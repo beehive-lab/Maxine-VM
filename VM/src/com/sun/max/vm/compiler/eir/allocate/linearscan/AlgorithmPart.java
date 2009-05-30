@@ -39,12 +39,18 @@ public abstract class AlgorithmPart {
 
 
     public AlgorithmPart(int phase) {
-        if (LinearScanRegisterAllocator.PHASE_TIMING) {
+
+        if (LinearScanRegisterAllocator.PHASE_TIMING ||
+                        LinearScanRegisterAllocator.DETAILED_COUNTING ||
+                        LinearScanRegisterAllocator.DETAILED_TIMING) {
             String number = "" + phase;
             if (phase < 10) {
                 number = "0" + number;
             }
             _name = "Phase" + number + "." + getClass().getSimpleName();
+        }
+
+        if (LinearScanRegisterAllocator.PHASE_TIMING) {
             _timer = GlobalMetrics.newTimer(LinearScanRegisterAllocator.METRICS_PREFIX + ".TotalTiming." + _name, Clock.SYSTEM_MILLISECONDS);
         }
     }

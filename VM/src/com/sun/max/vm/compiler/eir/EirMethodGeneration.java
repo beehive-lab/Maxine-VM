@@ -311,11 +311,9 @@ public abstract class EirMethodGeneration {
         return integerRegisterRoleValue(VMRegister.Role.SAFEPOINT_LATCH);
     }
 
-    public abstract EirCall createCall(EirBlock eirBlock, EirABI abi, EirValue result, EirLocation resultLocation,
-                    EirValue function, EirValue[] arguments, EirLocation[] argumentLocations);
+    public abstract EirCall createCall(EirBlock eirBlock, EirABI abi, EirValue result, EirLocation resultLocation, EirValue function, EirValue[] arguments, EirLocation[] argumentLocations);
 
-    public abstract EirCall createRuntimeCall(EirBlock eirBlock, EirABI abi, EirValue result, EirLocation resultLocation,
-                                              EirValue function, EirValue[] arguments, EirLocation[] argumentLocations);
+    public abstract EirCall createRuntimeCall(EirBlock eirBlock, EirABI abi, EirValue result, EirLocation resultLocation, EirValue function, EirValue[] arguments, EirLocation[] argumentLocations);
 
     public abstract EirInstruction createAssignment(EirBlock eirBlock, Kind kind, EirValue destination, EirValue source);
 
@@ -640,6 +638,7 @@ public abstract class EirMethodGeneration {
         final EirInstruction<?, ?> instruction = operand.instruction();
         final EirVariable destination = createEirVariable(constant.kind());
         final EirInstruction assignment = createAssignment(instruction.block(), destination.kind(), destination, constant);
+        ((EirAssignment) assignment).setType(Type.FIXED_SPLIT);
         introduceInstructionBefore(instruction, assignment);
         operand.setEirValue(destination);
         final EirAssignment a = (EirAssignment) assignment;

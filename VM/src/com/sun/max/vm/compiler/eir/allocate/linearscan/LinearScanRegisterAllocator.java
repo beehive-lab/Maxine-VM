@@ -27,7 +27,7 @@ import com.sun.max.vm.compiler.eir.allocate.linearscan.parts.*;
 
 /**
  * Linear scan register allocator based on the register allocator described by Christian Wimmer in
- * his master thesis "Linear Scan Register Allocation for the Java HotSpot™ Client Compiler".
+ * his master thesis "Linear Scan Register Allocation for the Java HotSpot Client Compiler".
  *
  * @author Thomas Wuerthinger
  */
@@ -36,7 +36,7 @@ public abstract class LinearScanRegisterAllocator<EirRegister_Type extends EirRe
     // Debugging flags, may be turned off to increase performance
     public static final boolean PHASE_TIMING = false;
     public static final boolean DETAILED_TIMING = false;
-    public static final boolean DETAILED_COUNTING = false;
+    public static final boolean DETAILED_COUNTING = true;
     public static final boolean DETAILED_ASSERTIONS = false;
 
     public static final String METRICS_PREFIX = "LSRA";

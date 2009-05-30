@@ -38,7 +38,7 @@ public abstract class EirLocation {
     public abstract EirLocationCategory category();
 
     public EirStackSlot asStackSlot() {
-        return (EirStackSlot) this;
+        return null;
     }
 
     public EirLiteral asLiteral() {

@@ -22,8 +22,8 @@ package com.sun.max.vm.compiler.eir.allocate.linearscan.parts;
 
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.compiler.eir.EirOperand.*;
 import com.sun.max.vm.compiler.eir.allocate.linearscan.*;
 import com.sun.max.vm.type.*;
 
@@ -57,6 +57,45 @@ public class Prologue extends AlgorithmPart {
                 fixedLocationMapping.put(variable.location(), variable);
             }
         }
+
+        /*
+        for (EirBlock block : generation().eirBlocks()) {
+            for (EirInstruction instruction : block.instructions()) {
+                if (instruction instanceof EirAssignment) {
+                    final EirAssignment assignment = (EirAssignment) instruction;
+
+                    if (assignment.destinationOperand().eirValue().asVariable() != null) {
+                        final EirVariable destVariable = assignment.destinationOperand().eirValue().asVariable();
+
+                        if (assignment.sourceOperand().eirValue().asVariable() != null) {
+                            final EirVariable sourceVariable = assignment.sourceOperand().eirValue().asVariable();
+
+                            // We have an assignment between two variables, try to merge variables
+                            int modifyCount = 0;
+                            for (EirOperand operand : destVariable.operands()) {
+                                if (operand.effect() == Effect.UPDATE || operand.effect() == Effect.DEFINITION) {
+                                    modifyCount++;
+                                }
+                            }
+
+                            int modifyCount2 = 0;
+                            for (EirOperand operand : sourceVariable.operands()) {
+                                if (operand.effect() == Effect.UPDATE || operand.effect() == Effect.DEFINITION) {
+                                    modifyCount2++;
+                                }
+                            }
+
+                            if (modifyCount == 1 && modifyCount2 == 1) {
+                                final int x = 0;
+                            } else {
+                                final int y = 0;
+                            }
+                        }
+                    }
+                }
+            }
+        }*/
+
 
         final boolean[] valueKilled = new boolean[1];
 

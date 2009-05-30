@@ -29,8 +29,8 @@ import com.sun.max.vm.type.*;
 /**
  * @author Bernd Mathiske
  */
-public final class EirVariable extends EirValue implements Comparable<EirVariable>, PoolObject {
 
+public final class EirVariable extends EirValue implements Comparable<EirVariable>, PoolObject {
     private int _serial;
 
     public int serial() {
@@ -46,6 +46,7 @@ public final class EirVariable extends EirValue implements Comparable<EirVariabl
     }
 
     private final Kind _kind;
+
 
     @Override
     public EirVariable asVariable() {

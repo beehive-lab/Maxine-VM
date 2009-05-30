@@ -24,6 +24,7 @@ import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.allocate.linearscan.*;
+import com.sun.max.vm.compiler.ir.IrBlock.*;
 
 /**
  * Computes an optimized linear scan block order.
@@ -115,7 +116,9 @@ public class ComputeBlockOrder extends AlgorithmPart {
         final int nesting = succ.loopNestingDepth();
 
         for (int i = 0; i < workList.length(); i++) {
-            if (nesting > workList.get(i).loopNestingDepth()) {
+
+            final int otherNesting = workList.get(i).loopNestingDepth();
+            if (nesting > otherNesting || (nesting == otherNesting && workList.get(i).role() == Role.EXCEPTION_DISPATCHER)) {
                 workList.insert(i, succ);
                 return;
             }

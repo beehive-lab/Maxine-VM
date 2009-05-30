@@ -41,6 +41,9 @@ public abstract class EirValue implements IrValue {
     }
 
 
+    public boolean isMutable() {
+        return numberOfUpdates() + numberOfDefinitions() > 1;
+    }
 
     public void substituteWith(EirValue other) {
         for (EirOperand operand : operands()) {

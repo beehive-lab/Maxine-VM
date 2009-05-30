@@ -40,6 +40,11 @@ public final class EirStackSlot extends EirLocation {
         return _purpose;
     }
 
+    @Override
+    public EirStackSlot asStackSlot() {
+        return this;
+    }
+
     // TODO: this should be an index, not an offset
     private final int _offset;
 
