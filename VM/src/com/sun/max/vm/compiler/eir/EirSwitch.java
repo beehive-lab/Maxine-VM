@@ -27,9 +27,8 @@ import com.sun.max.collect.*;
 /**
  * @author Bernd Mathiske
  */
-public abstract class EirSwitch<EirInstructionVisitor_Type extends EirInstructionVisitor,
-                                EirTargetEmitter_Type extends EirTargetEmitter>
-                      extends EirInstruction<EirInstructionVisitor_Type, EirTargetEmitter_Type> {
+public abstract class EirSwitch<EirInstructionVisitor_Type extends EirInstructionVisitor, EirTargetEmitter_Type extends EirTargetEmitter> extends
+                EirInstruction<EirInstructionVisitor_Type, EirTargetEmitter_Type> {
 
     private final EirOperand _tag;
 
@@ -49,7 +48,7 @@ public abstract class EirSwitch<EirInstructionVisitor_Type extends EirInstructio
         return _targets;
     }
 
-    private final EirBlock _defaultTarget;
+    private EirBlock _defaultTarget;
 
     public EirBlock defaultTarget() {
         return _defaultTarget;
@@ -84,12 +83,40 @@ public abstract class EirSwitch<EirInstructionVisitor_Type extends EirInstructio
 
     @Override
     public void visitSuccessorBlocks(EirBlock.Procedure procedure) {
+        super.visitSuccessorBlocks(procedure);
         if (_defaultTarget != null) {
             procedure.run(_defaultTarget);
         }
         for (EirBlock block : _targets) {
             procedure.run(block);
         }
+    }
+
+    @Override
+    public void substituteSuccessorBlocks(Mapping<EirBlock, EirBlock> map) {
+        super.substituteSuccessorBlocks(map);
+        if (map.containsKey(_defaultTarget)) {
+            _defaultTarget = map.get(_defaultTarget);
+        }
+
+        for (int i = 0; i < _targets.length; i++) {
+            if (map.containsKey(_targets[i])) {
+                _targets[i] = map.get(_targets[i]);
+            }
+        }
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder result = new StringBuilder(super.toString());
+
+        for (EirBlock b : _targets) {
+            result.append("; " + b.toString());
+        }
+
+        result.append("; tag=" + tag());
+
+        return result.toString();
     }
 
     @Override

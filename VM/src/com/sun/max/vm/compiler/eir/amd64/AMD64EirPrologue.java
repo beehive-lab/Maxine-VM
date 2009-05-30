@@ -64,7 +64,10 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
                 }
                 if (STACK_BANGING) {
                     // emit a read of the stack 2 pages down to trigger a stack overflow earlier
-                    asm.mov(emitter.scratchRegister(), -2 * emitter.abi().vmConfiguration().platform().pageSize(), emitter.stackPointer().indirect());
+                    // TODO (tw): Check why the LSRA needs the value 3 here. Can probably be removed after implementing better stack slot sharing.
+                    asm.mov(emitter.scratchRegister(), -3 * emitter.abi().vmConfiguration().platform().pageSize(), emitter.stackPointer().indirect());
+                    //asm.mov(emitter.scratchRegister(), -2 * emitter.abi().vmConfiguration().platform().pageSize(), emitter.stackPointer().indirect());
+
                 }
             }
         }

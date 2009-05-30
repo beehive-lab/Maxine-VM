@@ -28,7 +28,7 @@ import com.sun.max.vm.compiler.eir.*;
  */
 public abstract class AMD64EirConditionalBranch extends AMD64EirLocalControlTransfer {
 
-    private final EirBlock _next;
+    private EirBlock _next;
 
     public EirBlock next() {
         return _next;
@@ -45,6 +45,14 @@ public abstract class AMD64EirConditionalBranch extends AMD64EirLocalControlTran
         super.visitSuccessorBlocks(procedure);
         if (_next != null) {
             procedure.run(_next);
+        }
+    }
+
+    @Override
+    public void substituteSuccessorBlocks(Mapping<EirBlock, EirBlock> map) {
+        super.substituteSuccessorBlocks(map);
+        if (map.containsKey(_next)) {
+            _next = map.get(_next);
         }
     }
 

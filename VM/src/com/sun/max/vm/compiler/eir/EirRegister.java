@@ -32,6 +32,11 @@ public abstract class EirRegister extends EirLocation implements PoolObject {
         super();
     }
 
+    @Override
+    public EirRegister asRegister() {
+        return this;
+    }
+
     public abstract int serial();
 
     public abstract int ordinal();

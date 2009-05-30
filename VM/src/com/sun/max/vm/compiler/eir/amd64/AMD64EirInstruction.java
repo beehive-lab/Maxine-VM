@@ -3102,7 +3102,7 @@ public interface AMD64EirInstruction {
     public static class SETB extends AMD64EirUnaryOperation {
 
         public SETB(EirBlock block, EirValue destination) {
-            super(block, destination, EirOperand.Effect.UPDATE, G);
+            super(block, destination, EirOperand.Effect.DEFINITION, G);
         }
 
         @Override
@@ -3125,7 +3125,7 @@ public interface AMD64EirInstruction {
     public static class SETBE extends AMD64EirUnaryOperation {
 
         public SETBE(EirBlock block, EirValue destination) {
-            super(block, destination, EirOperand.Effect.UPDATE, G);
+            super(block, destination, EirOperand.Effect.DEFINITION, G);
         }
 
         @Override
@@ -3148,7 +3148,7 @@ public interface AMD64EirInstruction {
     public static class SETL extends AMD64EirUnaryOperation {
 
         public SETL(EirBlock block, EirValue destination) {
-            super(block, destination, EirOperand.Effect.UPDATE, G);
+            super(block, destination, EirOperand.Effect.DEFINITION, G);
         }
 
         @Override
@@ -3171,7 +3171,7 @@ public interface AMD64EirInstruction {
     public static class SETNBE extends AMD64EirUnaryOperation {
 
         public SETNBE(EirBlock block, EirValue destination) {
-            super(block, destination, EirOperand.Effect.UPDATE, G);
+            super(block, destination, EirOperand.Effect.DEFINITION, G);
         }
 
         @Override
@@ -3194,7 +3194,7 @@ public interface AMD64EirInstruction {
     public static class SETNB extends AMD64EirUnaryOperation {
 
         public SETNB(EirBlock block, EirValue destination) {
-            super(block, destination, EirOperand.Effect.UPDATE, G);
+            super(block, destination, EirOperand.Effect.DEFINITION, G);
         }
 
         @Override
@@ -3217,7 +3217,7 @@ public interface AMD64EirInstruction {
     public static class SETNLE extends AMD64EirUnaryOperation {
 
         public SETNLE(EirBlock block, EirValue destination) {
-            super(block, destination, EirOperand.Effect.UPDATE, G);
+            super(block, destination, EirOperand.Effect.DEFINITION, G);
         }
 
         @Override
@@ -3240,7 +3240,7 @@ public interface AMD64EirInstruction {
     public static class SETNP extends AMD64EirUnaryOperation {
 
         public SETNP(EirBlock block, EirValue destination) {
-            super(block, destination, EirOperand.Effect.UPDATE, G);
+            super(block, destination, EirOperand.Effect.DEFINITION, G);
         }
 
         @Override
@@ -3263,7 +3263,7 @@ public interface AMD64EirInstruction {
     public static class SETP extends AMD64EirUnaryOperation {
 
         public SETP(EirBlock block, EirValue destination) {
-            super(block, destination, EirOperand.Effect.UPDATE, G);
+            super(block, destination, EirOperand.Effect.DEFINITION, G);
         }
 
         @Override
@@ -3708,6 +3708,7 @@ public interface AMD64EirInstruction {
             final AMD64EirRegister.General tableEirRegister = (AMD64EirRegister.General) emitter.abi().getScratchRegister(Kind.LONG);
             final AMD64GeneralRegister64 tableRegister = tableEirRegister.as64();
             emitter.assembler().rip_lea(tableRegister, jumpTable);
+
             emitter.assembler().movsxd(indexRegister, tableRegister.base(), indexRegister.index(), SCALE_4);
             final AMD64GeneralRegister64 targetAddressRegister = tableRegister;
             emitter.assembler().add(targetAddressRegister, indexRegister);
