@@ -51,7 +51,10 @@ public interface EirAssignment {
         EXCEPTION_EDGE_RESCUED,
 
         /** Assignment inserted right after the catch to resolve the problem when a variable is at a different location in the exception block. */
-        EXCEPTION_EDGE_RESOLVED
+        EXCEPTION_EDGE_RESOLVED,
+
+        /** Assignment inserted right after one and only definition of a variable to its spill slot. */
+        SPILL_SLOT_DEFINITION
     }
 
     Kind kind();

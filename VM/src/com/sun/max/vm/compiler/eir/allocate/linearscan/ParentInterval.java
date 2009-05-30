@@ -34,9 +34,18 @@ public final class ParentInterval {
 
     private AppendableSequence<Interval> _children;
     private EirVariable _slotVariable;
+    private boolean _spillSlotDefined;
 
     public ParentInterval() {
         _children = new ArrayListSequence<Interval>(3);
+    }
+
+    public boolean spillSlotDefined() {
+        return _spillSlotDefined;
+    }
+
+    public void setSpillSlotDefined(boolean b) {
+        _spillSlotDefined = b;
     }
 
     public Sequence<Interval> children() {
@@ -123,10 +132,15 @@ public final class ParentInterval {
 
             for (Interval i : _children) {
                 assert i.variable().kind() == kind;
+                if (i.variable().location() != null && i.variable().location().asStackSlot() != null) {
+                    _slotVariable = i.variable();
+                }
             }
 
-            _slotVariable = generation.createEirVariable(kind);
-            _slotVariable.fixLocation(generation.allocateSpillStackSlot());
+            if (_slotVariable == null) {
+                _slotVariable = generation.createEirVariable(kind);
+                _slotVariable.fixLocation(generation.allocateSpillStackSlot());
+            }
         }
 
         return _slotVariable;

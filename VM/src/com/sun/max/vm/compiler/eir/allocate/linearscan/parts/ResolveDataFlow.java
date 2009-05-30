@@ -21,10 +21,13 @@
 package com.sun.max.vm.compiler.eir.allocate.linearscan.parts;
 
 import com.sun.max.collect.*;
+import com.sun.max.io.*;
 import com.sun.max.profile.*;
+import com.sun.max.program.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.EirAssignment.*;
+import com.sun.max.vm.compiler.eir.EirOperand.*;
 import com.sun.max.vm.compiler.eir.allocate.linearscan.*;
 import com.sun.max.vm.compiler.ir.IrBlock.*;
 
@@ -50,7 +53,9 @@ public class ResolveDataFlow extends AlgorithmPart {
     private final Metrics.Counter _catchBlockCounter = createCounter("Catch blocks");
     private final Metrics.Counter _createdExceptionEdgesCounter = createCounter("Created exception edges");
     private final Metrics.Counter _splitsCounter = createCounter("Number of split positions");
-    private final Metrics.Counter _assignmentCounters = createCounter("Number of inserted assignments");
+    private final Metrics.Counter _assignmentCounter = createCounter("Number of inserted assignments");
+    private final Metrics.Counter _splitSlotDefinitionCounter = createCounter("Inserted spills after variable definition");
+    private final Metrics.Counter _savedSpillSlotStoresCounter = createCounter("Saved spill slot stores");
 
     private AppendableSequence<BlockEdge> _blockEdges;
 
@@ -309,7 +314,7 @@ public class ResolveDataFlow extends AlgorithmPart {
             }
 
             if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
-                _assignmentCounters.accumulate(insertedAssignmentsCount);
+                _assignmentCounter.accumulate(insertedAssignmentsCount);
             }
 
             _spilledPairs.clear();
@@ -321,6 +326,15 @@ public class ResolveDataFlow extends AlgorithmPart {
             assert from.variable() != to.variable();
 
             final Pair<Interval, Interval> newPair = new Pair<Interval, Interval>(from, to);
+
+            if (to.parent() == from.parent() && to.parent().hasSlotVariable() && to.parent().spillSlotDefined() && to.variable().location().asStackSlot() != null) { // No
+                                                                                                                                                                     // //
+                                                                                                                                                                     // needed!
+                if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
+                    _savedSpillSlotStoresCounter.increment();
+                }
+                return;
+            }
 
             int minInsertPosition = 0;
             int maxInsertPosition = _pairs.length();
@@ -343,8 +357,7 @@ public class ResolveDataFlow extends AlgorithmPart {
                 _spilledPairs.append(newPair);
             } else {
                 assert minInsertPosition <= maxInsertPosition : "dependency cycle detected!";
-                //_pairs.insert(minInsertPosition, newPair);
-
+                // _pairs.insert(minInsertPosition, newPair);
 
                 // TODO (tw): Check why the following code does not work...
 
@@ -374,12 +387,47 @@ public class ResolveDataFlow extends AlgorithmPart {
 
         _blockEdges = new ArrayListSequence<BlockEdge>(data().generation().eirBlocks().length());
 
+        /*
+        // Optimization if variable has only 1 definition and is spilled somewhere
+        for (ParentInterval parentInterval : data().parentIntervals()) {
+
+            if (parentInterval.hasSlotVariable()) {
+
+                // This variable is spilled somewhere...
+
+                int modificationCount = 0;
+                EirOperand modificationOperand = null;
+
+                for (Interval interval : parentInterval.children()) {
+                    // This is an interval where the variable does not reside in the spill slot
+                    for (EirOperand operand : interval.variable().operands()) {
+                        if (operand.effect() == Effect.DEFINITION || operand.effect() == Effect.UPDATE) {
+                            modificationCount++;
+                            modificationOperand = operand;
+                        }
+                    }
+                }
+
+                if (modificationCount == 1) {
+                    parentInterval.setSpillSlotDefined(true);
+
+                    if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
+                        _splitSlotDefinitionCounter.increment();
+                    }
+                }
+            }
+        }*/
+
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
             _splitsTimer.start();
         }
 
         if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
             _catchBlockCounter.accumulate(data().splitMoves().keys().length());
+        }
+
+        if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
+            _splitsCounter.accumulate(data().splitMoves().keys().length());
         }
 
         for (Integer i : data().splitMoves().keys()) {
@@ -412,6 +460,49 @@ public class ResolveDataFlow extends AlgorithmPart {
                 }
             }
         }
+
+        /*
+        // Optimization if variable has only 1 definition and is spilled somewhere
+        for (ParentInterval parentInterval : data().parentIntervals()) {
+
+            if (parentInterval.hasSlotVariable() && parentInterval.spillSlotDefined()) {
+
+                // This variable is spilled somewhere...
+
+                int modificationCount = 0;
+                EirOperand modificationOperand = null;
+
+                for (Interval interval : parentInterval.children()) {
+                    // This is an interval where the variable does not reside in the spill slot
+                    for (EirOperand operand : interval.variable().operands()) {
+                        if (operand.effect() == Effect.DEFINITION || operand.effect() == Effect.UPDATE) {
+                            modificationCount++;
+                            modificationOperand = operand;
+                        }
+                    }
+                }
+
+                if (modificationCount == 1) {
+                    assert modificationOperand != null;
+                    final EirInstruction afterInstruction = modificationOperand.instruction();
+                    final EirVariable variable = modificationOperand.eirValue().asVariable();
+                    assert variable != null;
+                    assert variable.interval().parent().hasSlotVariable();
+                    assert modificationOperand.eirValue() == variable;
+                    assert variable.interval().parent() == parentInterval;
+
+                    final EirInstruction newInstruction = generation().createAssignment(afterInstruction.block(), variable.kind(), variable.interval().parent().slotVariable(generation()), variable);
+                    assert newInstruction instanceof EirAssignment;
+                    ((EirAssignment) newInstruction).setType(EirAssignment.Type.SPILL_SLOT_DEFINITION);
+                    variable.interval().parent().setSpillSlotDefined(true);
+                    generation().introduceInstructionAfter(afterInstruction, newInstruction);
+
+                    if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
+                        _splitSlotDefinitionCounter.increment();
+                    }
+                }
+            }
+        }*/
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
             _exceptionsTimer.stop();
@@ -452,7 +543,6 @@ public class ResolveDataFlow extends AlgorithmPart {
                 assert variable.operands().length() == 0;
             }
         }
-
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
             _substituteVariablesTimer.stop();
@@ -518,6 +608,17 @@ public class ResolveDataFlow extends AlgorithmPart {
 
     }
 
+    private boolean traceIntervalParent(ParentInterval interval) {
+        Trace.line(1, interval.detailedToString());
+
+        final IndentWriter writer = IndentWriter.traceStreamWriter();
+        for (EirBlock block : generation().eirBlocks()) {
+            block.printTo(writer);
+        }
+        writer.flush();
+        return false;
+    }
+
     private void processExceptionBlock(EirBlock block) {
         assert block.role() == Role.EXCEPTION_DISPATCHER;
 
@@ -548,6 +649,7 @@ public class ResolveDataFlow extends AlgorithmPart {
 
         for (EirVariable variable : block.liveIn()) {
             final Interval interval = variable.interval().parent().getChildAt(block.beginNumber());
+            assert interval != null || traceIntervalParent(variable.interval().parent());
             final EirVariable variableAtExceptionBlock = interval.variable();
 
             for (EirTry curTry : tries) {
@@ -563,6 +665,7 @@ public class ResolveDataFlow extends AlgorithmPart {
                 }
 
                 final Interval intervalAtTry = interval.parent().getChildAt(next.number());
+                assert intervalAtTry != null || traceIntervalParent(interval.parent());
                 final EirVariable variableAtTry = intervalAtTry.variable();
 
                 if (variableAtTry.location() != variableAtExceptionBlock.location()) {
@@ -644,6 +747,7 @@ public class ResolveDataFlow extends AlgorithmPart {
         final VariableMapping<EirVariable, EirVariable> variableToRescue = new ChainedHashMapping<EirVariable, EirVariable>();
         for (EirVariable variable : block.liveIn()) {
             final Interval interval = variable.interval().parent().getChildAt(block.beginNumber());
+            assert interval != null || traceIntervalParent(variable.interval().parent());
             final EirVariable realVariable = interval.variable();
             if (realVariable.location().asRegister() != null) {
                 final EirVariable stackVariable = realVariable.interval().parent().slotVariable(generation());
