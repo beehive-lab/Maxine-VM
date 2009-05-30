@@ -214,6 +214,11 @@ public class Classpath {
         return _entries;
     }
 
+    /**
+     * Creates a classpath {@link Entry} from a given file system path.
+     *
+     * @param path a file system path denoting a classpath entry
+     */
     public static Entry createEntry(String path) {
         final File pathFile = new File(path);
         if (pathFile.isDirectory()) {
@@ -227,6 +232,11 @@ public class Classpath {
         return new PlainFile(pathFile);
     }
 
+    /**
+     * Creates a new classpath from an array of classpath entries.
+     *
+     * @param paths an array of classpath entries
+     */
     public Classpath(String[] paths) {
         final Entry[] entries = new Entry[paths.length];
         for (int i = 0; i < paths.length; ++i) {
@@ -236,28 +246,90 @@ public class Classpath {
         _entries = new ArraySequence<Entry>(entries);
     }
 
+    /**
+     * Creates a new classpath from a sequence of classpath entries.
+     *
+     * @param paths a sequence of classpath entries
+     */
     public Classpath(Sequence<Entry> entries) {
         _entries = entries;
     }
 
+    /**
+     * Creates a new classpath by parsing a string of classpath entries separated by the system dependent
+     * {@linkplain File#pathSeparator path separator}.
+     *
+     * @param paths a string of classpath entries separated by ':' or ';'
+     */
     public Classpath(String paths) {
         this(paths.split(File.pathSeparator));
     }
 
+    /**
+     * Gets the classpath derived from the value of the {@code "java.ext.dirs"} system property.
+     *
+     * @see "http://java.sun.com/javase/6/docs/technotes/guides/extensions/extensions.html"
+     */
+    private static String extensionClasspath() {
+        final String extDirs = System.getProperty("java.ext.dirs");
+        if (extDirs != null) {
+            final StringBuilder buf = new StringBuilder();
+            for (String extDirPath : extDirs.split(File.pathSeparator)) {
+                final File extDir = new File(extDirPath);
+                if (extDir.isDirectory()) {
+                    for (File file : extDir.listFiles()) {
+                        if (file.isDirectory() ||
+                            (file.isFile() && (file.getName().endsWith(".jar") || file.getName().endsWith(".zip")))) {
+                            if (buf.length() != 0) {
+                                buf.append(File.pathSeparatorChar);
+                            }
+                            buf.append(file.getAbsolutePath());
+                        }
+                    }
+                } else {
+                    // Ignore non-directory
+                }
+            }
+            if (buf.length() != 0) {
+                buf.append(File.pathSeparatorChar);
+                return buf.toString();
+            }
+        }
+        return "";
+    }
+
+    /**
+     * Gets a classpath corresponding to the class search order used by the application class loader.
+     */
     public static Classpath fromSystem() {
-        final String value = System.getProperty("sun.boot.class.path") + File.pathSeparator + System.getProperty("java.class.path");
+        final String value = System.getProperty("sun.boot.class.path") + File.pathSeparator + extensionClasspath() + System.getProperty("java.class.path");
         return new Classpath(value.split(File.pathSeparator));
     }
 
+    /**
+     * Gets a classpath corresponding to the class search order used by the boot class loader.
+     */
     public static Classpath bootClassPath() {
         final String value = System.getProperty("sun.boot.class.path");
         return new Classpath(value.split(File.pathSeparator));
     }
 
+    /**
+     * Gets a new classpath obtained by prepending a given classpath to this class classpath.
+     *
+     * @param classpath the classpath to prepend to this classpath
+     * @return the result of prepending {@code classpath} to this classpath
+     */
     public Classpath prepend(Classpath classpath) {
         return new Classpath(Sequence.Static.concatenated(classpath._entries, _entries));
     }
 
+    /**
+     * Gets a new classpath obtained by prepending a given classpath to this class classpath.
+     *
+     * @param classpath the classpath to prepend to this classpath
+     * @return the result of prepending {@code classpath} to this classpath
+     */
     public Classpath prepend(String path) {
         return new Classpath(Sequence.Static.prepended(createEntry(path), _entries));
     }
