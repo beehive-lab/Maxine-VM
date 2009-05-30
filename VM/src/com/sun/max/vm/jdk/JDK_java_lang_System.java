@@ -759,7 +759,7 @@ public final class JDK_java_lang_System {
     }
 
     /**
-     * Initializes the sun.boot.library.path and sun.boot.path system properties when running on Unix.
+     * Initializes the sun.boot.library.path, sun.boot.path and java.ext.dirs system properties when running on Unix.
      *
      * @param properties the system properties
      * @param javaHome the value of the java.home system property
@@ -791,6 +791,15 @@ public final class JDK_java_lang_System {
 
         javaAndZipLibraryPaths[0] = jreLibIsaPath;
         javaAndZipLibraryPaths[1] = jreLibIsaPath;
+
+        final OperatingSystem os = Platform.hostOrTarget().operatingSystem();
+        if (os == OperatingSystem.LINUX) {
+            setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext"), "/usr/java/packages/lib/ext"));
+        } else if (os == OperatingSystem.SOLARIS) {
+            setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext"), "/usr/jdk/packages/lib/ext"));
+        } else {
+            ProgramError.unknownCase(os.toString());
+        }
     }
 
     static String checkAugmentBootClasspath(final String xBootClassPath) {
@@ -817,7 +826,7 @@ public final class JDK_java_lang_System {
     }
 
     /**
-     * Initializes the sun.boot.library.path and sun.boot.path system properties when running on Darwin.
+     * Initializes the sun.boot.library.path, sun.boot.path and java.ext.dirs system properties when running on Darwin.
      *
      * @param properties the system properties
      * @param javaHome the value of the java.home system property
@@ -848,6 +857,14 @@ public final class JDK_java_lang_System {
         setIfAbsent(properties, "sun.boot.class.path", checkAugmentBootClasspath(bootClassPath));
         javaAndZipLibraryPaths[0] = getenvExecutablePath();
         javaAndZipLibraryPaths[1] = librariesPath;
+
+        String extDirs = "/Library/Java/Extensions:/System/Library/Java/Extensions:" + javaHome + "/lib/ext";
+        final String userHome = properties.getProperty("user.home");
+        if (userHome != null) {
+            final File userExtDir = new File(userHome, "Library/Java/Extensions/");
+            extDirs += ":" + userExtDir;
+        }
+        setIfAbsent(properties, "java.ext.dirs", extDirs);
     }
 
     private static void initBasicWindowsProperties(Properties properties) {

@@ -62,6 +62,7 @@ public final class Code {
      * Creates the singleton code manager for this operating system.
      * @return a new code manager
      */
+    @PROTOTYPE_ONLY
     private static CodeManager createCodeManager() {
         switch (Platform.hostOrTarget().operatingSystem()) {
             case LINUX: {
