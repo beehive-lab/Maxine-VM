@@ -2447,5 +2447,16 @@ public interface SPARCEirInstruction {
             visitor.visit(this);
         }
 
+        @Override
+        public String toString() {
+            final StringBuilder result = new StringBuilder(super.toString());
+
+            if (indexRegister() != null) {
+                result.append("; indexRegister=" + indexRegister());
+            }
+
+            return result.toString();
+        }
+
     }
 }

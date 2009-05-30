@@ -24,12 +24,16 @@ import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.EirTraceObserver.*;
-import com.sun.max.vm.value.*;
+import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
  */
 public abstract class EirAllocator<EirRegister_Type extends EirRegister> {
+
+    protected abstract PoolSet<EirRegister_Type> noRegisters();
+    protected abstract PoolSet<EirRegister_Type> allocatableIntegerRegisters();
+    protected abstract PoolSet<EirRegister_Type> allocatableFloatingPointRegisters();
 
     private final EirMethodGeneration _methodGeneration;
 
@@ -42,6 +46,26 @@ public abstract class EirAllocator<EirRegister_Type extends EirRegister> {
     }
 
     public abstract void run();
+
+    protected void splitVariables() {
+        // Make a copy of the existing variables so that they iterated over while new variables are being created:
+        final EirVariable[] variables = Sequence.Static.toArray(methodGeneration().variables(), EirVariable.class);
+        for (EirVariable variable : variables) {
+            if (!variable.isLocationFixed() && !variable.isSpillingPrevented() && variable.kind() != Kind.VOID) {
+                final EirOperand[] operands = Sequence.Static.toArray(variable.operands(), EirOperand.class);
+                for (EirOperand operand : operands) {
+                    if (!operand.locationCategories().contains(EirLocationCategory.STACK_SLOT) ||
+                                    operand.requiredLocation() != null ||
+                                    operand.requiredRegister() != null ||
+                                    (operand.eirValue() != null && operand.eirValue().isLocationFixed())) {
+                        methodGeneration().splitVariableAtOperand(variable, operand);
+                    }
+                }
+            }
+        }
+    }
+
+
 
     private void gatherDefinitions() {
         for (EirBlock eirBlock : methodGeneration().eirBlocks()) {
@@ -67,6 +91,8 @@ public abstract class EirAllocator<EirRegister_Type extends EirRegister> {
             }
         }
     }
+
+
 
     /**
      * Determines the live range for each EIR variable in the EIR control flow graph.
@@ -153,30 +179,7 @@ public abstract class EirAllocator<EirRegister_Type extends EirRegister> {
         return true;
     }
 
-    protected EirLocation getConstantLocation(Value value, EirLocationCategory category) {
-        switch (category) {
-            case INTEGER_REGISTER:
-            case FLOATING_POINT_REGISTER:
-                break;
-            case IMMEDIATE_8:
-            case IMMEDIATE_16:
-            case IMMEDIATE_32:
-            case IMMEDIATE_64:
-                return new EirImmediate(category, value);
-            case METHOD:
-                break;
-            case LITERAL:
-                return methodGeneration().literalPool().makeLiteral(value);
-            default:
-                break;
-        }
-        throw ProgramError.unexpected();
-    }
 
-    /**
-     * @return location or null iff over-constrained
-     */
-    protected abstract EirLocationCategory decideConstantLocationCategory(Value value, EirOperand operand);
 
     protected EirLocationCategory decideVariableLocationCategory(PoolSet<EirLocationCategory> categories) {
         if (categories.length() == 1) {
@@ -188,22 +191,6 @@ public abstract class EirAllocator<EirRegister_Type extends EirRegister> {
             }
         }
         throw ProgramError.unexpected();
-    }
-
-    private boolean _areConstantsAllocated = false;
-
-    protected void setConstantsAllocated() {
-        _areConstantsAllocated = true;
-    }
-
-    protected EirLocation requiredLocation(EirOperand operand) {
-        if (operand.requiredLocation() != null) {
-            return operand.requiredLocation();
-        }
-        if (_areConstantsAllocated) {
-            return operand.requiredRegister();
-        }
-        return null;
     }
 
     protected boolean assertPlausibleCorrectness() {

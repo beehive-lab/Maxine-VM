@@ -86,6 +86,26 @@ public class IndentWriter {
         }
     }
 
+    public void printWhite(int width) {
+        for (int i = 0; i < width; i++) {
+            _writer.print(" ");
+        }
+    }
+
+    public void printFixedWidth(String s, int width) {
+        assert width > 0 : "width must be positive";
+        String text = s;
+        if (text.length() + 1 > width) {
+            if (width - 4 > 0) {
+                text = s.substring(0, width - 4) + "...";
+            } else {
+                text = s.substring(0, width);
+            }
+        }
+        _writer.print(text);
+        printWhite(width - text.length());
+    }
+
     public void print(String s) {
         writeIndentation();
         _writer.print(s);

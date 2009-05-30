@@ -30,7 +30,7 @@ import com.sun.max.vm.compiler.eir.*;
  */
 public abstract class SPARCEirConditionalBranch extends SPARCEirLocalControlTransfer {
 
-    private final EirBlock _next;
+    private EirBlock _next;
 
     public EirBlock next() {
         return _next;
@@ -48,6 +48,20 @@ public abstract class SPARCEirConditionalBranch extends SPARCEirLocalControlTran
             return _next;
         }
         return super.selectSuccessorBlock(eligibleBlocks);
+    }
+
+    @Override
+    public void visitSuccessorBlocks(EirBlock.Procedure procedure) {
+        super.visitSuccessorBlocks(procedure);
+        procedure.run(next());
+    }
+
+    @Override
+    public void substituteSuccessorBlocks(Mapping<EirBlock, EirBlock> map) {
+        super.substituteSuccessorBlocks(map);
+        if (map.containsKey(_next)) {
+            _next = map.get(_next);
+        }
     }
 
     /**

@@ -40,6 +40,28 @@ public abstract class EirValue implements IrValue {
         return _operands;
     }
 
+
+    public boolean isMutable() {
+        return numberOfUpdates() + numberOfDefinitions() > 1;
+    }
+
+    public void substituteWith(EirValue other) {
+        for (EirOperand operand : operands()) {
+            other.addOperand(operand);
+            operand.setEirValueWithoutUpdate(other);
+        }
+
+        _operands.clear();
+    }
+
+    public EirVariable asVariable() {
+        return null;
+    }
+
+    public Preallocated asPreallocated() {
+        return null;
+    }
+
     private int _numberOfDefinitions;
 
     public int numberOfDefinitions() {
@@ -56,6 +78,21 @@ public abstract class EirValue implements IrValue {
 
     public int numberOfUses() {
         return _numberOfUses;
+    }
+
+    public boolean assertLocationCategory() {
+
+        // TODO (tw): Try to get valid location categories for constants!
+        if (this.location() == null || this instanceof EirConstant) {
+            return true;
+        }
+
+        assert this.locationCategories().contains(location().category()) : "location invalid";
+        for (EirOperand operand : operands()) {
+            assert operand.locationCategories().contains(location().category()) : "invalid location at instruction " + operand.instruction().toString();
+        }
+
+        return true;
     }
 
     public int numberOfEffects() {
@@ -96,6 +133,8 @@ public abstract class EirValue implements IrValue {
                 _numberOfDefinitions--;
                 break;
         }
+
+        assert assertLocationCategory();
     }
 
     private PoolSet<EirLocationCategory> _locationCategories;
@@ -124,6 +163,8 @@ public abstract class EirValue implements IrValue {
     public final void setLocation(EirLocation location) {
         assert !_isLocationFixed;
         _location = location;
+
+        assert assertLocationCategory();
     }
 
     private boolean _isLocationFixed;
@@ -135,6 +176,7 @@ public abstract class EirValue implements IrValue {
 
     public void fixLocation(EirLocation location) {
         assert !(_isLocationFixed && location != _location);
+        assert location != null : "must not fix location to null!";
         _location = location;
         _isLocationFixed = true;
     }
@@ -148,6 +190,11 @@ public abstract class EirValue implements IrValue {
         @Override
         public Kind kind() {
             return _kind;
+        }
+
+        @Override
+        public Preallocated asPreallocated() {
+            return this;
         }
 
         public Preallocated(EirLocation location, Kind kind) {
