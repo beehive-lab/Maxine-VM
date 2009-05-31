@@ -42,7 +42,6 @@ public final class Trace {
         // do nothing.
     }
 
-    @RESET
     private static PrintStream _stream;
 
     public static PrintStream stream() {
