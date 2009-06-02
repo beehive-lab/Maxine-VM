@@ -117,8 +117,19 @@ shift
 jvm_args="$jvm_args_prefix $jvm_args $jvm_args_suffix"
 command_args=$@
 
-# Ensure that the non-optional variables are set
-test -n "${JAVA_HOME}" || { echo "JAVA_HOME must be set to a JDK 6 installation directory"; exit 1; }
+# Ensure that the JAVA_HOME is set or guess at its location:
+if [ -z "${JAVA_HOME}" ]; then
+    if [ -d /usr/lib/jvm/java-6-sun ]; then
+       export JAVA_HOME=/usr/lib/jvm/java-6-sun
+    elif [ -d /System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Home ]; then
+       export JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Home
+    elif [ -d /usr/jdk/latest ]; then
+       export JAVA_HOME=/usr/jdk/latest
+    else 
+       echo "JAVA_HOME must be set to a JDK 6 installation directory"
+       exit 1;
+    fi
+fi
 
 # Try to find the base directory of the Maxine code base by using the path of this script
 if [ -z "${maxine_dir}" ]; then
