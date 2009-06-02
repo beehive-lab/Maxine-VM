@@ -278,7 +278,11 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     @PROTOTYPE_ONLY
     protected void forceClass(String className, boolean isMain) {
         Trace.line(1, "extending image with class " + className);
-        JavaPrototype.javaPrototype().loadClass(className);
+        try {
+            JavaPrototype.javaPrototype().loadClass(className);
+        } catch (NoClassDefFoundError ex) {
+            ProgramWarning.message("class " + className + " not found");
+        }
         if (isMain) {
             _mainClassName = className;
             try {
@@ -288,7 +292,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
                 CompiledPrototype.registerImageMethod(mainMethodActor);
                 CompiledPrototype.registerImageInvocationStub(mainMethodActor);
             } catch (Exception ex) {
-                ProgramError.unexpected("failed to find class: " + className);
+                ProgramError.unexpected("failed to find main method in class: " + className);
             }
         }
     }

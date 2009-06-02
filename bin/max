@@ -725,8 +725,8 @@ function run_test() {
     rm -rf maxine-tester
     run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -output-dir=maxine-tester -java-executable="${jvm}" "-java-vm-args=${jvm_args}" "$@"
     result=$?
-    zip -q -r maxine-tester.zip `find maxine-tester | egrep '(.stdout|.stderr|.passed|.failed|.command)'`
-    echo "Test log files are in maxine-tester.zip"
+    zip -q -r maxine-testers.zip `find maxine-tester | egrep '(.stdout|.stderr|.passed|.failed|.command)'`
+    echo "Test log files are in maxine-tester-logs.zip"
     exit $?
 }
 
