@@ -722,7 +722,12 @@ test_help="run some or all of the Maxine tests
     Use \"max test -help\" to see what other options this command accepts."
 
 function run_test() {
-    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -java-executable="${jvm}" "-java-vm-args=${jvm_args}" "$@"
+    rm -rf maxine-tester
+    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -output-dir=maxine-tester -java-executable="${jvm}" "-java-vm-args=${jvm_args}" "$@"
+    result=$?
+    zip -q -r maxine-tester-`date +%F-%H%M`.zip `find maxine-tester | egrep '(.stdout|.stderr|.passed|.failed|.command)'`
+    echo "Test log files are in maxine-tester-`date +%F-%H%M`.zip"
+    exit $?
 }
 
 #=======================================
