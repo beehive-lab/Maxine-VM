@@ -133,9 +133,17 @@ public class WalkIntervals extends AlgorithmPart {
         _registers = registers;
 
         // Preallocate arrays for performance reasons
-        _freePos = new int[_registers.length];
-        _usePos = new int[_registers.length];
-        _blockPos = new int[_registers.length];
+
+        int length = _registers.length;
+        for (EirRegister reg : _registers) {
+            if (reg != null) {
+                length = Math.max(length, reg.ordinal() + 1);
+            }
+        }
+
+        _freePos = new int[length];
+        _usePos = new int[length];
+        _blockPos = new int[length];
 
         _allIntervals = new ArrayListSequence<Interval>(intervals);
 
@@ -194,12 +202,15 @@ public class WalkIntervals extends AlgorithmPart {
         for (Interval interval : _allIntervals) {
 
             if (interval.isFixed()) {
-                if (interval.variable().location().asRegister() != null) {
+
+                final EirRegister fixedReg = interval.variable().location().asRegister();
+
+                if (fixedReg != null && _registers.length > fixedReg.ordinal() && _registers[fixedReg.ordinal()] != null) {
                     // Fixed interval with register => make it active!
                     assert interval.register() != null;
                     _active.append(interval);
                 } else {
-                    // Fixed interval with stack slot assigned => ignore
+                    // Fixed interval with stack slot or unallocatable register assigned => ignore
                     _handled.append(interval);
                 }
             } else {
