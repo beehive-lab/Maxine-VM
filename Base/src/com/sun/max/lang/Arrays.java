@@ -93,8 +93,8 @@ public final class Arrays {
      *
      * @param array the array for which an iterable is returned
      */
-    public static <Element_Type> Iterable<Element_Type> iterable(Element_Type[] array) {
-        return java.util.Arrays.asList(array);
+    public static <Element_Type> IterableWithLength<Element_Type> iterable(Element_Type[] array) {
+        return new ArraySequence<Element_Type>(array);
     }
 
     /**
