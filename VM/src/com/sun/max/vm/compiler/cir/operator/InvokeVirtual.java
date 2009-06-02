@@ -30,13 +30,9 @@ import com.sun.max.vm.type.*;
 
 
 public class InvokeVirtual extends JavaResolvableOperator<VirtualMethodActor> {
-    private final BirToCirMethodTranslation _translation;
-    private final BlockState _blockState;
 
-    public InvokeVirtual(ConstantPool constantPool, int index, BirToCirMethodTranslation translation, BlockState blockState) {
+    public InvokeVirtual(ConstantPool constantPool, int index) {
         super(CALL | NULL_POINTER_CHECK, constantPool, index, constantPool.methodAt(index).signature(constantPool).resultKind());
-        _translation = translation;
-        _blockState = blockState;
     }
 
     @Override
@@ -47,14 +43,6 @@ public class InvokeVirtual extends JavaResolvableOperator<VirtualMethodActor> {
     @Override
     public void acceptVisitor(HCirOperatorVisitor visitor) {
         visitor.visit(this);
-    }
-
-    public BirToCirMethodTranslation methodTranslation() {
-        return _translation;
-    }
-
-    public BlockState blockState() {
-        return _blockState;
     }
 
     @Override

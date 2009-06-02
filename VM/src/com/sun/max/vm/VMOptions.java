@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
+import com.sun.max.lang.Arrays;
 import com.sun.max.profile.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -314,6 +315,15 @@ public final class VMOptions {
             }
         }
         return null;
+    }
+
+    /**
+     * Gets all the registered VM options as an {@code IterableWithLength} object.
+     *
+     * @return all the registered VM options as an {@code IterableWithLength} object
+     */
+    public static IterableWithLength<VMOption> allOptions() {
+        return Iterables.join(Arrays.iterable(_pristinePhaseOptions), Arrays.iterable(_startingPhaseOptions));
     }
 
     public static boolean parsePristine(int argc, Pointer argv) {

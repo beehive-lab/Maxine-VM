@@ -210,13 +210,21 @@ public class MaxineTester {
     private static final ThreadLocal<PrintStream> _out = new ThreadLocal<PrintStream>() {
         @Override
         protected PrintStream initialValue() {
-            return System.out;
+            try {
+                return new PrintStream(new MultiOutputStream(System.out, new FileOutputStream(new File(_outputDir.getValue(), "console.stdout"))));
+            } catch (FileNotFoundException fileNotFoundException) {
+                throw ProgramError.unexpected(fileNotFoundException);
+            }
         }
     };
     private static final ThreadLocal<PrintStream> _err = new ThreadLocal<PrintStream>() {
         @Override
         protected PrintStream initialValue() {
-            return System.err;
+            try {
+                return new PrintStream(new MultiOutputStream(System.err, new FileOutputStream(new File(_outputDir.getValue(), "console.stderr"))));
+            } catch (FileNotFoundException fileNotFoundException) {
+                throw ProgramError.unexpected(fileNotFoundException);
+            }
         }
     };
 
@@ -724,6 +732,13 @@ public class MaxineTester {
         return libName;
     }
 
+    /**
+     * Copies a binary file from the default output directory used by the {@link BinaryImageGenerator} for
+     * the output files it generates to a given directory.
+     *
+     * @param imageDir the destination directory
+     * @param binary the name of the file in the source directory that is to be copied to {@code imageDir}
+     */
     private static void copyBinary(File imageDir, String binary) {
         final File defaultImageDir = BinaryImageGenerator.getDefaultBootImageFilePath().getParentFile();
         final File defaultBinaryFile = new File(defaultImageDir, binary);
