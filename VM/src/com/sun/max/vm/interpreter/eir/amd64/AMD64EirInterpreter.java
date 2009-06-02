@@ -192,8 +192,10 @@ public class AMD64EirInterpreter extends EirInterpreter implements AMD64EirInstr
     public void visit(AMD64EirStore store) {
         final Value pointer = _cpu.read(store.pointerOperand().location());
         if (pointer.kind() == Kind.WORD) {
-            // This must be a store to the stack: don't type check the load
-            final Value value = _cpu.read(store.valueOperand().location());
+            // This must be a store to the stack: don't type check the load if it's Word-type store
+            final Value value = store.kind() == Kind.WORD ?
+                            _cpu.read(store.valueOperand().location()) :
+                            _cpu.read(store.kind(), store.valueOperand().location());
             assert store.indexOperand() == null;
             final int offset = store.offsetOperand() != null ? _cpu.read(store.offsetOperand().location()).asInt() : 0;
             _cpu.stack().write(pointer.asWord().asAddress().plus(offset), value);

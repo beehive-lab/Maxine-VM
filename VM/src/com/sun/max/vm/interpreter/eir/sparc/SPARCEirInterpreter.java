@@ -307,7 +307,9 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         final Value pointer = _cpu.read(store.pointerOperand().location());
         if (pointer.kind() == Kind.WORD) {
             // This must be a store to the stack: don't type check the load
-            final Value value = _cpu.read(store.valueOperand().location());
+            final Value value = store.kind() == Kind.WORD ?
+                            _cpu.read(store.valueOperand().location()) :
+                            _cpu.read(store.kind(), store.valueOperand().location());
             assert store.indexOperand() == null;
             final int offset = store.offsetOperand() != null ? _cpu.read(store.offsetOperand().location()).asInt() : 0;
             _cpu.stack().write(pointer.asWord().asAddress().plus(offset), value);
