@@ -131,9 +131,9 @@ endif
 
 
 ifeq ($(OS),darwin)
-	CC ?= gcc $(DARWIN_GCC_MFLAG)
+	CC ?= gcc 
 	C_DEPENDENCIES_FLAGS = -M -DDARWIN -D$(ISA) -D$(TARGET)
-	CFLAGS ?= -g -Wall -Wextra -Werror -Wno-main -Wno-unused-parameter -fPIC -DDARWIN -D$(ISA) -D$(TARGET)
+	CFLAGS ?= -g $(DARWIN_GCC_MFLAG) -Wall -Wextra -Werror -Wno-main -Wno-unused-parameter -fPIC -DDARWIN -D$(ISA) -D$(TARGET)
 	LINK_MAIN = $(CC) -g $(DARWIN_GCC_MFLAG) -lc -lm -ldl -o $(MAIN)
 	# The version linker flag below ensure are required by the modified version of
 	# libjava.jnilib that is put into the $(PROJECT)/generated/$(OS) directory
