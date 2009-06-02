@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
 <listEntry value="/VM/src/com/sun/max/vm/prototype/BinaryImageGenerator.java"/>
@@ -12,5 +12,5 @@
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.sun.max.vm.prototype.BinaryImageGenerator"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-trace=1 -build=PRODUCT -native-tests -test-caller-jit -test-callee-jit -run=test.com.sun.max.vm.testrun.all"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="VM"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -Xss2m -Xms1G -Xmx2G -Dmaxwell.trace.file=trace -Dmaxwell.trace.noconsoles"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xss2m -Xms1G -Xmx2G"/>
 </launchConfiguration>

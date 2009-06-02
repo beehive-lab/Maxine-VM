@@ -68,19 +68,17 @@ import com.sun.max.vm.value.*;
 public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
     private final JavaOperator _operator;
     private final CirCall _call;
-    private final CirVariableFactory _variableFactory;
+    private final BirToCirMethodTranslation _methodTranslation;
     private final CirValue _originalCC;
     private final CirValue _originalCE;
     private final CirVariable _ce;
 
     private final CirValue[] _arguments;
-    private final CompilerScheme _compilerScheme;
 
-    HCirOperatorLowering(JavaOperator operator, CirCall call, CirVariableFactory variableFactory, CompilerScheme compilerScheme) {
+    HCirOperatorLowering(JavaOperator operator, CirCall call, BirToCirMethodTranslation methodTranslation) {
         _operator = operator;
         _call = call;
-        _compilerScheme = compilerScheme;
-        _variableFactory = variableFactory;
+        _methodTranslation = methodTranslation;
         _arguments = call.arguments();
         _originalCC = _arguments[_arguments.length - 2];
         _originalCE = _arguments[_arguments.length - 1];
@@ -88,19 +86,19 @@ public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
         if (ce instanceof CirVariable) {
             _ce = (CirVariable) ce;
         } else {
-            _ce = variableFactory.createFreshExceptionContinuationParameter();
+            _ce = variableFactory().createFreshExceptionContinuationParameter();
         }
     }
 
     /**
-     * Creates a closure for a block of code with exactly one parameter.
+     * Creates a closure for a block of code.
      *
      * @param body the code to be parameterized in a closure
-     * @param parameter the single parameter
-     * @return a closure that parameterizes {@code body} with the single parameter {@code parameter}
+     * @param parameters the parameters of the closure
+     * @return a closure that parameterizes {@code body} with the parameter {@code parameters}
      */
-    static CirClosure closure(CirCall body, CirVariable parameter) {
-        return new CirClosure(body, parameter);
+    static CirClosure closure(CirCall body, CirVariable... parameters) {
+        return new CirClosure(body, parameters);
     }
 
     /**
@@ -155,7 +153,7 @@ public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
      */
     CirCall call(CirValue procedure, CirValue... arguments) {
         final CirCall call = new CirCall(procedure, arguments.length > 0 ? arguments : CirCall.NO_ARGUMENTS);
-        assert validateArguments(call);
+        assert procedure instanceof CirClosure || validateArguments(call);
         if (procedure instanceof Stoppable) {
             final Stoppable stoppable = (Stoppable) procedure;
             if (canStop(stoppable)) {
@@ -212,10 +210,10 @@ public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
 
     void set(CirCall result) {
         CirCall call = result;
-        assert _arguments[_arguments.length - 2] == _originalCC : _arguments[_arguments.length - 2] + " != " + _originalCC;
-        assert _arguments[_arguments.length - 1] == _originalCE;
         if (ce() != _originalCE) {
-            _arguments[_arguments.length - 1] = ce();
+            if (_arguments[_arguments.length - 1] == _originalCE) {
+                _arguments[_arguments.length - 1] = ce();
+            }
             call = new CirCall(closure(call, ce()), _originalCE);
         }
         _call.assign(call);
@@ -377,17 +375,19 @@ public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
 
                 if (mostFrequentHub != null) {
                     final CirValue cont = _arguments[_arguments.length - 2];
-                    final CirContinuationVariable kvar = variableFactory().createFreshNormalContinuationParameter();
-                    _arguments[_arguments.length - 2] = kvar;
+                    final CirContinuationVariable cc = variableFactory().createFreshNormalContinuationParameter();
+                    final CirContinuationVariable ce = variableFactory().createFreshExceptionContinuationParameter();
+                    _arguments[_arguments.length - 2] = cc;
+                    _arguments[_arguments.length - 1] = ce;
+
                     final ClassMethodRefConstant classMethodRef = operator.constantPool().classMethodAt(operator.index());
                     final VirtualMethodActor declaredMethod = classMethodRef.resolveVirtual(operator.constantPool(), operator.index());
                     final Address entryPoint = mostFrequentHub.getWord(declaredMethod.vTableIndex()).asAddress();
                     final TargetMethod targetMethod = Code.codePointerToTargetMethod(entryPoint);
-                    final CirMethod targetCirMethod = operator.methodTranslation().cirGenerator().createIrMethod(targetMethod.classMethodActor());
+                    final ClassMethodActor targetMethodActor = targetMethod.classMethodActor();
+                    final CirMethod targetCirMethod = _methodTranslation.cirGenerator().createIrMethod(targetMethodActor);
                     final CirValue cachedHub = new CirConstant(ReferenceValue.from(mostFrequentHub));
                     final CirVariable hub = variableFactory().createTemporary(Kind.REFERENCE);
-                    final CirValue[] argumentsCopy = CirCall.newArguments(_arguments.length);
-                    System.arraycopy(_arguments, 0, argumentsCopy, 0, _arguments.length);
                     final CirSnippet readHub = CirSnippet.get(MethodSelectionSnippet.ReadHub.SNIPPET);
                     call = call(
                                closure(
@@ -403,11 +403,12 @@ public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
                                                cont(
                                                    call(
                                                        targetCirMethod,
-                                                       argumentsCopy)),
+                                                       _arguments.clone())),
                                                cont(
                                                    call))),
                                        ce()),
-                                   kvar),
+                                   cc,
+                                   ce),
                                cont,
                                ce());
                 }
@@ -541,7 +542,7 @@ public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
     }
 
     CirVariableFactory variableFactory() {
-        return _variableFactory;
+        return _methodTranslation.variableFactory();
     }
 
     @Override
@@ -858,7 +859,7 @@ public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
     public void visitDefault(JavaOperator operator) {
         if (operator instanceof Lowerable) {
             final Lowerable lowerableOp = (Lowerable) operator;
-            lowerableOp.toLCir(lowerableOp, _call, _compilerScheme);
+            lowerableOp.toLCir(lowerableOp, _call, _methodTranslation.cirGenerator().compilerScheme());
         }
     }
 

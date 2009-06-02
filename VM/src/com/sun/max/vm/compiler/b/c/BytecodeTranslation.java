@@ -1218,7 +1218,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     @Override
     protected void invokevirtual(int index) {
-        invokeClassMethod(index, new InvokeVirtual(_constantPool, index, _methodTranslation, _blockState));
+        invokeClassMethod(index, new InvokeVirtual(_constantPool, index));
     }
 
     @Override
