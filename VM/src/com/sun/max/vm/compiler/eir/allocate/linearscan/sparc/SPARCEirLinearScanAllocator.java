@@ -25,6 +25,7 @@ import com.sun.max.vm.compiler.dir.eir.sparc.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.allocate.linearscan.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
+import com.sun.max.vm.compiler.eir.sparc.SPARCEirRegister.*;
 
 /**
  * @author Bernd Mathiske
@@ -67,6 +68,8 @@ public final class SPARCEirLinearScanAllocator extends LinearScanRegisterAllocat
         }
 
         _allocatableFloatingPointRegisters = PoolSet.allOf(SPARCEirRegister.pool());
+        _allocatableFloatingPointRegisters.and(SPARCEirRegister.FloatingPoint.singlePrecisionPoolSet());
+        _allocatableFloatingPointRegisters.and(SPARCEirRegister.FloatingPoint.doublePrecisionPoolSet());
         _allocatableFloatingPointRegisters.and(SPARCEirRegister.FloatingPoint.poolSet());
         _allocatableFloatingPointRegisters.and(abi.allocatableRegisters());
     }
