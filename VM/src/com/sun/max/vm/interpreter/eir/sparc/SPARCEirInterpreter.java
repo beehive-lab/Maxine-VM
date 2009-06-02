@@ -305,13 +305,14 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
     @Override
     public void visit(SPARCEirStore store) {
         final Value pointer = _cpu.read(store.pointerOperand().location());
-        final Value value = _cpu.read(store.kind(), store.valueOperand().location());
         if (pointer.kind() == Kind.WORD) {
-            // This must be a store to the stack
+            // This must be a store to the stack: don't type check the load
+            final Value value = _cpu.read(store.valueOperand().location());
             assert store.indexOperand() == null;
             final int offset = store.offsetOperand() != null ? _cpu.read(store.offsetOperand().location()).asInt() : 0;
             _cpu.stack().write(pointer.asWord().asAddress().plus(offset), value);
         } else {
+            final Value value = _cpu.read(store.kind(), store.valueOperand().location());
             final Value[] arguments = (store.indexOperand() != null) ? new Value[4] : new Value[3];
             arguments[0] = pointer;
             if (store.offsetOperand() != null) {
