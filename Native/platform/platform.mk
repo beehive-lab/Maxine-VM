@@ -145,6 +145,7 @@ ifeq ($(OS),darwin)
 	    -lc -lm
 	LIB_PREFIX = lib
 	LIB_SUFFIX = .dylib
+	JAVA_HOME ?= /System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home
 endif
 
 ifeq ($(OS),linux)
@@ -204,8 +205,8 @@ ifeq ($(OS),guestvm)
 	LINK_LIB = $(CC) -shared -lc -lm -m64  -lguk_db
 endif
 
-ifndef JAVA_HOME 
-  $(error "Must set JAVA_HOME environment variable to your JDK home directory")
+ifndef JAVA_HOME
+	$(error "Must set JAVA_HOME environment variable to your JDK home directory")
 endif
 
 
