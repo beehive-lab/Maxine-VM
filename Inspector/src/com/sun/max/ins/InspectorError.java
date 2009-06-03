@@ -52,7 +52,7 @@ public class InspectorError extends Error {
     public void display(Inspection inspection) {
         printStackTrace();
         if (_dialogDisplay) {
-            ThrowableDialog.showLater(this, inspection, "Inspector Error");
+            ThrowableDialog.showLater(this, inspection.gui().frame(), "Inspector Error");
         }
     }
 

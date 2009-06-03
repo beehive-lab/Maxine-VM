@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.compiler.b.c.d.e.amd64;
 
+import com.sun.max.profile.*;
+import com.sun.max.util.timer.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.dir.*;
@@ -37,15 +39,21 @@ public class DirToAMD64EirTranslator extends AMD64EirGenerator {
         super(eirGeneratorScheme);
     }
 
+    private static final TimerMetric _timer = GlobalMetrics.newTimer("Translate-DirToEir", Clock.SYSTEM_MILLISECONDS);
+
     @Override
     protected void generateIrMethod(EirMethod eirMethod, CompilationDirective compilationDirective) {
         final DirGeneratorScheme dirGeneratorScheme = (DirGeneratorScheme) compilerScheme();
         final DirMethod dirMethod = dirGeneratorScheme.dirGenerator().makeIrMethod(eirMethod.classMethodActor());
 
+        _timer.start();
+
         final DirToAMD64EirMethodTranslation translation = new DirToAMD64EirMethodTranslation(this, eirMethod, dirMethod);
         translation.translateMethod();
 
         eirMethod.setGenerated(translation.eirBlocks(), translation.literalPool(), translation.parameterEirLocations(), translation.resultEirLocation(), translation.frameSize());
+
+        _timer.stop();
     }
 
     private TreeEirMethod createTreeEirMethod(ClassMethodActor classMethodActor) {

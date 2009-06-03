@@ -41,9 +41,6 @@ public abstract class AbstractInspectionHolder implements InspectionHolder{
         _tracePrefix = "[" + getClass().getSimpleName() + "] ";
     }
 
-    /**
-     * @return holder of the interactive inspection state for the session
-     */
     public final Inspection inspection() {
         return _inspection;
     }
@@ -52,23 +49,18 @@ public abstract class AbstractInspectionHolder implements InspectionHolder{
         return _inspection.maxVM();
     }
 
-    /**
-     * @return visual specifications for user interaction during the session
-     */
+    public InspectorGUI gui() {
+        return _inspection.gui();
+    }
+
     public final InspectorStyle style() {
         return _inspection.style();
     }
 
-    /**
-     * @return information about the user focus of attention in the view state.
-     */
     public final InspectionFocus focus() {
         return _inspection.focus();
     }
 
-    /**
-     * @return access to {@link InspectorAction}s of general use.
-     */
     public final InspectionActions actions() {
         return _inspection.actions();
     }

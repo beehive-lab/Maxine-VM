@@ -101,10 +101,6 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
         }
     }
 
-//    public boolean needsJavaFrameDescriptor() {
-//        return runtimeChecks() != NONE;
-//    }
-
     @Override
     public void acceptVisitor(CirVisitor visitor) {
         visitor.visitBuiltin(this);

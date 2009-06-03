@@ -162,6 +162,11 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
             }
         }
 
+        if (_trace && !_tracedMethods.contains(eirMethod.classMethodActor())) {
+            _tracedMethods.add(eirMethod.classMethodActor());
+            Trace.stream().println(eirMethod.traceToString());
+        }
+
         try {
             return interpret(eirMethod, arguments);
         } finally {
@@ -366,6 +371,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
     private boolean _trace;
     private boolean _traceCpu;
     private boolean _traceStack;
+    private final Set<ClassMethodActor> _tracedMethods = new HashSet<ClassMethodActor>();
 
     public boolean traceStack() {
         return _traceStack;

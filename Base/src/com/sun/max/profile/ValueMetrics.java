@@ -119,6 +119,13 @@ public class ValueMetrics {
             }
             return map;
         }
+
+        @Override
+        public void reset() {
+            super.reset();
+            _missed = 0;
+            Arrays.fill(_counts, 0);
+        }
     }
 
     public static class FixedSetIntegerDistribution extends IntegerDistribution {
@@ -164,6 +171,14 @@ public class ValueMetrics {
             }
             return map;
         }
+
+        @Override
+        public void reset() {
+            super.reset();
+            _missed = 0;
+            Arrays.fill(_set, 0);
+            Arrays.fill(_count, 0);
+        }
     }
 
     /**
@@ -173,7 +188,7 @@ public class ValueMetrics {
      * sorted list of value/count pairs. This results in an exact distribution
      * with a tunable size/performance tradeoff, since a larger buffer means
      * fewer reduction steps.
-     * 
+     *
      * This implementation is <b>not thread safe</b>. It may lose updates and potentially
      * generate exceptions if used in a multi-threaded scenario. To make updates
      * to this distribution thread safe, {@linkplain ValueMetrics#threadSafe(IntegerDistribution) wrap}
@@ -223,6 +238,15 @@ public class ValueMetrics {
                 }
             }
             return map;
+        }
+
+        @Override
+        public void reset() {
+            super.reset();
+            _cursor = 0;
+            Arrays.fill(_buffer, 0);
+            Arrays.fill(_values, 0);
+            Arrays.fill(_counts, 0);
         }
 
         private void reduce() {
@@ -328,22 +352,29 @@ public class ValueMetrics {
     }
 
     public static class HashedIntegerDistribution extends IntegerDistribution {
-        private final Map<Integer, Distribution> _map = new HashMap<Integer, Distribution>();
+        private Map<Integer, Distribution> _map;
+
+        private Map<Integer, Distribution> map() {
+            if (_map == null) {
+                _map = new HashMap<Integer, Distribution>();
+            }
+            return _map;
+        }
 
         @Override
         public void record(int value) {
             _total++;
             final Integer integer = value;
-            Distribution distribution = _map.get(integer);
+            Distribution distribution = map().get(integer);
             if (distribution == null) {
                 distribution = new Distribution();
-                _map.put(integer, distribution);
+                map().put(integer, distribution);
             }
             distribution._total++;
         }
         @Override
         public int getCount(Integer value) {
-            final Distribution distribution = _map.get(value);
+            final Distribution distribution = map().get(value);
             if (distribution != null) {
                 return distribution._total;
             }
@@ -353,10 +384,16 @@ public class ValueMetrics {
         @Override
         public Map<Integer, Integer> asMap() {
             final Map<Integer, Integer> map = new HashMap<Integer, Integer>();
-            for (Map.Entry<Integer, Distribution> entry : _map.entrySet()) {
+            for (Map.Entry<Integer, Distribution> entry : map().entrySet()) {
                 map.put(entry.getKey(), entry.getValue()._total);
             }
             return map;
+        }
+
+        @Override
+        public void reset() {
+            super.reset();
+            _map = null;
         }
     }
 
@@ -372,25 +409,30 @@ public class ValueMetrics {
     }
 
     public static class HashedObjectDistribution<Value_Type> extends ObjectDistribution<Value_Type> {
-        private final Map<Value_Type, Distribution> _map;
+        private Map<Value_Type, Distribution> _map;
+        private Map<Value_Type, Distribution> map() {
+            if (_map == null) {
+                _map = new IdentityHashMap<Value_Type, Distribution>();
+            }
+            return _map;
+        }
 
         public HashedObjectDistribution() {
-            _map = new IdentityHashMap<Value_Type, Distribution>();
         }
 
         @Override
         public void record(Value_Type value) {
             _total++;
-            Distribution distribution = _map.get(value);
+            Distribution distribution = map().get(value);
             if (distribution == null) {
                 distribution = new Distribution();
-                _map.put(value, distribution);
+                map().put(value, distribution);
             }
             distribution._total++;
         }
         @Override
         public int getCount(Value_Type value) {
-            final Distribution distribution = _map.get(value);
+            final Distribution distribution = map().get(value);
             if (distribution != null) {
                 return distribution._total;
             }
@@ -400,10 +442,16 @@ public class ValueMetrics {
         @Override
         public Map<Value_Type, Integer> asMap() {
             final Map<Value_Type, Integer> map = new IdentityHashMap<Value_Type, Integer>();
-            for (Map.Entry<Value_Type, Distribution> entry : _map.entrySet()) {
+            for (Map.Entry<Value_Type, Distribution> entry : map().entrySet()) {
                 map.put(entry.getKey(), entry.getValue()._total);
             }
             return map;
+        }
+
+        @Override
+        public void reset() {
+            super.reset();
+            _map = null;
         }
     }
 
@@ -447,11 +495,19 @@ public class ValueMetrics {
             }
             return map;
         }
+
+        @Override
+        public void reset() {
+            super.reset();
+            _missed = 0;
+            Arrays.fill(_set, 0);
+            Arrays.fill(_count, 0);
+        }
     }
 
     /**
      * This method creates a new distribution for the occurrence of integer values.
-     * 
+     *
      * @param name the name of the metric; if non-null, then a global metric of the specified
      * name will be returned {@see GlobalMetrics}
      * @param approx the approximation level that is requested. Different approximation levels
@@ -494,7 +550,7 @@ public class ValueMetrics {
 
     /**
      * This is a utility method to create an integer distribution over a range of specified integers.
-     * 
+     *
      * @param name the name of the metric
      * @param low the lowest value to be recorded in the range (inclusive)
      * @param high the highest value to be recorded (inclusive)
@@ -509,7 +565,7 @@ public class ValueMetrics {
      * This utility method creates a new integer distribution with the {@link #EXACT} approximation.
      * Note that the implementation of this integer distribution may consume excessive time and/or
      * space for unstructured distributions.
-     * 
+     *
      * @param name the name of the metric; if non-null, then a shared, global metric of the specified name will be returned
      * @return a new integer distribution that records an exact profile
      */
@@ -520,7 +576,7 @@ public class ValueMetrics {
     /**
      * This utility method creates an integer distribution that records only the specified set of
      * values, with all other values being not recorded.
-     * 
+     *
      * @param name the name of the metric; if non-null, then a shared, global metric of the specified name will be returned
      * @param values the set of integer values to be recored
      * @return a new integer distribution recorder
@@ -535,7 +591,7 @@ public class ValueMetrics {
 
     /**
      * This method creates a new distribution capable of recording individual objects.
-     * 
+     *
      * @param <Value_Type> the type of objects being profiled
      * @param name the name of the metric; if non-null, then a shared, global metric of the specified name will be
      * returned
@@ -569,7 +625,7 @@ public class ValueMetrics {
     /**
      * This is a utility method to create a new object distribution that only records occurrences of
      * objects in the specified set.
-     * 
+     *
      * @param <Value_Type> the type of the objects being profiled
      * @param name the name of the metric
      * @param set the set of objects for which to record exact profiling information
@@ -581,7 +637,7 @@ public class ValueMetrics {
 
     /**
      * This is utility method to create a new object distribution with an exact profile.
-     * 
+     *
      * @param <Value_Type> the type of the objects being profiled
      * @param name the name of metric
      * @return a new distribution capable of producing an exact profile of the occurrences of all of the specified
@@ -596,7 +652,7 @@ public class ValueMetrics {
         private final IntegerDistribution _distribution;
 
         public ThreadsafeIntegerDistribution(IntegerDistribution distribution) {
-            this._distribution = distribution;
+            _distribution = distribution;
         }
         @Override
         public void record(int value) {
@@ -617,6 +673,13 @@ public class ValueMetrics {
                 return _distribution.asMap();
             }
         }
+        @Override
+        public void reset() {
+            super.reset();
+            _distribution.reset();
+        }
+
+
     }
 
     private static class ThreadsafeObjectDistribution<Value_Type> extends ObjectDistribution<Value_Type> {
@@ -650,7 +713,7 @@ public class ValueMetrics {
     /**
      * This method creates a wrapper around the specified integer distribution that ensures
      * access to the distribution is synchronized.
-     * 
+     *
      * @param distribution the distribution to wrap in a synchronization
      * @return a synchronized view of the distribution
      */
@@ -661,7 +724,7 @@ public class ValueMetrics {
     /**
      * This method creates a wrapper around the specified integer distribution that ensures
      * access to the distribution is synchronized.
-     * 
+     *
      * @param distribution the distribution to wrap in a synchronization
      * @return a synchronized view of the distribution
      */

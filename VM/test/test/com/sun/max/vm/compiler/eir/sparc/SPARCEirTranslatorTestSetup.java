@@ -43,7 +43,7 @@ public class SPARCEirTranslatorTestSetup extends CompilerTestSetup<EirMethod> {
         super(test);
         System.setProperty(Prototype.ENDIANNESS_PROPERTY, Endianness.BIG.name());
         System.setProperty(Prototype.OPERATING_SYSTEM_PROPERTY, OperatingSystem.SOLARIS.name());
-        System.setProperty(Prototype.WORD_WIDTH_PROPERTY, WordWidth.BITS_64.name());
+        System.setProperty(Prototype.WORD_WIDTH_PROPERTY, String.valueOf(WordWidth.BITS_64.numberOfBits()));
         System.setProperty(Prototype.INSTRUCTION_SET_PROPERTY, InstructionSet.SPARC.name());
     }
 

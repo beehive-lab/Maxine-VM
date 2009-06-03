@@ -210,13 +210,21 @@ public class MaxineTester {
     private static final ThreadLocal<PrintStream> _out = new ThreadLocal<PrintStream>() {
         @Override
         protected PrintStream initialValue() {
-            return System.out;
+            try {
+                return new PrintStream(new MultiOutputStream(System.out, new FileOutputStream(new File(_outputDir.getValue(), "console.stdout"))));
+            } catch (FileNotFoundException fileNotFoundException) {
+                throw ProgramError.unexpected(fileNotFoundException);
+            }
         }
     };
     private static final ThreadLocal<PrintStream> _err = new ThreadLocal<PrintStream>() {
         @Override
         protected PrintStream initialValue() {
-            return System.err;
+            try {
+                return new PrintStream(new MultiOutputStream(System.err, new FileOutputStream(new File(_outputDir.getValue(), "console.stderr"))));
+            } catch (FileNotFoundException fileNotFoundException) {
+                throw ProgramError.unexpected(fileNotFoundException);
+            }
         }
     };
 
@@ -507,6 +515,12 @@ public class MaxineTester {
         return _failFast.getValue() && reportTestResults(null) != 0;
     }
 
+    /**
+     * Gets a string denoting a path to a given file in a standardized format.
+     *
+     * *NOTE*: This standardized format is expected by the Maxine gate scripts so do not change it
+     * without making the necessary changes to these scripts.
+     */
     private static String fileRef(File file) {
         final String basePath = new File(_outputDir.getValue()).getAbsolutePath() + File.separator;
         final String path = file.getAbsolutePath();
@@ -682,7 +696,14 @@ public class MaxineTester {
                     addTestResult(testName, String.format("timed out", maxvmExitValue, javaExitValue), expected);
                 } else {
                     final ExpectedResult expected = printFailed(testName, config);
-                    addTestResult(testName, String.format("bad exit value [received %d, expected %d; see %s and %s ]", maxvmExitValue, javaExitValue, fileRef(javaOutput), fileRef(maxvmOutput)), expected);
+                    addTestResult(testName, String.format("bad exit value [received %d, expected %d]%n  -> see: %s%n  -> see: %s%n  -> see: %s%n  -> see: %s",
+                        maxvmExitValue,
+                        javaExitValue,
+                        fileRef(javaOutput),
+                        fileRef(stderrFile(javaOutput)),
+                        fileRef(maxvmOutput),
+                        fileRef(stderrFile(maxvmOutput))),
+                        expected);
                 }
             } else if (Files.compareFiles(javaOutput, maxvmOutput, filteredLines)) {
                 final ExpectedResult expected = printSuccess(testName, config);
@@ -711,6 +732,13 @@ public class MaxineTester {
         return libName;
     }
 
+    /**
+     * Copies a binary file from the default output directory used by the {@link BinaryImageGenerator} for
+     * the output files it generates to a given directory.
+     *
+     * @param imageDir the destination directory
+     * @param binary the name of the file in the source directory that is to be copied to {@code imageDir}
+     */
     private static void copyBinary(File imageDir, String binary) {
         final File defaultImageDir = BinaryImageGenerator.getDefaultBootImageFilePath().getParentFile();
         final File defaultBinaryFile = new File(defaultImageDir, binary);
@@ -800,8 +828,8 @@ public class MaxineTester {
                 sb.append(escapeShellCharacters(s)).append(' ');
             }
             if (outputFile != null) {
-                sb.append((append ? ">" : ">>") + outputFile.getAbsolutePath());
-                sb.append((append ? " 2>" : " 2>>") + stderrFile(outputFile));
+                sb.append((append ? ">>" : ">") + outputFile.getAbsolutePath());
+                sb.append((append ? " 2>>" : " 2>") + stderrFile(outputFile));
             } else {
                 sb.append(">/dev/null");
                 sb.append(" 2>&1");

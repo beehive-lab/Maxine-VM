@@ -20,6 +20,7 @@
  */
 package com.sun.max.util.timer;
 
+import com.sun.max.annotate.*;
 import com.sun.max.profile.*;
 
 /**
@@ -29,7 +30,9 @@ import com.sun.max.profile.*;
  * @author Ben L. Titzer
  */
 public class SingleUseTimer implements Timer {
+    @RESET
     private long _start;
+    @RESET
     private long _last;
     private final Clock _clock;
 

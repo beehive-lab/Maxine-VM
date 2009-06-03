@@ -28,9 +28,11 @@ import com.sun.max.unsafe.*;
 /**
  * A cached page of remote memory contents.
  *
- * To avoid double buffering of {@code byte} arrays in the native code that copies bytes from the VM address space,
- * NIO {@linkplain ByteBuffer#isDirect() direct} {@link ByteBuffer}s can be used. This option is exercised by
- *
+ * To avoid double buffering of {@code byte} arrays in the native code that copies bytes from the VM address space, NIO
+ * {@linkplain ByteBuffer#isDirect() direct} {@link ByteBuffer}s can be used. This option is controlled by the {@code
+ * "max.tele.page.noDirectBuffers"} system property. If this property is {@code null} then the buffer for each page is
+ * allocated from a global buffer until the global buffer is exhausted. If the property is non-{@code null} or the
+ * global buffer has been exhausted, then the buffer for each page is a heap allocated byte array.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
@@ -57,10 +59,10 @@ public class Page {
 
     /**
      * A global option set according to the {@code "max.tele.page.noDirectBuffers"} system property.
-     * If this property is {@code null} then the {@link #_buffer} for each page each allocated from
+     * If this property is {@code null} then the {@link #_buffer} for each page is allocated from
      * {@link #_globalBuffer this} global buffer until the global buffer is exhausted. If the property
      * is non-{@code null} or the global buffer has been exhausted, then the buffer for each page is
-     * backed by a heap allocated byte array.
+     * a heap allocated byte array.
      */
     private static final boolean _noDirectBuffers = System.getProperty("max.tele.page.noDirectBuffers") != null;
 

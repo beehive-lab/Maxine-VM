@@ -72,7 +72,7 @@ public final class AboutDialog extends InspectorDialog {
         }), BorderLayout.SOUTH);
         setContentPane(dialogPanel);
         pack();
-        inspection().moveToMiddle(this);
+        inspection.gui().moveToMiddle(this);
         setVisible(true);
     }
 }

@@ -94,7 +94,7 @@ public abstract class AddressInputDialog extends InspectorDialog {
         SpringUtilities.makeGrid(dialogPanel, 2, 2, 10, 10, 20, 20);
         setContentPane(dialogPanel);
         pack();
-        inspection.moveToMiddle(this);
+        inspection.gui().moveToMiddle(this);
         setVisible(true);
     }
 

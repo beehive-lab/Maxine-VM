@@ -112,6 +112,12 @@ public final class Metrics {
         }
 
         public void reset() {
+            _firstTicks = _clock.getTicks();
+            _lastTicks = _firstTicks;
+            _lastAccumulation = 0;
+        }
+
+        public void resetRate() {
             _lastAccumulation = _counter._accumulation;
             _lastTicks = _clock.getTicks();
         }

@@ -22,42 +22,12 @@ package com.sun.max.annotate;
 
 import java.lang.annotation.*;
 
-import com.sun.max.vm.*;
-import com.sun.max.vm.prototype.*;
-
 /**
- * Indicates that a method, field or class is omitted from the target VM.
- * <p>
- * Typically this is used when the annotated method, field or class is only used by code guarded (directly or
- * indirectly) by a call to {@link MaxineVM#isPrototyping()}. For example:
- *
- * <pre>
- * @PROTOTYPE_ONLY
- * private int _counter;
- *
- * public void getValue() {
- *     if (VM.isPrototyping()) {
- *         _counter++;
- *     }
- *     return _value;
- * }
- *
- * @PROTOTYPE_ONLY
- * public int counter() {
- *     return _counter;
- * }
- * </pre>
- * <p>
- * A second usage of this annotation is for testing compilation of code that references a potentially unresolved symbol.
- * For example, to test the implementation of {@link com.sun.max.vm.bytecode.Bytecode#INVOKEVIRTUAL INVOKEVIRTUAL}, a test
- * case can be written that calls a method in a class annotated with this annotation.
- * <p>
- * During {@linkplain BinaryImageGenerator boot image generation}, all such annotated entities are omitted from the
- * generated image.
+ * Denotes a field whose value is reset to the default value for its type when it is copied into the Maxine boot image.
  *
  * @author Doug Simon
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE, ElementType.CONSTRUCTOR, ElementType.FIELD})
-public @interface PROTOTYPE_ONLY {
+@Target(ElementType.FIELD)
+public @interface RESET {
 }

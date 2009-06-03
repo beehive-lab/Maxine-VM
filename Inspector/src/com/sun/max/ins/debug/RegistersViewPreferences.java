@@ -20,6 +20,8 @@
  */
 package com.sun.max.ins.debug;
 
+import javax.swing.*;
+
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 
@@ -35,7 +37,7 @@ public final class RegistersViewPreferences extends TableColumnVisibilityPrefere
     /**
      * @return the global, persistent set of user preferences for viewing a table of breakpoints.
      */
-    public static RegistersViewPreferences globalPreferences(Inspection inspection) {
+    static RegistersViewPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
             _globalPreferences = new RegistersViewPreferences(inspection);
         }
@@ -43,11 +45,18 @@ public final class RegistersViewPreferences extends TableColumnVisibilityPrefere
     }
 
     /**
+     * @return a GUI panel suitable for setting global preferences for this kind of view.
+     */
+    public static JPanel globalPreferencesPanel(Inspection inspection) {
+        return globalPreferences(inspection).getPanel();
+    }
+
+    /**
      * Creates a set of preferences specified for use by singleton instances, where local and
      * persistent global choices are identical.
      */
     private RegistersViewPreferences(Inspection inspection) {
-        super(inspection, "registerssViewPrefs", RegistersColumnKind.class, RegistersColumnKind.VALUES);
+        super(inspection, "registersViewPrefs", RegistersColumnKind.class, RegistersColumnKind.VALUES);
     }
 
     @Override

@@ -85,6 +85,10 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         return _inspection.maxVM();
     }
 
+    public final InspectorGUI gui() {
+        return _inspection.gui();
+    }
+
     public final InspectorStyle style() {
         return _inspection.style();
     }

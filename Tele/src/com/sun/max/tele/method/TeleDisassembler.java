@@ -53,7 +53,9 @@ public final class TeleDisassembler {
 
     private static final int TRACE_VALUE = 1;
 
-    private static final String _tracePrefix = "[TeleDisassembler] ";
+    private static String tracePrefix() {
+        return "[TeleDisassembler: thread=" + Thread.currentThread().getName() + "] ";
+    }
 
     private TeleDisassembler() {
     }
@@ -62,12 +64,12 @@ public final class TeleDisassembler {
      * Cause the disassembler to load and initialize static state, which can be a bit time consuming.
      */
     public static void initialize(final TeleVM teleVM) {
-        final Thread thread = new Thread() {
+        final Thread thread = new Thread("TeleDisassembler initializer") {
             @Override
             public void run() {
-                Trace.begin(TRACE_VALUE, _tracePrefix + "initializing");
+                Trace.begin(TRACE_VALUE, tracePrefix() + "initializing");
                 createDisassembler(teleVM, Address.zero(), null);
-                Trace.end(TRACE_VALUE, _tracePrefix + "initializing");
+                Trace.end(TRACE_VALUE, tracePrefix() + "initializing");
             }
         };
         thread.start();
@@ -79,7 +81,9 @@ public final class TeleDisassembler {
         return create(codeStart, code, disassembler, literalParser);
     }
 
-    private static Disassembler createDisassembler(final TeleVM teleVM, Address startAddress, InlineDataDecoder inlineDataDecoder) {
+    // Synchronize on class to avoid use of the disassembler before the initial call made during initialization.
+    // This might be tidier if not all static.
+    private static synchronized Disassembler createDisassembler(final TeleVM teleVM, Address startAddress, InlineDataDecoder inlineDataDecoder) {
         final ProcessorKind processorKind = teleVM.vmConfiguration().platform().processorKind();
         switch (processorKind.instructionSet()) {
             case ARM:
@@ -104,7 +108,7 @@ public final class TeleDisassembler {
         return null;
     }
 
-    abstract static class LoadLiteralParser {
+    private abstract static class LoadLiteralParser {
         protected Disassembler _disassembler;
         protected Address _literalBase;
         LoadLiteralParser(Disassembler disassembler, Address literalBase) {
@@ -131,7 +135,7 @@ public final class TeleDisassembler {
         abstract Address literalAddress(DisassembledInstruction disassembledInstruction);
     }
 
-    static class AMD64LoadLiteralParser extends LoadLiteralParser {
+    private static class AMD64LoadLiteralParser extends LoadLiteralParser {
         AMD64LoadLiteralParser(Disassembler<AMD64Template, AMD64DisassembledInstruction> disassembler, Address codeStart) {
             super(disassembler, codeStart);
         }
@@ -160,7 +164,7 @@ public final class TeleDisassembler {
      * literal parser has first to locate that instruction. The prologue is also place differently depending on whether the method is JITed or optimized.
      *
      */
-    static class SPARCLoadLiteralParser extends  LoadLiteralParser {
+    private static class SPARCLoadLiteralParser extends  LoadLiteralParser {
         private static final int FRAME_ADAPTER_PROLOGUE = 8;
 
         /**

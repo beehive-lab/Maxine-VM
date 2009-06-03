@@ -75,7 +75,7 @@ import com.sun.max.vm.type.*;
 public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
 
     private static VMOption _useProfileGuidedInlining = new VMOption("-XX:PGI",
-                    "Enable profile-guided inlining, which collects receiver method profiles which are fed into " +
+                    "Enable profile-guided inlining, which collects receiver method profiles to feed into " +
                     "inlining decisions during recompilation.",
                     Phase.STARTING);
 

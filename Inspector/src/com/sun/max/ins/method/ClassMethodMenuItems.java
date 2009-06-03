@@ -135,7 +135,7 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
             ReferenceValue receiver = null;
 
             if (classMethodActor instanceof VirtualMethodActor) {
-                final String input = inspection().inputDialog("Argument 0 (receiver, must be a reference to a " + classMethodActor.holder() + " or subclass, origin address in hex):", "");
+                final String input = inspection().gui().inputDialog("Argument 0 (receiver, must be a reference to a " + classMethodActor.holder() + " or subclass, origin address in hex):", "");
 
                 if (input == null) {
                     // User clicked cancel.
@@ -155,7 +155,7 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
 
             try {
                 final Value returnValue = maxVM().interpretMethod(classMethodActor, arguments);
-                inspection().informationMessage("Method " + classMethodActor.name() + " returned " + returnValue.toString());
+                inspection().gui().informationMessage("Method " + classMethodActor.name() + " returned " + returnValue.toString());
             } catch (TeleInterpreterException teleInterpreterException) {
                 throw new InspectorError(teleInterpreterException);
             }

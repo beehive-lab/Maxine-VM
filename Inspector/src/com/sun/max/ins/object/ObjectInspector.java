@@ -99,7 +99,7 @@ public abstract class ObjectInspector extends Inspector {
     @Override
     public void createFrame(InspectorMenu menu) {
         super.createFrame(menu);
-        setLocationRelativeToMouse(inspection().geometry().objectInspectorNewFrameDiagonalOffset());
+        gui().setLocationRelativeToMouse(this, inspection().geometry().objectInspectorNewFrameDiagonalOffset());
         frame().menu().addSeparator();
         frame().menu().add(new InspectorAction(inspection(), "Inspect Memory") {
             @Override
@@ -114,8 +114,8 @@ public abstract class ObjectInspector extends Inspector {
             }
         });
         frame().menu().addSeparator();
-        frame().menu().add(inspection().getDeleteInspectorsAction(_otherObjectInspectorsPredicate, "Close other object inspectors"));
-        frame().menu().add(inspection().getDeleteInspectorsAction(_allObjectInspectorsPredicate, "Close all object inspectors"));
+        frame().menu().add(actions().closeViews(_otherObjectInspectorsPredicate, "Close other object inspectors"));
+        frame().menu().add(actions().closeViews(_allObjectInspectorsPredicate, "Close all object inspectors"));
     }
 
     @Override
@@ -414,14 +414,14 @@ public abstract class ObjectInspector extends Inspector {
             prefslLabelPanel.add(new TextLabel(inspection, "Preferences"), BorderLayout.WEST);
             prefPanel.add(prefslLabelPanel);
 
-            final JPanel prefsOptionsPanel = ObjectInspectorPreferences.globalPreferences(inspection).getPanel();
+            final JPanel prefsOptionsPanel = ObjectInspectorPreferences.globalPreferencesPanel(inspection);
             prefsOptionsPanel.setBorder(border);
             prefPanel.add(prefsOptionsPanel);
 
             SpringUtilities.makeCompactGrid(prefPanel, 2);
 
             final JPanel buttonPanel = new InspectorPanel(inspection);
-            buttonPanel.add(new JButton(new InspectorAction(inspection(), "Close") {
+            buttonPanel.add(new JButton(new InspectorAction(inspection, "Close") {
                 @Override
                 protected void procedure() {
                     dispose();
@@ -432,7 +432,7 @@ public abstract class ObjectInspector extends Inspector {
             dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
             setContentPane(dialogPanel);
             pack();
-            inspection().moveToMiddle(this);
+            inspection.gui().moveToMiddle(this);
             setVisible(true);
         }
     }

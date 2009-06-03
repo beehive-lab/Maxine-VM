@@ -773,7 +773,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
                 _teleTargetBreakpoint.setCondition(condition);
                 inspection().settings().save();
             } catch (BreakpointCondition.ExpressionException expressionException) {
-                inspection().errorMessage(String.format("Error parsing saved breakpoint condition:%n  expression: %s%n       error: " + condition, expressionException.getMessage()), "Breakpoint Condition Error");
+                gui().errorMessage(String.format("Error parsing saved breakpoint condition:%n  expression: %s%n       error: " + condition, expressionException.getMessage()), "Breakpoint Condition Error");
             }
         }
 

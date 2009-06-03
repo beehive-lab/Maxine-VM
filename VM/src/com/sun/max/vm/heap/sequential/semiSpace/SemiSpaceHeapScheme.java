@@ -135,13 +135,13 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private Pointer _allocationMarkPointer;
 
     // Create timing facilities.
-    private final Timer _clearTimer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
-    private final Timer _gcTimer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
-    private final Timer _rootScanTimer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
-    private final Timer _bootHeapScanTimer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
-    private final Timer _codeScanTimer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
-    private final Timer _copyTimer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
-    private final Timer _weakRefTimer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
+    private final TimerMetric _clearTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+    private final TimerMetric _gcTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+    private final TimerMetric _rootScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+    private final TimerMetric _bootHeapScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+    private final TimerMetric _codeScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+    private final TimerMetric _copyTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+    private final TimerMetric _weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
 
     private int _numberOfGarbageCollectionInvocations;
 
@@ -474,8 +474,17 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     }
 
+    /**
+     * This option exists only to measure the performance effect of using a reference map for the boot heap.
+     */
+    private static final VMOption _ignoreBootHeapRefmap = new VMOption("-XX:IgnoreBootHeapRefmap", "Do not use the boot heap reference map when scanning the boot heap.", MaxineVM.Phase.STARTING);
+
     private void scanBootHeap() {
-        Heap.bootHeapRegion().visitPointers(_pointerIndexGripUpdater);
+        if (!_ignoreBootHeapRefmap.isPresent()) {
+            Heap.bootHeapRegion().visitPointers(_pointerIndexGripUpdater);
+        } else {
+            Heap.bootHeapRegion().visitCells(this);
+        }
     }
 
     private void scanCode() {
@@ -798,6 +807,28 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     public void finalize(MaxineVM.Phase phase) {
         if (MaxineVM.isPrototyping()) {
             StopTheWorldDaemon.checkInvariants();
+        }
+        if (MaxineVM.Phase.RUNNING == phase) {
+            if (Heap.traceGCTime()) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Timings (");
+                Log.print(HeapScheme.GC_TIMING_CLOCK.getHZAsSuffix());
+                Log.print(") for all GC: clear & initialize=");
+                Log.print(_clearTimer.getElapsedTime());
+                Log.print(", root scan=");
+                Log.print(_rootScanTimer.getElapsedTime());
+                Log.print(", boot heap scan=");
+                Log.print(_bootHeapScanTimer.getElapsedTime());
+                Log.print(", code scan=");
+                Log.print(_codeScanTimer.getElapsedTime());
+                Log.print(", copy=");
+                Log.print(_copyTimer.getElapsedTime());
+                Log.print(", weak refs=");
+                Log.print(_weakRefTimer.getElapsedTime());
+                Log.print(", total=");
+                Log.println(_gcTimer.getElapsedTime());
+                Log.unlock(lockDisabledSafepoints);
+            }
         }
     }
 

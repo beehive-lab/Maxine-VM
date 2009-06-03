@@ -48,6 +48,8 @@ import com.sun.max.vm.runtime.*;
  */
 public final class JniNativeInterface {
 
+    private static boolean _verboseJNI;
+
     private JniNativeInterface() {
     }
 
@@ -205,5 +207,15 @@ public final class JniNativeInterface {
         check(JniFunctionWrapper.savedLastJavaCallerFramePointer());
         check(JniFunctionWrapper.savedLastJavaCallerInstructionPointer());
         check(JniFunctionWrapper.savedLastJavaCallerStackPointer());
+    }
+
+    private static final VMOption _verboseOption = new VMOption("-verbose:jni",
+        "Report information about use of native methods and other Java Native Interface activity.", MaxineVM.Phase.PRISTINE);
+
+    /**
+     * Determines if information should be displayed about use of native methods and other Java Native Interface activity.
+     */
+    public static boolean verbose() {
+        return _verboseOption.isPresent() || ClassMethodActor.traceJNI();
     }
 }

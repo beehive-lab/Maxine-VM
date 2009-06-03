@@ -334,15 +334,18 @@ public final class JavaTypeDescriptor {
      * @return a reference to a canonical type descriptor for the specified Java class
      */
     public static TypeDescriptor forJavaClass(Class javaClass) {
-        if (javaClass.isArray()) {
-            return getArrayDescriptorForComponent(javaClass.getComponentType());
+        if (VOID == null || MaxineVM.isPrototyping()) {
+            if (javaClass.isArray()) {
+                return getArrayDescriptorForComponent(javaClass.getComponentType());
+            }
+            if (javaClass.isPrimitive()) {
+                final AtomicTypeDescriptor atom = findAtomicTypeDescriptor(javaClass);
+                assert atom != null;
+                return atom;
+            }
+            return getDescriptorForTupleType(javaClass);
         }
-        if (javaClass.isPrimitive()) {
-            final AtomicTypeDescriptor atom = findAtomicTypeDescriptor(javaClass);
-            assert atom != null;
-            return atom;
-        }
-        return getDescriptorForTupleType(javaClass);
+        return ClassActor.fromJava(javaClass).typeDescriptor();
     }
 
     /**

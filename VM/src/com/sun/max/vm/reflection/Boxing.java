@@ -61,7 +61,7 @@ public enum Boxing {
         }
 
         @Override
-        void box(ByteArrayBytecodeAssembler asm, boolean isConstructor, Kind returnKind) {
+        void box(BytecodeAssembler asm, boolean isConstructor, Kind returnKind) {
             if (!isConstructor) {
                 if (returnKind == Kind.VOID) {
                     asm.aconst_null();
@@ -75,7 +75,7 @@ public enum Boxing {
         }
 
         @Override
-        void unbox(ByteArrayBytecodeAssembler asm, Class parameterType, int parameterTypePoolConstantIndex) {
+        void unbox(BytecodeAssembler asm, Class parameterType, int parameterTypePoolConstantIndex) {
             final Kind parameterKind = Kind.fromJava(parameterType);
             if (parameterKind == Kind.REFERENCE) {
                 asm.checkcast(parameterTypePoolConstantIndex);
@@ -151,7 +151,7 @@ public enum Boxing {
         }
 
         @Override
-        void box(ByteArrayBytecodeAssembler asm, boolean isConstructor, Kind returnKind) {
+        void box(BytecodeAssembler asm, boolean isConstructor, Kind returnKind) {
             if (!isConstructor) {
                 if (returnKind == Kind.VOID) {
                     asm.getstatic(VoidValue_VOID);
@@ -164,7 +164,7 @@ public enum Boxing {
         }
 
         @Override
-        void unbox(ByteArrayBytecodeAssembler asm, Class parameterType, int parameterTypePoolConstantIndex) {
+        void unbox(BytecodeAssembler asm, Class parameterType, int parameterTypePoolConstantIndex) {
             final Kind parameterKind = Kind.fromJava(parameterType);
             asm.invokevirtual(VALUE_UNBOX.get(parameterKind.asEnum()), 1, parameterKind.stackSlots());
             if (parameterKind == Kind.REFERENCE) {
@@ -222,9 +222,9 @@ public enum Boxing {
     public abstract SignatureDescriptor invokeSignature();
     public abstract SignatureDescriptor newInstanceSignature();
 
-    abstract void box(ByteArrayBytecodeAssembler asm, boolean isConstructor, Kind returnKind);
+    abstract void box(BytecodeAssembler asm, boolean isConstructor, Kind returnKind);
     abstract Class[] runtimeParameterTypes(Class[] parameterTypes, Class declaringClass, boolean isStatic, boolean isConstructor);
-    abstract void unbox(ByteArrayBytecodeAssembler asm, Class parameterType, int parameterTypePoolConstantIndex);
+    abstract void unbox(BytecodeAssembler asm, Class parameterType, int parameterTypePoolConstantIndex);
 
     abstract String sourceDeclaration(boolean isConstructor);
     abstract String sourceBox(ConstantPool pool, boolean isConstructor, Kind returnKind, String value);

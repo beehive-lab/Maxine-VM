@@ -89,7 +89,7 @@ public abstract class NativeMethodAddressInputDialog extends InspectorDialog {
         SpringUtilities.makeGrid(dialogPanel, 4, 2, 10, 10, 20, 20);
         setContentPane(dialogPanel);
         pack();
-        inspection.moveToMiddle(this);
+        inspection.gui().moveToMiddle(this);
         setVisible(true);
     }
 

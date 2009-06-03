@@ -610,6 +610,13 @@ public final class JDK_java_lang_System {
             return _path;
         }
     }
+
+    /**
+     * Determines if information should be displayed about the {@linkplain System#getProperties() system properties} when
+     * they initialized during VM startup.
+     */
+    private static final VMOption _verbosePropertiesOption = new VMOption("-verbose:props", "Report the initial values of the system properties.", MaxineVM.Phase.PRISTINE);
+
     /**
      * Initializes system properties from a wide variety of sources.
      */
@@ -735,7 +742,7 @@ public final class JDK_java_lang_System {
         Charset.isSupported(sunJnuEncodingValue); // We are only interested in the side effect: loading the char set if supported and initializing related JNU variables
         setIfAbsent(properties, "sun.jnu.encoding", sunJnuEncodingValue); // Now that we have loaded the char set, the recursion is broken and we can move on
 
-        if (VerboseVMOption.verboseProperties()) {
+        if (_verbosePropertiesOption.isPresent()) {
             Log.println("Initial system properties:");
             final Map<String, String> sortedProperties = new TreeMap<String, String>();
             for (Map.Entry<Object, Object> entry : properties.entrySet()) {
@@ -752,7 +759,7 @@ public final class JDK_java_lang_System {
     }
 
     /**
-     * Initializes the sun.boot.library.path and sun.boot.path system properties when running on Unix.
+     * Initializes the sun.boot.library.path, sun.boot.path and java.ext.dirs system properties when running on Unix.
      *
      * @param properties the system properties
      * @param javaHome the value of the java.home system property
@@ -784,6 +791,17 @@ public final class JDK_java_lang_System {
 
         javaAndZipLibraryPaths[0] = jreLibIsaPath;
         javaAndZipLibraryPaths[1] = jreLibIsaPath;
+
+        final OperatingSystem os = Platform.hostOrTarget().operatingSystem();
+        if (os == OperatingSystem.LINUX) {
+            setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext"), "/usr/java/packages/lib/ext"));
+        } else if (os == OperatingSystem.SOLARIS) {
+            setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext"), "/usr/jdk/packages/lib/ext"));
+        } else if (os == OperatingSystem.GUESTVM) {
+            setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext"), "/usr/java/packages/lib/ext"));
+        } else {
+            ProgramError.unknownCase(os.toString());
+        }
     }
 
     static String checkAugmentBootClasspath(final String xBootClassPath) {
@@ -810,7 +828,7 @@ public final class JDK_java_lang_System {
     }
 
     /**
-     * Initializes the sun.boot.library.path and sun.boot.path system properties when running on Darwin.
+     * Initializes the sun.boot.library.path, sun.boot.path and java.ext.dirs system properties when running on Darwin.
      *
      * @param properties the system properties
      * @param javaHome the value of the java.home system property
@@ -841,6 +859,14 @@ public final class JDK_java_lang_System {
         setIfAbsent(properties, "sun.boot.class.path", checkAugmentBootClasspath(bootClassPath));
         javaAndZipLibraryPaths[0] = getenvExecutablePath();
         javaAndZipLibraryPaths[1] = librariesPath;
+
+        String extDirs = "/Library/Java/Extensions:/System/Library/Java/Extensions:" + javaHome + "/lib/ext";
+        final String userHome = properties.getProperty("user.home");
+        if (userHome != null) {
+            final File userExtDir = new File(userHome, "Library/Java/Extensions/");
+            extDirs += ":" + userExtDir;
+        }
+        setIfAbsent(properties, "java.ext.dirs", extDirs);
     }
 
     private static void initBasicWindowsProperties(Properties properties) {

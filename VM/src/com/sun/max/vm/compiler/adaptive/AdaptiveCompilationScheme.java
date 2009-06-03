@@ -105,7 +105,8 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     /**
      * List of attached Compilation observers.
      */
-    protected transient LinkedList<CompilationObserver> _observers;
+    @RESET
+    protected LinkedList<CompilationObserver> _observers;
 
     private static final VMOption _jitOption = new VMOption("-Xjit",
                     "Selects JIT only mode, with no recompilation.", MaxineVM.Phase.STARTING);

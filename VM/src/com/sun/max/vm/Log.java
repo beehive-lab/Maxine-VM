@@ -108,6 +108,13 @@ public final class Log {
     }
 
     /**
+     * Equivalent to calling {@link LogPrintStream#print(String, int)} on {@link #out}.
+     */
+    public static void print(String s, int width) {
+        out.print(s, width);
+    }
+
+    /**
      * Equivalent to calling {@link LogPrintStream#print(Object)} on {@link #out}.
      */
     public static void print(Object object) {
@@ -175,6 +182,13 @@ public final class Log {
      */
     public static void println(String s) {
         out.println(s);
+    }
+
+    /**
+     * Equivalent to calling {@link LogPrintStream#print(String, int)} on {@link #out}.
+     */
+    public static void println(String s, int width) {
+        out.println(s, width);
     }
 
     /**
@@ -415,6 +429,40 @@ public final class Log {
                 print(s);
             }
         }
+
+        /**
+         * Prints a given string to this stream, padded by zero or more spaces.
+         *
+         * @param s the string to print
+         * @param width the minimum number of characters to be printed, {@code w}, is the absolute value of {@code
+         *            width}. The number of padding spaces printed is {@code s.length() - w}. If {@code width} is
+         *            negative, then the padding spaces are printed before {@code s} otherwise they are printed after
+         *            {@code s}.
+         */
+        public void print(String s, int width) {
+            if (width < 0) {
+                int padding = s.length() + width;
+                while (padding-- >= 0) {
+                    print(' ');
+                }
+            }
+            print(s);
+            if (width > 0) {
+                int padding = s.length() - width;
+                while (padding-- >= 0) {
+                    print(' ');
+                }
+            }
+        }
+
+        /**
+         * Convenience method for a call to {@link #print(String, int)} followed by {@link #println()}.
+         */
+        public void println(String s, int width) {
+            print(s, width);
+            println();
+        }
+
         @Override
         public void print(String s) {
             if (MaxineVM.isPrototyping()) {
