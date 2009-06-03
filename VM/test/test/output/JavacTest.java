@@ -21,13 +21,15 @@
 package test.output;
 
 import java.io.*;
+import java.lang.reflect.*;
+import java.net.*;
 
 import javax.tools.*;
 import javax.tools.JavaCompiler.*;
 
 
 public class JavacTest {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         final JavaCompiler javaCompiler = ToolProvider.getSystemJavaCompiler();
         if (javaCompiler == null) {
             System.out.println("Could not find system Java compiler.");
@@ -35,10 +37,11 @@ public class JavacTest {
         }
         final StandardJavaFileManager fileManager = javaCompiler.getStandardFileManager(null, null, null);
         Iterable<? extends JavaFileObject> fileObjects;
+        File tempSourceFile = null;
         if (args.length == 0) {
             // the user didn't specify any files. compile this source file.
-            final File thisSourceFile = findThisSourceFile();
-            fileObjects = fileManager.getJavaFileObjects(thisSourceFile);
+            tempSourceFile = createTempSourceFile();
+            fileObjects = fileManager.getJavaFileObjects(tempSourceFile);
         } else {
             // the user specified a list of files
             final File[] files = new File[args.length];
@@ -49,10 +52,29 @@ public class JavacTest {
         }
         final CompilationTask task = javaCompiler.getTask(new PrintWriter(System.out), fileManager, null, null, null, fileObjects);
         task.call();
+        if (tempSourceFile != null) {
+            final String tempSourceFilePath = tempSourceFile.getPath();
+            final String tempClassName = tempSourceFilePath.substring(0, tempSourceFilePath.length() - ".java".length());
+            final String tempClassFilePath = tempClassName + ".class";
+            final File tempClassFile = new File(tempClassFilePath);
+            final URLClassLoader cl = URLClassLoader.newInstance(new URL[] {new File(".").toURI().toURL()});
+            final Method method = cl.loadClass(tempClassName).getMethod("main", String[].class);
+            System.err.println(method);
+            method.invoke(null, (Object) new String[0]);
+            tempSourceFile.delete();
+            tempClassFile.delete();
+        }
     }
 
-    private static File findThisSourceFile() {
-        final File qualifiedFile = new File(JavacTest.class.getName().replace('.', File.separatorChar) + ".java");
+    private static File createTempSourceFile()  throws IOException {
+        final File qualifiedFile = new File("JavacTestInputSource.java");
+        final PrintStream ps = new PrintStream(new FileOutputStream(qualifiedFile));
+        ps.println("public class JavacTestInputSource {");
+        ps.println("    public static void main(String[] args) {");
+        ps.println("        System.out.println(\"Hello world from \" + JavacTestInputSource.class + '!');");
+        ps.println("    }");
+        ps.println("}");
+        ps.close();
         return qualifiedFile;
     }
 }
