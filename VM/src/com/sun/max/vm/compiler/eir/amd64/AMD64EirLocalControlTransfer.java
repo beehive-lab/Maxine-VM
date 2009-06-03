@@ -28,7 +28,7 @@ import com.sun.max.vm.compiler.eir.*;
  */
 public abstract class AMD64EirLocalControlTransfer extends AMD64EirOperation implements EirControlTransfer {
 
-    private final EirBlock _target;
+    private EirBlock _target;
 
     public EirBlock target() {
         return _target;
@@ -43,6 +43,14 @@ public abstract class AMD64EirLocalControlTransfer extends AMD64EirOperation imp
     @Override
     public void visitSuccessorBlocks(EirBlock.Procedure procedure) {
         procedure.run(_target);
+    }
+
+    @Override
+    public void substituteSuccessorBlocks(Mapping<EirBlock, EirBlock> map) {
+        super.substituteSuccessorBlocks(map);
+        if (map.containsKey(_target)) {
+            _target = map.get(_target);
+        }
     }
 
     @Override

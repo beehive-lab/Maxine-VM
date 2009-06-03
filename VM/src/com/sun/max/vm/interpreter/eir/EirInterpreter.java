@@ -628,7 +628,6 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
         final Value method = cpu().read(instruction.function().location());
         final MethodID methodID = MethodID.fromWord(method.asWord());
         classMethodActor = (ClassMethodActor) MethodID.toMethodActor(methodID);
-
         if (classMethodActor.isInstanceInitializer()) {
             callConstructor(classMethodActor);
         } else if (classMethodActor.holder().toJava() == JniHandles.class) {

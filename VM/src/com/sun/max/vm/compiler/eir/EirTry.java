@@ -20,15 +20,17 @@
  */
 package com.sun.max.vm.compiler.eir;
 
+import com.sun.max.collect.*;
+
 /**
- * This pseudo-instruction (aka directive) directs the control flow
- * of subsequent exceptions towards a given catch block.
- * 
+ * This pseudo-instruction (aka directive) directs the control flow of subsequent exceptions towards a given catch
+ * block.
+ *
  * @author Bernd Mathiske
  */
-public class EirTry extends EirInstruction {
+public class EirTry<EirInstructionVisitor_Type extends EirInstructionVisitor, EirTargetEmitter_Type extends EirTargetEmitter> extends EirInstruction<EirInstructionVisitor_Type, EirTargetEmitter_Type> {
 
-    private final EirBlock _catchBlock;
+    private EirBlock _catchBlock;
 
     public EirBlock catchBlock() {
         return _catchBlock;
@@ -64,8 +66,17 @@ public class EirTry extends EirInstruction {
 
     @Override
     public void visitSuccessorBlocks(EirBlock.Procedure procedure) {
+        super.visitSuccessorBlocks(procedure);
         if (_catchBlock != null) {
             procedure.run(_catchBlock);
+        }
+    }
+
+    @Override
+    public void substituteSuccessorBlocks(Mapping<EirBlock, EirBlock> map) {
+        super.substituteSuccessorBlocks(map);
+        if (_catchBlock != null && map.containsKey(_catchBlock)) {
+            _catchBlock = map.get(_catchBlock);
         }
     }
 

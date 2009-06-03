@@ -34,9 +34,22 @@ public class EirPosition {
     }
 
     private int _index;
+    private int _number = -1;
 
     public int index() {
         return _index;
+    }
+
+    public int number() {
+        return _number;
+    }
+
+    /**
+     * Unique number within whole method.
+     * @param instructionNumber the new unique number assigned to this instruction
+     */
+    public void setNumber(int instructionNumber) {
+        _number = instructionNumber;
     }
 
     public void setIndex(int instructionIndex) {

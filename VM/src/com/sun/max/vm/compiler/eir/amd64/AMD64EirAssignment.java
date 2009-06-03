@@ -39,6 +39,15 @@ import com.sun.max.vm.value.*;
 public class AMD64EirAssignment extends AMD64EirBinaryOperation.Move implements EirAssignment {
 
     private final Kind _kind;
+    private Type _type = Type.NORMAL;
+
+    public Type type() {
+        return _type;
+    }
+
+    public void setType(Type type) {
+        _type = type;
+    }
 
     public Kind kind() {
         return _kind;
@@ -536,7 +545,13 @@ public class AMD64EirAssignment extends AMD64EirBinaryOperation.Move implements 
 
     @Override
     public String toString() {
-        return "assign-" + _kind + " " + destinationOperand() + " := " + sourceOperand();
+        String result = "assign-" + _kind + " " + destinationOperand() + " := " + sourceOperand();
+
+        if (type() != Type.NORMAL) {
+            result += " (" + type().toString() + ")";
+        }
+
+        return result;
     }
 
 }
