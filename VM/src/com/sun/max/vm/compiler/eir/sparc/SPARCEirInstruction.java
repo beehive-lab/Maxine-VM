@@ -2401,7 +2401,7 @@ public interface SPARCEirInstruction {
         private void translateLookupBinarySearch(SPARCEirTargetEmitter emitter, int bottomIndex, int topIndex) {
             final SPARCEirRegister.GeneralPurpose scratchEirRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
             final GPR tagRegister = tagGeneralRegister().as();
-            final int middleIndex = (bottomIndex + topIndex) / 2;
+            final int middleIndex = (bottomIndex + topIndex) >> 1;
             final int match = matches()[middleIndex].value().asInt();
 
             if (SPARCEirOperation.isSimm13(match)) {
