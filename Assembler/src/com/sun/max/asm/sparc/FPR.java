@@ -129,7 +129,7 @@ public class FPR extends AbstractSymbolicArgument {
             return _singleValues[value];
         }
         if (value % 2 == 0) {
-            return _doubleValues[value / 2];
+            return _doubleValues[value >> 1];
         }
         throw new IllegalArgumentException();
     }

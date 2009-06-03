@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.stack.sparc;
 
+import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jit.sparc.*;
@@ -59,7 +60,7 @@ public class SPARCJitStackFrame extends JitStackFrame<SPARCJitStackFrameLayout> 
     @Override
     public int operandStackDepth() {
         final Pointer operandStackBase = operandStackPointer(0);
-        return stackPointer().minus(operandStackBase).toInt() / JitStackFrameLayout.JIT_SLOT_SIZE;
+        return Unsigned.idiv(stackPointer().minus(operandStackBase).toInt(), JitStackFrameLayout.JIT_SLOT_SIZE);
     }
 
     @Override

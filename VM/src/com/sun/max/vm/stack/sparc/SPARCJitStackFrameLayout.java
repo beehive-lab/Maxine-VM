@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.stack.sparc;
 
+import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.collect.*;
@@ -129,9 +130,9 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
 
     public SPARCJitStackFrameLayout(TargetMethod targetMethod) {
         super(targetMethod.classMethodActor());
-        final int frameSlots = targetMethod.frameSize() / STACK_SLOT_SIZE;
+        final int frameSlots = Unsigned.idiv(targetMethod.frameSize(), STACK_SLOT_SIZE);
         // The extra JIT_SLOT_SIZE is the saving area for the literal base.
-        final int nonTemplateSlots = CALL_SAVE_AREA_SLOTS + sizeOfLocalArea() / STACK_SLOT_SIZE;
+        final int nonTemplateSlots = Unsigned.idiv(CALL_SAVE_AREA_SLOTS + sizeOfLocalArea(), STACK_SLOT_SIZE);
         _numberOfTemplateSlots = frameSlots - nonTemplateSlots;
         assert targetMethod.frameSize() == frameSize();
     }
@@ -157,7 +158,7 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
 
     @Override
     public int frameReferenceMapSize() {
-        return ByteArrayBitMap.computeBitMapSize((maximumSlotOffset() - lowestSlotOffset()) / STACK_SLOT_SIZE);
+        return ByteArrayBitMap.computeBitMapSize(Unsigned.idiv(maximumSlotOffset() - lowestSlotOffset(), STACK_SLOT_SIZE));
     }
 
 
@@ -203,7 +204,7 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
         //       ^ operand offset (wrt. FP)            ^ FP                                               ^ local offset (wrt. FP)
         // <-------- frame pointer bias --------------->
         final int framePointerBias = sizeOfOperandStack() + sizeOfLocalArea();
-        return (offset + framePointerBias) / STACK_SLOT_SIZE;
+        return Unsigned.idiv(offset + framePointerBias, STACK_SLOT_SIZE);
     }
 
     @Override
@@ -269,7 +270,7 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
         return new JitSlots() {
             @Override
             protected String nameOfSlot(int offset) {
-                final int templateSlotIndex = offset / STACK_SLOT_SIZE;
+                final int templateSlotIndex = Unsigned.idiv(offset, STACK_SLOT_SIZE);
                 if (templateSlotIndex >= 0 && templateSlotIndex < _numberOfTemplateSlots) {
                     return "template slot " + templateSlotIndex;
 
