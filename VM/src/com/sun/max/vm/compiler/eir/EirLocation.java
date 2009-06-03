@@ -25,7 +25,7 @@ import com.sun.max.vm.value.*;
 
 /**
  * Abstract location for Eir variables.
- * 
+ *
  * An Eir variable may be a constant, in which case it may have the immediate or literal location, depending on whether the constant value fits in an immediate operand
  * of the instruction that use the variable. An Eir variable may also be located on the stack, or in a register.
  * @author Bernd Mathiske
@@ -38,7 +38,7 @@ public abstract class EirLocation {
     public abstract EirLocationCategory category();
 
     public EirStackSlot asStackSlot() {
-        return (EirStackSlot) this;
+        return null;
     }
 
     public EirLiteral asLiteral() {
@@ -47,6 +47,10 @@ public abstract class EirLocation {
 
     public EirImmediate asImmediate() {
         return (EirImmediate) this;
+    }
+
+    public EirRegister asRegister() {
+        return null;
     }
 
     public abstract TargetLocation toTargetLocation();

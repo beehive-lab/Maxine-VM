@@ -21,8 +21,11 @@
 package com.sun.max.vm.compiler.eir;
 
 import com.sun.max.collect.*;
+import com.sun.max.lang.*;
 import com.sun.max.memory.*;
+import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.eir.EirAssignment.*;
 import com.sun.max.vm.compiler.eir.allocate.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.runtime.*;
@@ -50,6 +53,13 @@ public abstract class EirMethodGeneration {
 
     public MemoryModel memoryModel() {
         return _memoryModel;
+    }
+
+    protected abstract EirInstruction createJump(EirBlock eirBlock, EirBlock toBlock);
+
+    public void addJump(EirBlock eirBlock, EirBlock targetBlock) {
+        targetBlock.addPredecessor(eirBlock);
+        eirBlock.appendInstruction(createJump(eirBlock, targetBlock));
     }
 
     private final EirValue[] _integerRegisterRoleValues;
@@ -83,7 +93,7 @@ public abstract class EirMethodGeneration {
 
         _integerRegisterRoleValues = new EirValue[VMRegister.Role.VALUES.length()];
         _floatingPointRegisterRoleValues = new EirValue[VMRegister.Role.VALUES.length()];
-        for (VMRegister.Role role : VMRegister.Role.VALUES)  {
+        for (VMRegister.Role role : VMRegister.Role.VALUES) {
             _integerRegisterRoleValues[role.ordinal()] = preallocate(abi.integerRegisterActingAs(role), role.kind());
             _floatingPointRegisterRoleValues[role.ordinal()] = preallocate(abi.floatingPointRegisterActingAs(role), role.kind());
         }
@@ -101,7 +111,7 @@ public abstract class EirMethodGeneration {
         _eirGenerator.notifyAfterTransformation(eirMethod(), context, transform);
     }
 
-    private AppendableIndexedSequence<EirBlock> _eirBlocks = new ArrayListSequence<EirBlock>();
+    private VariableSequence<EirBlock> _eirBlocks = new ArrayListSequence<EirBlock>();
 
     private AppendableIndexedSequence<EirBlock> _result;
 
@@ -114,7 +124,17 @@ public abstract class EirMethodGeneration {
 
     private Pool<EirBlock> _eirBlockPool;
 
+    /**
+     * (tw) Blocks may change during register allocation.
+     */
+    private void clearBlockPool() {
+        _eirBlockPool = null;
+    }
+
     public Pool<EirBlock> eirBlockPool() {
+        if (_eirBlockPool == null) {
+            _eirBlockPool = new ArrayPool<EirBlock>(Sequence.Static.toArray(eirBlocks(), EirBlock.class));
+        }
         return _eirBlockPool;
     }
 
@@ -124,6 +144,7 @@ public abstract class EirMethodGeneration {
         final int serial = _eirBlocks.length();
         final EirBlock eirBlock = new EirBlock(eirMethod(), role, serial);
         _eirBlocks.append(eirBlock);
+        clearBlockPool();
         return eirBlock;
     }
 
@@ -140,8 +161,8 @@ public abstract class EirMethodGeneration {
     private final AppendableIndexedSequence<EirStackSlot> _localStackSlots = new ArrayListSequence<EirStackSlot>();
 
     /**
-     * Slots in the frame of the caller of method being generated. That is, the offsets of these slots are relative to SP
-     * before it has been adjusted upon entry to the method.
+     * Slots in the frame of the caller of method being generated. That is, the offsets of these slots are relative to
+     * SP before it has been adjusted upon entry to the method.
      */
     private final AppendableIndexedSequence<EirStackSlot> _parameterStackSlots = new ArrayListSequence<EirStackSlot>();
 
@@ -153,6 +174,10 @@ public abstract class EirMethodGeneration {
         final EirStackSlot stackSlot = new EirStackSlot(EirStackSlot.Purpose.LOCAL, _localStackSlots.length() * abi().stackSlotSize());
         _localStackSlots.append(stackSlot);
         return stackSlot;
+    }
+
+    public int getLocalStackSlotCount() {
+        return _localStackSlots.length();
     }
 
     /**
@@ -213,7 +238,7 @@ public abstract class EirMethodGeneration {
         return value;
     }
 
-    private final AppendableSequence<EirVariable> _variables = new ArrayListSequence<EirVariable>();
+    private VariableSequence<EirVariable> _variables = new ArrayListSequence<EirVariable>();
 
     private Pool<EirVariable> _variablePool;
 
@@ -230,11 +255,24 @@ public abstract class EirMethodGeneration {
         return _variablePool;
     }
 
+    public void clearVariablePool() {
+        _variablePool = null;
+    }
+
     /**
      * Gets the set of variables that have been allocated.
      */
     public Sequence<EirVariable> variables() {
         return _variables;
+    }
+
+    public void setVariables(IterableWithLength<EirVariable> variables) {
+        assert _variablePool == null : "can't allocate EIR variables once a variable pool exists";
+        _variables = new ArrayListSequence<EirVariable>(variables);
+
+        for (int i = 0; i < _variables.length(); i++) {
+            _variables.get(i).setSerial(i);
+        }
     }
 
     public EirVariable createEirVariable(Kind kind) {
@@ -273,11 +311,9 @@ public abstract class EirMethodGeneration {
         return integerRegisterRoleValue(VMRegister.Role.SAFEPOINT_LATCH);
     }
 
-    public abstract EirCall createCall(EirBlock eirBlock, EirABI abi, EirValue result, EirLocation resultLocation,
-                    EirValue function, EirValue[] arguments, EirLocation[] argumentLocations);
+    public abstract EirCall createCall(EirBlock eirBlock, EirABI abi, EirValue result, EirLocation resultLocation, EirValue function, EirValue[] arguments, EirLocation[] argumentLocations);
 
-    public abstract EirCall createRuntimeCall(EirBlock eirBlock, EirABI abi, EirValue result, EirLocation resultLocation,
-                                               EirValue function, EirValue[] arguments, EirLocation[] argumentLocations);
+    public abstract EirCall createRuntimeCall(EirBlock eirBlock, EirABI abi, EirValue result, EirLocation resultLocation, EirValue function, EirValue[] arguments, EirLocation[] argumentLocations);
 
     public abstract EirInstruction createAssignment(EirBlock eirBlock, Kind kind, EirValue destination, EirValue source);
 
@@ -301,6 +337,10 @@ public abstract class EirMethodGeneration {
             _eirEpilogueBlock = createEirBlock(IrBlock.Role.NORMAL);
         }
         return _eirEpilogueBlock;
+    }
+
+    public boolean hasEirEpilogueBlock() {
+        return _eirEpilogueBlock != null;
     }
 
     private EirEpilogue _eirEpilogue;
@@ -426,4 +466,277 @@ public abstract class EirMethodGeneration {
         return _isTemplate;
     }
 
+    public EirVariable splitVariableAtDefinition(EirVariable variable, EirOperand operand) {
+        final EirVariable source = createEirVariable(variable.kind());
+        splitVariableAtDefinition(variable, operand, source);
+        return source;
+    }
+
+    public void splitVariableAtDefinition(EirVariable variable, EirOperand operand, EirVariable source) {
+        assert source != null;
+        final EirInstruction<?, ?> instruction = operand.instruction();
+        final EirInstruction assignment = createAssignment(instruction.block(), variable.kind(), variable, source);
+        ((EirAssignment) assignment).setType(Type.FIXED_SPLIT);
+        introduceInstructionAfter(instruction, assignment);
+        operand.setEirValue(source);
+    }
+
+    public EirVariable splitVariableAtUse(EirVariable variable, EirOperand operand) {
+        final EirVariable destination = createEirVariable(variable.kind());
+        splitVariableAtUse(variable, operand, destination);
+        return destination;
+    }
+
+    public void splitVariableAtUse(EirVariable variable, EirOperand operand, EirVariable destination) {
+        final EirInstruction<?, ?> instruction = operand.instruction();
+        final EirInstruction assignment = createAssignment(instruction.block(), variable.kind(), destination, variable);
+        ((EirAssignment) assignment).setType(Type.FIXED_SPLIT);
+        introduceInstructionBefore(instruction, assignment);
+        operand.setEirValue(destination);
+    }
+
+    public EirVariable splitVariableAtUpdate(EirVariable variable, EirOperand operand) {
+        final EirVariable temporary = createEirVariable(variable.kind());
+        splitVariableAtUpdate(variable, operand, temporary);
+        return temporary;
+    }
+
+    public void splitVariableAtUpdate(EirVariable variable, EirOperand operand, EirVariable temporary) {
+        final EirInstruction<?, ?> instruction = operand.instruction();
+        final EirInstruction assignment1 = createAssignment(instruction.block(), variable.kind(), temporary, variable);
+        ((EirAssignment) assignment1).setType(Type.FIXED_SPLIT);
+        introduceInstructionBefore(instruction, assignment1);
+        final EirInstruction assignment2 = createAssignment(instruction.block(), variable.kind(), variable, temporary);
+        ((EirAssignment) assignment2).setType(Type.FIXED_SPLIT);
+        introduceInstructionAfter(instruction, assignment2);
+        operand.setEirValue(temporary);
+    }
+
+    public void introduceInstructionBefore(EirPosition position, EirInstruction instruction) {
+        if (position.index() > 0) {
+            final EirInstruction previousInstruction = position.block().instructions().get(position.index() - 1);
+            if (previousInstruction.isRedundant()) {
+                position.block().setInstruction(previousInstruction.index(), instruction);
+                return;
+            }
+        }
+        position.block().insertInstruction(position.index(), instruction);
+    }
+
+    public void introduceInstructionAfter(EirInstruction<?, ?> position, EirInstruction instruction) {
+        final IndexedSequence<EirInstruction> instructions = position.block().instructions();
+        final int nextIndex = position.index() + 1;
+        if (nextIndex == instructions.length()) {
+            position.block().appendInstruction(instruction);
+            return;
+        }
+        final EirInstruction nextInstruction = instructions.get(nextIndex);
+        if (nextInstruction.isRedundant()) {
+            position.block().setInstruction(nextIndex, instruction);
+            return;
+        }
+        position.block().insertInstruction(nextInstruction.index(), instruction);
+    }
+
+    public EirVariable splitVariableAtOperand(EirVariable variable, EirOperand operand) {
+        final EirVariable newVariable = createEirVariable(variable.kind());
+        splitVariableAtOperand(variable, operand, newVariable);
+        return newVariable;
+    }
+
+    /**
+     * Split the variables. The following patterns are generated: - use position: v1 = v; v1; v = v1; - update position:
+     * v1 = v; v1 = v1; v = v1; - definition: v1 =; v = v1;
+     *
+     * @param variable
+     * @param operand
+     * @param newVariable
+     */
+    public void splitVariableAtOperandFully(EirVariable variable, EirOperand operand, EirVariable newVariable) {
+        switch (operand.instruction().getEffect(variable)) {
+            case DEFINITION:
+                splitVariableAtDefinition(variable, operand, newVariable);
+                break;
+            case USE:
+                splitVariableAtUpdate(variable, operand, newVariable);
+                break;
+            case UPDATE:
+                splitVariableAtUpdate(variable, operand, newVariable);
+                break;
+            default:
+                ProgramError.unknownCase();
+                break;
+        }
+    }
+
+    public void splitVariableAtOperand(EirVariable variable, EirOperand operand, EirVariable newVariable) {
+        switch (operand.instruction().getEffect(variable)) {
+            case DEFINITION:
+                splitVariableAtDefinition(variable, operand, newVariable);
+                break;
+            case USE:
+                splitVariableAtUse(variable, operand, newVariable);
+                break;
+            case UPDATE:
+                splitVariableAtUpdate(variable, operand, newVariable);
+                break;
+            default:
+                ProgramError.unknownCase();
+                break;
+        }
+    }
+
+    protected EirLocation getConstantLocation(Value value, EirLocationCategory category) {
+        switch (category) {
+            case INTEGER_REGISTER:
+            case FLOATING_POINT_REGISTER:
+                break;
+            case IMMEDIATE_8:
+            case IMMEDIATE_16:
+            case IMMEDIATE_32:
+            case IMMEDIATE_64:
+                return new EirImmediate(category, value);
+            case METHOD:
+                break;
+            case LITERAL:
+                return literalPool().makeLiteral(value);
+            default:
+                break;
+        }
+        throw ProgramError.unexpected();
+    }
+
+    public void allocateConstants() {
+        final MutableQueue<EirConstant> constants = new MutableQueue<EirConstant>();
+
+        for (EirConstant constant : constants()) {
+            constants.add(constant);
+        }
+        while (!constants.isEmpty()) {
+            allocateConstant(constants.removeFirst(), constants);
+        }
+        assert assertConstantsAllocated();
+    }
+
+    private boolean assertConstantsAllocated() {
+        for (EirBlock eirBlock : eirBlocks()) {
+            for (EirInstruction instruction : eirBlock.instructions()) {
+                instruction.visitOperands(new EirOperand.Procedure() {
+
+                    public void run(EirOperand operand) {
+                        if (operand.eirValue().isConstant()) {
+                            assert operand.eirValue().location() != null;
+                        }
+                    }
+                });
+            }
+        }
+        return true;
+    }
+
+    private EirOperand splitConstantAtUse(EirConstant constant, EirOperand operand) {
+        final EirInstruction<?, ?> instruction = operand.instruction();
+        final EirVariable destination = createEirVariable(constant.kind());
+        final EirInstruction assignment = createAssignment(instruction.block(), destination.kind(), destination, constant);
+        ((EirAssignment) assignment).setType(Type.FIXED_SPLIT);
+        introduceInstructionBefore(instruction, assignment);
+        operand.setEirValue(destination);
+        final EirAssignment a = (EirAssignment) assignment;
+        return a.sourceOperand();
+    }
+
+    private void allocateConstant(EirConstant constant, MutableQueue<EirConstant> constants) {
+        final EirLocationCategory[] categories = new EirLocationCategory[constant.operands().length()];
+        final EirOperand[] operands = new EirOperand[constant.operands().length()];
+        int i = 0;
+        for (EirOperand operand : constant.operands()) {
+            operands[i] = operand;
+            i++;
+        }
+
+        i = 0;
+        for (EirOperand operand : operands) {
+            categories[i] = decideConstantLocationCategory(constant.value(), operand);
+            assert categories[i] == null || operands[i].locationCategories().contains(categories[i]);
+            assert operands[i].eirValue() == constant;
+            operands[i].clearEirValue();
+            i++;
+        }
+
+        assert constant.operands().length() == 0;
+
+        for (i = 0; i < operands.length; i++) {
+            if (categories[i] == null) {
+                operands[i] = splitConstantAtUse(constant, operands[i]);
+                categories[i] = decideConstantLocationCategory(constant.value(), operands[i]);
+                assert operands[i].locationCategories().contains(categories[i]);
+            }
+        }
+
+        EirConstant original = constant;
+        final EirConstant[] categoryToConstant = new EirConstant[EirLocationCategory.VALUES.length()];
+        for (i = 0; i < operands.length; i++) {
+            final int categoryIndex = categories[i].ordinal();
+            EirConstant c = categoryToConstant[categoryIndex];
+            if (c == null) {
+                if (original != null) {
+                    c = original;
+                    original = null;
+                } else {
+                    c = createEirConstant(constant.value());
+                    constants.add(c);
+                }
+                c.setLocation(getConstantLocation(constant.value(), categories[i]));
+                categoryToConstant[categoryIndex] = c;
+            }
+            operands[i].setEirValue(c);
+        }
+    }
+
+    /**
+     * @return location or null iff over-constrained
+     */
+    protected static EirLocationCategory decideConstantLocationCategory(Value value, EirOperand operand) {
+        if (value.kind() != Kind.REFERENCE || value.isZero()) {
+            final WordWidth width = value.signedEffectiveWidth();
+
+            EirLocationCategory category = EirLocationCategory.immediateFromWordWidth(width);
+            do {
+                if (operand.locationCategories().contains(category)) {
+                    return category;
+                }
+                category = category.next();
+            } while (EirLocationCategory.I.contains(category));
+
+        }
+        if (operand.locationCategories().contains(EirLocationCategory.LITERAL)) {
+            return EirLocationCategory.LITERAL;
+        }
+        return null;
+    }
+
+    /**
+     * (tw) Clears variables without usages (operands).
+     */
+    public void clearEmptyVariables() {
+        boolean variablesToRemove = false;
+        for (EirVariable variable : this._variables) {
+            if (variable.operands().length() == 0) {
+                variablesToRemove = true;
+                break;
+            }
+        }
+
+        if (variablesToRemove) {
+            final AppendableSequence<EirVariable> newVariables = new ArrayListSequence<EirVariable>(_variables.length());
+
+            for (EirVariable variable : this._variables) {
+                if (variable.operands().length() > 0) {
+                    newVariables.append(variable);
+                }
+            }
+
+            this.setVariables(newVariables);
+        }
+    }
 }

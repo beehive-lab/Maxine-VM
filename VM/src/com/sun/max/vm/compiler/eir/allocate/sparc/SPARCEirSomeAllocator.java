@@ -23,13 +23,11 @@ package com.sun.max.vm.compiler.eir.allocate.sparc;
 import java.util.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.vm.compiler.dir.eir.sparc.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.allocate.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
 
 /**
  * @author Bernd Mathiske
@@ -118,26 +116,6 @@ public final class SPARCEirSomeAllocator extends EirSomeAllocator<SPARCEirRegist
                 availableRegisters.remove(overlappingRegister);
             }
         }
-    }
-
-    @Override
-    protected EirLocationCategory decideConstantLocationCategory(Value value, EirOperand operand) {
-        if (value.kind() != Kind.REFERENCE || value.isZero()) {
-            final WordWidth width = value.signedEffectiveWidth();
-
-            EirLocationCategory category = EirLocationCategory.immediateFromWordWidth(width);
-            do {
-                if (operand.locationCategories().contains(category)) {
-                    return category;
-                }
-                category = category.next();
-            } while (EirLocationCategory.I.contains(category));
-
-        }
-        if (operand.locationCategories().contains(EirLocationCategory.LITERAL)) {
-            return EirLocationCategory.LITERAL;
-        }
-        return null;
     }
 
 }

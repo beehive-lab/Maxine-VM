@@ -23,20 +23,35 @@ package com.sun.max.vm.compiler.eir;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.compiler.eir.allocate.linearscan.*;
 import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
  */
-public final class EirVariable extends EirValue implements Comparable<EirVariable>, PoolObject {
 
-    private final int _serial;
+public final class EirVariable extends EirValue implements Comparable<EirVariable>, PoolObject {
+    private int _serial;
 
     public int serial() {
         return _serial;
     }
 
+    /**
+     * (tw) Be careful with using this method! All pool sets with this variable become immediately invalid!
+     * @param serial
+     */
+    public void setSerial(int serial) {
+        _serial = serial;
+    }
+
     private final Kind _kind;
+
+
+    @Override
+    public EirVariable asVariable() {
+        return this;
+    }
 
     @Override
     public Kind kind() {
@@ -55,10 +70,6 @@ public final class EirVariable extends EirValue implements Comparable<EirVariabl
 
     public void setWeight(int weight) {
         _weight = weight;
-    }
-
-    public void preventSpilling() {
-        _weight = Integer.MAX_VALUE;
     }
 
     public boolean isSpillingPrevented() {
@@ -253,5 +264,15 @@ public final class EirVariable extends EirValue implements Comparable<EirVariabl
             s += "@" + location();
         }
         return s;
+    }
+
+    private Interval _interval;
+
+    public void setInterval(Interval interval) {
+        _interval = interval;
+    }
+
+    public Interval interval() {
+        return _interval;
     }
 }
