@@ -132,7 +132,7 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
         super(targetMethod.classMethodActor());
         final int frameSlots = Unsigned.idiv(targetMethod.frameSize(), STACK_SLOT_SIZE);
         // The extra JIT_SLOT_SIZE is the saving area for the literal base.
-        final int nonTemplateSlots = Unsigned.idiv(CALL_SAVE_AREA_SLOTS + sizeOfLocalArea(), STACK_SLOT_SIZE);
+        final int nonTemplateSlots = CALL_SAVE_AREA_SLOTS + Unsigned.idiv(sizeOfLocalArea(), STACK_SLOT_SIZE);
         _numberOfTemplateSlots = frameSlots - nonTemplateSlots;
         assert targetMethod.frameSize() == frameSize();
     }
