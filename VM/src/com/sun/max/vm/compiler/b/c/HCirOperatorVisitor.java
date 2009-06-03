@@ -20,9 +20,7 @@
  */
 package com.sun.max.vm.compiler.b.c;
 
-import com.sun.max.program.*;
 import com.sun.max.vm.compiler.cir.operator.*;
-import com.sun.max.vm.compiler.cir.optimize.*;
 
 
 /**
@@ -34,9 +32,7 @@ import com.sun.max.vm.compiler.cir.optimize.*;
  * @author Aziz Ghuloum
  */
 public abstract class HCirOperatorVisitor {
-    public void visit(JavaOperator op) {
-        ProgramError.unexpected("Unimplemented HCirOperatorVisit: " + op);
-    }
+    public abstract void visit(JavaOperator op);
     public abstract void visit(GetField op);
     public abstract void visit(PutField op);
     public abstract void visit(GetStatic op);
@@ -57,5 +53,4 @@ public abstract class HCirOperatorVisitor {
     public abstract void visit(MonitorExit op);
     public abstract void visit(Mirror op);
     public abstract void visit(CallNative op);
-    public abstract void visit(SplitTransformation.Split op);
 }
