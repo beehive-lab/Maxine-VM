@@ -541,7 +541,7 @@ public interface SPARCEirInstruction {
         public CALL(EirBlock block, EirABI abi, EirValue result, EirLocation resultLocation,
                         EirValue function, EirValue[] arguments, EirLocation[] argumentLocations,
                         EirMethodGeneration methodGeneration) {
-            super(block, abi, result, resultLocation, function, M_G_L_S, arguments, argumentLocations, methodGeneration);
+            super(block, abi, result, resultLocation, function, M_G, arguments, argumentLocations, methodGeneration);
             final SPARCEirABI sparcAbi = (SPARCEirABI) abi;
             _safepointLatch = (SPARCEirRegister.GeneralPurpose) sparcAbi.safepointLatchRegister();
             final DirToSPARCEirMethodTranslation sparcMethodGeneration = (DirToSPARCEirMethodTranslation) methodGeneration;
