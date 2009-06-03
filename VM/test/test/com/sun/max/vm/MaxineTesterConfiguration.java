@@ -42,6 +42,7 @@ public class MaxineTesterConfiguration {
 
     private static final Expectation FAIL_ALL = new Expectation(null, null, ExpectedResult.FAIL);
     private static final Expectation FAIL_SPARC = new Expectation(OperatingSystem.SOLARIS, ProcessorModel.SPARCV9, ExpectedResult.FAIL);
+    private static final Expectation FAIL_SOLARIS = new Expectation(OperatingSystem.SOLARIS, null, ExpectedResult.FAIL);
     private static final Expectation FAIL_DARWIN = new Expectation(OperatingSystem.DARWIN, null, ExpectedResult.FAIL);
     private static final Expectation FAIL_LINUX = new Expectation(OperatingSystem.LINUX, null, ExpectedResult.FAIL);
 
@@ -51,7 +52,7 @@ public class MaxineTesterConfiguration {
 
     static final Object[] _outputTestList = {
         test.output.AWTFont.class,                  FAIL_SPARC, FAIL_ALL,
-        test.output.JavacTest.class,                FAIL_SPARC,
+        test.output.JavacTest.class,                FAIL_SPARC, FAIL_LINUX, FAIL_SOLARIS,
         test.output.CatchOutOfMemory.class,         FAIL_SPARC,
         test.output.PrintDate.class,                FAIL_SPARC,
         test.output.HelloWorld.class,               FAIL_SPARC,

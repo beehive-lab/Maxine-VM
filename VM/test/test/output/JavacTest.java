@@ -59,7 +59,6 @@ public class JavacTest {
             final File tempClassFile = new File(tempClassFilePath);
             final URLClassLoader cl = URLClassLoader.newInstance(new URL[] {new File(".").toURI().toURL()});
             final Method method = cl.loadClass(tempClassName).getMethod("main", String[].class);
-            System.err.println(method);
             method.invoke(null, (Object) new String[0]);
             tempSourceFile.delete();
             tempClassFile.delete();
