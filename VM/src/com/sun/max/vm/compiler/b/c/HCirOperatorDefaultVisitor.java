@@ -21,7 +21,6 @@
 package com.sun.max.vm.compiler.b.c;
 
 import com.sun.max.vm.compiler.cir.operator.*;
-import com.sun.max.vm.compiler.cir.optimize.SplitTransformation.*;
 
 
 public class HCirOperatorDefaultVisitor extends HCirOperatorVisitor {
@@ -129,11 +128,6 @@ public class HCirOperatorDefaultVisitor extends HCirOperatorVisitor {
 
     @Override
     public void visit(CallNative op) {
-        visitDefault(op);
-    }
-
-    @Override
-    public void visit(Split op) {
         visitDefault(op);
     }
 }
