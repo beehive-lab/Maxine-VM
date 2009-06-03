@@ -120,6 +120,8 @@ public enum EirLocationCategory implements PoolObject {
 
     public static final PoolSet<EirLocationCategory> M = PoolSet.of(VALUE_POOL, METHOD);
 
+    public static final PoolSet<EirLocationCategory> M_G = PoolSet.of(VALUE_POOL, METHOD, INTEGER_REGISTER);
+
     public static final PoolSet<EirLocationCategory> M_G_L_S = PoolSet.of(VALUE_POOL, METHOD, INTEGER_REGISTER, LITERAL, STACK_SLOT);
 
     public static final PoolSet<EirLocationCategory> G_S = PoolSet.of(VALUE_POOL, INTEGER_REGISTER, STACK_SLOT);
