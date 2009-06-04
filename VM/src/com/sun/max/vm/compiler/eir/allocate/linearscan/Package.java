@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.eir.allocate.linearscan;
 import com.sun.max.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.compiler.eir.allocate.*;
 
 /**
  * @see MaxPackage
@@ -36,6 +37,6 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.compilerScheme() instanceof EirGeneratorScheme;
+        return vmConfiguration.compilerScheme() instanceof EirGeneratorScheme && EirAllocatorFactory.isSelected(this);
     }
 }

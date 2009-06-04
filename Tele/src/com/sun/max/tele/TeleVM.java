@@ -88,7 +88,7 @@ public abstract class TeleVM implements MaxVM {
     private static final String _TELE_LIBRARY_NAME = "tele";
 
     /**
-     * The options controlling how a tele VM instance is {@linkplain #create(String...) created}.
+     * The options controlling how a tele VM instance is {@linkplain #newAllocator(String...) created}.
      */
     public static class Options extends OptionSet {
         public final Option<Boolean> _debugOption = newBooleanOption("d", false,

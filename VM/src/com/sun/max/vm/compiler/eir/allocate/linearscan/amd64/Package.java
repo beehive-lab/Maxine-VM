@@ -22,6 +22,7 @@ package com.sun.max.vm.compiler.eir.allocate.linearscan.amd64;
 
 import com.sun.max.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.eir.allocate.*;
 import com.sun.max.vm.compiler.eir.amd64.*;
 
 /**
@@ -30,12 +31,9 @@ import com.sun.max.vm.compiler.eir.amd64.*;
  * @author Thomas Wuerthinger
  */
 public class Package extends VMPackage {
-    public Package() {
-        super();
-    }
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.compilerScheme() instanceof AMD64EirGeneratorScheme;
+        return vmConfiguration.compilerScheme() instanceof AMD64EirGeneratorScheme && EirAllocatorFactory.isSelected(Factory.class);
     }
 }
