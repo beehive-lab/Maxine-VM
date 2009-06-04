@@ -548,7 +548,7 @@ public class ResolveDataFlow extends AlgorithmPart {
     private EirInstruction findInstruction(int position) {
         final EirBlock block = findBlock(position);
         for (EirInstruction instruction : block.instructions()) {
-            if (position / 2 == instruction.number() / 2) {
+            if (position >> 1 == instruction.number() >> 1) {
                 return instruction;
             }
         }

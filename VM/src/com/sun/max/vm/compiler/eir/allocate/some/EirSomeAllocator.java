@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.eir.allocate;
+package com.sun.max.vm.compiler.eir.allocate.some;
 
 import java.util.*;
 
@@ -28,6 +28,7 @@ import com.sun.max.profile.*;
 import com.sun.max.util.timer.Timer;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.EirTraceObserver.*;
+import com.sun.max.vm.compiler.eir.allocate.*;
 
 /**
  * A medium speed, medium quality register allocator.

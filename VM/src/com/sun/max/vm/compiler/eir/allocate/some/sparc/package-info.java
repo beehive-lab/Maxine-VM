@@ -23,5 +23,5 @@
  *
  * @author Bernd Mathiske
  */
-package com.sun.max.vm.compiler.eir.allocate.sparc;
+package com.sun.max.vm.compiler.eir.allocate.some.sparc;
 

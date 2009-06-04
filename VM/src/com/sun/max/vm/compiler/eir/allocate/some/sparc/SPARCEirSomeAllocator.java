@@ -18,14 +18,14 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.eir.allocate.sparc;
+package com.sun.max.vm.compiler.eir.allocate.some.sparc;
 
 import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.vm.compiler.dir.eir.sparc.*;
 import com.sun.max.vm.compiler.eir.*;
-import com.sun.max.vm.compiler.eir.allocate.*;
+import com.sun.max.vm.compiler.eir.allocate.some.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
 import com.sun.max.vm.type.*;
 
