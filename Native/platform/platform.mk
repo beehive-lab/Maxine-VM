@@ -163,7 +163,7 @@ endif
 ifeq ($(OS),solaris)
 	CC ?= cc 
 	C_DEPENDENCIES_FLAGS = -xM1 -DSOLARIS -D$(ISA) -D$(TARGET) 
-	CFLAGS ?= -g -xc99 -errwarn -erroff=E_ARGUEMENT_MISMATCH -errtags -errfmt=error $(KPIG_FLAG) $(ARCH_FLAG) -D$(ISA) -DSOLARIS -D$(TARGET) $(OTHER_CFLAGS)
+	CFLAGS ?= -g -xc99 -errwarn -errtags -errfmt=error $(KPIG_FLAG) $(ARCH_FLAG) -D$(ISA) -DSOLARIS -D$(TARGET) $(OTHER_CFLAGS)
 	LINK_MAIN = $(CC) $(ARCH_FLAG) -lc -lthread -ldl -o $(MAIN)
 	LINK_LIB = $(CC) -G $(ARCH_FLAG) -lresolv -lc -lm -ldl -lthread -lrt -lproc
 	LIB_PREFIX = lib
@@ -206,7 +206,7 @@ ifeq ($(OS),guestvm)
 endif
 
 ifndef JAVA_HOME
-	$(error "Must set JAVA_HOME environment variable to your JDK home directory")
+	ignore := $(error "Must set JAVA_HOME environment variable to your JDK home directory")
 endif
 
 

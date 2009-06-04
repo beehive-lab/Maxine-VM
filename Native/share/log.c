@@ -96,18 +96,15 @@ FILE *getFileStream() {
 #endif
 
 void log_print_format(const char *format, ...) {
-#if !os_GUESTVMXEN
     va_list ap;
     va_start(ap, format);
+#if !os_GUESTVMXEN
     FILE* out = getFileStream();
     vfprintf(out, format, ap);
-    va_end(ap);
 #else
-    va_list ap;
-    va_start(ap, format);
     vprintf(format, ap);
-    va_end(ap);
 #endif
+    va_end(ap);
 }
 
 void log_print_vformat(const char *format, va_list ap) {
