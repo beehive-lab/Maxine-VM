@@ -48,7 +48,7 @@ public class GraphBuilder {
     MemoryBuffer _memory;
     int _instructionCount;                  // for bailing out in pathological jsr/ret cases
     BlockBegin _start;                      // the start block
-    BlockBegin _osrEntry;                   // the osr entry block block
+    BlockBegin _osrEntry;                   // the osr entry block
     ValueStack _initialState;               // The state for the start block
 
     // for each call to connectToEnd; can also be set by inliner
@@ -1384,7 +1384,7 @@ public class GraphBuilder {
 
     boolean checkInliningConditions(CiMethod target) {
         if (scope().level() > C1XOptions.MaximumInlineLevel) {
-            return cannotInline(target, "inlining too depth");
+            return cannotInline(target, "inlining too deep");
         }
         if (recursiveInlineLevel(target) > C1XOptions.MaximumRecursiveInlineLevel) {
             return cannotInline(target, "recursive inlining too depth");
@@ -1403,19 +1403,19 @@ public class GraphBuilder {
             return cannotInline(target, "compile excluded by runtime");
         }
         if (target.isAbstract()) {
-            return cannotInline(target, "method is abstract");
+            return cannotInline(target, "is abstract");
         }
         if (target.isNative()) {
-            return cannotInline(target, "method is native");
+            return cannotInline(target, "is native");
         }
         if (target.isSynchronized() && !C1XOptions.InlineSynchronizedMethods) {
-            return cannotInline(target, "method is synchronized");
+            return cannotInline(target, "is synchronized");
         }
         if (target.hasExceptionHandlers() && !C1XOptions.InlineMethodsWithExceptionHandlers) {
-            return cannotInline(target, "method has exception handlers");
+            return cannotInline(target, "has exception handlers");
         }
         if (!target.hasBalancedMonitors()) {
-            return cannotInline(target, "method has unbalanced monitors");
+            return cannotInline(target, "has unbalanced monitors");
         }
         if (C1XOptions.SSEVersion < 2 && target.isStrictFP() != method().isStrictFP()) {
             return cannotInline(target, "strictfp mismatch on x87");
@@ -1590,7 +1590,6 @@ public class GraphBuilder {
 
         _last = _block = syncHandler;
         _state = syncHandler.state().copy();
-
 
         assert !syncHandler.wasVisited() : "synch handler already visited";
 

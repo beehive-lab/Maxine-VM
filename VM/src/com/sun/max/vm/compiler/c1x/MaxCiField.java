@@ -194,4 +194,15 @@ public class MaxCiField implements CiField {
         return o == this;
     }
 
+    /**
+     * Converts this compiler interface field to a string.
+     */
+    @Override
+    public String toString() {
+        if (_fieldActor != null) {
+            return _fieldActor.toString();
+        }
+        return _fieldRef.toString() + " [unresolved]";
+    }
+
 }

@@ -340,4 +340,15 @@ public class MaxCiMethod implements CiMethod {
         }
         return o == this;
     }
+
+    /**
+     * Converts this compiler interface method to a string.
+     */
+    @Override
+    public String toString() {
+        if (_methodActor != null) {
+            return _methodActor.toString();
+        }
+        return _methodRef.toString() + " [unresolved]";
+    }
 }
