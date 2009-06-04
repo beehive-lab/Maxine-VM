@@ -18,24 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.eir.allocate.amd64;
-
-import com.sun.max.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.eir.amd64.*;
+package com.sun.max.util;
 
 /**
- * @see MaxPackage
- * 
- * @author Bernd Mathiske
+ * Class for generating pseudo random numbers.
+ *
+ * @author Thomas Wuerthinger
  */
-public class Package extends VMPackage {
-    public Package() {
-        super();
+public class Random {
+
+    private long _value;
+
+    public Random(long seed) {
+        _value = seed;
     }
 
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.compilerScheme() instanceof AMD64EirGeneratorScheme;
+    public int nextInt(int length) {
+        _value = _value * 1237 + 13;
+        return (int) (Math.abs(_value) % length);
     }
+
+    public int previewNextInt(int length) {
+        final long tmpValue = _value * 1237 + 13;
+        return (int) (Math.abs(tmpValue) % length);
+    }
+
 }

@@ -37,7 +37,6 @@ import com.sun.max.vm.compiler.cir.operator.*;
 import com.sun.max.vm.compiler.cir.operator.CheckCast;
 import com.sun.max.vm.compiler.cir.operator.InstanceOf;
 import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
-import com.sun.max.vm.compiler.cir.optimize.SplitTransformation.*;
 import com.sun.max.vm.compiler.cir.snippet.*;
 import com.sun.max.vm.compiler.cir.variable.*;
 import com.sun.max.vm.compiler.instrument.*;
@@ -65,7 +64,7 @@ import com.sun.max.vm.value.*;
  * @author Yi Guo
  * @author Aziz Ghuloum
  */
-public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
+public final class HCirOperatorLowering extends HCirOperatorVisitor {
     private final JavaOperator _operator;
     private final CirCall _call;
     private final BirToCirMethodTranslation _methodTranslation;
@@ -854,20 +853,12 @@ public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
                 ce()));
     }
 
-
     @Override
-    public void visitDefault(JavaOperator operator) {
+    public void visit(JavaOperator operator) {
         if (operator instanceof Lowerable) {
             final Lowerable lowerableOp = (Lowerable) operator;
             lowerableOp.toLCir(lowerableOp, _call, _methodTranslation.cirGenerator().compilerScheme());
         }
-    }
-
-    @Override
-    public void visit(Split operator) {
-        final CirVariable vOld = (CirVariable) _call.arguments()[0];
-        final CirValue cont =  _call.arguments()[1];
-        set(call(cont, vOld));
     }
 }
 

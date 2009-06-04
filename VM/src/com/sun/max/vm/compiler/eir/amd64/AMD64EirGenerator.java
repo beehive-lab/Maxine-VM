@@ -43,7 +43,7 @@ public abstract class AMD64EirGenerator extends EirGenerator<AMD64EirGeneratorSc
     /**
      * Assigns an exception object into the result location defined by the {@linkplain EirABIsScheme#javaABI() Java ABI}.
      * which is where this compiler expects the exception to be when compiling a catch block.
-     * 
+     *
      * The {@link NEVER_INLINE} annotation guarantees that the assignment to the result location actually occurs.
      */
     @NEVER_INLINE

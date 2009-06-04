@@ -99,6 +99,11 @@ public final class EirOperand implements IrValue {
         }
     }
 
+    void setEirValueWithoutUpdate(EirValue eirValue) {
+        assert !eirValue.isLocationFixed() || _locationCategories.contains(eirValue.location().category());
+        _eirValue = eirValue;
+    }
+
     public void setEirValue(EirValue eirValue) {
         clearEirValue();
         assert !eirValue.isLocationFixed() || _locationCategories.contains(eirValue.location().category());
@@ -154,8 +159,8 @@ public final class EirOperand implements IrValue {
     public void setRequiredLocation(EirLocation location) {
         assert _locationCategories.contains(location.category());
         _requiredLocation = location;
-        if (location instanceof EirRegister) {
-            setRequiredRegister((EirRegister) location);
+        if (location.asRegister() != null) {
+            setRequiredRegister(location.asRegister());
         }
     }
 

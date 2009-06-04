@@ -24,8 +24,6 @@ import com.sun.max.vm.compiler.b.c.d.e.sparc.*;
 import com.sun.max.vm.compiler.dir.*;
 import com.sun.max.vm.compiler.dir.eir.*;
 import com.sun.max.vm.compiler.eir.*;
-import com.sun.max.vm.compiler.eir.allocate.*;
-import com.sun.max.vm.compiler.eir.allocate.sparc.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
 import com.sun.max.vm.compiler.eir.sparc.SPARCEirInstruction.*;
 import com.sun.max.vm.stack.sparc.*;
@@ -69,11 +67,6 @@ public final class DirToSPARCEirMethodTranslation extends DirToEirMethodTranslat
 
     public boolean usesConversionArea() {
         return _offsetToConversionArea != null;
-    }
-
-    @Override
-    protected EirAllocator createAllocator(EirMethodGeneration methodGeneration) {
-        return new SPARCEirSomeAllocator(methodGeneration);
     }
 
     @Override

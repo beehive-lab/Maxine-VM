@@ -27,6 +27,7 @@ import java.util.jar.*;
 
 import sun.misc.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.util.*;
@@ -77,6 +78,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
      * "initIDs" with signature "()V". Such methods are typically used in the JDK to initialize JNI
      * identifiers for native code, and need to be reexecuted upon startup.
      */
+    @PROTOTYPE_ONLY
     public IterableWithLength<? extends MethodActor> gatherNativeInitializationMethods() {
         final AppendableSequence<StaticMethodActor> methods = new LinkSequence<StaticMethodActor>();
         final String maxinePackagePrefix = new com.sun.max.Package().name();

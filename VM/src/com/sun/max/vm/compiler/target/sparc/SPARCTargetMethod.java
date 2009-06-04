@@ -42,7 +42,7 @@ public interface SPARCTargetMethod {
         }
 
         public static int registerReferenceMapSize() {
-            return GPR.SYMBOLIZER.numberOfValues() / Bytes.WIDTH;
+            return Unsigned.idiv(GPR.SYMBOLIZER.numberOfValues(), Bytes.WIDTH);
         }
 
         public static void patchCallSite(TargetMethod targetMethod, int callOffset, Word callEntryPoint) {

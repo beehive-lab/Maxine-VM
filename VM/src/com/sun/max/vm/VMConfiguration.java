@@ -107,11 +107,11 @@ public final class VMConfiguration {
         return _layoutScheme;
     }
 
-    private final VMPackage _heapPackage;
-
     public VMPackage heapPackage() {
         return _heapPackage;
     }
+
+    private final VMPackage _heapPackage;
 
     @CONSTANT_WHEN_NOT_ZERO
     private HeapScheme _heapScheme = null;
@@ -185,7 +185,7 @@ public final class VMConfiguration {
         return _compilationScheme;
     }
 
-    private VMPackage _trampolinePackage;
+    private final VMPackage _trampolinePackage;
 
     public VMPackage trampolinePackage() {
         return _trampolinePackage;
@@ -199,7 +199,7 @@ public final class VMConfiguration {
         return _trampolineScheme;
     }
 
-    private VMPackage _targetABIsPackage;
+    private final VMPackage _targetABIsPackage;
 
     public VMPackage targetABIsPackage() {
         return _targetABIsPackage;
@@ -228,7 +228,16 @@ public final class VMConfiguration {
     }
 
     public Sequence<MaxPackage> packages() {
-        return new ArraySequence<MaxPackage>(referencePackage(), layoutPackage(), heapPackage(),  monitorPackage(), compilerPackage(),  trampolinePackage(), targetABIsPackage(), gripPackage(), runPackage());
+        return new ArraySequence<MaxPackage>(
+                        _referencePackage,
+                        _layoutPackage,
+                        _heapPackage,
+                        _monitorPackage,
+                        _compilerPackage,
+                        _trampolinePackage,
+                        _targetABIsPackage,
+                        _gripPackage,
+                        _runPackage);
     }
 
     private final Safepoint _safepoint;
@@ -278,7 +287,7 @@ public final class VMConfiguration {
         // It is useful for now to build a VM with a single compiler, where the JIT and optimizing compiler are the same.
         // The CallEntryPoint enum gets the value of the call entry point offset from offsetToCallEntryPoints()
         // Ideally, we would want to get it from adapterFrameScheme().offsetToCallEntryPoints()
-        if (_jitPackage == null || _jitPackage.equals(_compilerPackage)) {
+        if (jitPackage() == null || jitPackage().equals(compilerPackage())) {
             // zero-fill array -- all entry points are at code start (for now -- may change with inline caches).
             _offsetsToCallEntryPoints = new int[CallEntryPoint.VALUES.length()];
             _offsetsToCalleeEntryPoints = new int[CallEntryPoint.VALUES.length()];
@@ -315,26 +324,26 @@ public final class VMConfiguration {
         if (_areSchemesLoadedAndInstantiated) {
             return;
         }
-        _gripScheme = loadAndInstantiateScheme(_gripPackage, GripScheme.class, this);
-        _referenceScheme = loadAndInstantiateScheme(_referencePackage, ReferenceScheme.class, this);
+        _gripScheme = loadAndInstantiateScheme(gripPackage(), GripScheme.class, this);
+        _referenceScheme = loadAndInstantiateScheme(referencePackage(), ReferenceScheme.class, this);
         _layoutScheme = loadAndInstantiateScheme(_layoutPackage, LayoutScheme.class, this, _gripScheme);
-        _monitorScheme = loadAndInstantiateScheme(_monitorPackage, MonitorScheme.class, this);
-        _heapScheme = loadAndInstantiateScheme(_heapPackage, HeapScheme.class, this);
-        _targetABIsScheme = loadAndInstantiateScheme(_targetABIsPackage, TargetABIsScheme.class, this);
-        _compilerScheme = loadAndInstantiateScheme(_compilerPackage, CompilerScheme.class, this);
-        _trampolineScheme = loadAndInstantiateScheme(_trampolinePackage, DynamicTrampolineScheme.class, this);
-        if (_jitPackage != null) {
-            _jitScheme = loadAndInstantiateScheme(_jitPackage, DynamicCompilerScheme.class, this);
+        _monitorScheme = loadAndInstantiateScheme(monitorPackage(), MonitorScheme.class, this);
+        _heapScheme = loadAndInstantiateScheme(heapPackage(), HeapScheme.class, this);
+        _targetABIsScheme = loadAndInstantiateScheme(targetABIsPackage(), TargetABIsScheme.class, this);
+        _compilerScheme = loadAndInstantiateScheme(compilerPackage(), CompilerScheme.class, this);
+        _trampolineScheme = loadAndInstantiateScheme(trampolinePackage(), DynamicTrampolineScheme.class, this);
+        if (jitPackage() != null) {
+            _jitScheme = loadAndInstantiateScheme(jitPackage(), DynamicCompilerScheme.class, this);
         } else {
             // no JIT, always using the optimizing compiler
             _jitScheme = _compilerScheme;
         }
-        _interpreterScheme = loadAndInstantiateScheme(_interpreterPackage, InterpreterScheme.class, this);
+        _interpreterScheme = loadAndInstantiateScheme(interpreterPackage(), InterpreterScheme.class, this);
 
         _compilationScheme = new AdaptiveCompilationScheme(this);
         _vmSchemes.append(_compilationScheme);
 
-        _runScheme = loadAndInstantiateScheme(_runPackage, RunScheme.class, this);
+        _runScheme = loadAndInstantiateScheme(runPackage(), RunScheme.class, this);
         _areSchemesLoadedAndInstantiated = true;
     }
 

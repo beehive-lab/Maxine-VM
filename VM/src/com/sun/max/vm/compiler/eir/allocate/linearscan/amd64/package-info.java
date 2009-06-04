@@ -19,9 +19,9 @@
  * Company, Ltd.
  */
 /**
- * Register allocation specialization for SPARC.
+ * Linear scan register allocation specialization for AMD64.
  *
- * @author Bernd Mathiske
+ * @author Thomas Wuerthinger
  */
-package com.sun.max.vm.compiler.eir.allocate.sparc;
+package com.sun.max.vm.compiler.eir.allocate.linearscan.amd64;
 
