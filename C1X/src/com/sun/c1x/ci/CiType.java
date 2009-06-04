@@ -44,7 +44,7 @@ public interface CiType {
     public CiType elementType();
     public CiType exactType();
     public CiType arrayOf();
-    public CiMethod resolveMethod(CiMethod method);
+    public CiMethod resolveMethodImpl(CiMethod method);
     public BasicType basicType();
 
 }

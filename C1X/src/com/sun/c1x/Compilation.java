@@ -20,8 +20,10 @@
  */
 package com.sun.c1x;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.util.Util;
+import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.ci.CiOsrFrame;
+import com.sun.c1x.ci.CiRuntime;
+import com.sun.c1x.ci.CiType;
 import com.sun.c1x.graph.BlockMap;
 import com.sun.c1x.ir.BlockBegin;
 
@@ -160,19 +162,6 @@ public class Compilation {
      */
     public void recordInlining(CiMethod target) {
         // TODO: record inlining success
-    }
-
-    /**
-     * Create an exception handler object, e.g. to synthesize a handler for synchronized methods.
-     * @param ciType the throwable type
-     * @param startBCI the start bytecode index
-     * @param endBCI the end bytecode index
-     * @param catchBCI the bytecode index of the catch block
-     * @param etIndex the index of the exception type in the constant pool (0 indicates catch all)
-     * @return a new exception handler
-     */
-    public CiExceptionHandler newExceptionHandler(CiType ciType, int startBCI, int endBCI, int catchBCI, int etIndex) {
-        throw Util.unimplemented();
     }
 
     /**

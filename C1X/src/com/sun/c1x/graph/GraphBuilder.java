@@ -83,7 +83,7 @@ public class GraphBuilder {
             syncHandler.setBlockFlag(BlockBegin.BlockFlag.IsOnWorkList);
             syncHandler.setBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler);
 
-            CiExceptionHandler desc = compilation.newExceptionHandler(method.holder(), 0, method.codeSize(), -1, 0);
+            CiExceptionHandler desc = newDefaultExceptionHandler(method);
             ExceptionHandler h = new ExceptionHandler(desc);
             h.setEntryBlock(syncHandler);
             _scopeData.exceptionHandlers().add(h);
@@ -134,6 +134,10 @@ public class GraphBuilder {
         }
     }
 
+    private CiExceptionHandler newDefaultExceptionHandler(CiMethod method) {
+        return constantPool().newExceptionHandler(0, method.codeSize(), -1, 0);
+    }
+
     private void loadParameters(CiMethod method) {
         int index = 0;
         if (!method.isStatic()) {
@@ -144,8 +148,8 @@ public class GraphBuilder {
         CiSignature sig = method.signatureType();
         int max = sig.arguments();
         for (int i = 0; i < max; i++) {
-            CiType type = sig.argumentType(i);
-            ValueType vt = ValueType.fromBasicType(type.basicType());
+            BasicType type = sig.argumentBasicType(i);
+            ValueType vt = ValueType.fromBasicType(type);
             loadLocal(vt, index);
             index += vt.size();
         }
@@ -752,7 +756,7 @@ public class GraphBuilder {
             stateCopy = _state.copy();
         }
 
-        ValueType type = ValueType.fromBasicType(field.type().basicType());
+        ValueType type = ValueType.fromBasicType(field.basicType());
         int offset = isLoaded ? field.offset() : -1;
 
         switch (opcode) {
@@ -837,7 +841,7 @@ public class GraphBuilder {
             CiType exact = getExactType(klass, receiver);
             if (exact != null && exact.isLoaded()) {
                 // either the holder class is exact, or the receiver object has an exact type
-                invokeSpecial(exact.resolveMethod(target), exact);
+                invokeSpecial(exact.resolveMethodImpl(target), exact);
                 return;
             }
             // 2. check if an assumed leaf method can be found
@@ -850,7 +854,7 @@ public class GraphBuilder {
             exact = getAssumedLeafType(klass, receiver);
             if (exact != null && exact.isLoaded()) {
                 // either the holder class is exact, or the receiver object has an exact type
-                invokeSpecial(exact.resolveMethod(target), exact);
+                invokeSpecial(exact.resolveMethodImpl(target), exact);
                 return;
             }
         }
@@ -863,7 +867,7 @@ public class GraphBuilder {
     }
 
     private ValueType returnValueType(CiMethod target) {
-        return ValueType.fromBasicType(target.signatureType().returnType().basicType());
+        return ValueType.fromBasicType(target.signatureType().returnBasicType());
     }
 
     void invokeSpecial(CiMethod target, CiType knownHolder) {
@@ -919,7 +923,7 @@ public class GraphBuilder {
         }
         CiType declared = receiver.declaredType();
         if (declared != null) {
-            CiMethod impl = declared.resolveMethod(target);
+            CiMethod impl = declared.resolveMethodImpl(target);
             if (impl != null && assumeLeafClass(declared)) {
                 return impl;
             }
@@ -1363,7 +1367,7 @@ public class GraphBuilder {
             CiType type = sig.argumentType(i);
             ValueType vt = ValueType.fromBasicType(type.basicType());
             Local local = new Local(vt, index);
-            local.setDeclaredType(type);
+            if (type.isLoaded()) local.setDeclaredType(type);
             state.storeLocal(index, local);
             index += vt.size();
         }
@@ -1572,7 +1576,7 @@ public class GraphBuilder {
         _last.setFlag(Instruction.Flag.NonNull, true);
         syncHandler.setExceptionEntry();
         syncHandler.setBlockFlag(BlockBegin.BlockFlag.IsOnWorkList);
-        CiExceptionHandler handler = _compilation.newExceptionHandler(method().holder(), 0, method().codeSize(), -1, 0);
+        CiExceptionHandler handler = newDefaultExceptionHandler(method());
         ExceptionHandler h = new ExceptionHandler(handler);
         h.setEntryBlock(syncHandler);
         _scopeData.exceptionHandlers().add(h);

@@ -44,7 +44,7 @@ public class TimerOption extends VMOption {
      *
      * @param prefix the prefix by which the option is activated
      * @param help describes the option's semantics
-     * @param timer the timer to use. This should be a multi-thread safe timer (e.g. {@link MultiThreadTimer}) if it
+     * @param timerMetric the timer to use. This should be a multi-thread safe timer (e.g. {@link MultiThreadTimer}) if it
      *            may be used by more than one thread.
      */
     @PROTOTYPE_ONLY
@@ -82,12 +82,12 @@ public class TimerOption extends VMOption {
             Log.print("Elapsed=");
             Log.print(_timerMetric.getElapsedTime());
             Log.print(' ');
-            Log.print(_timerMetric.getClock().getHZAsSuffix());
+            Log.print(TimerUtil.getHzSuffix(_timerMetric.getClock()));
             if (_timerMetric.getNestedTime() != 0) {
                 Log.print(" [Nested=");
                 Log.print(_timerMetric.getNestedTime());
                 Log.print(' ');
-                Log.print(_timerMetric.getClock().getHZAsSuffix());
+                Log.print(TimerUtil.getHzSuffix(_timerMetric.getClock()));
                 Log.print(']');
             }
             Log.println();

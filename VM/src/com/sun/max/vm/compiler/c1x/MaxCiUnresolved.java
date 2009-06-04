@@ -18,20 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ci;
+package com.sun.max.vm.compiler.c1x;
 
 /**
- * The <code>CiOsrFrame</code> interface allows the compiler to query the runtime for
- * the locations of the state of locals, stacks, and locks when generating code to
- * transition from one frame layout during OSR (on-stack replacement).
+ * The <code>MaxCiUnresolved</code> exception is thrown if the user of the compiler interface (e.g. C1X)
+ * queries a compiler interface object in a way that is not appropriate for an unresolved object.
  *
  * @author Ben L. Titzer
  */
-public interface CiOsrFrame {
-    public int getLocalOffset(int local);
-    public boolean isLive(int local);
-    public boolean isLiveObject(int local);
-    public int getStackOffset(int index);
-    public int getLockOffset(int lock);
-    public int frameSize();
+public class MaxCiUnresolved extends RuntimeException {
+    public MaxCiUnresolved(String msg) {
+        super(msg);
+    }
 }

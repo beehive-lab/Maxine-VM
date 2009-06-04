@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ci;
 
-import com.sun.c1x.value.ConstType;
+import com.sun.c1x.value.BasicType;
 
 /**
  * The <code>CiField</code> class definition.
@@ -30,10 +30,11 @@ import com.sun.c1x.value.ConstType;
 public interface CiField {
     public String name();
     public CiType type();
+    public BasicType basicType();
     public CiType holder();
     public boolean willLink(CiType where, int opcode);
     public boolean isVolatile();
     public boolean isConstant();
     public int offset();
-    public ConstType constantValue(); // TODO: don't expose ConstType in the interface
+    public CiConstant constantValue();
 }
