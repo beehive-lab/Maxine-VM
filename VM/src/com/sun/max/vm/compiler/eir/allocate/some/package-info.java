@@ -18,24 +18,11 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.eir.allocate.sparc;
-
-import com.sun.max.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.eir.sparc.*;
-
 /**
- * @see MaxPackage
- * 
+ * Some register allocator for EIR.
+ *
  * @author Bernd Mathiske
  */
-public class Package extends VMPackage {
-    public Package() {
-        super();
-    }
 
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.compilerScheme() instanceof SPARCEirGeneratorScheme;
-    }
-}
+package com.sun.max.vm.compiler.eir.allocate.some;
+

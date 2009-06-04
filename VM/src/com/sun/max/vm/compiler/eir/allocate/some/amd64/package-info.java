@@ -23,5 +23,5 @@
  *
  * @author Bernd Mathiske
  */
-package com.sun.max.vm.compiler.eir.allocate.amd64;
+package com.sun.max.vm.compiler.eir.allocate.some.amd64;
 
