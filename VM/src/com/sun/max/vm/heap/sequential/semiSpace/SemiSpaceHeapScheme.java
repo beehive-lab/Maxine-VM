@@ -38,7 +38,6 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.type.*;
 
-
 /**
  * A simple semi-space scavenger heap, mainly for testing.
  *
@@ -230,7 +229,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 if (Heap.traceGCTime()) {
                     final boolean lockDisabledSafepoints = Log.lock();
                     Log.print("Timings (");
-                    Log.print(HeapScheme.GC_TIMING_CLOCK.getHZAsSuffix());
+                    Log.print(TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK));
                     Log.print(") for GC ");
                     Log.print(_numberOfGarbageCollectionInvocations);
                     Log.print(": clear & initialize=");
@@ -812,7 +811,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             if (Heap.traceGCTime()) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Timings (");
-                Log.print(HeapScheme.GC_TIMING_CLOCK.getHZAsSuffix());
+                Log.print(TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK));
                 Log.print(") for all GC: clear & initialize=");
                 Log.print(_clearTimer.getElapsedTime());
                 Log.print(", root scan=");

@@ -28,6 +28,7 @@ import com.sun.c1x.util.Util;
 import com.sun.c1x.C1XOptions;
 import com.sun.c1x.ci.CiType;
 import com.sun.c1x.ci.CiField;
+import com.sun.c1x.ci.CiConstant;
 
 import java.util.List;
 import java.util.LinkedList;
@@ -347,14 +348,26 @@ public class Canonicalizer implements InstructionVisitor {
     }
 
     public void visitLoadField(LoadField i) {
-        // note that C1 did not fold loads of constant fields in the canonicalizer but in the graph builder
         if (i.isStatic() && i.isLoaded() && C1XOptions.CanonicalizeConstantFields) {
             // only try to canonicalize static field loads
             CiField field = i.field();
             if (field.isConstant()) {
-                ConstType val = field.constantValue();
-                if (C1XOptions.SupportObjectConstants || !val.isObject()) {
-                    setCanonical(new Constant(val));
+                CiConstant val = field.constantValue();
+                // XXX: this is clunky, perhaps constantValue() should return ConstType?
+                switch (val.basicType()) {
+                    case Boolean: setBooleanConstant(val.asBoolean()); break;
+                    case Char:    setCanonical(new Constant(ConstType.forChar(val.asChar()))); break;
+                    case Float:   setFloatConstant(val.asFloat()); break;
+                    case Double:  setDoubleConstant(val.asDouble()); break;
+                    case Byte:    setCanonical(new Constant(ConstType.forByte(val.asByte()))); break;
+                    case Short:   setCanonical(new Constant(ConstType.forShort(val.asShort()))); break;
+                    case Int:     setIntConstant(val.asInt()); break;
+                    case Long:    setLongConstant(val.asLong()); break;
+                    case Object:
+                    case Array:
+                        if (C1XOptions.SupportObjectConstants) {
+                            setObjectConstant(val.asObject()); break;
+                        }
                 }
             }
         }
@@ -365,7 +378,7 @@ public class Canonicalizer implements InstructionVisitor {
         // writing the value to a field that is packed
         Instruction v = i.value();
         if (v instanceof Convert && C1XOptions.EliminateNarrowingInStores) {
-            Instruction nv = eliminateNarrowing(i.field().type().basicType(), (Convert) v);
+            Instruction nv = eliminateNarrowing(i.field().basicType(), (Convert) v);
             // limit this optimization to the current basic block
             if (nv != null && inCurrentBlock(v)) {
                 setCanonical(new StoreField(i.object(), i.offset(), i.field(), nv, i.isStatic(),
@@ -529,7 +542,7 @@ public class Canonicalizer implements InstructionVisitor {
         BasicType type = BasicType.Illegal;
         if (v instanceof LoadField) {
             // remove redundant conversions from field loads of the correct type
-            type = ((LoadField) v).field().type().basicType();
+            type = ((LoadField) v).field().basicType();
         } else if (v instanceof LoadIndexed) {
             // remove redundant conversions from array loads of the correct type
             type = ((LoadIndexed) v).elementType();

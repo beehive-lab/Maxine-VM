@@ -163,19 +163,6 @@ public class Compilation {
     }
 
     /**
-     * Create an exception handler object, e.g. to synthesize a handler for synchronized methods.
-     * @param ciType the throwable type
-     * @param startBCI the start bytecode index
-     * @param endBCI the end bytecode index
-     * @param catchBCI the bytecode index of the catch block
-     * @param etIndex the index of the exception type in the constant pool (0 indicates catch all)
-     * @return a new exception handler
-     */
-    public CiExceptionHandler newExceptionHandler(CiType ciType, int startBCI, int endBCI, int catchBCI, int etIndex) {
-        throw Util.unimplemented();
-    }
-
-    /**
      * Builds the block map for the specified method.
      * @param method the method for which to build the block map
      * @param osrBCI the OSR bytecode index; <code>-1</code> if this is not an OSR

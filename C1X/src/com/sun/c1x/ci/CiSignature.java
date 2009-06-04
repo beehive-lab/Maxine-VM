@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.ci;
 
+import com.sun.c1x.value.BasicType;
+
 /**
  * The <code>CiSignature</code> class represents a method signature.
  *
@@ -28,7 +30,9 @@ package com.sun.c1x.ci;
 public interface CiSignature {
     public int arguments();
     public CiType argumentType(int which);
+    public BasicType argumentBasicType(int which);
     public CiType returnType();
+    public BasicType returnBasicType();
     public String asString();
     public int argumentSize(boolean withReceiver);
 }

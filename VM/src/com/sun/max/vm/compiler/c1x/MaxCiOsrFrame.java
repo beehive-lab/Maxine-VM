@@ -18,20 +18,12 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ci;
+package com.sun.max.vm.compiler.c1x;
 
 /**
- * The <code>CiOsrFrame</code> interface allows the compiler to query the runtime for
- * the locations of the state of locals, stacks, and locks when generating code to
- * transition from one frame layout during OSR (on-stack replacement).
+ * The <code>MaxCiOsrFrame</code> class definition.
  *
  * @author Ben L. Titzer
  */
-public interface CiOsrFrame {
-    public int getLocalOffset(int local);
-    public boolean isLive(int local);
-    public boolean isLiveObject(int local);
-    public int getStackOffset(int index);
-    public int getLockOffset(int lock);
-    public int frameSize();
+public class MaxCiOsrFrame {
 }
