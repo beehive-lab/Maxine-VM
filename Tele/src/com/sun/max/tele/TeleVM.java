@@ -328,10 +328,6 @@ public abstract class TeleVM implements MaxVM {
         return _teleProcess;
     }
 
-    public boolean isReadOnly() {
-        return false;
-    }
-
     public boolean isBootImageRelocated() {
         return true;
     }
@@ -974,8 +970,8 @@ public abstract class TeleVM implements MaxVM {
         teleCodeRegistry().writeSummaryToStream(printStream);
     }
 
-    public final State state() {
-        return _teleProcess.state();
+    public MaxVMState maxVMState() {
+        return _teleProcess.maxVMState();
     }
 
     public final void addStateListener(StateTransitionListener listener) {
@@ -1276,20 +1272,21 @@ public abstract class TeleVM implements MaxVM {
 
     private final StateTransitionListener _jdwpStateModel = new StateTransitionListener() {
 
-        public void handleStateTransition(StateTransitionEvent event) {
-            Trace.begin(TRACE_VALUE, tracePrefix() + "handling " + event);
-            switch(event.newState()) {
+        public void handleStateTransition(MaxVMState maxVMState) {
+            Trace.begin(TRACE_VALUE, tracePrefix() + "handling " + maxVMState);
+            switch(maxVMState.processState()) {
                 case TERMINATED:
                     fireJDWPVMDiedEvent();
                     break;
                 case STOPPED:
                     if (!_jdwpListeners.isEmpty()) {
-                        final Sequence<TeleNativeThread> breakpointThreads = event.breakpointThreads();
+                        final Sequence<TeleNativeThread> breakpointThreads = maxVMState.breakpointThreads();
                         for (TeleNativeThread teleNativeThread : breakpointThreads) {
                             fireJDWPBreakpointEvent(teleNativeThread, teleNativeThread.getFrames()[0].getLocation());
                         }
-                        if (event.singleStepThread() != null) {
-                            fireJDWPSingleStepEvent(event.singleStepThread(), event.singleStepThread().getFrames()[0].getLocation());
+                        final TeleNativeThread singleStepThread = maxVMState.singleStepThread();
+                        if (singleStepThread != null) {
+                            fireJDWPSingleStepEvent(singleStepThread, singleStepThread.getFrames()[0].getLocation());
                         }
                     }
                     break;
@@ -1297,7 +1294,7 @@ public abstract class TeleVM implements MaxVM {
                     LOGGER.info("VM continued to RUN!");
                     break;
             }
-            Trace.end(TRACE_VALUE, tracePrefix() + "handling " + event);
+            Trace.end(TRACE_VALUE, tracePrefix() + "handling " + maxVMState);
         }
     };
 
@@ -1545,7 +1542,7 @@ public abstract class TeleVM implements MaxVM {
 
         public void suspend() {
 
-            if (state() == TeleProcess.State.RUNNING) {
+            if (_teleProcess.processState() == TeleProcess.ProcessState.RUNNING) {
                 LOGGER.info("Pausing VM...");
                 try {
                     TeleVM.this.pause();
@@ -1564,7 +1561,7 @@ public abstract class TeleVM implements MaxVM {
 
         public void resume() {
 
-            if (TeleVM.this.state() == TeleProcess.State.STOPPED) {
+            if (_teleProcess.processState() == ProcessState.STOPPED) {
 
                 if (_registeredSingleStepThread != null) {
 

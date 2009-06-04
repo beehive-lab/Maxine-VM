@@ -27,11 +27,11 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.Inspection.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
+import com.sun.max.tele.*;
 import com.sun.max.util.*;
 
 
@@ -48,6 +48,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI {
     private final Cursor _busyCursor = new Cursor(Cursor.WAIT_CURSOR);
     private final JDesktopPane _desktopPane;
     private final JScrollPane _scrollPane;
+    private final InspectorMainMenuBar _menuBar;
     private final InspectorMenu _desktopMenu = new InspectorMenu();
 
     /**
@@ -140,7 +141,8 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI {
         _desktopPane.setOpaque(true);
         _scrollPane = new InspectorScrollPane(_inspection, _desktopPane);
         setContentPane(_scrollPane);
-        setJMenuBar(new InspectorMainMenuBar(actions));
+        _menuBar = new InspectorMainMenuBar(actions);
+        setJMenuBar(_menuBar);
 
         _desktopMenu.add(actions.viewBootImage());
         _desktopMenu.add(actions.viewMemoryRegions());
@@ -227,27 +229,27 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI {
         repaint();
     }
 
-    public void showVMState(InspectionState inspectionState) {
-        final InspectorMainMenuBar menuBar = (InspectorMainMenuBar) getJMenuBar();
-        switch (inspectionState) {
-            case STOPPED_IN_GC:
-                menuBar.setStateColor(_inspection.style().vmStoppedinGCBackgroundColor());
-                break;
+    public void showVMState(MaxVMState maxVMState) {
+        switch (maxVMState.processState()) {
             case STOPPED:
-                menuBar.setStateColor(_inspection.style().vmStoppedBackgroundColor());
+                if (maxVMState.isInGC()) {
+                    _menuBar.setStateColor(_inspection.style().vmStoppedinGCBackgroundColor());
+                } else {
+                    _menuBar.setStateColor(_inspection.style().vmStoppedBackgroundColor());
+                }
                 break;
             case RUNNING:
-                menuBar.setStateColor(_inspection.style().vmRunningBackgroundColor());
+                _menuBar.setStateColor(_inspection.style().vmRunningBackgroundColor());
                 break;
             case TERMINATED:
-                menuBar.setStateColor(_inspection.style().vmTerminatedBackgroundColor());
+                _menuBar.setStateColor(_inspection.style().vmTerminatedBackgroundColor());
                 break;
             default:
-                ProgramError.unknownCase(inspectionState.toString());
+                ProgramError.unknownCase(maxVMState.processState().toString());
         }
     }
 
-    public void showBusy(boolean busy) {
+    public void showInspectorBusy(boolean busy) {
         if (busy) {
             _desktopPane.setCursor(_busyCursor);
         } else {

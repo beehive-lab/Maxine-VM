@@ -92,12 +92,6 @@ public interface MaxVM {
     File programFile();
 
     /**
-     * Determines if this VM is read-only. The operations that try to write to the memory of a read-only VM
-     * or change its execution state will result in a {@link TeleVMException}.
-     */
-    boolean isReadOnly();
-
-    /**
      * Determines if the heap and code sections in the boot image have been relocated.
      */
     boolean isBootImageRelocated();
@@ -495,12 +489,12 @@ public interface MaxVM {
     void describeTeleTargetRoutines(PrintStream printStream);
 
     /**
-     * @return VM process state
+     * @return VM state
      */
-    State state();
+    MaxVMState maxVMState();
 
     /**
-     * @param listener will be notified of changes to {@link state()}.
+     * @param listener will be notified of changes to {@link #maxVMState()}.
      */
     void addStateListener(StateTransitionListener listener);
 

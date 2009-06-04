@@ -45,30 +45,13 @@ public abstract class InspectorAction extends AbstractAction implements Prober {
 
     private final Inspection _inspection;
 
-    /*
-     * Identifies actions that start the VM running so that the Inspector visuals can be updated immediately.
-     */
-    private final boolean _runsVM;
-
     /**
      * Creates an action than involves Inspector machinery in addition to GUI machinery.
-     *
      * @param title  name of the action for human consumption
      */
     public InspectorAction(Inspection inspection, String title) {
-        this(inspection, title, false);
-    }
-
-    /**
-     * Creates an action than involves Inspector machinery in addition to GUI machinery.
-     *
-     * @param title  name of the action for human consumption
-     * @param runsVM whether the actions causes the VM to start running.
-     */
-    public InspectorAction(Inspection inspection, String title, boolean runsVM) {
         super(title);
         _inspection = inspection;
-        _runsVM = runsVM;
         inspection.registerAction(this);
     }
 
@@ -104,10 +87,7 @@ public abstract class InspectorAction extends AbstractAction implements Prober {
     public void perform() {
         Trace.begin(TRACE_VALUE, _actionTracer);
         final long startTimeMillis = System.currentTimeMillis();
-        _inspection.gui().showBusy(true);
-        if (_runsVM) {
-            _inspection.assumeRunning();
-        }
+        _inspection.gui().showInspectorBusy(true);
         try {
             procedure();
         } catch (InspectorError inspectorError) {
@@ -117,7 +97,7 @@ public abstract class InspectorAction extends AbstractAction implements Prober {
         } finally {
             _inspection.setCurrentAction(null);
             Trace.end(TRACE_VALUE, _actionTracer, startTimeMillis);
-            _inspection.gui().showBusy(false);
+            _inspection.gui().showInspectorBusy(false);
         }
     }
 

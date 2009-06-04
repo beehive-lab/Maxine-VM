@@ -22,10 +22,12 @@ package com.sun.max.tele.debug.no;
 
 import java.io.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.debug.TeleProcess.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.prototype.*;
 
@@ -40,6 +42,8 @@ public final class ReadOnlyTeleVM extends TeleVM {
     private final boolean _relocate;
 
     private TeleMessenger _messenger = new NoVMInspectorMessenger();
+
+    private MaxVMState _maxVMState = new TeleVMState(ProcessState.NO_PROCESS, 0, null, Sequence.Static.empty(TeleNativeThread.class), false, null);
 
     /**
      * Creates a tele VM instance for inspecting a boot image without executing it.
@@ -74,8 +78,8 @@ public final class ReadOnlyTeleVM extends TeleVM {
     }
 
     @Override
-    public boolean isReadOnly() {
-        return true;
+    public MaxVMState maxVMState() {
+        return _maxVMState;
     }
 
     @Override

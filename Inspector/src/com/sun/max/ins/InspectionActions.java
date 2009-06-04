@@ -2515,7 +2515,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Resume";
 
         DebugResumeAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
         }
 
@@ -2554,7 +2554,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Return from frame (ignoring breakpoints)";
 
         DebugReturnFromFrameAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
         }
 
@@ -2596,7 +2596,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Return from frame";
 
         DebugReturnFromFrameWithBreakpointsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
         }
 
@@ -2638,7 +2638,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Run to selected instruction (ignoring breakpoints)";
 
         DebugRunToSelectedInstructionAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
         }
 
@@ -2682,7 +2682,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Run to selected instruction";
 
         DebugRunToSelectedInstructionWithBreakpointsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
         }
 
@@ -2726,7 +2726,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Run to next call instruction (ignoring breakpoints)";
 
         DebugRunToNextCallAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
         }
 
@@ -2772,7 +2772,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Run to next call instruction";
 
         DebugRunToNextCallWithBreakpointsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
         }
 
@@ -2817,7 +2817,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Single instruction step";
 
         DebugSingleStepAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
         }
 
@@ -2856,7 +2856,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Step over (ignoring breakpoints)";
 
         DebugStepOverAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
         }
 
@@ -2896,7 +2896,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Step over";
 
         DebugStepOverWithBreakpointsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
         }
 
