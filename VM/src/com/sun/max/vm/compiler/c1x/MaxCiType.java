@@ -363,4 +363,15 @@ public class MaxCiType implements CiType {
         return o == this;
     }
 
+    /**
+     * Converts this compiler interface type to a string.
+     */
+    @Override
+    public String toString() {
+        if (_classActor != null) {
+            return _classActor.toString();
+        }
+        return _typeDescriptor.toString() + " [unresolved]";
+    }
+
 }
