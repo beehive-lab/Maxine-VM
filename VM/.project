@@ -3,6 +3,7 @@
 	<name>VM</name>
 	<comment></comment>
 	<projects>
+		<project>C1X</project>
 		<project>jung</project>
 		<project>MaxwellAssembler</project>
 		<project>MaxwellBase</project>

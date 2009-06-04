@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.ci;
 
-import com.sun.c1x.value.ConstType;
 import com.sun.c1x.value.BasicType;
 
 /**

@@ -56,7 +56,7 @@ public class MaxCiField implements CiField {
     }
 
     /**
-     * Creates a new unresolved field with the specified field ref constant
+     * Creates a new unresolved field with the specified field ref constant.
      * @param constantPool the constant pool in which the field is referenced
      * @param fieldRef the field reference
      */
@@ -73,9 +73,8 @@ public class MaxCiField implements CiField {
     public String name() {
         if (_fieldActor != null) {
             return _fieldActor.name().toString();
-        } else {
-            return _fieldRef.name(_constantPool._constantPool).toString();
         }
+        return _fieldRef.name(_constantPool._constantPool).toString();
     }
 
     /**
@@ -85,9 +84,8 @@ public class MaxCiField implements CiField {
     public CiType type() {
         if (_fieldActor != null) {
             return _constantPool.canonicalCiType(_fieldActor.type());
-        } else {
-            return new MaxCiType(_constantPool, _fieldRef.type(_constantPool._constantPool));
         }
+        return new MaxCiType(_constantPool, _fieldRef.type(_constantPool._constantPool));
     }
 
     /**
@@ -105,9 +103,8 @@ public class MaxCiField implements CiField {
     public CiType holder() {
         if (_fieldActor != null) {
             return _constantPool.canonicalCiType(_fieldActor.holder());
-        } else {
-            return new MaxCiType(_constantPool, _fieldRef.holder(_constantPool._constantPool));
         }
+        return new MaxCiType(_constantPool, _fieldRef.holder(_constantPool._constantPool));
     }
 
     /**
@@ -173,6 +170,7 @@ public class MaxCiField implements CiField {
      * otherwise the identity hash code for this object.
      * @return the hashcode
      */
+    @Override
     public int hashCode() {
         if (_fieldActor != null) {
             return System.identityHashCode(_fieldActor); // use the field actor's hashcode
@@ -188,9 +186,10 @@ public class MaxCiField implements CiField {
      * @param o the object to check
      * @return <code>true</code> if this object is equal to the other
      */
+    @Override
     public boolean equals(Object o) {
         if (_fieldActor != null && o instanceof MaxCiField) {
-            return _fieldActor == ((MaxCiField)o)._fieldActor;
+            return _fieldActor == ((MaxCiField) o)._fieldActor;
         }
         return o == this;
     }

@@ -80,7 +80,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @param cpi the constant pool index of the field reference
      * @return the compiler interface field resolved at that index
      */
-    public CiField resolvePutField(char cpi){
+    public CiField resolvePutField(char cpi) {
         return resolveField(cpi); // TODO: check for incompatible class changes
     }
 
@@ -91,7 +91,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @param cpi the constant pool index of the field reference
      * @return the compiler interface field resolved at that index
      */
-    public CiField resolveGetStatic(char cpi){
+    public CiField resolveGetStatic(char cpi) {
         return resolveField(cpi); // TODO: check for incompatible class changes
     }
 
@@ -102,7 +102,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @param cpi the constant pool index of the field reference
      * @return the compiler interface field resolved at that index
      */
-    public CiField resolvePutStatic(char cpi){
+    public CiField resolvePutStatic(char cpi) {
         return resolveField(cpi); // TODO: check for incompatible class changes
     }
 
@@ -235,7 +235,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @return the compiler interface constant at that index
      */
     public CiConstant lookupConstant(char cpi) {
-        PoolConstant constant = _constantPool.at(cpi);
+        final PoolConstant constant = _constantPool.at(cpi);
         if (constant instanceof IntegerConstant) {
             return new MaxCiConstant(IntValue.from(_constantPool.intAt(cpi)));
         } else if (constant instanceof LongConstant) {
@@ -254,23 +254,17 @@ public class MaxCiConstantPool implements CiConstantPool {
 
     private MaxCiField fieldFrom(FieldRefConstant constant) {
         if (constant instanceof FieldRefConstant.Resolved) {
-            // the constant is resolved; canonicalize it and return
-            FieldActor fieldActor = ((FieldRefConstant.Resolved) constant).fieldActor();
-            return canonicalCiField(fieldActor);
+            return canonicalCiField(((FieldRefConstant.Resolved) constant).fieldActor());
         }
         return new MaxCiField(this, constant);
     }
 
     private MaxCiMethod methodFrom(MethodRefConstant constant) {
         if (constant instanceof ClassMethodRefConstant.Resolved) {
-            // the constant is resolved; canonicalize it and return
-            MethodActor methodActor = ((ClassMethodRefConstant.Resolved) constant).methodActor();
-            return canonicalCiMethod(methodActor);
+            return canonicalCiMethod(((ClassMethodRefConstant.Resolved) constant).methodActor());
         }
         if (constant instanceof InterfaceMethodRefConstant.Resolved) {
-            // the constant is resolved; canonicalize it and return
-            MethodActor methodActor = ((InterfaceMethodRefConstant.Resolved) constant).methodActor();
-            return canonicalCiMethod(methodActor);
+            return canonicalCiMethod(((InterfaceMethodRefConstant.Resolved) constant).methodActor());
         }
         // no canonicalization necessary for unresolved constants
         return new MaxCiMethod(this, constant);
@@ -278,9 +272,7 @@ public class MaxCiConstantPool implements CiConstantPool {
 
     private MaxCiType typeFrom(ClassConstant constant) {
         if (constant instanceof ClassConstant.Resolved) {
-            // the constant is resolved; canonicalize it and return
-            ClassActor classActor = ((ClassConstant.Resolved) constant).classActor();
-            return canonicalCiType(classActor);
+            return canonicalCiType(((ClassConstant.Resolved) constant).classActor());
         }
         // no canonicalization necessary for unresolved constants
         return new MaxCiType(this, constant);
@@ -289,15 +281,15 @@ public class MaxCiConstantPool implements CiConstantPool {
     /**
      * Canonicalizes resolved <code>MaxCiType</code> instances (per runtime), so
      * that the same <code>MaxCiType</code> instance is always returned for the
-     * same <code>ClassActor</code>
+     * same <code>ClassActor</code>.
      * @param classActor the class actor for which to get the canonical type
      * @return the canonical compiler interface type for the class actor
      */
     public MaxCiType canonicalCiType(ClassActor classActor) {
-        MaxCiType type = new MaxCiType(this, classActor);
+        final MaxCiType type = new MaxCiType(this, classActor);
         synchronized (_runtime) {
             // all resolved types are canonicalized per runtime instance
-            MaxCiType previous = _runtime._types.get(type);
+            final MaxCiType previous = _runtime._types.get(type);
             if (previous == null) {
                 _runtime._types.put(type, type);
                 return type;
@@ -309,15 +301,15 @@ public class MaxCiConstantPool implements CiConstantPool {
     /**
      * Canonicalizes resolved <code>MaxCiMethod</code> instances (per runtime), so
      * that the same <code>MaxCiMethod</code> instance is always returned for the
-     * same <code>MethodActor</code>
+     * same <code>MethodActor</code>.
      * @param methodActor the mehtod actor for which to get the canonical type
      * @return the canonical compiler interface method for the method actor
      */
     public MaxCiMethod canonicalCiMethod(MethodActor methodActor) {
-        MaxCiMethod method = new MaxCiMethod(this, methodActor);
+        final MaxCiMethod method = new MaxCiMethod(this, methodActor);
         synchronized (_runtime) {
             // all resolved methods are canonicalized per runtime instance
-            MaxCiMethod previous = _runtime._methods.get(method);
+            final MaxCiMethod previous = _runtime._methods.get(method);
             if (previous == null) {
                 _runtime._methods.put(method, method);
                 return method;
@@ -329,15 +321,15 @@ public class MaxCiConstantPool implements CiConstantPool {
     /**
      * Canonicalizes resolved <code>MaxCiFielde</code> instances (per runtime), so
      * that the same <code>MaxCiField</code> instance is always returned for the
-     * same <code>FieldActor</code>
+     * same <code>FieldActor</code>.
      * @param fieldActor the field actor for which to get the canonical type
      * @return the canonical compiler interface field for the field actor
      */
     public MaxCiField canonicalCiField(FieldActor fieldActor) {
-        MaxCiField field = new MaxCiField(this, fieldActor);
+        final MaxCiField field = new MaxCiField(this, fieldActor);
         synchronized (_runtime) {
             // all resolved field are canonicalized per runtime instance
-            MaxCiField previous = _runtime._fields.get(field);
+            final MaxCiField previous = _runtime._fields.get(field);
             if (previous == null) {
                 _runtime._fields.put(field, field);
                 return field;
@@ -349,7 +341,7 @@ public class MaxCiConstantPool implements CiConstantPool {
     /**
      * Caches the compiler interface signature objects (per constant pool), to
      * reduce the amount of decoding done for repeated uses of the same signature.
-     * @param descriptor the signature descriptor
+     * @param descriptor the signature descriptor.
      * @return the cached compiler interface signature object
      */
     public synchronized MaxCiSignature cacheSignature(SignatureDescriptor descriptor) {

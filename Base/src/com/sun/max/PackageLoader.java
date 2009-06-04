@@ -80,7 +80,7 @@ public class PackageLoader {
             }
         };
         classSearch.run(_classpath, packageName.replace('.', '/'));
-        ProgramError.check(!classNames.isEmpty(), "no classes found in package: " + packageName);
+        ProgramWarning.check(!classNames.isEmpty(), "no classes found in package: " + packageName);
         return classes;
     }
 

@@ -51,8 +51,8 @@ public class MaxCiRuntime implements CiRuntime {
      * @return the compiler interface constant pool for the specified method
      */
     public CiConstantPool getConstantPool(CiMethod method) {
-        ClassMethodActor classMethodActor = this.asClassMethodActor(method, "getConstantPool()");
-        ConstantPool cp = classMethodActor.codeAttribute().constantPool();
+        final ClassMethodActor classMethodActor = this.asClassMethodActor(method, "getConstantPool()");
+        final ConstantPool cp = classMethodActor.codeAttribute().constantPool();
         synchronized (this) {
             MaxCiConstantPool constantPool = _constantPools.get(cp);
             if (constantPool == null) {
@@ -154,7 +154,7 @@ public class MaxCiRuntime implements CiRuntime {
      * @return the compiler interface type for the class
      */
     public CiType resolveType(String name) {
-        ClassActor classActor = ClassRegistry.get(null, JavaTypeDescriptor.getDescriptorForJavaString(name));
+        final ClassActor classActor = ClassRegistry.get((ClassLoader) null, JavaTypeDescriptor.getDescriptorForJavaString(name));
         if (classActor != null) {
             return _globalConstantPool.canonicalCiType(classActor);
         }
@@ -172,16 +172,14 @@ public class MaxCiRuntime implements CiRuntime {
 
     ClassMethodActor asClassMethodActor(CiMethod method, String operation) {
         if (method instanceof MaxCiMethod) {
-            MaxCiMethod maxMethod = (MaxCiMethod) method;
-            return maxMethod.asClassMethodActor(operation);
+            return ((MaxCiMethod) method).asClassMethodActor(operation);
         }
         throw new MaxCiUnresolved("invalid CiMethod instance: " + method.getClass());
     }
 
     ClassActor asClassActor(CiType type, String operation) {
         if (type instanceof MaxCiType) {
-            MaxCiType maxClass = (MaxCiType) type;
-            return maxClass.asClassActor(operation);
+            return ((MaxCiType) type).asClassActor(operation);
         }
         throw new MaxCiUnresolved("invalid CiType instance: " + type.getClass());
     }

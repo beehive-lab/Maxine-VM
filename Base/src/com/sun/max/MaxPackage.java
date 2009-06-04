@@ -188,7 +188,7 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
     }
 
     /**
-     * Gets the class within this package implementing a given scheme type (represented as an as abstract class or interface).
+     * Gets the class within this package implementing a given scheme type (represented as an abstract class or interface).
      *
      * @return the class directly within this package that implements {@code scheme} or null if no such class
      *         exists

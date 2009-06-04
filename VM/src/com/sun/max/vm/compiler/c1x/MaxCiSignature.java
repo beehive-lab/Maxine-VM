@@ -66,7 +66,7 @@ public class MaxCiSignature implements CiSignature {
      */
     public CiType argumentType(int index) {
         if (_ciTypes == null) {
-            int max = _descriptor.numberOfParameters();
+            final int max = _descriptor.numberOfParameters();
             _ciTypes = new MaxCiType[max];
             for (int i = 0; i < max; i++) {
                 _ciTypes[i] = descriptorToCiType(_descriptor.parameterDescriptorAt(i));
@@ -84,7 +84,7 @@ public class MaxCiSignature implements CiSignature {
      */
     public BasicType argumentBasicType(int index) {
         if (_basicTypes == null) {
-            int max = _descriptor.numberOfParameters();
+            final int max = _descriptor.numberOfParameters();
             _basicTypes = new BasicType[max];
             for (int i = 0; i < max; i++) {
                 _basicTypes[i] = descriptorToBasicType(_descriptor.parameterDescriptorAt(i));

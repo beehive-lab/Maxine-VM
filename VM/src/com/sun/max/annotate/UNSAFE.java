@@ -26,7 +26,6 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -118,7 +117,7 @@ public @interface UNSAFE {
             if (classMethodActor.isCFunction() || classMethodActor.isJniFunction()) {
                 return true;
             }
-            if (MaxineVM.isPrototypeOnly(classMethodActor) || classMethodActor.isClassInitializer()) { // TODO: check whether the latter is always correct
+            if (classMethodActor.isClassInitializer()) { // TODO: check whether the latter is always correct
                 return false;
             }
             final ClassActor classActor = classMethodActor.holder();

@@ -37,7 +37,7 @@ public class MaxCiConstant implements CiConstant {
     private final MaxCiType _type;
 
     /**
-     * Constructs a new constant from a <code>Value</code>
+     * Constructs a new constant from a <code>Value</code>.
      * @param value the value
      */
     MaxCiConstant(Value value) {

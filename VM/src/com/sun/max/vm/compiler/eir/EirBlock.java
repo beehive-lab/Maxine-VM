@@ -29,10 +29,53 @@ import com.sun.max.vm.compiler.target.*;
 
 /**
  * @author Bernd Mathiske
+ * @author Thomas Wuerthinger
  */
 public class EirBlock extends EirValue implements IrBlock, PoolObject {
 
     private final EirMethod _method;
+
+    private int _loopNestingDepth;
+    private boolean _isMoveResolverBlock;
+
+    private PoolSet<EirVariable> _liveGen;
+    private PoolSet<EirVariable> _liveKill;
+    private PoolSet<EirVariable> _inverseLiveKill;
+    private PoolSet<EirVariable> _liveIn;
+    private PoolSet<EirVariable> _liveOut;
+
+    public void setLiveKill(PoolSet<EirVariable> liveKill) {
+        _liveKill = liveKill;
+
+        _inverseLiveKill = PoolSet.allOf(liveKill.pool());
+        for (EirVariable variable : liveKill) {
+            _inverseLiveKill.remove(variable);
+        }
+    }
+
+    public void setLiveGen(PoolSet<EirVariable> liveGen) {
+        _liveGen = liveGen;
+    }
+
+    public PoolSet<EirVariable> liveGen() {
+        return _liveGen;
+    }
+
+    public void setLiveIn(PoolSet<EirVariable> liveIn) {
+        _liveIn = liveIn;
+    }
+
+    public void setLiveOut(PoolSet<EirVariable> liveOut) {
+        _liveOut = liveOut;
+    }
+
+    public PoolSet<EirVariable> liveIn() {
+        return _liveIn;
+    }
+
+    public PoolSet<EirVariable> liveOut() {
+        return _liveOut;
+    }
 
     public EirMethod method() {
         return _method;
@@ -42,6 +85,10 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
 
     public Role role() {
         return _role;
+    }
+
+    public void setRole(Role r) {
+        _role = r;
     }
 
     private int _serial;
@@ -62,6 +109,7 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
     }
 
     public final class Location extends EirLocation {
+
         private final EirBlock _block;
 
         public EirBlock block() {
@@ -100,7 +148,15 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
     }
 
     public void addPredecessor(EirBlock block) {
+        block.clearSuccessorCache();
         _predecessors.add(block);
+    }
+
+    public void clearPredecessors() {
+        for (EirBlock pred : _predecessors) {
+            pred.clearSuccessorCache();
+        }
+        _predecessors.clear();
     }
 
     public boolean isAdjacentSuccessorOf(EirBlock other) {
@@ -108,6 +164,7 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
     }
 
     public interface Procedure {
+
         void run(EirBlock block);
     }
 
@@ -117,18 +174,83 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
         }
     }
 
-    private int _loopNestingDepth;
+    private Sequence<EirBlock> _cachedNormalSuccessors;
+    private Sequence<EirBlock> _cachedAllSuccessors;
+
+    /**
+     * (tw) Returns normal unique successors of a block without exception successors.
+     * @return
+     */
+    public Sequence<EirBlock> normalUniqueSuccessors() {
+
+        if (_cachedNormalSuccessors != null) {
+            return _cachedNormalSuccessors;
+        }
+
+        final IdentityHashSet<EirBlock> blocks = new LinkedIdentityHashSet<EirBlock>();
+        final AppendableSequence<EirBlock> result = new ArrayListSequence<EirBlock>(3);
+
+        final Procedure filterProcedure = new Procedure() {
+
+            @Override
+            public void run(EirBlock block) {
+                if (!blocks.contains(block)) {
+                    blocks.add(block);
+                    result.append(block);
+                }
+            }
+        };
+
+        instructions().last().visitSuccessorBlocks(filterProcedure);
+
+        _cachedNormalSuccessors = result;
+        return result;
+    }
+
+    private void clearSuccessorCache() {
+        _cachedAllSuccessors = null;
+        _cachedNormalSuccessors = null;
+    }
+
+    /**
+     * (tw) Returns all unique successors of a block.
+     * @return
+     */
+    public Sequence<EirBlock> allUniqueSuccessors() {
+
+        if (_cachedAllSuccessors != null) {
+            return _cachedAllSuccessors;
+        }
+
+        final IdentityHashSet<EirBlock> blocks = new LinkedIdentityHashSet<EirBlock>();
+        final AppendableSequence<EirBlock> result = new ArrayListSequence<EirBlock>(3);
+
+        final Procedure filterProcedure = new Procedure() {
+
+            @Override
+            public void run(EirBlock block) {
+                if (!blocks.contains(block)) {
+                    blocks.add(block);
+                    result.append(block);
+                }
+            }
+        };
+
+        for (EirInstruction instruction : _instructions) {
+            instruction.visitSuccessorBlocks(filterProcedure);
+        }
+
+        _cachedAllSuccessors = result;
+        return result;
+    }
 
     public int loopNestingDepth() {
         return _loopNestingDepth;
     }
 
     public void setLoopNestingDepth(int loopNestingDepth) {
+        assert loopNestingDepth >= 0;
         _loopNestingDepth = loopNestingDepth;
-    }
-
-    public void incrementLoopNestingDepth() {
-        _loopNestingDepth++;
     }
 
     private final VariableSequence<EirInstruction> _instructions = new ArrayListSequence<EirInstruction>();
@@ -203,15 +325,101 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
         }
     }
 
+    private void printSet(IndentWriter writer, String name, PoolSet<EirVariable> set) {
+
+        writer.print(name + "={");
+
+        for (EirVariable variable : set) {
+            writer.print(variable.toString() + "; ");
+        }
+
+        writer.print("}");
+    }
+
     public void printTo(IndentWriter writer) {
-        writer.println(toString());
+        writer.print(toString());
+
+        if (this.isMoveResolverBlock()) {
+            writer.print("(MOVE_RESOLVER)");
+        }
+
+        if (_liveIn != null) {
+            printSet(writer, "liveIn", _liveIn);
+        }
+
+        if (_liveOut != null) {
+            printSet(writer, "liveOut", _liveOut);
+        }
+
+        if (_liveKill != null) {
+            printSet(writer, "liveKill", _liveKill);
+        }
+
+        if (_liveGen != null) {
+            printSet(writer, "liveGen", _liveGen);
+        }
+
+        writer.println();
         writer.indent();
         int i = 0;
         while (i < _instructions.length()) {
-            writer.println(":" + Integer.toString(i) + "   " + _instructions.get(i).toString());
+            writer.println(":" + Integer.toString(i) + " (" + Integer.toString(_instructions.get(i).number()) + ") " + _instructions.get(i).toString());
             i++;
         }
         writer.outdent();
+        writer.flush();
+    }
+
+    public PoolSet<EirVariable> inverseLiveKill() {
+        return _inverseLiveKill;
+    }
+
+    private int _beginNumber;
+    private int _endNumber;
+
+    public int beginNumber() {
+        return _beginNumber;
+    }
+
+    public void setNumbers(int begin, int end) {
+        assert begin <= end;
+        _beginNumber = begin;
+        _endNumber = end;
+    }
+
+    public int endNumber() {
+        return _endNumber;
+    }
+
+    /**
+     * Substitutes all predecessor blocks based on a set of substitution pairs.
+     * @param mapping a mapping object containing the substitution pairs
+     */
+    public void substitutePredecessorBlocks(VariableMapping<EirBlock, EirBlock> mapping) {
+        for (EirBlock block : mapping.keys()) {
+            if (_predecessors.contains(block)) {
+                final EirBlock substitute = mapping.get(block);
+                _predecessors.remove(block);
+                _predecessors.add(substitute);
+                substitute.clearSuccessorCache();
+                block.clearSuccessorCache();
+            }
+        }
+
+    }
+
+    /**
+     * Sets whether this block was only inserted in order to resolve moves during register allocation.
+     */
+    public void setMoveResolverBlock(boolean b) {
+        _isMoveResolverBlock = b;
+    }
+
+    /**
+     * Checks whether this block was only inserted in order to resolve moves during register allocation.
+     */
+    public boolean isMoveResolverBlock() {
+        return _isMoveResolverBlock;
     }
 
 }

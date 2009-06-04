@@ -20,8 +20,10 @@
  */
 package com.sun.c1x;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.util.Util;
+import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.ci.CiOsrFrame;
+import com.sun.c1x.ci.CiRuntime;
+import com.sun.c1x.ci.CiType;
 import com.sun.c1x.graph.BlockMap;
 import com.sun.c1x.ir.BlockBegin;
 

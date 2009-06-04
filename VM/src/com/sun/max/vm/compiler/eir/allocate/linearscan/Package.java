@@ -18,10 +18,25 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/**
- * Register allocation specialization for AMD64.
- *
- * @author Bernd Mathiske
- */
-package com.sun.max.vm.compiler.eir.allocate.amd64;
+package com.sun.max.vm.compiler.eir.allocate.linearscan;
 
+import com.sun.max.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.compiler.eir.allocate.*;
+
+/**
+ * @see MaxPackage
+ *
+ * @author Thomas Wuerthinger
+ */
+public class Package extends VMPackage {
+    public Package() {
+        super();
+    }
+
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return vmConfiguration.compilerScheme() instanceof EirGeneratorScheme && EirAllocatorFactory.isSelected(this);
+    }
+}

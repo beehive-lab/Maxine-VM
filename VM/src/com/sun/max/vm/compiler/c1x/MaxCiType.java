@@ -82,7 +82,7 @@ public class MaxCiType implements CiType {
     public MaxCiType(MaxCiConstantPool constantPool, TypeDescriptor typeDescriptor) {
         _constantPool = constantPool;
         if (typeDescriptor instanceof JavaTypeDescriptor.AtomicTypeDescriptor) {
-            JavaTypeDescriptor.AtomicTypeDescriptor atom = (JavaTypeDescriptor.AtomicTypeDescriptor) typeDescriptor;
+            final JavaTypeDescriptor.AtomicTypeDescriptor atom = (JavaTypeDescriptor.AtomicTypeDescriptor) typeDescriptor;
             _classActor = ClassActor.fromJava(atom.getJavaClass());
         }
         _typeDescriptor = typeDescriptor;
@@ -126,7 +126,7 @@ public class MaxCiType implements CiType {
     }
 
     /**
-     * Checks whether this compiler interface type has any subclasses that have finalizers
+     * Checks whether this compiler interface type has any subclasses that have finalizers.
      * @return <code>true</code> if this class has any subclasses with finalizers
      * @throws MaxCiUnresolved if the class is not resolved
      */
@@ -194,7 +194,7 @@ public class MaxCiType implements CiType {
      * @throws MaxCiUnresolved if either class is not resolved
      */
     public boolean isSubtypeOf(CiType other) {
-        MaxCiType otherType = (MaxCiType) other;
+        final MaxCiType otherType = (MaxCiType) other;
         return otherType.asClassActor("isSubtypeOf()").isAssignableFrom(this.asClassActor("isSubtypeOf()"));
     }
 
@@ -208,7 +208,7 @@ public class MaxCiType implements CiType {
     }
 
     /**
-     * Gets the element type of this compiler interface type
+     * Gets the element type of this compiler interface type.
      * @return the element type if this class is an array
      * @throws MaxCiUnresolved if the class is not resolved
      */
@@ -223,7 +223,7 @@ public class MaxCiType implements CiType {
      * @return the exact type of this type, if it is known; <code>null</code> otherwise
      */
     public CiType exactType() {
-        ClassActor classActor = _classActor;
+        final ClassActor classActor = _classActor;
         if (classActor != null) {
             if (isFinalOrPrimitive(classActor)) {
                 return this;
@@ -255,17 +255,17 @@ public class MaxCiType implements CiType {
      * @throws MaxCiUnresolved if this type or the method is unresolved
      */
     public CiMethod resolveMethodImpl(CiMethod method) {
-        MethodActor methodActor = ((MaxCiMethod) method)._methodActor;
-        ClassActor classActor = asClassActor("resolveMethod()");
+        final MethodActor methodActor = ((MaxCiMethod) method)._methodActor;
+        final ClassActor classActor = asClassActor("resolveMethod()");
         if (methodActor instanceof InterfaceMethodActor) {
             // resolve the actual method implementation in this class
-            int index = ((InterfaceMethodActor) methodActor).iIndexInInterface();
-            VirtualMethodActor implementation = classActor.getVirtualMethodActorByIIndex(index);
+            final int index = ((InterfaceMethodActor) methodActor).iIndexInInterface();
+            final VirtualMethodActor implementation = classActor.getVirtualMethodActorByIIndex(index);
             return _constantPool.canonicalCiMethod(implementation);
         } else if (methodActor instanceof VirtualMethodActor) {
             // resolve the actual method implementation in this class
-            int index = ((VirtualMethodActor) methodActor).vTableIndex();
-            VirtualMethodActor implementation = classActor.getVirtualMethodActorByVTableIndex(index);
+            final int index = ((VirtualMethodActor) methodActor).vTableIndex();
+            final VirtualMethodActor implementation = classActor.getVirtualMethodActorByVTableIndex(index);
             return _constantPool.canonicalCiMethod(implementation);
         } else {
             assert methodActor.isFinal() || methodActor.isPrivate();
@@ -308,16 +308,26 @@ public class MaxCiType implements CiType {
      */
     public static BasicType kindToBasicType(Kind kind) {
         switch (kind.asEnum()) {
-            case BYTE:      return BasicType.Byte;
-            case BOOLEAN:   return BasicType.Boolean;
-            case SHORT:     return BasicType.Short;
-            case CHAR:      return BasicType.Char;
-            case INT:       return BasicType.Int;
-            case FLOAT:     return BasicType.Float;
-            case LONG:      return BasicType.Long;
-            case DOUBLE:    return BasicType.Double;
-            case WORD:      return BasicType.Address;
-            case REFERENCE: return BasicType.Object;
+            case BYTE:
+                return BasicType.Byte;
+            case BOOLEAN:
+                return BasicType.Boolean;
+            case SHORT:
+                return BasicType.Short;
+            case CHAR:
+                return BasicType.Char;
+            case INT:
+                return BasicType.Int;
+            case FLOAT:
+                return BasicType.Float;
+            case LONG:
+                return BasicType.Long;
+            case DOUBLE:
+                return BasicType.Double;
+            case WORD:
+                return BasicType.Address;
+            case REFERENCE:
+                return BasicType.Object;
             default:
                 throw ProgramError.unknownCase();
         }
@@ -329,6 +339,7 @@ public class MaxCiType implements CiType {
      * otherwise the identity hash code for this object.
      * @return the hashcode
      */
+    @Override
     public int hashCode() {
         if (_classActor != null) {
             return System.identityHashCode(_classActor); // use the class actor's hashcode
@@ -344,9 +355,10 @@ public class MaxCiType implements CiType {
      * @param o the object to check
      * @return <code>true</code> if this object is equal to the other
      */
+    @Override
     public boolean equals(Object o) {
         if (_classActor != null && o instanceof MaxCiType) {
-            return _classActor == ((MaxCiType)o)._classActor;
+            return _classActor == ((MaxCiType) o)._classActor;
         }
         return o == this;
     }

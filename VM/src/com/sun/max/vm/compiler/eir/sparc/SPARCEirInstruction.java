@@ -541,7 +541,7 @@ public interface SPARCEirInstruction {
         public CALL(EirBlock block, EirABI abi, EirValue result, EirLocation resultLocation,
                         EirValue function, EirValue[] arguments, EirLocation[] argumentLocations,
                         EirMethodGeneration methodGeneration) {
-            super(block, abi, result, resultLocation, function, M_G_L_S, arguments, argumentLocations, methodGeneration);
+            super(block, abi, result, resultLocation, function, M_G, arguments, argumentLocations, methodGeneration);
             final SPARCEirABI sparcAbi = (SPARCEirABI) abi;
             _safepointLatch = (SPARCEirRegister.GeneralPurpose) sparcAbi.safepointLatchRegister();
             final DirToSPARCEirMethodTranslation sparcMethodGeneration = (DirToSPARCEirMethodTranslation) methodGeneration;
@@ -2401,7 +2401,7 @@ public interface SPARCEirInstruction {
         private void translateLookupBinarySearch(SPARCEirTargetEmitter emitter, int bottomIndex, int topIndex) {
             final SPARCEirRegister.GeneralPurpose scratchEirRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
             final GPR tagRegister = tagGeneralRegister().as();
-            final int middleIndex = (bottomIndex + topIndex) / 2;
+            final int middleIndex = (bottomIndex + topIndex) >> 1;
             final int match = matches()[middleIndex].value().asInt();
 
             if (SPARCEirOperation.isSimm13(match)) {
@@ -2445,6 +2445,17 @@ public interface SPARCEirInstruction {
         @Override
         public void acceptVisitor(SPARCEirInstructionVisitor visitor) {
             visitor.visit(this);
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder result = new StringBuilder(super.toString());
+
+            if (indexRegister() != null) {
+                result.append("; indexRegister=" + indexRegister());
+            }
+
+            return result.toString();
         }
 
     }

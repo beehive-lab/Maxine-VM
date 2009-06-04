@@ -210,21 +210,13 @@ public class MaxineTester {
     private static final ThreadLocal<PrintStream> _out = new ThreadLocal<PrintStream>() {
         @Override
         protected PrintStream initialValue() {
-            try {
-                return new PrintStream(new MultiOutputStream(System.out, new FileOutputStream(new File(_outputDir.getValue(), "console.stdout"))));
-            } catch (FileNotFoundException fileNotFoundException) {
-                throw ProgramError.unexpected(fileNotFoundException);
-            }
+            return System.out;
         }
     };
     private static final ThreadLocal<PrintStream> _err = new ThreadLocal<PrintStream>() {
         @Override
         protected PrintStream initialValue() {
-            try {
-                return new PrintStream(new MultiOutputStream(System.err, new FileOutputStream(new File(_outputDir.getValue(), "console.stderr"))));
-            } catch (FileNotFoundException fileNotFoundException) {
-                throw ProgramError.unexpected(fileNotFoundException);
-            }
+            return System.err;
         }
     };
 
@@ -1148,7 +1140,10 @@ public class MaxineTester {
 
                         } else if (line.contains("failed")) {
                             failedLines.append(line); // found a line with "failed"--probably a failed test
-                            addTestResult(lastTest, line);
+                            // (tw) bug?
+                            if (lastTest != null) {
+                                addTestResult(lastTest, line);
+                            }
                             lastTest = null;
                             lastTestNumber = null;
                         } else if (line.startsWith("Done: ")) {

@@ -55,7 +55,6 @@ public class CirTraceObserver extends IrTraceObserver {
         ALPHA_CONVERSION("Alpha conversion", 2),
         JAVA_LOCALS_PRUNING("Pruning Java locals", 2),
         COPY_PROPAGATION("Copy propagation", 2),
-        HCIR_SPLITTING("Split HCIR", 2),
         HCIR_TO_LCIR("HCIR -> LCIR", 2),
         FOLDING("Folding", 3),
         REDUCING("Reducing", 4),

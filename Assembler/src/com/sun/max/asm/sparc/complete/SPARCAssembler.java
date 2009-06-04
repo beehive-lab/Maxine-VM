@@ -54,7 +54,7 @@ public abstract class SPARCAssembler extends SPARCLabelAssembler {
         if ((numberOfBytes % 4) != 0) {
             throw new AssemblyException("Cannot pad instruction stream with a number of bytes not divisble by 4");
         }
-        for (int i = 0; i < numberOfBytes / 4; i++) {
+        for (int i = 0; i < numberOfBytes >> 2; i++) {
             nop();
         }
     }

@@ -18,11 +18,25 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.cir.optimize;
+package com.sun.max.vm.compiler.eir.allocate.some;
 
-import com.sun.max.vm.compiler.cir.*;
+import com.sun.max.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.compiler.eir.allocate.*;
 
-public interface DataflowAnalysis<T extends AbstractValue<T>> {
-    T get(CirNode v);
-    void apply(CirClosure closure);
+/**
+ * @see MaxPackage
+ *
+ * @author Bernd Mathiske
+ */
+public class Package extends VMPackage {
+    public Package() {
+        super();
+    }
+
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return vmConfiguration.compilerScheme() instanceof EirGeneratorScheme && EirAllocatorFactory.isSelected(this);
+    }
 }

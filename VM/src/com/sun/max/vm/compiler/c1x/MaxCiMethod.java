@@ -20,18 +20,13 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.util.BitMap;
-import com.sun.max.program.Problem;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.actor.member.MethodActor;
-import com.sun.max.vm.actor.member.VirtualMethodActor;
-import com.sun.max.vm.classfile.ExceptionHandlerEntry;
-import com.sun.max.vm.classfile.constant.MethodRefConstant;
-import com.sun.max.vm.type.SignatureDescriptor;
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.util.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.classfile.constant.*;
 
 /**
  * The <code>MaxCiMethod</code> implements a compiler interface method. A method can
@@ -77,9 +72,8 @@ public class MaxCiMethod implements CiMethod {
     public String name() {
         if (_methodActor != null) {
             return _methodActor.name().toString();
-        } else {
-            return _methodRef.name(_constantPool._constantPool).toString();
         }
+        return _methodRef.name(_constantPool._constantPool).toString();
     }
 
     /**
@@ -89,9 +83,8 @@ public class MaxCiMethod implements CiMethod {
     public CiType holder() {
         if (_methodActor != null) {
             return _constantPool.canonicalCiType(_methodActor.holder());
-        } else {
-            return new MaxCiType(_constantPool, _methodRef.holder(_constantPool._constantPool));
         }
+        return new MaxCiType(_constantPool, _methodRef.holder(_constantPool._constantPool));
     }
 
     /**
@@ -110,11 +103,9 @@ public class MaxCiMethod implements CiMethod {
      */
     public CiSignature signatureType() {
         if (_methodActor != null) {
-            SignatureDescriptor descriptor = _methodActor.descriptor();
-        } else {
-
+            return _constantPool.cacheSignature(_methodActor.descriptor());
         }
-        throw Problem.unimplemented();
+        return _constantPool.cacheSignature(_methodRef.signature(_constantPool._constantPool));
     }
 
     /**
@@ -273,7 +264,7 @@ public class MaxCiMethod implements CiMethod {
      */
     public boolean canBeStaticallyBound() {
         if (_methodActor instanceof ClassMethodActor) {
-            ClassMethodActor classMethodActor = (ClassMethodActor) _methodActor;
+            final ClassMethodActor classMethodActor = (ClassMethodActor) _methodActor;
             return classMethodActor.isStatic() || classMethodActor.isPrivate() || classMethodActor.isFinal();
         }
         return false;
@@ -298,7 +289,7 @@ public class MaxCiMethod implements CiMethod {
             // return the cached exception handlers
             return _exceptionHandlers;
         }
-        ClassMethodActor classMethodActor = asClassMethodActor("exceptionHandlers()");
+        final ClassMethodActor classMethodActor = asClassMethodActor("exceptionHandlers()");
         _exceptionHandlers = new ArrayList<CiExceptionHandler>();
         for (ExceptionHandlerEntry entry : classMethodActor.codeAttribute().exceptionHandlerTable()) {
             _exceptionHandlers.add(new MaxCiExceptionHandler((char) entry.startPosition(),
@@ -326,6 +317,7 @@ public class MaxCiMethod implements CiMethod {
      * otherwise the identity hash code for this object.
      * @return the hashcode
      */
+    @Override
     public int hashCode() {
         if (_methodActor != null) {
             return System.identityHashCode(_methodActor); // use the method actor's hashcode
@@ -341,9 +333,10 @@ public class MaxCiMethod implements CiMethod {
      * @param o the object to check
      * @return <code>true</code> if this object is equal to the other
      */
+    @Override
     public boolean equals(Object o) {
         if (_methodActor != null && o instanceof MaxCiMethod) {
-            return _methodActor == ((MaxCiMethod)o)._methodActor;
+            return _methodActor == ((MaxCiMethod) o)._methodActor;
         }
         return o == this;
     }
