@@ -186,6 +186,7 @@ fi
 # reflect any dependencies between the projects (i.e. if x depends on y, then y must
 # precede x in the list).
 projects=( \
+    C1X:src               \
     Base:src,test,shell   \
     Assembler:src,test    \
     VM:src,test           \
