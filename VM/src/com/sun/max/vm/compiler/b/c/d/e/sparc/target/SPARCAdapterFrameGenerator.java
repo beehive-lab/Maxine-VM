@@ -47,7 +47,7 @@ import com.sun.max.vm.type.*;
  * It maintains an expression stack adjusted dynamically, and use both
  * a frame pointer and a stack pointer. The former is used to access arguments and local variables, the latter is used
  * to maintain the Java expression stack. The stack pointer is the native stack pointer and is therefore biased.
- * The frame pointer is a local register and is not biased.
+ * The Java frame pointer is a local register and is not biased.
  *
  * All arguments to Java calls are passed via the Java expression stack. Result
  * are returned in a result register.
@@ -287,12 +287,13 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
 
         @Override
         void adapt(Kind kind, int optoCompilerStackOffset32, int jitStackOffset32) {
+            int biasedOptToStackOffset32 = optoCompilerStackOffset32 + SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
             if (kind.isCategory2() || kind == Kind.WORD || kind == Kind.REFERENCE) {
                 assembler().ldx(_optimizedCodeFramePointer, jitStackOffset32, _longScratchRegister);
-                assembler().stx(_longScratchRegister, _optimizedCodeStackPointer, optoCompilerStackOffset32);
+                assembler().stx(_longScratchRegister, _optimizedCodeStackPointer, biasedOptToStackOffset32);
             } else {
                 assembler().lduw(_optimizedCodeFramePointer, jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind), _intScratchRegister);
-                assembler().stw(_intScratchRegister, _optimizedCodeStackPointer, optoCompilerStackOffset32);
+                assembler().stw(_intScratchRegister, _optimizedCodeStackPointer, biasedOptToStackOffset32);
             }
         }
 
