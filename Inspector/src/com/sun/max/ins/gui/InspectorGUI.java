@@ -24,7 +24,7 @@ import java.awt.*;
 
 import javax.swing.*;
 
-import com.sun.max.ins.Inspection.*;
+import com.sun.max.tele.*;
 import com.sun.max.util.*;
 
 
@@ -59,14 +59,14 @@ public interface InspectorGUI {
     /**
      * Shows a visual indication of the presumed VM state.
      */
-    void showVMState(InspectionState inspectionState);
+    void showVMState(MaxVMState maxVMState);
 
     /**
      * Shows a visual indication of the Inspector state with regard to accepting user inputs.
      *
      * @param busy whether the Inspector is busy and not responding to user events
      */
-    void showBusy(boolean busy);
+    void showInspectorBusy(boolean busy);
 
     /**
      * Displays an information message in a modal dialog with specified frame title.

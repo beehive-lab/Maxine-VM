@@ -20,7 +20,7 @@
  */
 package com.sun.max.tele.debug;
 
-import static com.sun.max.tele.debug.TeleProcess.State.*;
+import static com.sun.max.tele.debug.TeleProcess.ProcessState.*;
 
 import java.io.*;
 import java.nio.*;
@@ -50,6 +50,8 @@ import com.sun.max.vm.thread.*;
 public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO {
 
     private static final int TRACE_VALUE = 2;
+
+    private static final Sequence<TeleNativeThread>_emptyThreadSequence = Sequence.Static.empty(TeleNativeThread.class);
 
     @Override
     protected String  tracePrefix() {
@@ -145,7 +147,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                                         bp.activate();
                                     }
 
-                                    updateState(RUNNING);
+                                    //updateState(RUNNING);
                                     Trace.line(TRACE_VALUE, tracePrefix() + "continuing after hitting unsatisfied conditional breakpoint");
                                     TeleProcess.this.resume();
                                     continuing = true;
@@ -164,8 +166,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 Trace.begin(TRACE_VALUE, tracePrefix() + "firing execution post-request action: " + request);
                 request.notifyProcessStopped();
                 Trace.end(TRACE_VALUE, tracePrefix() + "firing execution post-request action: " + request);
-                final TeleNativeThread singleStepThread = _lastSingleStepThread;
-                updateState(STOPPED, breakpointThreads, singleStepThread);
+                updateState(STOPPED, breakpointThreads, _lastSingleStepThread);
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
                 ThrowableDialog.showLater(throwable, null, tracePrefix() + "Uncaught exception while processing " + request);
@@ -215,7 +216,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         }
 
         private void execute(TeleEventRequest request, boolean isNested) {
-            if (!isNested && _state != STOPPED) {
+            if (!isNested && _processState != STOPPED) {
                 ProgramWarning.message(tracePrefix() + "Cannot execute \"" + request + "\" unless process state is " + STOPPED);
             } else {
                 try {
@@ -273,9 +274,44 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         return CString.utf8ArrayFromStringArray(strings, true);
     }
 
+    /**
+     * The possible states of a {@link TeleProcess}.
+     */
+    public enum ProcessState {
+        NO_PROCESS, STOPPED, RUNNING, TERMINATED
+    }
+
+    protected ProcessState _processState;
+
+    /**
+     * Gets the current state of this process.
+     * @return the current state of the process
+     */
+    public final ProcessState processState() {
+        return _processState;
+    }
+
+    private long _epoch;
+
+    /**
+     * Gets the current epoch: the number of requested execution steps of the process since it was created.
+     *
+     * @return the current epoch
+     */
+    public long epoch() {
+        return _epoch;
+    }
+
+    /**
+     * The immutable history of all VM states, as of the last state transition.
+     */
+    private TeleVMState _teleVMState = new TeleVMState(STOPPED, 0, null, _emptyThreadSequence, false, null);
+
     protected TeleProcess(TeleVM teleVM, Platform platform) {
         super(teleVM);
         _platform = platform;
+        _processState = STOPPED;
+        _epoch = 0;
         _targetBreakpointFactory = new TeleTargetBreakpoint.Factory(this);
         _watchpointFactory = new TeleWatchpoint.Factory(this);
         _controller = new TeleProcessController(this);
@@ -285,78 +321,19 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         _requestHandlingThread.start();
     }
 
-
-    /**
-     * The possible states of a {@link TeleProcess}.
-     */
-    public enum State {
-        STOPPED, RUNNING, TERMINATED
-    }
-
-    protected State _state = STOPPED;
-
-    /**
-     * Gets the current state of this process.
-     * @return the current state of the process
-     */
-    public final State state() {
-        return _state;
+    public MaxVMState maxVMState() {
+        return _teleVMState;
     }
 
     /**
-     * @return true if the tele is ready to execute a command that puts it in the {@link State#RUNNING} state.
+     * @return true if the tele is ready to execute a command that puts it in the {@link ProcessState#RUNNING} state.
      */
     public boolean isReadyToRun() {
-        return _state == State.STOPPED;
+        return _processState == ProcessState.STOPPED;
     }
 
     public interface StateTransitionListener {
-        void handleStateTransition(StateTransitionEvent e);
-    }
-
-    public final class StateTransitionEvent {
-
-        private State _oldState;
-        private State _newState;
-        private Sequence<TeleNativeThread> _breakpointThreads;
-        private TeleNativeThread _singleStepThread;
-        private long _epoch;
-
-        private StateTransitionEvent(State oldState, State newState, Sequence<TeleNativeThread> breakpointThreads, TeleNativeThread singleStepThread, long epoch) {
-            _oldState = oldState;
-            _newState = newState;
-            _breakpointThreads = breakpointThreads;
-            _singleStepThread = singleStepThread;
-            _epoch = epoch;
-        }
-
-        public TeleNativeThread singleStepThread() {
-            return _singleStepThread;
-        }
-
-        public Sequence<TeleNativeThread> breakpointThreads() {
-            return _breakpointThreads;
-        }
-
-        public State oldState() {
-            return _oldState;
-        }
-
-        public State newState() {
-            return _newState;
-        }
-
-        /**
-         * @return the process epoch at the time of the state transition.
-         */
-        public long epoch() {
-            return _epoch;
-        }
-
-        @Override
-        public String toString() {
-            return _oldState.name() + "-->" + _newState.name() + "(" + _epoch + ")";
-        }
+        void handleStateTransition(MaxVMState maxVMState);
     }
 
     private VariableSequence<StateTransitionListener> _listeners = new ArrayListSequence<StateTransitionListener>();
@@ -372,9 +349,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         }
     }
 
-    private void notifyStateChange(StateTransitionEvent event) {
+    private void notifyStateChange(TeleVMState teleVMState) {
         for (final StateTransitionListener listener : _listeners) {
-            listener.handleStateTransition(event);
+            listener.handleStateTransition(teleVMState);
         }
     }
 
@@ -395,16 +372,13 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         _requestHandlingThread.scheduleRequest(request, synchronous);
     }
 
-    private void updateState(State newState, Sequence<TeleNativeThread> breakpointThreads, TeleNativeThread singleStepThread) {
-        final State oldState = _state;
-        if (oldState != newState) {
-            _state = newState;
-            notifyStateChange(new StateTransitionEvent(oldState, newState, breakpointThreads, singleStepThread, epoch()));
-        }
+    private void updateState(ProcessState newState, Sequence<TeleNativeThread> breakpointThreads, TeleNativeThread singleStepThread) {
+        _teleVMState = new TeleVMState(newState, _epoch, singleStepThread, breakpointThreads, teleVM().isInGC(), _teleVMState);
+        notifyStateChange(_teleVMState);
     }
 
-    private void updateState(State newState) {
-        updateState(newState, Sequence.Static.empty(TeleNativeThread.class), null);
+    private void updateState(ProcessState newState) {
+        updateState(newState, _emptyThreadSequence, null);
     }
 
     /**
@@ -417,12 +391,12 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     /**
      * Suspends this process.
      *
-     * @throws InvalidProcessRequestException if the current process state is not {@link State#RUNNING}
+     * @throws InvalidProcessRequestException if the current process state is not {@link ProcessState#RUNNING}
      * @throws OSExecutionRequestException if there was some problem in executing the suspension
      */
     public final void pause() throws InvalidProcessRequestException, OSExecutionRequestException {
-        if (_state != RUNNING) {
-            throw new InvalidProcessRequestException("Can only suspend a running tele process, not a tele process that is " + _state.toString().toLowerCase());
+        if (_processState != RUNNING) {
+            throw new InvalidProcessRequestException("Can only suspend a running tele process, not a tele process that is " + _processState.toString().toLowerCase());
         }
         suspend();
     }
@@ -457,8 +431,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 
 
     public final void terminate() throws InvalidProcessRequestException, OSExecutionRequestException {
-        if (_state == TERMINATED) {
-            throw new InvalidProcessRequestException("Can only terminate a non-terminated tele process, not a tele process that is " + _state.toString().toLowerCase());
+        if (_processState == TERMINATED) {
+            throw new InvalidProcessRequestException("Can only terminate a non-terminated tele process, not a tele process that is " + _processState.toString().toLowerCase());
         }
         kill();
     }
@@ -544,16 +518,6 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         threads.append(thread);
     }
 
-
-    private long _epoch;
-
-    /**
-     * Gets the current epoch: the number of discrete execution steps of the process since it was created.
-     * @return the current epoch
-     */
-    public long epoch() {
-        return _epoch;
-    }
 
     private void refreshThreads() {
         Trace.begin(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:");
@@ -645,10 +609,10 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     }
 
     public final int read(Address address, ByteBuffer buffer, int offset, int length) {
-        if (_state == TERMINATED) {
+        if (_processState == TERMINATED) {
             throw new DataIOError(address, "Attempt to read the memory when the process is in state " + TERMINATED);
         }
-        if (_state != STOPPED && _state != null && Thread.currentThread() != _requestHandlingThread) {
+        if (_processState != STOPPED && _processState != null && Thread.currentThread() != _requestHandlingThread) {
         //    ProgramWarning.message("Reading from process memory while processed not stopped [thread: " + Thread.currentThread().getName() + "]");
         }
         DataIO.Static.checkRead(buffer, offset, length);
@@ -674,10 +638,10 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     protected abstract int read0(Address address, ByteBuffer buffer, int offset, int length);
 
     public final int write(ByteBuffer buffer, int offset, int length, Address address) {
-        if (_state == TERMINATED) {
+        if (_processState == TERMINATED) {
             throw new DataIOError(address, "Attempt to write to memory when the process is in state " + TERMINATED);
         }
-        if (_state != STOPPED && _state != null && Thread.currentThread() != _requestHandlingThread) {
+        if (_processState != STOPPED && _processState != null && Thread.currentThread() != _requestHandlingThread) {
             //ProgramWarning.message("Writing to process memory while processed not stopped [thread: " + Thread.currentThread().getName() + "]");
             /* Uncomment to trace the culprit
             try {
