@@ -30,13 +30,9 @@ import com.sun.max.vm.compiler.eir.*;
  * @author Bernd Mathiske
  */
 public class Package extends VMPackage {
-    public Package() {
-        super();
-    }
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
         return vmConfiguration.compilerScheme() instanceof EirGeneratorScheme;
     }
-
 }

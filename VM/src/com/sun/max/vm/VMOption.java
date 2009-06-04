@@ -75,6 +75,8 @@ public class VMOption {
     protected final String _prefix;
     protected final boolean _exactPrefix;
     protected final String _help;
+
+    @RESET
     protected Pointer _optionStart = Pointer.zero();
 
     /**
@@ -237,6 +239,7 @@ public class VMOption {
 
     @PROTOTYPE_ONLY
     static String[] _vmArguments = null;
+    @PROTOTYPE_ONLY
     static String[] _matchedVmArguments = null;
 
     /**

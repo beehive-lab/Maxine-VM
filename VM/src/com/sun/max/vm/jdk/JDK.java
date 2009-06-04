@@ -41,7 +41,7 @@ public class JDK {
     public static final ClassRef java_lang_Cloneable                 = new ClassRef(Cloneable.class);
     public static final ClassRef java_lang_Compiler                  = new ClassRef(Compiler.class);
     public static final ClassRef java_lang_Object                    = new ClassRef(Object.class);
-    public static final ClassRef java_lang_Package                   = new ClassRef(Package.class);
+    public static final ClassRef java_lang_Package                   = new ClassRef(java.lang.Package.class);
     public static final ClassRef java_lang_ProcessEnvironment        = new ClassRef("java.lang.ProcessEnvironment");
     public static final ClassRef java_lang_Runtime                   = new ClassRef(Runtime.class);
     public static final ClassRef java_lang_Shutdown                  = new ClassRef("java.lang.Shutdown");

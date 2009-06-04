@@ -26,9 +26,4 @@ package com.sun.max;
  * @author Bernd Mathiske
  */
 public class Package extends BasePackage {
-    public Package() {
-        super();
-    }
-
-    private static final String PACKAGE_NAME = new Package().name();
 }

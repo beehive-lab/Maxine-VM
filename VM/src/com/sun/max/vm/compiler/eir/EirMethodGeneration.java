@@ -323,8 +323,6 @@ public abstract class EirMethodGeneration {
         return new EirGuardpoint(eirBlock);
     }
 
-    protected abstract EirAllocator createAllocator(EirMethodGeneration methodGeneration);
-
     protected abstract EirEpilogue createEpilogue(EirBlock eirBlock);
 
     // Used when one wants generated code to perform a jump at the end of

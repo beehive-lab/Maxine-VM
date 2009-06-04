@@ -501,7 +501,7 @@ public class GraphPrototype extends Prototype {
             final Object object = _worklist.removeFirst();
             try {
                 explore(object);
-            } catch (ProgramError e) {
+            } catch (Throwable e) {
                 printPath(object, System.err);
                 ProgramError.unexpected("Problem while gathering instance of " + object.getClass(), e);
             }
