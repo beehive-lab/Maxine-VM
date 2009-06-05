@@ -118,6 +118,7 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
     public void test() throws Exception {
 
         verify("java.lang.Class", true);
+        verify(JdtBadStackMapTable.class.getName(), true);
 
         int numberOfClassesVerified = 0;
 
