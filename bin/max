@@ -409,8 +409,22 @@ function run_build() {
                 
                     echo "Running Checkstyle using $checks_file..."
                     checkstyle_out=/tmp/audit.$$
-                    run $jvm -Xmx1g -jar $CHECKSTYLE_JAR -c $checks_file $(cat $javac_input) -o $checkstyle_out
+                    checkstyle_input=/tmp/checkfiles.txt.$$
+
+                    cat $javac_input | \
+                        grep -v 'test/bytecode/' |\
+                        grep -v 'test/except/' |\
+                        grep -v 'test/interactive/' |\
+                        grep -v 'test/jdk/' |\
+                        grep -v 'test/lang/' |\
+                        grep -v 'test/micro/' |\
+                        grep -v 'test/optimize/' |\
+                        grep -v 'test/reflect/' |\
+                        grep -v 'test/threads/' >$checkstyle_input
+                    
+                    run $jvm -Xmx1g -jar $CHECKSTYLE_JAR -c $checks_file $(cat $checkstyle_input) -o $checkstyle_out
                     result=$?
+                    rm $checkstyle_input
                     if [ $result -eq 0 ]; then
 	                    if [ "X$(grep 'warning:' <$checkstyle_out)" != "X" ]; then
                             cat $checkstyle_out
