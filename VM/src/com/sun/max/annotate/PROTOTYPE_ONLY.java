@@ -22,9 +22,6 @@ package com.sun.max.annotate;
 
 import java.lang.annotation.*;
 
-import com.sun.max.vm.*;
-import com.sun.max.vm.prototype.*;
-
 /**
  * Indicates that a method, field or class is omitted from the target VM.
  * <p>

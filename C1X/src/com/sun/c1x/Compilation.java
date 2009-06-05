@@ -20,10 +20,14 @@
  */
 package com.sun.c1x;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.util.Util;
+import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.ci.CiOsrFrame;
+import com.sun.c1x.ci.CiRuntime;
+import com.sun.c1x.ci.CiType;
 import com.sun.c1x.graph.BlockMap;
+import com.sun.c1x.graph.GraphBuilder;
 import com.sun.c1x.ir.BlockBegin;
+import com.sun.c1x.ir.IRScope;
 
 /**
  * The <code>Compilation</code> class encapsulates global information about the compilation
@@ -38,10 +42,8 @@ public class Compilation {
     final CiMethod _method;
     final int _osrBCI;
 
-    Object _hir; // TODO: define IR class
+    BlockBegin _start;
     int _maxSpills;
-    Object _frameMap; // TODO: define FrameMap class
-    Object _masm; // TODO: define MacroAssembler
     boolean _needsDebugInfo;
     boolean _hasExceptionHandlers;
     boolean _hasFpuCode;
@@ -63,6 +65,39 @@ public class Compilation {
         _osrBCI = osrBCI;
     }
 
+    /**
+     * Creates a new compilation for the specified method and runtime.
+     * @param runtime the runtime implementation
+     * @param method the method to be compiled
+     */
+    public Compilation(CiRuntime runtime, CiMethod method) {
+        _runtime = runtime;
+        _method = method;
+        _osrBCI = -1;
+    }
+
+    /**
+     * Performs the compilation, producing the start block.
+     */
+    public BlockBegin startBlock() {
+    	try {
+    		if (_start == null) {
+    			_start = new GraphBuilder(this, new IRScope(this, null, 0, _method, _osrBCI)).start();
+    		}
+		} catch (Bailout b) {
+			_bailout = b;
+		}
+		return _start;
+    }
+    
+    /**
+     * Gets the bailout condition if this compilation failed.
+     * @return the bailout condition
+     */
+    public Bailout bailout() {
+    	return _bailout;
+    }
+    
     /**
      * Gets the root method being compiled.
      * @return the method being compiled
@@ -163,19 +198,6 @@ public class Compilation {
     }
 
     /**
-     * Create an exception handler object, e.g. to synthesize a handler for synchronized methods.
-     * @param ciType the throwable type
-     * @param startBCI the start bytecode index
-     * @param endBCI the end bytecode index
-     * @param catchBCI the bytecode index of the catch block
-     * @param etIndex the index of the exception type in the constant pool (0 indicates catch all)
-     * @return a new exception handler
-     */
-    public CiExceptionHandler newExceptionHandler(CiType ciType, int startBCI, int endBCI, int catchBCI, int etIndex) {
-        throw Util.unimplemented();
-    }
-
-    /**
      * Builds the block map for the specified method.
      * @param method the method for which to build the block map
      * @param osrBCI the OSR bytecode index; <code>-1</code> if this is not an OSR
@@ -190,7 +212,7 @@ public class Compilation {
             isOsrCompilation = true;
         }
         if (!map.build(!isOsrCompilation && C1XOptions.ComputeStoresInLoops)) {
-            throw new Bailout("build of BlockMap failed");
+            throw new Bailout("build of BlockMap failed for " + method);
         }
         map.cleanup();
         _totalBlocks += map.numberOfBlocks();

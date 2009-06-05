@@ -115,9 +115,8 @@ public final class BinaryImageGenerator {
             "For the Java tester, this option specifies that " + System.mapLibraryName("javatest") + " should be dynamically loaded.");
 
     private final Option<String> _vmArguments = _options.newStringOption("vmargs", null,
-            "A set of one or VM arguments. This is useful for exercising certain VM functionality or " +
-            "enabling certain VM tracing while prototyping. Any VM options or state set by these arguments " +
-            "is persisted in the boot image.");
+            "A set of one or VM arguments. This is useful for exercising VM functionality or " +
+            "enabling VM tracing while prototyping.");
 
     /**
      * Used in the Java tester to indicate whether to test the resolution and linking mechanism for

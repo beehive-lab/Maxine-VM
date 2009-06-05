@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,25 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.eir.allocate.linearscan.parts;
-
-import com.sun.max.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.eir.*;
-import com.sun.max.vm.compiler.eir.allocate.*;
+package com.sun.max.vm.compiler.c1x;
 
 /**
- * @see MaxPackage
+ * The <code>MaxCiUnresolved</code> exception is thrown if the user of the compiler interface (e.g. C1X)
+ * queries a compiler interface object in a way that is not appropriate for an unresolved object.
  *
- * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
-public class Package extends VMPackage {
-    public Package() {
-        super();
-    }
-
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.compilerScheme() instanceof EirGeneratorScheme && EirAllocatorFactory.isSelected(superPackage());
+public class MaxCiUnresolved extends RuntimeException {
+    public MaxCiUnresolved(String msg) {
+        super(msg);
     }
 }

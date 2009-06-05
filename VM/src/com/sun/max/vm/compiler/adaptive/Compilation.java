@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.compiler.adaptive;
 
+import static com.sun.max.vm.VMOptions.*;
+
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -43,7 +45,7 @@ import com.sun.max.vm.runtime.*;
  */
 class Compilation implements Future<TargetMethod> {
 
-    private static final VMOption _verboseOption = new VMOption("-verbose:comp", "Display information about each compilation performed.", MaxineVM.Phase.PRISTINE);
+    private static final VMOption _verboseOption = register(new VMOption("-verbose:comp", "Display information about each compilation performed."), MaxineVM.Phase.PRISTINE);
 
     /**
      * A reference to the enclosing instance of the compilation scheme.
@@ -138,7 +140,7 @@ class Compilation implements Future<TargetMethod> {
     }
 
     void compile(CompilationDirective compilationDirective) {
-        if (AdaptiveCompilationScheme._gcOnCompileOption.isPresent()) {
+        if (AdaptiveCompilationScheme._gcOnCompileOption.getValue()) {
             System.gc();
         }
         DynamicCompilerScheme compiler = _compiler;
@@ -189,7 +191,7 @@ class Compilation implements Future<TargetMethod> {
         }
     }
 
-    private static final CompilationStatsOption _statsOptions = new CompilationStatsOption();
+    private static final CompilationStatsOption _statsOptions = register(new CompilationStatsOption(), MaxineVM.Phase.STARTING);
 
     static class CompilationStatsOption extends TimerOption {
         static class CompilerStats {

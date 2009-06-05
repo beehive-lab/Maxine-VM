@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.run.java;
 
+import static com.sun.max.vm.VMOptions.register;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.security.*;
@@ -57,12 +59,12 @@ import com.sun.max.vm.type.*;
  */
 public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
 
-    private static final VMOption _versionOption = new VMOption(
-        "-version", "print product version and exit", MaxineVM.Phase.STARTING);
-    private static final VMOption _showVersionOption = new VMOption(
-        "-showversion", "print product version and continue", MaxineVM.Phase.STARTING);
-    private static final VMOption _D64Option = new VMOption("-d64",
-        "Selects the 64-bit data model if available. Currently ignored.", MaxineVM.Phase.PRISTINE);
+    private static final VMOption _versionOption = register(new VMOption(
+        "-version", "print product version and exit"), MaxineVM.Phase.STARTING);
+    private static final VMOption _showVersionOption = register(new VMOption(
+        "-showversion", "print product version and continue"), MaxineVM.Phase.STARTING);
+    private static final VMOption _D64Option = register(new VMOption("-d64",
+        "Selects the 64-bit data model if available. Currently ignored."), MaxineVM.Phase.PRISTINE);
 
     public JavaRunScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
