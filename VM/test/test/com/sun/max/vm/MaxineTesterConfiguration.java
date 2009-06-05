@@ -66,7 +66,7 @@ public class MaxineTesterConfiguration {
         test.output.Recursion.class,
         test.output.StaticInitializers.class,       FAIL_SPARC,
         test.output.LocalCatch.class,               FAIL_SPARC,
-        test.output.Printf.class,                   FAIL_SPARC,
+        test.output.Printf.class,         
         test.output.GCTest0.class,                  FAIL_SPARC,
         test.output.GCTest1.class,                  FAIL_SPARC,
         test.output.GCTest2.class,                  FAIL_SPARC,
