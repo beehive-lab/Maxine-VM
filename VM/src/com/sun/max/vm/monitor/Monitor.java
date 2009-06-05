@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.monitor;
 
+import static com.sun.max.vm.VMOptions.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -43,13 +45,13 @@ public final class Monitor {
 
     private static boolean _traceMonitors;
 
-    private static final VMOption _traceMonitorsOption = new VMOption("-XX:TraceMonitors", "", Phase.STARTING) {
+    private static final VMBooleanXXOption _traceMonitorsOption = register(new VMBooleanXXOption("-XX:-TraceMonitors", "") {
         @Override
-        public boolean parse(Pointer optionStart) {
-            _traceMonitors = true;
-            return super.parse(optionStart);
+        public boolean parseValue(Pointer optionValue) {
+            _traceMonitors = getValue();
+            return true;
         }
-    };
+    }, Phase.STARTING);
 
     @UNSAFE
     @FOLD

@@ -110,7 +110,7 @@ public class Verifier implements VerificationRegistry {
         final int majorVersion = classActor.majorVersion();
         if (majorVersion >= 50) {
             final boolean failOverToOldVerifier = majorVersion == 50;
-            return new TypeCheckingVerifier(classActor, failOverToOldVerifier);
+            return new TypeCheckingVerifier(classActor);
         }
         return new TypeInferencingVerifier(classActor);
     }

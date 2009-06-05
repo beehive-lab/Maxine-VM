@@ -21,6 +21,7 @@
 package com.sun.max.vm.verifier;
 
 import com.sun.max.profile.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -31,14 +32,14 @@ import com.sun.max.vm.classfile.*;
  */
 public class TypeCheckingVerifier extends ClassVerifier {
 
-    private final boolean _failOverToTypeInferencing;
+    private static final VMBooleanXXOption _failOverToTypeInferencing = VMOptions.register(new VMBooleanXXOption("-XX:+FailOverToOldVerifier",
+        "Fail over to old verifier when the new type checker fails."), MaxineVM.Phase.STARTING);
 
-    public TypeCheckingVerifier(ClassActor classActor, boolean failOverToTypeInferencing) {
+    public TypeCheckingVerifier(ClassActor classActor) {
         super(classActor);
         if (classActor.majorVersion() < 50) {
             throw new IllegalArgumentException("Cannot perform type checking verification on class " + classActor.name() + " with version number less than 50: " + classActor.majorVersion());
         }
-        _failOverToTypeInferencing = failOverToTypeInferencing;
     }
 
     @Override
@@ -46,7 +47,7 @@ public class TypeCheckingVerifier extends ClassVerifier {
         try {
             super.verify();
         } catch (VerifyError verifyError) {
-            if (classActor().majorVersion() == 50 && _failOverToTypeInferencing) {
+            if (classActor().majorVersion() == 50 && _failOverToTypeInferencing.getValue()) {
                 final TypeInferencingVerifier typeInferencingVerifier = new TypeInferencingVerifier(classActor());
                 typeInferencingVerifier.setVerbose(verbose());
                 typeInferencingVerifier.verify();

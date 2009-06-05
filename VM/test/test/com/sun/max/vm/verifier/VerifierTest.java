@@ -206,7 +206,7 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
                     if (classfileVersion._major < 50) {
                         return;
                     }
-                    classVerifier = new TypeCheckingVerifier(loadClassActor(name), false);
+                    classVerifier = new TypeCheckingVerifier(loadClassActor(name));
                     break;
                 case dfa:
                     classVerifier = new TypeInferencingVerifier(loadClassActor(name));

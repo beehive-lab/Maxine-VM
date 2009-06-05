@@ -36,6 +36,9 @@ import com.sun.max.vm.MaxineVM.*;
  * are parsed at different times than others; thus a VM option can have an associated
  * phase in which it is parsed.
  *
+ * A VM option must be {@linkplain VMOptions#register(VMOption, Phase) registered} to be
+ * enabled at runtime.
+ *
  * @author Ben L. Titzer
  * @author Doug Simon
  */
@@ -81,17 +84,16 @@ public class VMOption {
 
     /**
      * Creates a new VM option with the specified string prefix (which includes the '-') and the specified help text.
-     * The VM option will be parsed during the specified VM startup phase.
+     *
+     * <b>The caller is responsible for {@linkplain VMOptions#register(VMOption, Phase) registering} this option
+     * in the global registry or VM options.</b>
      *
      * @param prefix the name of the option, including the leading '-' character. If the name ends with a space, then it
      *            must be matched exactly against a VM argument, otherwise it matches if it is a prefix of a VM
      *            argument.
      * @param help the help text to be printed for this option on the command line
-     * @param phase the phase in which to parse this option. This must be {@code null} if and only if this is
-     *            {@linkplain #isSuboption() sub-option}
      */
-    @PROTOTYPE_ONLY
-    public VMOption(String prefix, String help, Phase phase) {
+    public VMOption(String prefix, String help) {
         _exactPrefix = prefix.endsWith(" ");
         if (_exactPrefix) {
             _prefix = prefix.substring(0, prefix.length() - 1);
@@ -99,17 +101,6 @@ public class VMOption {
             _prefix = prefix;
         }
         _help = help;
-        assert phase != null;
-        parseOption();
-        VMOptions.addOption(this, phase);
-    }
-
-    /**
-     *
-     * @return
-     */
-    VMOption[] suboptions() {
-        return null;
     }
 
     private VMOption _parentOption;
@@ -240,6 +231,8 @@ public class VMOption {
     @PROTOTYPE_ONLY
     static String[] _vmArguments = null;
     @PROTOTYPE_ONLY
+    static Pointer _vmArgumentPointers = null;
+    @PROTOTYPE_ONLY
     static String[] _matchedVmArguments = null;
 
     /**
@@ -254,6 +247,10 @@ public class VMOption {
     @PROTOTYPE_ONLY
     public static void setVMArguments(String[] vmArguments) {
         _vmArguments = vmArguments;
+        if (_vmArgumentPointers != null) {
+            Memory.deallocate(_vmArgumentPointers);
+            _vmArgumentPointers = null;
+        }
         _matchedVmArguments = new String[vmArguments.length];
     }
 
@@ -285,29 +282,35 @@ public class VMOption {
         throw ProgramError.unexpected(sb.toString());
     }
 
+    /**
+     * Searches for a {@linkplain #setVMArguments(String[]) registered} VM argument that this option matches and,
+     * if found, calls {@link #parse(Pointer)} or {@link #parseValue(Pointer)} on the argument.
+     */
     @PROTOTYPE_ONLY
-    public void parseOption() {
+    public void findMatchingArgumentAndParse() {
         if (_vmArguments != null) {
+            if (_vmArgumentPointers == null) {
+                _vmArgumentPointers = CString.utf8ArrayFromStringArray(_vmArguments, false);
+            }
             for (int i = 0; i < _vmArguments.length; ++i) {
                 final String argument = _vmArguments[i];
-                if (argument != null && (_exactPrefix ? argument.equals(_prefix) : argument.startsWith(_prefix))) {
+                final Pointer argumentPointer = _vmArgumentPointers.getWord(i).asPointer();
+                if (argument != null && (matches(argumentPointer))) {
                     _matchedVmArguments[i] = argument;
                     if (consumesNext()) {
                         // this option expects a space and then its value (e.g. -classpath)
                         if (i + 1 >= _vmArguments.length) {
                             parseError("Could not find argument for " + this, i);
                         }
-                        final Pointer optionValue = CString.utf8FromJava(_vmArguments[i + 1]);
+                        final Pointer optionValue = _vmArgumentPointers.getWord(i + 1).asPointer();
                         _vmArguments[i + 1] = null;
                         final boolean ok = parseValue(optionValue);
-                        Memory.deallocate(optionValue);
                         if (!ok) {
                             parseError("Error parsing " + this, i);
                         }
                     } else {
-                        final Pointer optionValue = CString.utf8FromJava(argument);
+                        final Pointer optionValue = argumentPointer;
                         final boolean ok = parse(optionValue);
-                        Memory.deallocate(optionValue);
                         if (!ok) {
                             parseError("Error parsing " + this, i);
                         }
