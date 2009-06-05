@@ -54,7 +54,7 @@ public class MaxineTesterConfiguration {
         test.output.AWTFont.class,                  FAIL_SPARC, FAIL_ALL,
         test.output.JavacTest.class,                FAIL_SPARC, FAIL_LINUX, FAIL_SOLARIS,
         test.output.CatchOutOfMemory.class,         FAIL_SPARC,
-        test.output.PrintDate.class,                FAIL_SPARC,
+        test.output.PrintDate.class,          
         test.output.HelloWorld.class,
         test.output.HelloWorldGC.class,             FAIL_SPARC,
         test.output.ExitCode.class,
