@@ -221,7 +221,7 @@ public class ConstType extends ValueType {
     }
 
     /**
-     * Utility method to create a value type for an object constant
+     * Utility method to create a value type for an object constant.
      * @param o the object value for which to create the value type
      * @return a value type representing the object
      */
@@ -248,7 +248,7 @@ public class ConstType extends ValueType {
     }
 
     /**
-     * Utility method to create a value type for a double constant
+     * Utility method to create a value type for a double constant.
      * @param d the double value for which to create the value type
      * @return a value type representing the double
      */
@@ -257,7 +257,7 @@ public class ConstType extends ValueType {
     }
 
     /**
-     * Utility method to create a value type for a float constant
+     * Utility method to create a value type for a float constant.
      * @param f the float value for which to create the value type
      * @return a value type representing the float
      */
@@ -266,7 +266,7 @@ public class ConstType extends ValueType {
     }
 
     /**
-     * Utility method to create a value type for an long constant
+     * Utility method to create a value type for an long constant.
      * @param i the long value for which to create the value type
      * @return a value type representing the long
      */
@@ -275,7 +275,7 @@ public class ConstType extends ValueType {
     }
 
     /**
-     * Utility method to create a value type for an integer constant
+     * Utility method to create a value type for an integer constant.
      * @param i the integer value for which to create the value type
      * @return a value type representing the integer
      */
@@ -284,7 +284,7 @@ public class ConstType extends ValueType {
     }
 
     /**
-     * Utility method to create a value type for a byte constant
+     * Utility method to create a value type for a byte constant.
      * @param i the byte value for which to create the value type
      * @return a value type representing the byte
      */
@@ -293,7 +293,7 @@ public class ConstType extends ValueType {
     }
 
     /**
-     * Utility method to create a value type for a boolean constant
+     * Utility method to create a value type for a boolean constant.
      * @param i the boolean value for which to create the value type
      * @return a value type representing the boolean
      */
@@ -302,7 +302,7 @@ public class ConstType extends ValueType {
     }
 
     /**
-     * Utility method to create a value type for a char constant
+     * Utility method to create a value type for a char constant.
      * @param i the char value for which to create the value type
      * @return a value type representing the char
      */
@@ -311,7 +311,7 @@ public class ConstType extends ValueType {
     }
 
     /**
-     * Utility method to create a value type for a short constant
+     * Utility method to create a value type for a short constant.
      * @param i the short value for which to create the value type
      * @return a value type representing the short
      */
@@ -320,7 +320,7 @@ public class ConstType extends ValueType {
     }
 
     /**
-     * Utility method to create a value type for an address (jsr/ret address) constant
+     * Utility method to create a value type for an address (jsr/ret address) constant.
      * @param i the address value for which to create the value type
      * @return a value type representing the address
      */

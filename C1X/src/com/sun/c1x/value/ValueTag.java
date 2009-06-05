@@ -37,7 +37,7 @@ public class ValueTag {
     public static final byte ILLEGAL_TAG = 7;
 
     /**
-     * Gets the character for the specified tag
+     * Gets the character for the specified tag.
      * @param tag the value tag
      * @return a single character suitable to print
      */
@@ -56,7 +56,7 @@ public class ValueTag {
     }
 
     /**
-     * Gets the name of the tag as a string
+     * Gets the name of the tag as a string.
      * @param tag the value tag
      * @return a string suitable to print
      */

@@ -73,7 +73,7 @@ public class IRScope {
     }
 
     /**
-     * Gets the number of locks in this IR scope
+     * Gets the number of locks in this IR scope.
      * @return the number of locks
      */
     public final int numberOfLocks() {

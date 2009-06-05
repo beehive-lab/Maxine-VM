@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.bytecode;
 
-import com.sun.c1x.bytecode.BytecodeStream;
 import com.sun.c1x.util.Util;
 
 /**

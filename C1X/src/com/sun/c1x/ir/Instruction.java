@@ -146,7 +146,7 @@ public abstract class Instruction {
     }
 
     /**
-     * Gets the pin state of this instruction
+     * Gets the pin state of this instruction.
      * @return the pin state of this instruction
      */
     public final int pinState() {
@@ -357,7 +357,7 @@ public abstract class Instruction {
     }
 
     /**
-     * Gets the list of exception handlers associated with this instruction
+     * Gets the list of exception handlers associated with this instruction.
      * @return the list of exception handlers for this instruction
      */
     public List<ExceptionHandler> exceptionHandlers() {
@@ -365,7 +365,7 @@ public abstract class Instruction {
     }
 
     /**
-     * Sets the list of exception handlers for this instruction
+     * Sets the list of exception handlers for this instruction.
      * @param exceptionHandlers the exception handlers
      */
     public void setExceptionHandlers(List<ExceptionHandler> exceptionHandlers) {
@@ -428,7 +428,7 @@ public abstract class Instruction {
     }
 
     /**
-     * Apply the specified closure to all the input values of this instruction
+     * Apply the specified closure to all the input values of this instruction.
      * @param closure the closure to apply
      */
     public void inputValuesDo(InstructionClosure closure) {
@@ -436,7 +436,7 @@ public abstract class Instruction {
     }
 
     /**
-     * Apply the specified closure to all the state values of this instruction
+     * Apply the specified closure to all the state values of this instruction.
      * @param closure the closure to apply
      */
     public void stateValuesDo(InstructionClosure closure) {
@@ -444,7 +444,7 @@ public abstract class Instruction {
     }
 
     /**
-     * Apply the specified closure to all the other values of this instruction
+     * Apply the specified closure to all the other values of this instruction.
      * @param closure the closure to apply
      */
     public void otherValuesDo(InstructionClosure closure) {
@@ -453,7 +453,7 @@ public abstract class Instruction {
 
     /**
      * Apply the specified closure to all the values of this instruction, including
-     * input values, state values, and other values
+     * input values, state values, and other values.
      * @param closure the closure to apply
      */
     public void allValuesDo(InstructionClosure closure) {

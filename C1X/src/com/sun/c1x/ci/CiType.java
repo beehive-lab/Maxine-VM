@@ -28,23 +28,23 @@ import com.sun.c1x.value.BasicType;
  * @author Ben L. Titzer
  */
 public interface CiType {
-    public String name();
-    public Class<?> javaClass();
-    public boolean hasSubclass();
-    public boolean hasFinalizer();
-    public boolean hasFinalizableSubclass();
-    public boolean isInterface();
-    public boolean isInstanceClass();
-    public boolean isTypeArrayClass();
-    public boolean isFinal();
-    public boolean isLoaded();
-    public boolean isInitialized();
-    public boolean isSubtypeOf(CiType other);
-    public boolean isInstance(Object obj);
-    public CiType elementType();
-    public CiType exactType();
-    public CiType arrayOf();
-    public CiMethod resolveMethodImpl(CiMethod method);
-    public BasicType basicType();
+    String name();
+    Class<?> javaClass();
+    boolean hasSubclass();
+    boolean hasFinalizer();
+    boolean hasFinalizableSubclass();
+    boolean isInterface();
+    boolean isInstanceClass();
+    boolean isTypeArrayClass();
+    boolean isFinal();
+    boolean isLoaded();
+    boolean isInitialized();
+    boolean isSubtypeOf(CiType other);
+    boolean isInstance(Object obj);
+    CiType elementType();
+    CiType exactType();
+    CiType arrayOf();
+    CiMethod resolveMethodImpl(CiMethod method);
+    BasicType basicType();
 
 }
