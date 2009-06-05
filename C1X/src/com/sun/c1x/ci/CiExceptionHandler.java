@@ -28,7 +28,7 @@ package com.sun.c1x.ci;
 public interface CiExceptionHandler {
     public int startBCI();
     public int endBCI();
-    public int catchBCI();
+    public int handlerBCI();
     public int catchClassIndex();
     public boolean isCatchAll();
     public boolean isRethrow();

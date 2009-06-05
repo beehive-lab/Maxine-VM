@@ -68,7 +68,7 @@ public class ExceptionHandler {
      * @return the bytecode index of the handler
      */
     public int handlerBCI() {
-        return _handler.catchBCI();
+        return _handler.handlerBCI();
     }
 
     /**

@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.jdk;
 
+import static com.sun.max.vm.VMOptions.*;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.nio.charset.*;
@@ -32,6 +34,7 @@ import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
@@ -40,7 +43,6 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
-import com.sun.max.util.*;
 
 /**
  * Implements method substitutions for {@link java.lang.System java.lang.System}.
@@ -561,10 +563,10 @@ public final class JDK_java_lang_System {
     private static final String CLASSPATH_HELP_MESSAGE = "A list of paths to search for Java classes, separated by the : character.";
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static VMStringOption _classpathOption = new VMStringOption("-classpath", true, null, CLASSPATH_HELP_MESSAGE, MaxineVM.Phase.PRISTINE);
+    private static VMStringOption _classpathOption = register(new VMStringOption("-classpath", true, null, CLASSPATH_HELP_MESSAGE), MaxineVM.Phase.PRISTINE);
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static VMStringOption _cpOption = new VMStringOption("-cp", true, null, CLASSPATH_HELP_MESSAGE, MaxineVM.Phase.PRISTINE) {
+    private static VMStringOption _cpOption = register(new VMStringOption("-cp", true, null, CLASSPATH_HELP_MESSAGE) {
         @Override
         public boolean parseValue(Pointer optionValue) {
             return _classpathOption.parseValue(optionValue);
@@ -577,23 +579,29 @@ public final class JDK_java_lang_System {
         public String getValue() {
             return _classpathOption.getValue();
         }
-    };
+    }, MaxineVM.Phase.PRISTINE);
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static BootClasspathVMOption _bootClasspathOption = new BootClasspathVMOption(":", "set search path for bootstrap classes and resources.");
+    private static BootClasspathVMOption _bootClasspathOption = BootClasspathVMOption.create(":", "set search path for bootstrap classes and resources.");
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static BootClasspathVMOption _aBootClasspathOption = new BootClasspathVMOption("/a:", "append to end of bootstrap class path");
+    private static BootClasspathVMOption _aBootClasspathOption = BootClasspathVMOption.create("/a:", "append to end of bootstrap class path");
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static BootClasspathVMOption _pBootClasspathOption = new BootClasspathVMOption("/p:", "prepend in front of bootstrap class path");
+    private static BootClasspathVMOption _pBootClasspathOption = BootClasspathVMOption.create("/p:", "prepend in front of bootstrap class path");
+
 
     static class BootClasspathVMOption extends VMOption {
         private String _path;
 
         @PROTOTYPE_ONLY
+        static BootClasspathVMOption create(String suffix, String help) {
+            return register(new BootClasspathVMOption(suffix, help), MaxineVM.Phase.STARTING);
+        }
+
+        @PROTOTYPE_ONLY
         BootClasspathVMOption(String suffix, String help) {
-            super("-Xbootclasspath" + suffix, help, MaxineVM.Phase.STARTING);
+            super("-Xbootclasspath" + suffix, help);
         }
 
         @Override
@@ -615,7 +623,7 @@ public final class JDK_java_lang_System {
      * Determines if information should be displayed about the {@linkplain System#getProperties() system properties} when
      * they initialized during VM startup.
      */
-    private static final VMOption _verbosePropertiesOption = new VMOption("-verbose:props", "Report the initial values of the system properties.", MaxineVM.Phase.PRISTINE);
+    private static final VMOption _verbosePropertiesOption = register(new VMOption("-verbose:props", "Report the initial values of the system properties."), MaxineVM.Phase.PRISTINE);
 
     /**
      * Initializes system properties from a wide variety of sources.

@@ -38,7 +38,7 @@ public interface CiRuntime {
     public boolean instanceOf(Object object, CiType type);
     public Object checkCast(Object object, CiType type);
     public Object allocateObject(CiType type);
-    public Object allocateArray(CiType type);
+    public Object allocateArray(CiType type, int length);
     public CiType resolveType(String name);
     public CiType getType(Class<?> javaClass);
 

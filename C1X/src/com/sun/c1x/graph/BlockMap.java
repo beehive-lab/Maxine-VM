@@ -79,7 +79,7 @@ public class BlockMap {
                         if (h.isCatchAll()) {
                             break;
                         }
-                        addHandler(block, get(h.catchBCI()));
+                        addHandler(block, get(h.handlerBCI()));
                     }
                 }
             }
@@ -94,7 +94,7 @@ public class BlockMap {
         void setHandlerEntrypoints() {
             // start basic blocks at all exception handler blocks and mark them as exception entries
             for (CiExceptionHandler h : _allHandlers) {
-                addEntrypoint(h.catchBCI(), BlockBegin.BlockFlag.ExceptionEntry);
+                addEntrypoint(h.handlerBCI(), BlockBegin.BlockFlag.ExceptionEntry);
             }
         }
 

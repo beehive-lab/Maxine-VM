@@ -48,7 +48,7 @@ public class GraphBuilder {
     MemoryBuffer _memory;
     int _instructionCount;                  // for bailing out in pathological jsr/ret cases
     BlockBegin _start;                      // the start block
-    BlockBegin _osrEntry;                   // the osr entry block block
+    BlockBegin _osrEntry;                   // the osr entry block
     ValueStack _initialState;               // The state for the start block
 
     // for each call to connectToEnd; can also be set by inliner
@@ -83,7 +83,7 @@ public class GraphBuilder {
             syncHandler.setBlockFlag(BlockBegin.BlockFlag.IsOnWorkList);
             syncHandler.setBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler);
 
-            CiExceptionHandler desc = compilation.newExceptionHandler(method.holder(), 0, method.codeSize(), -1, 0);
+            CiExceptionHandler desc = newDefaultExceptionHandler(method);
             ExceptionHandler h = new ExceptionHandler(desc);
             h.setEntryBlock(syncHandler);
             _scopeData.exceptionHandlers().add(h);
@@ -134,6 +134,10 @@ public class GraphBuilder {
         }
     }
 
+    private CiExceptionHandler newDefaultExceptionHandler(CiMethod method) {
+        return constantPool().newExceptionHandler(0, method.codeSize(), -1, 0);
+    }
+
     private void loadParameters(CiMethod method) {
         int index = 0;
         if (!method.isStatic()) {
@@ -144,8 +148,8 @@ public class GraphBuilder {
         CiSignature sig = method.signatureType();
         int max = sig.arguments();
         for (int i = 0; i < max; i++) {
-            CiType type = sig.argumentType(i);
-            ValueType vt = ValueType.fromBasicType(type.basicType());
+            BasicType type = sig.argumentBasicType(i);
+            ValueType vt = ValueType.fromBasicType(type);
             loadLocal(vt, index);
             index += vt.size();
         }
@@ -752,7 +756,7 @@ public class GraphBuilder {
             stateCopy = _state.copy();
         }
 
-        ValueType type = ValueType.fromBasicType(field.type().basicType());
+        ValueType type = ValueType.fromBasicType(field.basicType());
         int offset = isLoaded ? field.offset() : -1;
 
         switch (opcode) {
@@ -837,7 +841,7 @@ public class GraphBuilder {
             CiType exact = getExactType(klass, receiver);
             if (exact != null && exact.isLoaded()) {
                 // either the holder class is exact, or the receiver object has an exact type
-                invokeSpecial(exact.resolveMethod(target), exact);
+                invokeSpecial(exact.resolveMethodImpl(target), exact);
                 return;
             }
             // 2. check if an assumed leaf method can be found
@@ -850,7 +854,7 @@ public class GraphBuilder {
             exact = getAssumedLeafType(klass, receiver);
             if (exact != null && exact.isLoaded()) {
                 // either the holder class is exact, or the receiver object has an exact type
-                invokeSpecial(exact.resolveMethod(target), exact);
+                invokeSpecial(exact.resolveMethodImpl(target), exact);
                 return;
             }
         }
@@ -863,7 +867,7 @@ public class GraphBuilder {
     }
 
     private ValueType returnValueType(CiMethod target) {
-        return ValueType.fromBasicType(target.signatureType().returnType().basicType());
+        return ValueType.fromBasicType(target.signatureType().returnBasicType());
     }
 
     void invokeSpecial(CiMethod target, CiType knownHolder) {
@@ -919,7 +923,7 @@ public class GraphBuilder {
         }
         CiType declared = receiver.declaredType();
         if (declared != null) {
-            CiMethod impl = declared.resolveMethod(target);
+            CiMethod impl = declared.resolveMethodImpl(target);
             if (impl != null && assumeLeafClass(declared)) {
                 return impl;
             }
@@ -1363,7 +1367,7 @@ public class GraphBuilder {
             CiType type = sig.argumentType(i);
             ValueType vt = ValueType.fromBasicType(type.basicType());
             Local local = new Local(vt, index);
-            local.setDeclaredType(type);
+            if (type.isLoaded()) local.setDeclaredType(type);
             state.storeLocal(index, local);
             index += vt.size();
         }
@@ -1380,7 +1384,7 @@ public class GraphBuilder {
 
     boolean checkInliningConditions(CiMethod target) {
         if (scope().level() > C1XOptions.MaximumInlineLevel) {
-            return cannotInline(target, "inlining too depth");
+            return cannotInline(target, "inlining too deep");
         }
         if (recursiveInlineLevel(target) > C1XOptions.MaximumRecursiveInlineLevel) {
             return cannotInline(target, "recursive inlining too depth");
@@ -1399,19 +1403,19 @@ public class GraphBuilder {
             return cannotInline(target, "compile excluded by runtime");
         }
         if (target.isAbstract()) {
-            return cannotInline(target, "method is abstract");
+            return cannotInline(target, "is abstract");
         }
         if (target.isNative()) {
-            return cannotInline(target, "method is native");
+            return cannotInline(target, "is native");
         }
         if (target.isSynchronized() && !C1XOptions.InlineSynchronizedMethods) {
-            return cannotInline(target, "method is synchronized");
+            return cannotInline(target, "is synchronized");
         }
         if (target.hasExceptionHandlers() && !C1XOptions.InlineMethodsWithExceptionHandlers) {
-            return cannotInline(target, "method has exception handlers");
+            return cannotInline(target, "has exception handlers");
         }
         if (!target.hasBalancedMonitors()) {
-            return cannotInline(target, "method has unbalanced monitors");
+            return cannotInline(target, "has unbalanced monitors");
         }
         if (C1XOptions.SSEVersion < 2 && target.isStrictFP() != method().isStrictFP()) {
             return cannotInline(target, "strictfp mismatch on x87");
@@ -1572,7 +1576,7 @@ public class GraphBuilder {
         _last.setFlag(Instruction.Flag.NonNull, true);
         syncHandler.setExceptionEntry();
         syncHandler.setBlockFlag(BlockBegin.BlockFlag.IsOnWorkList);
-        CiExceptionHandler handler = _compilation.newExceptionHandler(method().holder(), 0, method().codeSize(), -1, 0);
+        CiExceptionHandler handler = newDefaultExceptionHandler(method());
         ExceptionHandler h = new ExceptionHandler(handler);
         h.setEntryBlock(syncHandler);
         _scopeData.exceptionHandlers().add(h);
@@ -1586,7 +1590,6 @@ public class GraphBuilder {
 
         _last = _block = syncHandler;
         _state = syncHandler.state().copy();
-
 
         assert !syncHandler.wasVisited() : "synch handler already visited";
 

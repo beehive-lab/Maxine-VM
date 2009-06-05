@@ -35,6 +35,7 @@ public interface Timer {
     /**
      * Gets the number of {@linkplain Clock#getTicks() ticks} of this timer's {@linkplain #getClock() clock}
      * that occurred in between the last pair of calls to {@link #start()} and {@link #stop()}.
+     * @return the number of ticks
      */
     long getLastElapsedTime();
 

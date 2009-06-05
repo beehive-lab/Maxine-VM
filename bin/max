@@ -186,6 +186,7 @@ fi
 # reflect any dependencies between the projects (i.e. if x depends on y, then y must
 # precede x in the list).
 projects=( \
+    C1X:src               \
     Base:src,test,shell   \
     Assembler:src,test    \
     VM:src,test           \
@@ -474,15 +475,81 @@ function run_javadoc() {
 # 'image' command
 #=======================================
 
+image_configs=( \
+    java:-run=java \
+    optopt:-run=test.com.sun.max.vm.testrun.all,-native-tests \
+    optjit:-run=test.com.sun.max.vm.testrun.all,-native-tests,-test-callee-jit \
+    jitopt:-run=test.com.sun.max.vm.testrun.all,-native-tests,-test-caller-jit \
+    jitjit:-run=test.com.sun.max.vm.testrun.all,-native-tests,-test-caller-jit,-test-callee-jit \
+)
+
 image_usage="[options]"
 image_help="build a boot image
 
-    Run the com.sun.max.vm.prototype.BinaryImageGenerator class to build a Maxine boot image.
+    Run the BinaryImageGenerator to build a Maxine boot image.
+    
+    An option starting with '@' denotes a preconfigured set of
+    options. The available preconfigured option sets are:  
+"
+    
+image_help=$(printf "%s\n    %-15s %s\n " "$image_help" "Configuration" "Expansion")
+for image_config in ${image_configs[@]}; do
+    image_config_args="${image_config/*:/}"
+    image_help=$(printf "%s\n    @%-15s %s" "$image_help" "${image_config/:*/}" "${image_config_args//,/ }")
+done
+
+image_help="$image_help
+    
+    An option starting with '--' is interpreted as a VM option of the same name
+    after the leading '-' is removed. Note that not all VM options have an
+    effect during image building. For example, to use the '-verbose:class' VM option
+    to trace class loading while image building, specify '--verbose:class'.
     
     Use \"max image -help\" to see what other options this command accepts."
-
+    
 function run_image() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageGenerator -trace=1 -run=java $@
+
+    vm_args=""
+    image_args=""
+    while [ "$1" != "" ]; do
+        case $1 in
+            @*)
+                image_config_arg=${1/@/}
+                image_config_found=false
+                for image_config in ${image_configs[@]}; do
+                    image_config_name=${image_config/:*/}
+                    if [ "$image_config_name" = "$image_config_arg" ]; then
+                        image_config_args="${image_config/*:/}"
+                        image_args="$image_args ${image_config_args//,/ }"
+                        image_config_found=true
+                        break
+                    fi
+                done
+                if ! $image_config_found ; then
+                    echo "Invalid image configuration: $1"
+                    run_help image
+                    exit 1
+                fi
+                ;;
+            --* )
+                if [ -z "$vm_args" ]; then
+                    vm_args="${1/-/}"
+                else
+                    vm_args="$vm_args ${1/-/}"
+                fi
+                ;;
+            *)
+                image_args="$image_args $1"
+                ;;
+        esac
+        shift
+    done    
+
+    if [ -z "$vm_args" ]; then
+        run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageGenerator -trace=1 -run=java $image_args
+    else
+        run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageGenerator -trace=1 -run=java $image_args -vmargs="$vm_args"
+    fi
 }
 
 #=======================================

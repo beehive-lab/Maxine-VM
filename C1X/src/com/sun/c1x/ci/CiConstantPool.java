@@ -53,4 +53,5 @@ public interface CiConstantPool {
     public boolean willLinkMethod(int opcode, char cpi);
 
     public CiConstant lookupConstant(char cpi);
+    public CiExceptionHandler newExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI);
 }

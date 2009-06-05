@@ -21,6 +21,7 @@
 package com.sun.max.vm.classfile;
 
 import static com.sun.max.annotate.SURROGATE.Static.*;
+import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.actor.Actor.*;
 import static com.sun.max.vm.actor.holder.ClassActorFactory.*;
 import static com.sun.max.vm.actor.member.MethodActor.*;
@@ -1254,8 +1255,8 @@ public class ClassfileReader {
         return classActor;
     }
 
-    private static final VMOption _verboseOption = new VMOption("-verbose:class",
-        "Display information about each class loaded.", MaxineVM.Phase.PRISTINE);
+    private static final VMOption _verboseOption = register(new VMOption("-verbose:class",
+        "Display information about each class loaded."), MaxineVM.Phase.PRISTINE);
 
     private ClassActor loadClass(final Utf8Constant name, Object source) {
         try {

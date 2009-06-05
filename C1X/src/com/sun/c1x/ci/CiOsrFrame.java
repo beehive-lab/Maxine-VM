@@ -33,4 +33,5 @@ public interface CiOsrFrame {
     public boolean isLiveObject(int local);
     public int getStackOffset(int index);
     public int getLockOffset(int lock);
+    public int frameSize();
 }

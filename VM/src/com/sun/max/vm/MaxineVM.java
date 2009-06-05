@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm;
 
+import static com.sun.max.vm.VMOptions.register;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -390,8 +391,8 @@ public final class MaxineVM {
         return _runMethodParameterTypes.clone();
     }
 
-    private static final VMOption _helpOption = new VMOption("-help", "Prints this help message.", MaxineVM.Phase.PRISTINE);
-    private static final VMOption _eaOption = new VMOption("-ea", "Enables assertions in user code. Currently unimplemented.", MaxineVM.Phase.PRISTINE);
+    private static final VMOption _helpOption = register(new VMOption("-help", "Prints this help message."), MaxineVM.Phase.PRISTINE);
+    private static final VMOption _eaOption = register(new VMOption("-ea", "Enables assertions in user code. Currently unimplemented."), MaxineVM.Phase.PRISTINE);
 
     /**
      * Entry point called by the substrate.

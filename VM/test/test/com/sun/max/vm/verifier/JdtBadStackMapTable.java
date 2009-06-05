@@ -18,25 +18,38 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.eir.allocate.linearscan.parts;
-
-import com.sun.max.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.eir.*;
-import com.sun.max.vm.compiler.eir.allocate.*;
+package test.com.sun.max.vm.verifier;
 
 /**
- * @see MaxPackage
+ * This class triggers a bug in the Eclipse JDT compiler up to version 0.883_R34x at least.
+ * The StackMapTable produced for {@link #willNotVerify()} is broken and causes a VerifyError
+ * under HotSpot when the '-Xverify:all' and '-XX:-FailOverToOldVerifier' options are used.
  *
- * @author Thomas Wuerthinger
+ * @author Doug Simon
  */
-public class Package extends VMPackage {
-    public Package() {
-        super();
+class JdtBadStackMapTable {
+    public static void main(String[] args) {
+        System.out.println("ok");
     }
 
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.compilerScheme() instanceof EirGeneratorScheme && EirAllocatorFactory.isSelected(superPackage());
+    private static int willNotVerify() {
+        int limit = 100;
+        int match;
+        final int result = 200;
+
+        do {
+            if (limit > 0) {
+                continue;
+            }
+
+            match = 0;
+
+            while (++match < 100) {
+                // empty
+            }
+
+        } while (--limit != 0);
+
+        return result;
     }
 }
