@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.runtime.Trap.Number.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
@@ -73,8 +74,8 @@ public final class Trap {
         }
     }
 
-    private static VMOption _dumpStackOnTrap =
-        new VMOption("-XX:DumpStackOnTrap", "Reports a stack trace for every trap, regardless of the cause.", MaxineVM.Phase.PRISTINE);
+    private static VMBooleanXXOption _dumpStackOnTrap =
+        register(new VMBooleanXXOption("-XX:-DumpStackOnTrap", "Reports a stack trace for every trap, regardless of the cause."), MaxineVM.Phase.PRISTINE);
 
     /**
      * This method is {@linkplain #isTrapStub(MethodActor) known} by the compilation system. In particular, no adapter
@@ -186,7 +187,7 @@ public final class Trap {
         final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
         final Pointer instructionPointer = safepoint.getInstructionPointer(trapState);
 
-        if (_dumpStackOnTrap.isPresent()) {
+        if (_dumpStackOnTrap.getValue()) {
             Log.print("Trap ");
             Log.print(trapNumber);
             Log.print(" @ ");

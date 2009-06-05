@@ -78,45 +78,47 @@ public final class VMOptions {
     private static VMOption[] _pristinePhaseOptions;
     private static VMOption[] _startingPhaseOptions;
 
-    private static final VMStringOption _jarOption = new VMStringOption("-jar", true, null, "Executes main class from jar file.", MaxineVM.Phase.PRISTINE) {
+    private static final VMStringOption _jarOption = register(new VMStringOption("-jar", true, null, "Executes main class from jar file.") {
         @Override
         public boolean isLastOption() {
             return true;
         }
-    };
+    }, MaxineVM.Phase.PRISTINE);
 
     /**
      * An option to {@linkplain GlobalMetrics#report(java.io.PrintStream) report} on all global metrics gathered during execution.
      * TODO: If this option is not enabled, then the global metrics should not be gathered.
      */
-    private static final VMOption _globalMetrics = new VMOption("-XX:PrintMetrics", "Report random metrics gathered during execution.", MaxineVM.Phase.STARTING) {
+    private static final VMBooleanXXOption _printMetrics = register(new VMBooleanXXOption("-XX:-PrintMetrics", "Report random metrics gathered during execution.") {
         @Override
         public boolean parseValue(Pointer optionValue) {
-            GlobalMetrics.reset();
+            if (getValue()) {
+                GlobalMetrics.reset();
+            }
             return true;
         }
 
         @Override
         protected void beforeExit() {
-            if (isPresent()) {
+            if (getValue()) {
                 GlobalMetrics.report(Log.out);
             }
         }
-    };
+    }, MaxineVM.Phase.STARTING);
 
-    private static final VMOption _verboseOption = new VMOption("-verbose ", "Enables all verbose options.", MaxineVM.Phase.PRISTINE);
-    private static final VMOption _timeOption = new VMOption("-XX:Time ", "Enables all timing options.", MaxineVM.Phase.PRISTINE);
+    private static final VMOption _verboseOption = register(new VMOption("-verbose ", "Enables all verbose options."), MaxineVM.Phase.PRISTINE);
+    private static final VMOption _timeOption = register(new VMOption("-XX:Time ", "Enables all timing options."), MaxineVM.Phase.PRISTINE);
 
-    private static final VMIntOption _traceLevelOption = new VMIntOption("-XX:TraceLevel=", 0, "Enables tracing output at the specified level.", MaxineVM.Phase.PRISTINE) {
+    private static final VMIntOption _traceLevelOption = register(new VMIntOption("-XX:TraceLevel=", 0, "Enables tracing output at the specified level.") {
         @Override
         public boolean parseValue(Pointer optionValue) {
             Trace.on(getValue());
             return true;
         }
-    };
+    }, MaxineVM.Phase.PRISTINE);
 
-    private static final VMOption _printConfiguration = new VMOption("-XX:PrintConfiguration", "Shows VM configuration details and exits.", MaxineVM.Phase.STARTING);
-    private static final VMOption _showConfiguration = new VMOption("-XX:ShowConfiguration", "Shows VM configuration details and continues.", MaxineVM.Phase.STARTING);
+    private static final VMBooleanXXOption _printConfiguration = register(new VMBooleanXXOption("-XX:-PrintConfiguration", "Shows VM configuration details and exits."), MaxineVM.Phase.STARTING);
+    private static final VMBooleanXXOption _showConfiguration = register(new VMBooleanXXOption("-XX:-ShowConfiguration", "Shows VM configuration details and continues."), MaxineVM.Phase.STARTING);
 
     private static Pointer _argv;
     private static int _argc;
@@ -162,7 +164,8 @@ public final class VMOptions {
     @PROTOTYPE_ONLY
     private static VMOption[] addOption(SortedSet<VMOption> options, VMOption option, Iterable<VMOption> allOptions) {
         if (option.category() == VMOption.Category.IMPLEMENTATION_SPECIFIC) {
-            final String name = option._prefix.substring("-XX:".length());
+            final int prefixLength = option instanceof VMBooleanXXOption ? "-XX:+".length() : "-XX:".length();
+            final String name = option._prefix.substring(prefixLength);
             ProgramError.check(Character.isUpperCase(name.charAt(0)), "Option with \"-XX:\" prefix must start with an upper-case letter: " + option);
         }
         for (VMOption existingOption : allOptions) {
@@ -177,17 +180,29 @@ public final class VMOptions {
         return options.toArray(new VMOption[options.size()]);
     }
 
+    /**
+     * Registers a given VM option in the global option registry that is used to match command
+     * line arguments passed to the VM at runtime.
+     *
+     * @param option a VM option
+     * @param phase the VM phase during which the option should be parsed
+     * @return the {@code option} object
+     */
     @PROTOTYPE_ONLY
-    public static VMOption addOption(VMOption option, MaxineVM.Phase phase) {
+    public static <T extends VMOption> T register(VMOption option, MaxineVM.Phase phase) {
+        assert phase != null;
         final Iterable<VMOption> allOptions = Iterables.join(_pristinePhaseOptionsSet, _startingPhaseOptionsSet);
         if (phase == MaxineVM.Phase.PRISTINE) {
             _pristinePhaseOptions = addOption(_pristinePhaseOptionsSet, option, allOptions);
         } else if (phase == MaxineVM.Phase.STARTING) {
+            assert !option.consumesNext();
             _startingPhaseOptions = addOption(_startingPhaseOptionsSet, option, allOptions);
         } else {
             ProgramError.unexpected("VM options for the " + phase + " phase not (yet) supported");
         }
-        return option;
+        option.findMatchingArgumentAndParse();
+        final Class<T> type = null;
+        return StaticLoophole.cast(type, option);
     }
 
     private static void printOptions(VMOption[] options, String label, Category category) {
@@ -417,7 +432,7 @@ public final class VMOptions {
         }
         final boolean noErrorFound = checkOptionsForErrors(_startingPhaseOptions);
         if (noErrorFound) {
-            if (_printConfiguration.isPresent() || _showConfiguration.isPresent()) {
+            if (_printConfiguration.getValue() || _showConfiguration.getValue()) {
                 final VMConfiguration vm = VMConfiguration.target();
                 Log.println("VM Configuration:");
                 Log.println("  Build level: " + vm.buildLevel());
@@ -426,7 +441,7 @@ public final class VMOptions {
                     final String specification = vmScheme.specification().getSimpleName();
                     Log.println("  " + specification.replace("Scheme", " scheme") + ": " + vmScheme.getClass().getName());
                 }
-                if (_printConfiguration.isPresent()) {
+                if (_printConfiguration.getValue()) {
                     _earlyVMExitRequested = true;
                 }
             }

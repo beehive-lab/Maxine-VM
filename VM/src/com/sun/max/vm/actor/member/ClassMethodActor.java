@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.actor.member;
 
+import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.bytecode.Bytecode.Flags.*;
 
 import java.lang.reflect.*;
@@ -110,13 +111,13 @@ public abstract class ClassMethodActor extends MethodActor {
     private static boolean _traceJNI;
 
     static {
-        new VMOption("-XX:TraceJNI", "Trace JNI activity for debugging purposes.", MaxineVM.Phase.STARTING) {
+        register(new VMBooleanXXOption("-XX:-TraceJNI", "Trace JNI activity for debugging purposes.") {
             @Override
-            public boolean parse(Pointer optionStart) {
-                _traceJNI = true;
-                return super.parse(optionStart);
+            public boolean parseValue(Pointer optionValue) {
+                _traceJNI = getValue();
+                return true;
             }
-        };
+        }, MaxineVM.Phase.STARTING);
     }
 
     public boolean isDeclaredNeverInline() {

@@ -90,6 +90,7 @@ public class MaxineTesterConfiguration {
         test.except.Catch_NPE_04.class,                FAIL_SPARC,
         test.output.Thread_join04.class,               FAIL_SPARC,
         test.threads.Thread_isInterrupted02.class,                  FAIL_LINUX,
+        test.jdk.EnumMap01.class,                                   RAND_ALL,
         test.output.ExitCode.class,                    FAIL_SPARC,
         test.hotpath.HP_series.class,                  FAIL_SPARC,
         test.hotpath.HP_array02.class,                 FAIL_SPARC,
@@ -287,7 +288,7 @@ public class MaxineTesterConfiguration {
 
         MaxineTesterConfiguration._maxvmConfigs.put("std", new String[0]);
         MaxineTesterConfiguration._maxvmConfigs.put("jit", new String[] {"-Xjit"});
-        MaxineTesterConfiguration._maxvmConfigs.put("pgi", new String[] {"-XX:PGI"});
+        MaxineTesterConfiguration._maxvmConfigs.put("pgi", new String[] {"-XX:+PGI"});
         MaxineTesterConfiguration._maxvmConfigs.put("mx256m", new String[] {"-Xmx256m"});
         MaxineTesterConfiguration._maxvmConfigs.put("mx512m", new String[] {"-Xmx512m"});
 

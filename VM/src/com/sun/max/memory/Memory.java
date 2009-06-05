@@ -45,6 +45,8 @@ public final class Memory {
     private static native Pointer memory_allocate(Size size);
 
     /**
+     * Allocates a chunk of memory using a malloc(3)-like facility.
+     *
      * @param size the size of the chunk of memory to be allocated
      * @return a pointer to the allocated chunk of memory or {@code Pointer.zero()} if allocation failed
      */

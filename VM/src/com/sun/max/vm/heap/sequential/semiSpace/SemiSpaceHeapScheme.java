@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.heap.sequential.semiSpace;
 
+import static com.sun.max.vm.VMOptions.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
@@ -53,10 +55,13 @@ import com.sun.max.vm.type.*;
  */
 public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements HeapScheme, CellVisitor {
 
-    private static final VMOption _virtualAllocOption = new VMOption("-XX:SemiSpaceGC:Virtual", "Use VirtualMemory.allocate", MaxineVM.Phase.PRISTINE);
+    private static final VMBooleanXXOption _virtualAllocOption =
+        register(new VMBooleanXXOption("-XX:-SemiSpaceUseVirtualMemory", "Allocate memory for GC using mmap instead of malloc."), MaxineVM.Phase.PRISTINE);
     private static final int DEFAULT_SAFETY_ZONE_SIZE = 6144;  // empirically determined to be sufficient for simple VM termination after OutOfMemory condition
-    private static final VMIntOption _safetyZoneSizeOption = new VMIntOption("-XX:SemiSpaceGC:szs", DEFAULT_SAFETY_ZONE_SIZE, "Safety zone size in bytes", MaxineVM.Phase.PRISTINE);
-    private static final VMStringOption _growPolicyOption = new VMStringOption("-XX:SemiSpaceGC:GrowPolicy:", false, "Double", "Grow policy for heap", MaxineVM.Phase.STARTING);
+    private static final VMIntOption _safetyZoneSizeOption =
+        register(new VMIntOption("-XX:SemiSpaceGCSafetyZoneSize", DEFAULT_SAFETY_ZONE_SIZE, "Safety zone size in bytes."), MaxineVM.Phase.PRISTINE);
+    private static final VMStringOption _growPolicyOption =
+        register(new VMStringOption("-XX:SemiSpaceGCGrowPolicy=", false, "Double", "Grow policy for heap (Linear|Double)."), MaxineVM.Phase.STARTING);
 
     private final PointerIndexVisitor _pointerIndexGripVerifier = new PointerIndexVisitor() {
         @Override
@@ -476,10 +481,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     /**
      * This option exists only to measure the performance effect of using a reference map for the boot heap.
      */
-    private static final VMOption _ignoreBootHeapRefmap = new VMOption("-XX:IgnoreBootHeapRefmap", "Do not use the boot heap reference map when scanning the boot heap.", MaxineVM.Phase.STARTING);
+    private static final VMBooleanXXOption _useBootHeapRefmap = register(new VMBooleanXXOption("-XX:-UseBootHeapRefmap", "Do not use the boot heap reference map when scanning the boot heap."), MaxineVM.Phase.STARTING);
 
     private void scanBootHeap() {
-        if (!_ignoreBootHeapRefmap.isPresent()) {
+        if (!_useBootHeapRefmap.getValue()) {
             Heap.bootHeapRegion().visitPointers(_pointerIndexGripUpdater);
         } else {
             Heap.bootHeapRegion().visitCells(this);

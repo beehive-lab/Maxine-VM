@@ -22,6 +22,7 @@ package com.sun.max.vm;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.MaxineVM.*;
 
 /**
  * A VM option that supports string values passed to parameters, including options
@@ -37,23 +38,22 @@ public class VMStringOption extends VMOption {
     protected boolean _allocated;
 
     /**
-     * Creates a new string option with the specified parameters and adds it to the appropriate VM option parsing phase.
+     * Creates a new string option with the specified parameters.
+     *
+     * <b>The caller is responsible for {@linkplain VMOptions#register(VMOption, Phase) registering} this option
+     * in the global registry or VM options.</b>
      *
      * @param prefix the name of the option including the leading '-' character
      * @param space a boolean indicating whether this option consumes the next parameter ({@code true}) or not ({@code
      *            false})
      * @param defaultValue the default string value of this option
      * @param help the help text for this option
-     * @param phase the option phase in which to parse this option
      */
     @PROTOTYPE_ONLY
-    public VMStringOption(String prefix, boolean space, String defaultValue, String help, MaxineVM.Phase phase) {
-        super(prefix, help, phase);
+    public VMStringOption(String prefix, boolean space, String defaultValue, String help) {
+        super(prefix, help);
         _value = defaultValue;
         _space = space;
-        if (space) {
-            assert phase == MaxineVM.Phase.PRISTINE;
-        }
     }
 
     /**

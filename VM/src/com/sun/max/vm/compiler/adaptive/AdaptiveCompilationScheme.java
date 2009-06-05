@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.compiler.adaptive;
 
+import static com.sun.max.vm.VMOptions.register;
+
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -108,18 +110,18 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     @RESET
     protected LinkedList<CompilationObserver> _observers;
 
-    private static final VMOption _jitOption = new VMOption("-Xjit",
-                    "Selects JIT only mode, with no recompilation.", MaxineVM.Phase.STARTING);
-    private static final VMOption _optOption = new VMOption("-Xopt",
-                    "Selects optimized only mode.", MaxineVM.Phase.STARTING);
-    private static final VMIntOption _thresholdOption = new VMIntOption("-XX:RCT=", DEFAULT_RECOMPILATION_THRESHOLD,
-                    "In mixed mode, sets the recompilation threshold for methods.", MaxineVM.Phase.STARTING);
-    static final VMOption _gcOnCompileOption = new VMOption("-XX:GCOnCompilation",
+    private static final VMOption _jitOption = register(new VMOption("-Xjit",
+                    "Selects JIT only mode, with no recompilation."), MaxineVM.Phase.STARTING);
+    private static final VMOption _optOption = register(new VMOption("-Xopt",
+                    "Selects optimized only mode."), MaxineVM.Phase.STARTING);
+    private static final VMIntOption _thresholdOption = register(new VMIntOption("-XX:RCT=", DEFAULT_RECOMPILATION_THRESHOLD,
+                    "In mixed mode, sets the recompilation threshold for methods."), MaxineVM.Phase.STARTING);
+    static final VMBooleanXXOption _gcOnCompileOption = register(new VMBooleanXXOption("-XX:-GCOnCompilation",
                     "When specified, the compiler will request GC before every compilation operation, " +
-                    "which is useful for testing corner cases in the compiler/GC interactions.", MaxineVM.Phase.STARTING);
-    private static final VMOption _gcOnRecompileOption = new VMOption("-XX:GCOnRecompilation",
+                    "which is useful for testing corner cases in the compiler/GC interactions."), MaxineVM.Phase.STARTING);
+    private static final VMBooleanXXOption _gcOnRecompileOption = register(new VMBooleanXXOption("-XX:-GCOnRecompilation",
                     "When specified, the compiler will request GC before every re-compilation operation, " +
-                    "which is useful for testing corner cases in the compiler/GC interactions.", MaxineVM.Phase.STARTING);
+                    "which is useful for testing corner cases in the compiler/GC interactions."), MaxineVM.Phase.STARTING);
 
     /**
      * The (dynamically selected) compilation mode.
@@ -458,7 +460,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      *            later
      */
     public void reoptimize(ClassMethodActor classMethodActor, boolean synchronous, CompilationDirective compilationDirective) {
-        if (_gcOnRecompileOption.isPresent()) {
+        if (_gcOnRecompileOption.getValue()) {
             System.gc();
         }
         final AdaptiveMethodState methodState = makeMethodState(classMethodActor);
