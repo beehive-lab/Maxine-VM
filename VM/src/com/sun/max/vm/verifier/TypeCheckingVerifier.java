@@ -31,14 +31,14 @@ import com.sun.max.vm.classfile.*;
  */
 public class TypeCheckingVerifier extends ClassVerifier {
 
-    private final boolean _fallBackToTypeInferencing;
+    private final boolean _failOverToTypeInferencing;
 
-    public TypeCheckingVerifier(ClassActor classActor, boolean fallBackToTypeInferencing) {
+    public TypeCheckingVerifier(ClassActor classActor, boolean failOverToTypeInferencing) {
         super(classActor);
         if (classActor.majorVersion() < 50) {
             throw new IllegalArgumentException("Cannot perform type checking verification on class " + classActor.name() + " with version number less than 50: " + classActor.majorVersion());
         }
-        _fallBackToTypeInferencing = fallBackToTypeInferencing;
+        _failOverToTypeInferencing = failOverToTypeInferencing;
     }
 
     @Override
@@ -46,12 +46,11 @@ public class TypeCheckingVerifier extends ClassVerifier {
         try {
             super.verify();
         } catch (VerifyError verifyError) {
-            if (classActor().majorVersion() == 50 && _fallBackToTypeInferencing) {
+            if (classActor().majorVersion() == 50 && _failOverToTypeInferencing) {
                 final TypeInferencingVerifier typeInferencingVerifier = new TypeInferencingVerifier(classActor());
                 typeInferencingVerifier.setVerbose(verbose());
                 typeInferencingVerifier.verify();
             }
-            throw verifyError;
         }
     }
 
