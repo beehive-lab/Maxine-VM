@@ -24,7 +24,7 @@ import com.sun.c1x.ci.CiMethod;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.util.BitMap;
 import com.sun.c1x.C1XOptions;
-import com.sun.c1x.Compilation;
+import com.sun.c1x.C1XCompilation;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ import java.util.ArrayList;
  */
 public class IRScope {
 
-    final Compilation _compilation; // XXX: is this necessary?
+    final C1XCompilation _compilation; // XXX: is this necessary?
     final IRScope _caller;
     final int _callerBCI;
     ValueStack _callerState;
@@ -53,7 +53,7 @@ public class IRScope {
 
     BitMap _storesInLoops;
 
-    public IRScope(Compilation compilation, IRScope caller, int callerBCI, CiMethod method, int osrBCI) {
+    public IRScope(C1XCompilation compilation, IRScope caller, int callerBCI, CiMethod method, int osrBCI) {
         _compilation = compilation;
         _caller = caller;
         _callerBCI = callerBCI;

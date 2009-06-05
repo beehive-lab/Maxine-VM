@@ -40,7 +40,7 @@ import java.util.*;
  * @author Ben L. Titzer
  */
 public class GraphBuilder {
-    final Compilation _compilation;
+    final C1XCompilation _compilation;
 
     // for each instance of GraphBuilder
     ScopeData _scopeData;                   // Per-scope data; used for inlining
@@ -63,8 +63,9 @@ public class GraphBuilder {
      * @param compilation the compilation
      * @param scope the top IRScope
      */
-    public GraphBuilder(Compilation compilation, IRScope scope) {
+    public GraphBuilder(C1XCompilation compilation, IRScope scope) {
         _compilation = compilation;
+        _memory = new MemoryBuffer();
         int osrBCI = compilation.osrBCI();
         BlockMap blockMap = compilation.getBlockMap(scope.method(), osrBCI);
         BlockBegin startBlock = blockMap.get(0);

@@ -47,11 +47,12 @@ public class BytecodeStream {
 
     /**
      * Advances to the next bytecode and returns its opcode.
-     * @return the opcode of the next bytecode
+     * @return the opcode of the current bytecode
      */
     public int next() {
+        final int opcode = currentBC();
         setBCI(_nextBCI);
-        return currentBC();
+		return opcode;
     }
 
     /**
@@ -187,5 +188,9 @@ public class BytecodeStream {
             _opcode = Bytecodes.END;
             _nextBCI = _curBCI;
         }
+    }
+    
+    public boolean hasMore() {
+    	return _opcode != Bytecodes.END;
     }
 }

@@ -133,7 +133,7 @@ public abstract class Instruction {
      */
     public final void setBCI(int bci) {
         // XXX: BCI field may not be needed at all
-        assert _bci >= 0 || _bci == SYNCHRONIZATION_ENTRY_BCI;
+        assert bci >= 0 || bci == SYNCHRONIZATION_ENTRY_BCI;
         _bci = bci;
     }
 

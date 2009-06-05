@@ -36,7 +36,7 @@ import com.sun.c1x.ir.IRScope;
  *
  * @author Ben L. Titzer
  */
-public class Compilation {
+public class C1XCompilation {
 
     final CiRuntime _runtime;
     final CiMethod _method;
@@ -59,7 +59,7 @@ public class Compilation {
      * @param method the method to be compiled
      * @param osrBCI the bytecode index for on-stack replacement, if requested
      */
-    public Compilation(CiRuntime runtime, CiMethod method, int osrBCI) {
+    public C1XCompilation(CiRuntime runtime, CiMethod method, int osrBCI) {
         _runtime = runtime;
         _method = method;
         _osrBCI = osrBCI;
@@ -70,7 +70,7 @@ public class Compilation {
      * @param runtime the runtime implementation
      * @param method the method to be compiled
      */
-    public Compilation(CiRuntime runtime, CiMethod method) {
+    public C1XCompilation(CiRuntime runtime, CiMethod method) {
         _runtime = runtime;
         _method = method;
         _osrBCI = -1;
@@ -86,6 +86,8 @@ public class Compilation {
     		}
 		} catch (Bailout b) {
 			_bailout = b;
+		} catch (Throwable t) {
+			_bailout = new Bailout("unexpected exception", t);
 		}
 		return _start;
     }
