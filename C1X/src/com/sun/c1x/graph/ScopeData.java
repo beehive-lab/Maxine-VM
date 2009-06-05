@@ -230,7 +230,7 @@ public class ScopeData {
     }
 
     /**
-     * Sets the continuation for this ScopeData
+     * Sets the continuation for this ScopeData.
      * @param continuation the continuation
      */
     public void setContinuation(BlockBegin continuation) {

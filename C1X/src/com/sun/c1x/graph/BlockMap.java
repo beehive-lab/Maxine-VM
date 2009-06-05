@@ -370,7 +370,7 @@ public class BlockMap {
             if (next != null && next != current) {
                 if (current != null) {
                     // add fall through successor to current block
-                    _successorMap[current.bci()] = new BlockBegin[] { next };
+                    _successorMap[current.bci()] = new BlockBegin[] {next};
                 }
                 current = next;
             }
@@ -527,10 +527,10 @@ public class BlockMap {
     }
 
     void succ2(int bci, int s1, int s2) {
-        _successorMap[bci] = new BlockBegin[] { make(s1), make(s2) };
+        _successorMap[bci] = new BlockBegin[] {make(s1), make(s2)};
     }
 
     void succ1(int bci, int s1) {
-        _successorMap[bci] = new BlockBegin[] { make(s1) };
+        _successorMap[bci] = new BlockBegin[] {make(s1)};
     }
 }

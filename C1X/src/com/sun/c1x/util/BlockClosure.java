@@ -28,5 +28,5 @@ import com.sun.c1x.ir.BlockBegin;
  * @author Ben L. Titzer
  */
 public interface BlockClosure {
-    public void apply(BlockBegin i);
+    void apply(BlockBegin i);
 }

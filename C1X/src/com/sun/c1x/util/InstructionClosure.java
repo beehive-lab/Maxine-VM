@@ -29,5 +29,5 @@ import com.sun.c1x.ir.Instruction;
  * @author Ben L. Titzer
  */
 public interface InstructionClosure {
-    public Instruction apply(Instruction i);
+    Instruction apply(Instruction i);
 }

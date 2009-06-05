@@ -88,7 +88,8 @@ public class ArrayMap<T> {
         if (_map == null || index < 0 || index >= _map.length) {
             return null;
         }
-        return Util.uncheckedCast(_map[index]);
+        Class<T> type = null;
+        return Util.uncheckedCast(type, _map[index]);
     }
 
     private void growBackward(int i, T value) {

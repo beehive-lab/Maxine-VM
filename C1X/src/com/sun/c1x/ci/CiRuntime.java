@@ -28,18 +28,18 @@ package com.sun.c1x.ci;
  * @author Ben L. Titzer
  */
 public interface CiRuntime {
-    public CiConstantPool getConstantPool(CiMethod method);
-    public CiOsrFrame getOsrFrame(CiMethod method, int bci);
+    CiConstantPool getConstantPool(CiMethod method);
+    CiOsrFrame getOsrFrame(CiMethod method, int bci);
 
-    public boolean mustInline(CiMethod method);
-    public boolean mustNotInline(CiMethod method);
-    public boolean mustNotCompile(CiMethod method);
+    boolean mustInline(CiMethod method);
+    boolean mustNotInline(CiMethod method);
+    boolean mustNotCompile(CiMethod method);
 
-    public boolean instanceOf(Object object, CiType type);
-    public Object checkCast(Object object, CiType type);
-    public Object allocateObject(CiType type);
-    public Object allocateArray(CiType type, int length);
-    public CiType resolveType(String name);
-    public CiType getType(Class<?> javaClass);
+    boolean instanceOf(Object object, CiType type);
+    Object checkCast(Object object, CiType type);
+    Object allocateObject(CiType type);
+    Object allocateArray(CiType type, int length);
+    CiType resolveType(String name);
+    CiType getType(Class<?> javaClass);
 
 }

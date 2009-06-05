@@ -28,10 +28,10 @@ package com.sun.c1x.ci;
  * @author Ben L. Titzer
  */
 public interface CiOsrFrame {
-    public int getLocalOffset(int local);
-    public boolean isLive(int local);
-    public boolean isLiveObject(int local);
-    public int getStackOffset(int index);
-    public int getLockOffset(int lock);
-    public int frameSize();
+    int getLocalOffset(int local);
+    boolean isLive(int local);
+    boolean isLiveObject(int local);
+    int getStackOffset(int index);
+    int getLockOffset(int lock);
+    int frameSize();
 }

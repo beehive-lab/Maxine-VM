@@ -26,10 +26,10 @@ package com.sun.c1x.ci;
  * @author Ben L. Titzer
  */
 public interface CiExceptionHandler {
-    public int startBCI();
-    public int endBCI();
-    public int handlerBCI();
-    public int catchClassIndex();
-    public boolean isCatchAll();
-    public boolean isRethrow();
+    int startBCI();
+    int endBCI();
+    int handlerBCI();
+    int catchClassIndex();
+    boolean isCatchAll();
+    boolean isRethrow();
 }

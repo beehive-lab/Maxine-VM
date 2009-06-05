@@ -30,17 +30,17 @@ import com.sun.c1x.value.BasicType;
  * @author Ben L. Titzer
  */
 public interface CiConstant {
-    public boolean isCiType();
-    public CiType asCiType();
-    public Object asObject();
-    public String asString();
-    public boolean asBoolean();
-    public byte asByte();
-    public short asShort();
-    public char asChar();
-    public int asInt();
-    public long asLong();
-    public float asFloat();
-    public double asDouble();
-    public BasicType basicType();
+    boolean isCiType();
+    CiType asCiType();
+    Object asObject();
+    String asString();
+    boolean asBoolean();
+    byte asByte();
+    short asShort();
+    char asChar();
+    int asInt();
+    long asLong();
+    float asFloat();
+    double asDouble();
+    BasicType basicType();
 }

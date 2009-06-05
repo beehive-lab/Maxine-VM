@@ -65,7 +65,7 @@ public class Util {
         assert val > 0 && isPowerOf2(val);
         return 64 - Long.numberOfLeadingZeros(val);
     }
-    
+
     /**
      * Statically cast an object to an arbitrary Object type WITHOUT eliminating dynamic erasure checks.
      */

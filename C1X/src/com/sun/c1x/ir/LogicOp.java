@@ -41,7 +41,7 @@ public class LogicOp extends Op2 {
     }
 
     /**
-     * Checks whether this operation is commutative
+     * Checks whether this operation is commutative.
      * @return <code>true</code> if this operation is commutative
      */
     public boolean isCommutative() {
