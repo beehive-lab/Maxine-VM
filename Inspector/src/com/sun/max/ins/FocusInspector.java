@@ -78,9 +78,9 @@ public final class FocusInspector extends Inspector {
     }
 
     @Override
-    protected void createView(long epoch) {
+    protected void createView() {
         _table = new FocusTable(inspection());
-        refreshView(epoch, true);
+        refreshView(true);
         JTableColumnResizer.adjustColumnPreferredWidths(_table);
         final JPanel panel = new JPanel(new BorderLayout());
         panel.add(_table.getTableHeader(), BorderLayout.NORTH);
@@ -90,9 +90,9 @@ public final class FocusInspector extends Inspector {
     }
 
     @Override
-    protected void refreshView(long epoch, boolean force) {
-        _table.refresh(epoch, force);
-        super.refreshView(epoch, force);
+    protected void refreshView(boolean force) {
+        _table.refresh(force);
+        super.refreshView(force);
     }
 
     @Override
@@ -101,7 +101,7 @@ public final class FocusInspector extends Inspector {
     }
 
     @Override
-    public void viewConfigurationChanged(long epoch) {
+    public void viewConfigurationChanged() {
         reconstructView();
     }
 

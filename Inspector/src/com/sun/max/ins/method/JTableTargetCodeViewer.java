@@ -190,12 +190,12 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         _columns = new TableColumn[ColumnKind.VALUES.length()];
         _columnModel = new TargetCodeTableColumnModel();
         _table = new TargetCodeTable(inspection, _model, _columnModel);
-        createView(inspection.maxVM().epoch());
+        createView();
     }
 
     @Override
-    protected void createView(long epoch) {
-        super.createView(epoch);
+    protected void createView() {
+        super.createView();
 
         // Set up toolbar
         JButton button = new InspectorButton(_inspection, _inspection.actions().toggleTargetCodeBreakpoint());
@@ -264,7 +264,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _table);
         add(scrollPane, BorderLayout.CENTER);
 
-        refresh(epoch, true);
+        refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(_table);
     }
 
@@ -476,7 +476,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             // not used pending further refactoring
         }
 
@@ -498,7 +498,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                         removeColumn(_columns[col]);
                     }
                     JTableColumnResizer.adjustColumnPreferredWidths(_table);
-                    refresh(maxVM().epoch(), true);
+                    refresh(true);
                 }
             };
 
@@ -591,7 +591,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
         }
     }
 
@@ -794,10 +794,10 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         private TargetCodeLabel _targetCodeLabel = new TargetCodeLabel(_inspection, "");
         private LiteralRenderer _literalRenderer = getLiteralRenderer(_inspection);
 
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             for (InspectorLabel wordValueLabel : _wordValueLabels) {
                 if (wordValueLabel != null) {
-                    wordValueLabel.refresh(epoch, force);
+                    wordValueLabel.refresh(force);
                 }
             }
         }
@@ -856,10 +856,10 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     }
 
     @Override
-    protected void updateView(long epoch, boolean force) {
+    protected void updateView(boolean force) {
         for (TableColumn column : _columns) {
             final Prober prober = (Prober) column.getCellRenderer();
-            prober.refresh(epoch, force);
+            prober.refresh(force);
         }
     }
 

@@ -62,7 +62,7 @@ public class PlainLabel extends InspectorLabel {
         setValue(n, null);
     }
 
-    public void refresh(long epoch, boolean force) {
+    public void refresh(boolean force) {
         // No data to refresh in ordinary cases.
     }
 

@@ -52,7 +52,7 @@ public final class LinuxTeleProcess extends TeleProcess {
     }
 
     LinuxTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
-        super(teleVM, platform);
+        super(teleVM, platform, ProcessState.STOPPED);
         final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(programFile, commandLineArguments);
         _task = LinuxTask.createChild(commandLineArgumentsBuffer.toLong(), agent.port());
         if (_task == null) {

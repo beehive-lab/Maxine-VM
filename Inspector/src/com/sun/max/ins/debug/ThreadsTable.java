@@ -65,7 +65,7 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
         setColumnSelectionAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
-        refresh(maxVM().epoch(), true);
+        refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
         updateSelection();
     }
@@ -314,15 +314,15 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
         repaint();
     }
 
-    private long _lastRefreshEpoch = -1;
+    private MaxVMState _lastRefreshedState = null;
 
-    public void refresh(long epoch, boolean force) {
-        if (epoch > _lastRefreshEpoch || force) {
-            _lastRefreshEpoch = epoch;
+    public void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
             _model.refresh();
             for (TableColumn column : _columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(epoch, force);
+                prober.refresh(force);
             }
         }
     }

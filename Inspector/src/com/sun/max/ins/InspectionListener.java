@@ -26,10 +26,6 @@ import com.sun.max.tele.debug.*;
 /**
  * Notification service for changes to state in the VM.
  *
- * Many of the notifications include the current "epoch" of the
- * underlying process ({@see TeleProcess#epoch()}), which can
- * be used by listeners to decide whether to update caches or
- * not.
  *
  * @author Michael Van De Vanter
  */
@@ -38,18 +34,15 @@ public interface InspectionListener {
     /**
      * Notifies that  VM state has potentially changed and should be revisited.
      *
-     * @param epoch current epoch of the VM process {@see TeleProcess#epoch()}.
      * @param force suspend caching behavior; reload state unconditionally.
      */
-    void vmStateChanged(long epoch, boolean force);
+    void vmStateChanged(boolean force);
 
     /**
      * Notifies that the set of threads in the VM has changed; listeners can assume
      * that the set hasn't changed unless this notification is received.
-     *
-     * @param epoch current epoch of the VM process {@see TeleProcess#epoch()}.
      */
-    void threadSetChanged(long epoch);
+    void threadSetChanged();
 
     /**
      * Notifies that the state associated with a particular thread  in the VM has changed.
@@ -58,17 +51,14 @@ public interface InspectionListener {
 
     /**
      * Notifies that the set of breakpoints in the VM has changed.
-     * @param epoch  current epoch of the VM process {@see TeleProcess#epoch()}.
      */
-    void breakpointSetChanged(long epoch);
+    void breakpointSetChanged();
 
     /**
      * Notifies that an important aspect of view style/parameters/configuration have changed,
      * and that views should be reconstructed if needed (view state change only).
-     *
-     * @param epoch current epoch of the VM process {@see TeleProcess#epoch()}.
      */
-    void viewConfigurationChanged(long epoch);
+    void viewConfigurationChanged();
 
     /**
      * Notifies that the running process associated with a VM has

@@ -25,6 +25,7 @@ import java.awt.event.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
@@ -140,13 +141,13 @@ public class TypeLabel extends InspectorLabel {
         }
     }
 
-    private long _epoch = -1;
+    private MaxVMState _lastRefreshedState = null;
 
     @Override
-    public void refresh(long epoch, boolean force) {
-        if (epoch > _epoch || force) {
+    public void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
             updateClassActor();
-            _epoch = epoch;
         }
     }
 

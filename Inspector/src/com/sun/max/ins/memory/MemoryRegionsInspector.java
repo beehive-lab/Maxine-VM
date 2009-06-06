@@ -73,7 +73,7 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
     }
 
     @Override
-    protected void createView(long epoch) {
+    protected void createView() {
         if (_table != null) {
             focus().removeListener(_table);
         }
@@ -113,12 +113,12 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
     }
 
     @Override
-    protected void refreshView(long epoch, boolean force) {
-        _table.refresh(epoch, force);
-        super.refreshView(epoch, force);
+    protected void refreshView(boolean force) {
+        _table.refresh(force);
+        super.refreshView(force);
     }
 
-    public void viewConfigurationChanged(long epoch) {
+    public void viewConfigurationChanged() {
         reconstructView();
     }
 

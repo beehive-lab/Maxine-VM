@@ -42,7 +42,7 @@ import com.sun.max.util.*;
  * @author Michael Van De Vanter
  *
  */
-public final class InspectorMainFrame extends JFrame implements InspectorGUI {
+public final class InspectorMainFrame extends JFrame implements InspectorGUI, Prober {
 
     private final Inspection _inspection;
     private final Cursor _busyCursor = new Cursor(Cursor.WAIT_CURSOR);
@@ -224,31 +224,6 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI {
         return null;
     }
 
-    public void showTitle(String string) {
-        setTitle(string);
-        repaint();
-    }
-
-    public void showVMState(MaxVMState maxVMState) {
-        switch (maxVMState.processState()) {
-            case STOPPED:
-                if (maxVMState.isInGC()) {
-                    _menuBar.setStateColor(_inspection.style().vmStoppedinGCBackgroundColor());
-                } else {
-                    _menuBar.setStateColor(_inspection.style().vmStoppedBackgroundColor());
-                }
-                break;
-            case RUNNING:
-                _menuBar.setStateColor(_inspection.style().vmRunningBackgroundColor());
-                break;
-            case TERMINATED:
-                _menuBar.setStateColor(_inspection.style().vmTerminatedBackgroundColor());
-                break;
-            default:
-                ProgramError.unknownCase(maxVMState.processState().toString());
-        }
-    }
-
     public void showInspectorBusy(boolean busy) {
         if (busy) {
             _desktopPane.setCursor(_busyCursor);
@@ -390,6 +365,40 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI {
             location.y = r.height - frame.getHeight();
         }
         frame.setLocation(location);
+    }
+
+    @Override
+    public void redisplay() {
+        refresh(true);
+    }
+
+    private MaxVMState _lastRefreshedState = null;
+
+    @Override
+    public void refresh(boolean force) {
+        final MaxVMState maxVMState = _inspection.maxVM().maxVMState();
+        if (maxVMState.newerThan(_lastRefreshedState)) {
+            _lastRefreshedState = maxVMState;
+            setTitle(_inspection.currentInspectionTitle());
+            switch (maxVMState.processState()) {
+                case STOPPED:
+                    if (maxVMState.isInGC()) {
+                        _menuBar.setStateColor(_inspection.style().vmStoppedinGCBackgroundColor());
+                    } else {
+                        _menuBar.setStateColor(_inspection.style().vmStoppedBackgroundColor());
+                    }
+                    break;
+                case RUNNING:
+                    _menuBar.setStateColor(_inspection.style().vmRunningBackgroundColor());
+                    break;
+                case TERMINATED:
+                    _menuBar.setStateColor(_inspection.style().vmTerminatedBackgroundColor());
+                    break;
+                default:
+                    ProgramError.unknownCase(maxVMState.processState().toString());
+            }
+        }
+        repaint();
     }
 
 }

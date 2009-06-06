@@ -888,7 +888,7 @@ public class WordValueLabel extends ValueLabel {
             return WordValueLabel.this.inspection();
         }
 
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
         }
 
         public void redisplay() {

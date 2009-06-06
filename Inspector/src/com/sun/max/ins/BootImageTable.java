@@ -31,6 +31,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.prototype.*;
@@ -62,16 +63,16 @@ public class BootImageTable extends InspectorTable {
         setRowSelectionAllowed(false);
         setColumnSelectionAllowed(false);
         addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
-        refresh(maxVM().epoch(), true);
+        refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
-    private long _lastRefreshEpoch = -1;
+    private MaxVMState _lastRefreshedState = null;
 
-    public void refresh(long epoch, boolean force) {
-        if (epoch > _lastRefreshEpoch || force) {
-            _lastRefreshEpoch = epoch;
-            _model.refresh(epoch, force);
+    public void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
+            _model.refresh(force);
         }
     }
 
@@ -220,12 +221,12 @@ public class BootImageTable extends InspectorTable {
 
         }
 
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             for (InspectorLabel label : _valueLabels) {
-                label.refresh(epoch, force);
+                label.refresh(force);
             }
             for (InspectorLabel label : _regionLabels) {
-                label.refresh(epoch, force);
+                label.refresh(force);
             }
         }
 

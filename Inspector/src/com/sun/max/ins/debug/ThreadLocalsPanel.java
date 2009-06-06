@@ -59,10 +59,10 @@ public final class ThreadLocalsPanel extends InspectorPanel {
     }
 
     @Override
-    public void refresh(long epoch, boolean force) {
+    public void refresh(boolean force) {
         if (isShowing()) {
-            _threadLocalsHeaderPanel.refresh(epoch, force);
-            _threadLocalsTable.refresh(epoch, force);
+            _threadLocalsHeaderPanel.refresh(force);
+            _threadLocalsTable.refresh(force);
         }
     }
 
@@ -113,9 +113,9 @@ public final class ThreadLocalsPanel extends InspectorPanel {
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             for (InspectorLabel label : _labels) {
-                label.refresh(epoch, force);
+                label.refresh(force);
             }
         }
     }

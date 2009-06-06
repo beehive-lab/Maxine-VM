@@ -21,7 +21,7 @@
 package com.sun.max.tele;
 
 /**
- * Convenience methods for all local objects that refer to something in a {@link TeleVM}.
+ * Interface for Tele layer objects that refer to something in a {@link TeleVM}.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter

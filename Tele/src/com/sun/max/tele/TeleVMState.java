@@ -22,7 +22,6 @@ package com.sun.max.tele;
 
 import com.sun.max.collect.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.TeleProcess.*;
 
 
 /**

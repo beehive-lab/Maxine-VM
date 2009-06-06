@@ -65,7 +65,7 @@ public final class SolarisTeleProcess extends TeleProcess {
      * @throws BootImageException
      */
     SolarisTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
-        super(teleVM, platform);
+        super(teleVM, platform, ProcessState.STOPPED);
         final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(programFile, commandLineArguments);
         _processHandle = nativeCreateChild(commandLineArgumentsBuffer.toLong(), agent.port());
         _dataAccess = new PageDataAccess(this, platform.processorKind().dataModel());

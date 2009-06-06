@@ -28,7 +28,6 @@ import com.sun.max.ide.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.TeleVM.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.prototype.*;
 
@@ -67,7 +66,6 @@ public class TestTeleVM {
 
         try {
             _teleVM = TeleVM.create(options);
-            TeleDisassembler.initialize(_teleVM);
         } catch (BootImageException e) {
             System.out.println("Failed to load boot image " + BinaryImageGenerator.getDefaultBootImageFilePath().toString());
             e.printStackTrace();

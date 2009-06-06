@@ -171,7 +171,7 @@ public class JavaMethodInspector extends MethodInspector {
     private final TargetMethodMenuItems _targetMethodMenuItems;
 
     @Override
-    public void createView(long epoch) {
+    public void createView() {
         // Create code viewers, either by explicit request or by defaults.
         if (_requestedCodeKind != null && _codeKindEnabled.get(_requestedCodeKind)) {
             addCodeViewer(_requestedCodeKind);
@@ -268,23 +268,23 @@ public class JavaMethodInspector extends MethodInspector {
     }
 
     @Override
-    protected void refreshView(long epoch, boolean force) {
+    protected void refreshView(boolean force) {
         if (isShowing() || force) {
             _teleClassMethodActor.refreshView();
             if (_classMethodMenuItems != null) {
-                _classMethodMenuItems.refresh(epoch, force);
+                _classMethodMenuItems.refresh(force);
             }
             for (CodeViewer codeViewer : _codeViewers.values()) {
-                codeViewer.refresh(epoch, force);
+                codeViewer.refresh(force);
             }
             if (_targetMethodMenuItems != null) {
-                _targetMethodMenuItems.refresh(epoch, force);
+                _targetMethodMenuItems.refresh(force);
             }
-            super.refreshView(epoch, force);
+            super.refreshView(force);
         }
     }
 
-    public void viewConfigurationChanged(long epoch) {
+    public void viewConfigurationChanged() {
         // TODO (mlvdv) fix method display update when view configurations change, patched now
         for (CodeViewer codeViewer : _codeViewers.values()) {
             codeViewer.redisplay();

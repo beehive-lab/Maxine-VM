@@ -37,7 +37,7 @@ public interface MaxVMState  {
     /**
      * @return the state that the VM was in at the time of this object creation..
      */
-    TeleProcess.ProcessState processState();
+    ProcessState processState();
 
     /**
      * @return the generation count of this state instance; each id is one greater than

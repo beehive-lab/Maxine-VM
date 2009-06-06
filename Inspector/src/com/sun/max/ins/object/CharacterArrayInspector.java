@@ -51,8 +51,8 @@ public final class CharacterArrayInspector extends ObjectInspector {
     }
 
     @Override
-    protected void createView(long epoch) {
-        super.createView(epoch);
+    protected void createView() {
+        super.createView();
 
         final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject();
         final String componentTypeName = teleArrayObject.classActorForType().componentClassActor().javaSignature(false);
@@ -78,18 +78,18 @@ public final class CharacterArrayInspector extends ObjectInspector {
                 // Remember which display is now selected
                 _alternateDisplay = prober == _stringPane;
                 // Refresh the display that is now visible.
-                prober.refresh(maxVM().epoch(), true);
+                prober.refresh(true);
             }
         });
         frame().getContentPane().add(_tabbedPane);
     }
 
     @Override
-    protected void refreshView(long epoch, boolean force) {
+    protected void refreshView(boolean force) {
         // Only refresh the visible pane.
         final Prober prober = (Prober) _tabbedPane.getSelectedComponent();
-        prober.refresh(epoch, force);
-        super.refreshView(epoch, force);
+        prober.refresh(force);
+        super.refreshView(force);
     }
 
 }

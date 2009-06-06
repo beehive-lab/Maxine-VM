@@ -222,7 +222,7 @@ public final class MemoryWordInspector extends Inspector {
     }
 
     @Override
-    protected void refreshView(long epoch, boolean force) {
+    protected void refreshView(boolean force) {
         final int wordSize = maxVM().wordSize();
         for (int i = 0; i < _numberOfWords; i++) {
             final Address address = _address.plus(i * wordSize);
@@ -249,7 +249,7 @@ public final class MemoryWordInspector extends Inspector {
                 }
             }
         }
-        super.refreshView(epoch, force);
+        super.refreshView(force);
     }
 
     @Override
@@ -278,7 +278,7 @@ public final class MemoryWordInspector extends Inspector {
     }
 
     @Override
-    protected void createView(long epoch) {
+    protected void createView() {
         _contentPane = new InspectorPanel(inspection());
         frame().setContentPane(_contentPane);
         _contentPane.removeAll();
@@ -317,11 +317,11 @@ public final class MemoryWordInspector extends Inspector {
             lineAddress = lineAddress.plus(maxVM().wordSize());
         }
 
-        refreshView(epoch, true);
+        refreshView(true);
         SpringUtilities.makeCompactGrid(view, _numberOfWords, 3, 0, 0, 0, 0);
     }
 
-    public void viewConfigurationChanged(long epoch) {
+    public void viewConfigurationChanged() {
         reconstructView();
     }
 
