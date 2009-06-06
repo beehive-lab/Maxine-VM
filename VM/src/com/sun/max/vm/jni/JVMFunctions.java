@@ -85,5 +85,5 @@ public class JVMFunctions {
         System.arraycopy(src, srcPos, dest, destPos, length);
     }
 
-    // Checkstyle: start method name check
+    // Checkstyle: resume method name check
 }

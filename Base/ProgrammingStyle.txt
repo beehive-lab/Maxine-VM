@@ -17,7 +17,7 @@ Most rules are expressed in our CheckStyle Eclipse plugin configuration.
 See http://eclipse-cs.sourceforge.net/
 
 If using Eclipse, you should also import the code style format profile from
-MaxineBase/eclipse/JavaSourceCodeFormatting.xml. This is under Window|Preferences|Java|Code Style|Formatter|Import...
+Base/.settings/JavaSourceCodeFormatting.xml. This is under Window|Preferences|Java|Code Style|Formatter|Import...
 
 We also use FindBugs from time to time,
 but there is no rule to eliminate all of its findings,

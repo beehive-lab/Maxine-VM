@@ -245,6 +245,7 @@ public class Bytecodes {
     private static final byte[] _flags = new byte[NUM_JAVA_CODES];
     private static final byte[] _length = new byte[NUM_JAVA_CODES];
 
+    // Checkstyle: stop
     static {
         def(NOP                 , "nop"                 , "b"    );
         def(ACONST_NULL         , "aconst_null"         , "b"    );
@@ -450,6 +451,7 @@ public class Bytecodes {
         def(JSR_W               , "jsr_w"               , "boooo");
         def(BREAKPOINT          , "breakpoint"          , "b"    , FLAG_TRAP);
     }
+    // Checkstyle: resume
 
     public static boolean isCommutative(int op) {
         return (_flags[op] & FLAG_COMMUTATIVE) != 0;
@@ -578,7 +580,7 @@ public class Bytecodes {
         return null;
     }
 
-    public strictfp static Float foldFloatOp2(int opcode, float x, float y) {
+    public static strictfp Float foldFloatOp2(int opcode, float x, float y) {
         switch (opcode) {
             case Bytecodes.FADD: return (x + y);
             case Bytecodes.FSUB: return (x - y);
@@ -589,7 +591,7 @@ public class Bytecodes {
         return null;
     }
 
-    public strictfp static Double foldDoubleOp2(int opcode, double x, double y) {
+    public static strictfp Double foldDoubleOp2(int opcode, double x, double y) {
         switch (opcode) {
             case Bytecodes.DADD: return (x + y);
             case Bytecodes.DSUB: return (x - y);

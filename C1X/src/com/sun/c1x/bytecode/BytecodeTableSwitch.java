@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.bytecode;
 
-import com.sun.c1x.bytecode.BytecodeStream;
-
 /**
  * The <code>BytecodeTableSwitch</code> class is a utility for processing tableswitch bytecodes.
  *

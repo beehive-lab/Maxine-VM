@@ -35,7 +35,7 @@ public class SubstitutionResolver implements BlockClosure, InstructionClosure {
 
     /**
      * Creates a new SubstitutionResolver and applies it to each instruction
-     * in the IR graph, starting from the specified block
+     * in the IR graph, starting from the specified block.
      * @param block the block from which to start substitution
      */
     public SubstitutionResolver(BlockBegin block) {

@@ -28,13 +28,13 @@ import com.sun.c1x.value.BasicType;
  * @author Ben L. Titzer
  */
 public interface CiField {
-    public String name();
-    public CiType type();
-    public BasicType basicType();
-    public CiType holder();
-    public boolean willLink(CiType where, int opcode);
-    public boolean isVolatile();
-    public boolean isConstant();
-    public int offset();
-    public CiConstant constantValue();
+    String name();
+    CiType type();
+    BasicType basicType();
+    CiType holder();
+    boolean willLink(CiType where, int opcode);
+    boolean isVolatile();
+    boolean isConstant();
+    int offset();
+    CiConstant constantValue();
 }

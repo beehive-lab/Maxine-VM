@@ -27,9 +27,9 @@ package com.sun.c1x;
  * @author Ben L. Titzer
  */
 public class Bailout extends RuntimeException {
-	
-	public static final long serialVersionUID = 8974598793458772L;
-	
+
+    public static final long serialVersionUID = 8974598793458772L;
+
     public Bailout(String reason) {
         super(reason);
     }

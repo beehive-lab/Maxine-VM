@@ -195,7 +195,7 @@ public final class JDKInterceptor {
         JDK.java_util_concurrent_locks_LockSupport,
             new FieldOffsetRecomputation("parkBlockerOffset", JDK.java_lang_Thread, "parkBlocker"),
     };
-    // Checkstyle: start
+    // Checkstyle: resume
 
     private static final Map<String, Map<String, InterceptedField>> _interceptedFieldMap = buildInterceptedFieldMap(_interceptedFieldArray);
 
@@ -279,7 +279,7 @@ public final class JDKInterceptor {
      */
     public static void resetField(Class javaClass, String fieldName) {
         Map<String, InterceptedField> fieldMap = _interceptedFieldMap.get(javaClass.getName());
-        if (fieldMap == null ) {
+        if (fieldMap == null) {
             fieldMap = new HashMap<String, InterceptedField>();
             _interceptedFieldMap.put(javaClass.getName(), fieldMap);
         }
