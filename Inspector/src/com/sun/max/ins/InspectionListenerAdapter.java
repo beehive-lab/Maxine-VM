@@ -36,19 +36,19 @@ import com.sun.max.tele.debug.*;
  */
 public abstract class InspectionListenerAdapter implements InspectionListener {
 
-    public void vmStateChanged(long epoch, boolean force) {
+    public void vmStateChanged(boolean force) {
     }
 
-    public void threadSetChanged(long epoch) {
+    public void threadSetChanged() {
     }
 
     public void threadStateChanged(TeleNativeThread teleNativeThread) {
     }
 
-    public void breakpointSetChanged(long epoch) {
+    public void breakpointSetChanged() {
     }
 
-    public void viewConfigurationChanged(long epoch) {
+    public void viewConfigurationChanged() {
     }
 
     public void vmProcessTerminated() {

@@ -67,7 +67,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
         setColumnSelectionAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         addMouseListener(new BreakpointInspectorMouseClickAdapter(inspection()));
-        refresh(maxVM().epoch(), true);
+        refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
         updateSelection();
     }
@@ -85,16 +85,16 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
         }
     }
 
-    private long _lastRefreshEpoch = -1;
+    private MaxVMState _lastStateRefreshed = null;
 
-    public void refresh(long epoch, boolean force) {
-        if (epoch > _lastRefreshEpoch || force) {
-            _lastRefreshEpoch = epoch;
+    public void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastStateRefreshed) || force) {
+            _lastStateRefreshed = maxVMState();
             _model.refresh();
             for (TableColumn column : _columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
                 if (prober != null) {
-                    prober.refresh(epoch, force);
+                    prober.refresh(force);
                 }
             }
         }
@@ -450,7 +450,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
         }
     }
 
@@ -502,7 +502,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
             return _inspection;
         }
 
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
         }
 
         public void redisplay() {

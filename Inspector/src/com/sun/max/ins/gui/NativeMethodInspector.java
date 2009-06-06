@@ -78,7 +78,7 @@ public final class NativeMethodInspector extends MethodInspector {
     }
 
     @Override
-    public void createView(long epoch) {
+    public void createView() {
         _targetCodeViewer =  new JTableTargetCodeViewer(inspection(), this, _teleTargetRoutine);
         frame().getContentPane().add(_targetCodeViewer);
         frame().pack();
@@ -87,13 +87,13 @@ public final class NativeMethodInspector extends MethodInspector {
     }
 
     @Override
-    protected void refreshView(long epoch, boolean force) {
+    protected void refreshView(boolean force) {
         if (isShowing() || force) {
-            _targetCodeViewer.refresh(epoch, force);
+            _targetCodeViewer.refresh(force);
         }
     }
 
-    public void viewConfigurationChanged(long epoch) {
+    public void viewConfigurationChanged() {
         _targetCodeViewer.redisplay();
     }
 

@@ -146,7 +146,7 @@ public final class MemoryInspector extends Inspector {
     private TextLabel[] _charLabels;
 
     @Override
-    protected void refreshView(long epoch, boolean force) {
+    protected void refreshView(boolean force) {
         final byte[] bytes = new byte[_numberOfBytesPerGroup];
         for (int i = 0; i < _numberOfGroups; i++) {
             final Address address = _address.plus(i * _numberOfBytesPerGroup);
@@ -169,7 +169,7 @@ public final class MemoryInspector extends Inspector {
                 }
             }
         }
-        super.refreshView(epoch, force);
+        super.refreshView(force);
     }
 
     private JPanel _contentPane;
@@ -192,7 +192,7 @@ public final class MemoryInspector extends Inspector {
     }
 
     @Override
-    protected void createView(long epoch) {
+    protected void createView() {
         frame().menu().addSeparator();
         frame().menu().add(actions().closeViews(_otherMemoryInspectorsPredicate, "Close other Memory Inspectors"));
         frame().menu().add(actions().closeViews(_allMemoryInspectorsPredicate, "Close all Memory Inspectors"));
@@ -237,11 +237,11 @@ public final class MemoryInspector extends Inspector {
             }
         }
 
-        refreshView(epoch, true);
+        refreshView(true);
         SpringUtilities.makeCompactGrid(view, numberOfLines * 2, 1 + _numberOfGroupsPerLine, 0, 0, 5, 5);
     }
 
-    public void viewConfigurationChanged(long epoch) {
+    public void viewConfigurationChanged() {
         reconstructView();
     }
 

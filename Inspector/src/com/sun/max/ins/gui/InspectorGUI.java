@@ -24,7 +24,6 @@ import java.awt.*;
 
 import javax.swing.*;
 
-import com.sun.max.tele.*;
 import com.sun.max.util.*;
 
 
@@ -50,16 +49,6 @@ public interface InspectorGUI {
      * Removes and disposes all instances of {@link Inspector} currently in the GUI display that matches a predicate.
      */
     void removeInspectors(Predicate<Inspector> predicate);
-
-    /**
-     * Shows a title string identifying the inspection session and possibly state information.
-     */
-    void showTitle(String string);
-
-    /**
-     * Shows a visual indication of the presumed VM state.
-     */
-    void showVMState(MaxVMState maxVMState);
 
     /**
      * Shows a visual indication of the Inspector state with regard to accepting user inputs.

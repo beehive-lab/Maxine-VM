@@ -76,7 +76,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     }
 
     @Override
-    protected void createView(long epoch) {
+    protected void createView() {
         if (_table != null) {
             focus().removeListener(_table);
         }
@@ -138,7 +138,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
             return BreakpointsInspector.this.inspection();
         }
 
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
         }
 
         public void redisplay() {
@@ -146,17 +146,17 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     }
 
     @Override
-    protected void refreshView(long epoch, boolean force) {
-        _table.refresh(epoch, force);
-        super.refreshView(epoch, force);
+    protected void refreshView(boolean force) {
+        _table.refresh(force);
+        super.refreshView(force);
     }
 
-    public void viewConfigurationChanged(long epoch) {
+    public void viewConfigurationChanged() {
         reconstructView();
     }
 
     @Override
-    public void breakpointSetChanged(long epoch) {
+    public void breakpointSetChanged() {
         refreshView(true);
     }
 

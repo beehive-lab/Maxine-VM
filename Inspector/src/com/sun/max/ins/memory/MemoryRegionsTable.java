@@ -34,6 +34,7 @@ import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -81,7 +82,7 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
         setColumnSelectionAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
-        refresh(maxVM().epoch(), true);
+        refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
         updateSelection();
     }
@@ -274,7 +275,7 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
         public void redisplay() {
         }
 
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
         }
     }
 
@@ -295,7 +296,7 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
         public void redisplay() {
         }
 
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
         }
     }
 
@@ -316,7 +317,7 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
         public void redisplay() {
         }
 
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
         }
     }
 
@@ -339,7 +340,7 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
         public void redisplay() {
         }
 
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
         }
     }
 
@@ -550,15 +551,15 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
         repaint();
     }
 
-    private long _lastRefreshEpoch = -1;
+    private MaxVMState _lastRefreshedState = null;
 
-    public void refresh(long epoch, boolean force) {
-        if (epoch > _lastRefreshEpoch || force) {
-            _lastRefreshEpoch = epoch;
+    public void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
             _model.refresh();
             for (TableColumn column : _columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(epoch, force);
+                prober.refresh(force);
             }
         }
     }

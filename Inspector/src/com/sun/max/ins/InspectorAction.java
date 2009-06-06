@@ -71,7 +71,7 @@ public abstract class InspectorAction extends AbstractAction implements Prober {
 
     protected abstract void procedure();
 
-    public void refresh(long epoch, boolean force) {
+    public void refresh(boolean force) {
     }
 
     public void redisplay() {

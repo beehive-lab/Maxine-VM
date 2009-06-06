@@ -25,6 +25,7 @@ import java.awt.event.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -40,7 +41,7 @@ public final class HubLabel extends InspectorLabel {
 
     private final TeleHub _teleHub;
 
-    private long _epoch;
+    private MaxVMState _lastRefreshedState = null;
 
     public HubLabel(Inspection inspection, TeleHub teleHub) {
         super(inspection);
@@ -60,10 +61,10 @@ public final class HubLabel extends InspectorLabel {
         redisplay();
     }
 
-    public void refresh(long epoch, boolean force) {
-        if (epoch > _epoch || force) {
+    public void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
             updateText();
-            _epoch = epoch;
         }
     }
 

@@ -33,7 +33,6 @@ import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.TeleProcess.*;
 import com.sun.max.tele.debug.TeleTargetBreakpoint.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.value.*;

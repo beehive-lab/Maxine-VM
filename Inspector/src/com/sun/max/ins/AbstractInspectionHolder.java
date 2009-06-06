@@ -29,7 +29,7 @@ import com.sun.max.tele.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public abstract class AbstractInspectionHolder implements InspectionHolder{
+public abstract class AbstractInspectionHolder implements InspectionHolder {
 
 
     private final Inspection _inspection;
@@ -48,6 +48,11 @@ public abstract class AbstractInspectionHolder implements InspectionHolder{
     public final MaxVM maxVM() {
         return _inspection.maxVM();
     }
+
+    public final MaxVMState maxVMState() {
+        return _inspection.maxVM().maxVMState();
+    }
+
 
     public InspectorGUI gui() {
         return _inspection.gui();

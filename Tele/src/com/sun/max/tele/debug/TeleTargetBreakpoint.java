@@ -44,8 +44,6 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
 
     private final Factory _factory;
 
-    private final TeleProcess _teleProcess;
-
     private final TeleCodeLocation _teleCodeLocation;
 
     @Override
@@ -105,12 +103,11 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
      * @param isTransient specifies if the created breakpoint is to be deleted when a process execution stops or an
      *            inspection session finishes
      */
-    private TeleTargetBreakpoint(TeleProcess teleProcess, Factory factory, Address address, byte[] originalCode, boolean isTransient) {
-        super(teleProcess.teleVM(), isTransient);
-        _teleProcess = teleProcess;
+    private TeleTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode, boolean isTransient) {
+        super(teleVM, isTransient);
         _factory = factory;
         _teleCodeLocation = new TeleCodeLocation(teleVM(), address);
-        _originalCode = originalCode == null ? teleProcess.dataAccess().readFully(address, _factory.codeSize()) : originalCode;
+        _originalCode = originalCode == null ? teleVM.dataAccess().readFully(address, _factory.codeSize()) : originalCode;
     }
 
     /**
@@ -119,7 +116,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
      * @return the current contents at this breakpoint's address of length {@link Factory#codeSize()}
      */
     public byte[] readCode() {
-        return _teleProcess.dataAccess().readFully(address(), _originalCode.length);
+        return teleVM().dataAccess().readFully(address(), _originalCode.length);
     }
 
     /**
@@ -134,7 +131,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
      * Patches the target code at this breakpoint's address with platform dependent instruction(s) implementing a breakpoint.
      */
     public void activate() {
-        _teleProcess.dataAccess().writeBytes(address(), _factory.code());
+        teleVM().dataAccess().writeBytes(address(), _factory.code());
         _activated = true;
     }
 
@@ -142,7 +139,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
      * Patches the target code at this breakpoint's address with the original code that was compiled at that address.
      */
     public void deactivate() {
-        _teleProcess.dataAccess().writeBytes(address(), _originalCode);
+        teleVM().dataAccess().writeBytes(address(), _originalCode);
         _activated = false;
     }
 
@@ -155,9 +152,9 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
         return "Target breakpoint" + "{0x" + address().toHexString() + "} " + attributesToString();
     }
 
-    public static class Factory extends TeleViewModel {
+    public static class Factory extends Observable {
 
-        private final TeleProcess _teleProcess;
+        private final TeleVM _teleVM;
         private final byte[] _code;
 
         /**
@@ -174,9 +171,9 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
             return _code.length;
         }
 
-        public Factory(TeleProcess teleProcess) {
-            _teleProcess = teleProcess;
-            _code = TargetBreakpoint.createBreakpointCode(_teleProcess.platform().processorKind().instructionSet());
+        public Factory(TeleVM teleVM) {
+            _teleVM = teleVM;
+            _code = TargetBreakpoint.createBreakpointCode(_teleVM.vmConfiguration().platform().processorKind().instructionSet());
         }
 
         private final Map<Long, TeleTargetBreakpoint> _breakpoints = new HashMap<Long, TeleTargetBreakpoint>();
@@ -252,11 +249,12 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
          * @return the created breakpoint
          */
         public synchronized TeleTargetBreakpoint createBreakpoint(Address address, byte[] originalCode, boolean isTransient) {
-            final TeleTargetBreakpoint breakpoint = new TeleTargetBreakpoint(_teleProcess, this, address, originalCode, isTransient);
+            final TeleTargetBreakpoint breakpoint = new TeleTargetBreakpoint(_teleVM, this, address, originalCode, isTransient);
             if (!isTransient) {
                 final TeleTargetBreakpoint oldBreakpoint = _breakpoints.put(address.toLong(), breakpoint);
                 assert oldBreakpoint == null;
-                refreshView(_teleProcess.epoch());
+                setChanged();
+                notifyObservers();
             } else {
                 final TeleTargetBreakpoint oldBreakpoint = _transientBreakpoints.put(address.toLong(), breakpoint);
                 assert oldBreakpoint == null;
@@ -280,7 +278,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
         }
 
         private byte[] recoverOriginalCodeForBreakpoint(Address instructionPointer) {
-            final Value result = _teleProcess.teleVM().methods().TargetBreakpoint_findOriginalCode.interpret(LongValue.from(instructionPointer.toLong()));
+            final Value result = _teleVM.methods().TargetBreakpoint_findOriginalCode.interpret(LongValue.from(instructionPointer.toLong()));
             final Reference reference = result.asReference();
             if (reference.isZero()) {
                 return null;
@@ -297,7 +295,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
          */
         public void registerBreakpointSetByVM(TeleNativeThread thread) {
             final Address breakpointAddress = thread.breakpointAddressFromInstructionPointer();
-            final byte[] codeBuffer = _teleProcess.dataAccess().readFully(breakpointAddress, codeSize());
+            final byte[] codeBuffer = _teleVM.dataAccess().readFully(breakpointAddress, codeSize());
             if (Bytes.equals(codeBuffer, _code)) {
                 TeleTargetBreakpoint breakpoint = getBreakpointAt(breakpointAddress);
                 if (breakpoint == null) {
@@ -322,7 +320,8 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
          */
         public synchronized void removeBreakpointAt(Address address) {
             _breakpoints.remove(address.toLong());
-            refreshView(_teleProcess.epoch());
+            setChanged();
+            notifyObservers();
         }
 
         /**

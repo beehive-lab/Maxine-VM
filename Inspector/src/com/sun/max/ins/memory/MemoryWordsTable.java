@@ -30,6 +30,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
@@ -73,7 +74,7 @@ public class MemoryWordsTable extends InspectorTable {
         setRowSelectionAllowed(true);
         setColumnSelectionAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        refresh(maxVM().epoch(), true);
+        refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
@@ -246,15 +247,15 @@ public class MemoryWordsTable extends InspectorTable {
         repaint();
     }
 
-    private long _lastRefreshEpoch = -1;
+    private MaxVMState _lastRefreshedState = null;
 
-    public void refresh(long epoch, boolean force) {
-        if (epoch > _lastRefreshEpoch || force) {
-            _lastRefreshEpoch = epoch;
+    public void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
             _model.refresh();
             for (TableColumn column : _columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(epoch, force);
+                prober.refresh(force);
             }
         }
     }

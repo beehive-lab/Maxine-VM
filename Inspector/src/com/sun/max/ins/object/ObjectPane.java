@@ -170,8 +170,8 @@ public final class ObjectPane extends InspectorScrollPane {
     }
 
     @Override
-    public void refresh(long epoch, boolean force) {
-        _inspectorTable.refresh(epoch, force);
+    public void refresh(boolean force) {
+        _inspectorTable.refresh(force);
     }
 
 }

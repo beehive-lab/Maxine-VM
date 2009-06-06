@@ -52,8 +52,8 @@ public final class StringInspector extends ObjectInspector {
     }
 
     @Override
-    protected void createView(long epoch) {
-        super.createView(epoch);
+    protected void createView() {
+        super.createView();
         final TeleString teleString = (TeleString) teleObject();
         final String name = teleString.classActorForType().javaSignature(false);
 
@@ -76,18 +76,18 @@ public final class StringInspector extends ObjectInspector {
                 // Remember which display is now selected
                 _alternateDisplay = prober == _stringPane;
                 // Refresh the display that is now visible.
-                prober.refresh(maxVM().epoch(), true);
+                prober.refresh(true);
             }
         });
         frame().getContentPane().add(_tabbedPane);
     }
 
     @Override
-    protected void refreshView(long epoch, boolean force) {
-        super.refreshView(epoch, force);
+    protected void refreshView(boolean force) {
+        super.refreshView(force);
         // Only refresh the visible pane
         final Prober pane = (Prober) _tabbedPane.getSelectedComponent();
-        pane.refresh(epoch, force);
+        pane.refresh(force);
     }
 
 }

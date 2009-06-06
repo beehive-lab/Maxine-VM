@@ -53,8 +53,8 @@ class Utf8ConstantInspector extends ObjectInspector {
     }
 
     @Override
-    protected void createView(long epoch) {
-        super.createView(epoch);
+    protected void createView() {
+        super.createView();
         final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) teleObject();
         final String name = teleUtf8Constant.classActorForType().javaSignature(false);
 
@@ -77,18 +77,18 @@ class Utf8ConstantInspector extends ObjectInspector {
                 // Remember which display is now selected
                 _alternateDisplay = prober == _stringPane;
                 // Refresh the display that is now visible.
-                prober.refresh(maxVM().epoch(), true);
+                prober.refresh(true);
             }
         });
         frame().getContentPane().add(_tabbedPane);
     }
 
     @Override
-    protected void refreshView(long epoch, boolean force) {
+    protected void refreshView(boolean force) {
         // Only refresh the visible view.
         final Prober pane = (Prober) _tabbedPane.getSelectedComponent();
-        pane.refresh(epoch, force);
-        super.refreshView(epoch, force);
+        pane.refresh(force);
+        super.refreshView(force);
     }
 
 }

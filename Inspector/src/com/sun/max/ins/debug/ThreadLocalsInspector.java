@@ -70,7 +70,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         _viewPreferences = ThreadLocalsViewPreferences.globalPreferences(inspection());
         _viewPreferences.addListener(this);
         createFrame(null);
-        refreshView(inspection.maxVM().epoch(), true);
+        refreshView(true);
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
@@ -80,7 +80,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     }
 
     @Override
-    protected void createView(long epoch) {
+    protected void createView() {
         _teleNativeThread = inspection().focus().thread();
         if (_teleNativeThread == null) {
             _tabbedPane = null;
@@ -96,7 +96,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
             _tabbedPane.addChangeListener(new ChangeListener() {
                 // Do a refresh whenever there's a tab change, so that the newly exposed pane is sure to be current
                 public void stateChanged(ChangeEvent event) {
-                    refreshView(maxVM().epoch(), true);
+                    refreshView(true);
                 }
             });
         }
@@ -158,7 +158,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     }
 
     @Override
-    protected void refreshView(long epoch, boolean force) {
+    protected void refreshView(boolean force) {
 
         boolean panelsAddedOrRemoved = false;
         for (Safepoint.State state : Safepoint.State.CONSTANTS) {
@@ -183,15 +183,15 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         // Only need to refresh the panel that's visible, as long as we refresh them when they become visible
         final ThreadLocalsPanel threadLocalsPanel = (ThreadLocalsPanel) _tabbedPane.getSelectedComponent();
         if (threadLocalsPanel != null) {
-            threadLocalsPanel.refresh(epoch, force);
+            threadLocalsPanel.refresh(force);
         }
-        super.refreshView(epoch, force);
+        super.refreshView(force);
         // The title displays thread state, so must be updated.
         updateFrameTitle();
     }
 
     @Override
-    public void viewConfigurationChanged(long epoch) {
+    public void viewConfigurationChanged() {
         reconstructView();
     }
 

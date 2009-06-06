@@ -86,7 +86,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
     }
 
     @Override
-    public void createView(long epoch) {
+    public void createView() {
         if (_table != null) {
             focus().removeListener(_table);
         }
@@ -97,9 +97,9 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
     }
 
     @Override
-    protected void refreshView(long epoch, boolean force) {
-        _table.refresh(epoch, force);
-        super.refreshView(epoch, force);
+    protected void refreshView(boolean force) {
+        _table.refresh(force);
+        super.refreshView(force);
     }
 
     @Override
@@ -117,7 +117,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         return getDefaultPrintAction();
     }
 
-    public void viewConfigurationChanged(long epoch) {
+    public void viewConfigurationChanged() {
         reconstructView();
     }
 
