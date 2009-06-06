@@ -52,7 +52,7 @@ public class TeleVmThread extends TeleTupleObject {
      * @return the name assigned to the thread in the {@link TeleVM}; may change dynamically.
      */
     public String name() {
-        if (teleVM().epoch() > _epoch) {
+        if (teleVM().teleProcess().epoch() > _epoch) {
             final Reference nameReference = teleVM().fields().VmThread_name.readReference(reference());
             if (_nameReference == null || !nameReference.equals(_nameReference)) {
                 if (nameReference.isZero()) {
@@ -64,7 +64,7 @@ public class TeleVmThread extends TeleTupleObject {
                     _name = teleVM().getString(_nameReference);
                 }
             }
-            _epoch = teleVM().epoch();
+            _epoch = teleVM().teleProcess().epoch();
         }
         return _name;
     }

@@ -32,6 +32,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.object.TeleObject.*;
@@ -110,7 +111,7 @@ public class ObjectHeaderTable extends InspectorTable {
                 super.procedure(mouseEvent);
             }
         });
-        refresh(_inspection.maxVM().epoch(), true);
+        refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
@@ -408,9 +409,9 @@ public class ObjectHeaderTable extends InspectorTable {
             }
         }
 
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             for (InspectorLabel label : _labels) {
-                label.refresh(epoch, force);
+                label.refresh(force);
             }
         }
     }
@@ -434,8 +435,8 @@ public class ObjectHeaderTable extends InspectorTable {
             _dummyLabel = new PlainLabel(_inspection, "");
         }
 
-        public void refresh(long epoch, boolean force) {
-            _regionLabel.refresh(epoch, force);
+        public void refresh(boolean force) {
+            _regionLabel.refresh(force);
         }
 
         public void redisplay() {
@@ -457,11 +458,11 @@ public class ObjectHeaderTable extends InspectorTable {
         repaint();
     }
 
-    private long _lastRefreshEpoch = -1;
+    private MaxVMState _lastRefreshedState = null;
 
-    public void refresh(long epoch, boolean force) {
-        if (epoch > _lastRefreshEpoch || force) {
-            _lastRefreshEpoch = epoch;
+    public void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
             _objectOrigin = _teleObject.getCurrentOrigin();
             _teleHub = _teleObject.getTeleHub();
             final int oldSelectedRow = getSelectedRow();
@@ -475,7 +476,7 @@ public class ObjectHeaderTable extends InspectorTable {
             }
             for (TableColumn column : _columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(epoch, force);
+                prober.refresh(force);
             }
         }
 

@@ -106,7 +106,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
     }
 
     @Override
-    protected void refreshView(long epoch, boolean force) {
+    protected void refreshView(boolean force) {
         if (isShowing() || force) {
             // First, refresh stack frame information.
             Pointer stackPointer = null;
@@ -151,11 +151,11 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
                 final WordValueLabel label = _stack[stackSlotIndex];
                 label.setValue(new WordValue(stackItem));
             }
-            super.refreshView(epoch, force);
+            super.refreshView(force);
         }
     }
 
-    public void viewConfigurationChanged(long epoch) {
+    public void viewConfigurationChanged() {
         for (InspectorLabel label : _locals) {
             label.redisplay();
         }
@@ -279,7 +279,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
     }
 
     @Override
-    protected void createView(long epoch) {
+    protected void createView() {
         initPanelView();
         final JPanel mainPanel = new InspectorPanel(inspection());
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));

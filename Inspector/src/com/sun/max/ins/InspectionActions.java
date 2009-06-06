@@ -83,7 +83,7 @@ import com.sun.max.vm.value.*;
  * <li>Override <code>protected void procedure()</code> with a method that does what
  * needs to be done.</li>
  * <li>If a singleton and if it contains state that might be changed depending on
- * external circumstances, override <code>public void refresh(long epoch, boolean force)</code>
+ * external circumstances, override <code>public void refresh(boolean force)</code>
  * with a method that updates the state.</li>
  * </ul></li>
  *
@@ -130,9 +130,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         Trace.line(TRACE_VALUE, "InspectionActions initialized.");
     }
 
-    public final void refresh(long epoch, boolean force) {
+    public final void refresh(boolean force) {
         for (Prober prober : _refreshableActions) {
-            prober.refresh(epoch, force);
+            prober.refresh(force);
         }
     }
 
@@ -404,7 +404,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess());
         }
     }
@@ -449,7 +449,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess());
         }
     }
@@ -549,7 +549,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess());
         }
     }
@@ -592,7 +592,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess());
         }
     }
@@ -652,7 +652,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess());
         }
     }
@@ -685,7 +685,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess());
         }
     }
@@ -747,7 +747,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess() && focus().hasThread());
         }
     }
@@ -780,7 +780,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess() && focus().hasThread());
         }
     }
@@ -813,7 +813,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess());
         }
     }
@@ -846,7 +846,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess() && focus().hasThread());
         }
     }
@@ -1573,7 +1573,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(focus().hasCodeLocation());
         }
     }
@@ -1607,7 +1607,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(focus().hasThread());
         }
     }
@@ -1806,7 +1806,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
-                    refresh(maxVM().epoch(), false);
+                    refresh(false);
                 }
             });
         }
@@ -1823,7 +1823,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(focus().hasBreakpoint());
         }
     }
@@ -1883,8 +1883,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _refreshableActions.append(this);
             inspection().addInspectionListener(new InspectionListenerAdapter() {
                 @Override
-                public void breakpointSetChanged(long epoch) {
-                    refresh(epoch, true);
+                public void breakpointSetChanged() {
+                    refresh(true);
                 }
             });
         }
@@ -1901,7 +1901,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess() && (maxVM().bytecodeBreakpointCount() > 0  || maxVM().targetBreakpointCount() > 0));
         }
     }
@@ -1940,7 +1940,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess() && maxVM().bytecodeBreakpointCount() > 0);
         }
     }
@@ -2003,7 +2003,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(maxVM().epoch(), false);
+                    refresh(false);
                 }
             });
         }
@@ -2024,7 +2024,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess()  && focus().codeLocation().hasTargetCodeLocation());
         }
     }
@@ -2052,7 +2052,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(maxVM().epoch(), false);
+                    refresh(false);
                 }
             });
         }
@@ -2069,7 +2069,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess() && focus().hasCodeLocation() && focus().codeLocation().hasTargetCodeLocation());
         }
     }
@@ -2097,13 +2097,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(maxVM().epoch(), false);
+                    refresh(false);
                 }
             });
             inspection().addInspectionListener(new InspectionListenerAdapter() {
                 @Override
-                public void breakpointSetChanged(long epoch) {
-                    refresh(epoch, true);
+                public void breakpointSetChanged() {
+                    refresh(true);
                 }
             });
         }
@@ -2118,7 +2118,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess() && maxVM().targetBreakpointCount() > 0 && focus().hasCodeLocation() && focus().codeLocation().hasTargetCodeLocation());
         }
     }
@@ -2145,8 +2145,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _refreshableActions.append(this);
             inspection().addInspectionListener(new InspectionListenerAdapter() {
                 @Override
-                public void breakpointSetChanged(long epoch) {
-                    refresh(epoch, true);
+                public void breakpointSetChanged() {
+                    refresh(true);
                 }
             });
         }
@@ -2160,7 +2160,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess() && maxVM().targetBreakpointCount() > 0);
         }
     }
@@ -2204,7 +2204,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess());
         }
     }
@@ -2257,7 +2257,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess());
         }
     }
@@ -2287,7 +2287,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(maxVM().epoch(), false);
+                    refresh(false);
                 }
             });
         }
@@ -2307,7 +2307,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess()  && focus().hasCodeLocation() && focus().codeLocation().hasBytecodeLocation());
         }
     }
@@ -2346,7 +2346,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess() && maxVM().activateMessenger());
         }
     }
@@ -2383,7 +2383,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess() && maxVM().activateMessenger());
         }
     }
@@ -2411,8 +2411,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _refreshableActions.append(this);
             inspection().addInspectionListener(new InspectionListenerAdapter() {
                 @Override
-                public void breakpointSetChanged(long epoch) {
-                    refresh(epoch, true);
+                public void breakpointSetChanged() {
+                    refresh(true);
                 }
             });
         }
@@ -2426,7 +2426,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess() && maxVM().bytecodeBreakpointCount() > 0);
         }
     }
@@ -2462,7 +2462,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspection().hasProcess()  && focus().codeLocation().hasTargetCodeLocation());
         }
     }
@@ -2495,7 +2495,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(focus().hasThread() && inspection().isVMRunning());
         }
     }
@@ -2515,7 +2515,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Resume";
 
         DebugResumeAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
         }
 
@@ -2530,7 +2530,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(focus().hasThread() && inspection().isVMReady());
         }
     }
@@ -2554,7 +2554,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Return from frame (ignoring breakpoints)";
 
         DebugReturnFromFrameAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
         }
 
@@ -2571,7 +2571,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(focus().hasThread() && inspection().isVMReady());
         }
     }
@@ -2596,7 +2596,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Return from frame";
 
         DebugReturnFromFrameWithBreakpointsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
         }
 
@@ -2613,7 +2613,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(focus().hasThread() && inspection().isVMReady());
         }
     }
@@ -2638,7 +2638,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Run to selected instruction (ignoring breakpoints)";
 
         DebugRunToSelectedInstructionAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
         }
 
@@ -2657,7 +2657,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(focus().hasThread() && focus().hasCodeLocation() && inspection().isVMReady());
         }
     }
@@ -2682,7 +2682,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Run to selected instruction";
 
         DebugRunToSelectedInstructionWithBreakpointsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
         }
 
@@ -2701,7 +2701,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(focus().hasThread() && focus().hasCodeLocation() && inspection().isVMReady());
         }
     }
@@ -2726,7 +2726,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Run to next call instruction (ignoring breakpoints)";
 
         DebugRunToNextCallAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
         }
 
@@ -2747,7 +2747,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(focus().hasThread() && focus().hasCodeLocation() && inspection().isVMReady());
         }
     }
@@ -2772,7 +2772,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Run to next call instruction";
 
         DebugRunToNextCallWithBreakpointsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
         }
 
@@ -2793,7 +2793,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(focus().hasThread() && focus().hasCodeLocation() && inspection().isVMReady());
         }
     }
@@ -2817,7 +2817,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Single instruction step";
 
         DebugSingleStepAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
         }
 
@@ -2832,7 +2832,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(focus().hasThread() && inspection().isVMReady());
         }
     }
@@ -2856,7 +2856,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Step over (ignoring breakpoints)";
 
         DebugStepOverAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
         }
 
@@ -2871,7 +2871,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(focus().hasThread() && inspection().isVMReady());
         }
     }
@@ -2896,7 +2896,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Step over";
 
         DebugStepOverWithBreakpointsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
         }
 
@@ -2911,7 +2911,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(focus().hasThread() && inspection().isVMReady());
         }
     }
@@ -2941,7 +2941,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(maxVM().epoch(), false);
+                    refresh(false);
                 }
             });
         }
@@ -2978,7 +2978,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             setEnabled(inspectable());
         }
     }

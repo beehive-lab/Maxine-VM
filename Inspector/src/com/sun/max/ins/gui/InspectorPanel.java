@@ -65,6 +65,10 @@ public class InspectorPanel extends JPanel implements Prober, InspectionHolder {
         return _inspection.maxVM();
     }
 
+    public final MaxVMState maxVMState() {
+        return _inspection.maxVM().maxVMState();
+    }
+
     public InspectorGUI gui() {
         return _inspection.gui();
     }
@@ -84,7 +88,7 @@ public class InspectorPanel extends JPanel implements Prober, InspectionHolder {
     public void redisplay() {
     }
 
-    public void refresh(long epoch, boolean force) {
+    public void refresh(boolean force) {
     }
 
 }

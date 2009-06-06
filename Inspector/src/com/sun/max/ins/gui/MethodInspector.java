@@ -275,7 +275,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
     }
 
     @Override
-    public void breakpointSetChanged(long epoch) {
+    public void breakpointSetChanged() {
         refreshView(true);
     }
 

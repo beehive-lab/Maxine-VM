@@ -23,7 +23,6 @@ package com.sun.max.tele.debug;
 import java.util.*;
 
 import com.sun.max.memory.*;
-import com.sun.max.tele.*;
 
 /**
  * @author Bernd Mathiske
@@ -47,7 +46,7 @@ public class TeleWatchpoint {
         _memoryRegion = memoryRegion;
     }
 
-    public static class Factory extends TeleViewModel {
+    public static class Factory extends Observable {
 
         private final TeleProcess _teleProcess;
 
@@ -63,7 +62,8 @@ public class TeleWatchpoint {
         public synchronized TeleWatchpoint createWatchpoint(MemoryRegion memoryRegion) {
             final TeleWatchpoint watchpoint = new TeleWatchpoint(_teleProcess, memoryRegion);
             _watchpoints.put(memoryRegion, watchpoint);
-            refreshView(_teleProcess.epoch());
+            setChanged();
+            notifyObservers();
             return watchpoint;
         }
 

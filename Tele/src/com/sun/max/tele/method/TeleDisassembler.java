@@ -39,7 +39,6 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 
@@ -61,51 +60,72 @@ public final class TeleDisassembler {
     }
 
     /**
-     * Cause the disassembler to load and initialize static state, which can be a bit time consuming.
+     * Causes the disassembler to load and initialize static state
+     * on a separate thread, since it can be time consuming.
+     *
+     * @param processorKind the kind of disassembler to initialize.
      */
-    public static void initialize(final TeleVM teleVM) {
+    public static void initialize(final ProcessorKind processorKind) {
         final Thread thread = new Thread("TeleDisassembler initializer") {
             @Override
             public void run() {
                 Trace.begin(TRACE_VALUE, tracePrefix() + "initializing");
-                createDisassembler(teleVM, Address.zero(), null);
-                Trace.end(TRACE_VALUE, tracePrefix() + "initializing");
+                final long startTimeMillis = System.currentTimeMillis();
+                createDisassembler(processorKind, Address.zero(), null);
+                Trace.end(TRACE_VALUE, tracePrefix() + "initializing", startTimeMillis);
             }
         };
         thread.start();
     }
 
-    public static IndexedSequence<TargetCodeInstruction> decode(TeleVM teleVM, Address codeStart, byte[] code, byte[] encodedInlineDataDescriptors) {
-        final Disassembler disassembler = createDisassembler(teleVM, codeStart, InlineDataDecoder.createFrom(encodedInlineDataDescriptors));
-        final LoadLiteralParser literalParser = createLiteralParser(teleVM, disassembler, codeStart, code);
+    /**
+     * Disassembles a segment of compiled code.
+     *
+     * @param processorKind the kind of processor for which the code was compiled.
+     * @param codeStart start location of the code in VM memory.
+     * @param code the compiled code as bytes
+     * @param encodedInlineDataDescriptors
+     *
+     * @return the code disassembled into instructions.
+     */
+    public static IndexedSequence<TargetCodeInstruction> decode(ProcessorKind processorKind, Address codeStart, byte[] code, byte[] encodedInlineDataDescriptors) {
+        final Disassembler disassembler = createDisassembler(processorKind, codeStart, InlineDataDecoder.createFrom(encodedInlineDataDescriptors));
+        final LoadLiteralParser literalParser = createLiteralParser(processorKind, disassembler, codeStart, code);
         return create(codeStart, code, disassembler, literalParser);
     }
 
     // Synchronize on class to avoid use of the disassembler before the initial call made during initialization.
     // This might be tidier if not all static.
-    private static synchronized Disassembler createDisassembler(final TeleVM teleVM, Address startAddress, InlineDataDecoder inlineDataDecoder) {
-        final ProcessorKind processorKind = teleVM.vmConfiguration().platform().processorKind();
+    private static synchronized Disassembler createDisassembler(final ProcessorKind processorKind, Address startAddress, InlineDataDecoder inlineDataDecoder) {
+        Disassembler disassembler = null;
         switch (processorKind.instructionSet()) {
             case ARM:
                 Problem.unimplemented();
-                return null;
+                break;
             case AMD64:
-                return new AMD64Disassembler(startAddress.toLong(), inlineDataDecoder);
+                disassembler = new AMD64Disassembler(startAddress.toLong(), inlineDataDecoder);
+                break;
             case IA32:
-                return new IA32Disassembler(startAddress.toInt(), inlineDataDecoder);
+                disassembler = new IA32Disassembler(startAddress.toInt(), inlineDataDecoder);
+                break;
             case PPC:
                 if (processorKind.dataModel().wordWidth() == WordWidth.BITS_64) {
-                    return new PPC64Disassembler(startAddress.toLong(), inlineDataDecoder);
+                    disassembler = new PPC64Disassembler(startAddress.toLong(), inlineDataDecoder);
+                } else {
+                    disassembler = new PPC32Disassembler(startAddress.toInt(), inlineDataDecoder);
                 }
-                return new PPC32Disassembler(startAddress.toInt(), inlineDataDecoder);
+                break;
             case SPARC:
                 if (processorKind.dataModel().wordWidth() == WordWidth.BITS_64) {
-                    return new SPARC64Disassembler(startAddress.toLong(), inlineDataDecoder);
+                    disassembler = new SPARC64Disassembler(startAddress.toLong(), inlineDataDecoder);
+                } else {
+                    disassembler = new SPARC32Disassembler(startAddress.toInt(), inlineDataDecoder);
                 }
-                return new SPARC32Disassembler(startAddress.toInt(), inlineDataDecoder);
+                break;
+            default:
+                ProgramError.unknownCase();
         }
-        ProgramError.unknownCase();
-        return null;
+        return disassembler;
     }
 
     private abstract static class LoadLiteralParser {
@@ -316,8 +336,8 @@ public final class TeleDisassembler {
         }
     }
 
-    private static LoadLiteralParser createLiteralParser(final TeleVM teleVM, Disassembler rawDisassembler, Address codeStart, byte [] code) {
-        final ProcessorKind processorKind = teleVM.vmConfiguration().platform().processorKind();
+    private static LoadLiteralParser createLiteralParser(final ProcessorKind processorKind, Disassembler rawDisassembler, Address codeStart, byte [] code) {
+        //final ProcessorKind processorKind = teleVM.vmConfiguration().platform().processorKind();
         switch (processorKind.instructionSet()) {
             case ARM:
                 Problem.unimplemented();

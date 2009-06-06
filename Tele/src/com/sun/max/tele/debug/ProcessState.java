@@ -18,31 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele;
-
-import com.sun.max.collect.*;
+package com.sun.max.tele.debug;
 
 /**
- * @author Bernd Mathiske
+ * The possible states of a {@link TeleProcess}.
+ *
+ * @author Michael Van De Vanter
  */
-public class TeleViewModel {
+public enum ProcessState {
 
-    public interface Listener {
-        void refreshView(long epoch);
-    }
+    /**
+     * There is no real process, only a dummy.
+     */
+    NO_PROCESS,
 
-    protected TeleViewModel() {
-    }
+    /**
+     * The process is live, but paused.
+     */
+    STOPPED,
 
-    private IdentityHashSet<Listener> _listeners = new IdentityHashSet<Listener>();
+    /**
+     * The process is live and running.
+     */
+    RUNNING,
 
-    public void addListener(Listener listener) {
-        _listeners.add(listener);
-    }
-
-    public void refreshView(long epoch) {
-        for (Listener listener : _listeners) {
-            listener.refreshView(epoch);
-        }
-    }
+    /**
+     * The process was live, but has died.
+     */
+    TERMINATED;
 }

@@ -43,7 +43,7 @@ public abstract class DataLabel extends InspectorLabel {
         setToolTipText(toolTipText);
     }
 
-    public final void refresh(long epoch, boolean force) {
+    public final void refresh(boolean force) {
         // Values don't change unless explicitly set
     }
 

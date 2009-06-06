@@ -42,6 +42,12 @@ public interface InspectionHolder {
     MaxVM maxVM();
 
     /**
+     * @return the immutable state history of the VM associated with this inspection;
+     * updated synchronously; thread safe.
+     */
+    MaxVMState maxVMState();
+
+    /**
      * @return access to basic GUI services.
      */
     InspectorGUI gui();
