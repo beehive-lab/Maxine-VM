@@ -315,7 +315,8 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
         };
         final Inspector inspector =  inspection.gui().findInspector(predicate);
         if (inspector != null && inspector instanceof UniqueInspector) {
-            final UniqueInspector_Type result = StaticLoophole.cast(inspector);
+            final Class<UniqueInspector_Type> type = null;
+            final UniqueInspector_Type result = StaticLoophole.cast(type, inspector);
             return result;
         }
         return null;
