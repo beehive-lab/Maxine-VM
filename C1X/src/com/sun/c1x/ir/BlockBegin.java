@@ -167,7 +167,7 @@ public class BlockBegin extends StateSplit {
     }
 
     /**
-     * Gets the loop index of this block
+     * Gets the loop index of this block.
      * @return the loop index
      */
     public int loopIndex() {
@@ -340,7 +340,7 @@ public class BlockBegin extends StateSplit {
     }
 
     /**
-     * Add a successor block to this block
+     * Add a successor block to this block.
      * @param succ the successor to add
      */
     public void addSuccessor(BlockBegin succ) {
@@ -359,7 +359,7 @@ public class BlockBegin extends StateSplit {
     }
 
     /**
-     * Add a predecessor to this block
+     * Add a predecessor to this block.
      * @param pred the predecessor to add
      */
     public void addPredecessor(BlockBegin pred) {

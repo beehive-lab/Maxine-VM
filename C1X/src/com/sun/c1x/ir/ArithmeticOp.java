@@ -60,7 +60,7 @@ public class ArithmeticOp extends Op2 {
     }
 
     /**
-     * Sets the lock stack for this instruction
+     * Sets the lock stack for this instruction.
      * @param lockStack the lock stack
      */
     public void setLockStack(ValueStack lockStack) {

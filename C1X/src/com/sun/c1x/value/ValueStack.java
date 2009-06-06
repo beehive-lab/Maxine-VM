@@ -147,7 +147,7 @@ public class ValueStack {
     }
 
     /**
-     * Returns the size of the locks
+     * Returns the size of the locks.
      * @return the size of the locks
      */
     public final int locksSize() {
@@ -155,7 +155,7 @@ public class ValueStack {
     }
 
     /**
-     * Returns the current size (height) of the stack
+     * Returns the current size (height) of the stack.
      * @return the size of the stack
      */
     public final int stackSize() {
@@ -163,7 +163,7 @@ public class ValueStack {
     }
 
     /**
-     * Returns the maximum size of the stack
+     * Returns the maximum size of the stack.
      * @return the maximum size of the stack
      */
     public final int maxStackSize() {

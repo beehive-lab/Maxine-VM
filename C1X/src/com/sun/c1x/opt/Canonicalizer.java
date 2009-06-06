@@ -47,7 +47,7 @@ public class Canonicalizer implements InstructionVisitor {
     int _bci;
 
     /**
-     * Creates a new Canonicalizer for the specified instruction
+     * Creates a new Canonicalizer for the specified instruction.
      * @param original the original instruction to be canonicalized
      * @param bci the bytecode index of the original instruction
      */
@@ -494,7 +494,9 @@ public class Canonicalizer implements InstructionVisitor {
         if (xt.isConstant() && yt.isConstant()) {
             // both x and y are constants
             switch (xt.tag()) {
-                case ValueTag.LONG_TAG: setIntConstant(Bytecodes.foldLongCompare(xt.asConstant().asLong(), yt.asConstant().asLong()));
+                case ValueTag.LONG_TAG:
+                    setIntConstant(Bytecodes.foldLongCompare(xt.asConstant().asLong(), yt.asConstant().asLong()));
+                    // fall through
                 case ValueTag.FLOAT_TAG: {
                     Integer val = Bytecodes.foldFloatCompare(i.opcode(), xt.asConstant().asFloat(), yt.asConstant().asFloat());
                     assert val != null : "invalid opcode in float compare op";
@@ -522,6 +524,7 @@ public class Canonicalizer implements InstructionVisitor {
         if (xt.isConstant()) {
             // fold conversions between primitive types
             switch (i.opcode()) {
+                // Checkstyle: stop
                 case Bytecodes.I2B: setIntConstant   ((byte)   xt.asConstant().asInt()); return;
                 case Bytecodes.I2S: setIntConstant   ((short)  xt.asConstant().asInt()); return;
                 case Bytecodes.I2C: setIntConstant   ((char)   xt.asConstant().asInt()); return;
@@ -536,6 +539,7 @@ public class Canonicalizer implements InstructionVisitor {
                 case Bytecodes.D2F: setFloatConstant ((float)  xt.asConstant().asDouble()); return;
                 case Bytecodes.D2I: setIntConstant   ((int)    xt.asConstant().asDouble()); return;
                 case Bytecodes.D2L: setLongConstant  ((long)   xt.asConstant().asDouble()); return;
+                // Checkstyle: resume
             }
         }
 
@@ -860,40 +864,40 @@ public class Canonicalizer implements InstructionVisitor {
     private void reduceIfCompareOpConstant(If i, ConstType rtc) {
         Condition ifcond = i.condition();
         Instruction l = i.x();
-        CompareOp cmp = (CompareOp)l;
+        CompareOp cmp = (CompareOp) l;
         boolean unorderedIsLess = cmp.opcode() == Bytecodes.FCMPL || cmp.opcode() == Bytecodes.DCMPL;
-        BlockBegin lss_sux = i.successor(ifcond.foldCondition(ConstType.forInt(-1), rtc));
-        BlockBegin eql_sux = i.successor(ifcond.foldCondition(ConstType.forInt(0), rtc));
-        BlockBegin gtr_sux = i.successor(ifcond.foldCondition(ConstType.forInt(1), rtc));
-        BlockBegin nan_sux = unorderedIsLess ? lss_sux : gtr_sux;
-        // Note: At this point all successors (lss_sux, eql_sux, gtr_sux, nan_sux) are
-        //       equal to x->tsux() or x->fsux(). Furthermore, nan_sux equals either
-        //       lss_sux or gtr_sux.
-        if (lss_sux == eql_sux && eql_sux == gtr_sux) {
+        BlockBegin lssSucc = i.successor(ifcond.foldCondition(ConstType.forInt(-1), rtc));
+        BlockBegin eqlSucc = i.successor(ifcond.foldCondition(ConstType.forInt(0), rtc));
+        BlockBegin gtrSucc = i.successor(ifcond.foldCondition(ConstType.forInt(1), rtc));
+        BlockBegin nanSucc = unorderedIsLess ? lssSucc : gtrSucc;
+        // Note: At this point all successors (lssSucc, eqlSucc, gtrSucc, nanSucc) are
+        //       equal to x->tsux() or x->fsux(). Furthermore, nanSucc equals either
+        //       lssSucc or gtrSucc.
+        if (lssSucc == eqlSucc && eqlSucc == gtrSucc) {
             // all successors identical => simplify to: Goto
-            setCanonical(new Goto(lss_sux, i.stateBefore(), i.isSafepoint()));
+            setCanonical(new Goto(lssSucc, i.stateBefore(), i.isSafepoint()));
         } else {
             // two successors differ and two successors are the same => simplify to: If (x cmp y)
             // determine new condition & successors
             Condition cond;
             BlockBegin tsux;
             BlockBegin fsux;
-            if (lss_sux == eql_sux) {
+            if (lssSucc == eqlSucc) {
                 cond = Condition.leq;
-                tsux = lss_sux;
-                fsux = gtr_sux;
-            } else if (lss_sux == gtr_sux) {
+                tsux = lssSucc;
+                fsux = gtrSucc;
+            } else if (lssSucc == gtrSucc) {
                 cond = Condition.neq;
-                tsux = lss_sux;
-                fsux = eql_sux;
-            } else if (eql_sux == gtr_sux) {
+                tsux = lssSucc;
+                fsux = eqlSucc;
+            } else if (eqlSucc == gtrSucc) {
                 cond = Condition.geq;
-                tsux = eql_sux;
-                fsux = lss_sux;
+                tsux = eqlSucc;
+                fsux = lssSucc;
             } else {
                 throw Util.shouldNotReachHere();
             }
-            If canon = new If(cmp.x(), cond, nan_sux == tsux, cmp.y(), tsux, fsux, cmp.stateBefore(), i.isSafepoint());
+            If canon = new If(cmp.x(), cond, nanSucc == tsux, cmp.y(), tsux, fsux, cmp.stateBefore(), i.isSafepoint());
             if (cmp.x() == cmp.y()) {
                 // re-canonicalize the new if
                 visitIf(canon);

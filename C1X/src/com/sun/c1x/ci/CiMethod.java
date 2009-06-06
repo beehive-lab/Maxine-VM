@@ -31,31 +31,31 @@ import java.util.List;
  */
 public interface CiMethod {
 
-    public String name();
-    public CiType holder();
-    public CiSignature signatureType();
-    public byte[] code();
-    public int maxLocals();
-    public int maxStackSize();
+    String name();
+    CiType holder();
+    CiSignature signatureType();
+    byte[] code();
+    int maxLocals();
+    int maxStackSize();
 
-    public boolean hasBalancedMonitors();
-    public boolean hasExceptionHandlers();
-    public boolean isLoaded();
-    public boolean isAbstract();
-    public boolean isNative();
-    public boolean isFinalMethod();
-    public boolean isSynchronized();
-    public boolean isStrictFP();
-    public boolean isStatic();
-    public boolean isOverridden();
-    public boolean willLink(CiType where, int opcode);
-    public int vtableIndex();
+    boolean hasBalancedMonitors();
+    boolean hasExceptionHandlers();
+    boolean isLoaded();
+    boolean isAbstract();
+    boolean isNative();
+    boolean isFinalMethod();
+    boolean isSynchronized();
+    boolean isStrictFP();
+    boolean isStatic();
+    boolean isOverridden();
+    boolean willLink(CiType where, int opcode);
+    int vtableIndex();
 
-    public CiMethodData methodData();
-    public BitMap liveness(int bci);
+    CiMethodData methodData();
+    BitMap liveness(int bci);
 
-    public boolean canBeStaticallyBound();
-    public int codeSize();
+    boolean canBeStaticallyBound();
+    int codeSize();
 
     List<CiExceptionHandler> exceptionHandlers();
 }

@@ -47,14 +47,14 @@ public class FrameState {
         _state = new Instruction[_localsSize + _stackSize + state.locksSize()];
 
         int i = 0;
-        for (int j = 0; j < _localsSize;) {
-            _state[i++] = state.localAt(j++);
+        for (int j = 0; j < _localsSize; j++) {
+            _state[i++] = state.localAt(j);
         }
-        for (int j = 0; j < _stackSize;) {
-            _state[i++] = state.stackAt(j++);
+        for (int j = 0; j < _stackSize; j++) {
+            _state[i++] = state.stackAt(j);
         }
-        for (int j = 0; j < state.locksSize();) {
-            _state[i++] = state.lockAt(j++);
+        for (int j = 0; j < state.locksSize(); j++) {
+            _state[i++] = state.lockAt(j);
         }
     }
 
