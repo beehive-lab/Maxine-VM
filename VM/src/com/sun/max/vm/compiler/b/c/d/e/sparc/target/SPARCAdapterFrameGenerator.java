@@ -287,7 +287,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
 
         @Override
         void adapt(Kind kind, int optoCompilerStackOffset32, int jitStackOffset32) {
-            int biasedOptToStackOffset32 = optoCompilerStackOffset32 + SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
+            final int biasedOptToStackOffset32 = optoCompilerStackOffset32 + SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
             if (kind.isCategory2() || kind == Kind.WORD || kind == Kind.REFERENCE) {
                 assembler().ldx(_optimizedCodeFramePointer, jitStackOffset32, _longScratchRegister);
                 assembler().stx(_longScratchRegister, _optimizedCodeStackPointer, biasedOptToStackOffset32);
