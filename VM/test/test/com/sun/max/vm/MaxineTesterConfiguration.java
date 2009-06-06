@@ -49,6 +49,7 @@ public class MaxineTesterConfiguration {
     private static final Expectation RAND_ALL = new Expectation(null, null, ExpectedResult.NONDETERMINISTIC);
     private static final Expectation RAND_LINUX = new Expectation(OperatingSystem.LINUX, null, ExpectedResult.NONDETERMINISTIC);
     private static final Expectation RAND_DARWIN = new Expectation(OperatingSystem.DARWIN, null, ExpectedResult.NONDETERMINISTIC);
+    private static final Expectation RAND_SPARC = new Expectation(OperatingSystem.SOLARIS, ProcessorModel.SPARCV9, ExpectedResult.NONDETERMINISTIC);
 
     static final Object[] _outputTestList = {
         test.output.AWTFont.class,                  FAIL_SPARC, FAIL_ALL,
@@ -76,8 +77,8 @@ public class MaxineTesterConfiguration {
         test.output.GCTest6.class,                  FAIL_SPARC,
         test.output.HelloWorldReflect.class,        FAIL_SPARC,
         test.output.JREJarLoadTest.class,    
-        test.output.FileReader.class,     
-        test.output.ZipFileReader.class,  
+        test.output.FileReader.class,               RAND_SPARC,
+        test.output.ZipFileReader.class,            RAND_SPARC,
         test.output.WeakReferenceTest01.class,      FAIL_SPARC, RAND_ALL,
         test.output.WeakReferenceTest02.class,      FAIL_SPARC, RAND_ALL,
         test.output.WeakReferenceTest03.class,      FAIL_SPARC, RAND_ALL,
