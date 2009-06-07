@@ -57,7 +57,7 @@ public final class DarwinTeleProcess extends TeleProcess {
     }
 
     DarwinTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
-        super(teleVM, platform);
+        super(teleVM, platform, ProcessState.STOPPED);
         final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(programFile, commandLineArguments);
         _task = nativeCreateChild(commandLineArgumentsBuffer.toLong(), agent.port());
         if (_task == -1) {

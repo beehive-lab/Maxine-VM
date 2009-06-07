@@ -218,8 +218,8 @@ public class HubInspector extends ObjectInspector {
     }
 
     @Override
-    protected void createView(long epoch) {
-        super.createView(epoch);
+    protected void createView() {
+        super.createView();
 
         final JPanel panel = new InspectorPanel(inspection());
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -316,24 +316,24 @@ public class HubInspector extends ObjectInspector {
     }
 
     @Override
-    protected void refreshView(long epoch, boolean force) {
-        _fieldsPane.refresh(epoch, force);
+    protected void refreshView(boolean force) {
+        _fieldsPane.refresh(force);
         if (_iTablePane != null) {
-            _iTablePane.refresh(epoch, force);
+            _iTablePane.refresh(force);
         }
         if (_vTablePane != null) {
-            _vTablePane.refresh(epoch, force);
+            _vTablePane.refresh(force);
         }
         if (_mTablePane != null) {
-            _mTablePane.refresh(epoch, force);
+            _mTablePane.refresh(force);
         }
         if (_refMapPane != null) {
-            _refMapPane.refresh(epoch, force);
+            _refMapPane.refresh(force);
         }
         if (_classMethodInspectorMenuItems != null) {
-            _classMethodInspectorMenuItems.refresh(epoch, force);
+            _classMethodInspectorMenuItems.refresh(force);
         }
-        super.refreshView(epoch, force);
+        super.refreshView(force);
     }
 
 

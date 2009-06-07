@@ -46,7 +46,7 @@ public class GuestVMXenTeleDomain extends TeleProcess {
     private boolean _terminated = false;
 
     protected GuestVMXenTeleDomain(TeleVM teleVM, Platform platform, int id) {
-        super(teleVM, platform);
+        super(teleVM, platform, ProcessState.STOPPED);
         if (id < 0) {
             _domainId = Integer.parseInt(JOptionPane.showInputDialog(null, "Enter the domain id"));
         } else {

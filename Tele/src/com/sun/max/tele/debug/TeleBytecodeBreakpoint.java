@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.debug;
 
+import java.util.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -261,7 +263,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     /**
      * Creates, tracks, and removes bytecode breakpoints from the {@link TeleVM}.
      */
-    public static class Factory extends TeleViewModel {
+    public static class Factory extends Observable {
 
         private final TeleVM _teleVM;
 
@@ -301,7 +303,8 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         private TeleBytecodeBreakpoint createBreakpoint(Key key, boolean persistent) {
             final TeleBytecodeBreakpoint breakpoint = new TeleBytecodeBreakpoint(_teleVM, this, key, false);
             _breakpoints.put(key, breakpoint);
-            refreshView(_teleVM.epoch());
+            setChanged();
+            notifyObservers();
             return breakpoint;
         }
 
@@ -325,7 +328,8 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          */
         private synchronized void removeBreakpoint(Key key) {
             _breakpoints.remove(key);
-            refreshView(_teleVM.epoch());
+            setChanged();
+            notifyObservers();
         }
 
         /**
@@ -336,7 +340,8 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 teleBytecodeBreakpoint.dispose();
             }
             _breakpoints.clear();
-            refreshView(_teleVM.epoch());
+            setChanged();
+            notifyObservers();
         }
     }
 }

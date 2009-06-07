@@ -119,7 +119,7 @@ public abstract class ObjectInspector extends Inspector {
     }
 
     @Override
-    protected void createView(long epoch) {
+    protected void createView() {
         final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
         if (_showHeader) {
             _objectHeaderTable = new ObjectHeaderTable(this);
@@ -148,12 +148,12 @@ public abstract class ObjectInspector extends Inspector {
     @Override
     public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
         // Object inspector displays are sensitive to the current thread selection.
-        refreshView(maxVM().epoch(), true);
+        refreshView(true);
     }
 
     @Override
     public void addressFocusChanged(Address oldAddress, Address newAddress) {
-        refreshView(maxVM().epoch(), true);
+        refreshView(true);
     }
 
     @Override
@@ -265,7 +265,7 @@ public abstract class ObjectInspector extends Inspector {
     };
 
     @Override
-    protected void refreshView(long epoch, boolean force) {
+    protected void refreshView(boolean force) {
         final Pointer newOrigin = _teleObject.getCurrentOrigin();
         if (!newOrigin.equals(_currentObjectOrigin)) {
             // The object has been relocated in memory
@@ -273,13 +273,13 @@ public abstract class ObjectInspector extends Inspector {
             reconstructView();
         } else {
             if (_objectHeaderTable != null) {
-                _objectHeaderTable.refresh(epoch, force);
+                _objectHeaderTable.refresh(force);
             }
         }
-        super.refreshView(epoch, force);
+        super.refreshView(force);
     }
 
-    public void viewConfigurationChanged(long epoch) {
+    public void viewConfigurationChanged() {
         reconstructView();
     }
 

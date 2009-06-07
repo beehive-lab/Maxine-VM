@@ -20,6 +20,8 @@
  */
 package com.sun.max.ins;
 
+import com.sun.max.ins.gui.*;
+
 
 /**
  * A display element of an {@link Inspector} that presents visually some aspect of the state of the VM.
@@ -31,11 +33,9 @@ public interface Prober {
 
     /**
      * Brings prober/view up to date with the state of the VM.
-     *
-     * @param epoch current execution age of the tele process.
      * @param force suspend caching behavior; read state unconditionally.
      */
-    void refresh(long epoch, boolean force);
+    void refresh(boolean force);
 
     /**
      * Revise the display to account for any changes in view configuration or style information; does not imply a state change in the VM.

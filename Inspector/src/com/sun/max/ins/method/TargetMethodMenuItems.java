@@ -161,7 +161,7 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
         _inspectTargetMethodObjectAction = new InspectTargetMethodObjectAction();
         _inspectTargetCodeMemoryAction = new InspectTargetCodeMemoryAction();
         _inspectTargetCodeMemoryWordsAction = new InspectTargetCodeMemoryWordsAction();
-        refresh(maxVM().epoch(), true);
+        refresh(true);
     }
 
     public void addTo(InspectorMenu menu) {
@@ -174,7 +174,7 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
         menu.add(_inspectTargetCodeMemoryWordsAction);
     }
 
-    public void refresh(long epoch, boolean force) {
+    public void refresh(boolean force) {
     }
 
     public void redisplay() {

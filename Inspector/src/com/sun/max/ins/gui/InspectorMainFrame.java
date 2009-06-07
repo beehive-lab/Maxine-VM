@@ -27,11 +27,11 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.Inspection.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
+import com.sun.max.tele.*;
 import com.sun.max.util.*;
 
 
@@ -42,12 +42,13 @@ import com.sun.max.util.*;
  * @author Michael Van De Vanter
  *
  */
-public final class InspectorMainFrame extends JFrame implements InspectorGUI {
+public final class InspectorMainFrame extends JFrame implements InspectorGUI, Prober {
 
     private final Inspection _inspection;
     private final Cursor _busyCursor = new Cursor(Cursor.WAIT_CURSOR);
     private final JDesktopPane _desktopPane;
     private final JScrollPane _scrollPane;
+    private final InspectorMainMenuBar _menuBar;
     private final InspectorMenu _desktopMenu = new InspectorMenu();
 
     /**
@@ -140,7 +141,8 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI {
         _desktopPane.setOpaque(true);
         _scrollPane = new InspectorScrollPane(_inspection, _desktopPane);
         setContentPane(_scrollPane);
-        setJMenuBar(new InspectorMainMenuBar(actions));
+        _menuBar = new InspectorMainMenuBar(actions);
+        setJMenuBar(_menuBar);
 
         _desktopMenu.add(actions.viewBootImage());
         _desktopMenu.add(actions.viewMemoryRegions());
@@ -222,32 +224,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI {
         return null;
     }
 
-    public void showTitle(String string) {
-        setTitle(string);
-        repaint();
-    }
-
-    public void showVMState(InspectionState inspectionState) {
-        final InspectorMainMenuBar menuBar = (InspectorMainMenuBar) getJMenuBar();
-        switch (inspectionState) {
-            case STOPPED_IN_GC:
-                menuBar.setStateColor(_inspection.style().vmStoppedinGCBackgroundColor());
-                break;
-            case STOPPED:
-                menuBar.setStateColor(_inspection.style().vmStoppedBackgroundColor());
-                break;
-            case RUNNING:
-                menuBar.setStateColor(_inspection.style().vmRunningBackgroundColor());
-                break;
-            case TERMINATED:
-                menuBar.setStateColor(_inspection.style().vmTerminatedBackgroundColor());
-                break;
-            default:
-                ProgramError.unknownCase(inspectionState.toString());
-        }
-    }
-
-    public void showBusy(boolean busy) {
+    public void showInspectorBusy(boolean busy) {
         if (busy) {
             _desktopPane.setCursor(_busyCursor);
         } else {
@@ -388,6 +365,40 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI {
             location.y = r.height - frame.getHeight();
         }
         frame.setLocation(location);
+    }
+
+    @Override
+    public void redisplay() {
+        refresh(true);
+    }
+
+    private MaxVMState _lastRefreshedState = null;
+
+    @Override
+    public void refresh(boolean force) {
+        final MaxVMState maxVMState = _inspection.maxVM().maxVMState();
+        if (maxVMState.newerThan(_lastRefreshedState)) {
+            _lastRefreshedState = maxVMState;
+            setTitle(_inspection.currentInspectionTitle());
+            switch (maxVMState.processState()) {
+                case STOPPED:
+                    if (maxVMState.isInGC()) {
+                        _menuBar.setStateColor(_inspection.style().vmStoppedinGCBackgroundColor());
+                    } else {
+                        _menuBar.setStateColor(_inspection.style().vmStoppedBackgroundColor());
+                    }
+                    break;
+                case RUNNING:
+                    _menuBar.setStateColor(_inspection.style().vmRunningBackgroundColor());
+                    break;
+                case TERMINATED:
+                    _menuBar.setStateColor(_inspection.style().vmTerminatedBackgroundColor());
+                    break;
+                default:
+                    ProgramError.unknownCase(maxVMState.processState().toString());
+            }
+        }
+        repaint();
     }
 
 }

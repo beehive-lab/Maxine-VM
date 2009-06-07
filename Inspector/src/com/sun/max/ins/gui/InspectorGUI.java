@@ -24,7 +24,6 @@ import java.awt.*;
 
 import javax.swing.*;
 
-import com.sun.max.ins.Inspection.*;
 import com.sun.max.util.*;
 
 
@@ -52,21 +51,11 @@ public interface InspectorGUI {
     void removeInspectors(Predicate<Inspector> predicate);
 
     /**
-     * Shows a title string identifying the inspection session and possibly state information.
-     */
-    void showTitle(String string);
-
-    /**
-     * Shows a visual indication of the presumed VM state.
-     */
-    void showVMState(InspectionState inspectionState);
-
-    /**
      * Shows a visual indication of the Inspector state with regard to accepting user inputs.
      *
      * @param busy whether the Inspector is busy and not responding to user events
      */
-    void showBusy(boolean busy);
+    void showInspectorBusy(boolean busy);
 
     /**
      * Displays an information message in a modal dialog with specified frame title.

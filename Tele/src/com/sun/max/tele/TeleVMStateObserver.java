@@ -18,38 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.object;
-
-import com.sun.max.ins.*;
-import com.sun.max.tele.object.*;
-import com.sun.max.vm.layout.*;
+package com.sun.max.tele;
 
 /**
- * An object inspector specialized for displaying a Maxine low-level object in the VM, constructed using {@link ArrayLayout}.
+ * Interface for listening to state changes in the Maxine VM.
  *
  * @author Michael Van De Vanter
  */
-public final class ArrayInspector extends ObjectInspector {
+public interface TeleVMStateObserver {
 
-    private ObjectPane _elementsPane;
-
-    ArrayInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
-        super(inspection, factory, teleObject);
-        createFrame(null);
-    }
-
-    @Override
-    protected void createView() {
-        super.createView();
-        final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject();
-        _elementsPane = ObjectPane.createArrayElementsPane(this, teleArrayObject);
-        frame().getContentPane().add(_elementsPane);
-    }
-
-    @Override
-    protected void refreshView(boolean force) {
-        _elementsPane.refresh(force);
-        super.refreshView(force);
-    }
+    /**
+     * Notifies observers that the VM has changed state.
+     *
+     * @param maxVMState the new VM state
+     */
+    void upate(MaxVMState maxVMState);
 
 }

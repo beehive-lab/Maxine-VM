@@ -45,7 +45,7 @@ public final class BytecodeOperandLabel extends InspectorLabel {
         this(inspection, Integer.toString(n), "0x" + Integer.toHexString(n));
     }
 
-    public void refresh(long epoch, boolean force) {
+    public void refresh(boolean force) {
         // no remote data to refresh
     }
 

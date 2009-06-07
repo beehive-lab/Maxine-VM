@@ -52,6 +52,10 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
         return _inspection.maxVM();
     }
 
+    public final MaxVMState maxVMState() {
+        return _inspection.maxVM().maxVMState();
+    }
+
     public InspectorGUI gui() {
         return _inspection.gui();
     }
@@ -71,7 +75,7 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
     public void redisplay() {
     }
 
-    public void refresh(long epoch, boolean force) {
+    public void refresh(boolean force) {
     }
 
 

@@ -248,12 +248,12 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         _columnModel = new BytecodeTableColumnModel();
         _table = new BytecodeTable(inspection, _model, _columnModel);
         _operandDisplayMode = globalPreferences(inspection())._operandDisplayMode;
-        createView(inspection.maxVM().epoch());
+        createView();
     }
 
     @Override
-    protected void createView(long epoch) {
-        super.createView(epoch);
+    protected void createView() {
+        super.createView();
 
         // Set up toolbar
         // TODO (mlvdv) implement remaining debugging controls in Bytecode view
@@ -329,7 +329,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         final JScrollPane scrollPane = new InspectorScrollPane(_inspection, _table);
         add(scrollPane, BorderLayout.CENTER);
 
-        refresh(epoch, true);
+        refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(_table);
     }
 
@@ -557,7 +557,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             // not used pending further refactoring
         }
     }
@@ -578,7 +578,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                         removeColumn(_columns[col]);
                     }
                     JTableColumnResizer.adjustColumnPreferredWidths(_table);
-                    refresh(maxVM().epoch(), true);
+                    refresh(true);
                 }
             };
             createColumn(ColumnKind.TAG, new TagRenderer());
@@ -702,7 +702,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         public void redisplay() {
         }
 
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
         }
     }
 
@@ -787,7 +787,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         public void redisplay() {
         }
 
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
         }
     }
 
@@ -837,10 +837,10 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     }
 
     @Override
-    protected void updateView(long epoch, boolean force) {
+    protected void updateView(boolean force) {
         for (TableColumn column : _columns) {
             final Prober prober = (Prober) column.getCellRenderer();
-            prober.refresh(epoch, force);
+            prober.refresh(force);
         }
     }
 
