@@ -48,7 +48,7 @@ public final class LocalsPanel extends InspectorPanel {
     }
 
     @Override
-    public void refresh(long epoch, boolean force) {
+    public void refresh(boolean force) {
         // No data that can change
     }
 

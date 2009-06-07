@@ -74,11 +74,6 @@ public final class ReadOnlyTeleVM extends TeleVM {
     }
 
     @Override
-    public boolean isReadOnly() {
-        return true;
-    }
-
-    @Override
     public boolean isBootImageRelocated() {
         return _relocate;
     }

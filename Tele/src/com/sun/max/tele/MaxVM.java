@@ -25,10 +25,8 @@ import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.memory.*;
-import com.sun.max.tele.TeleViewModel.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
-import com.sun.max.tele.debug.TeleProcess.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
@@ -92,12 +90,6 @@ public interface MaxVM {
     File programFile();
 
     /**
-     * Determines if this VM is read-only. The operations that try to write to the memory of a read-only VM
-     * or change its execution state will result in a {@link TeleVMException}.
-     */
-    boolean isReadOnly();
-
-    /**
      * Determines if the heap and code sections in the boot image have been relocated.
      */
     boolean isBootImageRelocated();
@@ -117,13 +109,6 @@ public interface MaxVM {
      * @return whether two-way messaging is operating.
      */
     boolean activateMessenger();
-
-    /**
-     * Status of garbage collection in the VM.
-     * Assume for now that {@link Reference}s are invalid during a GC.
-     * @return is a garbage collection underway in the VM?
-     */
-    boolean isInGC();
 
     /**
      * @return how much reliance is placed on the {@link TeleInterpreter} when
@@ -495,19 +480,19 @@ public interface MaxVM {
     void describeTeleTargetRoutines(PrintStream printStream);
 
     /**
-     * @return VM process state
+     * @return VM state; thread safe.
      */
-    State state();
+    MaxVMState maxVMState();
 
     /**
-     * @param listener will be notified of changes to {@link state()}.
+     * @param observer will be notified of changes to {@link #maxVMState()}.
      */
-    void addStateListener(StateTransitionListener listener);
+    void addVMStateObserver(TeleVMStateObserver observer);
 
     /**
-     * @return the number of discrete execution steps of the VM process since it was created.
+     * Removes a observer that was being notified of changes to {@link #maxVMState()}.
      */
-    long epoch();
+    void removeVMStateObserver(TeleVMStateObserver observer);
 
     /**
      * @return a collection of all current threads in the VM, ordered by threadID.
@@ -516,13 +501,13 @@ public interface MaxVM {
 
     //TODO (mlvdv) bogus
     /**
-     * @return threads created since the previous {@link #epoch()}.
+     * @return threads created since the previous ???
      */
     IterableWithLength<TeleNativeThread> recentlyCreatedThreads();
 
     //TODO (mlvdv) bogus
     /**
-     * @return threads died since the previous {@link #epoch()}.
+     * @return threads died since the previous ???
      */
     IterableWithLength<TeleNativeThread> recentlyDiedThreads();
 
@@ -570,11 +555,11 @@ public interface MaxVM {
     TeleCodeLocation createCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int position);
 
     /**
-     * Adds a listener for breakpoint changes in the VM.
+     * Adds a observer for breakpoint changes in the VM.
      *
      * @param listener will be notified whenever breakpoints in VM change.
      */
-    void addBreakpointListener(Listener listener);
+    void addBreakpointObserver(Observer observer);
 
     /**
      * All existing target code breakpoints.

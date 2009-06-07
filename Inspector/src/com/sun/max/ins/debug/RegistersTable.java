@@ -30,6 +30,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.debug.RegisterInfo.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.util.*;
 
@@ -61,30 +62,27 @@ public class RegistersTable extends InspectorTable {
         setColumnSelectionAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         addMouseListener(new TableCellMouseClickAdapter(inspection, this));
-        refresh(maxVM().epoch(), true);
+        refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
 
-    private long _lastRefreshEpoch = -1;
+    private MaxVMState _lastRefreshedState = null;
 
-    public void refresh(long epoch, boolean force) {
-        if (epoch > _lastRefreshEpoch) {
+    public void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
             // Read from VM, increment history generation count.
             _model.refresh();
-        }
-        if (epoch > _lastRefreshEpoch || force) {
             // Refresh the display, might be caused by explicit user request
             for (TableColumn column : _columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
                 if (prober != null) {
-                    prober.refresh(epoch, force);
+                    prober.refresh(force);
                 }
             }
         }
-        _lastRefreshEpoch = epoch;
     }
-
 
     public void redisplay() {
         for (TableColumn column : _columns) {
@@ -262,10 +260,10 @@ public class RegistersTable extends InspectorTable {
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             for (InspectorLabel label : _labels) {
                 if (label != null) {
-                    label.refresh(epoch, force);
+                    label.refresh(force);
                 }
             }
         }
@@ -275,10 +273,10 @@ public class RegistersTable extends InspectorTable {
 
         private MemoryRegionValueLabel[] _labels = new MemoryRegionValueLabel[_model.getRowCount()];
 
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             for (InspectorLabel label : _labels) {
                 if (label != null) {
-                    label.refresh(epoch, force);
+                    label.refresh(force);
                 }
             }
         }

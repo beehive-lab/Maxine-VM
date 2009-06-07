@@ -20,8 +20,11 @@
  */
 package com.sun.max.ins;
 
+import static com.sun.max.tele.debug.ProcessState.*;
+
 import java.io.*;
 import java.net.*;
+import java.util.*;
 
 import javax.swing.*;
 
@@ -33,7 +36,6 @@ import com.sun.max.ins.object.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.TeleProcess.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -61,41 +63,7 @@ public final class Inspection {
 
     private static final String INSPECTOR_NAME = "Maxine Inspector";
 
-    /**
-     * Constants specifying the state of the Inspection and VM, if present. These are a superset of
-     * {@link TeleProcess.State}.
-     */
-    public enum InspectionState {
-
-        /**
-         * Inspection state when there is and has been no process associated with the session.
-         */
-        NO_PROCESS,
-
-        /**
-         * Inspection state when there is a VM process and it is currently stopped, but not in a GC.
-         */
-        STOPPED,
-
-        /**
-         * Inspection state when there is a VM process and it is currently stopped in a GC.
-         */
-        STOPPED_IN_GC,
-
-        /**
-         * Inspection state when there is a VM process and it is currently running.
-         */
-        RUNNING,
-
-        /**
-         * Inspection state when there was a VM process that has terminated.
-         */
-        TERMINATED;
-    }
-
-    private InspectionState _inspectionState = InspectionState.NO_PROCESS;
-
-    private final MaxVM _vm;
+    private final MaxVM _maxVM;
 
     private final String _bootImageFileName;
 
@@ -104,7 +72,6 @@ public final class Inspection {
     private final InspectionFocus _focus;
 
     private final InspectionPreferences  _preferences;
-
 
     private static final String _SETTINGS_FILE_NAME = "maxine.ins";
     private final InspectionSettings _settings;
@@ -116,12 +83,8 @@ public final class Inspection {
     public Inspection(MaxVM maxVM) {
         Trace.begin(TRACE_VALUE, tracePrefix() + "Initializing");
         final long startTimeMillis = System.currentTimeMillis();
-        _vm = maxVM;
+        _maxVM = maxVM;
         _bootImageFileName = maxVM().bootImageFile().getAbsolutePath().toString();
-        if (!(maxVM().isReadOnly())) {
-            _presumedState = State.STOPPED;
-            _inspectionState = InspectionState.STOPPED;
-        }
         _nameDisplay = new InspectorNameDisplay(this);
         _focus = new InspectionFocus(this);
         _settings = new InspectionSettings(this, new File(maxVM().programFile().getParentFile(), _SETTINGS_FILE_NAME));
@@ -129,18 +92,26 @@ public final class Inspection {
         _inspectionActions = new InspectionActions(this);
 
         BreakpointPersistenceManager.initialize(this);
-        _inspectionActions.refresh(maxVM().epoch(), true);
-        // Listen for process state changes
-        maxVM().addStateListener(new ProcessStateListener());
+        _inspectionActions.refresh(true);
+        // Listen for VM state changes
+        maxVM().addVMStateObserver(new VMStateObserver());
         // Listen for changes in breakpoints
-        maxVM().addBreakpointListener(new BreakpointListener());
+        maxVM().addBreakpointObserver(new BreakpointObserver());
 
         _inspectorMainFrame = new InspectorMainFrame(this, INSPECTOR_NAME, _settings, _inspectionActions);
 
         MethodInspector.Manager.make(this);
         ObjectInspectorFactory.make(this);
 
-        if (!maxVM.isReadOnly()) {
+        if (maxVMState().processState() == NO_PROCESS) {
+            // Inspector is working with a boot image only, no process exists.
+
+            // Initialize the CodeManager and ClassRegistry, which seems to keep some heap reads
+            // in the BootImageInspecor from crashing when there's no VM running (mlvdv)
+//          if (teleVM.isBootImageRelocated()) {
+//          teleVM.teleCodeRegistry();
+//          }
+        } else {
             try {
                 // Choose an arbitrary thread as the "current" thread. If the inspector is
                 // creating the process to be debugged (as opposed to attaching to it), then there
@@ -170,18 +141,25 @@ public final class Inspection {
                 throwable.printStackTrace();
                 System.exit(1);
             }
-        } else {
-            // Initialize the CodeManager and ClassRegistry, which seems to keep some heap reads
-            // in the BootImageInspecor from crashing when there's no VM running (mlvdv)
-//          if (teleVM.isBootImageRelocated()) {
-//          teleVM.teleCodeRegistry();
-//          }
         }
         refreshAll(false);
-        updateTitle();
+        _inspectorMainFrame.refresh(true);
         _inspectorMainFrame.setVisible(true);
 
         Trace.end(TRACE_VALUE, tracePrefix() + "Initializing", startTimeMillis);
+    }
+
+    /**
+     * Updates the string appearing the outermost window frame: program name, process state, boot image filename.
+     */
+    public String currentInspectionTitle() {
+        final StringBuilder sb = new StringBuilder(50);
+        sb.append(INSPECTOR_NAME);
+        sb.append(" (");
+        sb.append(maxVMState() == null ? "" : maxVMState().processState());
+        sb.append(") ");
+        sb.append(_bootImageFileName);
+        return sb.toString();
     }
 
     /**
@@ -196,7 +174,15 @@ public final class Inspection {
     }
 
     public MaxVM maxVM() {
-        return _vm;
+        return _maxVM;
+    }
+
+    /**
+     * @return The immutable history of Maxine VM state, updated immediately
+     * and synchronously; thread safe.
+     */
+    private MaxVMState maxVMState() {
+        return _maxVM.maxVMState();
     }
 
     public InspectorGUI gui() {
@@ -254,77 +240,60 @@ public final class Inspection {
     }
 
     /**
-     * Updates the string appearing the outermost window frame: program name, process state, bootimage filename.
-     *
-     */
-    private void updateTitle() {
-        _inspectorMainFrame.showTitle(INSPECTOR_NAME + ": (" + _inspectionState + ") " + _bootImageFileName);
-    }
-
-    /**
-     * Note that there is a delay, as well as a gap in the AWT event queue between the actual change in the
-     * VM process state and the receipt of notification by the Inspector. This value may not always agree
-     * with what's reported by {@link MaxVM#state()}.
-     *
-     * @return the presumed state of the VM as of the most recent update, subject to quantum and other
-     *         effects.
-     */
-    private State _presumedState = null;
-
-    /**
      * @return Is the Inspector in debugging mode with a legitimate process?
      */
     public boolean hasProcess() {
-        return !(_inspectionState == InspectionState.NO_PROCESS || _inspectionState == InspectionState.TERMINATED);
+        final ProcessState processState = maxVMState().processState();
+        return !(processState == NO_PROCESS || processState == TERMINATED);
     }
 
     /**
-     * Is the VM running, as of the most recent state update? Note that there is a delay, as well as a gap
-     * in the AWT event queue, between the stopping of the VM and the receipt of notification by the
-     * Inspector (when running asynchronous), so this value may not always agree with what's reported by
-     * {@link MaxVM#state()}. In particular, the AWT event queue might initiate new action sequences when the
-     * VM has actually stopped, but before the Inspector receives notification.
+     * Is the VM running, as of the most recent direct (synchronous) notification by the VM?
      *
-     * @return VM state == {@link State#STOPPED}.
+     * @return VM state == {@link ProcessState#RUNNING}.
      */
     public boolean isVMRunning() {
-        return _presumedState == State.RUNNING;
+        return maxVMState().processState() == RUNNING;
     }
 
     /**
-     * Is the VM available to start running, as of the most recent state update?
+     * Is the VM available to start running, as of the most recent direct (synchronous) notification by the VM?
      *
-     * @return VM state == {@link State#STOPPED}.
+     * @return VM state == {@link ProcessState#STOPPED}.
      */
     public boolean isVMReady() {
-        return _presumedState == State.STOPPED;
+        return maxVMState().processState() == STOPPED;
     }
 
+    private MaxVMState _lastVMStateProcessed = null;
+
     /**
-     * Handles reported changes in the {@linkplain TeleProcess#state() tele process state}.
+     * Handles reported changes in the {@linkplain MaxVM#maxVMState()  VM process state}.
+     * Must only be run in AWT event thread.
      */
-    private void processStateChange(StateTransitionEvent e) {
+    private void processVMStateChange() {
+        // Ensure that we're just looking at one state while making decisions, even
+        // though display elements may find the VM in a newer state by the time they
+        // attempt to update their state.
+        _inspectorMainFrame.refresh(true);
+        final MaxVMState maxVMState = maxVMState();
+        if (!maxVMState.newerThan(_lastVMStateProcessed)) {
+            Trace.line(1, tracePrefix() + "ignoring redundant state change=" + maxVMState);
+        }
+        _lastVMStateProcessed = maxVMState;
         Tracer tracer = null;
         if (Trace.hasLevel(1)) {
-            tracer = new Tracer("process " + e);
+            tracer = new Tracer("process " + maxVMState);
         }
         Trace.begin(1, tracer);
         final long startTimeMillis = System.currentTimeMillis();
-        _presumedState = e.newState();
-        switch (_presumedState) {
+        switch (maxVMState.processState()) {
             case STOPPED:
-                if (maxVM().isInGC()) {
-                    _inspectionState = InspectionState.STOPPED_IN_GC;
-                } else {
-                    _inspectionState = InspectionState.STOPPED;
-                }
-                updateAfterVMStopped(e.epoch());
+                updateAfterVMStopped();
                 break;
             case RUNNING:
-                _inspectionState = InspectionState.RUNNING;
                 break;
             case TERMINATED:
-                _inspectionState = InspectionState.TERMINATED;
                 Trace.line(1, tracePrefix() + " - VM process terminated");
                 // Give all process-sensitive views a chance to shut down
                 for (InspectionListener listener : _inspectionListeners.clone()) {
@@ -333,44 +302,37 @@ public final class Inspection {
                 // Clear any possibly misleading view state.
                 focus().clearAll();
                 // Be sure all process-sensitive actions are disabled.
-                _inspectionActions.refresh(e.epoch(), false);
+                _inspectionActions.refresh(false);
+                break;
+            case NO_PROCESS:
                 break;
         }
-        _inspectorMainFrame.showVMState(_inspectionState);
-        updateTitle();
-        _inspectionActions.refresh(e.epoch(), true);
+        _inspectorMainFrame.refresh(true);
+        _inspectionActions.refresh(true);
         Trace.end(1, tracer, startTimeMillis);
     }
 
     /**
-     * Preemptively assume that the VM is running without waiting for notification.
+     * Handles reported changes in the {@linkplain MaxVM#maxVMState() VM state}.
+     * Updates state synchronously, then posts an event for follow-up on the AST event thread
      */
-    void assumeRunning() {
-        Trace.line(TRACE_VALUE, tracePrefix() + "assuming VM is " + State.RUNNING);
-        _presumedState = State.RUNNING;
-        _inspectionState = InspectionState.RUNNING;
-        _inspectorMainFrame.showVMState(_inspectionState);
-    }
+    private final class VMStateObserver implements TeleVMStateObserver {
 
-    /**
-     * Handles reported changes in the {@linkplain TeleProcess#state() tele process state}. Ensures that the event is
-     * handled only on the current AWT event thread.
-     */
-    private final class ProcessStateListener implements StateTransitionListener {
+        public void upate(final MaxVMState maxVMState) {
+            System.out.println("MaxVMState=" + maxVMState);
 
-        public void handleStateTransition(final StateTransitionEvent e) {
             if (java.awt.EventQueue.isDispatchThread()) {
-                processStateChange(e);
+                processVMStateChange();
             } else {
                 Tracer tracer = null;
                 if (Trace.hasLevel(TRACE_VALUE)) {
-                    tracer = new Tracer("scheduled " + e);
+                    tracer = new Tracer("scheduled " + maxVMState);
                 }
                 Trace.begin(TRACE_VALUE, tracer);
                 SwingUtilities.invokeLater(new Runnable() {
 
                     public void run() {
-                        processStateChange(e);
+                        processVMStateChange();
                     }
                 });
                 Trace.end(TRACE_VALUE, tracer);
@@ -381,27 +343,27 @@ public final class Inspection {
     /**
      * Handles reported breakpoint changes in the VM.
      */
-    private void processBreakpointChange(long epoch) {
+    private void processBreakpointChange() {
         Trace.line(TRACE_VALUE, tracePrefix() + "breakpoint state notification");
         for (InspectionListener listener : _inspectionListeners.clone()) {
-            listener.breakpointSetChanged(epoch);
+            listener.breakpointSetChanged();
         }
     }
 
     /**
-     * Handles reported breakpoint changes in the VM. Ensures that the event is handled only on the current
+     * Handles reported breakpoint changes in the VM. Ensures that the event is handled only on the
      * AWT event thread.
      */
-    private final class BreakpointListener implements TeleViewModel.Listener {
+    private final class BreakpointObserver implements Observer {
 
-        public void refreshView(final long epoch) {
+        public void update(Observable o, Object arg) {
             if (java.awt.EventQueue.isDispatchThread()) {
-                processBreakpointChange(epoch);
+                processBreakpointChange();
             } else {
                 SwingUtilities.invokeLater(new Runnable() {
 
                     public void run() {
-                        processBreakpointChange(epoch);
+                        processBreakpointChange();
                     }
                 });
             }
@@ -454,7 +416,6 @@ public final class Inspection {
      * @param force suspend caching behavior; reload state unconditionally.
      */
     public void refreshAll(boolean force) {
-        final long epoch = maxVM().epoch();
         Tracer tracer = null;
         // Additional listeners may come and go during the update cycle, which can be ignored.
         for (InspectionListener listener : _inspectionListeners.clone()) {
@@ -463,10 +424,10 @@ public final class Inspection {
             }
             Trace.begin(TRACE_VALUE, tracer);
             final long startTimeMillis = System.currentTimeMillis();
-            listener.vmStateChanged(epoch, force);
+            listener.vmStateChanged(force);
             Trace.end(TRACE_VALUE, tracer, startTimeMillis);
         }
-        _inspectionActions.refresh(epoch, force);
+        _inspectionActions.refresh(force);
     }
 
     /**
@@ -474,12 +435,12 @@ public final class Inspection {
      * VM.
      */
     void updateViewConfiguration() {
-        final long epoch = maxVM().epoch();
         for (InspectionListener listener : _inspectionListeners) {
             Trace.line(TRACE_VALUE, tracePrefix() + "updateViewConfiguration: " + listener);
-            listener.viewConfigurationChanged(epoch);
+            listener.viewConfigurationChanged();
         }
         _inspectionActions.redisplay();
+        _inspectorMainFrame.redisplay();
     }
 
     private final Tracer _threadTracer = new Tracer("refresh thread state");
@@ -487,9 +448,8 @@ public final class Inspection {
     /**
      * Determines what happened in VM execution that just concluded. Then updates all view state as needed.
      */
-    public void updateAfterVMStopped(long epoch) {
-        ProgramError.check(maxVM().state() == State.STOPPED, "State should be stopped, but is " + maxVM().state());
-        gui().showBusy(true);
+    public void updateAfterVMStopped() {
+        gui().showInspectorBusy(true);
         final IdentityHashSet<InspectionListener> listeners = _inspectionListeners.clone();
         // Notify of any changes of the thread set
 
@@ -499,7 +459,7 @@ public final class Inspection {
         final IterableWithLength<TeleNativeThread> startedThreads = maxVM().recentlyCreatedThreads();
         if (deadThreads.length() != 0 || startedThreads.length() != 0) {
             for (InspectionListener listener : listeners) {
-                listener.threadSetChanged(epoch);
+                listener.threadSetChanged();
             }
             for (TeleNativeThread teleNativeThread : maxVM().threads()) {
                 for (InspectionListener listener : listeners) {
@@ -536,7 +496,7 @@ public final class Inspection {
         } catch (Throwable throwable) {
             new InspectorError("could not update view", throwable).display(this);
         } finally {
-            gui().showBusy(false);
+            gui().showInspectorBusy(false);
         }
     }
 

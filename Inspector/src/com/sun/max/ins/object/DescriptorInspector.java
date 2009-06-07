@@ -53,8 +53,8 @@ public class DescriptorInspector extends ObjectInspector {
     }
 
     @Override
-    protected void createView(long epoch) {
-        super.createView(epoch);
+    protected void createView() {
+        super.createView();
         final TeleDescriptor teleDescriptor = (TeleDescriptor) teleObject();
         final String name = teleDescriptor.classActorForType().javaSignature(false);
 
@@ -77,17 +77,17 @@ public class DescriptorInspector extends ObjectInspector {
                 // Remember which display is now selected
                 _alternateDisplay = prober == _stringPane;
                 // Refresh the display that is now visible.
-                prober.refresh(maxVM().epoch(), true);
+                prober.refresh(true);
             }
         });
         frame().getContentPane().add(_tabbedPane);
     }
 
     @Override
-    protected void refreshView(long epoch, boolean force) {
+    protected void refreshView(boolean force) {
         // Only refresh the visible pane.
         final Prober pane = (Prober) _tabbedPane.getSelectedComponent();
-        pane.refresh(epoch, force);
-        super.refreshView(epoch, force);
+        pane.refresh(force);
+        super.refreshView(force);
     }
 }

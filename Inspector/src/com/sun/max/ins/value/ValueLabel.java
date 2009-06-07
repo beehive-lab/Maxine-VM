@@ -22,6 +22,7 @@ package com.sun.max.ins.value;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.tele.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -36,8 +37,7 @@ public abstract class ValueLabel extends InspectorLabel {
 
     // TODO (mlvdv) the flow of control in this class hierarchy is awkward and should be redesigned.
 
-    // VM epoch when value last read.
-    private long _epoch = -1;
+    private MaxVMState _lastRefreshedState = null;
 
     private Value _value;
 
@@ -72,7 +72,7 @@ public abstract class ValueLabel extends InspectorLabel {
      */
     protected final void initializeValue() {
         _value = fetchValue();
-        _epoch = maxVM().epoch();
+        _lastRefreshedState = maxVMState();
     }
 
     /**
@@ -90,10 +90,10 @@ public abstract class ValueLabel extends InspectorLabel {
         repaint();
     }
 
-    public final void refresh(long epoch, boolean force) {
-        if (epoch > _epoch || force) {
+    public final void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
             setValue(fetchValue());
-            _epoch = epoch;
         }
     }
 

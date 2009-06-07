@@ -32,6 +32,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -122,7 +123,7 @@ public final class ObjectFieldsTable extends InspectorTable {
                 super.procedure(mouseEvent);
             }
         });
-        refresh(_inspection.maxVM().epoch(), true);
+        refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
@@ -341,10 +342,10 @@ public final class ObjectFieldsTable extends InspectorTable {
 
         private InspectorLabel[] _labels = new InspectorLabel[_fieldActors.length];
 
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             for (InspectorLabel label : _labels) {
                 if (label != null) {
-                    label.refresh(epoch, force);
+                    label.refresh(force);
                 }
             }
         }
@@ -396,10 +397,10 @@ public final class ObjectFieldsTable extends InspectorTable {
 
         private InspectorLabel[] _labels = new InspectorLabel[_fieldActors.length];
 
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             for (InspectorLabel label : _labels) {
                 if (label != null) {
-                    label.refresh(epoch, force);
+                    label.refresh(force);
                 }
             }
         }
@@ -437,11 +438,11 @@ public final class ObjectFieldsTable extends InspectorTable {
         repaint();
     }
 
-    private long _lastRefreshEpoch = -1;
+    private MaxVMState _lastRefreshedState = null;
 
-    public void refresh(long epoch, boolean force) {
-        if (epoch > _lastRefreshEpoch || force) {
-            _lastRefreshEpoch = epoch;
+    public void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
             _objectOrigin = _teleObject.getCurrentOrigin();
             final int oldSelectedRow = getSelectedRow();
             final int newRow = _model.addressToRow(focus().address());
@@ -454,7 +455,7 @@ public final class ObjectFieldsTable extends InspectorTable {
             }
             for (TableColumn column : _columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(epoch, force);
+                prober.refresh(force);
             }
         }
     }

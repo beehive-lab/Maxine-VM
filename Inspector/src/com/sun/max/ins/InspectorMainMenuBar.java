@@ -61,7 +61,7 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
     }
 
     @Override
-    public void refresh(long epoch, boolean force) {
+    public void refresh(boolean force) {
     }
 
     /**

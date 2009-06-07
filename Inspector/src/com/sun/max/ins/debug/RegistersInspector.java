@@ -65,7 +65,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         _viewPreferences = RegistersViewPreferences.globalPreferences(inspection());
         _viewPreferences.addListener(this);
         createFrame(null);
-        refreshView(inspection.maxVM().epoch(), true);
+        refreshView(true);
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
@@ -75,7 +75,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     }
 
     @Override
-    protected void createView(long epoch) {
+    protected void createView() {
         _teleNativeThread = inspection().focus().thread();
         if (_teleNativeThread == null) {
             _table = null;
@@ -121,9 +121,9 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     }
 
     @Override
-    protected void refreshView(long epoch, boolean force) {
-        _table.refresh(epoch, force);
-        super.refreshView(epoch, force);
+    protected void refreshView(boolean force) {
+        _table.refresh(force);
+        super.refreshView(force);
         // The title displays thread state, so must be updated.
         updateFrameTitle();
     }
@@ -139,7 +139,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     }
 
     @Override
-    public void viewConfigurationChanged(long epoch) {
+    public void viewConfigurationChanged() {
         reconstructView();
     }
 

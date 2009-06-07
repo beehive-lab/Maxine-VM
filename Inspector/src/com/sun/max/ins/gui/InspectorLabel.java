@@ -57,6 +57,10 @@ public abstract class InspectorLabel extends JTextField implements InspectionHol
         return _inspection.maxVM();
     }
 
+    public final MaxVMState maxVMState() {
+        return _inspection.maxVM().maxVMState();
+    }
+
     public InspectorGUI gui() {
         return _inspection.gui();
     }

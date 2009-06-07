@@ -31,6 +31,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -91,7 +92,7 @@ public final class ThreadLocalsTable extends InspectorTable {
             }
         });
 
-        refresh(inspection.maxVM().epoch(), true);
+        refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
@@ -271,10 +272,10 @@ public final class ThreadLocalsTable extends InspectorTable {
 
         private InspectorLabel[] _labels = new InspectorLabel[VmThreadLocal.NAMES.length()];
 
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             for (InspectorLabel label : _labels) {
                 if (label != null) {
-                    label.refresh(epoch, force);
+                    label.refresh(force);
                 }
             }
         }
@@ -312,10 +313,10 @@ public final class ThreadLocalsTable extends InspectorTable {
 
         private InspectorLabel[] _labels = new InspectorLabel[VmThreadLocal.NAMES.length()];
 
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             for (InspectorLabel label : _labels) {
                 if (label != null) {
-                    label.refresh(epoch, force);
+                    label.refresh(force);
                 }
             }
         }
@@ -356,11 +357,11 @@ public final class ThreadLocalsTable extends InspectorTable {
         repaint();
     }
 
-    private long _lastRefreshEpoch = -1;
+    private MaxVMState _lastRefreshedState = null;
 
-    public void refresh(long epoch, boolean force) {
-        if (epoch > _lastRefreshEpoch || force) {
-            _lastRefreshEpoch = epoch;
+    public void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
             final int oldSelectedRow = getSelectedRow();
             final int newRow = _model.addressToRow(focus().address());
             if (newRow >= 0) {
@@ -372,7 +373,7 @@ public final class ThreadLocalsTable extends InspectorTable {
             }
             for (TableColumn column : _columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(epoch, force);
+                prober.refresh(force);
             }
         }
     }

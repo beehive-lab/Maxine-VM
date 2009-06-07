@@ -72,7 +72,7 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
     }
 
     @Override
-    protected void createView(long epoch) {
+    protected void createView() {
         _table = new BootImageTable(inspection(), _viewPreferences);
         frame().setContentPane(new InspectorScrollPane(inspection(), _table));
     }
@@ -108,12 +108,12 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
     }
 
     @Override
-    protected void refreshView(long epoch, boolean force) {
-        _table.refresh(epoch, force);
-        super.refreshView(epoch, force);
+    protected void refreshView(boolean force) {
+        _table.refresh(force);
+        super.refreshView(force);
     }
 
-    public void viewConfigurationChanged(long epoch) {
+    public void viewConfigurationChanged() {
         reconstructView();
     }
 

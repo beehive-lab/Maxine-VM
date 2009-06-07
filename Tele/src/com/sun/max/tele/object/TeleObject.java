@@ -75,7 +75,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     /**
      * Controls tracing for object copying.
      */
-    protected static final int COPY_TRACE_VALUE = 4;
+    protected static final int COPY_TRACE_VALUE = 1;
 
     /**
      * The factory method {@link TeleObjectFactory#make(Reference)} ensures synchronized TeleObjects creation.
@@ -381,13 +381,18 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
         final TeleClassActor teleClassActor = teleVM.findTeleClassActor(javaClass);
         final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
 
-        Trace.begin(COPY_TRACE_VALUE, "Copying static fields of " + javaClass + "from VM");
+        final String classMessage = "Copying static fields of " + javaClass + " from VM";
+        Trace.begin(COPY_TRACE_VALUE, classMessage);
         try {
+
             for (FieldActor fieldActor : classActor.localStaticFieldActors()) {
+                final String fieldMessage = "Copying static field " + fieldActor.format("%t %n") + " from VM";
+                Trace.begin(COPY_TRACE_VALUE, fieldMessage);
                 copyField(new DeepCopyContext(), teleStaticTuple, null, fieldActor);
+                Trace.end(COPY_TRACE_VALUE, fieldMessage);
             }
         } finally {
-            Trace.end(COPY_TRACE_VALUE, "Copying static fields of " + javaClass + "from VM");
+            Trace.end(COPY_TRACE_VALUE, classMessage);
         }
     }
 

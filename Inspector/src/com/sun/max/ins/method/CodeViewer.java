@@ -29,6 +29,7 @@ import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.vm.stack.*;
@@ -74,8 +75,7 @@ public abstract class CodeViewer extends InspectorPanel {
     public abstract boolean updateCodeFocus(TeleCodeLocation teleCodeLocation);
 
     public void updateThreadFocus(TeleNativeThread teleNativeThread) {
-        final long epoch = maxVM().epoch();
-        updateCaches(epoch, false);
+        updateCaches(false);
     }
 
     public CodeViewer(Inspection inspection, MethodInspector parent) {
@@ -120,7 +120,7 @@ public abstract class CodeViewer extends InspectorPanel {
         //getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke('F', CTRL_DOWN_MASK), SEARCH_ACTION);
     }
 
-    protected void createView(long epoch) {
+    protected void createView() {
         _toolBarPanel = new InspectorPanel(inspection(), new GridLayout(0, 1));
         _toolBar = new InspectorToolBar(inspection());
         _toolBar.setFloatable(false);
@@ -271,9 +271,9 @@ public abstract class CodeViewer extends InspectorPanel {
     }
 
     @Override
-    public final void refresh(long epoch, boolean force) {
-        updateCaches(epoch, force);
-        updateView(epoch, force);
+    public final void refresh(boolean force) {
+        updateCaches(force);
+        updateView(force);
         updateSize();
         invalidate();
         repaint();
@@ -346,26 +346,24 @@ public abstract class CodeViewer extends InspectorPanel {
     // The thread from which the stack cache was last built.
     private TeleNativeThread _threadForCache = null;
 
-    // The epoch at which the stack cache was last built.
-    private long _processEpochForCache = -1;
+    private MaxVMState _lastRefreshedState = null;
 
-    private void updateCaches(long epoch, boolean force) {
+    private void updateCaches(boolean force) {
         final TeleNativeThread teleNativeThread = inspection().focus().thread();
-        if (teleNativeThread != _threadForCache || epoch != _processEpochForCache || force) {
+        if (teleNativeThread != _threadForCache || maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
             updateStackCache();
             // Active rows depend on the stack cache.
             updateActiveRows();
             _threadForCache = teleNativeThread;
-            _processEpochForCache = epoch;
         }
     }
-
 
     /**
      * Updates any label in the view that are based on state in the VM.
      *
      */
-    protected abstract void updateView(long epoch, boolean force);
+    protected abstract void updateView(boolean force);
 
     /**
      * Returns stack frame information, if any, associated with the row.

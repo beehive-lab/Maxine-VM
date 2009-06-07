@@ -24,6 +24,7 @@ import javax.swing.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.tele.*;
 
 
 /**
@@ -52,7 +53,7 @@ public final class StringPane extends InspectorScrollPane {
         _textArea = textArea;
         _textArea.append(_stringValue);
         _textArea.setEditable(false);
-        refresh(inspection.maxVM().epoch(), true);
+        refresh(true);
     }
 
     @Override
@@ -60,12 +61,12 @@ public final class StringPane extends InspectorScrollPane {
         _textArea.setFont(style().defaultTextFont());
     }
 
-    private long _lastRefreshEpoch = -1;
+    private MaxVMState _lastRefreshedState = null;
 
     @Override
-    public void refresh(long epoch, boolean force) {
-        if (epoch > _lastRefreshEpoch || force) {
-            _lastRefreshEpoch = epoch;
+    public void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
             final String newString = _stringSource.fetchString();
             if (newString != _stringValue) {
                 _stringValue = newString;

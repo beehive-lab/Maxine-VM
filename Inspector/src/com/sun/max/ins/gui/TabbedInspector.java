@@ -175,11 +175,11 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
     }
 
     @Override
-    public void createView(long epoch) {
+    public void createView() {
         frame().setContentPane(_tabbedPane);
     }
 
-    public void viewConfigurationChanged(long epoch) {
+    public void viewConfigurationChanged() {
         // These containers generally have no view configurations that need updating.
     }
 

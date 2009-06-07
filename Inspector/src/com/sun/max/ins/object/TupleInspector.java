@@ -61,24 +61,24 @@ public class TupleInspector extends ObjectInspector {
     }
 
     @Override
-    protected void createView(long epoch) {
-        super.createView(epoch);
+    protected void createView() {
+        super.createView();
         final TeleTupleObject teleTupleObject = (TeleTupleObject) teleObject();
         _fieldsPane = ObjectPane.createFieldsPane(this, teleTupleObject);
         frame().getContentPane().add(_fieldsPane);
     }
 
     @Override
-    protected void refreshView(long epoch, boolean force) {
+    protected void refreshView(boolean force) {
         if (isShowing() || force) {
-            _fieldsPane.refresh(epoch, force);
+            _fieldsPane.refresh(force);
             if (_classMethodInspectorMenuItems != null) {
-                _classMethodInspectorMenuItems.refresh(epoch, force);
+                _classMethodInspectorMenuItems.refresh(force);
             }
             if (_targetMethodInspectorMenuItems != null) {
-                _targetMethodInspectorMenuItems.refresh(epoch, force);
+                _targetMethodInspectorMenuItems.refresh(force);
             }
-            super.refreshView(epoch, force);
+            super.refreshView(force);
         }
     }
 

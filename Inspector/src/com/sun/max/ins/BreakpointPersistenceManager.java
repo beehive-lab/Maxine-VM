@@ -20,10 +20,11 @@
  */
 package com.sun.max.ins;
 
+import java.util.*;
+
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -38,7 +39,7 @@ import com.sun.max.vm.type.*;
  *
  * @author Michael Van De Vanter
  */
-public final class BreakpointPersistenceManager extends AbstractSaveSettingsListener implements TeleViewModel.Listener  {
+public final class BreakpointPersistenceManager extends AbstractSaveSettingsListener implements Observer  {
 
     private static BreakpointPersistenceManager _breakpointPersistenceManager;
 
@@ -73,10 +74,10 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
         }
 
         // Once load-in is finished, register for notification of subsequent breakpoint changes in the VM.
-        _inspection.maxVM().addBreakpointListener(this);
+        _inspection.maxVM().addBreakpointObserver(this);
     }
 
-    public void refreshView(long epoch) {
+    public void update(Observable o, Object arg) {
         // Breakpoints in the VM have changed.
         _inspection.settings().save();
     }
