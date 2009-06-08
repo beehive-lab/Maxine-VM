@@ -33,7 +33,6 @@ public class ArrayLoad extends JavaOperator {
         _kind = kind;
     }
 
-    @Override
     public Kind resultKind() {
         return _kind;
     }
@@ -45,12 +44,10 @@ public class ArrayLoad extends JavaOperator {
 
     private static final Kind[] _parameterKinds = {Kind.REFERENCE, Kind.INT};
 
-    @Override
     public Kind[] parameterKinds() {
         return _parameterKinds;
     }
 
-    @Override
     public String toString() {
         return "ArrayLoad";
     }

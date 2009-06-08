@@ -51,7 +51,6 @@ public class AMD64JITTestSetup extends AMD64TranslatorTestSetup implements JITTe
         return new AMD64JitCompiler(VMConfiguration.target(), templateTable);
     }
 
-    @Override
     public boolean disassembleCompiledMethods() {
         return true;
     }

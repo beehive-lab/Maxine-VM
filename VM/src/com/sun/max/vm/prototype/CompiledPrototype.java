@@ -514,7 +514,6 @@ public class CompiledPrototype extends Prototype {
                 if (hasCode(methodActor)) {
                     ++submittedCompilations;
                     compilationCompletionService.submit(new Callable<TargetMethod>() {
-                        @Override
                         public TargetMethod call() throws Exception {
                             try {
                                 return compilationScheme.synchronousCompile((ClassMethodActor) methodActor, CompilationDirective.DEFAULT);

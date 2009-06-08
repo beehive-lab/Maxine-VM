@@ -199,12 +199,10 @@ public abstract class X86DisassembledInstruction<Template_Type extends X86Templa
         return argument.disassembledValue();
     }
 
-    @Override
     public String mnemonic() {
         return template().externalName();
     }
 
-    @Override
     public String operandsToString(AddressMapper addressMapper) {
         final Queue<X86Operand> operandQueue = new MutableQueue<X86Operand>(template().operands());
         final Queue<Argument> argumentQueue = new MutableQueue<Argument>(arguments());
@@ -217,7 +215,6 @@ public abstract class X86DisassembledInstruction<Template_Type extends X86Templa
         return result;
     }
 
-    @Override
     public String toString(AddressMapper addressMapper) {
         String s = operandsToString(addressMapper);
         if (s.length() > 0) {
@@ -226,7 +223,6 @@ public abstract class X86DisassembledInstruction<Template_Type extends X86Templa
         return Strings.padLengthWithSpaces(mnemonic(), 8) + s;
     }
 
-    @Override
     public ImmediateArgument addressForRelativeAddressing() {
         return endAddress();
     }

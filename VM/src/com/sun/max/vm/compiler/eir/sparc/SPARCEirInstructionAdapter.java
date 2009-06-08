@@ -124,17 +124,14 @@ public class SPARCEirInstructionAdapter extends EirInstructionAdapter implements
     public void visit(MOVL instruction) {
     }
 
-
     public void visit(MOVFL instruction) {
     }
 
-    @Override
     public void visit(MOVFG instruction) {
     }
 
     public void visit(MOVCS instruction) {
     }
-
 
     public void visit(MOVGU instruction) {
     }

@@ -962,7 +962,7 @@ public class MaxineTester {
         public JUnitHarness(String[] testList) {
             _testList = testList;
         }
-        @Override
+
         public boolean run() {
             final File outputDir = new File(_outputDir.getValue(), "junit-tests");
             final Set<String> junitTests = new TreeSet<String>();
@@ -1097,7 +1097,6 @@ public class MaxineTester {
     public static class JavaTesterHarness implements Harness {
         private static final Pattern TEST_BEGIN_LINE = Pattern.compile("(\\d+): +(\\S+)\\s+next: '-XX:TesterStart=(\\d+)', end: '-XX:TesterEnd=(\\d+)'");
 
-        @Override
         public boolean run() {
             final List<String> javaTesterConfigs = _javaTesterConfigs.getValue();
             for (final String config : javaTesterConfigs) {
@@ -1231,7 +1230,7 @@ public class MaxineTester {
         OutputHarness(Class[] tests) {
             _testList = tests;
         }
-        @Override
+
         public boolean run() {
             final File outputDir = new File(_outputDir.getValue(), "java");
             final File imageDir = generateJavaRunSchemeImage();
@@ -1317,7 +1316,7 @@ public class MaxineTester {
         SpecJVM98Harness(String[] tests) {
             _testList = tests;
         }
-        @Override
+
         public boolean run() {
             final File specjvm98Zip = getFileFromOptionOrEnv(_specjvm98Zip, "SPECJVM98_ZIP");
             if (specjvm98Zip == null) {
@@ -1374,7 +1373,7 @@ public class MaxineTester {
         DaCapoHarness(String[] tests) {
             _testList = tests;
         }
-        @Override
+
         public boolean run() {
             final File dacapoJar = getFileFromOptionOrEnv(_dacapoJar, "DACAPO_JAR");
             if (dacapoJar == null) {
@@ -1428,7 +1427,7 @@ public class MaxineTester {
         ShootoutHarness(String[] tests) {
             _testList = tests;
         }
-        @Override
+
         public boolean run() {
             final File shootoutDir = getFileFromOptionOrEnv(_shootoutDir, "SHOOTOUT_DIR");
             if (shootoutDir == null) {

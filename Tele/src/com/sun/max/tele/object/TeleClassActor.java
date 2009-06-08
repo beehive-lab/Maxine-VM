@@ -281,12 +281,10 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         return "ClassActor";
     }
 
-    @Override
     public ClassLoaderProvider classLoader() {
         return getTeleClassLoader();
     }
 
-    @Override
     public ClassObjectProvider classObject() {
         return getTeleClass();
     }
@@ -305,71 +303,58 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
             _signature = signature;
         }
 
-        @Override
         public ReferenceTypeProvider getReferenceTypeHolder() {
             return TeleClassActor.this;
         }
 
-        @Override
         public VMValue getStaticValue() {
             assert false : "This field is not a static field!";
             return null;
         }
 
-        @Override
         public void setStaticValue(VMValue value) {
             assert false : "This field is not a static field!";
         }
 
-        @Override
         public void setValue(ObjectProvider object, VMValue value) {
             assert false : "This field is readonly!";
         }
 
-        @Override
         public int getFlags() {
             return FieldActor.ACC_FINAL;
         }
 
-        @Override
         public String getGenericSignature() {
             return getSignature();
         }
 
-        @Override
         public String getName() {
             // TODO Auto-generated method stub
             return _name;
         }
 
-        @Override
         public String getSignature() {
             return _signature;
         }
 
-        @Override
         public Type getType() {
             return _type;
         }
     }
 
     private final FieldProvider _fakeAddressField = new FakeFieldProvider("address", VMValue.Type.LONG, JavaTypeDescriptor.LONG.toString()) {
-
-        @Override
         public VMValue getValue(ObjectProvider object) {
             return teleVM().vmAccess().createLongValue(((TeleObject) object).getReference().toOrigin().asAddress().toLong());
         }
     };
 
     private final FieldProvider _fakeHubField = new FakeFieldProvider("hub", VMValue.Type.PROVIDER, "Lcom/sun/max/vm/actor/holder/Hub;") {
-        @Override
         public VMValue getValue(ObjectProvider object) {
             return teleVM().maxineValueToJDWPValue(TeleReferenceValue.from(teleVM(), ((TeleObject) object).getTeleHub().getReference()));
         }
     };
 
     private final FieldProvider _fakeMiscField = new FakeFieldProvider("misc", VMValue.Type.LONG, JavaTypeDescriptor.LONG.toString()) {
-
         public VMValue getValue(ObjectProvider object) {
             return teleVM().vmAccess().createLongValue(((TeleObject) object).getMiscWord().asAddress().toLong());
         }

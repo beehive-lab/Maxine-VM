@@ -499,7 +499,6 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
         return new MachineCodeInstructionArray(result);
     }
 
-    @Override
     public MethodProvider getMethodProvider() {
         return this._teleClassMethodActor;
     }
@@ -575,10 +574,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
         private static final FieldActor _referenceLiterals = TeleFieldAccess.findFieldActor(TargetMethod.class, "_referenceLiterals");
 
         public boolean include(int level, FieldActor fieldActor) {
-            if (fieldActor.equals(_referenceLiterals) || fieldActor.equals(_scalarLiteralBytes)) {
-                return false;
-            }
-            return true;
+            return !(fieldActor.equals(_referenceLiterals) || fieldActor.equals(_scalarLiteralBytes));
         }
     }
 

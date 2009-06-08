@@ -42,7 +42,6 @@ import com.sun.max.vm.thread.*;
 public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
 
     private static Safepoint.Procedure _suspendProcedure = new Safepoint.Procedure() {
-        @Override
         public void run(Pointer trapState) {
             // note that this procedure always runs with safepoints disabled
             final Pointer vmThreadLocals = Safepoint.getLatchRegister();
@@ -148,7 +147,6 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
 
 
     private static class TLABScavengerReset implements Procedure<VmThread> {
-        @Override
         public void run(VmThread thread) {
             thread.getTLAB().unSet();
         }
@@ -157,7 +155,6 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
     private TLABScavengerReset _tlabScavengerReset = new TLABScavengerReset();
 
     private static final Pointer.Procedure _prepareGCThreadStackMap = new Pointer.Procedure() {
-        @Override
         public void run(Pointer vmThreadLocals) {
             VmThreadLocal.prepareStackReferenceMap(vmThreadLocals);
         }
@@ -188,7 +185,6 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
     };
 
     private static final Predicate<VmThread> _isGCOrStopTheWorldDaemonThread = new Predicate<VmThread>() {
-        @Override
         public boolean evaluate(VmThread vmThread) {
             final Thread javaThread = vmThread.javaThread();
             return javaThread instanceof BeltwayStopTheWorldDaemon || javaThread instanceof BeltwayCollectorThread;
@@ -196,7 +192,6 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
     };
 
     private static final Pointer.Predicate _isNotGCThreadLocalsOrCurrent = new Pointer.Predicate() {
-        @Override
         public boolean evaluate(Pointer vmThreadLocals) {
             if (vmThreadLocals != VmThread.current().vmThreadLocals()) {
                 final Thread javaThread = VmThread.current(vmThreadLocals).javaThread();
@@ -207,7 +202,6 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
     };
 
     private static final Pointer.Predicate _isGCThread = new Pointer.Predicate() {
-        @Override
         public boolean evaluate(Pointer vmThreadLocals) {
             final Thread javaThread = VmThread.current(vmThreadLocals).javaThread();
             return javaThread instanceof BeltwayCollectorThread;

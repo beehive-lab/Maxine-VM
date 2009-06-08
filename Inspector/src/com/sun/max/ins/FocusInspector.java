@@ -100,7 +100,6 @@ public final class FocusInspector extends Inspector {
         return getDefaultPrintAction();
     }
 
-    @Override
     public void viewConfigurationChanged(long epoch) {
         reconstructView();
     }

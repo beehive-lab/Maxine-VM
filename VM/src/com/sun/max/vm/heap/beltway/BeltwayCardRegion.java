@@ -206,7 +206,6 @@ public class BeltwayCardRegion {
     }
 
     private static class SetLocals implements Procedure<VmThread> {
-        @Override
         public void run(VmThread thread) {
             ADJUSTED_CARDTABLE_BASE.setConstantWord(thread.vmThreadLocals(), _adjustedCardTable);
         }

@@ -33,7 +33,7 @@ public class ArrayStore extends JavaOperator {
     public Kind elementKind() {
         return _elementKind;
     }
-    @Override
+
     public Kind resultKind() {
         return Kind.VOID;
     }
@@ -43,12 +43,10 @@ public class ArrayStore extends JavaOperator {
         visitor.visit(this);
     }
 
-    @Override
     public Kind[] parameterKinds() {
         return new Kind[] {Kind.REFERENCE, Kind.INT, _elementKind};
     }
 
-    @Override
     public String toString() {
         return "ArrayStore:" + _elementKind;
     }

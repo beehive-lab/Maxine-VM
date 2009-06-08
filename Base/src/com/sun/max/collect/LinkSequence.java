@@ -156,7 +156,6 @@ public class LinkSequence<Element_Type> implements PrependableSequence<Element_T
         return to;
     }
 
-    @Override
     public Collection<Element_Type> toCollection() {
         return Iterables.toCollection(this);
     }

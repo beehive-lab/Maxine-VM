@@ -831,7 +831,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         }
     }
 
-    @Override
     @INLINE
     public void writeBarrier(Reference from, Reference to) {
         // do nothing.

@@ -111,67 +111,56 @@ public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
      */
     public abstract ModalLockWordDecoder getModalLockWordDecoder();
 
-    @Override
     @INLINE
     public final Word createMisc(Object object) {
         return _entryHandler.createMisc(object);
     }
 
-    @Override
     @INLINE
     public final int makeHashCode(Object object) {
         return _entryHandler.makeHashCode(object);
     }
 
-    @Override
     @INLINE
     public final void monitorEnter(Object object) {
         _entryHandler.monitorEnter(object);
     }
 
-    @Override
     @INLINE
     public final void monitorExit(Object object) {
         _entryHandler.monitorExit(object);
     }
 
-    @Override
     @INLINE
     public final void monitorNotify(Object object) {
         _entryHandler.monitorNotify(object, false);
     }
 
-    @Override
     @INLINE
     public final void monitorNotifyAll(Object object) {
         _entryHandler.monitorNotify(object, true);
     }
 
-    @Override
     @INLINE
     public final void monitorWait(Object object, long timeout) throws InterruptedException {
         _entryHandler.monitorWait(object, timeout);
     }
 
-    @Override
     @INLINE
     public final boolean threadHoldsMonitor(Object object, VmThread thread) {
         return _entryHandler.threadHoldsMonitor(object, thread);
     }
 
-    @Override
     @INLINE
     public final void beforeGarbageCollection() {
         _entryHandler.beforeGarbageCollection();
     }
 
-    @Override
     @INLINE
     public final void afterGarbageCollection() {
         _entryHandler.afterGarbageCollection();
     }
 
-    @Override
     @INLINE
     public final void scanReferences(PointerIndexVisitor pointerIndexVisitor) {
         // We don't refer to any Java objects through pointers

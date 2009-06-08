@@ -551,12 +551,10 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             return false;
         }
 
-        @Override
         public void redisplay() {
             // not used pending further refactoring
         }
 
-        @Override
         public void refresh(long epoch, boolean force) {
             // not used pending further refactoring
         }
@@ -805,7 +803,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 }
             });
         }
-        @Override
+
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BytecodeLocation bytecodeLocation = (BytecodeLocation) value;
             final String sourceFileName = bytecodeLocation.sourceFileName();

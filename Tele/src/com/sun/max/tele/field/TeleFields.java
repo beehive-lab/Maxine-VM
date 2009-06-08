@@ -172,7 +172,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess ClassLoader_classRegistry = new TeleInstanceReferenceFieldAccess(ClassLoader.class, ClassRegistry.class, InjectedReferenceFieldActor.ClassLoader_classRegistry);
     public final TeleInstanceReferenceFieldAccess Thread_VmThread = new TeleInstanceReferenceFieldAccess(Thread.class, VmThread.class, InjectedReferenceFieldActor.Thread_vmThread);
     public final TeleInstanceReferenceFieldAccess Field_fieldActor = new TeleInstanceReferenceFieldAccess(Field.class, FieldActor.class, InjectedReferenceFieldActor.Field_fieldActor);
-    public final TeleInstanceReferenceFieldAccess Method_methodActor = new TeleInstanceReferenceFieldAccess(Method.class, MethodActor.class, InjectedReferenceFieldActor.Method_methodActor);    
+    public final TeleInstanceReferenceFieldAccess Method_methodActor = new TeleInstanceReferenceFieldAccess(Method.class, MethodActor.class, InjectedReferenceFieldActor.Method_methodActor);
     public final TeleInstanceReferenceFieldAccess Constructor_methodActor = new TeleInstanceReferenceFieldAccess(Constructor.class, MethodActor.class, InjectedReferenceFieldActor.Constructor_methodActor);
 
     // Other JDK fields:
@@ -213,8 +213,6 @@ public class TeleFields extends AbstractTeleVMHolder {
                 final IndentWriter writer = new IndentWriter(new PrintWriter(charArrayWriter));
                 writer.indent();
                 final Set<Member> reified = new TreeSet<Member>(new Comparator<Member>() {
-
-                    @Override
                     public int compare(Member member1, Member member2) {
                         if (member1.equals(member2)) {
                             return 0;
@@ -292,7 +290,6 @@ public class TeleFields extends AbstractTeleVMHolder {
 
     private static void updateSource(boolean inInspector) {
         final InspectedMemberReifier<Field> fieldReifier = new InspectedMemberReifier<Field>() {
-            @Override
             public void reify(Field field, IndentWriter writer) {
                 final Class c = field.getDeclaringClass();
                 final boolean isStatic = Modifier.isStatic(field.getModifiers());

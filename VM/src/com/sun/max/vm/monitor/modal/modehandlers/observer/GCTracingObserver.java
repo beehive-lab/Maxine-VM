@@ -32,7 +32,6 @@ import com.sun.max.vm.thread.*;
  */
 public class GCTracingObserver implements MonitorObserver {
 
-    @Override
     public void notify(Event event, Object object) {
         // Test for GC thread by id, as we might be in the middle of moving VmThread objects.
         if (VmThreadLocal.ID.getConstantWord().asAddress().toInt() == 1) {

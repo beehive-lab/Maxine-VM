@@ -210,13 +210,11 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
             return _blocks.length;
         }
 
-        @Override
         public void visitReferenceInLocalVariable(int localVariableIndex) {
             final ReferenceMap map = _referenceMaps[_bytecodePositionIterator.bytecodePosition()];
             map._locals[localVariableIndex] = true;
         }
 
-        @Override
         public void visitReferenceOnOperandStack(int operandStackIndex, boolean parametersPopped) {
             if (!parametersPopped) {
                 final ReferenceMap map = _referenceMaps[_bytecodePositionIterator.bytecodePosition()];

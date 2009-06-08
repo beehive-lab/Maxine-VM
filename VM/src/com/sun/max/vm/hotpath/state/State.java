@@ -446,7 +446,6 @@ public abstract class State<Element_Type extends Classifiable> {
 
     protected MapFunction<Element_Type, String> defaultMap() {
         return new MapFunction<Element_Type, String>() {
-            @Override
             public String map(Element_Type from) {
                 return from.toString();
             }

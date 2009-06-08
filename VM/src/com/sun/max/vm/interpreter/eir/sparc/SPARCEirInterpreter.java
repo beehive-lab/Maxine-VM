@@ -72,7 +72,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
 
     private SPARCEirCPU _cpu;
 
-    @Override
+
     protected SPARCEirCPU cpu() {
         return _cpu;
     }
@@ -132,7 +132,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         return returnAddress;
     }
 
-    @Override
+
     public void visit(EirPrologue instruction) {
         if (!instruction.eirMethod().isTemplate()) {
             if (cpu().usesRegisterWindow()) {
@@ -152,11 +152,11 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         }
     }
 
-    @Override
+
     public void visit(EirEpilogue instruction) {
     }
 
-    @Override
+
     public void visit(EirAssignment assignment) {
         switch (assignment.kind().asEnum()) {
             case INT: {
@@ -242,7 +242,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         return null;
     }
 
-    @Override
+
     public void visit(SPARCEirLoad load) {
         final Value value;
         final Value pointer = _cpu.read(load.pointerOperand().location());
@@ -302,7 +302,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         }
     }
 
-    @Override
+
     public void visit(SPARCEirStore store) {
         final Value pointer = _cpu.read(store.pointerOperand().location());
         if (pointer.kind() == Kind.WORD) {
@@ -332,33 +332,33 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         }
     }
 
-    @Override
+
     public void visit(SPARCEirCompareAndSwap instruction) {
         Problem.unimplemented();
     }
 
-    @Override
+
     public void visit(ADD_I32 instruction) {
         final int a = _cpu.readInt(instruction.leftLocation());
         final int b = _cpu.readInt(instruction.rightLocation());
         _cpu.writeInt(instruction.destinationLocation(), a + b);
     }
 
-    @Override
+
     public void visit(ADD_I64 instruction) {
         final long a = _cpu.readLong(instruction.leftLocation());
         final long b = _cpu.readLong(instruction.rightLocation());
         _cpu.writeLong(instruction.destinationLocation(), a + b);
     }
 
-    @Override
+
     public void visit(AND_I32 instruction) {
         final int a = _cpu.readInt(instruction.leftLocation());
         final int b = _cpu.readInt(instruction.rightLocation());
         _cpu.writeInt(instruction.destinationLocation(), a & b);
     }
 
-    @Override
+
     public void visit(AND_I64 instruction) {
         final long a = _cpu.readLong(instruction.leftLocation());
         final long b = _cpu.readLong(instruction.rightLocation());
@@ -431,7 +431,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         return value == FCCValue.L ||  value == FCCValue.E;
     }
 
-    @Override
+
     public void visit(MOVNE instruction) {
         final ConditionCodeRegister cc = instruction.testedConditionCode();
 
@@ -443,7 +443,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         _cpu.writeInt(instruction.destinationLocation(), i);
     }
 
-    @Override
+
     public void visit(MOVFNE instruction) {
         final ConditionCodeRegister cc = instruction.testedConditionCode();
         assert cc instanceof FCCOperand;
@@ -456,7 +456,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
     }
 
 
-    @Override
+
     public void visit(MOVE instruction) {
         final ConditionCodeRegister cc = instruction.testedConditionCode();
         if (!testE((ICCOperand) cc)) {
@@ -467,7 +467,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         _cpu.writeInt(instruction.destinationLocation(), i);
     }
 
-    @Override
+
     public void visit(MOVFE instruction) {
         final ConditionCodeRegister cc = instruction.testedConditionCode();
         assert cc instanceof FCCOperand;
@@ -480,7 +480,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         // TODO Auto-generated method stub
     }
 
-    @Override
+
     public void visit(MOVG instruction) {
         final ConditionCodeRegister cc = instruction.testedConditionCode();
         if (!testG((ICCOperand) cc)) {
@@ -490,7 +490,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         _cpu.writeInt(instruction.destinationLocation(), i);
     }
 
-    @Override
+
     public void visit(MOVCC instruction) {
         final ConditionCodeRegister cc = instruction.testedConditionCode();
         //test for unsigned result
@@ -501,7 +501,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         _cpu.writeInt(instruction.destinationLocation(), i);
     }
 
-    @Override
+
     public void visit(MOVGU instruction) {
         final ConditionCodeRegister cc = instruction.testedConditionCode();
         //test for unsigned result
@@ -515,7 +515,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
 
     }
 
-    @Override
+
     public void visit(MOVL instruction) {
         final ConditionCodeRegister cc = instruction.testedConditionCode();
         if (!testL((ICCOperand) cc)) {
@@ -527,7 +527,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
     }
 
 
-    @Override
+
     public void visit(MOVFG instruction) {
         final ConditionCodeRegister cc = instruction.testedConditionCode();
         assert cc instanceof FCCOperand;
@@ -538,7 +538,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         _cpu.writeInt(instruction.destinationLocation(), i);
     }
 
-    @Override
+
     public void visit(MOVCS instruction) {
         final ConditionCodeRegister cc = instruction.testedConditionCode();
         //tests for unsigned result
@@ -550,7 +550,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
 
     }
 
-    @Override
+
     public void visit(MOVLEU instruction) {
         final ConditionCodeRegister cc = instruction.testedConditionCode();
         if (!testLEU((ICCOperand) cc)) {
@@ -563,7 +563,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
 
 
 
-    @Override
+
     public void visit(MOVFL instruction) {
         final ConditionCodeRegister cc = instruction.testedConditionCode();
         assert cc instanceof FCCOperand;
@@ -575,7 +575,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
 
     }
 
-    @Override
+
     public void visit(CMP_I32 instruction) {
 
         final int a = _cpu.readInt(instruction.leftLocation());
@@ -596,7 +596,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         _cpu.set(V, ICCOperand.ICC, operandsDifferInSign && firstOperandDiffersInSignFromResult);
     }
 
-    @Override
+
     public void visit(CMP_I64 instruction) {
         Value valueA = _cpu.read(instruction.leftLocation());
         Value valueB = _cpu.read(instruction.rightLocation());
@@ -629,21 +629,21 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         _cpu.set(N, ICCOperand.XCC, (a - b) < 0);
     }
 
-    @Override
+
     public void visit(DIV_I32 instruction) {
         final int a = _cpu.readInt(instruction.leftLocation());
         final int b = _cpu.readInt(instruction.rightLocation());
         _cpu.writeInt(instruction.destinationLocation(), a / b);
     }
 
-    @Override
+
     public void visit(DIV_I64 instruction) {
         final long a = _cpu.readLong(instruction.leftLocation());
         final long b = _cpu.readLong(instruction.rightLocation());
         _cpu.writeLong(instruction.destinationLocation(), a / b);
     }
 
-    @Override
+
     public void visit(BA instruction) {
         _cpu.gotoBlock(instruction.target());
     }
@@ -656,107 +656,107 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         }
     }
 
-    @Override
+
     public void visit(BRZ instruction) {
         conditionalBranch(instruction, _cpu.read(instruction.testedOperandLocation()).isZero());
     }
 
-    @Override
+
     public void visit(BRNZ instruction) {
         conditionalBranch(instruction, !_cpu.read(instruction.testedOperandLocation()).isZero());
     }
 
-    @Override
+
     public void visit(BRLZ instruction) {
         conditionalBranch(instruction, _cpu.read(instruction.testedOperandLocation()).asLong() < 0);
     }
 
-    @Override
+
     public void visit(BRLEZ instruction) {
         conditionalBranch(instruction, _cpu.read(instruction.testedOperandLocation()).asLong() <= 0);
     }
 
-    @Override
+
     public void visit(BRGEZ instruction) {
         conditionalBranch(instruction, _cpu.read(instruction.testedOperandLocation()).asLong() >= 0);
     }
 
-    @Override
+
     public void visit(BRGZ instruction) {
         conditionalBranch(instruction, _cpu.read(instruction.testedOperandLocation()).asLong() > 0);
     }
 
-    @Override
+
     public void visit(BE instruction) {
         conditionalBranch(instruction, testE(instruction.conditionCode()));
     }
 
-    @Override
+
     public void visit(BNE instruction) {
         conditionalBranch(instruction, testNE(instruction.conditionCode()));
     }
 
-    @Override
+
     public void visit(BL instruction) {
         conditionalBranch(instruction, testL(instruction.conditionCode()));
     }
 
-    @Override
+
     public void visit(BLE instruction) {
         conditionalBranch(instruction, testLE(instruction.conditionCode()));
     }
 
-    @Override
+
     public void visit(BGE instruction) {
         conditionalBranch(instruction, testGE(instruction.conditionCode()));
     }
 
-    @Override
+
     public void visit(BG instruction) {
         conditionalBranch(instruction, testG(instruction.conditionCode()));
     }
 
-    @Override
+
     public void visit(BLU instruction) {
         conditionalBranch(instruction,  testLU(instruction.conditionCode()));
     }
 
-    @Override
+
     public void visit(BLEU instruction) {
         conditionalBranch(instruction, testLEU(instruction.conditionCode()));
     }
 
-    @Override
+
     public void visit(BGEU instruction) {
         conditionalBranch(instruction, testGEU(instruction.conditionCode()));
     }
 
-    @Override
+
     public void visit(BGU instruction) {
         conditionalBranch(instruction, testGU(instruction.conditionCode()));
     }
 
-    @Override
+
     public void visit(FLAT_RETURN instruction) {
         // TODO Auto-generated method stub
 
     }
 
-    @Override
+
     public void visit(FADD_S instruction) {
         final float a = _cpu.readFloat(instruction.leftLocation());
         final float b = _cpu.readFloat(instruction.rightLocation());
         _cpu.writeFloat(instruction.destinationLocation(), a + b);
     }
 
-    @Override
+
     public void visit(FADD_D instruction) {
         final double a = _cpu.readDouble(instruction.leftLocation());
         final double b = _cpu.readDouble(instruction.rightLocation());
         _cpu.writeDouble(instruction.destinationLocation(), a + b);
     }
 
-    @Override
+
     public void visit(FCMP_S instruction) {
         final float a = _cpu.readFloat(instruction.leftLocation());
         final float b = _cpu.readFloat(instruction.rightLocation());
@@ -773,7 +773,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         }
     }
 
-    @Override
+
     public void visit(FCMP_D instruction) {
         final double a = _cpu.readDouble(instruction.leftLocation());
         final double b = _cpu.readDouble(instruction.rightLocation());
@@ -790,97 +790,97 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         }
     }
 
-    @Override
+
     public void visit(FDIV_S instruction) {
         final float a = _cpu.readFloat(instruction.leftLocation());
         final float b = _cpu.readFloat(instruction.rightLocation());
         _cpu.writeFloat(instruction.destinationLocation(), a / b);
     }
 
-    @Override
+
     public void visit(FDIV_D instruction) {
         final double a = _cpu.readDouble(instruction.leftLocation());
         final double b = _cpu.readDouble(instruction.rightLocation());
         _cpu.writeDouble(instruction.destinationLocation(), a / b);
     }
 
-    @Override
+
     public void visit(FMUL_S instruction) {
         final float a = _cpu.readFloat(instruction.leftLocation());
         final float b = _cpu.readFloat(instruction.rightLocation());
         _cpu.writeFloat(instruction.destinationLocation(), a * b);
     }
 
-    @Override
+
     public void visit(FMUL_D instruction) {
         final double a = _cpu.readDouble(instruction.leftLocation());
         final double b = _cpu.readDouble(instruction.rightLocation());
         _cpu.writeDouble(instruction.destinationLocation(), a * b);
     }
 
-    @Override
+
     public void visit(FNEG_S instruction) {
         final float a = _cpu.readFloat(instruction.operandLocation());
         _cpu.writeFloat(instruction.operandLocation(), -a);
 
     }
 
-    @Override
+
     public void visit(FNEG_D instruction) {
         final double a = _cpu.readDouble(instruction.operandLocation());
         _cpu.writeDouble(instruction.operandLocation(), -a);
     }
 
-    @Override
+
     public void visit(FSUB_S instruction) {
         final float a = _cpu.readFloat(instruction.leftLocation());
         final float b = _cpu.readFloat(instruction.rightLocation());
         _cpu.writeFloat(instruction.destinationLocation(), a - b);
     }
 
-    @Override
+
     public void visit(FSUB_D instruction) {
         final double a = _cpu.readDouble(instruction.leftLocation());
         final double b = _cpu.readDouble(instruction.rightLocation());
         _cpu.writeDouble(instruction.destinationLocation(), a - b);
     }
 
-    @Override
+
     public void visit(FSTOD instruction) {
         final float f = _cpu.readFloat(instruction.sourceLocation());
         final double d = f;
         _cpu.writeDouble(instruction.destinationLocation(), d);
     }
 
-    @Override
+
     public void visit(FDTOS instruction) {
         final double d = _cpu.readDouble(instruction.sourceLocation());
         final float f = (float) d;
         _cpu.writeFloat(instruction.destinationLocation(), f);
     }
 
-    @Override
+
     public void visit(FITOS instruction) {
         final int i = _cpu.readInt(instruction.sourceLocation());
         final float f = i;
         _cpu.writeFloat(instruction.destinationLocation(), f);
     }
 
-    @Override
+
     public void visit(FITOD instruction) {
         final int i = _cpu.readInt(instruction.sourceLocation());
         final double d = i;
         _cpu.writeDouble(instruction.destinationLocation(), d);
     }
 
-    @Override
+
     public void visit(FXTOS instruction) {
         final long l = _cpu.readLong(instruction.sourceLocation());
         final float f = l;
         _cpu.writeFloat(instruction.destinationLocation(), f);
     }
 
-    @Override
+
     public void visit(FXTOD instruction) {
         final long l = _cpu.readLong(instruction.sourceLocation());
         final double d = l;
@@ -915,95 +915,95 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         _cpu.writeDouble(instruction.destinationLocation(), l);
     }
 
-    @Override
+
     public void visit(FLUSHW instruction) {
     }
 
-    @Override
+
     public void visit(JMP_indirect instruction) {
         ProgramError.unexpected("indirect jump not implemented at EIR level - it should only occur during exception dispatching at target level");
     }
 
-    @Override
+
     public void visit(MEMBAR instruction) {
     }
 
-    @Override
+
     public void visit(SET_STACK_ADDRESS instruction) {
         final int sourceOffset = _cpu.offset(instruction.sourceOperand().location().asStackSlot());
         _cpu.write(instruction.destinationOperand().location(), new WordValue(_cpu.readFramePointer().plus(sourceOffset)));
     }
 
-    @Override
+
     public void visit(MOV_I32 instruction) {
         final int a = _cpu.readInt(instruction.sourceLocation());
         _cpu.writeInt(instruction.destinationLocation(), a);
     }
 
-    @Override
+
     public void visit(MOV_I64 instruction) {
         final long a = _cpu.readInt(instruction.sourceLocation());
         _cpu.writeLong(instruction.destinationLocation(), a);
     }
 
-    @Override
+
     public void visit(MUL_I32 instruction) {
         final int a = _cpu.readInt(instruction.leftLocation());
         final int b = _cpu.readInt(instruction.rightLocation());
         _cpu.writeInt(instruction.destinationLocation(), a * b);
     }
 
-    @Override
+
     public void visit(MUL_I64 instruction) {
         final long a = _cpu.readLong(instruction.leftLocation());
         final long b = _cpu.readLong(instruction.rightLocation());
         _cpu.writeLong(instruction.destinationLocation(), a * b);
     }
 
-    @Override
+
     public void visit(NEG_I32 instruction) {
         final int a = _cpu.readInt(instruction.operandLocation());
         _cpu.writeInt(instruction.operandLocation(), -a);
     }
 
-    @Override
+
     public void visit(NEG_I64 instruction) {
         final long a = _cpu.readLong(instruction.operandLocation());
         _cpu.writeLong(instruction.operandLocation(), -a);
     }
 
-    @Override
+
     public void visit(NOT_I32 instruction) {
         final int operand = _cpu.readInt(instruction.operand().location());
         _cpu.writeInt(instruction.operand().location(), ~operand);
     }
 
-    @Override
+
     public void visit(NOT_I64 instruction) {
         final long operand = _cpu.readLong(instruction.operand().location());
         _cpu.writeLong(instruction.operand().location(), ~operand);
     }
 
-    @Override
+
     public void visit(OR_I32 instruction) {
         final int a = _cpu.readInt(instruction.leftLocation());
         final int b = _cpu.readInt(instruction.rightLocation());
         _cpu.writeInt(instruction.destinationLocation(), a | b);
     }
 
-    @Override
+
     public void visit(OR_I64 instruction) {
         final long a = _cpu.readLong(instruction.leftLocation());
         final long b = _cpu.readLong(instruction.rightLocation());
         _cpu.writeLong(instruction.destinationLocation(), a | b);
     }
 
-    @Override
+
     public void visit(RDPC instruction) {
         _cpu.write(instruction.operand().location(), new WordValue(Address.fromLong(_cpu.currentInstructionAddress().index())));
     }
 
-    @Override
+
     public void visit(RET instruction) {
         if (cpu().usesRegisterWindow()) {
             ret((InstructionAddress) cpu().read(SPARCEirRegister.GeneralPurpose.I7).asObject());
@@ -1015,70 +1015,70 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         }
     }
 
-    @Override
+
     public void visit(SET_I32 instruction) {
         assert instruction.immediateOperand().isConstant();
         final int a = instruction.immediateOperand().value().asInt();
         _cpu.writeInt(instruction.operandLocation(), a);
     }
 
-    @Override
+
     public void visit(SLL_I32 instruction) {
         final int number = _cpu.readInt(instruction.leftLocation());
         final int shift = _cpu.readByte(instruction.rightLocation());
         _cpu.writeInt(instruction.destinationLocation(), number << shift);
     }
 
-    @Override
+
     public void visit(SLL_I64 instruction) {
         final long number = _cpu.readInt(instruction.leftLocation());
         final int shift = _cpu.readByte(instruction.rightLocation());
         _cpu.writeLong(instruction.destinationLocation(), number << shift);
     }
 
-    @Override
+
     public void visit(SRA_I32 instruction) {
         final int number = _cpu.readInt(instruction.leftLocation());
         final int shift = _cpu.readByte(instruction.rightLocation());
         _cpu.writeInt(instruction.destinationLocation(), number >> shift);
     }
 
-    @Override
+
     public void visit(SRA_I64 instruction) {
         final long number = _cpu.readInt(instruction.leftLocation());
         final int shift = _cpu.readByte(instruction.rightLocation());
         _cpu.writeLong(instruction.destinationLocation(), number >> shift);
     }
 
-    @Override
+
     public void visit(SRL_I32 instruction) {
         final int number = _cpu.readInt(instruction.leftLocation());
         final int shift = _cpu.readByte(instruction.rightLocation());
         _cpu.writeInt(instruction.destinationLocation(), number >>> shift);
     }
 
-    @Override
+
     public void visit(SRL_I64 instruction) {
         final long number = _cpu.readInt(instruction.leftLocation());
         final int shift = _cpu.readByte(instruction.rightLocation());
         _cpu.writeLong(instruction.destinationLocation(), number >>> shift);
     }
 
-    @Override
+
     public void visit(SUB_I32 instruction) {
         final int a = _cpu.readInt(instruction.leftLocation());
         final int b = _cpu.readInt(instruction.rightLocation());
         _cpu.writeInt(instruction.destinationLocation(), a - b);
     }
 
-    @Override
+
     public void visit(SUB_I64 instruction) {
         final long a = _cpu.readLong(instruction.leftLocation());
         final long b = _cpu.readLong(instruction.rightLocation());
         _cpu.writeLong(instruction.destinationLocation(), a - b);
     }
 
-    @Override
+
     public void visit(SWITCH_I32 instruction) {
         final int a = _cpu.readInt(instruction.tag().location());
 
@@ -1092,7 +1092,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         _cpu.gotoBlock(instruction.defaultTarget());
     }
 
-    @Override
+
     public void visit(XOR_I32 instruction) {
         final int a = _cpu.readInt(instruction.leftLocation());
         final int b = _cpu.readInt(instruction.rightLocation());
@@ -1100,14 +1100,14 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
 
     }
 
-    @Override
+
     public void visit(XOR_I64 instruction) {
         final long a = _cpu.readLong(instruction.leftLocation());
         final long b = _cpu.readLong(instruction.rightLocation());
         _cpu.writeLong(instruction.destinationLocation(), a ^ b);
     }
 
-    @Override
+    
     public void visit(ZERO instruction) {
         switch (instruction.kind().asEnum()) {
             case INT:

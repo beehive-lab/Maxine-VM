@@ -87,7 +87,6 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI {
             }
         }
 
-        @Override
         public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
             final Rectangle bounds = _frame.getBounds();
             saveSettingsEvent.save(FRAME_X_KEY, bounds.x);
@@ -152,8 +151,6 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI {
         _desktopMenu.add(actions.viewBreakpoints());
 
         _desktopPane.addMouseListener(new InspectorMouseClickAdapter(_inspection) {
-
-            @Override
             public void procedure(final MouseEvent mouseEvent) {
                 if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
                     _desktopMenu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());

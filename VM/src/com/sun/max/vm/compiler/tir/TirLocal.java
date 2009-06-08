@@ -80,7 +80,6 @@ public class TirLocal extends TirInstruction {
     }
 
     public static final Predicate<TirInstruction> IS_READ = new Predicate<TirInstruction>(){
-        @Override
         public boolean evaluate(TirInstruction instruction) {
             final TirLocal local = (TirLocal) instruction;
             return local.flags().isRead();

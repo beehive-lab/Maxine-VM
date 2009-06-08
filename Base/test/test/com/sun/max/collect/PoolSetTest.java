@@ -104,7 +104,6 @@ public class PoolSetTest extends MaxTestCase {
 
     public void test_poolBitSet() {
         foreachPool(new Runnable() {
-            @Override
             public void run() {
                 final PoolSet<TestElement> poolSet = PoolSet.noneOf(_pool);
                 for (int i = 0; i < _nElems; i++) {
@@ -118,7 +117,6 @@ public class PoolSetTest extends MaxTestCase {
 
     public void test_remove() {
         foreachPool(new Runnable() {
-            @Override
             public void run() {
                 final PoolSet<TestElement> poolSet = PoolSet.noneOf(_pool);
                 poolSet.addAll();
@@ -135,7 +133,6 @@ public class PoolSetTest extends MaxTestCase {
 
     public void test_removeOne() {
         foreachPool(new Runnable() {
-            @Override
             public void run() {
                 final PoolSet<TestElement> poolSet = PoolSet.noneOf(_pool);
                 poolSet.addAll();
@@ -157,7 +154,6 @@ public class PoolSetTest extends MaxTestCase {
 
     public void test_pool() {
         foreachPool(new Runnable() {
-            @Override
             public void run() {
                 final PoolSet<TestElement> poolSet = PoolSet.noneOf(_pool);
                 assertSame(poolSet.pool(), _pool);
@@ -167,7 +163,6 @@ public class PoolSetTest extends MaxTestCase {
 
     public void test_clear() {
         foreachPool(new Runnable() {
-            @Override
             public void run() {
                 final PoolSet<TestElement> poolSet = PoolSet.noneOf(_pool);
                 poolSet.addAll();
@@ -183,7 +178,6 @@ public class PoolSetTest extends MaxTestCase {
 
     public void test_addAll() {
         foreachPool(new Runnable() {
-            @Override
             public void run() {
                 final PoolSet<TestElement> poolSet1 = PoolSet.noneOf(_pool);
                 poolSet1.addAll();
@@ -209,7 +203,6 @@ public class PoolSetTest extends MaxTestCase {
 
     public void test_and() {
         foreachPool(new Runnable() {
-            @Override
             public void run() {
                 final PoolSet<TestElement> poolSet = PoolSet.noneOf(_pool);
                 poolSet.addAll();
@@ -228,7 +221,6 @@ public class PoolSetTest extends MaxTestCase {
 
     public void test_containsAll() {
         foreachPool(new Runnable() {
-            @Override
             public void run() {
                 final PoolSet<TestElement> emptyPoolSet = PoolSet.noneOf(_pool);
                 final PoolSet<TestElement> fullPoolSet = PoolSet.allOf(_pool);
@@ -271,7 +263,6 @@ public class PoolSetTest extends MaxTestCase {
 
     public void test_clone() {
         foreachPool(new Runnable() {
-            @Override
             public void run() {
                 final PoolSet<TestElement> evenSet = PoolSet.noneOf(_pool);
                 for (int i = 0; i < _nElems; i += 2) {
@@ -289,7 +280,6 @@ public class PoolSetTest extends MaxTestCase {
 
     public void test_isEmpty() {
         foreachPool(new Runnable() {
-            @Override
             public void run() {
                 final PoolSet<TestElement> poolSet = PoolSet.noneOf(_pool);
                 assertTrue(poolSet.isEmpty());
@@ -307,7 +297,6 @@ public class PoolSetTest extends MaxTestCase {
 
     public void test_iterator() {
         foreachPool(new Runnable() {
-            @Override
             public void run() {
                 final PoolSet<TestElement> poolSet = PoolSet.noneOf(_pool);
                 for (TestElement elem : poolSet) {
@@ -325,7 +314,6 @@ public class PoolSetTest extends MaxTestCase {
 
     public void test_staticAddAll() {
         foreachPool(new Runnable() {
-            @Override
             public void run() {
                 final PoolSet<TestElement> poolSet = PoolSet.noneOf(_pool);
                 PoolSet.addAll(poolSet, java.util.Arrays.asList(_elems));
@@ -336,7 +324,6 @@ public class PoolSetTest extends MaxTestCase {
 
     public void test_staticToArray() {
         foreachPool(new Runnable() {
-            @Override
             public void run() {
                 final PoolSet<TestElement> poolSet = PoolSet.noneOf(_pool);
                 poolSet.addAll();
@@ -348,7 +335,6 @@ public class PoolSetTest extends MaxTestCase {
 
     public void test_allOf() {
         foreachPool(new Runnable() {
-            @Override
             public void run() {
                 final PoolSet<TestElement> poolBitSet = PoolSet.allOf(_pool);
                 check_poolSet(poolBitSet, _nElems);

@@ -120,13 +120,11 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
         _expandable = expandable;
     }
 
-    @Override
     public Pointer allocate(RuntimeMemoryRegion from, Size size) {
         return null;
     }
 
     @NO_SAFEPOINTS("TODO")
-    @Override
     @INLINE
     public final Pointer allocate(Size size) {
         Pointer cell;

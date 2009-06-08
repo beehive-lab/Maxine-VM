@@ -55,48 +55,36 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
         _bindingProtection = BindingProtection.PRE_ACQUIRE;
     }
 
-    @Override
     public abstract void monitorEnter();
 
-    @Override
     public abstract void monitorExit();
 
-    @Override
     public abstract void monitorWait(long timeoutMilliSeconds) throws InterruptedException;
 
-    @Override
     public abstract void monitorNotify(boolean all);
 
-    @Override
     public abstract void monitorPrivateAcquire(VmThread owner, int lockQty);
 
-    @Override
     public abstract void monitorPrivateRelease();
 
-    @Override
     public abstract void allocate();
 
-    @Override
     public final boolean isOwnedBy(VmThread thread) {
         return _ownerThread == thread;
     }
 
-    @Override
     public final Word displacedMisc() {
         return _displacedMiscWord;
     }
 
-    @Override
     public final void setDisplacedMisc(Word lockWord) {
         _displacedMiscWord = lockWord;
     }
 
-    @Override
     public final Word compareAndSwapDisplacedMisc(Word suspectedValue, Word newValue) {
         return Reference.fromJava(this).compareAndSwapWord(_displacedMiscWordFieldActor.offset(), suspectedValue, newValue);
     }
 
-    @Override
     public void reset() {
         _boundObject = null;
         _ownerThread = null;
@@ -106,59 +94,48 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
         _bindingProtection = BindingProtection.PRE_ACQUIRE;
     }
 
-    @Override
     public final void setBoundObject(Object object) {
         _boundObject = object;
     }
 
-    @Override
     public final Object boundObject() {
         return _boundObject;
     }
 
-    @Override
     public final boolean isBound() {
         return _boundObject != null;
     }
 
-    @Override
     public final boolean isHardBound() {
         return isBound() && ObjectAccess.readMisc(_boundObject).equals(InflatedMonitorLockWord64.boundFromMonitor(this));
     }
 
-    @Override
     public final void preGCPrepare() {
         _preGCLockWord = InflatedMonitorLockWord64.boundFromMonitor(this);
     }
 
-    @Override
     public final boolean requiresPostGCRefresh() {
         return isBound() && ObjectAccess.readMisc(_boundObject).equals(_preGCLockWord);
     }
 
-    @Override
     public final void refreshBoundObject() {
         ObjectAccess.writeMisc(_boundObject, InflatedMonitorLockWord64.boundFromMonitor(this));
     }
 
-    @Override
     public final BindingProtection bindingProtection() {
         return _bindingProtection;
     }
 
-    @Override
     public final void setBindingProtection(BindingProtection deflationState) {
         _bindingProtection = deflationState;
     }
 
     @INLINE
-    @Override
     public final ManagedMonitor next() {
         return _next;
     }
 
     @INLINE
-    @Override
     public final void setNext(ManagedMonitor next) {
         _next = next;
     }

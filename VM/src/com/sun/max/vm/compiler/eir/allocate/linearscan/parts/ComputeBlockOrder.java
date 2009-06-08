@@ -187,7 +187,6 @@ public class ComputeBlockOrder extends AlgorithmPart {
             for (EirInstruction instruction : block.instructions()) {
                 instruction.visitOperands(new EirOperand.Procedure() {
 
-                    @Override
                     public void run(EirOperand operand) {
 
                         final EirVariable variable = operand.eirValue().asVariable();

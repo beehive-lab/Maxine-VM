@@ -147,17 +147,14 @@ public class MemoryWordsTable extends InspectorTable {
             fireTableDataChanged();
         }
 
-        @Override
         public int getColumnCount() {
             return MemoryWordsColumnKind.VALUES.length();
         }
 
-        @Override
         public int getRowCount() {
             return _wordCount;
         }
 
-        @Override
         public Object getValueAt(int row, int col) {
             return row;
         }
@@ -181,7 +178,6 @@ public class MemoryWordsTable extends InspectorTable {
             super(inspection, null);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             setText("Tag(" + row + ")");
             return this;

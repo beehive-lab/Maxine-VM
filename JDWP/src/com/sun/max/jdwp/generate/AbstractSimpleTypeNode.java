@@ -38,13 +38,11 @@ public abstract class AbstractSimpleTypeNode extends AbstractTypeNode {
         }
     }
 
-    @Override
     public void genJavaWrite(PrintWriter writer, int depth, String writeLabel) {
         indent(writer, depth);
         writer.println("ps.write(" + writeLabel + ");");
     }
 
-    @Override
     public void genJavaToString(PrintWriter writer, int depth, String writeLabel) {
         indent(writer, depth);
         writer.println("stringBuilder.append(\"" + writeLabel + "=\" + " + writeLabel + ");");

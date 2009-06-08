@@ -55,13 +55,11 @@ public final class ActorFlagsValueLabel extends ValueLabel {
         return IntValue.from(flags);
     }
 
-    @Override
     protected void updateText() {
         setText(_flagsAsHex);
         setToolTipText(_flagsAsString);
     }
 
-    @Override
     public void redisplay() {
         setFont(style().primitiveDataFont());
         setForeground(style().primitiveDataColor());

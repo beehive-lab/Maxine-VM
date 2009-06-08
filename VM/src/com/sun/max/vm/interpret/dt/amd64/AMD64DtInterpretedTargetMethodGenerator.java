@@ -110,7 +110,6 @@ class AMD64DtInterpretedTargetMethodGenerator implements InterpretedTargetMethod
 
     private static final int RIP_MOV_SIZE = 7;
 
-    @Override
     public void generate(InterpretedMethodState methodState) {
 
         final ClassMethodActor classMethodActor = methodState.classMethodActor();

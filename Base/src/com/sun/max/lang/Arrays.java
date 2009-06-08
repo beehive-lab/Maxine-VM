@@ -131,7 +131,6 @@ public final class Arrays {
      */
     public static <Element_Type> Iterable<Element_Type> reverseIterable(final Element_Type[] array) {
         return new Iterable<Element_Type>() {
-            @Override
             public Iterator<Element_Type> iterator() {
                 return reverseIterator(array);
             }

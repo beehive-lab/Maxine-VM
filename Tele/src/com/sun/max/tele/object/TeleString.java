@@ -64,7 +64,6 @@ public class TeleString extends TeleTupleObject implements StringProvider {
         return "String.";
     }
 
-    @Override
     public String stringValue() {
         return getString();
     }

@@ -148,7 +148,6 @@ public abstract class AbstractCompiler extends AbstractVMScheme implements Compi
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public boolean isBuiltinImplemented(Builtin builtin) {
         return true;
     }

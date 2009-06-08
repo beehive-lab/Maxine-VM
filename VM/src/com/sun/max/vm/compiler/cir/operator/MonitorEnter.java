@@ -31,7 +31,6 @@ public class MonitorEnter extends JavaOperator {
         super(CALL | NULL_POINTER_CHECK);
     }
 
-    @Override
     public Kind resultKind() {
         return Kind.VOID;
     }
@@ -48,12 +47,10 @@ public class MonitorEnter extends JavaOperator {
 
     private static final Kind[] _parameterKinds = {Kind.REFERENCE};
 
-    @Override
     public Kind[] parameterKinds() {
         return _parameterKinds;
     }
 
-    @Override
     public String toString() {
         return "MonitorEnter";
     }

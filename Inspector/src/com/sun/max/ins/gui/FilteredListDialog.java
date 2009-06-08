@@ -106,11 +106,10 @@ public abstract class FilteredListDialog<Type> extends InspectorDialog {
      * events being sent to the list for each modification to its (potentially large) model.
      */
     private static final ListModel EMPTY_LIST_MODEL = new AbstractListModel() {
-        @Override
         public int getSize() {
             return 0;
         }
-        @Override
+
         public Object getElementAt(int i) {
             return "No Data Model";
         }

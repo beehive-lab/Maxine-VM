@@ -76,7 +76,7 @@ public abstract class StackFrameWalker {
     protected static class CallerFrameCollector implements StackFrameVisitor {
         int _count;
         StackFrame _result;
-        @Override
+
         public boolean visitFrame(StackFrame frame) {
             if (_count++ == 2) {
                 _result = frame;

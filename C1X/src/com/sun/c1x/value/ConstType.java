@@ -229,7 +229,7 @@ public class ConstType extends ValueType {
         if (o == null) {
             return NULL_OBJECT;
         }
-        return new ConstType(ValueTag.OBJECT_TAG, 1, o, false);
+        return new ConstType(ValueTag.OBJECT_TAG, 1, o, true);
     }
 
     /**

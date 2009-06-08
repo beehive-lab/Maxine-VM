@@ -247,7 +247,6 @@ public final class VmThreadMap {
     }
 
     public static final Pointer.Predicate _isNotCurrent = new Pointer.Predicate() {
-        @Override
         public boolean evaluate(Pointer vmThreadLocals) {
             return vmThreadLocals != VmThread.current().vmThreadLocals();
         }

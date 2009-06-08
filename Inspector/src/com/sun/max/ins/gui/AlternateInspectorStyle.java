@@ -36,7 +36,6 @@ public class AlternateInspectorStyle extends InspectorStyleAdapter {
         super(inspection);
     }
 
-    @Override
     public String name() {
         return "Alternate";
     }
