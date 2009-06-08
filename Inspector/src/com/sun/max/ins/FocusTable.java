@@ -159,7 +159,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
         //setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         //addMouseListener(new FocusInspectorMouseClickAdapter(inspection()));
 
-        refresh(maxVM().epoch(), true);
+        refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
@@ -246,7 +246,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
         public ValueCellRenderer(Inspection inspection) {
             _labels[FocusRowKind.THREAD.ordinal()] = new JavaNameLabel(inspection, "") {
                 @Override
-                public void refresh(long epoch, boolean force) {
+                public void refresh(boolean force) {
                     final TeleNativeThread teleNativeThread = inspection().focus().thread();
                     if (teleNativeThread == null) {
                         setValue("null", "No thread focus");
@@ -258,7 +258,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
             };
             _labels[FocusRowKind.FRAME.ordinal()] = new PlainLabel(inspection, "") {
                 @Override
-                public void refresh(long epoch, boolean force) {
+                public void refresh(boolean force) {
                     final StackFrame stackFrame = inspection().focus().stackFrame();
                     if (stackFrame == null) {
                         setValue(null, "No stack frame focus");
@@ -271,7 +271,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
             };
             _labels[FocusRowKind.CODE.ordinal()] = new PlainLabel(inspection, "") {
                 @Override
-                public void refresh(long epoch, boolean force) {
+                public void refresh(boolean force) {
                     final TeleCodeLocation teleCodeLocation = inspection().focus().codeLocation();
                     if (teleCodeLocation == null) {
                         setValue(null, "No code location focus");
@@ -283,7 +283,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
             };
             _labels[FocusRowKind.BREAKPOINT.ordinal()] = new PlainLabel(inspection, "") {
                 @Override
-                public void refresh(long epoch, boolean force) {
+                public void refresh(boolean force) {
                     final TeleBreakpoint teleBreakpoint = inspection().focus().breakpoint();
                     if (teleBreakpoint == null) {
                         setValue(null, "No code location focus");
@@ -316,7 +316,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
             };
             _labels[FocusRowKind.REGION.ordinal()] = new PlainLabel(inspection, "") {
                 @Override
-                public void refresh(long epoch, boolean force) {
+                public void refresh(boolean force) {
                     final MemoryRegion memoryRegion = inspection().focus().memoryRegion();
                     if (memoryRegion == null) {
                         setValue(null, "No memory region focus");
@@ -327,10 +327,10 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
             };
         }
 
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             for (InspectorLabel label : _labels) {
                 if (label != null) {
-                    label.refresh(epoch, force);
+                    label.refresh(force);
                 }
             }
         }
@@ -352,42 +352,41 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
     }
 
     public void codeLocationFocusSet(TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
-        refresh(maxVM().epoch(), true);
+        refresh(true);
     }
 
     public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
-        refresh(maxVM().epoch(), true);
+        refresh(true);
     }
 
     public void stackFrameFocusChanged(StackFrame oldStackFrame, TeleNativeThread threadForStackFrame, StackFrame stackFrame) {
-        refresh(maxVM().epoch(), true);
+        refresh(true);
     }
 
     public void addressFocusChanged(Address oldAddress, Address address) {
-        refresh(maxVM().epoch(), true);
+        refresh(true);
     }
 
     public void memoryRegionFocusChanged(MemoryRegion oldMemoryRegion, MemoryRegion memoryRegion) {
-        refresh(maxVM().epoch(), true);
+        refresh(true);
     }
 
     public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
-        refresh(maxVM().epoch(), true);
+        refresh(true);
     }
 
     public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
-        refresh(maxVM().epoch(), true);
+        refresh(true);
     }
 
     public void redisplay() {
     }
 
-    public void refresh(long epoch, boolean force) {
-        // Pay no attention to VM epoch; only update when forced, i.e. when focus changes
+    public void refresh(boolean force) {
         if (force) {
             for (TableColumn column : _columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(epoch, force);
+                prober.refresh(force);
             }
             _model.refresh();
         }

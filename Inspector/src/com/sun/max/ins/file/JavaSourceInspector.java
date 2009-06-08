@@ -45,7 +45,7 @@ public final class JavaSourceInspector  extends FileInspector {
     }
 
     @Override
-    public void createView(long epoch) {
+    public void createView() {
         _textArea = new JTextArea(readFile());
         _textArea.setEditable(false);
         _textArea.setFont(style().javaNameFont());
@@ -55,7 +55,7 @@ public final class JavaSourceInspector  extends FileInspector {
         scrollPane.setPreferredSize(inspection().geometry().javaSourceFramePrefSize());
         //frame().setLocation(geometry().javaSourceFrameDefaultLocation());
         frame().setContentPane(scrollPane);
-        refreshView(epoch, true);
+        refreshView(true);
         gui().moveToMiddle(this);
     }
 
@@ -87,7 +87,7 @@ public final class JavaSourceInspector  extends FileInspector {
         }
     }
 
-    public void viewConfigurationChanged(long epoch) {
+    public void viewConfigurationChanged() {
         reconstructView();
     }
 

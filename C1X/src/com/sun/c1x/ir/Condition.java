@@ -62,7 +62,7 @@ public enum Condition {
     }
 
     /**
-     * Checks if this conditional operation is commutative
+     * Checks if this conditional operation is commutative.
      * @return <code>true</code> if this operation is commutative
      */
     public final boolean isCommutative() {

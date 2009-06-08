@@ -52,7 +52,8 @@ public final class VirtualMemory {
     }
 
     /**
-     * Allocate virtual memory of a given type.
+     * Allocates virtual memory of a given type.
+     *
      * @param size the amount requested
      * @param type the type of memory requested
      * @return the address of the allocated memory or {@link Pointer#zero()} if the allocation failed

@@ -155,7 +155,7 @@ public class BlockBegin extends StateSplit {
     }
 
     /**
-     * Gets the loop index of this block
+     * Gets the loop index of this block.
      * @return the loop index
      */
     public int loopIndex() {

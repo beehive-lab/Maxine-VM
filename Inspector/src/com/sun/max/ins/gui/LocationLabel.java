@@ -23,6 +23,7 @@ package com.sun.max.ins.gui;
 import java.awt.event.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
 
@@ -36,7 +37,7 @@ public abstract class LocationLabel extends InspectorLabel {
 
     protected int _value;
     protected Address _base;
-    private long _epoch = -1;
+    private MaxVMState _lastRefreshedState = null;
 
     /**
      * @return a menu containing actions suitable for a generic memory location.
@@ -102,10 +103,10 @@ public abstract class LocationLabel extends InspectorLabel {
         }
     }
 
-    public final void refresh(long epoch, boolean force) {
-        if (epoch > _epoch || force) {
+    public final void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
             updateText();
-            _epoch = epoch;
         }
     }
 

@@ -26,8 +26,8 @@ package com.sun.c1x.ci;
  * @author Ben L. Titzer
  */
 public interface CiMethodData {
-    public Object dataObject();
-    public int invocationCountOffset();
-    public int bciCountOffset(int bci);
-    public int branchTakenCountOffset(int bci);
+    Object dataObject();
+    int invocationCountOffset();
+    int bciCountOffset(int bci);
+    int branchTakenCountOffset(int bci);
 }

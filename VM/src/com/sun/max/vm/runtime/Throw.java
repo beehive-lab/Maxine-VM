@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.vm.VMOptions.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -43,11 +45,11 @@ public final class Throw {
     private Throw() {
     }
 
-    public static VMOption _dumpStackOnThrowOption = new VMOption("-XX:DumpStackOnThrow",
-                    "Reports a stack trace for every throw operation, regardless of whether the exception is " +
-                    "caught or uncaught.", MaxineVM.Phase.PRISTINE);
-    public static VMOption _scanStackOnFatalError = new VMOption("-XX:ScanStackOnFatalError",
-                    "Reports a stack trace scan when a fatal VM occurs.", MaxineVM.Phase.PRISTINE);
+    public static VMBooleanXXOption _dumpStackOnThrowOption = register(new VMBooleanXXOption("-XX:-DumpStackOnThrow",
+                    "Report a stack trace for every throw operation, regardless of whether the exception is " +
+                    "caught or uncaught."), MaxineVM.Phase.PRISTINE);
+    public static VMBooleanXXOption _scanStackOnFatalError = register(new VMBooleanXXOption("-XX:-ScanStackOnFatalError",
+                    "Report a stack trace scan when a fatal VM occurs."), MaxineVM.Phase.PRISTINE);
 
     private static class StackFrameDumper implements StackFrameVisitor {
         private final int _maximum;
@@ -150,7 +152,7 @@ public final class Throw {
             FatalError.unexpected("exception thrown while raising another exception");
         }
 
-        if (_dumpStackOnThrowOption.isPresent()) {
+        if (_dumpStackOnThrowOption.getValue()) {
             throwable.printStackTrace(Log.out);
         }
         Safepoint.disable();

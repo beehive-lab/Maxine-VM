@@ -55,10 +55,14 @@ extern void log_print_double(double d);
 #define NEWLINE_STRING "\n"
 #endif
 
-#define log_print(format, ...) log_print_format(format, ##__VA_ARGS__)
-#define log_println(format, ...) log_print_format(format NEWLINE_STRING, ##__VA_ARGS__)
-#define log_exit(code, format, ...) do {\
-    log_print_format(format NEWLINE_STRING, ##__VA_ARGS__); \
+#define log_print(...) log_print_format(__VA_ARGS__)
+#define log_println(...) do {\
+    log_print_format(__VA_ARGS__); \
+    log_print_format(NEWLINE_STRING); \
+} while(0)
+#define log_exit(code, ...) do {\
+    log_print_format(__VA_ARGS__); \
+    log_print_format(NEWLINE_STRING); \
     exit(code); \
 } while(0)
 

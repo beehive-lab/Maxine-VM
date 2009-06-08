@@ -23,7 +23,7 @@ package com.sun.max.tele.debug;
 
 /**
  * A tele event request encapsulates some action that {@linkplain #execute() modifies} the execution
- * {@linkplain TeleProcess#state() state} of the tele process as well as some
+ * {@linkplain TeleProcess#processState() state} of the tele process as well as some
  * {@linkplain TeleEventRequest#afterExecution(WaitResult) action} to take when the tele process next stops after the
  * request has been issued.
  *
@@ -51,7 +51,7 @@ public abstract class TeleEventRequest {
     }
 
     /**
-     * Modifies the execution {@linkplain TeleProcess#state() state} of the tele process.
+     * Modifies the execution {@linkplain TeleProcess#processState() state} of the tele process.
      *
      * @throws OSExecutionRequestException if an error occurred while trying to modify the execution state
      */

@@ -55,6 +55,10 @@ public abstract class InspectorDialog extends JDialog implements InspectionHolde
         return _inspection.maxVM();
     }
 
+    public final MaxVMState maxVMState() {
+        return _inspection.maxVM().maxVMState();
+    }
+
     public InspectorGUI gui() {
         return _inspection.gui();
     }
@@ -71,9 +75,4 @@ public abstract class InspectorDialog extends JDialog implements InspectionHolde
         return _inspection.actions();
     }
 
-    public void redisplay() {
-    }
-
-    public void refresh(long epoch, boolean force) {
-    }
 }

@@ -37,7 +37,7 @@ public class BytecodeStream {
     int _nextBCI;
 
     /**
-     * Creates a new <code>BytecodeStream</code> for the specified bytecode
+     * Creates a new <code>BytecodeStream</code> for the specified bytecode.
      * @param code the array of bytes that contains the bytecode
      */
     public BytecodeStream(byte[] code) {

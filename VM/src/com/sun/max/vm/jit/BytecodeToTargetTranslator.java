@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.jit;
 
+import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.bytecode.Bytecode.*;
 import static com.sun.max.vm.bytecode.Bytecode.Flags.*;
 
@@ -74,9 +75,9 @@ import com.sun.max.vm.type.*;
  */
 public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
 
-    private static VMOption _useProfileGuidedInlining = new VMOption("-XX:PGI",
+    private static VMBooleanXXOption _useProfileGuidedInlining = register(new VMBooleanXXOption("-XX:-PGI",
                     "Enable profile-guided inlining, which collects receiver method profiles to feed into " +
-                    "inlining decisions during recompilation.",
+                    "inlining decisions during recompilation."),
                     Phase.STARTING);
 
     protected boolean _emitBackwardEdgeSafepointAtTarget;
@@ -261,7 +262,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     }
 
     private boolean shouldInsertInstrumentation(MethodActor methodActor) {
-        if (methodInstrumentation().recompilationAlarm() == null || !_useProfileGuidedInlining.isPresent()) {
+        if (methodInstrumentation().recompilationAlarm() == null || !_useProfileGuidedInlining.getValue()) {
             return false;
         }
         if (methodActor instanceof InterfaceMethodActor) {

@@ -51,7 +51,7 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
     }
 
     public ReadOnlyTeleProcess(TeleVM teleVM, Platform platform, File programFile) throws BootImageException {
-        super(teleVM, platform);
+        super(teleVM, platform, ProcessState.NO_PROCESS);
         _heap = Pointer.zero();
         try {
             _dataAccess = map(teleVM.bootImageFile(), teleVM.bootImage(), false);

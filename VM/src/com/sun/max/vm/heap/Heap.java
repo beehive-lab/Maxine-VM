@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.heap;
 
+import static com.sun.max.vm.VMOptions.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -39,14 +41,14 @@ public final class Heap {
     private Heap() {
     }
 
-    private static final VMSizeOption _maxHeapSizeOption = new VMSizeOption("-Xmx", Size.G, "The maximum heap size.", MaxineVM.Phase.PRISTINE);
+    private static final VMSizeOption _maxHeapSizeOption = register(new VMSizeOption("-Xmx", Size.G, "The maximum heap size."), MaxineVM.Phase.PRISTINE);
 
-    private static final VMSizeOption _initialHeapSizeOption = new InitialHeapSizeOption();
+    private static final VMSizeOption _initialHeapSizeOption = register(new InitialHeapSizeOption(), MaxineVM.Phase.PRISTINE);
 
     static class InitialHeapSizeOption extends VMSizeOption {
         @PROTOTYPE_ONLY
         public InitialHeapSizeOption() {
-            super("-Xms", Size.M.times(512), "The initial heap size.", MaxineVM.Phase.PRISTINE);
+            super("-Xms", Size.M.times(512), "The initial heap size.");
         }
         @Override
         public boolean check() {
@@ -58,7 +60,7 @@ public final class Heap {
         }
     }
 
-    private static final VMOption _disableGCOption = new VMOption("-XX:DisableGC", "Disable garbage collection.", MaxineVM.Phase.PRISTINE);
+    private static final VMBooleanXXOption _disableGCOption = register(new VMBooleanXXOption("-XX:-DisableGC", "Disable garbage collection."), MaxineVM.Phase.PRISTINE);
 
     private static Size _maxSize;
     private static Size _initialSize;
@@ -115,7 +117,7 @@ public final class Heap {
         return _initialHeapSizeOption.isPresent();
     }
 
-    private static final VMOption _verboseOption = new VMOption("-verbose:gc", "Report on each garbage collection event.", MaxineVM.Phase.PRISTINE);
+    private static final VMOption _verboseOption = register(new VMOption("-verbose:gc", "Report on each garbage collection event."), MaxineVM.Phase.PRISTINE);
 
     /**
      * Determines if information should be displayed about each garbage collection event.
@@ -148,18 +150,15 @@ public final class Heap {
         _traceAllocation = flag;
     }
 
-    private static final VMOption _traceAllocationOption;
     static {
-        if (!VMConfiguration.hostOrTarget().debugging()) {
-            _traceAllocationOption = null;
-        } else {
-            _traceAllocationOption = new VMOption("-XX:TraceAllocation", "Trace heap allocation.", MaxineVM.Phase.STARTING) {
+        if (VMConfiguration.hostOrTarget().debugging()) {
+            register(new VMBooleanXXOption("-XX:-TraceAllocation", "Trace heap allocation.") {
                 @Override
                 public boolean parseValue(Pointer optionValue) {
-                    _traceAllocation = true;
+                    _traceAllocation = getValue();
                     return true;
                 }
-            };
+            }, MaxineVM.Phase.STARTING);
         }
     }
 
@@ -191,7 +190,7 @@ public final class Heap {
     private static boolean _traceGCRootScanning;
     private static boolean _traceGCTime;
 
-    private static final VMOption _traceGCOption = new VMOption("-XX:TraceGC", "Trace garbage collection activity.", MaxineVM.Phase.STARTING) {
+    private static final VMOption _traceGCOption = register(new VMOption("-XX:TraceGC", "Trace garbage collection activity.") {
         @Override
         public boolean parseValue(Pointer optionValue) {
             if (CString.equals(optionValue, "")) {
@@ -211,7 +210,7 @@ public final class Heap {
         public void printHelp() {
             VMOptions.printHelpForOption("-XX:TraceGC[:RootScanning|:Time]", "", _help);
         }
-    };
+    }, MaxineVM.Phase.STARTING);
 
     /**
      * Returns whether the "-XX:DisableGC" option was specified.
@@ -221,7 +220,7 @@ public final class Heap {
      * @return
      */
     public static boolean gcDisabled() {
-        return _disableGCOption.isPresent();
+        return _disableGCOption.getValue();
     }
 
     @INSPECTED

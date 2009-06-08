@@ -1797,6 +1797,7 @@ public class GraphBuilder {
                 pushException = false;
             }
 
+            // Checkstyle: stop
             switch (opcode) {
                 case Bytecodes.NOP            : /* nothing to do */ break;
                 case Bytecodes.ACONST_NULL    : apush(appendConstant(ConstType.NULL_OBJECT)); break;
@@ -2003,6 +2004,7 @@ public class GraphBuilder {
                 default:
                     throw new Bailout("unknown bytecode " + opcode);
             }
+            // Checkstyle: resume
 
             prevBCI = bci;
             s.next();

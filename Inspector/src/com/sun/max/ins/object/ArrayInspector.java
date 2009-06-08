@@ -39,17 +39,17 @@ public final class ArrayInspector extends ObjectInspector {
     }
 
     @Override
-    protected void createView(long epoch) {
-        super.createView(epoch);
+    protected void createView() {
+        super.createView();
         final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject();
         _elementsPane = ObjectPane.createArrayElementsPane(this, teleArrayObject);
         frame().getContentPane().add(_elementsPane);
     }
 
     @Override
-    protected void refreshView(long epoch, boolean force) {
-        _elementsPane.refresh(epoch, force);
-        super.refreshView(epoch, force);
+    protected void refreshView(boolean force) {
+        _elementsPane.refresh(force);
+        super.refreshView(force);
     }
 
 }

@@ -118,9 +118,8 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
 
     /**
      * Populates the inspector's frame, already created, with components that make up the Inspector's view.
-     * @param epoch current execution age of the {@link teleProcess}.
      */
-    protected abstract void createView(long epoch);
+    protected abstract void createView();
 
     protected final void updateFrameTitle() {
         frame().setTitle(getTextForTitle());
@@ -139,7 +138,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     protected void createFrame(InspectorMenu menu) {
         _frame = new InternalInspectorFrame(this, menu);
         updateFrameTitle();
-        createView(maxVM().epoch());
+        createView();
         _frame.pack();
         gui().addInspector(this);
         inspection().addInspectionListener(this);
@@ -153,22 +152,12 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     /**
      * Reads, re-reads, and updates any state caches if needed from the VM.
      *
-     * @param epoch the execution epoch of the VM, {@see TeleProcess#epoch()}.
      * @param force suspend caching behavior; read state unconditionally.
      */
-    protected void refreshView(long epoch, boolean force) {
-        _frame.refresh(epoch, force);
+    protected void refreshView(boolean force) {
+        _frame.refresh(force);
         _frame.invalidate();
         _frame.repaint();
-    }
-
-    /**
-     * Reads, re-reads, and updates any state caches if needed from the VM.
-     *
-     * @param force suspend caching behavior; read state unconditionally.
-     */
-    protected final void refreshView(boolean force) {
-        refreshView(maxVM().epoch(), force);
     }
 
     /**
@@ -178,7 +167,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      */
     protected void reconstructView() {
         final Dimension size = _frame.getSize();
-        createView(maxVM().epoch());
+        createView();
         _frame.setPreferredSize(size);
         frame().pack();
     }
@@ -190,17 +179,17 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         return null;
     }
 
-    public void vmStateChanged(long epoch, boolean force) {
-        refreshView(epoch, force);
+    public void vmStateChanged(boolean force) {
+        refreshView(force);
     }
 
-    public void threadSetChanged(long epoch) {
+    public void threadSetChanged() {
     }
 
     public void threadStateChanged(TeleNativeThread teleNativeThread) {
     }
 
-    public void breakpointSetChanged(long epoch) {
+    public void breakpointSetChanged() {
     }
 
     public void vmProcessTerminated() {

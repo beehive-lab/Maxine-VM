@@ -33,7 +33,7 @@ public class BitMap {
     private int[] _extra32;
 
     /**
-     * Construct a new bit map with the specified length
+     * Construct a new bit map with the specified length.
      * @param length the length of the bitmap
      */
     public BitMap(int length) {

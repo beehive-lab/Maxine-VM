@@ -26,6 +26,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -87,8 +88,6 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         return _telePoolConstant != null && _telePoolConstant.isResolved();
     }
 
-    private long _epoch = -1;
-
     public static PoolConstantLabel make(Inspection inspection, int index, ConstantPool localConstantPool, TeleConstantPool teleConstantPool, Mode mode) {
         final Tag tag = localConstantPool.at(index).tag();
         PoolConstantLabel poolConstantLabel;
@@ -141,13 +140,16 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                 }
             }
         });
-        refresh(maxVM().epoch(), true);
+        refresh(true);
     }
 
     protected abstract void updateText();
 
-    public void refresh(long epoch, boolean force) {
-        if (epoch > _epoch || force) {
+    private MaxVMState _lastRefreshedState = null;
+
+    public void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
             if (_teleConstantPool != null) {
                 try {
                     _telePoolConstant = _teleConstantPool.readTelePoolConstant(_index);
@@ -156,7 +158,6 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                 }
                 updateText();
             }
-            _epoch = epoch;
         }
     }
 

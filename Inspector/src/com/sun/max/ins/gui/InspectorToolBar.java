@@ -54,6 +54,10 @@ public class InspectorToolBar extends JToolBar implements InspectionHolder {
         return _inspection.maxVM();
     }
 
+    public final MaxVMState maxVMState() {
+        return _inspection.maxVM().maxVMState();
+    }
+
     public InspectorGUI gui() {
         return _inspection.gui();
     }
@@ -73,7 +77,7 @@ public class InspectorToolBar extends JToolBar implements InspectionHolder {
     public void redisplay() {
     }
 
-    public void refresh(long epoch, boolean force) {
+    public void refresh(boolean force) {
     }
 
 }

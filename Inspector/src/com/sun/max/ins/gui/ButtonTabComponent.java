@@ -78,7 +78,7 @@ public class ButtonTabComponent extends InspectorPanel {
     }
 
     @Override
-    public void refresh(long epoch, boolean force) {
+    public void refresh(boolean force) {
         // No remote data that needs reading.
     }
 

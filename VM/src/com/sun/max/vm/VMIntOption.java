@@ -34,16 +34,18 @@ public class VMIntOption extends VMOption {
     protected int _value;
 
     /**
-     * Creates a new integer option and adds it to the specified option parsing phase.
+     * Creates a new integer option.
+     *
+     * <b>The caller is responsible for {@linkplain VMOptions#register(VMOption, Phase) registering} this option
+     * in the global registry or VM options.</b>
      *
      * @param prefix the name of the option, including the leading '-' character
      * @param defaultValue the default value of the option when it is not specified
      * @param help the help text for the option
-     * @param phase the phase in which to parse this option
      */
     @PROTOTYPE_ONLY
-    public VMIntOption(String prefix, int defaultValue, String help, Phase phase) {
-        super(prefix, help, phase);
+    public VMIntOption(String prefix, int defaultValue, String help) {
+        super(prefix, help);
         _value = defaultValue;
     }
 

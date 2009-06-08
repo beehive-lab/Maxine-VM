@@ -87,9 +87,9 @@ public class Shootout implements Runnable {
     public static Shootout sieve = new Shootout("sieve", "10000");
     public static Shootout strcat = new Shootout("strcat", "2000000");
     public static Shootout takfp = new Shootout("takfp", "10");
-    // Checkstyle: start field name check
+    // Checkstyle: resume field name check
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
         final java.lang.reflect.Field[] fields = Shootout.class.getFields();
         final Runnable[] runnables = new Runnable[fields.length];
         for (int i = 0; i < fields.length; i++) {

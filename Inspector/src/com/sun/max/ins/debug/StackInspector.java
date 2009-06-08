@@ -231,7 +231,7 @@ public class StackInspector extends Inspector {
         createFrame(null);
         frame().menu().addSeparator();
         frame().menu().add(_copyStackToClipboardAction);
-        refreshView(inspection.maxVM().epoch(), true);
+        refreshView(true);
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
@@ -245,7 +245,7 @@ public class StackInspector extends Inspector {
         return _saveSettingsListener;
     }
 
-    public void createView(long epoch) {
+    public void createView() {
         _teleNativeThread = inspection().focus().thread();
 
         if (_teleNativeThread == null) {
@@ -302,7 +302,7 @@ public class StackInspector extends Inspector {
             _contentPane.add(_splitPane, BorderLayout.CENTER);
         }
         frame().setContentPane(_contentPane);
-        refreshView(maxVM().epoch(), true);
+        refreshView(true);
 
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
@@ -322,7 +322,7 @@ public class StackInspector extends Inspector {
     }
 
     @Override
-    protected void refreshView(long epoch, boolean force) {
+    protected void refreshView(boolean force) {
         final Sequence<StackFrame> frames = _teleNativeThread.frames();
         assert !frames.isEmpty();
         if (_stateChanged || force) {
@@ -340,14 +340,14 @@ public class StackInspector extends Inspector {
             }
         }
         if (_selectedFrame != null) {
-            _selectedFrame.refresh(epoch, force);
+            _selectedFrame.refresh(force);
         }
-        super.refreshView(epoch, force);
+        super.refreshView(force);
         // The title displays thread state, so must be updated.
         updateFrameTitle();
     }
 
-    public void viewConfigurationChanged(long epoch) {
+    public void viewConfigurationChanged() {
         reconstructView();
     }
 
@@ -391,7 +391,7 @@ public class StackInspector extends Inspector {
         public final void setStackFrame(StackFrame stackFrame) {
             final Class<StackFrame_Type> type = null;
             _stackFrame = StaticLoophole.cast(type, stackFrame);
-            refresh(maxVM().epoch(), true);
+            refresh(true);
         }
     }
 
@@ -423,9 +423,9 @@ public class StackInspector extends Inspector {
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
+        public void refresh(boolean force) {
             for (InspectorLabel label : _labels) {
-                label.refresh(epoch, force);
+                label.refresh(force);
             }
         }
 
@@ -518,11 +518,11 @@ public class StackInspector extends Inspector {
             slotNameFormatPanel.add(_showSlotAddresses);
             _showSlotAddresses.addItemListener(new ItemListener() {
                 public void itemStateChanged(ItemEvent e) {
-                    refresh(maxVM().epoch(), true);
+                    refresh(true);
                 }
             });
 
-            refresh(maxVM().epoch(), true);
+            refresh(true);
 
             add(header, BorderLayout.NORTH);
             final JScrollPane slotsScrollPane = new InspectorScrollPane(inspection(), slotsPanel);
@@ -531,8 +531,8 @@ public class StackInspector extends Inspector {
         }
 
         @Override
-        public void refresh(long epoch, boolean force) {
-            _instructionPointerLabel.refresh(epoch, force);
+        public void refresh(boolean force) {
+            _instructionPointerLabel.refresh(force);
             final boolean isTopFrame = _stackFrame.isTopFrame();
             final Pointer instructionPointer = _stackFrame.instructionPointer();
             final Pointer instructionPointerForStopPosition = isTopFrame ?  instructionPointer.plus(1) :  instructionPointer;
@@ -551,7 +551,7 @@ public class StackInspector extends Inspector {
                 final Slot slot = _slots.slot(slotIndex);
                 final TextLabel slotLabel = _slotLabels[slotIndex];
                 updateSlotLabel(slot, slotLabel);
-                _slotValues[slotIndex].refresh(epoch, force);
+                _slotValues[slotIndex].refresh(force);
                 if (slot.referenceMapIndex() != -1) {
                     if (referenceMap != null && referenceMap.isSet(slot.referenceMapIndex())) {
                         slotLabel.setForeground(style().wordValidObjectReferenceDataColor());

@@ -31,27 +31,27 @@ package com.sun.c1x.ci;
  */
 public interface CiConstantPool {
 
-    public CiField resolveGetField(char cpi);
-    public CiField resolvePutField(char cpi);
-    public CiField resolveGetStatic(char cpi);
-    public CiField resolvePutStatic(char cpi);
+    CiField resolveGetField(char cpi);
+    CiField resolvePutField(char cpi);
+    CiField resolveGetStatic(char cpi);
+    CiField resolvePutStatic(char cpi);
 
-    public CiMethod resolveInvokeVirtual(char cpi);
-    public CiMethod resolveInvokeSpecial(char cpi);
-    public CiMethod resolveInvokeInterface(char cpi);
-    public CiMethod resolveInvokeStatic(char cpi);
+    CiMethod resolveInvokeVirtual(char cpi);
+    CiMethod resolveInvokeSpecial(char cpi);
+    CiMethod resolveInvokeInterface(char cpi);
+    CiMethod resolveInvokeStatic(char cpi);
 
-    public CiType resolveType(char cpi);
-    public String resolveString(char cpi);
-    public Class<?> resolveClass(char cpi);
+    CiType resolveType(char cpi);
+    String resolveString(char cpi);
+    Class<?> resolveClass(char cpi);
 
-    public CiType lookupType(char cpi);
-    public CiField lookupField(int opcode, char cpi);
-    public CiMethod lookupMethod(int opcode, char cpi);
+    CiType lookupType(char cpi);
+    CiField lookupField(int opcode, char cpi);
+    CiMethod lookupMethod(int opcode, char cpi);
 
-    public boolean willLinkField(int opcode, char cpi);
-    public boolean willLinkMethod(int opcode, char cpi);
+    boolean willLinkField(int opcode, char cpi);
+    boolean willLinkMethod(int opcode, char cpi);
 
-    public CiConstant lookupConstant(char cpi);
-    public CiExceptionHandler newExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI);
+    CiConstant lookupConstant(char cpi);
+    CiExceptionHandler newExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI);
 }

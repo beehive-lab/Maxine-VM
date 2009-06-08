@@ -66,7 +66,7 @@ public class Phi extends Instruction {
     }
 
     /**
-     * Check whether this phi corresponds to a local variable
+     * Check whether this phi corresponds to a local variable.
      * @return <code>true</code> if this phi refers to a local variable
      */
     public final boolean isLocal() {
@@ -74,7 +74,7 @@ public class Phi extends Instruction {
     }
 
     /**
-     * Check whether this phi corresponds to a stack location
+     * Check whether this phi corresponds to a stack location.
      * @return <code>true</code> if this phi refers to a stack location
      */
     public final boolean isOnStack() {
@@ -141,7 +141,7 @@ public class Phi extends Instruction {
     }
 
     /**
-     * Make this phi illegal if types were not merged correctly
+     * Make this phi illegal if types were not merged correctly.
      */
     public void makeIllegal() {
         setPhiFlag(PhiFlag.CannotSimplify);

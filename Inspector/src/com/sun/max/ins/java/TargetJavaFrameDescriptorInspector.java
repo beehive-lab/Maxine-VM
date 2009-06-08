@@ -149,7 +149,7 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
     }
 
     @Override
-    protected void createView(long epoch) {
+    protected void createView() {
         if (_javaFrameDescriptor != null) {
             final JPanel panel = new InspectorPanel(inspection());
             panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -162,7 +162,7 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
         }
     }
 
-    public void viewConfigurationChanged(long epoch) {
+    public void viewConfigurationChanged() {
         reconstructView();
     }
 

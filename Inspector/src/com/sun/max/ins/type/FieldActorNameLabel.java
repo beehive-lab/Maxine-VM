@@ -49,7 +49,7 @@ public class FieldActorNameLabel extends InspectorLabel {
         updateText();
     }
 
-    public void refresh(long epoch, boolean force) {
+    public void refresh(boolean force) {
         // local fieldActor state is assumed not to change.
     }
 

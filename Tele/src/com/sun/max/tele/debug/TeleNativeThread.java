@@ -33,7 +33,6 @@ import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.TeleProcess.*;
 import com.sun.max.tele.debug.TeleTargetBreakpoint.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.value.*;
@@ -50,6 +49,8 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
+
+// TODO (mlvdv) Clear as much state as possible when a thread dies; the Inspector's history mechanism holds on to the dead thread objects.
 
 /**
  * Represents a thread executing in a {@linkplain TeleProcess tele process}. The thread
@@ -977,7 +978,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
     public int suspendCount() {
         // TODO: Implement the suspend count according to the JDWP rules. The current very simple implementation seems to work however fine with NetBeans.
-        if (teleProcess().state() == State.STOPPED) {
+        if (teleProcess().processState() == ProcessState.STOPPED) {
             return 1;
         }
         return _suspendCount;
