@@ -153,10 +153,10 @@ public class BlockMap {
      * @return the block starting at the specified index, if it exists; <code>null</code> otherwise
      */
     public BlockBegin get(int bci) {
-    	if (bci < _blockMap.length) {
+        if (bci < _blockMap.length) {
             return _blockMap[bci];
-    	}
-    	return null;
+        }
+        return null;
     }
 
     BlockBegin make(int bci) {

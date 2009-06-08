@@ -325,7 +325,7 @@ public class BlockBegin extends StateSplit {
     }
 
     /**
-     * Add a predecessor to this block
+     * Add a predecessor to this block.
      * @param pred the predecessor to add
      */
     public void addPredecessor(BlockBegin pred) {

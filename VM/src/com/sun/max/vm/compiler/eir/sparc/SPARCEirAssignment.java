@@ -401,6 +401,7 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
         }
     }
 
+    @Override
     public void acceptVisitor(SPARCEirInstructionVisitor visitor) {
         visitor.visit(this);
     }
