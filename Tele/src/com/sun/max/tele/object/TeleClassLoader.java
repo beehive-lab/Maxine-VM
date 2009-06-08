@@ -48,11 +48,10 @@ public class TeleClassLoader extends TeleTupleObject implements ClassLoaderProvi
         return PrototypeClassLoader.PROTOTYPE_CLASS_LOADER;
     }
 
-    public static final Sequence<TeleClassLoader> teleClassLoaders() {
+    public static Sequence<TeleClassLoader> teleClassLoaders() {
         return _teleClassLoaders;
     }
 
-    @Override
     public ReferenceTypeProvider[] visibleClasses() {
         return teleVM().vmAccess().getAllReferenceTypes();
     }

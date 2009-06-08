@@ -73,79 +73,64 @@ abstract class JavaReferenceTypeProvider implements ReferenceTypeProvider {
         }
     }
 
-    @Override
     public ClassLoaderProvider classLoader() {
         return _classLoader;
     }
 
-    @Override
     public ClassObjectProvider classObject() {
         // TODO: Consider implementing otherwise.
         return null;
     }
 
-    @Override
     public FieldProvider[] getFields() {
         // Currently only methods are supported.
         return new FieldProvider[0];
     }
 
-    @Override
     public int getFlags() {
         return _class.getModifiers();
     }
 
-    @Override
     public InterfaceProvider[] getImplementedInterfaces() {
         return _implementedInterfaces;
     }
 
-    @Override
     public ObjectProvider[] getInstances() {
         // TODO: Consider implementing this otherwise.
         return new ObjectProvider[0];
     }
 
-    @Override
     public MethodProvider[] getMethods() {
         return _methodProviders;
     }
 
-    @Override
     public String getName() {
         return _class.getSimpleName();
     }
 
-    @Override
     public ReferenceTypeProvider[] getNestedTypes() {
         // Currently no nested types are supported.
         return new ReferenceTypeProvider[0];
     }
 
-    @Override
     public String getSignature() {
         return JavaTypeDescriptor.forJavaClass(_class).toString();
     }
 
-    @Override
     public String getSignatureWithGeneric() {
         return _class.getName();
     }
 
-    @Override
     public String getSourceFileName() {
         // Currently no source file name is supported.
         return "";
     }
 
-    @Override
     public int getStatus() {
         return ClassStatus.INITIALIZED;
     }
 
-    @Override
     public VMValue.Type getType() {
-
         if (this._class == Boolean.TYPE) {
             return VMValue.Type.BOOLEAN;
         } else if (this._class == Byte.TYPE) {
@@ -169,19 +154,16 @@ abstract class JavaReferenceTypeProvider implements ReferenceTypeProvider {
         return VMValue.Type.PROVIDER;
     }
 
-    @Override
     public int majorVersion() {
         // TODO: Check if this is correct.
         return 1;
     }
 
-    @Override
     public int minorVersion() {
         // TODO: Check if this is correct.
         return 5;
     }
 
-    @Override
     public ReferenceTypeProvider getReferenceType() {
         // TODO: Check if this is correct.
         return null;

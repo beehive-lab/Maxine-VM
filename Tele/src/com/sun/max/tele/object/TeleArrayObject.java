@@ -130,22 +130,17 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     public ArrayTypeProvider getArrayType() {
-        final ReferenceTypeProvider referenceTypeProvider = this.getReferenceType();
-        final ArrayTypeProvider arrayTypeProvider = (ArrayTypeProvider) referenceTypeProvider;
-        return arrayTypeProvider;
+        return (ArrayTypeProvider) this.getReferenceType();
     }
 
-    @Override
     public VMValue getValue(int i) {
         return teleVM().maxineValueToJDWPValue(readElementValue(i));
     }
 
-    @Override
     public int length() {
         return getLength();
     }
 
-    @Override
     public void setValue(int i, VMValue value) {
         LOGGER.info("Command received to SET ARRAY at index " + i + " + to + " + value);
     }

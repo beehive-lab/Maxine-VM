@@ -82,7 +82,7 @@ public class ValueStack {
         if (stackSize() == 0) {
             size = 0;
         }
-        ValueStack s = new ValueStack(scope(), localsSize(), size);
+        ValueStack s = new ValueStack(scope(), localsSize(), maxStackSize());
         s._lockStack = true;
         s.replaceLocks(this);
         s.replaceLocals(this);
@@ -438,7 +438,7 @@ public class ValueStack {
      * @return x the instruction popped off the stack
      */
     public Instruction apop() {
-        return checkTag(ValueTag.ADDRESS_TAG, xpop());
+        return checkTag(ValueTag.OBJECT_TAG, xpop());
     }
 
     /**

@@ -291,7 +291,6 @@ public class InspectionSettings {
      * file.
      */
     private class Saver implements Runnable {
-        @Override
         public void run() {
             while (!_done) {
                 try {

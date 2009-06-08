@@ -121,11 +121,9 @@ public class IgnoreMonitorScheme extends AbstractMonitorScheme implements Monito
         return Address.fromUnsignedInt(createHashCode(object));
     }
 
-    @Override
     public void scanReferences(PointerIndexVisitor pointerIndexVisitor) {
     }
 
-    @Override
     public boolean threadHoldsMonitor(Object object, VmThread thread) {
         if (object == null) {
             throw new NullPointerException();
@@ -133,12 +131,10 @@ public class IgnoreMonitorScheme extends AbstractMonitorScheme implements Monito
         return false;
     }
 
-    @Override
     public void afterGarbageCollection() {
         // Not used.
     }
 
-    @Override
     public void beforeGarbageCollection() {
         // Not used.
     }

@@ -207,18 +207,20 @@ public class BlockBegin extends StateSplit {
     public void setEnd(BlockEnd end) {
         assert end != null;
         BlockEnd old = _end;
-        if (old == end) {
-            return; // nothing to do
-        }
-        if (old != null) {
-            // disconnect this block from the old end
-            old.setBegin(null);
-            // disconnect this block from its current successors
-            for (BlockBegin s : old.successors()) {
-                s.predecessors().remove(this);
+        if (old != end) {
+            if (old != null) {
+                // disconnect this block from the old end
+                old.setBegin(null);
+                // disconnect this block from its current successors
+                for (BlockBegin s : old.successors()) {
+                    s.predecessors().remove(this);
+                }
+            }
+            this._end = end;
+            for (BlockBegin s : end.successors()) {
+                s.addPredecessor(this);
             }
         }
-        this._end = end;
     }
 
     public void setExceptionHandlerBlocks(List<BlockBegin> exceptionHandlers) {

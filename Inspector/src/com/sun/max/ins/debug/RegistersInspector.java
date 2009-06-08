@@ -133,12 +133,10 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         reconstructView();
     }
 
-    @Override
     public void tableColumnViewPreferencesChanged() {
         reconstructView();
     }
 
-    @Override
     public void viewConfigurationChanged(long epoch) {
         reconstructView();
     }

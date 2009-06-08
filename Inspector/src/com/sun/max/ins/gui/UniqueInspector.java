@@ -307,8 +307,6 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
 
     public static <UniqueInspector_Type extends UniqueInspector> UniqueInspector_Type find(Inspection inspection, final Key<UniqueInspector_Type> key) {
         final Predicate<Inspector> predicate = new Predicate<Inspector>() {
-
-            @Override
             public boolean evaluate(Inspector inspector) {
                 return match(inspector.frame(), key) != null;
             }

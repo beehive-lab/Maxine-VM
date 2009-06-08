@@ -27,7 +27,7 @@ import com.sun.max.unsafe.*;
 
 /**
  * TODO: eviction, budget.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
@@ -87,7 +87,7 @@ public class Cache<Key_Type, Value_Type> implements Mapping<Key_Type, Value_Type
      * Based on these user-provided criteria, the cache may evict some of its key/value bindings
      * from time to time to meet an overall space budget that it infers automatically
      * from the frequency of its usage and its occupancy.
-     * 
+     *
      * @param key the key to the value to be stored
      * @param value the value to be associated with the key
      * @param size tells the cache how much space is occupied by the value
@@ -110,16 +110,12 @@ public class Cache<Key_Type, Value_Type> implements Mapping<Key_Type, Value_Type
         _mapping.clear();
     }
 
-    @Override
     public IterableWithLength<Key_Type> keys() {
         return _mapping.keys();
     }
 
-    @Override
     public IterableWithLength<Value_Type> values() {
         return new IterableWithLength<Value_Type>() {
-
-            @Override
             public int length() {
                 return Cache.this.length();
             }

@@ -176,7 +176,6 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
     }
 
     @INLINE
-    @Override
     public final Pointer allocate(Size size) {
         Pointer cell;
         final Pointer oldAllocationMark = _mark.asPointer();
@@ -196,7 +195,6 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
         return cell;
     }
 
-    @Override
     @INLINE
     public final Pointer allocate(RuntimeMemoryRegion space, Size size) {
         return null;
@@ -204,7 +202,7 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
 
     @INLINE
     public final boolean isFull() {
-        return (getAllocationMark() != end()) ? false : true;
+        return getAllocationMark() == end();
     }
 
     @INLINE

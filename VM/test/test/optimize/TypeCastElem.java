@@ -60,12 +60,10 @@ public class TypeCastElem {
             a = _a;
             b = _b;
         }
-        @Override
         public int do3() {
             return _b;
         }
 
-        @Override
         public int do1() {
             return _a;
         }

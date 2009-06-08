@@ -202,17 +202,14 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
             fireTableDataChanged();
         }
 
-        @Override
         public int getColumnCount() {
             return FocusColumnKind.VALUES.length();
         }
 
-        @Override
         public int getRowCount() {
             return FocusRowKind.VALUES.length();
         }
 
-        @Override
         public Object getValueAt(int row, int col) {
             // Don't use cell values; all interaction is driven by row number.
             return null;
@@ -229,7 +226,6 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
             super(inspection, null);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final FocusRowKind focusRowKind = FocusRowKind.VALUES.get(row);
             setText(focusRowKind.label());
@@ -347,7 +343,6 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
             }
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             if (_labels[row] != null) {
                 return _labels[row];

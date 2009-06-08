@@ -401,7 +401,6 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
     }
 
 
-    @Override
     public IterableWithLength<Key_Type> keys() {
         return new HashMappingIterable<Key_Type>() {
             public Iterator<Key_Type> iterator() {

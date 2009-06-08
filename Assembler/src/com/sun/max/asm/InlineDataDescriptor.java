@@ -133,7 +133,6 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
      * descriptors overlap, then exactly one of the descriptors must describe unstructured {@linkplain ByteData byte
      * data} which will come later in the sort order.
      */
-    @Override
     public int compareTo(InlineDataDescriptor other) {
         final int thisStart = startPosition();
         final int otherStart = other.startPosition();
@@ -180,18 +179,15 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
             _size = dataInputStream.readInt();
         }
 
-        @Override
         public void writeBody(DataOutputStream dataOutputStream) throws IOException {
             dataOutputStream.writeInt(startPosition());
             dataOutputStream.writeInt(_size);
         }
 
-        @Override
         public int size() {
             return _size;
         }
 
-        @Override
         public int startPosition() {
             try {
                 return _startPosition.position();
@@ -200,7 +196,6 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
             }
         }
 
-        @Override
         public Tag tag() {
             return Tag.BYTE_DATA;
         }
@@ -261,7 +256,6 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
             _high = dataInputStream.readInt();
         }
 
-        @Override
         public void writeBody(DataOutputStream dataOutputStream) throws IOException {
             dataOutputStream.writeInt(startPosition());
             dataOutputStream.writeInt(_low);
@@ -272,12 +266,10 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
             return _high - _low + 1;
         }
 
-        @Override
         public int size() {
             return numberOfEntries() * 4;
         }
 
-        @Override
         public int startPosition() {
             try {
                 return _tablePosition.position();
@@ -290,7 +282,6 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
             return startPosition();
         }
 
-        @Override
         public Tag tag() {
             return Tag.JUMP_TABLE32;
         }
@@ -337,7 +328,6 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
             _numberOfEntries = dataInputStream.readInt();
         }
 
-        @Override
         public void writeBody(DataOutputStream dataOutputStream) throws IOException {
             dataOutputStream.writeInt(startPosition());
             dataOutputStream.writeInt(_numberOfEntries);
@@ -347,12 +337,10 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
             return _numberOfEntries;
         }
 
-        @Override
         public int size() {
             return numberOfEntries() * 8;
         }
 
-        @Override
         public int startPosition() {
             try {
                 return _tablePosition.position();
@@ -365,7 +353,6 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
             return startPosition();
         }
 
-        @Override
         public Tag tag() {
             return Tag.LOOKUP_TABLE32;
         }

@@ -53,7 +53,6 @@ public class BeltwayCollector implements Collector {
         _gcImpl = gcImpl;
     }
 
-    @Override
     public void run() {
         _gcImpl.run();
     }

@@ -127,7 +127,6 @@ public class Enumerator<Enumerable_Type extends Enum<Enumerable_Type> & Enumerab
         }
     }
 
-    @Override
     public Collection<Enumerable_Type> toCollection() {
         return java.util.Arrays.asList(_ordinalMap);
     }

@@ -64,7 +64,6 @@ public final class TeleFieldActor extends TeleMemberActor implements FieldProvid
         return "FieldActor";
     }
 
-    @Override
     public VMValue getStaticValue() {
 
         final Pointer pointer = this.getTeleHolder().getTeleStaticTuple().getReference().toOrigin();
@@ -73,48 +72,39 @@ public final class TeleFieldActor extends TeleMemberActor implements FieldProvid
         return teleVM().maxineValueToJDWPValue(teleVM().readValue(kind, pointer, offset));
     }
 
-    @Override
     public VMValue getValue(ObjectProvider object) {
         final Reference reference = ((TeleObject) object).getReference();
         return teleVM().maxineValueToJDWPValue(teleVM().readValue(_fieldActor.kind(), reference.toOrigin(), _fieldActor.offset()));
     }
 
-    @Override
     public void setStaticValue(VMValue value) {
         assert false : "Not implemented.";
     }
 
-    @Override
     public void setValue(ObjectProvider object, VMValue value) {
         assert false : "Not implemented.";
     }
 
-    @Override
     public ReferenceTypeProvider getReferenceTypeHolder() {
         return super.getTeleHolder();
     }
 
-    @Override
     public Type getType() {
         return TeleVM.maxineKindToJDWPType(fieldActor().kind());
     }
 
-    @Override
     public int getFlags() {
         return fieldActor().flags() & Actor.JAVA_FIELD_FLAGS;
     }
 
-    @Override
     public String getName() {
         return fieldActor().name().toString();
     }
 
-    @Override
     public String getSignature() {
         return fieldActor().jniSignature();
     }
 
-    @Override
     public String getGenericSignature() {
         return fieldActor().genericSignatureString();
     }

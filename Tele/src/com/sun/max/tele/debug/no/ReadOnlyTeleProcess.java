@@ -104,7 +104,6 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
             _base = base;
         }
 
-        @Override
         public int read(Address src, ByteBuffer dst, int dstOffset, int length) throws DataIOError {
             final int toRead = Math.min(length, dst.limit() - dstOffset);
             final ByteBuffer srcView = (ByteBuffer) _buffer.duplicate().position(src.toInt()).limit(toRead);
@@ -112,7 +111,6 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
             return toRead;
         }
 
-        @Override
         public int write(ByteBuffer src, int srcOffset, int length, Address dst) throws DataIOError {
             _buffer.position(dst.toInt());
             final ByteBuffer srcView = (ByteBuffer) src.duplicate().position(srcOffset).limit(length);
@@ -131,43 +129,34 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
             return _base.toInt() + address.toInt();
         }
 
-        @Override
         public byte readByte(Address address) {
             return _buffer.get(asOffset(address));
         }
 
-        @Override
         public int readInt(Address address) {
             return _buffer.getInt(asOffset(address));
         }
 
-        @Override
         public long readLong(Address address) {
-            final long result = _buffer.getLong(asOffset(address));
-            return result;
+            return _buffer.getLong(asOffset(address));
         }
 
-        @Override
         public short readShort(Address address) {
             return _buffer.getShort(asOffset(address));
         }
 
-        @Override
         public void writeByte(Address address, byte value) {
             _buffer.put(asOffset(address), value);
         }
 
-        @Override
         public void writeInt(Address address, int value) {
             _buffer.putInt(asOffset(address), value);
         }
 
-        @Override
         public void writeLong(Address address, long value) {
             _buffer.putLong(asOffset(address), value);
         }
 
-        @Override
         public void writeShort(Address address, short value) {
             _buffer.putShort(asOffset(address), value);
         }
@@ -175,44 +164,36 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
 
     private static final String FAIL_MESSAGE = "Attempt to run/write/modify a read-only bootimage VM with no live process";
 
-    @Override
     protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
         ProgramError.unexpected(FAIL_MESSAGE);
     }
 
-    @Override
     protected TeleNativeThread createTeleNativeThread(int id, long handle, long stackBase, long stackSize) {
         ProgramError.unexpected(FAIL_MESSAGE);
         return null;
     }
 
-    @Override
     protected int read0(Address address, ByteBuffer buffer, int offset, int length) {
         return _dataAccess.read(address, buffer, offset, length);
     }
 
-    @Override
     protected int write0(ByteBuffer buffer, int offset, int length, Address address) {
         ProgramError.unexpected(FAIL_MESSAGE);
         return 0;
     }
 
-    @Override
     protected void kill() throws OSExecutionRequestException {
         ProgramError.unexpected(FAIL_MESSAGE);
     }
 
-    @Override
     protected void resume() throws OSExecutionRequestException {
         ProgramError.unexpected(FAIL_MESSAGE);
     }
 
-    @Override
     protected void suspend() throws OSExecutionRequestException {
         ProgramError.unexpected(FAIL_MESSAGE);
     }
 
-    @Override
     protected boolean waitUntilStopped() {
         ProgramError.unexpected(FAIL_MESSAGE);
         return false;

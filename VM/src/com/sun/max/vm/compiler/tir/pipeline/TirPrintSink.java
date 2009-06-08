@@ -51,7 +51,6 @@ public class TirPrintSink extends TirBufferedSink {
         private TirTraceBegin _traceBegin;
 
         private MapFunction<TirInstruction, String> _defLabelMap = new MapFunction<TirInstruction, String>() {
-            @Override
             public String map(TirInstruction instruction) {
                 assert _labelMap.containsKey(instruction) == false;
                 final String name = "(" + _labelMap.length() + ")";
@@ -61,7 +60,6 @@ public class TirPrintSink extends TirBufferedSink {
         };
 
         private MapFunction<TirInstruction, String> _useLabelMap = new MapFunction<TirInstruction, String>() {
-            @Override
             public String map(TirInstruction instruction) {
                 if (instruction == Placeholder.FILLER) {
                     return "%";

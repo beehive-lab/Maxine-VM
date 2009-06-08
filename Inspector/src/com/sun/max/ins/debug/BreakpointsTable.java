@@ -373,7 +373,6 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
             super(inspection, null);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = _model.get(row);
             setText(breakpointData.kindTag());
@@ -393,7 +392,6 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
             super(inspection, null);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = _model.get(row);
             setValue(breakpointData.shortName(), breakpointData.longName());
@@ -412,7 +410,6 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
             super(inspection, null);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = _model.get(row);
             setText(Integer.toString(breakpointData.location()));
@@ -444,12 +441,10 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
             return component;
         }
 
-        @Override
         public void redisplay() {
             setFont(inspection().style().defaultFont());
         }
 
-        @Override
         public void refresh(long epoch, boolean force) {
         }
     }
@@ -459,7 +454,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
         TriggerThreadCellRenderer(Inspection inspection) {
             super(inspection, null);
         }
-        @Override
+
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = _model.get(row);
             if (breakpointData.triggerThread() != null) {
@@ -537,7 +532,6 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
             super(inspection);
         }
 
-        @Override
         public void procedure(final MouseEvent mouseEvent) {
             if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
                 final Point p = mouseEvent.getPoint();
@@ -547,7 +541,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
                 menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
             }
         }
-    };
+    }
 
     /**
      * Summary of information about a breakpoint that is useful for inspection.
@@ -732,42 +726,34 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
             }
         }
 
-        @Override
         TeleBreakpoint teleBreakpoint() {
             return _teleTargetBreakpoint;
         }
 
-        @Override
         String kindTag() {
             return "T";
         }
 
-        @Override
         String kindName() {
             return "Target Code breakpoint";
         }
 
-        @Override
         String shortName() {
             return _shortName;
         }
 
-        @Override
         String longName() {
             return _longName;
         }
 
-        @Override
         int location() {
             return _location;
         }
 
-        @Override
         String locationDescription() {
             return "Offset=" + (_location > 0 ? "+" : "") + _location + ", Address=" + _teleTargetBreakpoint.address().toHexString();
         }
 
-        @Override
         void setCondition(String condition) {
             try {
                 _teleTargetBreakpoint.setCondition(condition);
@@ -777,7 +763,6 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
             }
         }
 
-        @Override
         String conditionStatus() {
             final String condition = condition();
             if (!condition.equals("")) {
@@ -810,47 +795,38 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
             _longName = _longName + " in " + _key.holder().toJavaString();
         }
 
-        @Override
         TeleBreakpoint teleBreakpoint() {
             return _teleBytecodeBreakpoint;
         }
 
-        @Override
         String kindTag() {
             return "B";
         }
 
-        @Override
         String kindName() {
             return "Bytecode breakpoint";
         }
 
-        @Override
         String shortName() {
             return _shortName;
         }
 
-        @Override
         String longName() {
             return _longName;
         }
 
-        @Override
         int location() {
             return _key.position();
         }
 
-        @Override
         String locationDescription() {
             return "Bytecode position=" + _key.position();
         }
 
-        @Override
         void setCondition(String conditionText) {
             Problem.unimplemented("Conditional bytecode breakpoints not supported yet");
         }
 
-        @Override
         String conditionStatus() {
             return "Bytecode breakpoint conditions not supported yet";
         }

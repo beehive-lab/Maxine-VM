@@ -254,7 +254,6 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
         return immediateFreeSpace();
     }
 
-    @Override
     public Size reportUsedSpace() {
         return _allocationMark.minus(_space.start()).asSize();
     }
@@ -437,7 +436,6 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     public void finalize(MaxineVM.Phase phase) {
     }
 
-    @Override
     @INLINE
     public void writeBarrier(Reference from, Reference to) {
         // do nothing.

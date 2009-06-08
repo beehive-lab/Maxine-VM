@@ -25,35 +25,27 @@ import com.sun.max.jdwp.vm.proxy.*;
 
 public class VMAdapter implements VMListener {
 
-    @Override
     public void breakpointHit(ThreadProvider thread, CodeLocation location) {
     }
 
-    @Override
     public void classPrepared(ThreadProvider thread, ClassProvider klass) {
     }
 
-    @Override
     public void classUnloaded(ThreadProvider thread, ClassProvider klass) {
     }
 
-    @Override
     public void threadDied(ThreadProvider thread) {
     }
 
-    @Override
     public void threadStarted(ThreadProvider thread) {
     }
 
-    @Override
     public void vmDied() {
     }
 
-    @Override
     public void vmStarted() {
     }
 
-    @Override
     public void singleStepMade(ThreadProvider thread, CodeLocation location) {
     }
 }

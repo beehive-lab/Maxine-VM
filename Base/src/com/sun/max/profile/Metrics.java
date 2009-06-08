@@ -155,7 +155,6 @@ public final class Metrics {
                 _value = value;
             }
 
-            @Override
             public int compareTo(Counted o) {
                 if (o._total < _total) {
                     return -1;

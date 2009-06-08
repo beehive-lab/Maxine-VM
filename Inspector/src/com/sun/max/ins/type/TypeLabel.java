@@ -142,7 +142,6 @@ public class TypeLabel extends InspectorLabel {
 
     private long _epoch = -1;
 
-    @Override
     public void refresh(long epoch, boolean force) {
         if (epoch > _epoch || force) {
             updateClassActor();

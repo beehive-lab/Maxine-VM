@@ -50,7 +50,6 @@ public class SPARCJITTestSetup extends SPARCTranslatorTestSetup  implements JITT
         return new SPARCJitCompiler(VMConfiguration.target(), templateTable);
     }
 
-    @Override
     public boolean disassembleCompiledMethods() {
         return true;
     }

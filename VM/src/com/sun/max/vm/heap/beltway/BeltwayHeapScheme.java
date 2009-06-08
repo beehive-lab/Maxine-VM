@@ -528,7 +528,6 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
      * Perform thread-local initializations specific to the heap scheme when starting a new VM thread. For instance
      * install card table address.
      */
-    @Override
     public void initializeVmThread(Pointer vmThreadLocals) {
         // enable write barriers by setting the adjusted card table address
         if (MaxineVM.isRunning() || MaxineVM.isStarting()) {
@@ -545,7 +544,6 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
      */
     @INLINE
     @NO_SAFEPOINTS("TODO")
-    @Override
     public final Object createArray(DynamicHub dynamicHub, int length) {
         final Size size = Layout.getArraySize(dynamicHub.classActor().componentClassActor().kind(), length);
         final Pointer cell = allocate(size);
@@ -558,7 +556,6 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
      */
     @INLINE
     @NO_SAFEPOINTS("TODO")
-    @Override
     public final Object createTuple(Hub hub) {
         final Pointer cell = allocate(hub.tupleSize());
         return Cell.plantTuple(cell, hub);
@@ -572,7 +569,6 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     }
 
     @NO_SAFEPOINTS("TODO")
-    @Override
     public Hybrid expandHybrid(Hybrid hybrid, int length) {
         final Size newSize = Layout.hybridLayout().getArraySize(length);
         final Pointer newCell = allocate(newSize);
@@ -580,50 +576,41 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     }
 
     @NO_SAFEPOINTS("TODO")
-    @Override
     public Object clone(Object object) {
         final Size size = Layout.size(Reference.fromJava(object));
         final Pointer cell = allocate(size);
         return Cell.plantClone(cell, size, object);
     }
 
-    @Override
     public boolean contains(Address address) {
         return false;
     }
 
-    @Override
     public Size reportFreeSpace() {
         return _beltManager.reportFreeSpace();
     }
 
-    @Override
     public Size reportUsedSpace() {
         Problem.unimplemented();
         return null;
     }
 
-    @Override
     public void runFinalization() {
 
     }
 
-    @Override
     public boolean pin(Object object) {
         return false;
     }
 
-    @Override
     public void unpin(Object object) {
 
     }
 
-    @Override
     public boolean isPinned(Object object) {
         return false;
     }
 
-    @Override
     public void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
         VmThreadLocal.ADJUSTED_CARDTABLE_BASE.setConstantWord(primordialVmThreadLocals, BeltwayCardRegion.adjustedCardTableBase(auxiliarySpace));
     }
@@ -632,7 +619,6 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
         return coveredRegionSize.unsignedShiftedRight(BeltwayCardRegion.CARD_SHIFT);
     }
 
-    @Override
     public int auxiliarySpaceSize(int bootImageSize) {
         return cardTableSize(Size.fromInt(bootImageSize)).toInt();
     }
@@ -658,8 +644,6 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     }
 
     private static class StopTheWorldTLABReset implements Procedure<VmThread> {
-
-        @Override
         public void run(VmThread thread) {
             thread.getTLAB().unSet();
         }

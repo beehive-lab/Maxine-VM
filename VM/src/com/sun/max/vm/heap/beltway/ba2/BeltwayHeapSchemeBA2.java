@@ -92,7 +92,6 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
 
     @INLINE
     @NO_SAFEPOINTS("TODO")
-    @Override
     public Pointer allocate(Size size) {
         if (!MaxineVM.isRunning()) {
             return bumpAllocateSlowPath(getNurserySpace(), size);
@@ -103,17 +102,12 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
         return heapAllocate(getNurserySpace(), size);
     }
 
-    @Override
     public synchronized boolean collectGarbage(Size requestedFreeSpace) {
         boolean result = false;
         if (minorCollect(requestedFreeSpace)) {
             result = true;
             if (getMatureSpace().getUsedMemorySize().greaterEqual(BeltwayHeapSchemeConfiguration.getMaxHeapSize().dividedBy(2))) {
-                if (majorCollect(requestedFreeSpace)) {
-                    result = true;
-                } else {
-                    result = false;
-                }
+                result = majorCollect(requestedFreeSpace);
             }
         }
         _cardRegion.clearAllCards();
@@ -157,18 +151,14 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
 
     @Override
     public boolean contains(Address address) {
-        if (address.greaterEqual(Heap.bootHeapRegion().start()) & address.lessEqual(getNurserySpace().end())) {
-            return true;
-        }
-        return false;
+        return address.greaterEqual(Heap.bootHeapRegion().start()) && address.lessEqual(getNurserySpace().end());
     }
 
     @INLINE
     public boolean checkOverlappingBelts(Belt from, Belt to) {
-        return (from.getAllocationMark().greaterThan(to.start()) || from.end().greaterThan(to.start())) ? true : false;
+        return (from.getAllocationMark().greaterThan(to.start()) || from.end().greaterThan(to.start()));
     }
 
-    @Override
     @INLINE
     public void writeBarrier(Reference from, Reference to) {
         // do nothing.

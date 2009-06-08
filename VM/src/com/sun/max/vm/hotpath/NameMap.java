@@ -32,7 +32,6 @@ public class NameMap {
     public static final Color NESTED_LOCAL_COLOR = Color.LIGHTMAGENTA;
 
     public static final MapFunction<TirInstruction, String> COMPACT = new MapFunction<TirInstruction, String>() {
-        @Override
         public String map(TirInstruction from) {
             final SingleResult<String> result = new SingleResult<String>();
             from.accept(new TirInstructionAdapter() {
