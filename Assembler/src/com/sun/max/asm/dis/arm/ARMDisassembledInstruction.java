@@ -42,11 +42,13 @@ public class ARMDisassembledInstruction extends RiscDisassembledInstruction<ARMT
         return instruction.name();
     }
 
+    @Override
     public String operandsToString(AddressMapper addressMapper) {
         final ARMExternalInstruction instruction = new ARMExternalInstruction(template(), arguments(), startAddress(), null);
         return instruction.operands();
     }
 
+    @Override
     public String toString(AddressMapper addressMapper) {
         final ARMExternalInstruction instruction = new ARMExternalInstruction(template(), arguments(), startAddress(), addressMapper);
         return instruction.toString();

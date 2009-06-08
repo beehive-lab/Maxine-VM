@@ -293,6 +293,7 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
     }
 
     private final class SizeCellRenderer extends DefaultTableCellRenderer implements TableCellRenderer, Prober {
+        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
             final DataLabel.LongAsHex sizeDataLabel = new DataLabel.LongAsHex(inspection(), memoryRegionData.size().toLong());
@@ -312,6 +313,7 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
     }
 
     private final class AllocCellRenderer extends DefaultTableCellRenderer implements TableCellRenderer, Prober {
+        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
             final long allocated = memoryRegionData.allocated().toLong();

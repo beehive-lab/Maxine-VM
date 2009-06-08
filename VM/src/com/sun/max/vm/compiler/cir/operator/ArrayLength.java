@@ -47,10 +47,12 @@ public class ArrayLength extends JavaOperator {
 
     private static final Kind[] _parameterKinds = {Kind.REFERENCE};
 
+    @Override
     public Kind[] parameterKinds() {
         return _parameterKinds;
     }
 
+    @Override
     public String toString() {
         return "ArrayLength";
     }

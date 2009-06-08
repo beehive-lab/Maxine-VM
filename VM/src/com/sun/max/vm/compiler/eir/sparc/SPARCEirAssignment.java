@@ -380,6 +380,7 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
         }
     }
 
+    @Override
     public void emit(SPARCEirTargetEmitter emitter) {
         switch (kind().asEnum()) {
             case BYTE:

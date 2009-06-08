@@ -73,6 +73,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
     private SPARCEirCPU _cpu;
 
 
+    @Override
     protected SPARCEirCPU cpu() {
         return _cpu;
     }

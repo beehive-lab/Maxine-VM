@@ -230,6 +230,7 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
         return _builtin.resultKind();
     }
 
+    @Override
     public final Kind[] parameterKinds() {
         return _parameterKinds;
     }

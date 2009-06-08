@@ -45,6 +45,7 @@ public class ObserverThinInflatedMonitorScheme extends ModalMonitorScheme {
         attach(new GCTracingObserver());
     }
 
+    @Override
     public ModalLockWordDecoder getModalLockWordDecoder() {
         return new ModalLockWordDecoder() {
             public boolean isLockWordInMode(ModalLockWord64 modalLockWord, Class<? extends ModalLockWord64> mode) {

@@ -164,36 +164,44 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
 
     private static final String FAIL_MESSAGE = "Attempt to run/write/modify a read-only bootimage VM with no live process";
 
+    @Override
     protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
         ProgramError.unexpected(FAIL_MESSAGE);
     }
 
+    @Override
     protected TeleNativeThread createTeleNativeThread(int id, long handle, long stackBase, long stackSize) {
         ProgramError.unexpected(FAIL_MESSAGE);
         return null;
     }
 
+    @Override
     protected int read0(Address address, ByteBuffer buffer, int offset, int length) {
         return _dataAccess.read(address, buffer, offset, length);
     }
 
+    @Override
     protected int write0(ByteBuffer buffer, int offset, int length, Address address) {
         ProgramError.unexpected(FAIL_MESSAGE);
         return 0;
     }
 
+    @Override
     protected void kill() throws OSExecutionRequestException {
         ProgramError.unexpected(FAIL_MESSAGE);
     }
 
+    @Override
     protected void resume() throws OSExecutionRequestException {
         ProgramError.unexpected(FAIL_MESSAGE);
     }
 
+    @Override
     protected void suspend() throws OSExecutionRequestException {
         ProgramError.unexpected(FAIL_MESSAGE);
     }
 
+    @Override
     protected boolean waitUntilStopped() {
         ProgramError.unexpected(FAIL_MESSAGE);
         return false;

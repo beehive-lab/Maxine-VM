@@ -39,6 +39,7 @@ public class BiasedThinInflatedMonitorScheme extends ModalMonitorScheme {
                                 InflatedMonitorModeHandler.asThinLockDelegate())));
     }
 
+    @Override
     public ModalLockWordDecoder getModalLockWordDecoder() {
         return new ModalLockWordDecoder() {
             public boolean isLockWordInMode(ModalLockWord64 modalLockWord, Class<? extends ModalLockWord64> mode) {
