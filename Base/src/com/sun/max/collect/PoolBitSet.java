@@ -148,7 +148,6 @@ public class PoolBitSet<PoolObject_Type extends PoolObject> extends PoolSet<Pool
     /**
      * Gets an iterator over all the values in this set.
      */
-    @Override
     public Iterator<PoolObject_Type> iterator() {
         return new Iterator<PoolObject_Type>() {
 

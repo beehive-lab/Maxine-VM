@@ -25,11 +25,9 @@ import java.util.IdentityHashMap;
 import java.util.List;
 
 import com.sun.c1x.C1XOptions;
-import com.sun.c1x.graph.BlockUtil;
 import com.sun.c1x.util.BitMap;
 import com.sun.c1x.util.BlockClosure;
 import com.sun.c1x.util.InstructionVisitor;
-import com.sun.c1x.util.Util;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.value.ValueType;
 
@@ -66,8 +64,7 @@ public class BlockBegin extends StateSplit {
     private static final int _entryFlags = BlockFlag.StandardEntry.mask() | BlockFlag.OsrEntry.mask() | BlockFlag.ExceptionEntry.mask();
 
 
-    private int _flags;
-    private final List<BlockBegin> _successors;
+    private int _blockFlags;
     private final List<BlockBegin> _predecessors;
     private BlockEnd _end;
 
@@ -89,7 +86,6 @@ public class BlockBegin extends StateSplit {
         super(ValueType.ILLEGAL_TYPE);
         _depthFirstNumber = -1;
         _linearScanNumber = -1;
-        _successors = new ArrayList<BlockBegin>(2);
         _predecessors = new ArrayList<BlockBegin>(2);
         _loopIndex = -1;
         _exceptionHandlerBlocks = new ArrayList<BlockBegin>(0);
@@ -109,14 +105,6 @@ public class BlockBegin extends StateSplit {
         _blockID = i;
     }
 
-
-    /**
-     * Gets the list of successors of this block.
-     * @return the successor list
-     */
-    public List<BlockBegin> successors() {
-        return _successors;
-    }
 
     /**
      * Gets the list of predecessors of this block.
@@ -219,22 +207,19 @@ public class BlockBegin extends StateSplit {
     public void setEnd(BlockEnd end) {
         assert end != null;
         BlockEnd old = _end;
-        if (old == end) {
-            return; // nothing to do
-        }
-        if (old != null) {
-            // disconnect this block from the old end
-            old.setBegin(null);
-            // disconnect this block from its current successors
-            for (BlockBegin s : successors()) {
-                s.predecessors().remove(this);
+        if (old != end) {
+            if (old != null) {
+                // disconnect this block from the old end
+                old.setBegin(null);
+                // disconnect this block from its current successors
+                for (BlockBegin s : old.successors()) {
+                    s.predecessors().remove(this);
+                }
             }
-        }
-        this._end = end;
-        // now reset the successors to be the end's successors
-        successors().clear();
-        for (BlockBegin s : end.successors()) {
-            BlockUtil.addEdge(this, s);
+            this._end = end;
+            for (BlockBegin s : end.successors()) {
+                s.addPredecessor(this);
+            }
         }
     }
 
@@ -252,7 +237,7 @@ public class BlockBegin extends StateSplit {
      * @return <code>true</code> if this block is an entrypoint
      */
     public boolean isEntryBlock() {
-        return (_flags & _entryFlags) != 0;
+        return (_blockFlags & _entryFlags) != 0;
     }
 
     /**
@@ -260,7 +245,7 @@ public class BlockBegin extends StateSplit {
      * @param flag the flag to set
      */
     public void setBlockFlag(BlockFlag flag) {
-        _flags |= flag.mask();
+        _blockFlags |= flag.mask();
     }
 
     /**
@@ -268,7 +253,7 @@ public class BlockBegin extends StateSplit {
      * @param flag the flag to clear
      */
     public void clearBlockFlag(BlockFlag flag) {
-        _flags &= ~flag.mask();
+        _blockFlags &= ~flag.mask();
     }
 
     public void copyBlockFlag(BlockBegin other, BlockFlag flag) {
@@ -281,7 +266,7 @@ public class BlockBegin extends StateSplit {
      * @return <code>true</code> if this block has the flag
      */
     public final boolean checkBlockFlag(BlockFlag flag) {
-        return (_flags & flag.mask()) != 0;
+        return (_blockFlags & flag.mask()) != 0;
     }
 
     /**
@@ -340,25 +325,6 @@ public class BlockBegin extends StateSplit {
     }
 
     /**
-     * Add a successor block to this block.
-     * @param succ the successor to add
-     */
-    public void addSuccessor(BlockBegin succ) {
-        assert _end == null : "cannot add successors after end is set";
-        _successors.add(succ);
-    }
-
-    /**
-     * Remove all occurrences of the specified block from the successor list of this block.
-     * @param succ the successor to remove
-     */
-    public void removeSuccessor(BlockBegin succ) {
-        while (_successors.remove(succ)) {
-            // the block may appear multiple times in the list
-        }
-    }
-
-    /**
      * Add a predecessor to this block.
      * @param pred the predecessor to add
      */
@@ -374,17 +340,6 @@ public class BlockBegin extends StateSplit {
         while (_predecessors.remove(pred)) {
             // the block may appear multiple times in the list
         }
-    }
-
-    /**
-     * Substitutes a new block for an old block in this node's successor list.
-     * @param oldSucc the old successor
-     * @param newSucc the new successor
-     */
-    public void substituteSuccessor(BlockBegin oldSucc, BlockBegin newSucc) {
-        Util.replaceInList(oldSucc, newSucc, successors());
-        oldSucc.predecessors().remove(this);
-        end().substituteSuccessor(oldSucc, newSucc);
     }
 
     /**
@@ -409,7 +364,7 @@ public class BlockBegin extends StateSplit {
             newState = newState.copy();
 
             // if a liveness map is available, use it to invalidate dead locals
-            BitMap liveness = scope().method().liveness(bci());
+            BitMap liveness = newState.scope().method().liveness(bci());
             if (liveness != null) {
                 invalidateDeadLocals(newState, liveness);
             }

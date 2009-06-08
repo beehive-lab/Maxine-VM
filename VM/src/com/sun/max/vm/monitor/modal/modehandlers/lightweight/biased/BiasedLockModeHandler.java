@@ -85,7 +85,6 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
     }
 
     private static Safepoint.Procedure _safePointProcedure = new Safepoint.Procedure() {
-        @Override
         public void run(Pointer trapState) {
             // Suspended bias-owner threads wait here while a revoker thread performs the revocation.
             synchronized (VmThreadMap.ACTIVE) {
@@ -140,22 +139,18 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         }
     }
 
-    @Override
     public Word createMisc(Object object) {
         return BiasedLockWord64.anonBiasedFromHashcode(monitorScheme().createHashCode(object));
     }
 
-    @Override
     public void afterGarbageCollection() {
         delegate().delegateAfterGarbageCollection();
     }
 
-    @Override
     public void beforeGarbageCollection() {
         delegate().delegateBeforeGarbageCollection();
     }
 
-    @Override
     public void monitorExit(Object object) {
         nullCheck(object);
         if (MaxineVM.isPrototyping()) {
@@ -190,7 +185,6 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         }
     }
 
-    @Override
     public void monitorNotify(Object object, boolean all) {
         nullCheck(object);
         if (MaxineVM.isPrototyping()) {
@@ -210,7 +204,6 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         }
     }
 
-    @Override
     public void monitorWait(Object object, long timeout) throws InterruptedException {
         nullCheck(object);
         if (MaxineVM.isPrototyping()) {
@@ -240,7 +233,6 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
 
     private final boolean[] _threadHoldsMonitorResult = new boolean[1];
 
-    @Override
     public boolean threadHoldsMonitor(Object object, VmThread thread) {
         nullCheck(object);
         final int lockwordThreadID = encodeCurrentThreadIDForLockword();
@@ -259,7 +251,6 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             super(delegate);
         }
 
-        @Override
         public void monitorEnter(Object object) {
             nullCheck(object);
             if (MaxineVM.isPrototyping()) {
@@ -312,7 +303,6 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             delegate().delegateMonitorEnter(object, currentLockWord, lockwordThreadID);
         }
 
-        @Override
         public int makeHashCode(Object object) {
             nullCheck(object);
             if (MaxineVM.isPrototyping()) {
@@ -364,7 +354,6 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             super(delegate);
         }
 
-        @Override
         public void monitorEnter(Object object) {
             nullCheck(object);
             if (MaxineVM.isPrototyping()) {
@@ -444,7 +433,6 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             delegate().delegateMonitorEnter(object, currentLockWord, lockwordThreadID);
         }
 
-        @Override
         public int makeHashCode(Object object) {
             // This is under construction!
             nullCheck(object);

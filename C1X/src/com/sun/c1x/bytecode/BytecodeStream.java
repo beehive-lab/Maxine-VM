@@ -46,12 +46,10 @@ public class BytecodeStream {
     }
 
     /**
-     * Advances to the next bytecode and returns its opcode.
-     * @return the opcode of the next bytecode
+     * Advances to the next bytecode.
      */
-    public int next() {
+    public void next() {
         setBCI(_nextBCI);
-        return currentBC();
     }
 
     /**
@@ -68,6 +66,14 @@ public class BytecodeStream {
      */
     public int currentBCI() {
         return _curBCI;
+    }
+
+    /**
+     * Gets the bytecode index of the end of the code.
+     * @return the end of the code
+     */
+    public int endBCI() {
+        return _code.length;
     }
 
     /**
@@ -152,10 +158,10 @@ public class BytecodeStream {
      * @return the constant pool index
      */
     public char readCPI() {
-        if (_opcode == Bytecodes.LDC_W || _opcode == Bytecodes.LDC2_W) {
-            return (char) Bytes.beU2(_code, _curBCI + 1);
+        if (_opcode == Bytecodes.LDC) {
+            return (char) Bytes.beU1(_code, _curBCI + 1);
         }
-        return (char) Bytes.beU1(_code, _curBCI + 1);
+        return (char) Bytes.beU2(_code, _curBCI + 1);
     }
 
     /**

@@ -312,7 +312,6 @@ public final class Iterables {
             public Iterator<Element_Type> iterator() {
                 return Iterators.join(iterable1.iterator(), iterable2.iterator(), iterable3.iterator(), iterable4.iterator());
             }
-            @Override
             public int length() {
                 return iterable1.length() + iterable2.length() + iterable3.length() + iterable4.length();
             }

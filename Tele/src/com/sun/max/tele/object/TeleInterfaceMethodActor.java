@@ -56,7 +56,6 @@ public final class TeleInterfaceMethodActor extends TeleMethodActor {
     }
 
 
-    @Override
     public TargetMethodAccess[] getTargetMethods() {
         return new TargetMethodAccess[0];
     }

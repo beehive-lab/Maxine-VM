@@ -39,7 +39,6 @@ public class EmptyInterpreterScheme extends AbstractVMScheme implements Interpre
         super(vmConfiguration);
     }
 
-    @Override
     public TargetMethod makeInterpretedTargetMethod(ClassMethodActor callee) {
         ProgramError.unexpected();
         return null;

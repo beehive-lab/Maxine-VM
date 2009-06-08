@@ -305,7 +305,6 @@ public class StackInspector extends Inspector {
         refreshView(true);
 
         SwingUtilities.invokeLater(new Runnable() {
-
             public void run() {
                 // System.err.println("setting divider location in stack inspector for " + inspection().inspectionThreadName(_teleNativeThread));
                 // Try to place the split pane divider in the middle of the split pane's space initially
@@ -521,7 +520,6 @@ public class StackInspector extends Inspector {
             final JPanel slotNameFormatPanel = new InspectorPanel(inspection(), new FlowLayout(FlowLayout.LEFT));
             slotNameFormatPanel.add(_showSlotAddresses);
             _showSlotAddresses.addItemListener(new ItemListener() {
-                @Override
                 public void itemStateChanged(ItemEvent e) {
                     refresh(true);
                 }
@@ -621,6 +619,7 @@ public class StackInspector extends Inspector {
         StackFrameMouseClickAdapter(Inspection inspection) {
             super(inspection);
         }
+
         @Override
         public void procedure(final MouseEvent mouseEvent) {
             switch(MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
@@ -670,7 +669,6 @@ public class StackInspector extends Inspector {
             if (oldRightComponent != newRightComponent) {
                 _splitPane.setRightComponent(newRightComponent);
                 SwingUtilities.invokeLater(new Runnable() {
-
                     public void run() {
                         _splitPane.setDividerLocation(dividerLocation);
                     }

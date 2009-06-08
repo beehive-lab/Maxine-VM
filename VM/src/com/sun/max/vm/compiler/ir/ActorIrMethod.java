@@ -40,12 +40,10 @@ public class ActorIrMethod extends AbstractIrMethod {
         super(classMethodActor);
     }
 
-    @Override
     public boolean isGenerated() {
         return true;
     }
 
-    @Override
     public String traceToString() {
         final CharArrayWriter charArrayWriter = new CharArrayWriter();
         final IndentWriter writer = new IndentWriter(charArrayWriter);

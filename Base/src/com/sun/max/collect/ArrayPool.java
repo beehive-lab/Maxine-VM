@@ -45,7 +45,6 @@ public class ArrayPool<PoolObject_Type extends PoolObject> extends Pool<PoolObje
         return _objects.length;
     }
 
-    @Override
     public Iterator<PoolObject_Type> iterator() {
         return Iterators.iterator(_objects);
     }

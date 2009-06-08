@@ -143,7 +143,6 @@ public class TypeLabel extends InspectorLabel {
 
     private MaxVMState _lastRefreshedState = null;
 
-    @Override
     public void refresh(boolean force) {
         if (maxVMState().newerThan(_lastRefreshedState) || force) {
             _lastRefreshedState = maxVMState();

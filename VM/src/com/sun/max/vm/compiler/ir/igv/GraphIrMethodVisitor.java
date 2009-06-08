@@ -46,7 +46,6 @@ class GraphIrMethodVisitor implements IrMethodVisitor {
      * Creates a control flow graph for BirMethod objects and adds it to the {@link _group} field.
      * @param method the method for which the graph is generated
      */
-    @Override
     public void visit(BirMethod method) {
         final String graphName = method.classMethodActor().format("%H.%n(%p)") + "BIR";
         final GraphWriter.Graph graph = _group.createGraph(graphName);
@@ -70,7 +69,6 @@ class GraphIrMethodVisitor implements IrMethodVisitor {
      * Creates a graph for CirMethod objects and adds it to the {@link _group} field.
      * @param method the method for which the graph is generated
      */
-    @Override
     public void visit(CirMethod method) {
         if (_context == null) {
             return;
@@ -87,7 +85,6 @@ class GraphIrMethodVisitor implements IrMethodVisitor {
      * Creates a graph for DirMethod objects and adds it to the {@link _group) field.
      * @param method the method for which the graph is generated
      */
-    @Override
     public void visit(DirMethod method) {
         // TODO: Support DirMethod output.
     }
@@ -96,7 +93,6 @@ class GraphIrMethodVisitor implements IrMethodVisitor {
      * Creates a graph for an EirMethod object and adds it to the {@link _group} field.
      * @param method the method for which the graph is generated
      */
-    @Override
     public void visit(EirMethod method) {
         // TODO: Support EirMethod output.
     }

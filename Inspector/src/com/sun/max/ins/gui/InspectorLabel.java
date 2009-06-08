@@ -77,7 +77,6 @@ public abstract class InspectorLabel extends JTextField implements InspectionHol
         return _inspection.actions();
     }
 
-    @Override
     public String getSearchableText() {
         return getText();
     }

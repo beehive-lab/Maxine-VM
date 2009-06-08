@@ -189,8 +189,6 @@ public class VerifyAllocation extends AlgorithmPart {
 
                 // Visit usages and updates
                 instruction.visitOperands(new Procedure() {
-
-                    @Override
                     public void run(EirOperand operand) {
                         if ((operand.eirValue() instanceof EirVariable) && (operand.effect() == EirOperand.Effect.UPDATE || operand.effect() == EirOperand.Effect.USE)) {
                             final EirVariable variable = (EirVariable) operand.eirValue();
@@ -234,8 +232,6 @@ public class VerifyAllocation extends AlgorithmPart {
 
                 // Visit definitions and updates
                 instruction.visitOperands(new Procedure() {
-
-                    @Override
                     public void run(EirOperand operand) {
                         if ((operand.eirValue() instanceof EirVariable) && (operand.effect() == EirOperand.Effect.UPDATE || operand.effect() == EirOperand.Effect.DEFINITION)) {
                             final EirVariable variable = (EirVariable) operand.eirValue();
@@ -268,8 +264,6 @@ public class VerifyAllocation extends AlgorithmPart {
 
         final VariableSequence<EirBlock> successors = new ArrayListSequence<EirBlock>();
         last.visitSuccessorBlocks(new EirBlock.Procedure() {
-
-            @Override
             public void run(EirBlock block) {
                 successors.append(block);
             }

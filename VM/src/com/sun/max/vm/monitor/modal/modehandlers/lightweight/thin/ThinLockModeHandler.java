@@ -259,7 +259,6 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             super(delegate);
         }
 
-        @Override
         public boolean delegateMonitorEnter(Object object, ModalLockWord64 lockWord, int lockwordThreadID) {
             final ThinLockWord64 thinLockWord = ThinLockWord64.from(lockWord);
             final ThinLockWord64 asUnlocked = thinLockWord.asUnlocked();
@@ -271,7 +270,6 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             return true;
         }
 
-        @Override
         public void delegateMonitorExit(Object object, ModalLockWord64 lockWord) {
             final int lockwordThreadID = encodeCurrentThreadIDForLockword();
             final ThinLockWord64 thinLockWord = ThinLockWord64.from(lockWord);
@@ -283,38 +281,31 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             }
         }
 
-        @Override
         public void delegateMonitorNotify(Object object, boolean all, ModalLockWord64 lockWord) {
             monitorNotify(object, all, ThinLockWord64.from(lockWord));
         }
 
-        @Override
         public void delegateMonitorWait(Object object, long timeout, ModalLockWord64 lockWord) throws InterruptedException {
             monitorWait(object, timeout, ThinLockWord64.from(lockWord));
         }
 
-        @Override
         public boolean delegateThreadHoldsMonitor(Object object, ModalLockWord64 lockWord, VmThread thread, int threadID, boolean[] result) {
             result[0] = threadHoldsMonitor(object, ThinLockWord64.from(lockWord), thread, threadID);
             return true;
         }
 
-        @Override
         public int delegateMakeHashcode(Object object, ModalLockWord64 lockWord) {
             return makeHashCode(object, ThinLockWord64.from(lockWord));
         }
 
-        @Override
         public void delegateAfterGarbageCollection() {
             afterGarbageCollection();
         }
 
-        @Override
         public void delegateBeforeGarbageCollection() {
             beforeGarbageCollection();
         }
 
-        @Override
         public ModalLockWord64 prepareModalLockWord(Object object, ModalLockWord64 currentlockWord) {
             final BiasedLockWord64 biasedLockWord = BiasedLockWord64.from(currentlockWord);
             ThinLockWord64 thinLockWord = ThinLockWord64.from(biasedLockWord.asUnbiasable());
@@ -325,12 +316,10 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             return thinLockWord;
         }
 
-        @Override
         public ModalLockWord64 rePrepareModalLockWord(ModalLockWord64 preparedLockWord, ModalLockWord64 currentlockWord) {
             return prepareModalLockWord(null, currentlockWord);
         }
 
-        @Override
         public void cancelPreparedModalLockWord(ModalLockWord64 preparedLockWord) {
             // Nothing to do
         }
@@ -345,7 +334,6 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             super(delegate);
         }
 
-        @Override
         public void monitorEnter(Object object) {
             nullCheck(object);
             if (MaxineVM.isPrototyping()) {
@@ -364,7 +352,6 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             }
         }
 
-        @Override
         public void monitorExit(Object object) {
             nullCheck(object);
             if (MaxineVM.isPrototyping()) {
@@ -383,12 +370,10 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             }
         }
 
-        @Override
         public Word createMisc(Object object) {
             return ThinLockWord64.unlockedFromHashcode(monitorScheme().createHashCode(object));
         }
 
-        @Override
         public int makeHashCode(Object object) {
             nullCheck(object);
             if (MaxineVM.isPrototyping()) {
@@ -398,14 +383,12 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             return super.makeHashCode(object, lockWord);
         }
 
-        @Override
         public boolean threadHoldsMonitor(Object object, VmThread thread) {
             nullCheck(object);
             final ThinLockWord64 lockWord = ThinLockWord64.from(ObjectAccess.readMisc(object));
             return super.threadHoldsMonitor(object, lockWord, thread, encodeCurrentThreadIDForLockword());
         }
 
-        @Override
         public void monitorNotify(Object object, boolean all) {
             nullCheck(object);
             if (MaxineVM.isPrototyping()) {
@@ -416,7 +399,6 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             super.monitorNotify(object, all, lockWord);
         }
 
-        @Override
         public void monitorWait(Object object, long timeout) throws InterruptedException {
             nullCheck(object);
             if (MaxineVM.isPrototyping()) {

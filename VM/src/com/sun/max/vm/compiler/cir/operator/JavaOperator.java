@@ -75,12 +75,10 @@ public abstract class JavaOperator extends CirOperator {
         _reasonsMayStop &= ~reasonMayStop;
     }
 
-    @Override
     public MethodActor foldingMethodActor() {
         throw Problem.unimplemented();
     }
 
-    @Override
     public String name() {
         return "CirOperator";
     }
@@ -265,7 +263,6 @@ public abstract class JavaOperator extends CirOperator {
             return _cirBuiltin;
         }
 
-        @Override
         public Kind resultKind() {
             return _cirBuiltin.resultKind();
         }
@@ -285,7 +282,6 @@ public abstract class JavaOperator extends CirOperator {
             visitor.visit(this);
         }
 
-        @Override
         public void toLCir(Lowerable op, CirCall call, CompilerScheme compilerScheme) {
             call.setProcedure(_cirBuiltin);
         }
@@ -315,7 +311,6 @@ public abstract class JavaOperator extends CirOperator {
             return _snippet;
         }
 
-        @Override
         public Kind resultKind() {
             return _snippet.resultKind();
         }
@@ -335,7 +330,6 @@ public abstract class JavaOperator extends CirOperator {
             visitor.visit(this);
         }
 
-        @Override
         public void toLCir(Lowerable op, CirCall call, CompilerScheme compilerScheme) {
             call.setProcedure(_snippet);
         }
@@ -360,7 +354,6 @@ public abstract class JavaOperator extends CirOperator {
             _builtin = builtin;
             _snippet = snippet;
         }
-        @Override
         public void toLCir(Lowerable op, CirCall call, CompilerScheme compilerScheme) {
             if (compilerScheme.isBuiltinImplemented(_builtin)) {
                 call.setProcedure(CirBuiltin.get(_builtin));
@@ -368,7 +361,7 @@ public abstract class JavaOperator extends CirOperator {
                 call.setProcedure(CirSnippet.get(_snippet));
             }
         }
-        @Override
+
         public Kind resultKind() {
             return CirBuiltin.get(_builtin).resultKind();
         }

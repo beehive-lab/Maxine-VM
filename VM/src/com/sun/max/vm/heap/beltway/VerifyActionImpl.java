@@ -42,7 +42,6 @@ public class VerifyActionImpl implements Verify {
 
     }
 
-    @Override
     public Grip doAction(Grip grip, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         return verifyGrip(from, grip);
     }
@@ -69,7 +68,6 @@ public class VerifyActionImpl implements Verify {
         }
     }
 
-    @Override
     public void checkHub(Hub hub) {
         Hub h = hub;
         if (h instanceof StaticHub) {

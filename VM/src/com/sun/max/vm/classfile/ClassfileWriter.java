@@ -325,13 +325,11 @@ public class ClassfileWriter {
             super(classActor);
             _interfaceActors = classActor.localInterfaceActors();
             _methods = Arrays.map(Arrays.join(MethodActor.class, classActor.localInterfaceMethodActors(), classActor.localVirtualMethodActors(), classActor.localStaticMethodActors()), MethodInfo.class, new MapFunction<MethodActor, MethodInfo>() {
-                @Override
                 public MethodInfo map(MethodActor methodActor) {
                     return new MethodInfo(methodActor);
                 }
             });
             _fields = Arrays.map(Arrays.join(FieldActor.class, classActor.localInstanceFieldActors(), classActor.localStaticFieldActors()), FieldInfo.class, new MapFunction<FieldActor, FieldInfo>() {
-                @Override
                 public FieldInfo map(FieldActor fieldActor) {
                     return new FieldInfo(fieldActor);
                 }

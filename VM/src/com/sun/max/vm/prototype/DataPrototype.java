@@ -827,8 +827,6 @@ public final class DataPrototype extends Prototype {
             final Address regionStart = m.region().start();
             final int start = n;
             completionService.submit(new Callable<Integer>() {
-
-                @Override
                 public Integer call() throws Exception {
                     int numberOfBytes = 0;
                     final int end = Math.min(objects.length(), start + BATCH);
@@ -979,7 +977,6 @@ public final class DataPrototype extends Prototype {
      * A visitor that sets the relocation flag for the origin of all objects.
      */
     private final PointerOffsetVisitor _originOffsetVisitor = new PointerOffsetVisitor() {
-        @Override
         public void visitPointerOffset(Pointer origin, int offset) {
             setRelocationFlag(origin.plus(offset));
         }
@@ -1029,8 +1026,6 @@ public final class DataPrototype extends Prototype {
         for (int n = 0; n < objects.length(); n += BATCH) {
             final int start = n;
             completionService.submit(new Callable<Integer>() {
-
-                @Override
                 public Integer call() throws Exception {
                     try {
                         int numberOfRelocationsInBatch = 0;

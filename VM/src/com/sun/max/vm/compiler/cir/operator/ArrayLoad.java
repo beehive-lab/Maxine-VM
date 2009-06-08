@@ -33,7 +33,6 @@ public class ArrayLoad extends JavaOperator {
         _kind = kind;
     }
 
-    @Override
     public Kind resultKind() {
         return _kind;
     }

@@ -76,8 +76,6 @@ public class JDWPServer {
      * Thread waiting for clients to connect to the JDWP server.
      */
     private Runnable _waitForClientsThread = new Runnable() {
-
-        @Override
         public void run() {
             LOGGER.info("JDWPServer waiting for clients");
             try {

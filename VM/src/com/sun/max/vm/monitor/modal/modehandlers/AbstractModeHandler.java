@@ -45,7 +45,6 @@ public abstract class AbstractModeHandler implements ModeHandler {
     }
 
     @INLINE
-    @Override
     public final ModeDelegate delegate() {
         return _delegate;
     }

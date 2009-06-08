@@ -49,7 +49,6 @@ public class IndexedSequencePool<PoolObject_Type extends PoolObject> extends Poo
         return _indexedSequence.length();
     }
 
-    @Override
     public Iterator<PoolObject_Type> iterator() {
         assert _indexedSequence.length() == _length;
         return _indexedSequence.iterator();

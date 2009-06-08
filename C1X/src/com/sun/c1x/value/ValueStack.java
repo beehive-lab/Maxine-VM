@@ -82,7 +82,7 @@ public class ValueStack {
         if (stackSize() == 0) {
             size = 0;
         }
-        ValueStack s = new ValueStack(scope(), localsSize(), size);
+        ValueStack s = new ValueStack(scope(), localsSize(), maxStackSize());
         s._lockStack = true;
         s.replaceLocks(this);
         s.replaceLocals(this);
@@ -211,8 +211,7 @@ public class ValueStack {
             if (x.type().isIllegal()) {
                 return null;
             }
-            assert !(x instanceof HiWord);
-            assert isSingleWord(x) || checkHiWord(i, x);
+            assert x.type().isSingleWord() || _values[i + 1] == null;
         }
         return x;
     }
@@ -232,7 +231,6 @@ public class ValueStack {
             if (isDoubleWord(h)) {
                 _values[i + 2] = null;
             }
-            _values[i + 1] = new HiWord(x);
         }
         if (i > 0) {
             // if there was a double word at i - 1, then kill it
@@ -284,8 +282,6 @@ public class ValueStack {
     public Instruction stackAt(int i) {
         final Instruction x = _values[i + _maxLocals];
         assert i < _stackIndex;
-        assert !(x instanceof HiWord);
-        assert isSingleWord(x) || checkHiWord(x.subst(), _values[_maxLocals + i + 1]);
         return x;
     }
 
@@ -295,10 +291,7 @@ public class ValueStack {
      * @return the instruction that produced the value for the specified local
      */
     public Instruction localAt(int i) {
-        final Instruction x = _values[i];
-        assert !(x instanceof HiWord);
-        assert isSingleWord(x) || checkHiWord(x.subst(), _values[_maxLocals + i + 1]);
-        return x;
+        return _values[i];
     }
 
     /**
@@ -344,6 +337,7 @@ public class ValueStack {
      * @param x the instruction to push onto the stack
      */
     public void xpush(Instruction x) {
+        assert _stackIndex >= 0;
         _values[_maxLocals + _stackIndex++] = x;
     }
 
@@ -385,7 +379,7 @@ public class ValueStack {
      */
     public void lpush(Instruction x) {
         xpush(checkTag(ValueTag.LONG_TAG, x));
-        xpush(new HiWord(x));
+        xpush(null);
     }
 
     /**
@@ -394,7 +388,7 @@ public class ValueStack {
      */
     public void dpush(Instruction x) {
         xpush(checkTag(ValueTag.DOUBLE_TAG, x));
-        xpush(new HiWord(x));
+        xpush(null);
     }
 
     /**
@@ -419,6 +413,7 @@ public class ValueStack {
      * @return x the instruction popped off the stack
      */
     public Instruction xpop() {
+        assert _stackIndex >= 1;
         return _values[_maxLocals + --_stackIndex];
     }
 
@@ -443,7 +438,7 @@ public class ValueStack {
      * @return x the instruction popped off the stack
      */
     public Instruction apop() {
-        return checkTag(ValueTag.ADDRESS_TAG, xpop());
+        return checkTag(ValueTag.OBJECT_TAG, xpop());
     }
 
     /**
@@ -459,7 +454,8 @@ public class ValueStack {
      * @return x the instruction popped off the stack
      */
     public Instruction lpop() {
-        assert xpop() instanceof HiWord;
+        final Instruction high = xpop();
+        assert high == null;
         return checkTag(ValueTag.LONG_TAG, xpop());
     }
 
@@ -468,7 +464,8 @@ public class ValueStack {
      * @return x the instruction popped off the stack
      */
     public Instruction dpop() {
-        assert xpop() instanceof HiWord;
+        final Instruction high = xpop();
+        assert high == null;
         return checkTag(ValueTag.DOUBLE_TAG, xpop());
     }
 
@@ -563,9 +560,6 @@ public class ValueStack {
         assert !(p instanceof Phi) || ((Phi) p).block() != block : "phi already created for this block";
         Instruction phi = new Phi(p.type(), block, -i - 1);
         _values[_maxLocals + i] = phi;
-        if (isDoubleWord(p)) {
-            _values[_maxLocals + i + 1] = new HiWord(phi);
-        }
     }
 
     /**
@@ -585,7 +579,8 @@ public class ValueStack {
      * @param closure the closure to apply to each value
      */
     public void valuesDo(InstructionClosure closure) {
-        for (int i = 0; i < _stackIndex; i++) {
+        final int max = valuesSize();
+        for (int i = 0; i < max; i++) {
             _values[i] = closure.apply(_values[i]);
         }
         if (_locks != null) {
@@ -664,16 +659,8 @@ public class ValueStack {
         return x != null && x.type().isDoubleWord();
     }
 
-    private boolean isSingleWord(Instruction x) {
-        return x == null || x.type().isSingleWord();
-    }
-
     private boolean checkHiWord(int i, Instruction x) {
         Instruction h = _values[i + 1];
-        return h == null || (h instanceof HiWord) && ((HiWord) h).lowWord() == x;
-    }
-
-    private boolean checkHiWord(Instruction x, Instruction h) {
         return h == null || (h instanceof HiWord) && ((HiWord) h).lowWord() == x;
     }
 }

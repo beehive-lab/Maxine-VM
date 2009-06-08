@@ -291,7 +291,6 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         }) != null;
     }
 
-    @Override
     public int reasonsMayStop() {
         return Stoppable.CALL;
     }

@@ -147,17 +147,14 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
             updateSelection();
         }
 
-        @Override
         public int getColumnCount() {
             return ThreadsColumnKind.VALUES.length();
         }
 
-        @Override
         public int getRowCount() {
             return maxVMState().threads().length();
         }
 
-        @Override
         public Object getValueAt(int row, int col) {
             int count = 0;
             for (TeleNativeThread teleNativeThread : maxVMState().threads()) {
@@ -193,7 +190,6 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
             super(inspection, null);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final TeleNativeThread teleNativeThread = (TeleNativeThread) value;
             final int id = teleNativeThread.id();
@@ -220,7 +216,6 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
             super(inspection, null);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final TeleNativeThread teleNativeThread = (TeleNativeThread) value;
             final String handleString = Long.toString(teleNativeThread.handle());
@@ -241,7 +236,6 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
             super(inspection, null);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final TeleNativeThread teleNativeThread = (TeleNativeThread) value;
             final TeleVmThread teleVmThread = teleNativeThread.teleVmThread();
@@ -272,7 +266,6 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
             super(inspection, null);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final TeleNativeThread teleNativeThread = (TeleNativeThread) value;
             setValue(inspection().nameDisplay().shortName(teleNativeThread), "Name:  " + inspection().nameDisplay().longName(teleNativeThread));
@@ -291,7 +284,6 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
             super(inspection, null);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final TeleNativeThread teleNativeThread = (TeleNativeThread) value;
             final String status = teleNativeThread.state().toString();

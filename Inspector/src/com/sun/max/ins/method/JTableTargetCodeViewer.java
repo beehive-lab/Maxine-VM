@@ -470,12 +470,10 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             return false;
         }
 
-        @Override
         public void redisplay() {
             // not used pending further refactoring
         }
 
-        @Override
         public void refresh(boolean force) {
             // not used pending further refactoring
         }
@@ -586,11 +584,9 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             return "";
         }
 
-        @Override
         public void redisplay() {
         }
 
-        @Override
         public void refresh(boolean force) {
         }
     }
@@ -744,7 +740,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                                     if (maxVM().findJavaSourceFile(location.classMethodActor().holder()) != null) {
                                         final BytecodeLocation locationCopy = location;
                                         menu.add(new AbstractAction("Open " + fileName + " at line " + lineNumber) {
-                                            @Override
                                             public void actionPerformed(ActionEvent e) {
                                                 inspection().viewSourceExternally(locationCopy);
                                             }
@@ -769,7 +764,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             return text;
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BytecodeLocation bytecodeLocation = rowToBytecodeLocation(row);
             setText("");
@@ -802,7 +796,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             }
         }
 
-        @Override
         public void redisplay() {
             for (InspectorLabel wordValueLabel : _wordValueLabels) {
                 if (wordValueLabel != null) {

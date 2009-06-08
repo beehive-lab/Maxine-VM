@@ -373,7 +373,6 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
             super(inspection, null);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = _model.get(row);
             setText(breakpointData.kindTag());
@@ -393,7 +392,6 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
             super(inspection, null);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = _model.get(row);
             setValue(breakpointData.shortName(), breakpointData.longName());
@@ -412,7 +410,6 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
             super(inspection, null);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = _model.get(row);
             setText(Integer.toString(breakpointData.location()));
@@ -444,12 +441,10 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
             return component;
         }
 
-        @Override
         public void redisplay() {
             setFont(inspection().style().defaultFont());
         }
 
-        @Override
         public void refresh(boolean force) {
         }
     }
@@ -459,7 +454,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
         TriggerThreadCellRenderer(Inspection inspection) {
             super(inspection, null);
         }
-        @Override
+
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = _model.get(row);
             if (breakpointData.triggerThread() != null) {
@@ -547,7 +542,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
                 menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
             }
         }
-    };
+    }
 
     /**
      * Summary of information about a breakpoint that is useful for inspection.

@@ -113,12 +113,10 @@ public class TirTree extends AbstractIrMethod {
         return _entryState.frames().first().toString();
     }
 
-    @Override
     public boolean isGenerated() {
         return false;
     }
 
-    @Override
     public String traceToString() {
         return null;
     }
@@ -140,7 +138,6 @@ public class TirTree extends AbstractIrMethod {
         final Class<? extends TirInstruction> cls = instruction.getClass();
         send(new TirReverse(new TirMessageSink() {
             private int _number = 0;
-            @Override
             public void receive(TirMessage message) {
                 if (cls.isAssignableFrom(message.getClass())) {
                     if (message == instruction) {

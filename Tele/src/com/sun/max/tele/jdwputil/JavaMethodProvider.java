@@ -42,23 +42,19 @@ class JavaMethodProvider implements MethodProvider {
         _vm = vm;
     }
 
-    @Override
     public int getFlags() {
         return _method.getModifiers();
     }
 
-    @Override
     public LineTableEntry[] getLineTable() {
         return new LineTableEntry[0];
     }
 
-    @Override
     public String getName() {
         // TODO: Check if this is correct.
         return _method.getName();
     }
 
-    @Override
     public int getNumberOfArguments() {
         int count = Modifier.isStatic(_method.getModifiers()) ? 0 : 1;
         for (Class type : _method.getParameterTypes()) {
@@ -71,28 +67,23 @@ class JavaMethodProvider implements MethodProvider {
         return count;
     }
 
-    @Override
     public ReferenceTypeProvider getReferenceTypeHolder() {
         return _holder;
     }
 
-    @Override
     public String getSignature() {
         return SignatureDescriptor.fromJava(_method).toString();
     }
 
-    @Override
     public String getSignatureWithGeneric() {
         // TODO: Check if this is correct.
         return getSignature();
     }
 
-    @Override
     public VariableTableEntry[] getVariableTable() {
         return new VariableTableEntry[0];
     }
 
-    @Override
     public VMValue invoke(ObjectProvider object, VMValue[] args, ThreadProvider threadProvider, boolean singleThreaded, boolean nonVirtual) {
 
         LOGGER.info("Method " + _method.getName() + " of class " + _method.getDeclaringClass() + " was invoked with arguments: " + args);
@@ -127,12 +118,10 @@ class JavaMethodProvider implements MethodProvider {
         return _vm.createJavaObjectValue(result, _method.getReturnType());
     }
 
-    @Override
     public VMValue invokeStatic(VMValue[] args, ThreadProvider threadProvider, boolean singleThreaded) {
         return invoke(null, args, threadProvider, singleThreaded, false);
     }
 
-    @Override
     public TargetMethodAccess[] getTargetMethods() {
         return new TargetMethodAccess[0];
     }

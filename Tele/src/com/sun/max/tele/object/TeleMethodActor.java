@@ -101,12 +101,10 @@ public abstract class TeleMethodActor extends TeleMemberActor implements TeleRou
         return "MethodActor";
     }
 
-    @Override
     public String getUniqueName() {
         return "TeleJavaMethod: " + methodActor().format("%R %H.%n(%P)");
     }
 
-    @Override
     public VMValue invoke(ObjectProvider object, VMValue[] args, ThreadProvider threadProvider, boolean singleThreaded, boolean nonVirtual) {
         final VMValue[] newArgs = new VMValue[args.length + 1];
         newArgs[0] = teleVM().vmAccess().createObjectProviderValue(object);
@@ -116,7 +114,6 @@ public abstract class TeleMethodActor extends TeleMemberActor implements TeleRou
         return invokeStatic(newArgs, threadProvider, singleThreaded);
     }
 
-    @Override
     public VMValue invokeStatic(VMValue[] args, ThreadProvider threadProvider, boolean singleThreaded) {
         // TODO: Check ClassMethodActor / MethodActor relationship
         final com.sun.max.vm.value.Value[] realArgs = new com.sun.max.vm.value.Value[args.length];
@@ -132,7 +129,6 @@ public abstract class TeleMethodActor extends TeleMemberActor implements TeleRou
         }
     }
 
-    @Override
     public ReferenceTypeProvider getReferenceTypeHolder() {
         return super.getTeleHolder();
     }

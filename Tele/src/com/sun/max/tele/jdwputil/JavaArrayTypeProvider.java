@@ -40,12 +40,10 @@ public class JavaArrayTypeProvider extends JavaClassProvider implements ArrayTyp
         _vm = vm;
     }
 
-    @Override
     public ReferenceTypeProvider elementType() {
         return _elementType;
     }
 
-    @Override
     public ArrayProvider newInstance(int length) {
         final Object array = Array.newInstance(_class.getComponentType(), length);
         final Provider result = _vm.createJavaObjectValue(array, _class).asProvider();

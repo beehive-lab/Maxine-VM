@@ -1639,8 +1639,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "View bytecode for method in class...", "Select");
             if (teleClassActor != null) {
                 final Predicate<TeleMethodActor> hasBytecodePredicate = new Predicate<TeleMethodActor>() {
-
-                    @Override
                     public boolean evaluate(TeleMethodActor teleMethodActor) {
                         return teleMethodActor.hasCodeAttribute();
                     }

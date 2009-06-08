@@ -199,7 +199,6 @@ public abstract class X86DisassembledInstruction<Template_Type extends X86Templa
         return argument.disassembledValue();
     }
 
-    @Override
     public String mnemonic() {
         return template().externalName();
     }

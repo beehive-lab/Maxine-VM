@@ -188,7 +188,6 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         updateFrameTitle();
     }
 
-    @Override
     public void viewConfigurationChanged() {
         reconstructView();
     }

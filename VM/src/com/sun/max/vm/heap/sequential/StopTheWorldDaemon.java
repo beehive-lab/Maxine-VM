@@ -53,7 +53,6 @@ import com.sun.max.util.timer.TimerUtil;
 public class StopTheWorldDaemon extends BlockingServerDaemon {
 
     private static Safepoint.Procedure _suspendProcedure = new Safepoint.Procedure() {
-        @Override
         public void run(Pointer trapState) {
             // note that this procedure always runs with safepoints disabled
             final Pointer vmThreadLocals = Safepoint.getLatchRegister();

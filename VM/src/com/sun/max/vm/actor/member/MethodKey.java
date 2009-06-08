@@ -42,7 +42,6 @@ public interface MethodKey  {
     SignatureDescriptor signature();
 
     Comparator<MethodKey> SORT_BY_NAME_AND_SIGNATURE = new Comparator<MethodKey>() {
-        @Override
         public int compare(MethodKey methodKey1, MethodKey methodKey2) {
             final int nameComparison = methodKey1.name().compareTo(methodKey2.name());
             if (nameComparison != 0) {
@@ -53,14 +52,11 @@ public interface MethodKey  {
     };
 
     HashEquivalence<MethodKey> EQUIVALENCE = new HashEquivalence<MethodKey>() {
-        @Override
         public boolean equivalent(MethodKey object1, MethodKey object2) {
             return object1.holder().equals(object2.holder()) &&
                 object1.name().equals(object2.name()) &&
                 object1.signature().equals(object2.signature());
         }
-
-        @Override
         public int hashCode(MethodKey object) {
             return object.name().hashCode() ^ object.signature().hashCode();
         }

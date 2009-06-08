@@ -19,7 +19,7 @@
  * Company, Ltd.
  */
 /**
- * 
+ *
  */
 package com.sun.max.test;
 
@@ -30,7 +30,6 @@ import com.sun.max.test.JavaExecHarness.*;
 import com.sun.max.util.*;
 
 public class ReflectiveExecutor implements Executor {
-    @Override
     public void initialize(JavaTestCase c, boolean loadingPackages) {
         for (Method m : c._class.getDeclaredMethods()) {
             if (m.getName().equals("test") && (m.getModifiers() & Modifier.STATIC) != 0) {
@@ -41,7 +40,6 @@ public class ReflectiveExecutor implements Executor {
         ProgramError.unexpected("could not find static test() method");
     }
 
-    @Override
     public Object execute(JavaExecHarness.JavaTestCase c, Object[] vals) throws InvocationTargetException {
         try {
             final Method m = (Method) c._slot1;

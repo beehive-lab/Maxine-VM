@@ -46,7 +46,6 @@ public class BeltwaySSCollector implements Runnable {
     public BeltwaySSCollector() {
     }
 
-    @Override
     public void run() {
         _collections++;
         if (Heap.verbose()) {

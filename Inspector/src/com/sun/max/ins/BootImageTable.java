@@ -230,17 +230,14 @@ public class BootImageTable extends InspectorTable {
             }
         }
 
-        @Override
         public int getColumnCount() {
             return BootImageColumnKind.VALUES.length();
         }
 
-        @Override
         public int getRowCount() {
             return _names.length();
         }
 
-        @Override
         public Object getValueAt(int row, int col) {
             switch (BootImageColumnKind.VALUES.get(col)) {
                 case NAME:
@@ -273,7 +270,6 @@ public class BootImageTable extends InspectorTable {
             super(inspection, null);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final String name = (String) value;
             setText(name);
@@ -284,7 +280,6 @@ public class BootImageTable extends InspectorTable {
 
     private final class ValueCellRenderer implements TableCellRenderer {
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             return (InspectorLabel) value;
         }
@@ -292,7 +287,6 @@ public class BootImageTable extends InspectorTable {
 
     private final class RegionCellRenderer implements TableCellRenderer {
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             return (InspectorLabel) value;
         }

@@ -326,7 +326,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
 
     public InspectorAction getCloseOtherInspectorsAction() {
         final Predicate<Inspector> predicate = new Predicate<Inspector>() {
-            @Override
             public boolean evaluate(Inspector inspector) {
                 return inspector != Inspector.this;
             }

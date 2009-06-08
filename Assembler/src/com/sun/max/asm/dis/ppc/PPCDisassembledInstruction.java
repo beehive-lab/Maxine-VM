@@ -35,7 +35,6 @@ public abstract class PPCDisassembledInstruction extends RiscDisassembledInstruc
         super(disassembler, position, bytes, template, arguments);
     }
 
-    @Override
     public String mnemonic() {
         final PPCExternalInstruction instruction = new PPCExternalInstruction(template(), arguments(), startAddress(), null);
         return instruction.name();

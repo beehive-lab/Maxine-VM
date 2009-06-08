@@ -131,7 +131,6 @@ public class ArraySequence<Element_Type> implements MutableSequence<Element_Type
         return to;
     }
 
-    @Override
     public Collection<Element_Type> toCollection() {
         return java.util.Arrays.asList(_array);
     }

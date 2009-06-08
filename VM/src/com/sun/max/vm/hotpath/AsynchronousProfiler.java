@@ -57,7 +57,6 @@ public class AsynchronousProfiler implements Runnable {
         _profilerThread.start();
     }
 
-    @Override
     public void run() {
         try {
             while (true) {

@@ -85,7 +85,6 @@ public interface DeterministicSet<Element_Type> extends Sequence<Element_Type> {
                 }
             }
 
-            @Override
             public Collection<Element_Type> toCollection() {
                 return Collections.emptySet();
             }
@@ -160,7 +159,6 @@ public interface DeterministicSet<Element_Type> extends Sequence<Element_Type> {
             }
         }
 
-        @Override
         public Collection<Element_Type> toCollection() {
             return Collections.singleton(_element);
         }

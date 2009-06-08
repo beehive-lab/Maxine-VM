@@ -31,7 +31,6 @@ public class MonitorEnter extends JavaOperator {
         super(CALL | NULL_POINTER_CHECK);
     }
 
-    @Override
     public Kind resultKind() {
         return Kind.VOID;
     }

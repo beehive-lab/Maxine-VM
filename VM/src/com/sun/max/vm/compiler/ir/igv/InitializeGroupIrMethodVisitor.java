@@ -54,26 +54,22 @@ class InitializeGroupIrMethodVisitor implements IrMethodVisitor {
         group.getProperties().setProperty(NAME_PROPERTY_NAME, method.classMethodActor().format("%H.%n(%p)") + " / " + suffix);
     }
 
-    @Override
     public void visit(BirMethod method) {
         _group.getProperties().setProperty(TYPE_PROPERTY_NAME, BIR_TYPE_PROPERTY_VALUE);
         initGroupName(_group, method, BIR_NAME_PROPERTY_SUFFIX);
     }
 
-    @Override
     public void visit(CirMethod method) {
         _group.getProperties().setProperty(TYPE_PROPERTY_NAME, CIR_TYPE_PROPERTY_VALUE);
         initGroupName(_group, method, CIR_NAME_PROPERTY_SUFFIX);
     }
 
-    @Override
     public void visit(DirMethod method) {
         _group.getProperties().setProperty(TYPE_PROPERTY_NAME, DIR_TYPE_PROPERTY_VALUE);
         initGroupName(_group, method, DIR_NAME_PROPERTY_SUFFIX);
 
     }
 
-    @Override
     public void visit(EirMethod method) {
         _group.getProperties().setProperty(TYPE_PROPERTY_NAME, EIR_TYPE_PROPERTY_VALUE);
         initGroupName(_group, method, EIR_NAME_PROPERTY_SUFFIX);
