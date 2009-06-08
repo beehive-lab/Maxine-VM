@@ -494,22 +494,16 @@ public interface MaxVM {
      */
     void removeVMStateObserver(TeleVMStateObserver observer);
 
+
+    /**
+     * Writes a textual summary describing the current {@link #maxVMState()}, including all predecessor states.
+     */
+    void describeVMStateHistory(PrintStream printStream);
+
     /**
      * @return a collection of all current threads in the VM, ordered by threadID.
      */
     IterableWithLength<TeleNativeThread> threads();
-
-    //TODO (mlvdv) bogus
-    /**
-     * @return threads created since the previous ???
-     */
-    IterableWithLength<TeleNativeThread> recentlyCreatedThreads();
-
-    //TODO (mlvdv) bogus
-    /**
-     * @return threads died since the previous ???
-     */
-    IterableWithLength<TeleNativeThread> recentlyDiedThreads();
 
     /**
      * @param threadID

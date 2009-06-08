@@ -207,6 +207,7 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
     private JMenu createTestMenu() {
         final JMenu menu = new JMenu("Test");
         menu.add(_actions.viewFocus());
+        menu.add(_actions.listVMStateHistory());
         menu.add(_actions.listCodeRegistry());
         menu.add(_actions.listCodeRegistryToFile());
         return menu;

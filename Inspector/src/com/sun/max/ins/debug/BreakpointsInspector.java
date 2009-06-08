@@ -173,10 +173,4 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
         super.inspectorClosing();
     }
 
-    @Override
-    public void vmProcessTerminated() {
-        _breakpointsInspector = null;
-        _viewPreferences.removeListener(this);
-        dispose();
-    }
 }

@@ -183,9 +183,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         refreshView(force);
     }
 
-    public void threadSetChanged() {
-    }
-
     public void threadStateChanged(TeleNativeThread teleNativeThread) {
     }
 

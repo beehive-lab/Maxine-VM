@@ -137,7 +137,8 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
     }
 
     /**
-     * A table data model wrapped around the thread list in the VM.
+     * A table data model wrapped around the thread list in the
+     * current state of the VM. The list goes empty with the process dies.
      */
     private final class ThreadsTableModel extends AbstractTableModel {
 
@@ -151,12 +152,12 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
         }
 
         public int getRowCount() {
-            return maxVM().threads().length();
+            return maxVMState().threads().length();
         }
 
         public Object getValueAt(int row, int col) {
             int count = 0;
-            for (TeleNativeThread teleNativeThread : maxVM().threads()) {
+            for (TeleNativeThread teleNativeThread : maxVMState().threads()) {
                 if (count == row) {
                     return teleNativeThread;
                 }
@@ -172,7 +173,7 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
 
         public int findRow(TeleNativeThread teleNativeThread) {
             int row = 0;
-            for (TeleNativeThread thread : maxVM().threads()) {
+            for (TeleNativeThread thread : maxVMState().threads()) {
                 if (thread == teleNativeThread) {
                     return row;
                 }

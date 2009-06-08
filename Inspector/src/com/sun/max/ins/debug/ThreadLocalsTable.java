@@ -209,6 +209,9 @@ public final class ThreadLocalsTable extends InspectorTable {
             final Address address = _model.rowToAddress(row);
             String registerNameList = null;
             final TeleIntegerRegisters teleIntegerRegisters = _teleNativeThread.integerRegisters();
+            if (teleIntegerRegisters == null) {
+                return gui().getMissingDataTableCellRederer();
+            }
             final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(maxVM().wordSize()));
             if (registerSymbols.isEmpty()) {
                 setText("");

@@ -27,6 +27,7 @@ import com.sun.max.ins.method.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -276,7 +277,10 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
 
     @Override
     public void breakpointSetChanged() {
-        refreshView(true);
+        // TODO (mlvdv)  Data reading PATCH
+        if (maxVMState().processState() != ProcessState.TERMINATED) {
+            refreshView(true);
+        }
     }
 
     public void close() {

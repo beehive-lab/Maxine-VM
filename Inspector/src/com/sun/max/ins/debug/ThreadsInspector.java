@@ -134,10 +134,4 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         super.inspectorClosing();
     }
 
-    @Override
-    public void vmProcessTerminated() {
-        _threadsInspector = null;
-        dispose();
-    }
-
 }

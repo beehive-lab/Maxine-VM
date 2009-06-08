@@ -149,4 +149,9 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         super.inspectorClosing();
     }
 
+    @Override
+    public void vmProcessTerminated() {
+        reconstructView();
+    }
+
 }
