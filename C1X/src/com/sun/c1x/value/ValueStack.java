@@ -247,7 +247,7 @@ public class ValueStack {
      * @param with the value stack containing the new local variables
      */
     public void replaceLocals(ValueStack with) {
-        assert with._values.length == _values.length;
+        assert with._maxLocals == _maxLocals;
         System.arraycopy(with._values, 0, _values, 0, _maxLocals);
     }
 
@@ -257,7 +257,7 @@ public class ValueStack {
      * @param with the value stack containing the new local variables
      */
     public void replaceStack(ValueStack with) {
-        System.arraycopy(with._values, _maxLocals, _values, _maxLocals, with._stackIndex);
+        System.arraycopy(with._values, with._maxLocals, _values, _maxLocals, with._stackIndex);
         _stackIndex = with._stackIndex;
     }
 

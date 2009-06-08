@@ -410,6 +410,19 @@ public class ScopeData {
     }
 
     /**
+     * Adds an exception handler to this scope data.
+     * @param handler the handler to add
+     */
+    public void addExceptionHandler(ExceptionHandler handler) {
+        if (_jsrHandlers == null) {
+            assert !_parsingJsr;
+            _scope.addExceptionHandler(handler);
+        } else {
+            _jsrHandlers.add(handler);
+        }
+    }
+
+    /**
      * Adds a block to the worklist, if it is not already in the worklist.
      * This method will keep the worklist topologically stored (i.e. the lower
      * DFNs are earlier in the list).

@@ -87,7 +87,7 @@ public class GraphBuilder {
             CiExceptionHandler desc = newDefaultExceptionHandler(method);
             ExceptionHandler h = new ExceptionHandler(desc);
             h.setEntryBlock(syncHandler);
-            _scopeData.exceptionHandlers().add(h);
+            _scopeData.addExceptionHandler(h);
             _scopeData.setHasHandler();
         }
 
@@ -1582,7 +1582,7 @@ public class GraphBuilder {
         CiExceptionHandler handler = newDefaultExceptionHandler(method());
         ExceptionHandler h = new ExceptionHandler(handler);
         h.setEntryBlock(syncHandler);
-        _scopeData.exceptionHandlers().add(h);
+        _scopeData.addExceptionHandler(h);
         _scopeData.setHasHandler();
     }
 

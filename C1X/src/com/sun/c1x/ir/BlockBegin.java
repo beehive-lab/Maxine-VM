@@ -530,4 +530,34 @@ public class BlockBegin extends StateSplit {
         copyBlockFlag(other, BlockBegin.BlockFlag.WasVisited);
     }
 
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("block #");
+        builder.append(_blockID);
+        builder.append(" [");
+        boolean hasFlag = false;
+        for (BlockFlag f : BlockFlag.values()) {
+            if (checkBlockFlag(f)) {
+                if (hasFlag) {
+                    builder.append(' ');
+                }
+                builder.append(f.name());
+                hasFlag = true;
+            }
+        }
+        builder.append("]");
+        if (_end != null) {
+            builder.append(" -> ");
+            boolean hasSucc = false;
+            for (BlockBegin s : _end.successors()) {
+                if (hasSucc) {
+                    builder.append(", ");
+                }
+                builder.append("#");
+                builder.append(s._blockID);
+                hasSucc = true;
+            }
+        }
+        return builder.toString();
+    }
 }
