@@ -92,6 +92,7 @@ public abstract class JavaOperator extends CirOperator {
         visitor.visit(this);
     }
 
+    @Override
     public abstract String toString();
 
     /**
@@ -266,6 +267,7 @@ public abstract class JavaOperator extends CirOperator {
             return _cirBuiltin.resultKind();
         }
 
+        @Override
         public Kind[] parameterKinds() {
             return _cirBuiltin.parameterKinds();
         }
@@ -284,6 +286,7 @@ public abstract class JavaOperator extends CirOperator {
             call.setProcedure(_cirBuiltin);
         }
 
+        @Override
         public String toString() {
             return _cirBuiltin.name();
         }
@@ -312,6 +315,7 @@ public abstract class JavaOperator extends CirOperator {
             return _snippet.resultKind();
         }
 
+        @Override
         public Kind[] parameterKinds() {
             return _snippet.parameterKinds();
         }
@@ -330,6 +334,7 @@ public abstract class JavaOperator extends CirOperator {
             call.setProcedure(_snippet);
         }
 
+        @Override
         public String toString() {
             return _snippet.name();
         }
@@ -361,6 +366,7 @@ public abstract class JavaOperator extends CirOperator {
             return CirBuiltin.get(_builtin).resultKind();
         }
 
+        @Override
         public Kind[] parameterKinds() {
             return CirBuiltin.get(_builtin).parameterKinds();
         }
@@ -375,6 +381,7 @@ public abstract class JavaOperator extends CirOperator {
             visitor.visit(this);
         }
 
+        @Override
         public String toString() {
             return _builtin.name();
         }

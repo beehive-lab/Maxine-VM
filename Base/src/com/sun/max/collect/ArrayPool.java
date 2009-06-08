@@ -35,10 +35,12 @@ public class ArrayPool<PoolObject_Type extends PoolObject> extends Pool<PoolObje
         _objects = objects;
     }
 
+    @Override
     public PoolObject_Type get(int serial) {
         return _objects[serial];
     }
 
+    @Override
     public int length() {
         return _objects.length;
     }

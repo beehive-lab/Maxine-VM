@@ -37,11 +37,13 @@ public class IndexedSequencePool<PoolObject_Type extends PoolObject> extends Poo
         _length = indexedSequence.length();
     }
 
+    @Override
     public PoolObject_Type get(int serial) {
         assert _indexedSequence.length() == _length;
         return _indexedSequence.get(serial);
     }
 
+    @Override
     public int length() {
         assert _indexedSequence.length() == _length;
         return _indexedSequence.length();

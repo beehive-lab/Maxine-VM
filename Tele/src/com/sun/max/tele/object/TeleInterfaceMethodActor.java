@@ -44,6 +44,7 @@ public final class TeleInterfaceMethodActor extends TeleMethodActor {
         return (InterfaceMethodActor) methodActor();
     }
 
+    @Override
     public TeleCodeAttribute getTeleCodeAttribute() {
         return null;
     }

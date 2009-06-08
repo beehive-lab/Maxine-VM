@@ -40,11 +40,13 @@ public abstract class PPCDisassembledInstruction extends RiscDisassembledInstruc
         return instruction.name();
     }
 
+    @Override
     public String operandsToString(AddressMapper addressMapper) {
         final PPCExternalInstruction instruction = new PPCExternalInstruction(template(), arguments(), startAddress(), addressMapper);
         return instruction.operands();
     }
 
+    @Override
     public String toString(AddressMapper addressMapper) {
         final PPCExternalInstruction instruction = new PPCExternalInstruction(template(), arguments(), startAddress(), addressMapper);
         return instruction.toString();

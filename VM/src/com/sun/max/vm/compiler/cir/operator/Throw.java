@@ -48,10 +48,12 @@ public class Throw extends JavaOperator implements Lowerable{
 
     private static final Kind[] _parameterKinds = {Kind.REFERENCE};
 
+    @Override
     public Kind[] parameterKinds() {
         return _parameterKinds;
     }
 
+    @Override
     public String toString() {
         return "Throw";
     }
