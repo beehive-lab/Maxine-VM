@@ -72,6 +72,14 @@ public class TimerMetric implements Timer, Metric {
         _nested = 0;
     }
 
+    public long getElapsedTime() {
+        return _elapsed;
+    }
+
+    public long getNestedTime() {
+        return _nested;
+    }
+
     public synchronized void report(String name, PrintStream stream) {
         if (_count > 0) {
             final long hz = _timer.getClock().getHZ();

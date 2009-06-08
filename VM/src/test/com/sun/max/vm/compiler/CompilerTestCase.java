@@ -433,7 +433,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
 
     protected void compileClass(ClassActor classActor) {
         for (MethodActor methodActor : classActor.getLocalMethodActors()) {
-            if (!methodActor.isAbstract() && !methodActor.isBuiltin() && !MaxineVM.isPrototypeOnly(methodActor)) {
+            if (!methodActor.isAbstract() && !methodActor.isBuiltin()) {
                 final ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
                 if (classMethodActor.isClassInitializer() && classMethodActor.holder().name().toString().contains("HexByte")) {
                     continue;

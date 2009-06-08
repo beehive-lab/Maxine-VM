@@ -96,12 +96,8 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
             return;
         }
 
-        final String[] vmArguments;
         if (_vmArguments.getValue() != null) {
-            vmArguments = _vmArguments.getValue().split("\\s+");
-            VMOption.setVMArguments(vmArguments);
-        } else {
-            vmArguments = null;
+            VMOption.setVMArguments(_vmArguments.getValue().split("\\s+"));
         }
 
         System.setProperty(IrObserverConfiguration.IR_TRACE_PROPERTY, _irTraceLevel.getValue() + ":");
@@ -173,13 +169,7 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
         Trace.stream().println("Initializing compiler...");
         junit.textui.TestRunner.run(new CompilerRunner(suite));
 
-        if (vmArguments != null) {
-            for (String argument : vmArguments) {
-                if (argument != null) {
-                    ProgramWarning.message("VM argument not matched by any VM option: " + argument);
-                }
-            }
-        }
+        VMOptions.beforeExit();
     }
 
     private static String createTestName(Class javaClass, String methodName, SignatureDescriptor signature) {

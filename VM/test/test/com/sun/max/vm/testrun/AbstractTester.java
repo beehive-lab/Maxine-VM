@@ -20,6 +20,7 @@
  */
 package test.com.sun.max.vm.testrun;
 
+import static com.sun.max.vm.VMOptions.*;
 import test.com.sun.max.vm.testrun.all.*;
 
 import com.sun.max.annotate.*;
@@ -51,10 +52,10 @@ public abstract class AbstractTester extends JavaRunScheme {
     protected static int _testCount;
     protected static int _verbose = 2;
 
-    private static VMIntOption _startOption  = new VMIntOption("-XX:TesterStart=", -1,
-                    "The number of the first test to run.", MaxineVM.Phase.STARTING);
-    private static VMIntOption _endOption  = new VMIntOption("-XX:TesterEnd=", -1,
-                    "The number of the last test to run. Specify 0 to run exactly one test.", MaxineVM.Phase.STARTING);
+    private static VMIntOption _startOption = register(new VMIntOption("-XX:TesterStart=", -1,
+                    "The number of the first test to run."), MaxineVM.Phase.STARTING);
+    private static VMIntOption _endOption  = register(new VMIntOption("-XX:TesterEnd=", -1,
+                    "The number of the last test to run. Specify 0 to run exactly one test."), MaxineVM.Phase.STARTING);
     private static final boolean COMPILE_ALL_TEST_METHODS = true;
 
     public static void reportPassed(int passed, int total) {

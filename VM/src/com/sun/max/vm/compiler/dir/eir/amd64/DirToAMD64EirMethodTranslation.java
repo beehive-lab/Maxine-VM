@@ -24,8 +24,6 @@ import com.sun.max.vm.compiler.b.c.d.e.amd64.*;
 import com.sun.max.vm.compiler.dir.*;
 import com.sun.max.vm.compiler.dir.eir.*;
 import com.sun.max.vm.compiler.eir.*;
-import com.sun.max.vm.compiler.eir.allocate.*;
-import com.sun.max.vm.compiler.eir.allocate.amd64.*;
 import com.sun.max.vm.compiler.eir.amd64.*;
 import com.sun.max.vm.compiler.eir.amd64.AMD64EirInstruction.*;
 import com.sun.max.vm.type.*;
@@ -37,11 +35,6 @@ public final class DirToAMD64EirMethodTranslation extends DirToEirMethodTranslat
 
     public DirToAMD64EirMethodTranslation(EirGenerator eirGenerator, EirMethod eirMethod, DirMethod dirMethod) {
         super(eirGenerator, eirMethod, dirMethod);
-    }
-
-    @Override
-    protected EirAllocator createAllocator(EirMethodGeneration methodGeneration) {
-        return new AMD64EirSomeAllocator(methodGeneration);
     }
 
     @Override

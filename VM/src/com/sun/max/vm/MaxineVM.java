@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm;
 
+import static com.sun.max.vm.VMOptions.register;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -29,7 +30,6 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
@@ -264,15 +264,6 @@ public final class MaxineVM {
     }
 
     /**
-     * Determines if a given class, field or method actor exists only for prototyping and purposes should not be part of
-     * a generated target image.
-     */
-    @PROTOTYPE_ONLY
-    public static boolean isPrototypeOnly(Actor actor) {
-        return actor.getAnnotation(PROTOTYPE_ONLY.class) != null;
-    }
-
-    /**
      * Determines if a given constructor, field or method exists only for prototyping purposes and should not be part of
      * a generated target image.
      */
@@ -293,11 +284,12 @@ public final class MaxineVM {
         if (javaClass.getAnnotation(PROTOTYPE_ONLY.class) != null) {
             return true;
         }
+
         final Class<?> enclosingClass = javaClass.getEnclosingClass();
-        if (enclosingClass == null) {
-            return false;
+        if (enclosingClass != null) {
+            return isPrototypeOnly(enclosingClass);
         }
-        return isPrototypeOnly(enclosingClass);
+        return false;
     }
 
     public static boolean isPrimordial() {
@@ -399,8 +391,8 @@ public final class MaxineVM {
         return _runMethodParameterTypes.clone();
     }
 
-    private static final VMOption _helpOption = new VMOption("-help", "Prints this help message.", MaxineVM.Phase.PRISTINE);
-    private static final VMOption _eaOption = new VMOption("-ea", "Enables assertions in user code. Currently unimplemented.", MaxineVM.Phase.PRISTINE);
+    private static final VMOption _helpOption = register(new VMOption("-help", "Prints this help message."), MaxineVM.Phase.PRISTINE);
+    private static final VMOption _eaOption = register(new VMOption("-ea", "Enables assertions in user code. Currently unimplemented."), MaxineVM.Phase.PRISTINE);
 
     /**
      * Entry point called by the substrate.

@@ -51,6 +51,8 @@ public class InvokedMethodRecorder extends BytecodeAdapter {
         _interfaceCalls = interfaceCalls;
     }
 
+    private static final String _maxPackagePrefix = new com.sun.max.Package().name();
+
     protected void addMethodCall(int index, AppendableSequence<MethodActor> sequence) {
         final MethodRefConstant methodRefConstant = _constantPool.methodAt(index);
         if (methodRefConstant.isResolvableWithoutClassLoading(_constantPool)) {
@@ -63,7 +65,7 @@ public class InvokedMethodRecorder extends BytecodeAdapter {
         } else {
             final TypeDescriptor holder = methodRefConstant.holder(_constantPool);
             final String holderName = holder.toJavaString();
-            if (holderName.startsWith(new com.sun.max.Package().name())) {
+            if (holderName.startsWith(_maxPackagePrefix)) {
                 ProgramError.unexpected(_classMethodActor.format("%H.%n(%p) calls unresolved Maxine method " + methodRefConstant.valueString(_constantPool)));
             }
         }

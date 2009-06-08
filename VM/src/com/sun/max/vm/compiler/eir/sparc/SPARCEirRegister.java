@@ -296,9 +296,19 @@ public abstract class SPARCEirRegister extends EirRegister {
         public static final IndexedSequence<FloatingPoint> DOUBLE_PRECISION_VALUES = new ArraySequence<FloatingPoint>(_doublePrecisionValues);
 
         private static final PoolSet<SPARCEirRegister> _poolSet = PoolSet.of(_pool, _values);
+        private static final PoolSet<SPARCEirRegister> _doublePrecisionPoolSet = PoolSet.of(_pool, _doublePrecisionValues);
+        private static final PoolSet<SPARCEirRegister> _singlePrecisionPoolSet = PoolSet.of(_pool, _singlePrecisionValues);
 
         public static PoolSet<SPARCEirRegister> poolSet() {
             return _poolSet;
+        }
+
+        public static PoolSet<SPARCEirRegister> doublePrecisionPoolSet() {
+            return _doublePrecisionPoolSet;
+        }
+
+        public static PoolSet<SPARCEirRegister> singlePrecisionPoolSet() {
+            return _singlePrecisionPoolSet;
         }
 
         public static FloatingPoint doublePrecisionFrom(FPR register) {

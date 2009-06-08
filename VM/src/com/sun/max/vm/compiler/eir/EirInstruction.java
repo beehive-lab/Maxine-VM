@@ -84,6 +84,9 @@ public abstract class EirInstruction<EirInstructionVisitor_Type extends EirInstr
     public void visitSuccessorBlocks(EirBlock.Procedure procedure) {
     }
 
+    public void substituteSuccessorBlocks(Mapping<EirBlock, EirBlock> map) {
+    }
+
     /**
      * Select a preferred successor block that is also in the given set of eligible blocks.
      */
@@ -124,6 +127,10 @@ public abstract class EirInstruction<EirInstructionVisitor_Type extends EirInstr
 
     public void resetLiveVariables(PoolSet<EirVariable> emptyVariableSet) {
         _liveVariables = emptyVariableSet.clone();
+    }
+
+    public void setLiveVariables(PoolSet<EirVariable> liveVariables) {
+        _liveVariables = liveVariables;
     }
 
     public PoolSet<EirVariable> liveVariables() {

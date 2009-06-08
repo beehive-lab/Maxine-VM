@@ -81,6 +81,7 @@ public abstract class Actor {
     public static final int INJECTED =               0x00010000; // an additionally injected field that was not derived from a class file field
     public static final int CONSTANT =               0x00020000;
     public static final int CONSTANT_WHEN_NOT_ZERO = 0x00040000;
+    public static final int RESET =                  0x00080000;
 
     // Common flags referring to methods in #4.6, Table 4.5:
     public static final int ACC_SYNCHRONIZED = 0x00000020;
@@ -387,6 +388,11 @@ public abstract class Actor {
     }
 
     @INLINE
+    public static boolean isReset(int flags) {
+        return (flags & RESET) != 0;
+    }
+
+    @INLINE
     public static boolean isBuiltin(int flags) {
         return (flags & BUILTIN) != 0;
     }
@@ -601,8 +607,8 @@ public abstract class Actor {
         if (isWrapper(flags)) {
             sb.append("wrapper ");
         }
-        if (isInterpretOnly(flags)) {
-            sb.append("interpretOnly ");
+        if (isInterpretOnly(flags) || isReset(flags)) {
+            sb.append("interpretOnly/reset ");
         }
 
         if (sb.length() > 0) {

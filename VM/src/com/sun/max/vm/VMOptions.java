@@ -25,6 +25,8 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
+import com.sun.max.lang.Arrays;
+import com.sun.max.profile.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -46,21 +48,77 @@ import com.sun.max.vm.prototype.*;
  */
 public final class VMOptions {
 
-    private static final int HELP_INDENT = 22;
-    private static final AppendableIndexedSequence<VMOption> _pristinePhaseOptions = new ArrayListSequence<VMOption>();
-    private static final AppendableIndexedSequence<VMOption> _startingPhaseOptions = new ArrayListSequence<VMOption>();
+    private static final int HELP_INDENT = 32;
 
-    private static final VMStringOption _jarOption = new VMStringOption("-jar", true, null, "Executes main class from jar file.", MaxineVM.Phase.PRISTINE) {
+    /**
+     * A comparator for sorted a set of {@link VMOption}s in reverse lexicographic order of their
+     * {@linkplain VMOption#_prefix prefixes}. This means that suboptions precede their parent option
+     * where a suboption is an option whose prefix starts with but is not equal to the parent's prefix.
+     */
+    @PROTOTYPE_ONLY
+    private static final Comparator<VMOption> VMOPTION_SORTER = new Comparator<VMOption>() {
+        @Override
+        public int compare(VMOption o1, VMOption o2) {
+            return o2._prefix.compareTo(o1._prefix);
+        }
+    };
+
+    /**
+     * Used to collect and sort VM options as they are declared.
+     */
+    @PROTOTYPE_ONLY
+    private static final SortedSet<VMOption> _pristinePhaseOptionsSet = new TreeSet<VMOption>(VMOPTION_SORTER);
+
+    /**
+     * Used to collect and sort VM options as they are declared.
+     */
+    @PROTOTYPE_ONLY
+    private static final SortedSet<VMOption> _startingPhaseOptionsSet = new TreeSet<VMOption>(VMOPTION_SORTER);
+
+    private static VMOption[] _pristinePhaseOptions;
+    private static VMOption[] _startingPhaseOptions;
+
+    private static final VMStringOption _jarOption = register(new VMStringOption("-jar", true, null, "Executes main class from jar file.") {
         @Override
         public boolean isLastOption() {
             return true;
         }
-    };
+    }, MaxineVM.Phase.PRISTINE);
 
-    private static final VMIntOption _traceLevelOption = new VMIntOption("-XX:TraceLevel=", 0, "Enables tracing output at the specified level.", MaxineVM.Phase.PRISTINE);
+    /**
+     * An option to {@linkplain GlobalMetrics#report(java.io.PrintStream) report} on all global metrics gathered during execution.
+     * TODO: If this option is not enabled, then the global metrics should not be gathered.
+     */
+    private static final VMBooleanXXOption _printMetrics = register(new VMBooleanXXOption("-XX:-PrintMetrics", "Report random metrics gathered during execution.") {
+        @Override
+        public boolean parseValue(Pointer optionValue) {
+            if (getValue()) {
+                GlobalMetrics.reset();
+            }
+            return true;
+        }
 
-    private static final VMOption _printConfiguration = new VMOption("-XX:PrintConfiguration", "Shows VM configuration details and exits.", MaxineVM.Phase.STARTING);
-    private static final VMOption _showConfiguration = new VMOption("-XX:ShowConfiguration", "Shows VM configuration details and continues.", MaxineVM.Phase.STARTING);
+        @Override
+        protected void beforeExit() {
+            if (getValue()) {
+                GlobalMetrics.report(Log.out);
+            }
+        }
+    }, MaxineVM.Phase.STARTING);
+
+    private static final VMOption _verboseOption = register(new VMOption("-verbose ", "Enables all verbose options."), MaxineVM.Phase.PRISTINE);
+    private static final VMOption _timeOption = register(new VMOption("-XX:Time ", "Enables all timing options."), MaxineVM.Phase.PRISTINE);
+
+    private static final VMIntOption _traceLevelOption = register(new VMIntOption("-XX:TraceLevel=", 0, "Enables tracing output at the specified level.") {
+        @Override
+        public boolean parseValue(Pointer optionValue) {
+            Trace.on(getValue());
+            return true;
+        }
+    }, MaxineVM.Phase.PRISTINE);
+
+    private static final VMBooleanXXOption _printConfiguration = register(new VMBooleanXXOption("-XX:-PrintConfiguration", "Shows VM configuration details and exits."), MaxineVM.Phase.STARTING);
+    private static final VMBooleanXXOption _showConfiguration = register(new VMBooleanXXOption("-XX:-ShowConfiguration", "Shows VM configuration details and continues."), MaxineVM.Phase.STARTING);
 
     private static Pointer _argv;
     private static int _argc;
@@ -104,34 +162,51 @@ public final class VMOptions {
     }
 
     @PROTOTYPE_ONLY
-    private static void addOption(AppendableSequence<VMOption> options, VMOption option) {
+    private static VMOption[] addOption(SortedSet<VMOption> options, VMOption option, Iterable<VMOption> allOptions) {
         if (option.category() == VMOption.Category.IMPLEMENTATION_SPECIFIC) {
-            final String name = option._prefix.substring("-XX:".length());
+            final int prefixLength = option instanceof VMBooleanXXOption ? "-XX:+".length() : "-XX:".length();
+            final String name = option._prefix.substring(prefixLength);
             ProgramError.check(Character.isUpperCase(name.charAt(0)), "Option with \"-XX:\" prefix must start with an upper-case letter: " + option);
         }
-        for (VMOption existingOption : options) {
-            ProgramError.check(!existingOption._prefix.equals(option._prefix), "VM option is not unique: " + option._prefix);
-            ProgramError.check(!option._prefix.startsWith(existingOption._prefix), "Prefix for VM option \"" + option + "\" overlaps existing option \"" + existingOption + "\"");
-            ProgramError.check(!existingOption._prefix.startsWith(option._prefix), "Prefix for VM option \"" + existingOption + "\" overlaps existing option \"" + option + "\"");
+        for (VMOption existingOption : allOptions) {
+            ProgramError.check(!existingOption._prefix.equals(option._prefix), "VM option prefix is not unique: " + option._prefix);
+            if (option._prefix.startsWith(existingOption._prefix)) {
+                existingOption.addSuboption(option);
+            } else if (existingOption._prefix.startsWith(option._prefix)) {
+                option.addSuboption(existingOption);
+            }
         }
-        options.append(option);
+        options.add(option);
+        return options.toArray(new VMOption[options.size()]);
     }
 
+    /**
+     * Registers a given VM option in the global option registry that is used to match command
+     * line arguments passed to the VM at runtime.
+     *
+     * @param option a VM option
+     * @param phase the VM phase during which the option should be parsed
+     * @return the {@code option} object
+     */
     @PROTOTYPE_ONLY
-    public static VMOption addOption(VMOption option, MaxineVM.Phase phase) {
+    public static <T extends VMOption> T register(VMOption option, MaxineVM.Phase phase) {
+        assert phase != null;
+        final Iterable<VMOption> allOptions = Iterables.join(_pristinePhaseOptionsSet, _startingPhaseOptionsSet);
         if (phase == MaxineVM.Phase.PRISTINE) {
-            addOption(_pristinePhaseOptions, option);
+            _pristinePhaseOptions = addOption(_pristinePhaseOptionsSet, option, allOptions);
         } else if (phase == MaxineVM.Phase.STARTING) {
-            addOption(_startingPhaseOptions, option);
+            assert !option.consumesNext();
+            _startingPhaseOptions = addOption(_startingPhaseOptionsSet, option, allOptions);
         } else {
-            ProgramError.unexpected("VMProgramArguments does not parse options in the " + phase + " phase");
+            ProgramError.unexpected("VM options for the " + phase + " phase not (yet) supported");
         }
-        return option;
+        option.findMatchingArgumentAndParse();
+        final Class<T> type = null;
+        return StaticLoophole.cast(type, option);
     }
 
-    private static void printOptions(IndexedSequence<VMOption> options, String label, Category category) {
-        for (int i = 0; i < options.length(); i++) {
-            final VMOption option = options.get(i);
+    private static void printOptions(VMOption[] options, String label, Category category) {
+        for (VMOption option : options) {
             if (option.category() == category) {
                 option.printHelp();
             }
@@ -248,14 +323,22 @@ public final class VMOptions {
         return nextIndex;
     }
 
-    private static VMOption findVMOption(Pointer arg, AppendableIndexedSequence<VMOption> options) {
-        for (int j = 0; j < options.length(); j++) {
-            final VMOption option = options.get(j);
-            if (CString.startsWith(arg, option._prefix)) {
+    private static VMOption findVMOption(Pointer arg, VMOption[] options) {
+        for (VMOption option : options) {
+            if (option.matches(arg)) {
                 return option;
             }
         }
         return null;
+    }
+
+    /**
+     * Gets all the registered VM options as an {@code IterableWithLength} object.
+     *
+     * @return all the registered VM options as an {@code IterableWithLength} object
+     */
+    public static IterableWithLength<VMOption> allOptions() {
+        return Iterables.join(Arrays.iterable(_pristinePhaseOptions), Arrays.iterable(_startingPhaseOptions));
     }
 
     public static boolean parsePristine(int argc, Pointer argv) {
@@ -298,12 +381,11 @@ public final class VMOptions {
         return result;
     }
 
-    private static boolean checkOptionsForErrors(AppendableIndexedSequence<VMOption> options) {
+    private static boolean checkOptionsForErrors(VMOption[] options) {
         if (_earlyVMExitRequested) {
             return false;
         }
-        for (int i = 0; i < options.length(); i++) {
-            final VMOption option = options.get(i);
+        for (VMOption option : options) {
             if (!option.check()) {
                 error(option);
                 return false;
@@ -350,7 +432,7 @@ public final class VMOptions {
         }
         final boolean noErrorFound = checkOptionsForErrors(_startingPhaseOptions);
         if (noErrorFound) {
-            if (_printConfiguration.isPresent() || _showConfiguration.isPresent()) {
+            if (_printConfiguration.getValue() || _showConfiguration.getValue()) {
                 final VMConfiguration vm = VMConfiguration.target();
                 Log.println("VM Configuration:");
                 Log.println("  Build level: " + vm.buildLevel());
@@ -359,7 +441,7 @@ public final class VMOptions {
                     final String specification = vmScheme.specification().getSimpleName();
                     Log.println("  " + specification.replace("Scheme", " scheme") + ": " + vmScheme.getClass().getName());
                 }
-                if (_printConfiguration.isPresent()) {
+                if (_printConfiguration.getValue()) {
                     _earlyVMExitRequested = true;
                 }
             }
@@ -548,7 +630,22 @@ public final class VMOptions {
         return result;
     }
 
-    public static int traceLevel() {
-        return _traceLevelOption.getValue();
+    /**
+     * Calls the {@link VMOption#beforeExit()} method of each registered VM option.
+     */
+    public static void beforeExit() {
+        for (VMOption option : _pristinePhaseOptions) {
+            option.beforeExit();
+        }
+        for (VMOption option : _startingPhaseOptions) {
+            option.beforeExit();
+        }
+        if (MaxineVM.isPrototyping()) {
+            for (String argument : VMOption.unmatchedVMArguments()) {
+                if (argument != null) {
+                    ProgramWarning.message("VM argument not matched by any VM option: " + argument);
+                }
+            }
+        }
     }
 }

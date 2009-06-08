@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.jni;
 
+import static com.sun.max.vm.VMOptions.*;
+
 import java.io.*;
 import java.util.regex.*;
 
@@ -47,6 +49,8 @@ import com.sun.max.vm.runtime.*;
  * @author Doug Simon
  */
 public final class JniNativeInterface {
+
+    private static boolean _verboseJNI;
 
     private JniNativeInterface() {
     }
@@ -205,5 +209,15 @@ public final class JniNativeInterface {
         check(JniFunctionWrapper.savedLastJavaCallerFramePointer());
         check(JniFunctionWrapper.savedLastJavaCallerInstructionPointer());
         check(JniFunctionWrapper.savedLastJavaCallerStackPointer());
+    }
+
+    private static final VMOption _verboseOption = register(new VMOption("-verbose:jni",
+        "Report information about use of native methods and other Java Native Interface activity."), MaxineVM.Phase.PRISTINE);
+
+    /**
+     * Determines if information should be displayed about use of native methods and other Java Native Interface activity.
+     */
+    public static boolean verbose() {
+        return _verboseOption.isPresent() || ClassMethodActor.traceJNI();
     }
 }

@@ -144,14 +144,27 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
             verifyCells();
         }
 
+        if (Heap.traceGCRootScanning()) {
+            scanReferenceMap(pointerIndexVisitor, referenceMap, referenceMapWords, true);
+        } else {
+            scanReferenceMap(pointerIndexVisitor, referenceMap, referenceMapWords, false);
+        }
+
+        for (Reference specialReference : _specialReferences) {
+            SpecialReferenceManager.discoverSpecialReference(Grip.fromJava(specialReference));
+        }
+    }
+
+    @INLINE
+    private void scanReferenceMap(PointerIndexVisitor pointerIndexVisitor, Pointer referenceMap, int referenceMapWords, boolean tracing) {
         for (int i = 0; i < referenceMapWords; ++i) {
-            final Address refmapWord = referenceMap.getWord(i).asAddress();
+            Address refmapWord = referenceMap.getWord(i).asAddress();
             if (!refmapWord.isZero()) {
-                for (int bitIndex = 0; bitIndex < Word.width().numberOfBits(); bitIndex++) {
-                    final Address mask = Address.fromLong(1L << bitIndex);
-                    if (!refmapWord.and(mask).isZero()) {
+                int bitIndex = 0;
+                while (!refmapWord.isZero()) {
+                    if (!refmapWord.and(1).isZero()) {
                         final int heapWordIndex = (i * Word.width().numberOfBits()) + bitIndex;
-                        if (Heap.traceGCRootScanning()) {
+                        if (tracing) {
                             final Pointer address = start().asPointer().plus(heapWordIndex * Word.size());
                             final Address value = address.readWord(0).asAddress();
                             if (!value.isZero() && !contains(value) && !Code.bootCodeRegion().contains(value)) {
@@ -161,12 +174,10 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
                         }
                         pointerIndexVisitor.visitPointerIndex(start().asPointer(), heapWordIndex);
                     }
+                    refmapWord = refmapWord.dividedBy(2);
+                    bitIndex++;
                 }
             }
-        }
-
-        for (Reference specialReference : _specialReferences) {
-            SpecialReferenceManager.discoverSpecialReference(Grip.fromJava(specialReference));
         }
     }
 

@@ -32,6 +32,14 @@ import com.sun.max.vm.thread.*;
  */
 public final class FatalError extends Error {
 
+    /**
+     * A breakpoint should be set on this method when debugging the VM so that
+     * fatal errors can be investigated before the VM exits.
+     */
+    @NEVER_INLINE
+    private static void breakpoint() {
+    }
+
     private FatalError(String msg) {
         super(msg);
     }
@@ -53,6 +61,8 @@ public final class FatalError extends Error {
             throw new FatalError(message);
         }
 
+        breakpoint();
+
         if (ExitingGuard._guard) {
             Log.println("FATAL VM ERROR: Error occurred while handling previous fatal VM error");
             MaxineVM.native_exit(11);
@@ -67,19 +77,10 @@ public final class FatalError extends Error {
             Log.print("Caused by: ");
             throwable.printStackTrace(Log.out);
         }
-        if (Throw._scanStackOnFatalError.isPresent()) {
+        if (Throw._scanStackOnFatalError.getValue()) {
             Throw.stackScan("stack scan", VMRegister.getCpuStackPointer(), VmThread.current().vmThreadLocals());
         }
         Log.unlock(lockDisabledSafepoints);
-        return exit(nativeTrapAddress);
-    }
-
-    /**
-     * A breakpoint should be set on this method when debugging the VM so that fatal VM exits can be investigated
-     * with the VM still up.
-     */
-    @NEVER_INLINE
-    private static FatalError exit(Address nativeTrapAddress) {
         if (nativeTrapAddress.isZero()) {
             MaxineVM.native_exit(11);
         }

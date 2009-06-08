@@ -131,65 +131,64 @@ endif
 
 
 ifeq ($(OS),darwin)
-	CC = gcc -g $(DARWIN_GCC_MFLAG)
+	CC ?= gcc 
 	C_DEPENDENCIES_FLAGS = -M -DDARWIN -D$(ISA) -D$(TARGET)
-	CFLAGS = -Wall -Wextra -Werror -Wno-main -Wno-unused-parameter -fPIC -DDARWIN -D$(ISA) -D$(TARGET)
-	LINK_MAIN = gcc -g $(DARWIN_GCC_MFLAG) -lc -lm -ldl -o $(MAIN)
+	CFLAGS ?= -g $(DARWIN_GCC_MFLAG) -Wall -Wextra -Werror -Wno-main -Wno-unused-parameter -fPIC -DDARWIN -D$(ISA) -D$(TARGET)
+	LINK_MAIN = $(CC) -g $(DARWIN_GCC_MFLAG) -lc -lm -ldl -o $(MAIN)
 	# The version linker flag below ensure are required by the modified version of
 	# libjava.jnilib that is put into the $(PROJECT)/generated/$(OS) directory
 	# by running $(PROJECT)/../bin/mod-macosx-javalib.sh. This library expects the jvm shared
 	# library to have a certain version number.
-	LINK_LIB = gcc -g $(DARWIN_GCC_MFLAG) -dynamiclib -undefined dynamic_lookup \
+	LINK_LIB = $(CC) -g $(DARWIN_GCC_MFLAG) -dynamiclib -undefined dynamic_lookup \
 	    -Xlinker -compatibility_version -Xlinker 1.0.0 \
 	    -Xlinker -current_version -Xlinker 1.0.0 \
 	    -lc -lm
 	LIB_PREFIX = lib
 	LIB_SUFFIX = .dylib
-	ifndef JAVA_HOME
-		JAVA_HOME = /System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Home
-	endif
+	JAVA_HOME ?= /System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home
 endif
 
 ifeq ($(OS),linux)
-	CC = gcc -g
+	CC ?= gcc 
 	C_DEPENDENCIES_FLAGS = -M -DLINUX -D$(ISA) -D$(TARGET)
-	CFLAGS = -Wall -Wno-long-long -Werror -Wextra -Wno-main -Wno-unused-parameter -fPIC -D_GNU_SOURCE -D$(ISA) -DLINUX -D$(TARGET)
+	CFLAGS ?= -g -Wall -Wno-long-long -Werror -Wextra -Wno-main -Wno-unused-parameter -fPIC -D_GNU_SOURCE -D$(ISA) -DLINUX -D$(TARGET)
 	# The -rpath option is used so that LD_LIBRARY_PATH does not have to be configured at runtime to
 	# find Maxine's version of the libjvm.so library. 
-	LINK_MAIN = gcc -g -lc -lm -lpthread -ldl -rdynamic -Xlinker -rpath -Xlinker $(shell cd $(PROJECT)/generated/$(OS) && /bin/pwd) -o $(MAIN)
-	LINK_LIB = gcc -g -shared -lc -lm
+	LINK_MAIN = $(CC) -g -lc -lm -lpthread -ldl -rdynamic -Xlinker -rpath -Xlinker $(shell cd $(PROJECT)/generated/$(OS) && /bin/pwd) -o $(MAIN)
+	LINK_LIB = $(CC) -g -shared -lc -lm
 	LIB_PREFIX = lib
 	LIB_SUFFIX = .so
 endif
 
 ifeq ($(OS),solaris)
-	CC = cc -g
+	CC ?= cc 
 	C_DEPENDENCIES_FLAGS = -xM1 -DSOLARIS -D$(ISA) -D$(TARGET) 
-	CFLAGS = -xc99 -errwarn -erroff=E_ARGUEMENT_MISMATCH -errtags -errfmt=error $(KPIG_FLAG) $(ARCH_FLAG) -D$(ISA) -DSOLARIS -D$(TARGET) $(OTHER_CFLAGS)
-	LINK_MAIN = cc -g $(ARCH_FLAG) -lc -lthread -ldl -o $(MAIN)
-	LINK_LIB = cc -g -G $(ARCH_FLAG) -lresolv -lc -lm -ldl -lthread -lrt -lproc
+	CFLAGS ?= -g -xc99 -errwarn -errtags -errfmt=error $(KPIG_FLAG) $(ARCH_FLAG) -D$(ISA) -DSOLARIS -D$(TARGET) $(OTHER_CFLAGS)
+	LINK_MAIN = $(CC) $(ARCH_FLAG) -lc -lthread -ldl -o $(MAIN)
+	LINK_LIB = $(CC) -G $(ARCH_FLAG) -lresolv -lc -lm -ldl -lthread -lrt -lproc
 	LIB_PREFIX = lib
 	LIB_SUFFIX = .so
 endif
 
 ifeq ($(OS),windows)
     # determine predefined macros: touch foo.c; gcc -E -dD foo.c
-	CC = gcc -g
+	CC ?= gcc 
 	C_DEPENDENCIES_FLAGS = -MM -DWINDOWS -D$(ISA) -D$(TARGET)
-	CFLAGS = -ansi -Wall -pedantic -Wno-long-long -mno-cygwin -DWINDOWS -D$(ISA) -D$(TARGET)
-	LINK_MAIN = gcc -g -mno-cygwin -Wall -W1,----add-stdcall-alias -ldl
-	LINK_LIB = gcc -g -shared -mno-cygwin -Wall -W1,----add-stdcall-alias
+	CFLAGS ?= -g -ansi -Wall -pedantic -Wno-long-long -mno-cygwin -DWINDOWS -D$(ISA) -D$(TARGET)
+	LINK_MAIN = $(CC) -g -mno-cygwin -Wall -W1,----add-stdcall-alias -ldl
+	LINK_LIB = $(CC) -g -shared -mno-cygwin -Wall -W1,----add-stdcall-alias
 	LIB_PREFIX =
 	LIB_SUFFIX = .dll
 endif
 
 ifeq ($(OS),guestvm)
     # assume Xen hypervisor
-	CC = gcc -g
+	CC ?= gcc 
 	C_DEPENDENCIES_FLAGS = -M -DGUESTVMXEN -D$(ISA) -D$(TARGET)
-	CFLAGS = -Wall -Wno-format -Wpointer-arith -Winline \
-                      -m64 -mno-red-zone -fpic -fno-reorder-blocks \
-                      -fno-asynchronous-unwind-tables -fno-builtin -DGUESTVMXEN -D$(ISA) -D$(TARGET)
+	CFLAGS ?= -g -Wall -Wno-format -Wpointer-arith -Winline \
+                  -m64 -mno-red-zone -fpic -fno-reorder-blocks \
+                  -fno-asynchronous-unwind-tables -fno-builtin \
+                  -DGUESTVMXEN -D$(ISA) -D$(TARGET)
     ifeq ($(HOSTOS),Linux)
         CFLAGS += -fno-stack-protector 
     endif
@@ -206,8 +205,8 @@ ifeq ($(OS),guestvm)
 	LINK_LIB = $(CC) -shared -lc -lm -m64  -lguk_db
 endif
 
-ifndef JAVA_HOME 
-  $(error "Must set JAVA_HOME environment variable to your JDK home directory")
+ifndef JAVA_HOME
+	ignore := $(error "Must set JAVA_HOME environment variable to your JDK home directory")
 endif
 
 

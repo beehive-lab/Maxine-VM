@@ -39,6 +39,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.util.timer.TimerUtil;
 
 /**
  * A daemon thread that hangs around, waiting, then executes a given procedure when requested, then waits again.
@@ -164,14 +165,14 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
                     final long time = VmThreadLocal.prepareCurrentStackReferenceMap();
                     _procedure.run();
 
+                    VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _resetSafepoint);
                     if (Heap.traceGCTime()) {
                         final boolean lockDisabledSafepoints = Log.lock();
                         Log.print("Stack reference map preparation time: ");
                         Log.print(time + _waitUntilNonMutating._stackReferenceMapPreparationTime);
-                        Log.println(HeapScheme.GC_TIMING_CLOCK.getHZAsSuffix());
+                        Log.println(TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK));
                         Log.unlock(lockDisabledSafepoints);
                     }
-                    VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _resetSafepoint);
                 }
             }
         }

@@ -45,11 +45,30 @@ public class TimerUtil {
         return timeElapsed(runnable, new SingleUseTimer(clock));
     }
 
+    public static long getLastElapsedSeconds(Timer timer) {
+        return (1 * timer.getLastElapsedTime()) / timer.getClock().getHZ();
+    }
+
     public static long getLastElapsedMilliSeconds(Timer timer) {
         return (1000 * timer.getLastElapsedTime()) / timer.getClock().getHZ();
     }
 
-    public static long getLastElapsedNanoSeconds(Timer timer) {
+    public static long getLastElapsedMicroSeconds(Timer timer) {
         return (1000000 * timer.getLastElapsedTime()) / timer.getClock().getHZ();
+    }
+
+    public static long getLastElapsedNanoSeconds(Timer timer) {
+        return (1000000000 * timer.getLastElapsedTime()) / timer.getClock().getHZ();
+    }
+
+    public static String getHzSuffix(Clock clock) {
+        if (clock.getHZ() == 1000) {
+            return "ms";
+        } else if (clock.getHZ() == 1000000) {
+            return "us";
+        } else if (clock.getHZ() == 1000000000) {
+            return "ns";
+        }
+        return "(" + clock.getHZ() + "/sec)";
     }
 }

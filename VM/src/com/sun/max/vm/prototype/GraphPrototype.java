@@ -50,9 +50,10 @@ public class GraphPrototype extends Prototype {
     public final CompiledPrototype _compiledPrototype;
     private final Map<Object, Link> _objectToParent = new IdentityHashMap<Object, Link>();
     private LinkedList<Object> _worklist = new LinkedList<Object>();
+    private Sequence<Object> _fixedObjects;
 
-    IdentitySet<Object> _objects = new IdentitySet<Object>(Ints.M);
-    Map<Class, ClassInfo> _classInfos = new IdentityHashMap<Class, ClassInfo>();
+    final IdentitySet<Object> _objects = new IdentitySet<Object>(Ints.M);
+    final Map<Class, ClassInfo> _classInfos = new IdentityHashMap<Class, ClassInfo>();
 
     /**
      * Create a new graph prototype from the specified compiled prototype and compute the transitive closure
@@ -140,6 +141,9 @@ public class GraphPrototype extends Prototype {
 
         @Override
         Object getValue(Object object) {
+            if (fieldActor().isReset()) {
+                return _fieldActor.kind().zeroValue();
+            }
             try {
                 return HostObjectAccess.hostToTarget(_field.get(object));
             } catch (IllegalArgumentException e) {
@@ -356,11 +360,22 @@ public class GraphPrototype extends Prototype {
     }
 
     /**
-     * Returns an iterable collection of all the objects in the graph prototype.
+     * Returns an iterable collection of all the objects in the graph prototype. Once this method has been called, no
+     * further objects can be added to the graph prototype.
+     *
      * @return a collection of all objects in this graph
      */
-    public Iterable<Object> objects() {
-        return _objects;
+    public synchronized IterableWithLength<Object> objects() {
+        if (_fixedObjects == null) {
+            final AppendableSequence<Object> fixedObjects = new ArrayListSequence<Object>(_objects.numberOfElements());
+            for (Object object : _objects) {
+                fixedObjects.append(object);
+            }
+            _fixedObjects = fixedObjects;
+        } else {
+            ProgramError.check(_fixedObjects.length() == _objects.numberOfElements());
+        }
+        return _fixedObjects;
     }
 
     public ClassInfo classInfoFor(Object object) {
@@ -461,6 +476,7 @@ public class GraphPrototype extends Prototype {
     private void add(Object parent, Object child, Object fieldNameOrArrayIndex) {
         final Object object = HostObjectAccess.hostToTarget(child);
         if (object != null && !_objects.contains(object)) {
+            assert _fixedObjects == null : "Cannot add more objects to graph prototype once the fixed set objects has been created";
             _objects.add(object);
             _worklist.add(object);
 
@@ -485,7 +501,7 @@ public class GraphPrototype extends Prototype {
             final Object object = _worklist.removeFirst();
             try {
                 explore(object);
-            } catch (ProgramError e) {
+            } catch (Throwable e) {
                 printPath(object, System.err);
                 ProgramError.unexpected("Problem while gathering instance of " + object.getClass(), e);
             }

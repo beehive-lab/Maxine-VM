@@ -42,30 +42,32 @@ public class MaxineTesterConfiguration {
 
     private static final Expectation FAIL_ALL = new Expectation(null, null, ExpectedResult.FAIL);
     private static final Expectation FAIL_SPARC = new Expectation(OperatingSystem.SOLARIS, ProcessorModel.SPARCV9, ExpectedResult.FAIL);
+    private static final Expectation FAIL_SOLARIS = new Expectation(OperatingSystem.SOLARIS, null, ExpectedResult.FAIL);
     private static final Expectation FAIL_DARWIN = new Expectation(OperatingSystem.DARWIN, null, ExpectedResult.FAIL);
     private static final Expectation FAIL_LINUX = new Expectation(OperatingSystem.LINUX, null, ExpectedResult.FAIL);
 
     private static final Expectation RAND_ALL = new Expectation(null, null, ExpectedResult.NONDETERMINISTIC);
     private static final Expectation RAND_LINUX = new Expectation(OperatingSystem.LINUX, null, ExpectedResult.NONDETERMINISTIC);
     private static final Expectation RAND_DARWIN = new Expectation(OperatingSystem.DARWIN, null, ExpectedResult.NONDETERMINISTIC);
+    private static final Expectation RAND_SPARC = new Expectation(OperatingSystem.SOLARIS, ProcessorModel.SPARCV9, ExpectedResult.NONDETERMINISTIC);
 
     static final Object[] _outputTestList = {
         test.output.AWTFont.class,                  FAIL_SPARC, FAIL_ALL,
-        test.output.JavacTest.class,                FAIL_SPARC, FAIL_ALL,
+        test.output.JavacTest.class,                FAIL_SPARC, FAIL_LINUX, FAIL_SOLARIS,
         test.output.CatchOutOfMemory.class,         FAIL_SPARC,
-        test.output.PrintDate.class,                FAIL_SPARC,
-        test.output.HelloWorld.class,               FAIL_SPARC,
+        test.output.PrintDate.class,
+        test.output.HelloWorld.class,
         test.output.HelloWorldGC.class,             FAIL_SPARC,
-        test.output.ExitCode.class,                 FAIL_SPARC,
-        test.output.FloatNanTest.class,             FAIL_SPARC,
+        test.output.ExitCode.class,
+        test.output.FloatNanTest.class,
         test.output.GetResource.class,              FAIL_SPARC,
         test.output.SafepointWhileInNative.class,   FAIL_SPARC, RAND_LINUX,
         test.output.SafepointWhileInJava.class,     FAIL_SPARC, RAND_LINUX,
         test.output.BlockingQueue.class,            FAIL_SPARC,
-        test.output.Recursion.class,                FAIL_SPARC,
+        test.output.Recursion.class,
         test.output.StaticInitializers.class,       FAIL_SPARC,
         test.output.LocalCatch.class,               FAIL_SPARC,
-        test.output.Printf.class,                   FAIL_SPARC,
+        test.output.Printf.class,
         test.output.GCTest0.class,                  FAIL_SPARC,
         test.output.GCTest1.class,                  FAIL_SPARC,
         test.output.GCTest2.class,                  FAIL_SPARC,
@@ -74,9 +76,9 @@ public class MaxineTesterConfiguration {
         test.output.GCTest5.class,                  FAIL_SPARC,
         test.output.GCTest6.class,                  FAIL_SPARC,
         test.output.HelloWorldReflect.class,        FAIL_SPARC,
-        test.output.JREJarLoadTest.class,           FAIL_SPARC,
-        test.output.FileReader.class,               FAIL_SPARC,
-        test.output.ZipFileReader.class,            FAIL_SPARC,
+        test.output.JREJarLoadTest.class,
+        test.output.FileReader.class,               RAND_SPARC,
+        test.output.ZipFileReader.class,            RAND_SPARC,
         test.output.WeakReferenceTest01.class,      FAIL_SPARC, RAND_ALL,
         test.output.WeakReferenceTest02.class,      FAIL_SPARC, RAND_ALL,
         test.output.WeakReferenceTest03.class,      FAIL_SPARC, RAND_ALL,
@@ -87,9 +89,8 @@ public class MaxineTesterConfiguration {
     static final Object[] _javaTestList = {
         test.except.Catch_NPE_03.class,                FAIL_SPARC,
         test.except.Catch_NPE_04.class,                FAIL_SPARC,
-        test.output.Thread_join04.class,               FAIL_SPARC,
         test.threads.Thread_isInterrupted02.class,                  FAIL_LINUX,
-        test.output.ExitCode.class,                    FAIL_SPARC,
+        test.jdk.EnumMap01.class,                                   RAND_ALL,
         test.hotpath.HP_series.class,                  FAIL_SPARC,
         test.hotpath.HP_array02.class,                 FAIL_SPARC,
         test.except.Catch_StackOverflowError_01.class, FAIL_SPARC,
@@ -264,7 +265,6 @@ public class MaxineTesterConfiguration {
     }
 
     static final String[] _expectedAutoTestFailures = {
-        "test_manyObjectParameters(test.com.sun.max.vm.compiler.eir.amd64.AMD64EirTranslatorTest_native)",
         "test_manyObjectParameters(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",
         "test_arrayCopyForKinds(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_jdk_System)",
         "test_catchNull(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_throw)",
@@ -287,7 +287,7 @@ public class MaxineTesterConfiguration {
 
         MaxineTesterConfiguration._maxvmConfigs.put("std", new String[0]);
         MaxineTesterConfiguration._maxvmConfigs.put("jit", new String[] {"-Xjit"});
-        MaxineTesterConfiguration._maxvmConfigs.put("pgi", new String[] {"-XX:PGI"});
+        MaxineTesterConfiguration._maxvmConfigs.put("pgi", new String[] {"-XX:+PGI"});
         MaxineTesterConfiguration._maxvmConfigs.put("mx256m", new String[] {"-Xmx256m"});
         MaxineTesterConfiguration._maxvmConfigs.put("mx512m", new String[] {"-Xmx512m"});
 

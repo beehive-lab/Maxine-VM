@@ -51,7 +51,7 @@ public class HCirToLCirTranslation {
                 final JavaOperator operator = (JavaOperator) procedure;
                 final Kind[] parameterKinds = operator.parameterKinds();
                 assert call.arguments().length == parameterKinds.length + 2;
-                final HCirOperatorLowering visitor = new HCirOperatorLowering(operator, call, _methodTranslation.variableFactory(), _methodTranslation.cirGenerator().compilerScheme());
+                final HCirOperatorLowering visitor = new HCirOperatorLowering(operator, call, _methodTranslation);
                 operator.acceptVisitor(visitor);
             }
         }

@@ -31,14 +31,12 @@ import com.sun.max.program.option.*;
  * Tracing output for debugging purposes. No performance impact when disabled. Some performance impact when active, even
  * without output. Possibly significant performance impact when producing a lot of output.
  *
- * Should not by itself cause allocation/GC during output.
- *
  * @author Bernd Mathiske
  */
 public final class Trace {
 
-    private static Metrics.Counter _traceCalls = GlobalMetrics.newCounter("Trace.calls");
-    private static Metrics.Counter _tracePrints = GlobalMetrics.newCounter("Trace.prints");
+    private static final Metrics.Counter _traceCalls = GlobalMetrics.newCounter("Trace.calls");
+    private static final Metrics.Counter _tracePrints = GlobalMetrics.newCounter("Trace.prints");
 
     private Trace() {
         // do nothing.
@@ -110,13 +108,26 @@ public final class Trace {
         on(Integer.MAX_VALUE);
     }
 
-    private static transient long _count;
+    @RESET
+    private static long _count;
 
+    /**
+     * The threshold of trace calls before traces are actually sent to the trace stream.
+     *
+     * This field can be updated by the inspector.
+     */
+    @RESET
     @INSPECTED
-    private static transient long _threshold;
+    private static long _threshold;
 
+    /**
+     * The current trace level.
+     *
+     * This field can be updated by the inspector.
+     */
+    @RESET
     @INSPECTED
-    private static transient int _level;
+    private static int _level;
 
     /**
      * Dynamically sets the current tracing level to the greater of the current level or the specified new level.
@@ -150,6 +161,8 @@ public final class Trace {
     }
 
     private static final int MAX_INDENTATION = 10;
+
+    @RESET
     private static int _indentation;
 
     private static void printInt(int n) {

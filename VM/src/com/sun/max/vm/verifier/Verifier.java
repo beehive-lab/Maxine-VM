@@ -109,7 +109,7 @@ public class Verifier implements VerificationRegistry {
     public static ClassVerifier verifierFor(ClassActor classActor) {
         final int majorVersion = classActor.majorVersion();
         if (majorVersion >= 50) {
-            return new TypeCheckingVerifier(classActor, false);
+            return new TypeCheckingVerifier(classActor);
         }
         return new TypeInferencingVerifier(classActor);
     }

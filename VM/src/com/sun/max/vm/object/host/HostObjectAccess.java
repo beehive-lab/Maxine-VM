@@ -234,6 +234,7 @@ public final class HostObjectAccess {
         _objectMap.put(VmClassLoader.VM_CLASS_LOADER.getParent(), NULL);
         _objectMap.put(_systemThreadGroup, NULL);
         _objectMap.put(_mainThread, _mainThread);
+        _objectMap.put(Trace.stream(), Log.out);
         final ThreadGroup threadGroup = new ThreadGroup("MaxineVM");
         WithoutAccessCheck.setInstanceField(threadGroup, "parent", null);
         _objectMap.put(_mainThread.getThreadGroup(), threadGroup);

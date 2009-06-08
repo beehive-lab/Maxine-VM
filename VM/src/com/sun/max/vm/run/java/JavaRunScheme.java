@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.run.java;
 
+import static com.sun.max.vm.VMOptions.register;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.security.*;
@@ -27,6 +29,7 @@ import java.util.jar.*;
 
 import sun.misc.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.util.*;
@@ -56,12 +59,12 @@ import com.sun.max.vm.type.*;
  */
 public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
 
-    private static final VMOption _versionOption = new VMOption(
-        "-version", "print product version and exit", MaxineVM.Phase.STARTING);
-    private static final VMOption _showVersionOption = new VMOption(
-        "-showversion", "print product version and continue", MaxineVM.Phase.STARTING);
-    private static final VMOption _D64Option = new VMOption("-d64",
-        "Selects the 64-bit data model if available. Currently ignored.", MaxineVM.Phase.PRISTINE);
+    private static final VMOption _versionOption = register(new VMOption(
+        "-version", "print product version and exit"), MaxineVM.Phase.STARTING);
+    private static final VMOption _showVersionOption = register(new VMOption(
+        "-showversion", "print product version and continue"), MaxineVM.Phase.STARTING);
+    private static final VMOption _D64Option = register(new VMOption("-d64",
+        "Selects the 64-bit data model if available. Currently ignored."), MaxineVM.Phase.PRISTINE);
 
     public JavaRunScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -77,6 +80,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
      * "initIDs" with signature "()V". Such methods are typically used in the JDK to initialize JNI
      * identifiers for native code, and need to be reexecuted upon startup.
      */
+    @PROTOTYPE_ONLY
     public IterableWithLength<? extends MethodActor> gatherNativeInitializationMethods() {
         final AppendableSequence<StaticMethodActor> methods = new LinkSequence<StaticMethodActor>();
         final String maxinePackagePrefix = new com.sun.max.Package().name();
@@ -135,9 +139,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
 
                 // This hack enables (platform-dependent) tracing before the eventual System properties are set:
                 System.setProperty("line.separator", "\n");
-
-                Trace.setStream(Log.out);
-                Trace.on(VMOptions.traceLevel());
 
                 try {
                     ClassActor.fromJava(System.class).findLocalStaticMethodActor("initializeSystemClass").invoke();

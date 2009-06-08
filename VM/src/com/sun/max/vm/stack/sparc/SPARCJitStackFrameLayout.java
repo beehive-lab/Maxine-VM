@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.stack.sparc;
 
+import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.collect.*;
@@ -31,14 +32,14 @@ import com.sun.max.vm.stack.*;
  * Describes a stack frame for a method produced by the {@linkplain SPARCJitCompiler SPARC JIT compiler}.
  * The JIT compiler doesn't use register windows for JIT-compiled code. Instead, it re-uses the same register window
  * across successive jit-compiled code to jit-compiled code calls.
- * As for the AMD64 JIT compiler, it uses a frame and a stack pointer. The stack pointer is the native stack pointer defined by
- * the SPARC platform (i.e., %06). It is used as an operand stack (as defined in the JVM specification).
+ * As for the sparcv9 (64 bit) JIT compiler, it uses a frame and a stack pointer. The stack pointer is the native stack pointer
+ * defined by the SPARC platform (i.e., %o6). It is used as an operand stack (as defined in the JVM specification).
  * The frame pointer is a synthetic pointer (%l0) explicitly maintained by the SPARC JIT runtime.
- * The native frame pointer (%i6), the one defined by the ABI and know by the OS, points to the base of the register window,
+ * The native frame pointer (%i6), the one defined by the ABI and known by the OS, points to the base of the register window,
  * and is not manipulated at all by JITed code.
  *
  * Frames of JITed code are synthetic in that the operating system only sees a single native stack frame, delimited by %i6 and %o6.
- * That native stack frame must follows the requirement of the SPARC ABI, namely, it must be at all times 16-byte aligned,
+ * That native stack frame must follow the requirement of the SPARC ABI, namely, it must be at all times 16-byte aligned,
  * must have a area for saving the current register window at its base, and both the stack and frame pointer registers (%i6 and %o6) hold
  * a biased address. The consequence for the JIT frame is that the top frame always end with an
  *
@@ -129,9 +130,9 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
 
     public SPARCJitStackFrameLayout(TargetMethod targetMethod) {
         super(targetMethod.classMethodActor());
-        final int frameSlots = targetMethod.frameSize() / STACK_SLOT_SIZE;
+        final int frameSlots = Unsigned.idiv(targetMethod.frameSize(), STACK_SLOT_SIZE);
         // The extra JIT_SLOT_SIZE is the saving area for the literal base.
-        final int nonTemplateSlots = CALL_SAVE_AREA_SLOTS + sizeOfLocalArea() / STACK_SLOT_SIZE;
+        final int nonTemplateSlots = CALL_SAVE_AREA_SLOTS + Unsigned.idiv(sizeOfLocalArea(), STACK_SLOT_SIZE);
         _numberOfTemplateSlots = frameSlots - nonTemplateSlots;
         assert targetMethod.frameSize() == frameSize();
     }
@@ -157,7 +158,7 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
 
     @Override
     public int frameReferenceMapSize() {
-        return ByteArrayBitMap.computeBitMapSize((maximumSlotOffset() - lowestSlotOffset()) / STACK_SLOT_SIZE);
+        return ByteArrayBitMap.computeBitMapSize(Unsigned.idiv(maximumSlotOffset() - lowestSlotOffset(), STACK_SLOT_SIZE));
     }
 
 
@@ -203,7 +204,7 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
         //       ^ operand offset (wrt. FP)            ^ FP                                               ^ local offset (wrt. FP)
         // <-------- frame pointer bias --------------->
         final int framePointerBias = sizeOfOperandStack() + sizeOfLocalArea();
-        return (offset + framePointerBias) / STACK_SLOT_SIZE;
+        return Unsigned.idiv(offset + framePointerBias, STACK_SLOT_SIZE);
     }
 
     @Override
@@ -269,7 +270,7 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
         return new JitSlots() {
             @Override
             protected String nameOfSlot(int offset) {
-                final int templateSlotIndex = offset / STACK_SLOT_SIZE;
+                final int templateSlotIndex = Unsigned.idiv(offset, STACK_SLOT_SIZE);
                 if (templateSlotIndex >= 0 && templateSlotIndex < _numberOfTemplateSlots) {
                     return "template slot " + templateSlotIndex;
 

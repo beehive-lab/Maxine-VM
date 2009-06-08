@@ -21,6 +21,8 @@
 package com.sun.max.vm.compiler.b;
 
 import com.sun.max.collect.*;
+import com.sun.max.profile.*;
+import com.sun.max.util.timer.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.bir.*;
@@ -37,7 +39,10 @@ public class ActorToBirTranslator extends BirGenerator {
         super(birGeneratorScheme);
     }
 
+    private static final TimerMetric _timer = GlobalMetrics.newTimer("Translate-ActorToBir", Clock.SYSTEM_MILLISECONDS);
+
     private void translate(BirMethod birMethod) {
+        _timer.start();
         final CodeAttribute codeAttribute = birMethod.classMethodActor().compilee().codeAttribute();
         final ControlFlowAnalyzer controlFlowAnalyzer = new ControlFlowAnalyzer(codeAttribute.code());
         final IndexedSequence<BirBlock> blocks = controlFlowAnalyzer.run();
@@ -50,6 +55,7 @@ public class ActorToBirTranslator extends BirGenerator {
                         blocks,
                         blockMap,
                         codeAttribute.exceptionHandlerTable());
+        _timer.stop();
     }
 
     @Override

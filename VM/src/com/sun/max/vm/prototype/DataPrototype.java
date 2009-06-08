@@ -230,8 +230,7 @@ public final class DataPrototype extends Prototype {
         preventNullConfusion();
         final BootHeapRegion heapRegion = Heap.bootHeapRegion();
 
-        final int size = assignHeapCells(heapRegion, true);
-        createHeapReferenceMap(heapRegion, size);
+        assignHeapCells(heapRegion, true);
         assignHeapCells(heapRegion, false);
 
         final Object alignment = createPageAlignmentObject(heapRegion);
@@ -251,11 +250,12 @@ public final class DataPrototype extends Prototype {
      *            {@linkplain ClassInfo#containsMutableReferences() containing mutable references} are processed;
      *            otherwise only objects the do not contain mutable object references are processed
      */
-    private int assignHeapCells(final LinearAllocatorHeapRegion heapRegion, boolean objectsWithMutableReferences) {
+    private void assignHeapCells(BootHeapRegion heapRegion, boolean objectsWithMutableReferences) {
         final String tracePrefix = "assign" + (objectsWithMutableReferences ? "Mutable" : "Immutable") + "HeapCells: ";
         Trace.begin(1, tracePrefix);
         int count = 0;
         final Address mark = heapRegion.getAllocationMark();
+        final AppendableSequence<Object> mutableHeapObjects = new ArrayListSequence<Object>(_graphPrototype.objects().length());
         for (Object object : _graphPrototype.objects()) {
             final ClassInfo classInfo = _graphPrototype.classInfoFor(object);
             if (classInfo.containsMutableReferences(object) == objectsWithMutableReferences) {
@@ -268,85 +268,89 @@ public final class DataPrototype extends Prototype {
                     cell = heapRegion.allocateCell(size);
                     assignHeapCell(object, cell);
 
+                    if (objectsWithMutableReferences) {
+                        mutableHeapObjects.append(object);
+                    }
                     if (++count % 100000 == 0) {
                         Trace.line(1, ": " + count);
                     }
                 }
             }
         }
-        Trace.end(1, tracePrefix + count + " heap objects");
-        return heapRegion.getAllocationMark().minus(mark).toInt();
+        Trace.end(1, tracePrefix + count + " heap objects, " + heapRegion.getAllocationMark().minus(mark).toInt() + " bytes");
+        if (objectsWithMutableReferences) {
+            createHeapReferenceMap(heapRegion, mutableHeapObjects);
+        }
     }
 
     /**
-     * Creates the reference map covering the objects in the boot heap that contain references that may
-     * be modified by the VM at runtime. The assignment of addresses for the boot heap will have ensured
-     * that such mutable objects are at the front of the heap, before all non-mutable objects.
+     * Creates the reference map covering the objects in the boot heap that contain references that may be modified by
+     * the VM at runtime. The assignment of addresses for the boot heap will have ensured that such mutable objects are
+     * at the front of the heap, before all non-mutable objects.
      *
      * @param heapRegion the boot heap region
-     * @param mutableHeapObjectsSize the number of bytes at the front of the boot heap occupied by mutable objects
+     * @param mutableHeapObjects the mutable objects in the boot heap which currently the only objects to have been
+     *            allocated cells in the heap
      */
-    private void createHeapReferenceMap(final BootHeapRegion heapRegion, final int mutableHeapObjectsSize) {
+    private void createHeapReferenceMap(BootHeapRegion heapRegion, Sequence<Object> mutableHeapObjects) {
         Trace.begin(1, "createHeapReferenceMap:");
+        final int mutableHeapObjectsSize = heapRegion.getAllocationMark().toInt();
         final int heapReferenceMapSize = Size.fromLong(ByteArrayBitMap.computeBitMapSize(mutableHeapObjectsSize / Word.size())).aligned().toInt();
         final ByteArrayBitMap referenceMap = new ByteArrayBitMap(new byte[heapReferenceMapSize]);
         final AppendableSequence<Reference> specialReferences = new ArrayListSequence<Reference>();
 
         int count = 0;
-        for (Object object : _graphPrototype.objects()) {
+        for (Object object : mutableHeapObjects) {
             final ClassInfo classInfo = _graphPrototype.classInfoFor(object);
-            if (classInfo.containsMutableReferences(object)) {
-                final Address cell = _objectToCell.get(object);
-                if (!Code.bootCodeRegion().contains(cell)) {
-                    final Hub hub = HostObjectAccess.readHub(object);
-                    final SpecificLayout specificLayout = hub.specificLayout();
-                    if (specificLayout.isArrayLayout()) {
-                        if (specificLayout.isReferenceArrayLayout()) {
-                            final ArrayLayout arrayLayout = (ArrayLayout) specificLayout;
-                            final int n = ((Object[]) object).length;
-                            if (n != 0) {
-                                final Pointer origin = specificLayout.cellToOrigin(cell.asPointer());
-                                final int element0Index = origin.plus(arrayLayout.getElementOffsetFromOrigin(0)).dividedBy(Word.size()).toInt();
-                                for (int i = 0; i < n; i++) {
-                                    final int index = element0Index + i;
-                                    try {
-                                        assert !referenceMap.isSet(index);
-                                        referenceMap.set(index);
-                                    } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-                                        throw ProgramError.unexpected("Error while preparing reference map for mutable array in boot heap of type " +
-                                            classInfo._class.getName() + ": cell=" + cell.toHexString() + ", index=" + i +
-                                            " [" + origin.toHexString() + "+" + (Word.size() * i) + "], refmap index=" + index);
-                                    }
-                                }
-                            }
-                        }
-                    } else {
+            assert classInfo.containsMutableReferences(object);
+            final Address cell = _objectToCell.get(object);
+            final Hub hub = HostObjectAccess.readHub(object);
+            final SpecificLayout specificLayout = hub.specificLayout();
+            if (specificLayout.isArrayLayout()) {
+                if (specificLayout.isReferenceArrayLayout()) {
+                    final ArrayLayout arrayLayout = (ArrayLayout) specificLayout;
+                    final int n = ((Object[]) object).length;
+                    if (n != 0) {
                         final Pointer origin = specificLayout.cellToOrigin(cell.asPointer());
-                        for (ReferenceFieldInfo fieldInfo : classInfo.fieldInfos(object)) {
-                            final FieldActor fieldActor = fieldInfo.fieldActor();
-                            if (fieldActor.isSpecialReference()) {
-                                continue;
-                            }
-                            final Pointer address = origin.plus(fieldActor.offset());
-                            final int index = address.toInt() / _alignment;
+                        final int element0Index = origin.plus(arrayLayout.getElementOffsetFromOrigin(0)).dividedBy(Word.size()).toInt();
+                        for (int i = 0; i < n; i++) {
+                            final int index = element0Index + i;
                             try {
                                 assert !referenceMap.isSet(index);
                                 referenceMap.set(index);
                             } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-                                throw ProgramError.unexpected("Error while preparing reference map for mutable object in boot heap of type " +
-                                    classInfo._class.getName() + ": cell=" + cell.toHexString() + ", field=" + fieldActor.name() +
-                                    " [" + origin.toHexString() + "+" + fieldActor.offset() + "], refmap index=" + index);
+                                throw ProgramError.unexpected("Error while preparing reference map for mutable array in boot heap of type " +
+                                    classInfo._class.getName() + ": cell=" + cell.toHexString() + ", index=" + i +
+                                    " [" + origin.toHexString() + "+" + (Word.size() * i) + "], refmap index=" + index, indexOutOfBoundsException);
                             }
                         }
-
-                        if (object instanceof Reference) {
-                            specialReferences.append((Reference) object);
-                        }
-                    }
-                    if (++count % 100000 == 0) {
-                        Trace.line(1, ": " + count);
                     }
                 }
+            } else {
+                final Pointer origin = specificLayout.cellToOrigin(cell.asPointer());
+                for (ReferenceFieldInfo fieldInfo : classInfo.fieldInfos(object)) {
+                    final FieldActor fieldActor = fieldInfo.fieldActor();
+                    if (fieldActor.isSpecialReference()) {
+                        continue;
+                    }
+                    final Pointer address = origin.plus(fieldActor.offset());
+                    final int index = address.toInt() / _alignment;
+                    try {
+                        assert !referenceMap.isSet(index);
+                        referenceMap.set(index);
+                    } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
+                        throw ProgramError.unexpected("Error while preparing reference map for mutable object in boot heap of type " +
+                            classInfo._class.getName() + ": cell=" + cell.toHexString() + ", field=" + fieldActor.name() +
+                            " [" + origin.toHexString() + "+" + fieldActor.offset() + "], refmap index=" + index, indexOutOfBoundsException);
+                    }
+                }
+
+                if (object instanceof Reference) {
+                    specialReferences.append((Reference) object);
+                }
+            }
+            if (++count % 100000 == 0) {
+                Trace.line(1, ": " + count);
             }
         }
 

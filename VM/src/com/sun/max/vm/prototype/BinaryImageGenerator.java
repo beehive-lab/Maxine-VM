@@ -115,9 +115,8 @@ public final class BinaryImageGenerator {
             "For the Java tester, this option specifies that " + System.mapLibraryName("javatest") + " should be dynamically loaded.");
 
     private final Option<String> _vmArguments = _options.newStringOption("vmargs", null,
-            "A set of one or VM arguments. This is useful for exercising certain VM functionality or " +
-            "enabling certain VM tracing while prototyping. Any VM options or state set by these arguments " +
-            "is persisted in the boot image.");
+            "A set of one or VM arguments. This is useful for exercising VM functionality or " +
+            "enabling VM tracing while prototyping.");
 
     /**
      * Used in the Java tester to indicate whether to test the resolution and linking mechanism for
@@ -203,12 +202,8 @@ public final class BinaryImageGenerator {
                 return;
             }
 
-            final String[] vmArguments;
             if (_vmArguments.getValue() != null) {
-                vmArguments = _vmArguments.getValue().split("\\s+");
-                VMOption.setVMArguments(vmArguments);
-            } else {
-                vmArguments = null;
+                VMOption.setVMArguments(_vmArguments.getValue().split("\\s+"));
             }
 
             BinaryImageGenerator._calleeJit = _testCalleeJit.getValue();
@@ -225,13 +220,7 @@ public final class BinaryImageGenerator {
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
             compilerScheme = dataPrototype.vmConfiguration().compilerScheme();
 
-            if (vmArguments != null) {
-                for (String argument : vmArguments) {
-                    if (argument != null) {
-                        ProgramWarning.message("VM argument not matched by any VM option: " + argument);
-                    }
-                }
-            }
+            VMOptions.beforeExit();
 
             // write the statistics
             if (_statsOption.getValue()) {

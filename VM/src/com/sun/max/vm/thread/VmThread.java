@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.thread;
 
+import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
@@ -103,14 +104,14 @@ public class VmThread {
 
     @INLINE
     public static boolean traceThreads() {
-        return _traceThreadsOption.isPresent();
+        return _traceThreadsOption.getValue();
     }
 
-    private static final VMOption _traceThreadsOption = new VMOption("-XX:TraceThreads", "Trace thread management activity for debugging purposes.", MaxineVM.Phase.PRISTINE);
+    private static final VMBooleanXXOption _traceThreadsOption = register(new VMBooleanXXOption("-XX:-TraceThreads", "Trace thread management activity for debugging purposes."), MaxineVM.Phase.PRISTINE);
 
     private static final Size DEFAULT_STACK_SIZE = Size.M;
 
-    private static final VMSizeOption _stackSizeOption = new VMSizeOption("-Xss", DEFAULT_STACK_SIZE, "Stack size of new threads.", MaxineVM.Phase.PRISTINE);
+    private static final VMSizeOption _stackSizeOption = register(new VMSizeOption("-Xss", DEFAULT_STACK_SIZE, "Stack size of new threads."), MaxineVM.Phase.PRISTINE);
 
     /**
      * The signature of {@link #run(int, Address, Pointer, Pointer, Pointer, Pointer, Pointer, Pointer, Pointer, Pointer)}.
@@ -645,6 +646,7 @@ public class VmThread {
     }
 
     private static void invokeShutdownHooks() {
+        VMOptions.beforeExit();
         //Shutdown.shutdown(), but it's not visible
         if (traceThreads()) {
             Log.println("invoking Shutdown hooks");

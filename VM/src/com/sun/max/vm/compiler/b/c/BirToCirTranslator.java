@@ -24,7 +24,9 @@ import static com.sun.max.vm.compiler.cir.CirTraceObserver.TransformationType.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
+import com.sun.max.profile.*;
 import com.sun.max.program.*;
+import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -42,9 +44,13 @@ public class BirToCirTranslator extends CirGenerator {
         super(cirGeneratorScheme);
     }
 
+    private static final TimerMetric _timer = GlobalMetrics.newTimer("Translate-BirToCir", Clock.SYSTEM_MILLISECONDS);
+
     CirClosure translateMethod(BirMethod birMethod, CirMethod cirMethod, CirVariableFactory variableFactory) {
         final BirToCirMethodTranslation methodTranslation = new BirToCirMethodTranslation(birMethod, variableFactory, this);
         final ClassMethodActor classMethodActor = birMethod.classMethodActor();
+
+        _timer.start();
 
         BlockTranslator.run(methodTranslation);
         CirClosure cirClosure = methodTranslation.cirClosure();
@@ -79,37 +85,16 @@ public class BirToCirTranslator extends CirGenerator {
         /* optionally verify the structure of the code */
         CirVisitingTraversal.apply(methodTranslation.cirClosure(), new Verifier());
 
-        if (true) {
-            final EnvBasedInitializedAnalysis analysis = new EnvBasedInitializedAnalysis(InitializedDomain.DOMAIN);
+        final EnvBasedInitializedAnalysis analysis = new EnvBasedInitializedAnalysis(InitializedDomain.DOMAIN);
 
-            Environment<CirVariable, InitializedDomain.Set> env = null;
-            if (!cirMethod.classMethodActor().isStatic()) {
-                env = new Environment<CirVariable, InitializedDomain.Set>();
-                final CirVariable receiver = cirClosure.parameters()[0];
-                env = env.extend(receiver, InitializedDomain.DOMAIN.getInitialized());
-            }
-            final IdentityHashMapping<CirCall, InitializedDomain.Set[]> result = analysis.analyse(cirClosure, env);
-            EnvBasedInitializedAnalysis.InitializedResult.applyResult(cirClosure, result);
+        Environment<CirVariable, InitializedDomain.Set> env = null;
+        if (!cirMethod.classMethodActor().isStatic()) {
+            env = new Environment<CirVariable, InitializedDomain.Set>();
+            final CirVariable receiver = cirClosure.parameters()[0];
+            env = env.extend(receiver, InitializedDomain.DOMAIN.getInitialized());
         }
-
-        if (false) { /* FIXME: investigate which of these are broken and why. */
-            notifyBeforeTransformation(cirMethod, cirClosure, HCIR_SPLITTING);
-
-            SplitTransformation.apply(methodTranslation);
-            notifyAfterTransformation(cirMethod, cirClosure, HCIR_SPLITTING);
-
-            final NameAnalysis nameAnalysis = new NameAnalysis();
-            nameAnalysis.apply(cirClosure);
-
-            final DefsetAnalysis defset = new DefsetAnalysis(DefsetDomain.singleton);
-            defset.apply(cirClosure);
-
-            final ClassTypeAnalysis typeAnalysis = new ClassTypeAnalysis(defset, nameAnalysis, TypesetDomain.singleton);
-
-            typeAnalysis.apply(cirClosure);
-
-            (new TypeStrengthReduction(typeAnalysis)).apply(cirClosure);
-        }
+        final IdentityHashMapping<CirCall, InitializedDomain.Set[]> result = analysis.analyse(cirClosure, env);
+        EnvBasedInitializedAnalysis.InitializedResult.applyResult(cirClosure, result);
 
         notifyBeforeTransformation(cirMethod, cirClosure, HCIR_TO_LCIR);
         HCirToLCirTranslation.apply(methodTranslation);
@@ -131,6 +116,8 @@ public class BirToCirTranslator extends CirGenerator {
         notifyBeforeTransformation(cirMethod, cirClosure, JAVA_LOCALS_PRUNING);
         freeVariableCapturing.pruneJavaLocals();
         notifyAfterTransformation(cirMethod, cirClosure, JAVA_LOCALS_PRUNING);
+
+        _timer.stop();
 
         return cirClosure;
     }

@@ -31,6 +31,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.dir.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.EirTraceObserver.*;
+import com.sun.max.vm.compiler.eir.allocate.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -80,12 +81,6 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
 
     protected abstract EirPrologue createPrologue(EirBlock block);
 
-    protected abstract EirInstruction createJump(EirBlock eirBlock, EirBlock toBlock);
-
-    public void addJump(EirBlock eirBlock, EirBlock targetBlock) {
-        targetBlock.addPredecessor(eirBlock);
-        eirBlock.appendInstruction(createJump(eirBlock, targetBlock));
-    }
 
     protected abstract EirInstruction createReturn(EirBlock eirBlock);
 
@@ -177,6 +172,7 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
                 _calleeSavedEirVariables[i] = createEirVariable(_calleeSavedEirRegisters[i].kind());
             }
             _calleeRepositoryEirVariables[i] = createEirVariable(_calleeSavedEirRegisters[i].kind());
+            _calleeRepositoryEirVariables[i].fixLocation(allocateSpillStackSlot());
         }
 
         final EirBlock prologueBlock = createEirBlock(IrBlock.Role.NORMAL);
@@ -338,7 +334,7 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
 
         // perform register allocation
         _registerAllocationTimer.start();
-        createAllocator(this).run();
+        EirAllocatorFactory.createAllocator(this).run();
         _registerAllocationTimer.stop();
 
         notifyBeforeTransformation(eirBlocks(), Transformation.BLOCK_LAYOUT);
