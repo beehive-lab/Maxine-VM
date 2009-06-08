@@ -80,26 +80,26 @@ public class C1XCompilation {
      * Performs the compilation, producing the start block.
      */
     public BlockBegin startBlock() {
-    	try {
-    		if (_start == null) {
-    			_start = new GraphBuilder(this, new IRScope(this, null, 0, _method, _osrBCI)).start();
-    		}
-		} catch (Bailout b) {
-			_bailout = b;
-		} catch (Throwable t) {
-			_bailout = new Bailout("unexpected exception", t);
-		}
-		return _start;
+        try {
+            if (_start == null) {
+                _start = new GraphBuilder(this, new IRScope(this, null, 0, _method, _osrBCI)).start();
+            }
+        } catch (Bailout b) {
+            _bailout = b;
+        } catch (Throwable t) {
+            _bailout = new Bailout("unexpected exception", t);
+        }
+        return _start;
     }
-    
+
     /**
      * Gets the bailout condition if this compilation failed.
      * @return the bailout condition
      */
     public Bailout bailout() {
-    	return _bailout;
+        return _bailout;
     }
-    
+
     /**
      * Gets the root method being compiled.
      * @return the method being compiled

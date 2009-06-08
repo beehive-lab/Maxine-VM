@@ -80,7 +80,7 @@ public enum IDE {
                 prodDir = prodDir.getParentFile();
             }
             if (prodDir != null) {
-                File outDir = prodDir.getParentFile();
+                final File outDir = prodDir.getParentFile();
                 if (outDir != null && outDir.getName().equals("out")) {
                     return new File(outDir.getParentFile(), classesDirectory.getName());
                 }

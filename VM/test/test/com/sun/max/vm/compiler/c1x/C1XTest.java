@@ -56,10 +56,15 @@ public class C1XTest {
         _options.parseArguments(args);
         final String[] arguments = _options.getArguments();
         Trace.on(_trace.getValue());
-        final JavaPrototype prototype = new PrototypeGenerator(_options).createJavaPrototype(false);
+
+        // create the prototype
+        new PrototypeGenerator(_options).createJavaPrototype(false);
+
+        // create MaxineRuntime
         final MaxCiRuntime runtime = new MaxCiRuntime();
         final List<MethodActor> methods = findMethodsToCompile(arguments);
         final ProgressPrinter progress = new ProgressPrinter(System.out, methods.size(), _verbose.getValue(), false);
+
         for (MethodActor actor : methods) {
             progress.begin(actor.toString());
             if (compile(runtime, actor)) {
@@ -72,6 +77,7 @@ public class C1XTest {
                 }
             }
         }
+
         progress.report();
     }
 

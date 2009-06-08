@@ -156,7 +156,7 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
 
     @INLINE
     public boolean checkOverlappingBelts(Belt from, Belt to) {
-        return (from.getAllocationMark().greaterThan(to.start()) || from.end().greaterThan(to.start()));
+        return from.getAllocationMark().greaterThan(to.start()) || from.end().greaterThan(to.start());
     }
 
     @INLINE

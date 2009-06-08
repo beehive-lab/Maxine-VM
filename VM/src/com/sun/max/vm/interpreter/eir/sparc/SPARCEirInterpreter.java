@@ -1107,7 +1107,6 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         _cpu.writeLong(instruction.destinationLocation(), a ^ b);
     }
 
-    
     public void visit(ZERO instruction) {
         switch (instruction.kind().asEnum()) {
             case INT:

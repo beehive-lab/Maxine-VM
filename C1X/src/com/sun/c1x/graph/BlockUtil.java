@@ -99,7 +99,7 @@ public class BlockUtil {
      * @param to the destination block of the edge
      */
     public static void disconnectEdge(BlockBegin from, BlockBegin to) {
-    	throw Util.unimplemented();
+        throw Util.unimplemented();
         // from.removeSuccessor(to);
         // to.removePredecessor(from);
     }
@@ -110,7 +110,7 @@ public class BlockUtil {
      * @param to the destination of the edge
      */
     public static void addEdge(BlockBegin from, BlockBegin to) {
-    	throw Util.unimplemented();
+        throw Util.unimplemented();
         //from.addSuccessor(to);
         //to.addPredecessor(from);
     }
