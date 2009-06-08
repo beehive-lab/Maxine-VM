@@ -39,12 +39,6 @@ public interface InspectionListener {
     void vmStateChanged(boolean force);
 
     /**
-     * Notifies that the set of threads in the VM has changed; listeners can assume
-     * that the set hasn't changed unless this notification is received.
-     */
-    void threadSetChanged();
-
-    /**
      * Notifies that the state associated with a particular thread  in the VM has changed.
      */
     void threadStateChanged(TeleNativeThread teleNativeThread);

@@ -289,7 +289,7 @@ public class JavaMethodInspector extends MethodInspector {
         for (CodeViewer codeViewer : _codeViewers.values()) {
             codeViewer.redisplay();
         }
-        // Reconstruct doesnt' work now for code views
+        // Reconstruct doesn't work now for code views
         // reconstructView();
     }
 

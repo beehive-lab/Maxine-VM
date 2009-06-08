@@ -174,6 +174,17 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
         public Factory(TeleVM teleVM) {
             _teleVM = teleVM;
             _code = TargetBreakpoint.createBreakpointCode(_teleVM.vmConfiguration().platform().processorKind().instructionSet());
+            teleVM.addVMStateObserver(new TeleVMStateObserver() {
+
+                public void upate(MaxVMState maxVMState) {
+                    if (maxVMState.processState() == ProcessState.TERMINATED) {
+                        _breakpoints.clear();
+                        _transientBreakpoints.clear();
+                        setChanged();
+                        notifyObservers();
+                    }
+                }
+            });
         }
 
         private final Map<Long, TeleTargetBreakpoint> _breakpoints = new HashMap<Long, TeleTargetBreakpoint>();

@@ -82,10 +82,8 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     @Override
     protected void createView() {
         _teleNativeThread = inspection().focus().thread();
-        if (_teleNativeThread == null) {
-            _tabbedPane = null;
-        } else {
-            _tabbedPane = new JTabbedPane();
+        _tabbedPane = new JTabbedPane();
+        if (_teleNativeThread != null) {
             for (Safepoint.State state : Safepoint.State.CONSTANTS) {
                 final TeleThreadLocalValues values = _teleNativeThread.threadLocalsFor(state);
                 if (values != null) {
@@ -210,6 +208,11 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         _threadLocalsInspector = null;
         _viewPreferences.removeListener(this);
         super.inspectorClosing();
+    }
+
+    @Override
+    public void vmProcessTerminated() {
+        reconstructView();
     }
 
 }

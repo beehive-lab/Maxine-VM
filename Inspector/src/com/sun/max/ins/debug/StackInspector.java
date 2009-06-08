@@ -251,12 +251,8 @@ public class StackInspector extends Inspector {
     @Override
     public void createView() {
         _teleNativeThread = inspection().focus().thread();
-
-        if (_teleNativeThread == null) {
-            _contentPane = null;
-        } else {
-            _contentPane = new InspectorPanel(inspection(), new BorderLayout());
-
+        _contentPane = new InspectorPanel(inspection(), new BorderLayout());
+        if (_teleNativeThread != null) {
             _stackFrameListModel = new DefaultListModel();
             _stackFrameList = new JList(_stackFrameListModel);
             _stackFrameList.setCellRenderer(_stackFrameListCellRenderer);
@@ -329,24 +325,26 @@ public class StackInspector extends Inspector {
 
     @Override
     protected void refreshView(boolean force) {
-        final Sequence<StackFrame> frames = _teleNativeThread.frames();
-        assert !frames.isEmpty();
-        if (_stateChanged || force) {
-            _stackFrameListModel.clear();
-            addToModel(frames);
-            _stateChanged = false;
-        } else {
-            // The stack is structurally unchanged with respect to methods,
-            // so avoid a complete redisplay for performance reasons.
-            // However, the object representing the top frame may be different,
-            // in which case the state of the old frame object is out of date.
-            final StackFrame newTopFrame = frames.first();
-            if (_selectedFrame != null && _selectedFrame.stackFrame().isTopFrame() && _selectedFrame.stackFrame().isSameFrame(newTopFrame)) {
-                _selectedFrame.setStackFrame(newTopFrame);
+        if (_teleNativeThread != null) {
+            final Sequence<StackFrame> frames = _teleNativeThread.frames();
+            assert !frames.isEmpty();
+            if (_stateChanged || force) {
+                _stackFrameListModel.clear();
+                addToModel(frames);
+                _stateChanged = false;
+            } else {
+                // The stack is structurally unchanged with respect to methods,
+                // so avoid a complete redisplay for performance reasons.
+                // However, the object representing the top frame may be different,
+                // in which case the state of the old frame object is out of date.
+                final StackFrame newTopFrame = frames.first();
+                if (_selectedFrame != null && _selectedFrame.stackFrame().isTopFrame() && _selectedFrame.stackFrame().isSameFrame(newTopFrame)) {
+                    _selectedFrame.setStackFrame(newTopFrame);
+                }
             }
-        }
-        if (_selectedFrame != null) {
-            _selectedFrame.refresh(force);
+            if (_selectedFrame != null) {
+                _selectedFrame.refresh(force);
+            }
         }
         super.refreshView(force);
         // The title displays thread state, so must be updated.
@@ -733,5 +731,9 @@ public class StackInspector extends Inspector {
         super.inspectorClosing();
     }
 
+    @Override
+    public void vmProcessTerminated() {
+        reconstructView();
+    }
 
 }

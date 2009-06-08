@@ -75,7 +75,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     /**
      * Controls tracing for object copying.
      */
-    protected static final int COPY_TRACE_VALUE = 1;
+    protected static final int COPY_TRACE_VALUE = 2;
 
     /**
      * The factory method {@link TeleObjectFactory#make(Reference)} ensures synchronized TeleObjects creation.

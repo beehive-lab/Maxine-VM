@@ -39,9 +39,6 @@ public abstract class InspectionListenerAdapter implements InspectionListener {
     public void vmStateChanged(boolean force) {
     }
 
-    public void threadSetChanged() {
-    }
-
     public void threadStateChanged(TeleNativeThread teleNativeThread) {
     }
 
