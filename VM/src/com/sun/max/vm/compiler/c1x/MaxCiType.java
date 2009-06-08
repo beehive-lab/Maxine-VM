@@ -328,6 +328,8 @@ public class MaxCiType implements CiType {
                 return BasicType.Address;
             case REFERENCE:
                 return BasicType.Object;
+            case VOID:
+                return BasicType.Void;
             default:
                 throw ProgramError.unknownCase();
         }

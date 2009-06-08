@@ -32,7 +32,7 @@ public class ValueTag {
     public static final byte FLOAT_TAG = 2;
     public static final byte DOUBLE_TAG = 3;
     public static final byte OBJECT_TAG = 4;
-    public static final byte ADDRESS_TAG = 5;
+    public static final byte JSR_TAG = 5;
     public static final byte VOID_TAG = 6;
     public static final byte ILLEGAL_TAG = 7;
 
@@ -48,7 +48,7 @@ public class ValueTag {
             case FLOAT_TAG: return 'f';
             case DOUBLE_TAG: return 'd';
             case OBJECT_TAG: return 'a';
-            case ADDRESS_TAG: return 'r';
+            case JSR_TAG: return 'r';
             case VOID_TAG: return 'v';
             case ILLEGAL_TAG: return '!';
         }
@@ -67,7 +67,7 @@ public class ValueTag {
             case FLOAT_TAG: return "float";
             case DOUBLE_TAG: return "double";
             case OBJECT_TAG: return "object";
-            case ADDRESS_TAG: return "address";
+            case JSR_TAG: return "address";
             case VOID_TAG: return "void";
             case ILLEGAL_TAG: return "illegal";
         }

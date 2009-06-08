@@ -326,8 +326,8 @@ public class ValueStack {
             case ValueTag.LONG_TAG: lpush(x); return;
             case ValueTag.FLOAT_TAG: fpush(x); return;
             case ValueTag.DOUBLE_TAG: dpush(x); return;
-            case ValueTag.OBJECT_TAG: rpush(x); return;
-            case ValueTag.ADDRESS_TAG: apush(x); return;
+            case ValueTag.OBJECT_TAG: apush(x); return;
+            case ValueTag.JSR_TAG: jpush(x); return;
             default: throw Util.shouldNotReachHere();
         }
     }
@@ -358,19 +358,19 @@ public class ValueStack {
     }
 
     /**
-     * Pushes a value onto the stack and checks that it is an address.
+     * Pushes a value onto the stack and checks that it is an object.
      * @param x the instruction to push onto the stack
      */
     public void apush(Instruction x) {
-        xpush(checkTag(ValueTag.ADDRESS_TAG, x));
+        xpush(checkTag(ValueTag.OBJECT_TAG, x));
     }
 
     /**
-     * Pushes a value onto the stack and checks that it is a reference.
+     * Pushes a value onto the stack and checks that it is a JSR return address.
      * @param x the instruction to push onto the stack
      */
-    public void rpush(Instruction x) {
-        xpush(checkTag(ValueTag.OBJECT_TAG, x));
+    public void jpush(Instruction x) {
+        xpush(checkTag(ValueTag.JSR_TAG, x));
     }
 
     /**
@@ -402,8 +402,8 @@ public class ValueStack {
             case ValueTag.LONG_TAG: return lpop();
             case ValueTag.FLOAT_TAG: return fpop();
             case ValueTag.DOUBLE_TAG: return dpop();
-            case ValueTag.OBJECT_TAG: return rpop();
-            case ValueTag.ADDRESS_TAG: return apop();
+            case ValueTag.OBJECT_TAG: return apop();
+            case ValueTag.JSR_TAG: return jpop();
             default: throw Util.shouldNotReachHere();
         }
     }
@@ -434,7 +434,7 @@ public class ValueStack {
     }
 
     /**
-     * Pops a value off of the stack and checks that it is an address.
+     * Pops a value off of the stack and checks that it is an object.
      * @return x the instruction popped off the stack
      */
     public Instruction apop() {
@@ -442,11 +442,11 @@ public class ValueStack {
     }
 
     /**
-     * Pops a value off of the stack and checks that it is a reference.
+     * Pops a value off of the stack and checks that it is a JSR return address.
      * @return x the instruction popped off the stack
      */
-    public Instruction rpop() {
-        return checkTag(ValueTag.OBJECT_TAG, xpop());
+    public Instruction jpop() {
+        return checkTag(ValueTag.JSR_TAG, xpop());
     }
 
     /**

@@ -36,7 +36,7 @@ public class ValueType {
     public static final ValueType LONG_TYPE = new ValueType(ValueTag.LONG_TAG, 2);
     public static final ValueType FLOAT_TYPE = new ValueType(ValueTag.FLOAT_TAG, 1);
     public static final ValueType DOUBLE_TYPE = new ValueType(ValueTag.DOUBLE_TAG, 2);
-    public static final ValueType ADDRESS_TYPE = new ValueType(ValueTag.ADDRESS_TAG, 1);
+    public static final ValueType ADDRESS_TYPE = new ValueType(ValueTag.JSR_TAG, 1);
     public static final ValueType OBJECT_TYPE = new ValueType(ValueTag.OBJECT_TAG, 1);
     public static final ValueType ILLEGAL_TYPE = new ValueType(ValueTag.ILLEGAL_TAG, 1);
     public static final ValueType VOID_TYPE = new ValueType(ValueTag.VOID_TAG, 0);
@@ -207,13 +207,20 @@ public class ValueType {
     }
 
     /**
+     * Converts this value type to a string.
+     */
+    public String toString() {
+        return ValueTag.tagName(_tag);
+    }
+
+    /**
      * Gets the base value type for the specified value tag.
      * @param tag the value tag
      * @return the value type
      */
     public static ValueType base(byte tag) {
         switch (tag) {
-            case ValueTag.ADDRESS_TAG: return ADDRESS_TYPE;
+            case ValueTag.JSR_TAG: return ADDRESS_TYPE;
             case ValueTag.INT_TAG: return INT_TYPE;
             case ValueTag.FLOAT_TAG: return FLOAT_TYPE;
             case ValueTag.LONG_TAG: return LONG_TYPE;
@@ -258,7 +265,7 @@ public class ValueType {
             case ValueTag.FLOAT_TAG: return BasicType.Float;
             case ValueTag.DOUBLE_TAG: return BasicType.Double;
             case ValueTag.OBJECT_TAG: return BasicType.Object;
-            case ValueTag.ADDRESS_TAG: return BasicType.Address;
+            case ValueTag.JSR_TAG: return BasicType.Address;
             case ValueTag.VOID_TAG: return BasicType.Void;
         }
         return BasicType.Illegal;

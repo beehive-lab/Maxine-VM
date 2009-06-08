@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.bytecode;
 
-import com.sun.c1x.util.Util;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>BytecodeSwitch</code> class definition.
@@ -29,17 +29,22 @@ import com.sun.c1x.util.Util;
  */
 public abstract class BytecodeSwitch {
     final BytecodeStream _stream;
+    final byte[] _code;
     final int _bci;
     final int _aligned;
 
     public BytecodeSwitch(BytecodeStream stream, int bci) {
         _aligned = (bci + 4) & 0xfffffffc;
         _stream = stream;
+        _code = null;
         _bci = bci;
     }
 
     public BytecodeSwitch(byte[] code, int bci) {
-        throw Util.unimplemented();
+        _aligned = (bci + 4) & 0xfffffffc;
+        _stream = null;
+        _code = code;
+        _bci = bci;
     }
 
     public abstract int defaultOffset();
@@ -51,6 +56,9 @@ public abstract class BytecodeSwitch {
     public abstract int size();
 
     protected int readWord(int bci) {
+        if (_code != null) {
+            return Bytes.beS4(_code, bci);
+        }
         return _stream.readInt(bci);
     }
 
