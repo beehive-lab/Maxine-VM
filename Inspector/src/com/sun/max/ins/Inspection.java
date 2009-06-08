@@ -295,6 +295,8 @@ public final class Inspection {
                 break;
             case TERMINATED:
                 Trace.line(1, tracePrefix() + " - VM process terminated");
+                // Clear any possibly misleading view state.
+                focus().clearAll();
                 // Give all process-sensitive views a chance to shut down
                 for (InspectionListener listener : _inspectionListeners.clone()) {
                     listener.vmProcessTerminated();
@@ -320,7 +322,12 @@ public final class Inspection {
 
         public void upate(final MaxVMState maxVMState) {
             System.out.println("MaxVMState=" + maxVMState);
-
+            for (TeleNativeThread thread : maxVMState.threadsStarted()) {
+                Trace.line(TRACE_VALUE, tracePrefix() + "started: " + thread);
+            }
+            for (TeleNativeThread thread : maxVMState.threadsDied()) {
+                Trace.line(TRACE_VALUE, tracePrefix() + "died: " + thread);
+            }
             if (java.awt.EventQueue.isDispatchThread()) {
                 processVMStateChange();
             } else {
@@ -455,12 +462,7 @@ public final class Inspection {
 
         Trace.begin(TRACE_VALUE, _threadTracer);
         final long startTimeMillis = System.currentTimeMillis();
-        final IterableWithLength<TeleNativeThread> deadThreads = maxVM().recentlyDiedThreads();
-        final IterableWithLength<TeleNativeThread> startedThreads = maxVM().recentlyCreatedThreads();
-        if (deadThreads.length() != 0 || startedThreads.length() != 0) {
-            for (InspectionListener listener : listeners) {
-                listener.threadSetChanged();
-            }
+        if (!maxVMState().threadsStarted().isEmpty() || !maxVMState().threadsDied().isEmpty()) {
             for (TeleNativeThread teleNativeThread : maxVM().threads()) {
                 for (InspectionListener listener : listeners) {
                     listener.threadStateChanged(teleNativeThread);
@@ -488,7 +490,7 @@ public final class Inspection {
             if (!atBreakpoint) {
                 // If there was no selection based on breakpoint, then check the thread that was selected before the
                 // change.
-                InspectorError.check(!focus().thread().isDead(), "Selected thread no longer valid");
+                InspectorError.check(focus().thread().isLive(), "Selected thread no longer valid");
             }
             // Reset focus to new IP.
             final TeleNativeThread focusThread = focus().thread();

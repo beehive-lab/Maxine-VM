@@ -274,6 +274,9 @@ public class ObjectHeaderTable extends InspectorTable {
             final TeleNativeThread thread = focus().thread();
             if (thread != null) {
                 final TeleIntegerRegisters teleIntegerRegisters = thread.integerRegisters();
+                if (teleIntegerRegisters == null) {
+                    return gui().getMissingDataTableCellRederer();
+                }
                 final Address address = _model.rowToAddress(row);
                 final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(maxVM().wordSize()));
                 if (registerSymbols.isEmpty()) {

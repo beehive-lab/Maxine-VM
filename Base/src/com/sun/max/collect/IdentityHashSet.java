@@ -24,9 +24,10 @@ import java.util.*;
 
 /**
  * An identity hash set backed by java.util.IdentityHashMap.
- * 
+ *
  * @author Hiroshi Yamauchi
  * @author Bernd Mathiske
+ * @author Michael Van De Vanter
  */
 public class IdentityHashSet<Element_Type> implements Iterable<Element_Type>, Cloneable {
 
@@ -45,11 +46,15 @@ public class IdentityHashSet<Element_Type> implements Iterable<Element_Type>, Cl
         addAll(elements);
     }
 
+    public IdentityHashSet(Iterable<Element_Type> elements) {
+        this ();
+        addAll(elements);
+    }
+
     /**
      * Adds a specified element to this set.
-     * 
-     * @param element
-     *                the element to add
+     *
+     * @param element the element to add
      * @return true if {@code element} was already in this set
      */
     public boolean add(Element_Type element) {
@@ -59,9 +64,8 @@ public class IdentityHashSet<Element_Type> implements Iterable<Element_Type>, Cl
     /**
      * Adds all the elements in a given Iterable to this set. The addition is always done by calling
      * {@link #add(Object)}.
-     * 
-     * @param iterable
-     *                the collection of elements to add
+     *
+     * @param iterable the collection of elements to add
      */
     public final void addAll(Iterable<Element_Type> iterable) {
         for (Element_Type element : iterable) {
@@ -69,6 +73,12 @@ public class IdentityHashSet<Element_Type> implements Iterable<Element_Type>, Cl
         }
     }
 
+    /**
+     * Adds all the elements in a given array to this set. The addition is always done by calling
+     * {@link #add(Object)}.
+     *
+     * @param elements the collection of elements to add
+     */
     public final void addAll(Element_Type[] elements) {
         for (Element_Type element : elements) {
             add(element);
@@ -83,8 +93,37 @@ public class IdentityHashSet<Element_Type> implements Iterable<Element_Type>, Cl
         _internalMap.clear();
     }
 
+    /**
+     * Remove an element from the set.
+     *
+     * @param element the element to remove.
+     */
     public void remove(Element_Type element) {
         _internalMap.remove(element);
+    }
+
+    /**
+     * Removes all the elements in a given Iterable from this set. The removal is always done by calling
+     * {@link #remove(Object)}.
+     *
+     * @param iterable the collection of elements to remove
+     */
+    public final void removeAll(Iterable<Element_Type> iterable) {
+        for (Element_Type element : iterable) {
+            remove(element);
+        }
+    }
+
+    /**
+     * Removes all the elements in a given array from this set. The removal is always done by calling
+     * {@link #remove(Object)}.
+     *
+     * @param elements the collection of elements to remove
+     */
+    public final void removeAll(Element_Type[] elements) {
+        for (Element_Type element : elements) {
+            remove(element);
+        }
     }
 
     /**

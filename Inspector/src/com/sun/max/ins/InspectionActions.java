@@ -3024,6 +3024,33 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
+     * Action:  lists to the console this history of the VM state.
+     */
+    final class ListVMStateHistoryAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "List VM state history";
+
+        ListVMStateHistoryAction(String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        }
+
+        @Override
+        protected void procedure() {
+            maxVM().describeVMStateHistory(System.out);
+        }
+    }
+
+    private InspectorAction _listVMStateHistory = new ListVMStateHistoryAction(null);
+
+    /**
+     * @return an Action that will list to the console the history of the VM state
+     */
+    public final InspectorAction listVMStateHistory() {
+        return _listVMStateHistory;
+    }
+
+
+    /**
      * Action:  lists to the console all entries in the {@link TeleCodeRegistry}.
      */
     final class ListCodeRegistryAction extends InspectorAction {

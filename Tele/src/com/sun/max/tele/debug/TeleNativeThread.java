@@ -58,6 +58,7 @@ import com.sun.max.vm.value.*;
  * @author Bernd Mathiske
  * @author Aritra Bandyopadhyay
  * @author Doug Simon
+ * @author Michael Van De Vanter
  */
 public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, ThreadProvider, TeleVMHolder {
 
@@ -151,9 +152,9 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     private int _suspendCount;
 
     private long _registersEpoch;
-    private final TeleIntegerRegisters _integerRegisters;
-    private final TeleStateRegisters _stateRegisters;
-    private final TeleFloatingPointRegisters _floatingPointRegisters;
+    private TeleIntegerRegisters _integerRegisters;
+    private TeleStateRegisters _stateRegisters;
+    private TeleFloatingPointRegisters _floatingPointRegisters;
 
     /**
      * A cached stack trace for this thread.
@@ -211,7 +212,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * thread last stopped.
      */
     public Sequence<StackFrame> frames() {
-        refreshFrames(false);
+        refreshFrames();
         return _frames;
     }
 
@@ -221,10 +222,15 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * @see StackFrame#isSameFrame(StackFrame)
      */
     public boolean framesChanged() {
-        refreshFrames(false);
+        refreshFrames();
         return _framesChanged;
     }
 
+    /**
+     * Immutable; thread-safe.
+     *
+     * @return the process in which this thread is running.
+     */
     public TeleProcess teleProcess() {
         return _teleProcess;
     }
@@ -246,28 +252,34 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         return _teleVmThreadLocals.get(state);
     }
 
+    /**
+     * This thread's integer registers.
+     *
+     * @return the integer registers; null after thread dies.
+     */
     public TeleIntegerRegisters integerRegisters() {
         refreshRegisters();
         return _integerRegisters;
     }
 
+    /**
+     * This thread's floating point registers.
+     *
+     * @return the floating point registers; null after thread dies.
+     */
     public TeleFloatingPointRegisters floatingPointRegisters() {
         refreshRegisters();
         return _floatingPointRegisters;
     }
 
+    /**
+     * This thread's state registers.
+     *
+     * @return the state registers; null after thread dies.
+     */
     public TeleStateRegisters stateRegisters() {
         refreshRegisters();
         return _stateRegisters;
-    }
-
-    /**
-     * Updates this thread's state. This does not cause a {@linkplain #refresh(long) refresh}.
-     *
-     * @param state the new state of this thread
-     */
-    public final void setState(ThreadState state) {
-        _state = state;
     }
 
     /**
@@ -325,20 +337,12 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
     /**
      * Refreshes the contents of this object to reflect the data of the corresponding thread in the tele process.
-     * If {@code this.state() == DEAD}, then this object represents a thread that has died in the tele process and
-     * all state is flushed accordingly.
+
      *
      * @param epoch the new epoch of this thread
      */
     public final void refresh(long epoch) {
         Trace.line(REFRESH_TRACE_LEVEL, tracePrefix() + "refresh(epoch=" + epoch + ") for " + this);
-        if (_state == DEAD) {
-            refreshFrames(true);
-            _breakpoint = null;
-            _teleVmThread = null;
-            return;
-        }
-
         if (_state.allowsDataAccess()) {
             refreshBreakpoint();
         }
@@ -349,7 +353,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      */
     private synchronized void refreshRegisters() {
         final long processEpoch = teleProcess().epoch();
-        if (_registersEpoch < processEpoch) {
+        if (_registersEpoch < processEpoch && isLive()) {
             _registersEpoch = processEpoch;
             Trace.line(REFRESH_TRACE_LEVEL, tracePrefix() + "refreshRegisters (epoch=" + processEpoch + ") for " + this);
 
@@ -433,18 +437,19 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     }
 
     /**
+     * Clears the current list of frames.
+     */
+    private synchronized void clearFrames() {
+        _frames = Sequence.Static.empty(StackFrame.class);
+        _framesChanged = true;
+    }
+
+    /**
      * Update the current list of frames.
      * As a side effect, set {@link #_framesChanged} to true if the identify of the stack frames has change,
      * even if the objects representing them are different.
-     * @param clear the current list of frames should be cleared
      */
-    private synchronized void refreshFrames(boolean clear) {
-        if (clear) {
-            _frames = Sequence.Static.empty(StackFrame.class);
-            _framesChanged = true;
-            return;
-        }
-
+    private synchronized void refreshFrames() {
         final long processEpoch = teleProcess().epoch();
         if (_framesEpoch < processEpoch) {
             _framesEpoch = processEpoch;
@@ -507,10 +512,10 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     }
 
     /**
-     * @return whether this thread has died.
+     * @return whether this thread is still alive.
      */
-    public final boolean isDead() {
-        return _state == DEAD;
+    public final boolean isLive() {
+        return _state != DEAD;
     }
 
     /**
@@ -521,8 +526,25 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     }
 
     /**
+     * Marks the thread as having died in the process; flushes all state accordingly.
+     */
+    public final void setDead() {
+        _state = DEAD;
+        clearFrames();
+        _breakpoint = null;
+        _teleVmThread = null;
+        _frameCache = null;
+        _teleVmThreadLocals.clear();
+        _integerRegisters = null;
+        _stateRegisters = null;
+        _floatingPointRegisters = null;
+    }
+
+    /**
      * Gets the identifier passed to {@link VmThread#run} when the thread was started. Note that this is different from
      * the platform dependent thread {@linkplain #handle() handle}.
+     * <br>
+     * Immutable; thread-safe.
      *
      * @return the id of this thread. A value less than, equal to or greater than 0 denotes a native thread, the
      *         primordial thread or a Java thread respectively.
@@ -534,6 +556,8 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     /**
      * Gets the platform dependent handle to the native thread data structure. For example, on Solaris this will be
      * the LWP identifier for this thread. This value is guaranteed to be unique for any running thread.
+     * <br>
+     * Immutable; thread-safe.
      */
     public final long handle() {
         return _handle;
@@ -551,6 +575,10 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
     /**
      * Gets the stack for this thread.
+     * <br>
+     * The identity of the result is immutable and thread-safe, although its contents are not.
+     *
+     * @return this thread's stack
      */
     public final TeleNativeStack stack() {
         return _stack;
@@ -662,19 +690,31 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
     @Override
     public final String toString() {
-        String name = isPrimordial() ? "primordial" : (_teleVmThread == null ? "native" : _teleVmThread.name());
-        name +=
-            "[id=" + id() +
-            ",handle=" + handle() +
-            ",state=" + _state +
-            ",type=" + (isPrimordial() ? "primordial" : (isJava() ? "Java" : "native")) +
-            ",ip=0x" + instructionPointer().toHexString();
-        if (isJava()) {
-            name +=
-                ",stack_start=0x" + stack().start().toHexString() +
-                ",stack_size=" + stack().size().toLong();
+        final StringBuilder sb = new StringBuilder(100);
+        sb.append(isPrimordial() ? "primordial" : (_teleVmThread == null ? "native" : _teleVmThread.name()));
+        sb.append("[id=").append(id());
+        sb.append(",handle=").append(handle());
+        sb.append(",state=").append(_state);
+        sb.append(",type=").append(isPrimordial() ? "primordial" : (isJava() ? "Java" : "native"));
+        if (isLive()) {
+            sb.append(",ip=0x").append(instructionPointer().toHexString());
+            if (isJava()) {
+                sb.append(",stack_start=0x").append(stack().start().toHexString());
+                sb.append(",stack_size=").append(stack().size().toLong());
+            }
         }
-        return name + "]";
+        sb.append("]");
+        return sb.toString();
+    }
+
+    public final String toShortString() {
+        final StringBuilder sb = new StringBuilder(100);
+        sb.append(isPrimordial() ? "primordial" : (_teleVmThread == null ? "native" : _teleVmThread.name()));
+        sb.append("[id=").append(id());
+        sb.append(",handle=").append(handle());
+        sb.append(",type=").append(isPrimordial() ? "primordial" : (isJava() ? "Java" : "native"));
+        sb.append("]");
+        return sb.toString();
     }
 
     /**

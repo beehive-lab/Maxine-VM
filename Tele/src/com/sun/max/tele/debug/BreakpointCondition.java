@@ -56,6 +56,9 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
             return false;
         }
         _integerRegisters = teleNativeThread.integerRegisters();
+        if (_integerRegisters == null) {
+            return false;
+        }
         _integerRegisters.symbolizer();
         try {
             final Expression result = _expression.evaluate();
