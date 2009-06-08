@@ -75,6 +75,14 @@ public class ConstType extends ValueType {
     }
 
     /**
+     * Converts this value type to a string.
+     */
+    public String toString() {
+        final String val = _isObject ? "object@" + System.identityHashCode(_value) : _value.toString();
+        return ValueTag.tagName(tag())  + " = " + val;
+    }
+
+    /**
      * Modified merge operations for constants. Merge of two identical constants
      * will return the first. Merge of two constants of the same type will return
      * the common (nonconstant) value type. Meet of anything else results in the
@@ -325,7 +333,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the address
      */
     public static ConstType forAddress(int i) {
-        return new ConstType(ValueTag.ADDRESS_TAG, 1, i, false);
+        return new ConstType(ValueTag.JSR_TAG, 1, i, false);
     }
 
 }
