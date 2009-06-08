@@ -166,8 +166,6 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
         return -1;
     }
 
-
-    @Override
     public MachineCodeInstructionArray getTargetCodeInstructions() {
         final IndexedSequence<TargetCodeInstruction> instructions = getInstructions();
         final MachineCodeInstruction[] result = new MachineCodeInstruction[instructions.length()];
@@ -178,7 +176,6 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
         return new MachineCodeInstructionArray(result);
     }
 
-    @Override
     public MethodProvider getMethodProvider() {
         return this.getTeleClassMethodActor();
     }

@@ -114,7 +114,6 @@ public class VectorSequence<Element_Type> extends Vector<Element_Type> implement
         return to;
     }
 
-    @Override
     public Collection<Element_Type> toCollection() {
         return this;
     }

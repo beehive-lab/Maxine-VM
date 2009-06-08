@@ -104,7 +104,6 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
         emitter.assembler().or(sourceRegister.as(), G0, destinationRegister.as());
     }
 
-    @Override
     public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
         try {
             emitter.assembler().setsw(sourceImmediate, destinationRegister.as());
@@ -381,7 +380,6 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
         }
     }
 
-    @Override
     public void emit(SPARCEirTargetEmitter emitter) {
         switch (kind().asEnum()) {
             case BYTE:
@@ -403,7 +401,6 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
         }
     }
 
-    @Override
     public void acceptVisitor(SPARCEirInstructionVisitor visitor) {
         visitor.visit(this);
     }

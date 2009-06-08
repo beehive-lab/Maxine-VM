@@ -775,8 +775,6 @@ public class ResolveDataFlow extends AlgorithmPart {
                 }
 
                 instruction.visitOperands(new EirOperand.Procedure() {
-
-                    @Override
                     public void run(EirOperand operand) {
                         if (operand.eirValue() instanceof EirVariable && (operand.effect() == EirOperand.Effect.DEFINITION || operand.effect() == EirOperand.Effect.UPDATE)) {
                             variablesUpdated.add((EirVariable) operand.eirValue());

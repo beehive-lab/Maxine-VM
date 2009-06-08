@@ -76,7 +76,6 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
         }
     }
 
-    @Override
     public void visitPointerOffset(Pointer pointer, int offset) {
         final Pointer address = pointer.plus(offset);
         final int heapWordIndex = address.minus(start()).dividedBy(Word.size()).toInt();

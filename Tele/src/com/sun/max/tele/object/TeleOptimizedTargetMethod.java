@@ -35,12 +35,10 @@ public final class TeleOptimizedTargetMethod extends TeleTargetMethod {
         super(teleVM, optimizedTargetMethodReference);
     }
 
-    @Override
     public int[] bytecodeToTargetCodePositionMap() {
         return null;
     }
 
-    @Override
     public BytecodeInfo[] bytecodeInfos() {
         return null;
     }

@@ -59,7 +59,6 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
         _name = "Standard-" + defaultFontSize;
     }
 
-    @Override
     public String name() {
         return _name;
     }
@@ -97,6 +96,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
         }
         return _defaultFont;
     }
+
     public int defaultTextFontSize() {
         return _defaultFontSize;
     }

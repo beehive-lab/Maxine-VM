@@ -394,22 +394,18 @@ public class TirToDirTranslator extends TirPipelineFilter  {
         for (DirBlock block : method.blocks()) {
             for (DirInstruction instruction : block.instructions()) {
                 instruction.acceptVisitor(new DirVisitor() {
-                    @Override
                     public void visitAssign(DirAssign dirAssign) {
                         Problem.unimplemented();
                     }
 
-                    @Override
                     public void visitBuiltinCall(DirBuiltinCall dirBuiltinCall) {
                         Problem.unimplemented();
                     }
 
-                    @Override
                     public void visitGoto(DirGoto dirGoto) {
                         Problem.unimplemented();
                     }
 
-                    @Override
                     public void visitMethodCall(DirMethodCall dirMethodCall) {
                         Problem.unimplemented();
                         // final DirVariable result = dirMethodCall.result();
@@ -417,32 +413,26 @@ public class TirToDirTranslator extends TirPipelineFilter  {
                         // final DirMethodCall call = new DirMethodCall(callResult, dirMethodCall.method(), );
                     }
 
-                    @Override
                     public void visitReturn(DirReturn dirReturn) {
                         Problem.unimplemented();
                     }
 
-                    @Override
                     public void visitSafepoint(DirSafepoint safepoint) {
                         Problem.unimplemented();
                     }
 
-                    @Override
                     public void visitSwitch(DirSwitch dirSwitch) {
                         Problem.unimplemented();
                     }
 
-                    @Override
                     public void visitThrow(DirThrow dirThrow) {
                         Problem.unimplemented();
                     }
 
-                    @Override
                     public void visitGuardpoint(DirGuardpoint guardpoint) {
                         Problem.unimplemented();
                     }
 
-                    @Override
                     public void visitJump(DirJump dirJump) {
                         Problem.unimplemented();
                     }

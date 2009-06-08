@@ -100,17 +100,14 @@ public class StackInspector extends Inspector {
             return _truncatedStackFrame;
         }
 
-        @Override
         public TargetMethod targetMethod() {
             return _truncatedStackFrame.targetMethod();
         }
 
-        @Override
         public boolean isJavaStackFrame() {
             return false;
         }
 
-        @Override
         public boolean isSameFrame(StackFrame stackFrame) {
             if (stackFrame instanceof TruncatedStackFrame) {
                 final TruncatedStackFrame other = (TruncatedStackFrame) stackFrame;
@@ -248,7 +245,6 @@ public class StackInspector extends Inspector {
         return _saveSettingsListener;
     }
 
-    @Override
     public void createView() {
         _teleNativeThread = inspection().focus().thread();
 
@@ -309,7 +305,6 @@ public class StackInspector extends Inspector {
         refreshView(true);
 
         SwingUtilities.invokeLater(new Runnable() {
-
             public void run() {
                 // System.err.println("setting divider location in stack inspector for " + inspection().inspectionThreadName(_teleNativeThread));
                 // Try to place the split pane divider in the middle of the split pane's space initially
@@ -318,7 +313,6 @@ public class StackInspector extends Inspector {
         });
     }
 
-    @Override
     public String getTextForTitle() {
         String title = "Stack: ";
         if (_teleNativeThread != null) {
@@ -523,7 +517,6 @@ public class StackInspector extends Inspector {
             final JPanel slotNameFormatPanel = new InspectorPanel(inspection(), new FlowLayout(FlowLayout.LEFT));
             slotNameFormatPanel.add(_showSlotAddresses);
             _showSlotAddresses.addItemListener(new ItemListener() {
-                @Override
                 public void itemStateChanged(ItemEvent e) {
                     refresh(true);
                 }
@@ -623,7 +616,6 @@ public class StackInspector extends Inspector {
         StackFrameMouseClickAdapter(Inspection inspection) {
             super(inspection);
         }
-        @Override
         public void procedure(final MouseEvent mouseEvent) {
             switch(MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
                 case MouseEvent.BUTTON1: {
@@ -672,7 +664,6 @@ public class StackInspector extends Inspector {
             if (oldRightComponent != newRightComponent) {
                 _splitPane.setRightComponent(newRightComponent);
                 SwingUtilities.invokeLater(new Runnable() {
-
                     public void run() {
                         _splitPane.setDividerLocation(dividerLocation);
                     }
@@ -709,7 +700,6 @@ public class StackInspector extends Inspector {
             super(inspection(), "Copy stack list to clipboard");
         }
 
-        @Override
         public void procedure() {
             // (mlvdv)  This is pretty awkward, but has the virtue that it reproduces exactly what's displayed.  Could be improved.
             final StringBuilder result = new StringBuilder(100);

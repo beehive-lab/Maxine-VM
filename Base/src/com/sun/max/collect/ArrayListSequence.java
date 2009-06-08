@@ -114,7 +114,6 @@ public class ArrayListSequence<Element_Type> extends ArrayList<Element_Type> imp
         return to;
     }
 
-    @Override
     public Collection<Element_Type> toCollection() {
         return this;
     }

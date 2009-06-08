@@ -294,7 +294,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      */
     public InspectorAction getViewOptionsAction() {
         final InspectorAction dummyViewOptionsAction = new InspectorAction(inspection(), "View Options") {
-            @Override
             protected void procedure() {
             }
         };
@@ -320,7 +319,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      */
     public InspectorAction getCloseAction() {
         return new InspectorAction(inspection(), "Close") {
-            @Override
             protected void procedure() {
                 frame().dispose();
             }
@@ -329,7 +327,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
 
     public InspectorAction getCloseOtherInspectorsAction() {
         final Predicate<Inspector> predicate = new Predicate<Inspector>() {
-            @Override
             public boolean evaluate(Inspector inspector) {
                 return inspector != Inspector.this;
             }
@@ -343,7 +340,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      */
     protected final InspectorAction getDefaultPrintAction() {
         return new InspectorAction(inspection(), "Print") {
-            @Override
             public void procedure() {
                 final MessageFormat footer = new MessageFormat("Maxine: " + getTextForTitle() + "  Printed: " + new Date() + " -- Page: {0, number, integer}");
                 try {
@@ -363,7 +359,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      */
     public InspectorAction getPrintAction() {
         final InspectorAction dummyPrintAction = new InspectorAction(inspection(), "Print") {
-            @Override
             protected void procedure() {
             }
         };

@@ -37,7 +37,6 @@ public class CallNative extends JavaOperator {
         _classMethodActor = classMethodActor;
     }
 
-    @Override
     public Kind resultKind() {
         return _signatureDescriptor.resultKind();
     }
@@ -60,12 +59,10 @@ public class CallNative extends JavaOperator {
         return _classMethodActor;
     }
 
-    @Override
     public Kind[] parameterKinds() {
         return _signatureDescriptor.copyParameterKinds(null, 0);
     }
 
-    @Override
     public String toString() {
         return "CallNative:" + _classMethodActor.name();
     }

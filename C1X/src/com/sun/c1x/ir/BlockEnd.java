@@ -86,16 +86,7 @@ public abstract class BlockEnd extends StateSplit {
      * @param block the beginning of this basic block
      */
     public void setBegin(BlockBegin block) {
-        List<BlockBegin> sux = null;
-        if (block != null) {
-            sux = block.successors();
-        } else if (_begin != null) {
-            // XXX: why copy the successor list if reseting the block begin?
-            sux = new ArrayList<BlockBegin>();
-            sux.addAll(_begin.successors());
-        }
         _begin = block;
-        _successors = sux;
     }
 
     /**

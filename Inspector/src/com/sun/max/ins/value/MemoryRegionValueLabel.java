@@ -47,7 +47,6 @@ public class MemoryRegionValueLabel extends ValueLabel {
             super(inspection);
         }
 
-        @Override
         public void procedure(MouseEvent mouseEvent) {
             if (_memoryRegion != null) {
                 switch (MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
@@ -83,7 +82,6 @@ public class MemoryRegionValueLabel extends ValueLabel {
         addMouseListener(new MemoryRegionMouseClickAdapter(inspection));
     }
 
-    @Override
     protected void updateText() {
         if (value() != null) {
             _address = value().toWord().asAddress();
@@ -98,7 +96,6 @@ public class MemoryRegionValueLabel extends ValueLabel {
         }
     }
 
-    @Override
     public void redisplay() {
         setFont(style().javaNameFont());
         setForeground(style().javaNameColor());

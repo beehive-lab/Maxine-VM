@@ -79,7 +79,6 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         return inspection().geometry().threadLocalsFrameDefaultBounds();
     }
 
-    @Override
     protected void createView() {
         _teleNativeThread = inspection().focus().thread();
         if (_teleNativeThread == null) {
@@ -109,7 +108,6 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         return _saveSettingsListener;
     }
 
-    @Override
     public String getTextForTitle() {
         String title = "Thread Locals: ";
         if (_teleNativeThread != null) {
@@ -121,7 +119,6 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     @Override
     public InspectorAction getViewOptionsAction() {
         return new InspectorAction(inspection(), "View Options") {
-            @Override
             public void procedure() {
                 new TableColumnVisibilityPreferences.Dialog<ThreadLocalsColumnKind>(inspection(), "Thread Locals View Options", _viewPreferences);
             }
@@ -131,7 +128,6 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     @Override
     public InspectorAction getPrintAction() {
         return new InspectorAction(inspection(), "Print") {
-            @Override
             public void procedure() {
                 final ThreadLocalsPanel threadLocalsPanel = (ThreadLocalsPanel) _tabbedPane.getSelectedComponent();
                 final String name = getTextForTitle() + " " + threadLocalsPanel.getSafepointState().toString();
@@ -190,7 +186,6 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         updateFrameTitle();
     }
 
-    @Override
     public void viewConfigurationChanged() {
         reconstructView();
     }

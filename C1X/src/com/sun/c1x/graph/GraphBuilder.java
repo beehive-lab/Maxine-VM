@@ -40,7 +40,7 @@ import java.util.*;
  * @author Ben L. Titzer
  */
 public class GraphBuilder {
-    final Compilation _compilation;
+    final C1XCompilation _compilation;
 
     // for each instance of GraphBuilder
     ScopeData _scopeData;                   // Per-scope data; used for inlining
@@ -63,8 +63,9 @@ public class GraphBuilder {
      * @param compilation the compilation
      * @param scope the top IRScope
      */
-    public GraphBuilder(Compilation compilation, IRScope scope) {
+    public GraphBuilder(C1XCompilation compilation, IRScope scope) {
         _compilation = compilation;
+        _memory = new MemoryBuffer();
         int osrBCI = compilation.osrBCI();
         BlockMap blockMap = compilation.getBlockMap(scope.method(), osrBCI);
         BlockBegin startBlock = blockMap.get(0);
@@ -1764,10 +1765,19 @@ public class GraphBuilder {
         _scopeData.setStream(s);
 
         BlockBegin block = _block;
+        BlockEnd end = null;
         boolean pushException = block.isExceptionEntry() && block.next() == null;
         int prevBCI = bci;
-        int opcode;
-        while ((opcode = nextBytecodeInThisBlock(s)) != Bytecodes.END) {
+        int endBCI = s.endBCI();
+        while (bci < endBCI) {
+            BlockBegin nextBlock = blockAt(bci);
+            if (nextBlock != null && nextBlock != block) {
+                // we fell through to the next block, add a goto and break
+                end = new Goto(nextBlock, null, false);
+                _last = _last.setNext(end, prevBCI);
+                break;
+            }
+            int opcode = s.currentBC();
             // check whether the bytecode can cause an exception
             if (hasHandler() && Bytecodes.canTrap(opcode)) {
                 _exceptionState = _state.copy();
@@ -1996,23 +2006,20 @@ public class GraphBuilder {
             }
             // Checkstyle: resume
 
-            prevBCI = s.currentBCI();
+            prevBCI = bci;
+            s.next();
+
+            if (_last instanceof BlockEnd) {
+                end = (BlockEnd) _last;
+                break;
+            }
+            bci = s.currentBCI();
         }
 
         // stop processing of this block
         if (_skipBlock) {
             _skipBlock = false;
             return (BlockEnd) _last;
-        }
-
-        BlockEnd end;
-
-        // check that the last instruction is a block end and add a goto if necessary
-        if (!(_last instanceof BlockEnd)) {
-            end = new Goto(blockAt(s.currentBCI()), null, false);
-            _last = _last.setNext(end, prevBCI);
-        } else {
-            end = (BlockEnd) _last;
         }
 
         // if the method terminates, we don't need the stack anymore
@@ -2041,19 +2048,6 @@ public class GraphBuilder {
 
     private CiMethod readMethod(int opcode) {
         return constantPool().lookupMethod(opcode, stream().readCPI());
-    }
-
-    int nextBytecodeInThisBlock(BytecodeStream stream) {
-        int code = stream.next();
-        if (code != Bytecodes.END) {
-            if (!(_last instanceof BlockEnd)) {
-                BlockBegin block = blockAt(stream.currentBCI());
-                if ((block == null || block == _block)) {
-                    return code;
-                }
-            }
-        }
-        return Bytecodes.END;
     }
 
     void killAll() {

@@ -56,7 +56,6 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
         _optionSet.addOptions(IrInterpreter._options);
     }
 
-    @Override
     public Object execute(JavaTestCase testCase, Object[] arguments) throws InvocationTargetException {
         final StaticMethodActor staticMethodActor = (StaticMethodActor) testCase._slot2;
         Console.print(Color.LIGHTYELLOW, "Executing Testcase: " + staticMethodActor.toString() + ", Arguments: ");
@@ -107,7 +106,6 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
         Console.print(")");
     }
 
-    @Override
     public void initialize(JavaTestCase testCase, boolean loadingPackages) {
         final ClassActor classActor = ClassActor.fromJava(testCase._class);
         final StaticMethodActor staticMethodActor = classActor.findLocalStaticMethodActor("test");

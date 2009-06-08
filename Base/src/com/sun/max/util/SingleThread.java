@@ -39,7 +39,6 @@ public class SingleThread extends Thread {
 
     private static Thread _worker;
     private static final ExecutorService _executorService = Executors.newSingleThreadExecutor(new ThreadFactory() {
-        @Override
         public Thread newThread(Runnable runnable) {
             ProgramError.check(_worker == null, "Single worker thread died unexpectedly");
             _worker = new Thread(runnable);

@@ -50,7 +50,6 @@ public class PoolBitSet<PoolObject_Type extends PoolObject> extends PoolSet<Pool
         _set = (BitSet) toBeCloned._set.clone();
     }
 
-    @Override
     public boolean contains(PoolObject_Type value) {
         if (value == null) {
             return false;
@@ -59,28 +58,23 @@ public class PoolBitSet<PoolObject_Type extends PoolObject> extends PoolSet<Pool
         return _set.get(value.serial());
     }
 
-    @Override
     public int length() {
         return _set.cardinality();
     }
 
-    @Override
     public void clear() {
         _set.clear();
     }
 
-    @Override
     public boolean isEmpty() {
         return _set.isEmpty();
     }
 
-    @Override
     public void add(PoolObject_Type value) {
         assert _pool.get(value.serial()) == value;
         _set.set(value.serial());
     }
 
-    @Override
     public PoolBitSet<PoolObject_Type> addAll() {
         _set.set(0, _pool.length());
         return this;
@@ -98,7 +92,6 @@ public class PoolBitSet<PoolObject_Type extends PoolObject> extends PoolSet<Pool
         }
     }
 
-    @Override
     public boolean remove(PoolObject_Type value) {
         assert _pool.get(value.serial()) == value;
         final boolean present = _set.get(value.serial());
@@ -106,7 +99,6 @@ public class PoolBitSet<PoolObject_Type extends PoolObject> extends PoolSet<Pool
         return present;
     }
 
-    @Override
     public PoolObject_Type removeOne() {
         final int index = _set.nextSetBit(0);
         if (index < 0) {
@@ -116,7 +108,6 @@ public class PoolBitSet<PoolObject_Type extends PoolObject> extends PoolSet<Pool
         return _pool.get(index);
     }
 
-    @Override
     public void and(PoolSet<PoolObject_Type> others) {
         if (others instanceof PoolBitSet) {
             final PoolBitSet otherPoolBitSet = (PoolBitSet) others;
@@ -140,7 +131,6 @@ public class PoolBitSet<PoolObject_Type extends PoolObject> extends PoolSet<Pool
         return true;
     }
 
-    @Override
     public PoolSet<PoolObject_Type> clone() {
         return new PoolBitSet<PoolObject_Type>(this);
     }
@@ -148,7 +138,6 @@ public class PoolBitSet<PoolObject_Type extends PoolObject> extends PoolSet<Pool
     /**
      * Gets an iterator over all the values in this set.
      */
-    @Override
     public Iterator<PoolObject_Type> iterator() {
         return new Iterator<PoolObject_Type>() {
 

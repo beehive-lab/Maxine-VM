@@ -22,6 +22,7 @@ package com.sun.c1x.graph;
 
 import com.sun.c1x.ir.BlockBegin;
 import com.sun.c1x.ir.Goto;
+import com.sun.c1x.util.Util;
 import com.sun.c1x.value.ValueStack;
 
 import java.util.List;
@@ -98,8 +99,9 @@ public class BlockUtil {
      * @param to the destination block of the edge
      */
     public static void disconnectEdge(BlockBegin from, BlockBegin to) {
-        from.removeSuccessor(to);
-        to.removePredecessor(from);
+    	throw Util.unimplemented();
+        // from.removeSuccessor(to);
+        // to.removePredecessor(from);
     }
 
     /**
@@ -108,8 +110,9 @@ public class BlockUtil {
      * @param to the destination of the edge
      */
     public static void addEdge(BlockBegin from, BlockBegin to) {
-        from.addSuccessor(to);
-        to.addPredecessor(from);
+    	throw Util.unimplemented();
+        //from.addSuccessor(to);
+        //to.addPredecessor(from);
     }
 
     /**
@@ -118,9 +121,9 @@ public class BlockUtil {
      */
     public static void disconnectFromGraph(BlockBegin block) {
         for (BlockBegin p : block.predecessors()) {
-            p.successors().remove(block);
+            p.end().successors().remove(block);
         }
-        for (BlockBegin s : block.successors()) {
+        for (BlockBegin s : block.end().successors()) {
             s.predecessors().remove(block);
         }
     }

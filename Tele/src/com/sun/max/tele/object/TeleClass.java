@@ -80,7 +80,6 @@ public final class TeleClass extends TeleTupleObject implements ClassObjectProvi
         return "Class";
     }
 
-    @Override
     public ReferenceTypeProvider getReflectedType() {
         return getTeleClassActor();
     }

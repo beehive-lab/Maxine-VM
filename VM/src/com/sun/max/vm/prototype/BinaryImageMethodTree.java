@@ -315,8 +315,6 @@ public final class BinaryImageMethodTree {
             final Set<Node> prunedRoots = new HashSet<Node>(roots.size());
             for (Node root : roots) {
                 final Node prunedRoot = root.prune(new Predicate<Node>() {
-
-                    @Override
                     public boolean evaluate(Node object) {
                         return object.toString().contains(filter);
                     }

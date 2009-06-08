@@ -222,7 +222,6 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
         return _cirBuiltins[builtin.serial()];
     }
 
-    @Override
     public String name() {
         return _builtin.name();
     }
@@ -231,7 +230,6 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
         return _builtin.resultKind();
     }
 
-    @Override
     public final Kind[] parameterKinds() {
         return _parameterKinds;
     }
@@ -248,7 +246,6 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
         return CirRoutine.Static.fold(foldingMethodActor(), arguments);
     }
 
-    @Override
     public int reasonsMayStop() {
         return _builtin.reasonsMayStop();
     }

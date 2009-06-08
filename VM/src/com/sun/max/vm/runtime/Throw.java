@@ -57,7 +57,7 @@ public final class Throw {
         StackFrameDumper(int max) {
             _maximum = max;
         }
-        @Override
+
         public boolean visitFrame(StackFrame stackFrame) {
             final boolean lockDisabledSafepoints = Log.lock();
             // N.B. use "->" to make dumped stacks look slightly different than exception stacktraces.

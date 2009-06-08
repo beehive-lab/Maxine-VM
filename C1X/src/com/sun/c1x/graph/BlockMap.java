@@ -153,7 +153,10 @@ public class BlockMap {
      * @return the block starting at the specified index, if it exists; <code>null</code> otherwise
      */
     public BlockBegin get(int bci) {
-        return _blockMap[bci];
+    	if (bci < _blockMap.length) {
+            return _blockMap[bci];
+    	}
+    	return null;
     }
 
     BlockBegin make(int bci) {
@@ -251,7 +254,7 @@ public class BlockMap {
         int bci = 0;
         ExceptionMap exceptionMap = _exceptionMap;
         byte[] code = _code;
-        make(0);
+        make(0).setStandardEntry();
         while (bci < code.length) {
             int opcode = Bytes.beU1(code, bci);
             switch (opcode) {
@@ -288,25 +291,25 @@ public class BlockMap {
                 case Bytecodes.IF_ACMPNE: // fall through
                 case Bytecodes.IFNULL:    // fall through
                 case Bytecodes.IFNONNULL: {
-                    succ2(bci, bci + 3, Bytes.beS2(code, bci + 1));
+                    succ2(bci, bci + 3, bci + Bytes.beS2(code, bci + 1));
                     bci += 3; // these are all 3 byte opcodes
                     break;
                 }
 
                 case Bytecodes.GOTO: {
-                    succ1(bci, Bytes.beS2(code, bci + 1));
+                    succ1(bci, bci + Bytes.beS2(code, bci + 1));
                     bci += 3; // goto is 3 bytes
                     break;
                 }
 
                 case Bytecodes.GOTO_W: {
-                    succ1(bci, Bytes.beS4(code, bci + 1));
+                    succ1(bci, bci + Bytes.beS4(code, bci + 1));
                     bci += 5; // goto_w is 5 bytes
                     break;
                 }
 
                 case Bytecodes.JSR: {
-                    int target = Bytes.beS2(code, bci + 1);
+                    int target = bci + Bytes.beS2(code, bci + 1);
                     succ2(bci, bci + 3, target); // make JSR's a successor or not?
                     addEntrypoint(target, BlockBegin.BlockFlag.SubroutineEntry);
                     bci += 3; // jsr is 3 bytes
@@ -314,7 +317,7 @@ public class BlockMap {
                 }
 
                 case Bytecodes.JSR_W: {
-                    int target = Bytes.beS4(code, bci + 1);
+                    int target = bci + Bytes.beS4(code, bci + 1);
                     succ2(bci, bci + 5, target);
                     addEntrypoint(target, BlockBegin.BlockFlag.SubroutineEntry);
                     bci += 5; // jsr_w is 5 bytes

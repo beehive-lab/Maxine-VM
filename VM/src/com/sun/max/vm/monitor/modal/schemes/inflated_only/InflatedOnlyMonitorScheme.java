@@ -52,10 +52,8 @@ public class InflatedOnlyMonitorScheme extends ModalMonitorScheme {
         super.initialize(phase);
     }
 
-    @Override
     public ModalLockWordDecoder getModalLockWordDecoder() {
         return new ModalLockWordDecoder() {
-            @Override
             public boolean isLockWordInMode(ModalLockWord64 modalLockWord, Class<? extends ModalLockWord64> mode) {
                 return mode == InflatedMonitorLockWord64.class;
             }

@@ -106,7 +106,6 @@ public abstract class DisassembledInstruction<Template_Type extends Template> im
      */
     public abstract ImmediateArgument addressForRelativeAddressing();
 
-    @Override
     public ImmediateArgument targetAddress() {
         final Template_Type template = template();
         final int parameterIndex = template.labelParameterIndex();

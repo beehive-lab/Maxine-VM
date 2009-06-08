@@ -37,19 +37,16 @@ public class ARMDisassembledInstruction extends RiscDisassembledInstruction<ARMT
         super(disassembler, position, bytes, template, arguments);
     }
 
-    @Override
     public String mnemonic() {
         final ARMExternalInstruction instruction = new ARMExternalInstruction(template(), arguments(), startAddress(), null);
         return instruction.name();
     }
 
-    @Override
     public String operandsToString(AddressMapper addressMapper) {
         final ARMExternalInstruction instruction = new ARMExternalInstruction(template(), arguments(), startAddress(), null);
         return instruction.operands();
     }
 
-    @Override
     public String toString(AddressMapper addressMapper) {
         final ARMExternalInstruction instruction = new ARMExternalInstruction(template(), arguments(), startAddress(), addressMapper);
         return instruction.toString();

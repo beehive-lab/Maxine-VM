@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.bytecode;
 
+import com.sun.c1x.util.Bytes;
+
 /**
  * The <code>Bytecodes</code> class defines constants associated with bytecodes,
  * in particular the opcode numbers for each bytecode.
@@ -462,7 +464,7 @@ public class Bytecodes {
     }
 
     public static int length(byte[] code, int bci) {
-        int opcode = code[bci];
+        int opcode = Bytes.beU1(code, bci);
         int length = _length[opcode];
         if (length == 0) {
             switch (opcode) {
@@ -473,7 +475,7 @@ public class Bytecodes {
                     return new BytecodeLookupSwitch(code, bci).size();
                 }
                 case Bytecodes.WIDE: {
-                    int opc = code[bci + 1];
+                    int opc = Bytes.beU1(code, bci + 1);
                     if (opc == Bytecodes.RET) {
                         return 4;
                     } else if (opc == Bytecodes.IINC) {

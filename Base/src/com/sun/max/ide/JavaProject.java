@@ -152,6 +152,14 @@ public final class JavaProject {
      * The current project is the one containing the main class of this Java process.
      */
     public static File findVcsProjectDirectory() {
-        return IDE.current().findVcsProjectDirectoryFromClasspathEntry(findClassesOnClasspath());
+        IDE ide = IDE.current();
+        if (ide == null) {
+            throw ProgramError.unexpected("Cannot determine IDE in order to find project directory");
+        }
+        File projDir = ide.findVcsProjectDirectoryFromClasspathEntry(findClassesOnClasspath());
+        if (projDir == null) {
+            throw ProgramError.unexpected("Cannot find project directory for IDE: " + ide);
+        }
+        return projDir;
     }
 }

@@ -217,7 +217,6 @@ public class RegistersTable extends InspectorTable {
             super(inspection, null);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final RegisterInfo registerInfo = (RegisterInfo) value;
             final String name = registerInfo.name();
@@ -243,14 +242,12 @@ public class RegistersTable extends InspectorTable {
             }
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final RegisterInfo registerInfo = (RegisterInfo) value;
             _labels[row].setValue(registerInfo.value());
             return _labels[row];
         }
 
-        @Override
         public void redisplay() {
             for (InspectorLabel label : _labels) {
                 if (label != null) {
@@ -259,7 +256,6 @@ public class RegistersTable extends InspectorTable {
             }
         }
 
-        @Override
         public void refresh(boolean force) {
             for (InspectorLabel label : _labels) {
                 if (label != null) {

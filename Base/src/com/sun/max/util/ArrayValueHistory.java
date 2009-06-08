@@ -46,7 +46,6 @@ public class ArrayValueHistory<Value_Type> implements ValueHistory<Value_Type> {
         this (Integer.MAX_VALUE);
     }
 
-    @Override
     public void add(Value_Type newValue) {
         if (_generations.size() > 0) {
             if (newValue.equals(_generations.getFirst())) {
@@ -63,7 +62,6 @@ public class ArrayValueHistory<Value_Type> implements ValueHistory<Value_Type> {
         }
     }
 
-    @Override
     public Value_Type get() {
         if (_generations.size() > 0) {
             return _generations.getFirst();
@@ -72,7 +70,6 @@ public class ArrayValueHistory<Value_Type> implements ValueHistory<Value_Type> {
         return null;
     }
 
-    @Override
     public Value_Type get(int generation) {
         final Iterator<Value_Type> iterator = _generations.iterator();
         int index = 0;
@@ -86,22 +83,18 @@ public class ArrayValueHistory<Value_Type> implements ValueHistory<Value_Type> {
         return null;
     }
 
-    @Override
     public int getAge() {
         return _age;
     }
 
-    @Override
     public int getLimit() {
         return _limit;
     }
 
-    @Override
     public int getSize() {
         return _generations.size();
     }
 
-    @Override
     public Iterator<Value_Type> values() {
         return _generations.iterator();
     }

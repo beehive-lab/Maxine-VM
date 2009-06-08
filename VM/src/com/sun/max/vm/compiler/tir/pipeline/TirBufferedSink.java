@@ -33,7 +33,6 @@ public class TirBufferedSink extends TirInstructionAdapter implements TirMessage
     private TirTreeEnd _treeEnd;
     private boolean _inTrace;
 
-    @Override
     public void receive(TirMessage message) {
         message.accept(this);
     }

@@ -213,14 +213,12 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
         return javaPrototype().vmConfiguration().compilerScheme().compile(classMethodActor, CompilationDirective.DEFAULT);
     }
 
-    @Override
     public JitCompiler newJitCompiler(TemplateTable templateTable) {
         final JitCompiler jitScheme = (JitCompiler) VMConfiguration.target().jitScheme();
         jitScheme.initializeForJitCompilations();
         return jitScheme;
     }
 
-    @Override
     public boolean disassembleCompiledMethods() {
         return true;
     }

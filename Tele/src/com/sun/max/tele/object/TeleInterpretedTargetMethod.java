@@ -35,12 +35,10 @@ public class TeleInterpretedTargetMethod extends TeleTargetMethod {
         super(teleVM, targetMethodReference);
     }
 
-    @Override
     public BytecodeInfo[] bytecodeInfos() {
         return null;
     }
 
-    @Override
     public int[] bytecodeToTargetCodePositionMap() {
         return null;
     }

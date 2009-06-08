@@ -69,7 +69,6 @@ public enum MemoryBarrier implements PoolObject {
 
     public static final Pool<MemoryBarrier> VALUE_POOL = new ArrayPool<MemoryBarrier>(values());
 
-    @Override
     public int serial() {
         return ordinal();
     }

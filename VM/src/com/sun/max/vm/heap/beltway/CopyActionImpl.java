@@ -36,7 +36,6 @@ public class CopyActionImpl implements Action {
 
     private static Verify _verifyAction = new VerifyActionImpl();
 
-    @Override
     public Grip doAction(Grip origin, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         final Pointer fromOrigin = origin.toOrigin();
         if (VMConfiguration.hostOrTarget().debugging()) {

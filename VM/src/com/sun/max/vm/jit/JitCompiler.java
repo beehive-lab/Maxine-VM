@@ -41,7 +41,6 @@ public abstract class JitCompiler extends AbstractVMScheme implements DynamicCom
 
     protected abstract TemplateBasedTargetGenerator targetGenerator();
 
-    @Override
     public Sequence<IrGenerator> irGenerators() {
         return new DeterministicSet.Singleton<IrGenerator>(targetGenerator());
     }

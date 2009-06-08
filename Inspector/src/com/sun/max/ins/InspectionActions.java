@@ -1639,8 +1639,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "View bytecode for method in class...", "Select");
             if (teleClassActor != null) {
                 final Predicate<TeleMethodActor> hasBytecodePredicate = new Predicate<TeleMethodActor>() {
-
-                    @Override
                     public boolean evaluate(TeleMethodActor teleMethodActor) {
                         return teleMethodActor.hasCodeAttribute();
                     }
@@ -1677,7 +1675,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             super(inspection(), title == null ? DEFAULT_TITLE : title);
         }
 
-        @Override
         protected void procedure() {
             final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "View target code for method in class...", "Select");
             if (teleClassActor != null) {
@@ -1713,7 +1710,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _offset = offset;
         }
 
-        @Override
         protected void procedure() {
             focus().setCodeLocation(maxVM().createCodeLocation(maxVM().bootImageStart().plus(_offset)), true);
         }
@@ -1766,7 +1762,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             super(inspection(), title == null ? DEFAULT_TITLE : title);
         }
 
-        @Override
         protected void procedure() {
             // Most likely situation is that we are just about to call a native method in which case RAX is the address
             final TeleNativeThread teleNativeThread = focus().thread();
@@ -1774,7 +1769,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final Address indirectCallAddress = teleNativeThread.integerRegisters().getCallRegisterValue();
             final Address initialAddress = indirectCallAddress == null ? maxVM().bootImageStart() : indirectCallAddress;
             new AddressInputDialog(inspection(), initialAddress, "View native code containing code address...", "View Code") {
-                @Override
                 public void entered(Address address) {
                     focus().setCodeLocation(maxVM().createCodeLocation(address), true);
                 }
@@ -1811,7 +1805,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             });
         }
 
-        @Override
         protected void procedure() {
             final TeleBreakpoint selectedTeleBreakpoint = focus().breakpoint();
             if (selectedTeleBreakpoint != null) {
@@ -1852,7 +1845,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _teleBreakpoint = teleBreakpoint;
         }
 
-        @Override
         protected void procedure() {
             if (focus().breakpoint() == _teleBreakpoint) {
                 focus().setBreakpoint(null);
@@ -1889,7 +1881,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             });
         }
 
-        @Override
         protected void procedure() {
             focus().setBreakpoint(null);
             for (TeleTargetBreakpoint targetBreakpoint : maxVM().targetBreakpoints()) {
@@ -1929,7 +1920,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _teleBreakpoint = teleBreakpoint;
         }
 
-        @Override
         protected void procedure() {
             if (focus().breakpoint() == _teleBreakpoint) {
                 focus().setBreakpoint(null);
@@ -1970,7 +1960,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _teleBreakpoint = teleBreakpoint;
         }
 
-        @Override
         protected void procedure() {
             if (focus().breakpoint() == _teleBreakpoint) {
                 focus().setBreakpoint(null);
@@ -2008,7 +1997,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             });
         }
 
-        @Override
         protected void procedure() {
             final Address targetCodeInstructionAddress = focus().codeLocation().targetCodeInstructionAddresss();
             if (!targetCodeInstructionAddress.isZero()) {
@@ -2057,7 +2045,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             });
         }
 
-        @Override
         protected void procedure() {
             final Address address = focus().codeLocation().targetCodeInstructionAddresss();
             final TeleTargetRoutine teleTargetRoutine = maxVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
@@ -2108,7 +2095,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             });
         }
 
-        @Override
         protected void procedure() {
             final Address address = focus().codeLocation().targetCodeInstructionAddresss();
             final TeleTargetRoutine teleTargetRoutine = maxVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
@@ -2151,7 +2137,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             });
         }
 
-        @Override
         protected void procedure() {
             focus().setBreakpoint(null);
             for (TeleTargetBreakpoint targetBreakpoint : maxVM().targetBreakpoints()) {
@@ -2187,7 +2172,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _refreshableActions.append(this);
         }
 
-        @Override
         protected void procedure() {
             final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "Class for compiled method entry breakpoints...", "Select");
             if (teleClassActor != null) {
@@ -2232,7 +2216,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _refreshableActions.append(this);
         }
 
-        @Override
         protected void procedure() {
             final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "Break in Object Initializers of Class...", "Set Breakpoint");
             if (teleClassActor != null) {
@@ -2292,7 +2275,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             });
         }
 
-        @Override
         protected void procedure() {
             final BytecodeLocation bytecodeLocation = focus().codeLocation().bytecodeLocation();
             if (bytecodeLocation != null) {
@@ -2334,7 +2316,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _refreshableActions.append(this);
         }
 
-        @Override
         protected void procedure() {
             final TypeDescriptor typeDescriptor = TypeSearchDialog.show(inspection(), "Class for bytecode method entry breakpoint...", "Select");
             if (typeDescriptor != null) {
@@ -2374,7 +2355,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _refreshableActions.append(this);
         }
 
-        @Override
         protected void procedure() {
             final MethodKey methodKey = MethodKeyInputDialog.show(inspection(), "Specify method");
             if (methodKey != null) {
@@ -2417,7 +2397,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             });
         }
 
-        @Override
         protected void procedure() {
             focus().setBreakpoint(null);
             for (TeleBytecodeBreakpoint bytecodeBreakpoint : maxVM().bytecodeBreakpoints()) {
@@ -2449,10 +2428,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             super(inspection(), title == null ? DEFAULT_TITLE : title);
         }
 
-        @Override
         protected void procedure() {
             new AddressInputDialog(inspection(), maxVM().bootImageStart(), "Set word watch point at address...", "Watch") {
-                @Override
                 public void entered(Address address) {
                     final Address start = address;
                     final Size size = Size.fromInt(Word.size());
@@ -2485,7 +2462,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _refreshableActions.append(this);
         }
 
-        @Override
         protected void procedure() {
             try {
                 maxVM().pause();
@@ -2519,7 +2495,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _refreshableActions.append(this);
         }
 
-        @Override
         protected void procedure() {
             try {
                 maxVM().resume(false, false);
@@ -2558,7 +2533,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _refreshableActions.append(this);
         }
 
-        @Override
         protected void procedure() {
             final Address returnAddress = focus().thread().getReturnAddress();
             if (returnAddress != null) {
@@ -2600,7 +2574,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _refreshableActions.append(this);
         }
 
-        @Override
         public void procedure() {
             final Address returnAddress = focus().thread().getReturnAddress();
             if (returnAddress != null) {
@@ -2642,7 +2615,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _refreshableActions.append(this);
         }
 
-        @Override
         protected void procedure() {
             final Address selectedAddress = focus().codeLocation().targetCodeInstructionAddresss();
             if (!selectedAddress.isZero()) {
@@ -2686,7 +2658,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _refreshableActions.append(this);
         }
 
-        @Override
         protected void procedure() {
             final Address selectedAddress = focus().codeLocation().targetCodeInstructionAddresss();
             if (!selectedAddress.isZero()) {
@@ -2730,7 +2701,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _refreshableActions.append(this);
         }
 
-        @Override
         protected void procedure() {
             final Address address = focus().codeLocation().targetCodeInstructionAddresss();
             final TeleTargetMethod teleTargetMethod = maxVM().findTeleTargetRoutine(TeleTargetMethod.class, address);
@@ -2776,7 +2746,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _refreshableActions.append(this);
         }
 
-        @Override
         protected void procedure() {
             final Address address = focus().codeLocation().targetCodeInstructionAddresss();
             final TeleTargetMethod teleTargetMethod = maxVM().findTeleTargetRoutine(TeleTargetMethod.class, address);
@@ -2821,7 +2790,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _refreshableActions.append(this);
         }
 
-        @Override
         public  void procedure() {
             final TeleNativeThread thread = focus().thread();
             try {
@@ -2860,7 +2828,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _refreshableActions.append(this);
         }
 
-        @Override
         protected void procedure() {
             final TeleNativeThread thread = focus().thread();
             try {
@@ -2900,7 +2867,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _refreshableActions.append(this);
         }
 
-        @Override
         protected void procedure() {
             final TeleNativeThread thread = focus().thread();
             try {
@@ -2946,7 +2912,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             });
         }
 
-        @Override
         protected void procedure() {
             assert _targetJavaFrameDescriptor != null;
             TargetJavaFrameDescriptorInspector.make(inspection(), _targetJavaFrameDescriptor, _abi).highlight();
@@ -3007,7 +2972,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             super(inspection(), title == null ? DEFAULT_TITLE : title);
         }
 
-        @Override
         protected void procedure() {
             FocusInspector.make(inspection()).highlight();
         }
@@ -3061,7 +3025,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             super(inspection(), title == null ? DEFAULT_TITLE : title);
         }
 
-        @Override
         protected void procedure() {
             //Create a file chooser
             final JFileChooser fileChooser = new JFileChooser();

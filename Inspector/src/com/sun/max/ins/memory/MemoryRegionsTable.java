@@ -189,17 +189,14 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
             fireTableDataChanged();
         }
 
-        @Override
         public int getColumnCount() {
             return MemoryRegionsColumnKind.VALUES.length();
         }
 
-        @Override
         public int getRowCount() {
             return _sortedMemoryRegions.length();
         }
 
-        @Override
         public Object getValueAt(int row, int col) {
             int count = 0;
             for (MemoryRegionDisplay memoryRegionDisplay : _sortedMemoryRegions.memoryRegions()) {
@@ -243,7 +240,6 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
             super(inspection, null);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
             setText(memoryRegionData.description());
@@ -259,8 +255,6 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
     }
 
     private final class StartAddressCellRenderer implements TableCellRenderer, Prober {
-
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
             final WordValueLabel label = memoryRegionData.startLabel();
@@ -280,8 +274,6 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
     }
 
     private final class EndAddressCellRenderer implements TableCellRenderer, Prober{
-
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
             final WordValueLabel label = memoryRegionData.endLabel();
@@ -301,8 +293,6 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
     }
 
     private final class SizeCellRenderer extends DefaultTableCellRenderer implements TableCellRenderer, Prober {
-
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
             final DataLabel.LongAsHex sizeDataLabel = new DataLabel.LongAsHex(inspection(), memoryRegionData.size().toLong());
@@ -322,8 +312,6 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
     }
 
     private final class AllocCellRenderer extends DefaultTableCellRenderer implements TableCellRenderer, Prober {
-
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
             final long allocated = memoryRegionData.allocated().toLong();

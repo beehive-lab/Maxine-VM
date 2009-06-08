@@ -36,7 +36,7 @@ import com.sun.c1x.ir.IRScope;
  *
  * @author Ben L. Titzer
  */
-public class Compilation {
+public class C1XCompilation {
 
     final CiRuntime _runtime;
     final CiMethod _method;
@@ -59,7 +59,7 @@ public class Compilation {
      * @param method the method to be compiled
      * @param osrBCI the bytecode index for on-stack replacement, if requested
      */
-    public Compilation(CiRuntime runtime, CiMethod method, int osrBCI) {
+    public C1XCompilation(CiRuntime runtime, CiMethod method, int osrBCI) {
         _runtime = runtime;
         _method = method;
         _osrBCI = osrBCI;
@@ -70,7 +70,7 @@ public class Compilation {
      * @param runtime the runtime implementation
      * @param method the method to be compiled
      */
-    public Compilation(CiRuntime runtime, CiMethod method) {
+    public C1XCompilation(CiRuntime runtime, CiMethod method) {
         _runtime = runtime;
         _method = method;
         _osrBCI = -1;
@@ -80,24 +80,26 @@ public class Compilation {
      * Performs the compilation, producing the start block.
      */
     public BlockBegin startBlock() {
-        try {
-            if (_start == null) {
-                _start = new GraphBuilder(this, new IRScope(this, null, 0, _method, _osrBCI)).start();
-            }
-        } catch (Bailout b) {
-            _bailout = b;
-        }
-        return _start;
+    	try {
+    		if (_start == null) {
+    			_start = new GraphBuilder(this, new IRScope(this, null, 0, _method, _osrBCI)).start();
+    		}
+		} catch (Bailout b) {
+			_bailout = b;
+		} catch (Throwable t) {
+			_bailout = new Bailout("unexpected exception", t);
+		}
+		return _start;
     }
-
+    
     /**
      * Gets the bailout condition if this compilation failed.
      * @return the bailout condition
      */
     public Bailout bailout() {
-        return _bailout;
+    	return _bailout;
     }
-
+    
     /**
      * Gets the root method being compiled.
      * @return the method being compiled
