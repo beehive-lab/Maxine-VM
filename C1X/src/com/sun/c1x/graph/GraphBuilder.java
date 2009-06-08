@@ -161,10 +161,9 @@ public class GraphBuilder {
     }
 
     void pushRootScope(IRScope scope, BlockMap blockMap, BlockBegin start) {
-        ScopeData data = new ScopeData(null);
-        data.setScope(scope);
-        data.setBlockMap(blockMap);
-        _scopeData = data;
+        _scopeData = new ScopeData(null);
+        _scopeData.setScope(scope);
+        _scopeData.setBlockMap(blockMap);
         _block = start;
     }
 
@@ -1373,7 +1372,7 @@ public class GraphBuilder {
         }
 
         if (method.isSynchronized()) {
-            state.lock(scope(), null); // XXX: why don't we lock local 0?
+            state.lock(scope(), null); // XXX: why do we lock null?
         }
         return state;
     }
