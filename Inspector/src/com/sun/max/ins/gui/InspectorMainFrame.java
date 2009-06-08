@@ -25,6 +25,7 @@ import java.awt.datatransfer.*;
 import java.awt.event.*;
 
 import javax.swing.*;
+import javax.swing.table.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
@@ -50,6 +51,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     private final JScrollPane _scrollPane;
     private final InspectorMainMenuBar _menuBar;
     private final InspectorMenu _desktopMenu = new InspectorMenu();
+    private final InspectorLabel _missingDataTableCellRenderer;
 
     /**
      * Manages saving and restoring the geometry of the main GUI window, accounting
@@ -164,6 +166,8 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         });
         pack();
         settings.addSaveSettingsListener(new InspectorMainFrameSaveSettingsListener(this, settings));
+
+        _missingDataTableCellRenderer = new MissingDataTableCellRenderer(inspection);
     }
 
     public void addInspector(Inspector inspector) {
@@ -315,6 +319,10 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         return this;
     }
 
+    public InspectorLabel getMissingDataTableCellRederer() {
+        return _missingDataTableCellRenderer;
+    }
+
     private Point getMiddle(Component component) {
         final Point point = new Point((getWidth() / 2) - (component.getWidth() / 2), (getHeight() / 2) - (component.getHeight() / 2));
         if (point.y < 0) {
@@ -401,4 +409,15 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         repaint();
     }
 
+    private final class MissingDataTableCellRenderer extends PlainLabel implements TableCellRenderer, TextSearchable, Prober {
+        MissingDataTableCellRenderer(Inspection inspection) {
+            super(inspection, null);
+            setText("<?>");
+            setToolTipText("No data available");
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            return this;
+        }
+    }
 }

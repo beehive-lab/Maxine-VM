@@ -83,11 +83,9 @@ public abstract class TeleVM implements MaxVM {
 
     private static final int TRACE_VALUE = 2;
 
-    private static final String _PROGRAM_NAME = "maxvm";
+    private static final String PROGRAM_NAME = "maxvm";
 
-    private static final String _TELE_LIBRARY_NAME = "tele";
-
-    private static final Sequence<TeleNativeThread>_emptyThreadSequence = Sequence.Static.empty(TeleNativeThread.class);
+    private static final String TELE_LIBRARY_NAME = "tele";
 
 
     /**
@@ -149,7 +147,7 @@ public abstract class TeleVM implements MaxVM {
         final Classpath classpath = Classpath.fromSystem().prepend(classpathPrefix);
         PrototypeClassLoader.setClasspath(classpath);
 
-        Prototype.loadLibrary(_TELE_LIBRARY_NAME);
+        Prototype.loadLibrary(TELE_LIBRARY_NAME);
         final File bootImageFile = options._bootImageFileOption.getValue();
 
         Classpath sourcepath = JavaProject.getSourcePath(true);
@@ -164,6 +162,7 @@ public abstract class TeleVM implements MaxVM {
 
         if (options._debugOption.getValue()) {
             teleVM = create(bootImageFile, sourcepath, commandLineArguments, options._debuggeeIdOption.getValue());
+            teleVM.teleProcess().initializeState();
             try {
                 teleVM.advanceToJavaEntryPoint();
             } catch (IOException ioException) {
@@ -386,7 +385,7 @@ public abstract class TeleVM implements MaxVM {
     private final TeleObjectFactory _teleObjectFactory;
     private TeleClassRegistry _teleClassRegistry;
     private TeleCodeRegistry _teleCodeRegistry;
-    private final TeleBytecodeBreakpoint.Factory _bytecodeBreakpointFactory = new TeleBytecodeBreakpoint.Factory(this);
+    private final TeleBytecodeBreakpoint.Factory _bytecodeBreakpointFactory;
 
 
     /**
@@ -437,7 +436,7 @@ public abstract class TeleVM implements MaxVM {
         TeleDisassembler.initialize(_vmConfiguration.platform().processorKind());
 
         _wordSize = _vmConfiguration.platform().processorKind().dataModel().wordWidth().numberOfBytes();
-        _programFile = new File(bootImageFile.getParent(), _PROGRAM_NAME);
+        _programFile = new File(bootImageFile.getParent(), PROGRAM_NAME);
 
         if (commandLineArguments == null) {
             _teleProcess = attachToTeleProcess(processID);
@@ -456,7 +455,6 @@ public abstract class TeleVM implements MaxVM {
             _teleProcess = createTeleProcess(commandLineArguments, agent);
             _bootImageStart = loadBootImage(agent);
         }
-        _teleVMState  = new TeleVMState(_teleProcess.processState(), 0, null, _emptyThreadSequence, false, null);
 
         _fields = new TeleFields(this);
         _methods = new TeleMethods(this);
@@ -473,6 +471,7 @@ public abstract class TeleVM implements MaxVM {
         final TeleGripScheme teleGripScheme = (TeleGripScheme) _vmConfiguration.gripScheme();
         teleGripScheme.setTeleVM(this);
 
+        _bytecodeBreakpointFactory = new TeleBytecodeBreakpoint.Factory(this);
     }
 
     /**
@@ -519,11 +518,21 @@ public abstract class TeleVM implements MaxVM {
         }
     }
 
-    public void notifyStateChange(ProcessState processState, long epoch, TeleNativeThread singleStepThread, Sequence<TeleNativeThread> breakpointThreads) {
-        _teleVMState = new TeleVMState(processState, epoch, singleStepThread, breakpointThreads, _isInGC, _teleVMState);
+    public void notifyStateChange(ProcessState processState,
+                    long epoch,
+                    TeleNativeThread singleStepThread,
+                    Sequence<TeleNativeThread> breakpointThreads,
+                    Sequence<TeleNativeThread> threadsStarted,
+                    Sequence<TeleNativeThread> threadsDied) {
+        _teleVMState = new TeleVMState(processState, epoch, singleStepThread, breakpointThreads, threadsStarted, threadsDied, _isInGC, _teleVMState);
         for (final TeleVMStateObserver observer : _observers) {
             observer.upate(_teleVMState);
         }
+    }
+
+
+    public final void describeVMStateHistory(PrintStream printStream) {
+        _teleVMState.writeSummaryToStream(printStream);
     }
 
     public final boolean activateMessenger() {
@@ -1015,14 +1024,6 @@ public abstract class TeleVM implements MaxVM {
         return _teleProcess.threads();
     }
 
-    public final IterableWithLength<TeleNativeThread> recentlyCreatedThreads() {
-        return _teleProcess.recentlyCreatedThreads();
-    }
-
-    public final IterableWithLength<TeleNativeThread> recentlyDiedThreads() {
-        return _teleProcess.recentlyDiedThreads();
-    }
-
     public final TeleNativeThread getThread(long threadID) {
         return _teleProcess.idToThread(threadID);
     }
@@ -1227,10 +1228,10 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final void fireJDWPThreadEvents() {
-        for (TeleNativeThread thread : _teleProcess.recentlyDiedThreads()) {
+        for (TeleNativeThread thread : _teleVMState.threadsDied()) {
             fireJDWPThreadDiedEvent(thread);
         }
-        for (TeleNativeThread thread : _teleProcess.recentlyCreatedThreads()) {
+        for (TeleNativeThread thread : _teleVMState.threadsStarted()) {
             fireJDWPThreadStartedEvent(thread);
         }
     }
@@ -1303,6 +1304,7 @@ public abstract class TeleVM implements MaxVM {
 
         public void upate(MaxVMState maxVMState) {
             Trace.begin(TRACE_VALUE, tracePrefix() + "handling " + maxVMState);
+            fireJDWPThreadEvents();
             switch(maxVMState.processState()) {
                 case TERMINATED:
                     fireJDWPVMDiedEvent();
