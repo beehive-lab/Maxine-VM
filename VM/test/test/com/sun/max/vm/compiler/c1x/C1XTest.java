@@ -48,13 +48,21 @@ public class C1XTest {
     private static final Option<Integer> _verbose = _options.newIntegerOption("verbose", 1,
         "Sets the verbosity level of the testing framework.");
     private static final Option<Boolean> _clinit = _options.newBooleanOption("clinit", false,
-        "Compile class initialization methods");
+        "Compile class initialization methods.");
     private static final Option<Boolean> _failFast = _options.newBooleanOption("fail-fast", true,
-        "Stop compilation upon the first bailout");
+        "Stop compilation upon the first bailout.");
+    private static final Option<Boolean> _help = _options.newBooleanOption("help", true,
+        "Show help message and exit.");
 
     public static void main(String[] args) {
         _options.parseArguments(args);
         final String[] arguments = _options.getArguments();
+
+        if (_help.getValue()) {
+            _options.printHelp(System.out, 80);
+            return;
+        }
+
         Trace.on(_trace.getValue());
 
         // create the prototype
