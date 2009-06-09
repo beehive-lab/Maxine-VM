@@ -25,7 +25,6 @@ import static com.sun.max.tele.debug.TeleNativeThread.ThreadState.*;
 import java.util.*;
 import java.util.logging.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.jdwp.vm.data.*;
@@ -50,17 +49,16 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
-// TODO (mlvdv) Clear as much state as possible when a thread dies; the Inspector's history mechanism holds on to the dead thread objects.
 
 /**
- * Represents a thread executing in a {@linkplain TeleProcess tele process}. The thread
+ * Represents a thread executing in a {@linkplain TeleProcess tele process}.
  *
  * @author Bernd Mathiske
  * @author Aritra Bandyopadhyay
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, ThreadProvider, TeleVMHolder {
+public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, MaxThread, ThreadProvider, TeleVMHolder {
 
     protected String  tracePrefix() {
         return "[TeleNativeThread: " + Thread.currentThread().getName() + "] ";
@@ -207,19 +205,16 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         _breakpointIsAtInstructionPointer = vmConfiguration.platform().processorKind().instructionSet() == InstructionSet.SPARC;
     }
 
-    /**
-     * Gets the frames of this stack as produced by a {@linkplain StackFrameWalker stack walk} when the associated
-     * thread last stopped.
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxThread#frames()
      */
     public Sequence<StackFrame> frames() {
         refreshFrames();
         return _frames;
     }
 
-    /**
-     * Have the frames of this stack changed in the epoch that completed last time this thread stopped.
-     * This may be true even if the objects representing the frames have changed.
-     * @see StackFrame#isSameFrame(StackFrame)
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxThread#framesChanged()
      */
     public boolean framesChanged() {
         refreshFrames();
@@ -239,12 +234,12 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         return _teleVM;
     }
 
-    public boolean hasThreadLocals() {
+    private boolean hasThreadLocals() {
         return _teleVmThreadLocals != null;
     }
 
-    /**
-     * Gets the VM thread locals corresponding to a given safepoint state.
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxThread#threadLocalsFor(com.sun.max.vm.runtime.Safepoint.State)
      */
     public TeleThreadLocalValues threadLocalsFor(Safepoint.State state) {
         assert hasThreadLocals();
@@ -252,30 +247,24 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         return _teleVmThreadLocals.get(state);
     }
 
-    /**
-     * This thread's integer registers.
-     *
-     * @return the integer registers; null after thread dies.
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxThread#integerRegisters()
      */
     public TeleIntegerRegisters integerRegisters() {
         refreshRegisters();
         return _integerRegisters;
     }
 
-    /**
-     * This thread's floating point registers.
-     *
-     * @return the floating point registers; null after thread dies.
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxThread#floatingPointRegisters()
      */
     public TeleFloatingPointRegisters floatingPointRegisters() {
         refreshRegisters();
         return _floatingPointRegisters;
     }
 
-    /**
-     * This thread's state registers.
-     *
-     * @return the state registers; null after thread dies.
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxThread#stateRegisters()
      */
     public TeleStateRegisters stateRegisters() {
         refreshRegisters();
@@ -293,7 +282,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * @param instructionPointer the current value of the instruction pointer for the thread
      * @param vmThreadLocals the address of the various VM thread locals storage areas
      */
-    public final void updateAfterGather(ThreadState state, Pointer instructionPointer, Map<Safepoint.State, Pointer> vmThreadLocals) {
+    final void updateAfterGather(ThreadState state, Pointer instructionPointer, Map<Safepoint.State, Pointer> vmThreadLocals) {
         _state = state;
         _stateRegisters.setInstructionPointer(instructionPointer);
         if (vmThreadLocals != null) {
@@ -315,33 +304,11 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     }
 
     /**
-     * Updates the addresses of this thread's state VM thread locals.
-     * This does not cause a {@linkplain #refresh(long) refresh}.
-     */
-    public final void setVmThreadLocals(Map<Safepoint.State, Pointer> vmThreadLocals) {
-        assert hasThreadLocals();
-        for (Safepoint.State safepointState : Safepoint.State.CONSTANTS) {
-            final Pointer vmThreadLocalsPointer = vmThreadLocals.get(safepointState);
-            if (vmThreadLocalsPointer.isZero()) {
-                _teleVmThreadLocals.put(safepointState, null);
-            } else {
-                // Only create a new TeleThreadLocalValues if the start address has changed which
-                // should only happen once going from 0 to a non-zero value.
-                final TeleThreadLocalValues teleVMThreadLocalValues = _teleVmThreadLocals.get(safepointState);
-                if (teleVMThreadLocalValues == null || !teleVMThreadLocalValues.start().equals(vmThreadLocalsPointer)) {
-                    _teleVmThreadLocals.put(safepointState, new TeleThreadLocalValues(safepointState, vmThreadLocalsPointer));
-                }
-            }
-        }
-    }
-
-    /**
      * Refreshes the contents of this object to reflect the data of the corresponding thread in the tele process.
-
      *
      * @param epoch the new epoch of this thread
      */
-    public final void refresh(long epoch) {
+    void refresh(long epoch) {
         Trace.line(REFRESH_TRACE_LEVEL, tracePrefix() + "refresh(epoch=" + epoch + ") for " + this);
         if (_state.allowsDataAccess()) {
             refreshBreakpoint();
@@ -368,7 +335,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
     /**
      * Refreshes the values of the cached VM thread local variables for this thread.
-     * This method also updates the reference to the {@linkplain #teleVmThread() tele VmThread}.
+     * This method also updates the reference to the {@linkplain #maxVMThread() maxVMThread}.
      */
     private synchronized void refreshThreadLocals() {
         if (_teleVmThreadLocals == null) {
@@ -407,8 +374,6 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     private void refreshBreakpoint() {
         final Factory breakpointFactory = teleProcess().targetBreakpointFactory();
         TeleTargetBreakpoint breakpoint = null;
-
-
 
         try {
             breakpointFactory.registerBreakpointSetByVM(this);
@@ -481,10 +446,8 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         }
     }
 
-    /**
-     * Gets the breakpoint this thread is currently stopped at (if any).
-     *
-     * @return null if this thread is not stopped at a breakpoint
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxThread#breakpoint()
      */
     public final TeleTargetBreakpoint breakpoint() {
         return _breakpoint;
@@ -498,37 +461,31 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      */
     private boolean _breakpointIsAtInstructionPointer;
 
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxThread#state()
+     */
     public final ThreadState state() {
         return _state;
     }
 
-    /**
-     * Determines if this is the primordial VM thread. The primordial VM thread is the native thread on which the VM was
-     * launched. It is not associated with a {@link VmThread} instance but does have {@linkplain #hasThreadLocals() VM
-     * thread locals}.
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxThread#isPrimordial()
      */
     public final boolean isPrimordial() {
         return id() == 0;
     }
 
-    /**
-     * @return whether this thread is still alive.
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxThread#isLive()
      */
     public final boolean isLive() {
         return _state != DEAD;
     }
 
     /**
-     * @return whether this thread is stopped at a breakpoint.
-     */
-    public final boolean isAtBreakpoint() {
-        return _state == BREAKPOINT;
-    }
-
-    /**
      * Marks the thread as having died in the process; flushes all state accordingly.
      */
-    public final void setDead() {
+    final void setDead() {
         _state = DEAD;
         clearFrames();
         _breakpoint = null;
@@ -540,51 +497,50 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         _floatingPointRegisters = null;
     }
 
-    /**
-     * Gets the identifier passed to {@link VmThread#run} when the thread was started. Note that this is different from
-     * the platform dependent thread {@linkplain #handle() handle}.
-     * <br>
-     * Immutable; thread-safe.
-     *
-     * @return the id of this thread. A value less than, equal to or greater than 0 denotes a native thread, the
-     *         primordial thread or a Java thread respectively.
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxThread#id()
      */
     public final int id() {
         return _id;
     }
 
-    /**
-     * Gets the platform dependent handle to the native thread data structure. For example, on Solaris this will be
-     * the LWP identifier for this thread. This value is guaranteed to be unique for any running thread.
-     * <br>
-     * Immutable; thread-safe.
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxThread#handle()
      */
     public final long handle() {
         return _handle;
     }
 
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxThread#stackPointer()
+     */
     public final Pointer stackPointer() {
+        if (!isLive()) {
+            return Pointer.zero();
+        }
         refreshRegisters();
         return _integerRegisters.stackPointer();
     }
 
-    public final Pointer framePointer() {
+    final Pointer framePointer() {
         refreshRegisters();
         return _integerRegisters.framePointer();
     }
 
-    /**
-     * Gets the stack for this thread.
-     * <br>
-     * The identity of the result is immutable and thread-safe, although its contents are not.
-     *
-     * @return this thread's stack
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxThread#stack()
      */
     public final TeleNativeStack stack() {
         return _stack;
     }
 
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxThread#instructionPointer()
+     */
     public final Pointer instructionPointer() {
+        if (!isLive()) {
+            return Pointer.zero();
+        }
         // No need to call refreshRegisters(): the instruction pointer is updated by updateAfterGather() which
         // ensures that it is always in sync.
         return _stateRegisters.instructionPointer();
@@ -598,10 +554,8 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      */
     protected abstract boolean updateInstructionPointer(Address address);
 
-    /**
-     * Gets the return address of the next-to-top frame on the stack. This will be null in the case where this thread is
-     * in native code that was entered via a native method annotated with {@link C_FUNCTION}. The stub for such methods
-     * do not leave the breadcrumbs on the stack that record how to find caller frames.
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxThread#getReturnAddress()
      */
     public Pointer getReturnAddress() {
         final StackFrame topFrame = frames().first();
@@ -609,17 +563,10 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         return topFrameCaller == null ? null : topFrameCaller.instructionPointer();
     }
 
-    /**
-     * Gets the surrogate for the {@link VmThread} in the tele process denoted by this object.
-     * This method returns {@code null} for any of the following reasons:
-     *
-     * 1. The thread is a non-Java thread
-     * 2. The thread is a Java thread that has not yet reached the execution point (somewhere in {@link VmThread#run})
-     *    that initializes {@link VmThreadLocal#VM_THREAD}.
-     *
-     * @return null if this thread is not (yet) associated with VmThread
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxThread#teleVmThread()
      */
-    public TeleVmThread teleVmThread() {
+    public MaxVMThread maxVMThread() {
         if (_teleVmThread == null) {
             refreshThreadLocals();
         }
@@ -634,9 +581,9 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      *
      * @return true if the single step was issued successfully, false otherwise
      */
-    public abstract boolean singleStep();
+    protected abstract boolean singleStep();
 
-    public abstract boolean threadResume();
+    protected abstract boolean threadResume();
 
     public abstract boolean threadSuspend();
 
@@ -644,7 +591,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * If this thread is currently at a {@linkplain #breakpoint() breakpoint} it is single stepped to the next
      * instruction.
      */
-    public void evadeBreakpoint() throws OSExecutionRequestException {
+    void evadeBreakpoint() throws OSExecutionRequestException {
         if (_breakpoint != null && !_breakpoint.isTransient()) {
             assert !_breakpoint.isActivated() : "Cannot single step at an activated breakpoint";
             teleProcess().singleStep(this);
@@ -659,7 +606,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * The implementation of this method in {@link TeleNativeThread} uses the convention for x86 architectures where the
      * the instruction pointer is at the instruction following the breakpoint instruction.
      */
-    public Pointer breakpointAddressFromInstructionPointer() {
+    Pointer breakpointAddressFromInstructionPointer() {
         final Pointer instructionPointer = instructionPointer();
         if (_breakpointIsAtInstructionPointer) {
             return instructionPointer();
@@ -707,6 +654,9 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         return sb.toString();
     }
 
+    /**
+     * @return a printable version of the thread's internal state that only shows key aspects
+     */
     public final String toShortString() {
         final StringBuilder sb = new StringBuilder(100);
         sb.append(isPrimordial() ? "primordial" : (_teleVmThread == null ? "native" : _teleVmThread.name()));
@@ -719,7 +669,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
     /**
      * Determines if this thread is associated with a {@link VmThread} instance. Note that even if this method returns
-     * {@code true}, the {@link #teleVmThread()} method will return {@code null} if the thread has not reached the
+     * {@code true}, the {@link #maxVMThread()} method will return {@code null} if the thread has not reached the
      * execution point in {@link VmThread#run} where the {@linkplain VmThreadLocal#VM_THREAD reference} to the
      * {@link VmThread} object has been initialized.
      */

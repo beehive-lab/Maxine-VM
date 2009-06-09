@@ -33,7 +33,7 @@ public interface AppendableIndexedSequence<Element_Type> extends AppendableSeque
         }
 
         /**
-         * Filters an iterable with a given predicate and return a sequence with the elments that matched the predicate.
+         * Filters an iterable with a given predicate and return a sequence with the elements that matched the predicate.
          * If the returned sequence will only be iterated over, consider using a {@link FilterIterator} instead.
          */
         public static <Element_Type> AppendableIndexedSequence<Element_Type> filter(Iterable<Element_Type> sequence, Predicate<? super Element_Type> predicate) {

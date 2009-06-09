@@ -268,11 +268,11 @@ public abstract class TargetCodeViewer extends CodeViewer {
      */
     @Override
     protected void updateStackCache() {
-        final TeleNativeThread teleNativeThread = inspection().focus().thread();
-        if (teleNativeThread == null) {
+        final MaxThread maxThread = inspection().focus().thread();
+        if (maxThread == null) {
             return;
         }
-        final Sequence<StackFrame> frames = teleNativeThread.frames();
+        final Sequence<StackFrame> frames = maxThread.frames();
 
         Arrays.fill(_rowToStackFrameInfo, null);
 
@@ -290,7 +290,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
                 for (TargetCodeInstruction targetCodeInstruction : _instructions) {
                     final Address address = targetCodeInstruction.address();
                     if (address.equals(frame.instructionPointer())) {
-                        _rowToStackFrameInfo[row] = new StackFrameInfo(frame, teleNativeThread, stackPosition);
+                        _rowToStackFrameInfo[row] = new StackFrameInfo(frame, maxThread, stackPosition);
                         break;
                     }
                     row++;

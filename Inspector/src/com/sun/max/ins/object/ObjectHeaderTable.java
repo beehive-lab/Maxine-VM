@@ -271,7 +271,7 @@ public class ObjectHeaderTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int col) {
             String registerNameList = null;
-            final TeleNativeThread thread = focus().thread();
+            final MaxThread thread = focus().thread();
             if (thread != null) {
                 final TeleIntegerRegisters teleIntegerRegisters = thread.integerRegisters();
                 if (teleIntegerRegisters == null) {

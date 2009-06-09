@@ -35,6 +35,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -235,7 +236,7 @@ public final class MemoryWordInspector extends Inspector {
             }
         }
         final Address lastAddress = _address.plus(_numberOfWords * wordSize);
-        final TeleNativeThread selectedThread = focus().thread();
+        final MaxThread selectedThread = focus().thread();
         if (selectedThread != null) {
             final TeleIntegerRegisters registers = selectedThread.integerRegisters();
             for (Symbol s : registers.symbolizer()) {
@@ -253,7 +254,7 @@ public final class MemoryWordInspector extends Inspector {
     }
 
     @Override
-    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
+    public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxThread) {
         // Revise any indications of registers pointing at inspected locations.
         refreshView(true);
     }

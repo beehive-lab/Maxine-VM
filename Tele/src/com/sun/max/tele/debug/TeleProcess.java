@@ -554,22 +554,6 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         return Iterables.toIterableWithLength(_handleToThreadMap.values());
     }
 
-    public final TeleNativeThread idToThread(long id) {
-        return _handleToThreadMap.get(id);
-    }
-
-    /**
-     * Gets the thread whose stack contains the memory location, null if none.
-     */
-    public final TeleNativeThread threadContaining(Address address) {
-        for (TeleNativeThread thread : _handleToThreadMap.values()) {
-            if (thread.stack().contains(address)) {
-                return thread;
-            }
-        }
-        return null;
-    }
-
     public final int pageSize() {
         return platform().pageSize();
     }

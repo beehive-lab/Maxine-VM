@@ -31,6 +31,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -183,7 +184,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         refreshView(force);
     }
 
-    public void threadStateChanged(TeleNativeThread teleNativeThread) {
+    public void threadStateChanged(MaxThread maxThread) {
     }
 
     public void breakpointSetChanged() {
@@ -195,10 +196,10 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     public void codeLocationFocusSet(TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
     }
 
-    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
+    public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxeThread) {
     }
 
-    public void stackFrameFocusChanged(StackFrame oldStackFrame, TeleNativeThread threadForStackFrame, StackFrame stackFrame) {
+    public void stackFrameFocusChanged(StackFrame oldStackFrame, MaxThread threadForStackFrame, StackFrame stackFrame) {
     }
 
     public void addressFocusChanged(Address oldAddress, Address address) {

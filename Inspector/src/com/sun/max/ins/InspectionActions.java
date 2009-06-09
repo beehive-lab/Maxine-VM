@@ -1767,9 +1767,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             // Most likely situation is that we are just about to call a native method in which case RAX is the address
-            final TeleNativeThread teleNativeThread = focus().thread();
-            assert teleNativeThread != null;
-            final Address indirectCallAddress = teleNativeThread.integerRegisters().getCallRegisterValue();
+            final MaxThread maxThread = focus().thread();
+            assert maxThread != null;
+            final Address indirectCallAddress = maxThread.integerRegisters().getCallRegisterValue();
             final Address initialAddress = indirectCallAddress == null ? maxVM().bootImageStart() : indirectCallAddress;
             new AddressInputDialog(inspection(), initialAddress, "View native code containing code address...", "View Code") {
                 @Override
@@ -2821,7 +2821,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public  void procedure() {
-            final TeleNativeThread thread = focus().thread();
+            final MaxThread thread = focus().thread();
             try {
                 maxVM().singleStep(thread, false);
             } catch (Exception exception) {
@@ -2860,7 +2860,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final TeleNativeThread thread = focus().thread();
+            final MaxThread thread = focus().thread();
             try {
                 maxVM().stepOver(thread, false, true);
             } catch (Exception exception) {
@@ -2900,7 +2900,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final TeleNativeThread thread = focus().thread();
+            final MaxThread thread = focus().thread();
             try {
                 maxVM().stepOver(thread, false, false);
             } catch (Exception exception) {
