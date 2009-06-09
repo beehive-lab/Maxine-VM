@@ -25,6 +25,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 
 import com.sun.c1x.C1XOptions;
+import com.sun.c1x.Bailout;
 import com.sun.c1x.util.BitMap;
 import com.sun.c1x.util.BlockClosure;
 import com.sun.c1x.util.InstructionVisitor;
@@ -350,14 +351,14 @@ public class BlockBegin extends StateSplit {
         v.visitBlockBegin(this);
     }
 
-    public boolean tryMerge(ValueStack newState) {
+    public void merge(ValueStack newState) {
         ValueStack existingState = state();
 
         if (existingState == null) {
             // this is the first state for the block
             if (wasVisited()) {
                 // this can happen for complex jsr/ret patterns; just bail out
-                return false;
+                throw new Bailout("jsr/ret too complex");
             }
 
             // copy state because it is modified
@@ -391,17 +392,15 @@ public class BlockBegin extends StateSplit {
                 // this block better be a loop header
                 if (!isLoopHeader()) {
                     // jsr/ret structure too complicated
-                    return false;
+                    throw new Bailout("jsr/ret too complicated");
                 }
 
                 // check that all local and stack tags match
-                if (!existingState.checkLocalAndStackTags(newState)) {
-                    return false;
-                }
+                existingState.checkLocalAndStackTags(newState);
 
                 // verify all phis in locals and the stack
-                if (C1XOptions.ExtraPhiChecking && !existingState.checkPhis(this, newState)) {
-                    return false;
+                if (C1XOptions.ExtraPhiChecking) {
+                    existingState.checkPhis(this, newState);
                 }
             } else {
                 // there is an existing state, but the block was not visited yet
@@ -411,10 +410,8 @@ public class BlockBegin extends StateSplit {
 
         } else {
             // stacks or locks do not match--bytecodes would not verify
-            return false;
+            throw new Bailout("stack or locks do not match");
         }
-
-        return true;
     }
 
     private void invalidateDeadLocals(ValueStack newState, BitMap liveness) {
@@ -451,11 +448,6 @@ public class BlockBegin extends StateSplit {
                 }
             }
         }
-    }
-
-    public void merge(ValueStack newState) {
-        boolean b = tryMerge(newState);
-        assert b : "merge failed";
     }
 
     public final boolean isStandardEntry() {

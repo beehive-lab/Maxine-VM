@@ -434,7 +434,7 @@ public class Bytecodes {
         def(INVOKEVIRTUAL       , "invokevirtual"       , "bjj"  , FLAG_TRAP);
         def(INVOKESPECIAL       , "invokespecial"       , "bjj"  , FLAG_TRAP);
         def(INVOKESTATIC        , "invokestatic"        , "bjj"  , FLAG_TRAP);
-        def(INVOKEINTERFACE     , "invokeinterface"     , "bjj"  , FLAG_TRAP);
+        def(INVOKEINTERFACE     , "invokeinterface"     , "bjja_", FLAG_TRAP);
         def(XXXUNUSEDXXX        , "xxxunusedxxx"        , ""     );
         def(NEW                 , "new"                 , "bii"  , FLAG_TRAP);
         def(NEWARRAY            , "newarray"            , "bc"   , FLAG_TRAP);
