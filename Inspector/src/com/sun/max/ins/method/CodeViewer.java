@@ -30,7 +30,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.vm.stack.*;
 
@@ -74,7 +73,7 @@ public abstract class CodeViewer extends InspectorPanel {
 
     public abstract boolean updateCodeFocus(TeleCodeLocation teleCodeLocation);
 
-    public void updateThreadFocus(TeleNativeThread teleNativeThread) {
+    public void updateThreadFocus(MaxThread maxThread) {
         updateCaches(false);
     }
 
@@ -309,13 +308,13 @@ public abstract class CodeViewer extends InspectorPanel {
             return _stackFrame;
         }
 
-        private final TeleNativeThread _teleNativeThread;
+        private final MaxThread _maxThread;
 
         /**
          * @return the thread in whose stack the frame resides.
          */
-        public TeleNativeThread thread() {
-            return _teleNativeThread;
+        public MaxThread thread() {
+            return _maxThread;
         }
 
         private final int _stackPosition;
@@ -327,9 +326,9 @@ public abstract class CodeViewer extends InspectorPanel {
             return _stackPosition;
         }
 
-        public StackFrameInfo(StackFrame stackFrame, TeleNativeThread teleNativeThread, int stackPosition) {
+        public StackFrameInfo(StackFrame stackFrame, MaxThread maxThread, int stackPosition) {
             _stackFrame = stackFrame;
-            _teleNativeThread = teleNativeThread;
+            _maxThread = maxThread;
             _stackPosition = stackPosition;
         }
     }
@@ -344,18 +343,18 @@ public abstract class CodeViewer extends InspectorPanel {
     protected abstract void updateStackCache();
 
     // The thread from which the stack cache was last built.
-    private TeleNativeThread _threadForCache = null;
+    private MaxThread _threadForCache = null;
 
     private MaxVMState _lastRefreshedState = null;
 
     private void updateCaches(boolean force) {
-        final TeleNativeThread teleNativeThread = inspection().focus().thread();
-        if (teleNativeThread != _threadForCache || maxVMState().newerThan(_lastRefreshedState) || force) {
+        final MaxThread maxThread = inspection().focus().thread();
+        if (maxThread != _threadForCache || maxVMState().newerThan(_lastRefreshedState) || force) {
             _lastRefreshedState = maxVMState();
             updateStackCache();
             // Active rows depend on the stack cache.
             updateActiveRows();
-            _threadForCache = teleNativeThread;
+            _threadForCache = maxThread;
         }
     }
 

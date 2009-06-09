@@ -50,7 +50,7 @@ public final class ThreadLocalsTable extends InspectorTable {
 
     private final TeleThreadLocalValues _values;
     private final ThreadLocalsViewPreferences _preferences;
-    private final TeleNativeThread _teleNativeThread;
+    private final MaxThread _maxThread;
 
     private final ThreadLocalsTableModel _model;
     private final ThreadLocalsTableColumnModel _columnModel;
@@ -59,9 +59,9 @@ public final class ThreadLocalsTable extends InspectorTable {
     /**
      * A {@link JTable} specialized to display Maxine thread local fields.
      */
-    public ThreadLocalsTable(Inspection inspection, TeleNativeThread teleNativeThread, TeleThreadLocalValues values, ThreadLocalsViewPreferences preferences) {
+    public ThreadLocalsTable(Inspection inspection, MaxThread maxThread, TeleThreadLocalValues values, ThreadLocalsViewPreferences preferences) {
         super(inspection);
-        _teleNativeThread = teleNativeThread;
+        _maxThread = maxThread;
         _values = values;
         _preferences = preferences;
         _model = new ThreadLocalsTableModel();
@@ -208,7 +208,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Address address = _model.rowToAddress(row);
             String registerNameList = null;
-            final TeleIntegerRegisters teleIntegerRegisters = _teleNativeThread.integerRegisters();
+            final TeleIntegerRegisters teleIntegerRegisters = _maxThread.integerRegisters();
             if (teleIntegerRegisters == null) {
                 return gui().getMissingDataTableCellRederer();
             }
@@ -227,7 +227,7 @@ public final class ThreadLocalsTable extends InspectorTable {
                     }
                 }
                 setText(registerNameList + "->");
-                setToolTipText("Register(s): " + registerNameList + " in thread " + inspection().nameDisplay().longName(_teleNativeThread) + " point at this location");
+                setToolTipText("Register(s): " + registerNameList + " in thread " + inspection().nameDisplay().longName(_maxThread) + " point at this location");
                 setForeground(style().memoryRegisterTagTextColor());
             }
             return this;

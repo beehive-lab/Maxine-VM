@@ -20,7 +20,6 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
@@ -33,12 +32,12 @@ import com.sun.max.vm.thread.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public class TeleVmThread extends TeleTupleObject {
+public class TeleVmThread extends TeleTupleObject implements MaxVMThread {
 
     private String _name;
 
-    // the most recent execution epoch when we checked the name reference
-    private long _epoch = -1;
+    // the most recent state when we checked the name reference
+    private long _lastRefreshedEpoch = 0;
 
     // the string representing the name of the thread the last time we checked the {@link TeleVM}.
     // assume that strings are immutable, so only re-read when the reference changes.
@@ -48,11 +47,11 @@ public class TeleVmThread extends TeleTupleObject {
         super(teleVM, vmThreadReference);
     }
 
-    /**
-     * @return the name assigned to the thread in the {@link TeleVM}; may change dynamically.
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxVMThread#name()
      */
     public String name() {
-        if (teleVM().teleProcess().epoch() > _epoch) {
+        if (teleVM().teleProcess().epoch() > _lastRefreshedEpoch) {
             final Reference nameReference = teleVM().fields().VmThread_name.readReference(reference());
             if (_nameReference == null || !nameReference.equals(_nameReference)) {
                 if (nameReference.isZero()) {
@@ -64,18 +63,18 @@ public class TeleVmThread extends TeleTupleObject {
                     _name = teleVM().getString(_nameReference);
                 }
             }
-            _epoch = teleVM().teleProcess().epoch();
+            _lastRefreshedEpoch = teleVM().teleProcess().epoch();
         }
         return _name;
     }
 
-    /**
-     * @return the native thread in the {@link TeleVM} with which this VM thread is associated.
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxVMThread#maxThread()
      */
-    public TeleNativeThread teleNativeThread() {
-        for (TeleNativeThread teleNativeThread : teleVM().threads()) {
-            if (this.equals(teleNativeThread.teleVmThread())) {
-                return teleNativeThread;
+    public MaxThread maxThread() {
+        for (MaxThread maxThread : teleVM().maxVMState().threads()) {
+            if (this.equals(maxThread.maxVMThread())) {
+                return maxThread;
             }
         }
         return null;

@@ -200,6 +200,17 @@ public class C1XCompilation {
     }
 
     /**
+     * Converts this compilation to a string.
+     * @return a string representation of this compilation
+     */
+    public String toString() {
+        if (isOsrCompilation()) {
+            return "osr-compile @ " + _osrBCI + ": " + _method;
+        }
+        return "compile: " + _method;
+    }
+
+    /**
      * Builds the block map for the specified method.
      * @param method the method for which to build the block map
      * @param osrBCI the OSR bytecode index; <code>-1</code> if this is not an OSR

@@ -29,6 +29,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.vm.runtime.*;
 
@@ -45,10 +46,10 @@ public final class ThreadLocalsPanel extends InspectorPanel {
     private final ThreadLocalsTable _threadLocalsTable;
     final TeleThreadLocalValues _teleVMThreadLocalValues;
 
-    ThreadLocalsPanel(Inspection inspection, TeleNativeThread teleNativeThread, TeleThreadLocalValues values, ThreadLocalsViewPreferences preferences) {
+    ThreadLocalsPanel(Inspection inspection, MaxThread maxThread, TeleThreadLocalValues values, ThreadLocalsViewPreferences preferences) {
         super(inspection);
         _threadLocalsHeaderPanel = new ThreadLocalsHeaderPanel(inspection, values);
-        _threadLocalsTable = new ThreadLocalsTable(inspection, teleNativeThread, values, preferences);
+        _threadLocalsTable = new ThreadLocalsTable(inspection, maxThread, values, preferences);
         _teleVMThreadLocalValues = values;
 
         setLayout(new BorderLayout());

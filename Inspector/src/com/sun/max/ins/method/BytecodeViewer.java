@@ -29,6 +29,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
 import com.sun.max.tele.method.*;
@@ -205,14 +206,14 @@ public abstract class BytecodeViewer extends CodeViewer {
     @Override
     protected void updateStackCache() {
         if (haveTargetCodeAddresses()) {
-            final TeleNativeThread teleNativeThread = inspection().focus().thread();
-            final Sequence<StackFrame> frames = teleNativeThread.frames();
+            final MaxThread maxThread = inspection().focus().thread();
+            final Sequence<StackFrame> frames = maxThread.frames();
             for (int row = 0; row < _bytecodeInstructions.length(); row++) {
                 int stackPosition = 0;
                 StackFrameInfo stackFrameInfo = null;
                 for (StackFrame frame : frames) {
                     if (rowContainsAddress(row, frame.instructionPointer())) {
-                        stackFrameInfo = new StackFrameInfo(frame, teleNativeThread, stackPosition);
+                        stackFrameInfo = new StackFrameInfo(frame, maxThread, stackPosition);
                         break;
                     }
                     stackPosition++;

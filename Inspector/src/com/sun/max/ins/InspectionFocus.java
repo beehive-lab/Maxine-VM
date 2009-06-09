@@ -24,6 +24,7 @@ import com.sun.max.collect.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -118,7 +119,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
 
 
 
-    private TeleNativeThread _thread;
+    private MaxThread _thread;
 
     private final Object _threadFocusTracer = new Object() {
         @Override
@@ -130,9 +131,9 @@ public class InspectionFocus extends AbstractInspectionHolder {
     };
 
     /**
-     * @return the {@link TeleNativeThread} that is the current user focus (view state); non-null once set.
+     * @return the {@link MaxThread} that is the current user focus (view state); non-null once set.
      */
-    public TeleNativeThread thread() {
+    public MaxThread thread() {
         return _thread;
     }
 
@@ -148,19 +149,19 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * Sets the code location to the current InstructionPointer of the newly focused thread.
      * This is a view state change that can happen when there is no change to VM  state.
      */
-    public void setThread(TeleNativeThread thread) {
-        assert thread != null;
-        if (!thread.equals(_thread)) {
-            final TeleNativeThread oldThread = _thread;
-            _thread = thread;
+    public void setThread(MaxThread maxThread) {
+        assert maxThread != null;
+        if (!maxThread.equals(_thread)) {
+            final MaxThread oldThread = _thread;
+            _thread = maxThread;
             Trace.line(TRACE_VALUE, _threadFocusTracer);
             for (ViewFocusListener listener : _listeners.clone()) {
-                listener.threadFocusSet(oldThread, thread);
+                listener.threadFocusSet(oldThread, maxThread);
             }
             // User Model Policy:  when thread focus changes, restore an old frame focus if possible.
             // If no record of a prior choice and thread is at a breakpoint, focus there.
             // Else focus on the top frame.
-            final StackFrame previousStackFrame = _frameSelections.get(thread);
+            final StackFrame previousStackFrame = _frameSelections.get(maxThread);
             StackFrame newStackFrame = null;
             if (previousStackFrame != null) {
                 for (StackFrame stackFrame : _thread.frames()) {
@@ -172,7 +173,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             }
             if (newStackFrame != null) {
                 // Reset frame selection to one previously selected by the user
-                setStackFrame(thread, newStackFrame, false);
+                setStackFrame(maxThread, newStackFrame, false);
             } else {
                 // No prior frame selection
                 final TeleTargetBreakpoint breakpoint = _thread.breakpoint();
@@ -181,7 +182,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
                     setBreakpoint(breakpoint);
                 } else {
                     // default is to focus on the top frame
-                    setStackFrame(thread, thread.frames().first(), false);
+                    setStackFrame(maxThread, maxThread.frames().first(), false);
                 }
             }
             // User Model Policy:  when thread focus changes, also set the memory region focus to the thread's stack.
@@ -191,11 +192,11 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
     // Remember most recent frame selection per thread, and restore this selection (if possible) when thread focus changes.
-    private final VariableMapping<TeleNativeThread, StackFrame> _frameSelections = HashMapping.<TeleNativeThread, StackFrame>createVariableEqualityMapping();
+    private final VariableMapping<MaxThread, StackFrame> _frameSelections = HashMapping.<MaxThread, StackFrame>createVariableEqualityMapping();
 
     private StackFrame _stackFrame;
     // Since frames don't record what stack they're in, we must keep a reference to the thread of the frame.
-    private TeleNativeThread _threadForStackFrame;
+    private MaxThread _threadForStackFrame;
 
     private final Object _stackFrameFocusTracer = new Object() {
         @Override
@@ -216,21 +217,21 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * Sets the current thread to be the thread of the frame.
      * This is a view state change that can happen when there is no change to VM state.
      *
-     * @param teleNativeThread the thread in whose stack the frame resides
+     * @param maxThread the thread in whose stack the frame resides
      * @param stackFrame the frame on which to focus.
      * @param interactiveForNative whether (should a side effect be to land in a native method) the user should be consulted if unknown.
      */
-    public void setStackFrame(TeleNativeThread teleNativeThread, StackFrame stackFrame, boolean interactiveForNative) {
-        if (!teleNativeThread.equals(_threadForStackFrame) || !stackFrame.isSameFrame(_stackFrame)) {
+    public void setStackFrame(MaxThread maxThread, StackFrame stackFrame, boolean interactiveForNative) {
+        if (!maxThread.equals(_threadForStackFrame) || !stackFrame.isSameFrame(_stackFrame)) {
             final StackFrame oldStackFrame = _stackFrame;
-            _threadForStackFrame = teleNativeThread;
+            _threadForStackFrame = maxThread;
             _stackFrame = stackFrame;
-            _frameSelections.put(teleNativeThread, stackFrame);
+            _frameSelections.put(maxThread, stackFrame);
             Trace.line(TRACE_VALUE, _stackFrameFocusTracer);
             // For consistency, be sure we're in the right thread context before doing anything with the stack frame.
-            setThread(teleNativeThread);
+            setThread(maxThread);
             for (ViewFocusListener listener : _listeners.clone()) {
-                listener.stackFrameFocusChanged(oldStackFrame, teleNativeThread, stackFrame);
+                listener.stackFrameFocusChanged(oldStackFrame, maxThread, stackFrame);
             }
         }
         // User Model Policy:  When a stack frame becomes the focus, then also focus on the code at the frame's instruction pointer.
@@ -329,9 +330,9 @@ public class InspectionFocus extends AbstractInspectionHolder {
             }
             // User Model Policy:  When a stack memory region gets selected for focus, also set focus to the thread owning the stack.
 //            if (_memoryRegion != null) {
-//                final TeleNativeThread teleNativeThread = teleVM().threadContaining(_memoryRegion.start());
-//                if (teleNativeThread != null) {
-//                    setThread(teleNativeThread);
+//                final MaxThread maxThread = teleVM().threadContaining(_memoryRegion.start());
+//                if (maxThread != null) {
+//                    setThread(maxThread);
 //                }
 //            }
         }
@@ -376,10 +377,10 @@ public class InspectionFocus extends AbstractInspectionHolder {
             }
         }
         if (teleBreakpoint != null) {
-            TeleNativeThread threadAtBreakpoint = null;
-            for (TeleNativeThread teleNativeThread : maxVM().threads()) {
-                if (teleNativeThread.breakpoint() == teleBreakpoint) {
-                    threadAtBreakpoint = teleNativeThread;
+            MaxThread threadAtBreakpoint = null;
+            for (MaxThread maxThread : maxVMState().threads()) {
+                if (maxThread.breakpoint() == teleBreakpoint) {
+                    threadAtBreakpoint = maxThread;
                     break;
                 }
             }

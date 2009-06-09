@@ -74,8 +74,8 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
      * Sets table selection to thread, if any, that is the current user focus.
      */
     private void updateSelection() {
-        final TeleNativeThread teleNativeThread = inspection().focus().thread();
-        final int row = _model.findRow(teleNativeThread);
+        final MaxThread maxThread = inspection().focus().thread();
+        final int row = _model.findRow(maxThread);
         if (row < 0) {
             clearSelection();
         } else  if (row != getSelectedRow()) {
@@ -105,8 +105,8 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
         if (!listSelectionEvent.getValueIsAdjusting()) {
             final int row = getSelectedRow();
             if (row >= 0) {
-                final TeleNativeThread teleNativeThread = (TeleNativeThread) getValueAt(row, 0);
-                focus().setThread(teleNativeThread);
+                final MaxThread maxThread = (MaxThread) getValueAt(row, 0);
+                focus().setThread(maxThread);
             }
         }
     }
@@ -157,9 +157,9 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
 
         public Object getValueAt(int row, int col) {
             int count = 0;
-            for (TeleNativeThread teleNativeThread : maxVMState().threads()) {
+            for (MaxThread maxThread : maxVMState().threads()) {
                 if (count == row) {
-                    return teleNativeThread;
+                    return maxThread;
                 }
                 count++;
             }
@@ -168,13 +168,13 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
 
         @Override
         public Class< ? > getColumnClass(int c) {
-            return TeleNativeThread.class;
+            return MaxThread.class;
         }
 
-        public int findRow(TeleNativeThread teleNativeThread) {
+        public int findRow(MaxThread maxThread) {
             int row = 0;
-            for (TeleNativeThread thread : maxVMState().threads()) {
-                if (thread == teleNativeThread) {
+            for (MaxThread thread : maxVMState().threads()) {
+                if (thread == maxThread) {
                     return row;
                 }
                 row++;
@@ -191,8 +191,8 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final TeleNativeThread teleNativeThread = (TeleNativeThread) value;
-            final int id = teleNativeThread.id();
+            final MaxThread maxThread = (MaxThread) value;
+            final int id = maxThread.id();
             if (id < 0) {
                 setText("");
                 setToolTipText("Not a VM thread");
@@ -217,8 +217,8 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final TeleNativeThread teleNativeThread = (TeleNativeThread) value;
-            final String handleString = Long.toString(teleNativeThread.handle());
+            final MaxThread maxThread = (MaxThread) value;
+            final String handleString = Long.toString(maxThread.handle());
             setText(handleString);
             setToolTipText("Native thread handle:  " + handleString);
             if (row == getSelectionModel().getMinSelectionIndex()) {
@@ -237,13 +237,13 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final TeleNativeThread teleNativeThread = (TeleNativeThread) value;
-            final TeleVmThread teleVmThread = teleNativeThread.teleVmThread();
+            final MaxThread maxThread = (MaxThread) value;
+            final MaxVMThread maxVMThread = maxThread.maxVMThread();
             String kind;
-            if (teleVmThread != null) {
+            if (maxVMThread != null) {
                 kind = "Java";
             } else {
-                if (teleNativeThread.isPrimordial()) {
+                if (maxThread.isPrimordial()) {
                     kind = "primordial";
                 } else {
                     kind = "native";
@@ -267,8 +267,8 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final TeleNativeThread teleNativeThread = (TeleNativeThread) value;
-            setValue(inspection().nameDisplay().shortName(teleNativeThread), "Name:  " + inspection().nameDisplay().longName(teleNativeThread));
+            final MaxThread maxThread = (MaxThread) value;
+            setValue(inspection().nameDisplay().shortName(maxThread), "Name:  " + inspection().nameDisplay().longName(maxThread));
             if (row == getSelectionModel().getMinSelectionIndex()) {
                 setBackground(style().defaultCodeAlternateBackgroundColor());
             } else {
@@ -285,8 +285,8 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final TeleNativeThread teleNativeThread = (TeleNativeThread) value;
-            final String status = teleNativeThread.state().toString();
+            final MaxThread maxThread = (MaxThread) value;
+            final String status = maxThread.state().toString();
             setText(status);
             setToolTipText("Status:  " + status);
             if (row == getSelectionModel().getMinSelectionIndex()) {
@@ -326,7 +326,7 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
     public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
     }
 
-    public void stackFrameFocusChanged(StackFrame oldStackFrame, TeleNativeThread threadForStackFrame, StackFrame stackFrame) {
+    public void stackFrameFocusChanged(StackFrame oldStackFrame, MaxThread threadForStackFrame, StackFrame stackFrame) {
     }
 
     public void addressFocusChanged(Address oldAddress, Address address) {
@@ -338,7 +338,7 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
     public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
     }
 
-    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
+    public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxThread) {
         updateSelection();
     }
 }

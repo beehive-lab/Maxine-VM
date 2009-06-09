@@ -90,7 +90,7 @@ public class C1XTest {
     }
 
     private static boolean compile(MaxCiRuntime runtime, MethodActor method) {
-        if (method instanceof ClassMethodActor) {
+        if (method instanceof ClassMethodActor && !method.isAbstract()) {
             final C1XCompilation compilation = new C1XCompilation(runtime, runtime.getCiMethod(method));
             if (compilation.startBlock() == null) {
                 compilation.bailout().printStackTrace();

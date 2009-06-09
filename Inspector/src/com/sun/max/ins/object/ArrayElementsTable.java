@@ -259,7 +259,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             String registerNameList = null;
-            final TeleNativeThread thread = focus().thread();
+            final MaxThread thread = focus().thread();
             if (thread != null) {
                 final TeleIntegerRegisters teleIntegerRegisters = thread.integerRegisters();
                 if (teleIntegerRegisters == null) {

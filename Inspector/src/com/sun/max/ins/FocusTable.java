@@ -30,6 +30,7 @@ import com.sun.max.collect.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.memory.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -247,11 +248,11 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
             _labels[FocusRowKind.THREAD.ordinal()] = new JavaNameLabel(inspection, "") {
                 @Override
                 public void refresh(boolean force) {
-                    final TeleNativeThread teleNativeThread = inspection().focus().thread();
-                    if (teleNativeThread == null) {
+                    final MaxThread maxThread = inspection().focus().thread();
+                    if (maxThread == null) {
                         setValue("null", "No thread focus");
                     } else {
-                        final String longName = inspection().nameDisplay().longNameWithState(teleNativeThread);
+                        final String longName = inspection().nameDisplay().longNameWithState(maxThread);
                         setValue(longName, "Thread focus = " + longName);
                     }
                 }
@@ -355,11 +356,11 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
         refresh(true);
     }
 
-    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
+    public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxThread) {
         refresh(true);
     }
 
-    public void stackFrameFocusChanged(StackFrame oldStackFrame, TeleNativeThread threadForStackFrame, StackFrame stackFrame) {
+    public void stackFrameFocusChanged(StackFrame oldStackFrame, MaxThread threadForStackFrame, StackFrame stackFrame) {
         refresh(true);
     }
 

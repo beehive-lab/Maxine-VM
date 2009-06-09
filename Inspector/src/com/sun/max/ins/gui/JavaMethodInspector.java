@@ -33,7 +33,6 @@ import com.sun.max.ins.InspectorNameDisplay.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.member.*;
@@ -325,9 +324,9 @@ public class JavaMethodInspector extends MethodInspector {
      * Global thread selection has been set, though possibly unchanged; update all viewers.
      */
     @Override
-    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
+    public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxThread) {
         for (CodeViewer codeViewer : _codeViewers.values()) {
-            codeViewer.updateThreadFocus(teleNativeThread);
+            codeViewer.updateThreadFocus(maxThread);
         }
     }
 

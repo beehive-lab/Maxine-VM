@@ -47,9 +47,9 @@ public class RegistersTable extends InspectorTable {
     private RegistersColumnModel _columnModel;
     private final TableColumn[] _columns;
 
-    public RegistersTable(Inspection inspection, TeleNativeThread teleNativeThread, RegistersViewPreferences viewPreferences) {
+    public RegistersTable(Inspection inspection, MaxThread maxThread, RegistersViewPreferences viewPreferences) {
         super(inspection);
-        _model = new RegistersTableModel(teleNativeThread);
+        _model = new RegistersTableModel(maxThread);
         _columns = new TableColumn[RegistersColumnKind.VALUES.length()];
         _columnModel = new RegistersColumnModel(viewPreferences);
         setModel(_model);
@@ -139,17 +139,17 @@ public class RegistersTable extends InspectorTable {
      */
     private final class RegistersTableModel extends DefaultTableModel {
 
-        private final TeleNativeThread _teleNativeThread;
+        private final MaxThread _maxThread;
 
         private int _nRegisters = 0;
 
         private final RegisterInfo[] _registerInfos;
 
-        RegistersTableModel(TeleNativeThread teleNativeThread) {
-            _teleNativeThread = teleNativeThread;
-            final TeleIntegerRegisters integerRegisters = _teleNativeThread.integerRegisters();
-            final TeleStateRegisters stateRegisters = _teleNativeThread.stateRegisters();
-            final TeleFloatingPointRegisters floatingPointRegisters = _teleNativeThread.floatingPointRegisters();
+        RegistersTableModel(MaxThread maxThread) {
+            _maxThread = maxThread;
+            final TeleIntegerRegisters integerRegisters = _maxThread.integerRegisters();
+            final TeleStateRegisters stateRegisters = _maxThread.stateRegisters();
+            final TeleFloatingPointRegisters floatingPointRegisters = _maxThread.floatingPointRegisters();
             _nRegisters = integerRegisters.symbolizer().numberOfValues()
                  + stateRegisters.symbolizer().numberOfValues()
                  + floatingPointRegisters.symbolizer().numberOfValues();
