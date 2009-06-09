@@ -146,6 +146,17 @@ public class IRScope {
     }
 
     /**
+     * Add an exception handler to this scope.
+     * @param handler the exception handler to add
+     */
+    public void addExceptionHandler(ExceptionHandler handler) {
+        if (_exceptionHandlers == null) {
+            _exceptionHandlers = new ArrayList<ExceptionHandler>();
+        }
+        _exceptionHandlers.add(handler);
+    }
+
+    /**
      * Gets the phi bitmap for this IR scope. The phi bitmap stores
      * whether a phi instruction is required for each local variable.
      * @return the phi bitmap for this IR scope

@@ -87,7 +87,7 @@ public class GraphBuilder {
             CiExceptionHandler desc = newDefaultExceptionHandler(method);
             ExceptionHandler h = new ExceptionHandler(desc);
             h.setEntryBlock(syncHandler);
-            _scopeData.exceptionHandlers().add(h);
+            _scopeData.addExceptionHandler(h);
             _scopeData.setHasHandler();
         }
 
@@ -324,7 +324,7 @@ public class GraphBuilder {
             // address for jsrs since we don't handle arbitrary jsr/ret
             // constructs. Here we are figuring out in which circumstances we
             // need to bail out.
-            if (x.type().tag() == ValueTag.ADDRESS_TAG) {
+            if (x.type().tag() == ValueTag.JSR_TAG) {
                 _scopeData.setJsrEntryReturnAddressLocal(index);
 
                 // Also check parent jsrs (if any) at this time to see whether
@@ -642,10 +642,9 @@ public class GraphBuilder {
     void increment() {
         int index = stream().readLocalIndex();
         int delta = stream().readIncrement();
-        loadLocal(ValueType.INT_TYPE, index);
-        ipush(new Constant(ConstType.forInt(delta)));
-        arithmeticOp(ValueType.INT_TYPE, Bytecodes.IADD, null);
-        storeLocal(ValueType.INT_TYPE, index);
+        Instruction x = _state.localAt(index);
+        Instruction y = append(new Constant(ConstType.forInt(delta)));
+        _state.storeLocal(index, append(new ArithmeticOp(Bytecodes.IADD, x, y, method().isStrictFP(), null)));
     }
 
     void goto_(int fromBCI, int toBCI) {
@@ -716,7 +715,7 @@ public class GraphBuilder {
 
     void newInstance() {
         CiType type = constantPool().lookupType(stream().readCPI());
-        assert type.isInstanceClass();
+        assert !type.isLoaded() || type.isInstanceClass();
         NewInstance n = new NewInstance(type);
         _memory.newInstance(n);
         apush(appendSplit(n));
@@ -1387,6 +1386,9 @@ public class GraphBuilder {
         if (scope().level() > C1XOptions.MaximumInlineLevel) {
             return cannotInline(target, "inlining too deep");
         }
+        if (!target.isLoaded()) {
+            return cannotInline(target, "method is not resolved");
+        }
         if (recursiveInlineLevel(target) > C1XOptions.MaximumRecursiveInlineLevel) {
             return cannotInline(target, "recursive inlining too depth");
         }
@@ -1580,7 +1582,7 @@ public class GraphBuilder {
         CiExceptionHandler handler = newDefaultExceptionHandler(method());
         ExceptionHandler h = new ExceptionHandler(handler);
         h.setEntryBlock(syncHandler);
-        _scopeData.exceptionHandlers().add(h);
+        _scopeData.addExceptionHandler(h);
         _scopeData.setHasHandler();
     }
 

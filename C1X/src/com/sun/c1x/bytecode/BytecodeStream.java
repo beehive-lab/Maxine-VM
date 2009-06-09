@@ -150,7 +150,7 @@ public class BytecodeStream {
      */
     public int readUByte(int bci) {
         // reads a 1-byte unsigned value
-        return Bytes.beU1(_code, _curBCI + 1);
+        return Bytes.beU1(_code, bci);
     }
 
     /**
