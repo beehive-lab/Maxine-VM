@@ -36,11 +36,11 @@ import java.util.ArrayList;
 public class ScopeData {
     // XXX: refactor and split this class into ScopeData, JsrScopeData, and InlineScopeData
 
-    final ScopeData parent;
+    final ScopeData _parent;
     // the IR scope
-    final IRScope scope;
+    final IRScope _scope;
     // bci-to-block mapping
-    final BlockMap blockMap;
+    final BlockMap _blockMap;
     // whether this scope or any parent scope has exception handlers
     boolean _hasHandler;
     // the bytecode stream
@@ -99,12 +99,12 @@ public class ScopeData {
      * Constructs a new ScopeData instance with the specified parent ScopeData.
      * @param parent the parent scope data
      * @param scope the IR scope
-     * @param blockMap the block map for this scope
+     * @param bm the block map for this scope
      */
-    public ScopeData(ScopeData parent, IRScope scope, BlockMap blockMap) {
-        this.parent = parent;
-        this.scope = scope;
-        this.blockMap = blockMap;
+    public ScopeData(ScopeData parent, IRScope scope, BlockMap bm) {
+        this._parent = parent;
+        this._scope = scope;
+        this._blockMap = bm;
         if (parent != null) {
             _maxInlineSize = (int) (C1XOptions.MaximumInlineRatio * parent.maxInlineSize());
             if (_maxInlineSize < C1XOptions.MaximumTrivialSize) {
@@ -133,7 +133,7 @@ public class ScopeData {
             // instructions in some cases).
             BlockBegin block = _jsrDuplicatedBlocks[bci];
             if (block == null) {
-                BlockBegin parent = this.parent.blockAt(bci);
+                BlockBegin parent = this._parent.blockAt(bci);
                 if (parent != null) {
                     BlockBegin newBlock = new BlockBegin(parent.bci());
                     newBlock.setDepthFirstNumber(parent.depthFirstNumber());
@@ -144,7 +144,7 @@ public class ScopeData {
             }
             return block;
         }
-        return blockMap.get(bci);
+        return _blockMap.get(bci);
     }
 
     /**
@@ -184,7 +184,7 @@ public class ScopeData {
      * @return the size of the stack
      */
     public int callerStackSize() {
-        ValueStack state = scope.callerState();
+        ValueStack state = _scope.callerState();
         return state == null ? 0 : state.stackSize();
     }
 
@@ -242,7 +242,7 @@ public class ScopeData {
      */
     public void setJsrEntryBCI(int bci) {
         assert bci > 0 : "jsr cannot possibly jump to BCI 0";
-        _jsrDuplicatedBlocks = new BlockBegin[scope.method().codeSize()];
+        _jsrDuplicatedBlocks = new BlockBegin[_scope.method().codeSize()];
         _jsrEntryBci = bci;
     }
 
@@ -284,7 +284,7 @@ public class ScopeData {
      */
     public int numberOfReturns() {
         if (parsingJsr()) {
-            return parent.numberOfReturns();
+            return _parent.numberOfReturns();
         }
         return _numReturns;
     }
@@ -294,7 +294,7 @@ public class ScopeData {
      */
     public void incrementNumberOfReturns() {
         if (parsingJsr()) {
-            parent.incrementNumberOfReturns();
+            _parent.incrementNumberOfReturns();
         } else {
             _numReturns++;
         }
@@ -343,7 +343,7 @@ public class ScopeData {
     public void setupJsrExceptionHandlers() {
         assert parsingJsr();
 
-        List<ExceptionHandler> shandlers = scope.exceptionHandlers();
+        List<ExceptionHandler> shandlers = _scope.exceptionHandlers();
         List<ExceptionHandler> handlers = new ArrayList<ExceptionHandler>(shandlers.size());
         for (ExceptionHandler h : shandlers) {
             ExceptionHandler n = new ExceptionHandler(h);
@@ -364,7 +364,7 @@ public class ScopeData {
     public List<ExceptionHandler> exceptionHandlers() {
         if (_jsrHandlers == null) {
             assert !parsingJsr();
-            return scope.exceptionHandlers();
+            return _scope.exceptionHandlers();
         }
         return _jsrHandlers;
     }
@@ -376,7 +376,7 @@ public class ScopeData {
     public void addExceptionHandler(ExceptionHandler handler) {
         if (_jsrHandlers == null) {
             assert !parsingJsr();
-            scope.addExceptionHandler(handler);
+            _scope.addExceptionHandler(handler);
         } else {
             _jsrHandlers.add(handler);
         }
@@ -455,9 +455,9 @@ public class ScopeData {
      */
     public String toString() {
         if (parsingJsr()) {
-            return "jsr@" + _jsrEntryBci + " data for " + scope.toString();
+            return "jsr@" + _jsrEntryBci + " data for " + _scope.toString();
         } else {
-            return "data for " + scope.toString();
+            return "data for " + _scope.toString();
         }
 
     }
