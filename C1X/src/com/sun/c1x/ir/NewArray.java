@@ -85,6 +85,8 @@ public abstract class NewArray extends StateSplit {
      */
     public void otherValuesDo(InstructionClosure closure) {
         super.otherValuesDo(closure);
-        _stateBefore.valuesDo(closure);
+        if (_stateBefore != null) {
+            _stateBefore.valuesDo(closure);
+        }
     }
 }

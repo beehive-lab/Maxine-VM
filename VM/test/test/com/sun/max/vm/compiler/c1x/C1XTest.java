@@ -128,6 +128,9 @@ public class C1XTest {
             for (String className : matchingClasses) {
                 try {
                     final ClassActor classActor = ClassActor.fromJava(Class.forName(className, false, C1XTest.class.getClassLoader()));
+                    if (classActor == null) {
+                        continue;
+                    }
 
                     if (colonIndex == -1) {
                         // Class only: compile all methods in class
@@ -184,7 +187,7 @@ public class C1XTest {
             double totalBcps = 0d;
             int count = 0;
             for (Timing timing : _timings) {
-                MethodActor method = timing._classMethodActor;
+                final MethodActor method = timing._classMethodActor;
                 final long ns = timing._nanoSeconds;
                 final double bcps = timing._bytecodesPerSecond;
                 System.out.print(Strings.padLengthWithSpaces("#" + timing._number, 6));
