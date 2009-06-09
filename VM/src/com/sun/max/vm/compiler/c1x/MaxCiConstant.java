@@ -76,6 +76,12 @@ public class MaxCiConstant implements CiConstant {
      * @return the object reference this constant represents
      */
     public Object asObject() {
+        if (_type != null) {
+            if (!_type.isLoaded()) {
+                throw new MaxCiUnresolved("asObject() not defined for unresolved MaxCiConstant of class " + _type);
+            }
+            return _type.javaClass();
+        }
         return _value.asObject();
     }
 

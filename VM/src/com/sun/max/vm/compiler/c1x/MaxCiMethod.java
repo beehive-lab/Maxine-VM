@@ -114,7 +114,7 @@ public class MaxCiMethod implements CiMethod {
      * @throws MaxCiUnresolved if the method is unresolved
      */
     public byte[] code() {
-        return asClassMethodActor("code()").codeAttribute().code();
+        return asClassMethodActor("code()").rawCodeAttribute().code();
     }
 
     /**
@@ -123,7 +123,7 @@ public class MaxCiMethod implements CiMethod {
      * @throws MaxCiUnresolved if the method is unresolved
      */
     public int maxLocals() {
-        return asClassMethodActor("maxLocals()").codeAttribute().maxLocals();
+        return asClassMethodActor("maxLocals()").rawCodeAttribute().maxLocals();
     }
 
     /**
@@ -132,7 +132,7 @@ public class MaxCiMethod implements CiMethod {
      * @throws MaxCiUnresolved if the method is unresolved
      */
     public int maxStackSize() {
-        return asClassMethodActor("maxStackSize()").codeAttribute().maxStack();
+        return asClassMethodActor("maxStackSize()").rawCodeAttribute().maxStack();
     }
 
     /**
@@ -151,7 +151,7 @@ public class MaxCiMethod implements CiMethod {
      * @throws MaxCiUnresolved if the method is unresolved
      */
     public boolean hasExceptionHandlers() {
-        return asClassMethodActor("hasExceptionHandlers()").codeAttribute().exceptionHandlerTable().length() > 0;
+        return asClassMethodActor("hasExceptionHandlers()").rawCodeAttribute().exceptionHandlerTable().length() > 0;
     }
 
     /**
@@ -276,7 +276,7 @@ public class MaxCiMethod implements CiMethod {
      * @throws MaxCiUnresolved if the method is unresolved
      */
     public int codeSize() {
-        return asClassMethodActor("codeSize()").codeAttribute().code().length;
+        return asClassMethodActor("codeSize()").rawCodeAttribute().code().length;
     }
 
     /**
@@ -291,7 +291,7 @@ public class MaxCiMethod implements CiMethod {
         }
         final ClassMethodActor classMethodActor = asClassMethodActor("exceptionHandlers()");
         _exceptionHandlers = new ArrayList<CiExceptionHandler>();
-        for (ExceptionHandlerEntry entry : classMethodActor.codeAttribute().exceptionHandlerTable()) {
+        for (ExceptionHandlerEntry entry : classMethodActor.rawCodeAttribute().exceptionHandlerTable()) {
             _exceptionHandlers.add(new MaxCiExceptionHandler((char) entry.startPosition(),
                                                              (char) entry.endPosition(),
                                                              (char) entry.handlerPosition(),
