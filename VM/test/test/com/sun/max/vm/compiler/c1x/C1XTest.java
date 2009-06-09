@@ -51,7 +51,7 @@ public class C1XTest {
         "Compile class initialization methods.");
     private static final Option<Boolean> _failFast = _options.newBooleanOption("fail-fast", true,
         "Stop compilation upon the first bailout.");
-    private static final Option<Boolean> _help = _options.newBooleanOption("help", true,
+    private static final Option<Boolean> _help = _options.newBooleanOption("help", false,
         "Show help message and exit.");
 
     public static void main(String[] args) {
