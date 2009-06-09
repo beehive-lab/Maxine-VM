@@ -632,10 +632,6 @@ public class ValueStack {
         }
     }
 
-    private boolean sizeMismatch(ValueStack other) {
-        return other._stackIndex != _stackIndex || other._values.length != _values.length;
-    }
-
     private void checkSize(ValueStack other) {
         if (other._stackIndex != _stackIndex) {
             throw new Bailout("stack sizes do not match");
