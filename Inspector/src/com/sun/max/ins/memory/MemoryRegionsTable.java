@@ -179,7 +179,7 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
                 }
             }
 
-            for (TeleNativeThread thread : maxVM().threads()) {
+            for (MaxThread thread : maxVMState().threads()) {
                 final TeleNativeStack stack = thread.stack();
                 if (!stack.size().isZero()) {
                     _sortedMemoryRegions.add(new StackRegionDisplay(stack));
@@ -560,7 +560,7 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
     public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
     }
 
-    public void stackFrameFocusChanged(StackFrame oldStackFrame, TeleNativeThread threadForStackFrame, StackFrame stackFrame) {
+    public void stackFrameFocusChanged(StackFrame oldStackFrame, MaxThread threadForStackFrame, StackFrame stackFrame) {
     }
 
     public void addressFocusChanged(Address oldAddress, Address address) {
@@ -573,6 +573,6 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
     public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
     }
 
-    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
+    public void threadFocusSet(MaxThread oldTeleNativeThread, MaxThread teleNativeThread) {
     }
 }

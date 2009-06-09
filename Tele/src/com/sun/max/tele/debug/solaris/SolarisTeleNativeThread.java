@@ -67,7 +67,7 @@ public class SolarisTeleNativeThread extends TeleNativeThread {
     }
 
     @Override
-    public boolean singleStep() {
+    protected boolean singleStep() {
         return nativeSingleStep(teleProcess().processHandle(), lwpId());
     }
 
@@ -86,7 +86,7 @@ public class SolarisTeleNativeThread extends TeleNativeThread {
     private static native boolean nativeResume(long processHandle, long lwpId);
 
     @Override
-    public boolean threadResume() {
+    protected boolean threadResume() {
         return nativeResume(teleProcess().processHandle(), lwpId());
     }
 

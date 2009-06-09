@@ -49,7 +49,7 @@ public class GuestVMXenNativeThread extends TeleNativeThread {
     }
 
     @Override
-    public boolean singleStep() {
+    protected boolean singleStep() {
         return GuestVMXenDBChannel.singleStep((int) handle());
     }
 
@@ -62,7 +62,7 @@ public class GuestVMXenNativeThread extends TeleNativeThread {
     }
 
     @Override
-    public boolean threadResume() {
+    protected boolean threadResume() {
         throw Problem.unimplemented();
     }
 }

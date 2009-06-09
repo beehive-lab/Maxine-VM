@@ -74,12 +74,12 @@ public class LinuxTeleNativeThread extends TeleNativeThread {
     }
 
     @Override
-    public boolean singleStep() {
+    protected boolean singleStep() {
         return task().singleStep();
     }
 
     @Override
-    public boolean threadResume() {
+    protected boolean threadResume() {
         throw Problem.unimplemented();
     }
 

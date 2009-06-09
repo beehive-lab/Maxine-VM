@@ -18,45 +18,31 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins;
+package com.sun.max.tele;
 
-import com.sun.max.tele.*;
+import com.sun.max.vm.thread.*;
 
 
 /**
- * Notification service for changes to state in the VM.
- *
+ * Access to a {@link VmThread} in the Maxine VM..
  *
  * @author Michael Van De Vanter
+ *
  */
-public interface InspectionListener {
+public interface MaxVMThread {
 
     /**
-     * Notifies that  VM state has potentially changed and should be revisited.
+     * @return the name assigned to the thread in the {@link TeleVM}; may change dynamically.
+     */
+    String name();
+
+    /**
+     * Find the thread, if any, associated with the VM thread.
+     * <br>
+     * Thread-safe.
      *
-     * @param force suspend caching behavior; reload state unconditionally.
+     * @return the thread in the VM with which this VM thread is associated.
      */
-    void vmStateChanged(boolean force);
+    MaxThread maxThread();
 
-    /**
-     * Notifies that the state associated with a particular thread  in the VM has changed.
-     */
-    void threadStateChanged(MaxThread maxThread);
-
-    /**
-     * Notifies that the set of breakpoints in the VM has changed.
-     */
-    void breakpointSetChanged();
-
-    /**
-     * Notifies that an important aspect of view style/parameters/configuration have changed,
-     * and that views should be reconstructed if needed (view state change only).
-     */
-    void viewConfigurationChanged();
-
-    /**
-     * Notifies that the running process associated with a VM has
-     * stopped running.
-     */
-    void vmProcessTerminated();
 }

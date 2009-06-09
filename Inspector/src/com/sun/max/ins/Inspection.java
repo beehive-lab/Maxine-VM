@@ -116,9 +116,9 @@ public final class Inspection {
                 // Choose an arbitrary thread as the "current" thread. If the inspector is
                 // creating the process to be debugged (as opposed to attaching to it), then there
                 // should only be one thread.
-                final IterableWithLength<TeleNativeThread> threads = maxVM().threads();
-                TeleNativeThread nonJavaThread = null;
-                for (TeleNativeThread thread : threads) {
+                final IterableWithLength<MaxThread> threads = maxVMState().threads();
+                MaxThread nonJavaThread = null;
+                for (MaxThread thread : threads) {
                     if (thread.isJava()) {
                         _focus.setThread(thread);
                         nonJavaThread = null;
@@ -322,10 +322,10 @@ public final class Inspection {
 
         public void upate(final MaxVMState maxVMState) {
             System.out.println("MaxVMState=" + maxVMState);
-            for (TeleNativeThread thread : maxVMState.threadsStarted()) {
+            for (MaxThread thread : maxVMState.threadsStarted()) {
                 Trace.line(TRACE_VALUE, tracePrefix() + "started: " + thread);
             }
-            for (TeleNativeThread thread : maxVMState.threadsDied()) {
+            for (MaxThread thread : maxVMState.threadsDied()) {
                 Trace.line(TRACE_VALUE, tracePrefix() + "died: " + thread);
             }
             if (java.awt.EventQueue.isDispatchThread()) {
@@ -463,14 +463,14 @@ public final class Inspection {
         Trace.begin(TRACE_VALUE, _threadTracer);
         final long startTimeMillis = System.currentTimeMillis();
         if (!maxVMState().threadsStarted().isEmpty() || !maxVMState().threadsDied().isEmpty()) {
-            for (TeleNativeThread teleNativeThread : maxVM().threads()) {
+            for (MaxThread maxThread : maxVMState().threads()) {
                 for (InspectionListener listener : listeners) {
-                    listener.threadStateChanged(teleNativeThread);
+                    listener.threadStateChanged(maxThread);
                 }
             }
         } else {
             // A kind of optimization that keeps the StackInspector from walking every stack every time; is it needed?
-            final TeleNativeThread currentThread = focus().thread();
+            final MaxThread currentThread = focus().thread();
             for (InspectionListener listener : listeners) {
                 listener.threadStateChanged(currentThread);
             }
@@ -480,9 +480,9 @@ public final class Inspection {
             refreshAll(false);
             // Make visible the code at the IP of the thread that triggered the breakpoint.
             boolean atBreakpoint = false;
-            for (TeleNativeThread teleNativeThread : maxVM().threads()) {
-                if (teleNativeThread.breakpoint() != null) {
-                    focus().setThread(teleNativeThread);
+            for (MaxThread maxThread : maxVMState().threads()) {
+                if (maxThread.breakpoint() != null) {
+                    focus().setThread(maxThread);
                     atBreakpoint = true;
                     break;
                 }
@@ -493,7 +493,7 @@ public final class Inspection {
                 InspectorError.check(focus().thread().isLive(), "Selected thread no longer valid");
             }
             // Reset focus to new IP.
-            final TeleNativeThread focusThread = focus().thread();
+            final MaxThread focusThread = focus().thread();
             focus().setStackFrame(focusThread, focusThread.frames().first(), true);
         } catch (Throwable throwable) {
             new InspectorError("could not update view", throwable).display(this);

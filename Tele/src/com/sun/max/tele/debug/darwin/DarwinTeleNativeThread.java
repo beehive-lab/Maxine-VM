@@ -64,12 +64,12 @@ public class DarwinTeleNativeThread extends TeleNativeThread {
     }
 
     @Override
-    public boolean singleStep() {
+    protected boolean singleStep() {
         return nativeSingleStep(teleProcess().task(), machThread());
     }
 
     @Override
-    public boolean threadResume() {
+    protected boolean threadResume() {
         throw Problem.unimplemented();
     }
 

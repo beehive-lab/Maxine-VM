@@ -32,7 +32,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.debug.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -146,7 +146,7 @@ public abstract class ObjectInspector extends Inspector {
     }
 
     @Override
-    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
+    public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxThread) {
         // Object inspector displays are sensitive to the current thread selection.
         refreshView(true);
     }

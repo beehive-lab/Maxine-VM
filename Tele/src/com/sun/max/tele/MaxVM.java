@@ -45,7 +45,7 @@ import com.sun.max.vm.value.*;
 
 
 /**
- * The Inspectors access to an instance of the Maxine VM.
+ * Access to an instance of the Maxine VM.
  * This could in the future be merged with the JDWP interface.
  *
  * @author Michael Van De Vanter
@@ -480,42 +480,56 @@ public interface MaxVM {
     void describeTeleTargetRoutines(PrintStream printStream);
 
     /**
-     * @return VM state; thread safe.
+     * An immutable summary of the VM state as of the most recent state transition.
+     * <br>
+     * Thread-safe.
+     *
+     * @return VM state summary
      */
     MaxVMState maxVMState();
 
     /**
+     * Adds a VM state observer.
+     * <br>
+     * Thread-safe.
+     *
      * @param observer will be notified of changes to {@link #maxVMState()}.
      */
     void addVMStateObserver(TeleVMStateObserver observer);
 
     /**
-     * Removes a observer that was being notified of changes to {@link #maxVMState()}.
+     * Removes a VM state observer.
+     * <br>
+     * Thread-safe.
      */
     void removeVMStateObserver(TeleVMStateObserver observer);
 
-
     /**
      * Writes a textual summary describing the current {@link #maxVMState()}, including all predecessor states.
+     * <br>
+     * Thread-safe.
      */
     void describeVMStateHistory(PrintStream printStream);
 
     /**
-     * @return a collection of all current threads in the VM, ordered by threadID.
-     */
-    IterableWithLength<TeleNativeThread> threads();
-
-    /**
+     * Finds a thread by ID.
+     * <br>
+     * Thread-safe
+     *
      * @param threadID
      * @return the thread associated with the id, null if none exists.
      */
-    TeleNativeThread getThread(long threadID);
+    MaxThread getThread(long threadID);
 
     /**
+     * Returns a VM thread, if any, whose memory includes a specified address.
+     * <br>
+     * Thread-safe.
+     *
      * @param address an address in the VM
      * @return thread whose stack contains the address, null if none.
      */
-    TeleNativeThread threadContaining(Address address);
+    MaxThread threadContaining(Address address);
 
     /**
      * Creates a code location in the VM based on a memory address,
@@ -673,7 +687,7 @@ public interface MaxVM {
      * @throws InvalidProcessRequestException execution not permissible in current VM state.
      * @throws OSExecutionRequestException execution failed in OS.
      */
-    void singleStep(final TeleNativeThread thread, boolean synchronous) throws InvalidProcessRequestException, OSExecutionRequestException;
+    void singleStep(final MaxThread maxThread, boolean synchronous) throws InvalidProcessRequestException, OSExecutionRequestException;
 
     /**
      * Single steps a thread in the VM; if the instruction is a call, then resume VM execution until call returns.
@@ -684,7 +698,7 @@ public interface MaxVM {
      * @throws InvalidProcessRequestException execution not permissible in current VM state.
      * @throws OSExecutionRequestException execution failed in OS.
      */
-    void stepOver(final TeleNativeThread thread, boolean synchronous, final boolean disableBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException;
+    void stepOver(final MaxThread maxThread, boolean synchronous, final boolean disableBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException;
 
     /**
      * Resumes execution of the VM with a temporary breakpoint set.

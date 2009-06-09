@@ -613,8 +613,11 @@ public class ValueStack {
         for (int i = 0; i < valuesSize(); i++) {
             Instruction x = _values[i];
             Instruction y = other._values[i];
-            if (x != y && !(x instanceof Phi) || ((Phi) x).block() != block) {
-                return false;
+            if (x != y) {
+                if (!(x instanceof Phi) || ((Phi) x).block() != block) {
+                    // x is not a phi, or is not a phi for this block
+                    return false;
+                }
             }
         }
         return true;

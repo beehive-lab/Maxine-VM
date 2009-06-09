@@ -25,7 +25,6 @@ import java.util.*;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -132,31 +131,31 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * @return human readable string identifying a VM thread by a terse name.
      */
-    public String shortName(TeleVmThread teleVmThread) {
-        return teleVmThread.name();
+    public String shortName(MaxVMThread maxVMThread) {
+        return maxVMThread.name();
     }
 
     /**
      * @return human readable string identifying a VM thread in a standard format.
      */
-    public String longName(TeleVmThread teleVmThread) {
-        final TeleNativeThread teleNativeThread = teleVmThread.teleNativeThread();
-        if (teleNativeThread != null) {
-            return shortName(teleVmThread) + " [" + teleNativeThread.handle() + "]";
+    public String longName(MaxVMThread maxVMThread) {
+        final MaxThread maxThread = maxVMThread.maxThread();
+        if (maxThread != null) {
+            return shortName(maxVMThread) + " [" + maxThread.handle() + "]";
         }
-        return shortName(teleVmThread);
+        return shortName(maxVMThread);
     }
 
     /**
      * @return human readable string identifying a VM thread in a standard format.
      */
-    public String longNameWithState(TeleVmThread teleVmThread) {
-        final TeleNativeThread teleNativeThread = teleVmThread.teleNativeThread();
+    public String longNameWithState(MaxVMThread maxVMThread) {
+        final MaxThread maxThread = maxVMThread.maxThread();
         final StringBuilder result = new StringBuilder(20);
-        result.append(shortName(teleVmThread));
-        if (teleNativeThread != null) {
-            result.append(" [").append(teleNativeThread.handle()).append("]");
-            result.append(" (").append(teleNativeThread.state()).append(")");
+        result.append(shortName(maxVMThread));
+        if (maxThread != null) {
+            result.append(" [").append(maxThread.handle()).append("]");
+            result.append(" (").append(maxThread.state()).append(")");
         }
         return result.toString();
     }
@@ -164,15 +163,15 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * @return human readable string identifying a thread in a terse standard format.
      */
-    public String shortName(TeleNativeThread teleNativeThread) {
-        if (teleNativeThread == null) {
+    public String shortName(MaxThread maxThread) {
+        if (maxThread == null) {
             return "null";
         }
-        if (teleNativeThread.isPrimordial()) {
+        if (maxThread.isPrimordial()) {
             return "primordial";
         }
-        if (teleNativeThread.teleVmThread() != null) {
-            return shortName(teleNativeThread.teleVmThread());
+        if (maxThread.maxVMThread() != null) {
+            return shortName(maxThread.maxVMThread());
         }
         return "native unnamed";
     }
@@ -180,27 +179,27 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * @return human readable string identifying a thread in a standard format.
      */
-    public String longName(TeleNativeThread teleNativeThread) {
-        if (teleNativeThread == null) {
+    public String longName(MaxThread maxThread) {
+        if (maxThread == null) {
             return "null";
         }
-        if (teleNativeThread.teleVmThread() != null) {
-            return longName(teleNativeThread.teleVmThread());
+        if (maxThread.maxVMThread() != null) {
+            return longName(maxThread.maxVMThread());
         }
-        return shortName(teleNativeThread) + " [" + teleNativeThread.handle() + "]";
+        return shortName(maxThread) + " [" + maxThread.handle() + "]";
     }
 
     /**
      * @return human readable string identifying a thread in a standard format.
      */
-    public String longNameWithState(TeleNativeThread teleNativeThread) {
-        if (teleNativeThread == null) {
+    public String longNameWithState(MaxThread maxThread) {
+        if (maxThread == null) {
             return "null";
         }
-        if (teleNativeThread.teleVmThread() != null) {
-            return longNameWithState(teleNativeThread.teleVmThread());
+        if (maxThread.maxVMThread() != null) {
+            return longNameWithState(maxThread.maxVMThread());
         }
-        return shortName(teleNativeThread) + " [" + teleNativeThread.handle() + "] (" + teleNativeThread.state() + ")";
+        return shortName(maxThread) + " [" + maxThread.handle() + "] (" + maxThread.state() + ")";
     }
 
     /**

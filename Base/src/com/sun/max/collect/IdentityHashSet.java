@@ -67,7 +67,7 @@ public class IdentityHashSet<Element_Type> implements Iterable<Element_Type>, Cl
      *
      * @param iterable the collection of elements to add
      */
-    public final void addAll(Iterable<Element_Type> iterable) {
+    public final void addAll(Iterable<? extends Element_Type> iterable) {
         for (Element_Type element : iterable) {
             add(element);
         }
@@ -108,7 +108,7 @@ public class IdentityHashSet<Element_Type> implements Iterable<Element_Type>, Cl
      *
      * @param iterable the collection of elements to remove
      */
-    public final void removeAll(Iterable<Element_Type> iterable) {
+    public final void removeAll(Iterable<? extends Element_Type> iterable) {
         for (Element_Type element : iterable) {
             remove(element);
         }

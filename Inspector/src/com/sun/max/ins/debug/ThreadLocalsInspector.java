@@ -33,6 +33,7 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.vm.runtime.*;
 
@@ -61,7 +62,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     // This is a singleton viewer, so only use a single level of view preferences.
     private final ThreadLocalsViewPreferences _viewPreferences;
 
-    private TeleNativeThread _teleNativeThread;
+    private MaxThread _maxThread;
     private JTabbedPane _tabbedPane;
 
     private ThreadLocalsInspector(Inspection inspection) {
@@ -81,13 +82,13 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
     @Override
     protected void createView() {
-        _teleNativeThread = inspection().focus().thread();
+        _maxThread = inspection().focus().thread();
         _tabbedPane = new JTabbedPane();
-        if (_teleNativeThread != null) {
+        if (_maxThread != null) {
             for (Safepoint.State state : Safepoint.State.CONSTANTS) {
-                final TeleThreadLocalValues values = _teleNativeThread.threadLocalsFor(state);
+                final TeleThreadLocalValues values = _maxThread.threadLocalsFor(state);
                 if (values != null) {
-                    final ThreadLocalsPanel panel = new ThreadLocalsPanel(inspection(), _teleNativeThread, values, _viewPreferences);
+                    final ThreadLocalsPanel panel = new ThreadLocalsPanel(inspection(), _maxThread, values, _viewPreferences);
                     _tabbedPane.add(state.toString(), panel);
                 }
             }
@@ -110,8 +111,8 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     @Override
     public String getTextForTitle() {
         String title = "Thread Locals: ";
-        if (_teleNativeThread != null) {
-            title += inspection().nameDisplay().longNameWithState(_teleNativeThread);
+        if (_maxThread != null) {
+            title += inspection().nameDisplay().longNameWithState(_maxThread);
         }
         return title;
     }
@@ -160,11 +161,11 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
         boolean panelsAddedOrRemoved = false;
         for (Safepoint.State state : Safepoint.State.CONSTANTS) {
-            final TeleThreadLocalValues values = _teleNativeThread.threadLocalsFor(state);
+            final TeleThreadLocalValues values = _maxThread.threadLocalsFor(state);
             final ThreadLocalsPanel panel = threadLocalsPanelFor(state);
             if (values != null) {
                 if (panel == null) {
-                    _tabbedPane.add(state.toString(), new ThreadLocalsPanel(inspection(), _teleNativeThread, values, _viewPreferences));
+                    _tabbedPane.add(state.toString(), new ThreadLocalsPanel(inspection(), _maxThread, values, _viewPreferences));
                     panelsAddedOrRemoved = true;
                 }
             } else {
@@ -193,7 +194,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     }
 
     @Override
-    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativThread) {
+    public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxThread) {
         reconstructView();
     }
 

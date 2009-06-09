@@ -31,7 +31,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.lang.*;
-import com.sun.max.tele.debug.*;
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -46,18 +46,18 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
     /**
      * Display and highlight an inspector for stack frame locals.
      */
-    public static LocalsInspector make(Inspection inspection, TeleNativeThread teleNativeThread, JitStackFrame jitStackFrame) {
+    public static LocalsInspector make(Inspection inspection, MaxThread maxThread, JitStackFrame jitStackFrame) {
         // CLEANUP: probably want to hide the use of calleeFramePointer in framePointer() ?
         final Pointer localsBasePointer = jitStackFrame.localsPointer(0);
         final UniqueInspector.Key<LocalsInspector> key = UniqueInspector.Key.create(LocalsInspector.class, localsBasePointer.toLong());
         LocalsInspector localsInspector = UniqueInspector.find(inspection, key);
         if (localsInspector == null) {
-            localsInspector = new LocalsInspector(inspection, teleNativeThread, jitStackFrame);
+            localsInspector = new LocalsInspector(inspection, maxThread, jitStackFrame);
         }
         return localsInspector;
     }
 
-    private final TeleNativeThread _teleNativeThread;
+    private final MaxThread _maxThread;
     private final JitStackFrame _jitStackFrame;
 
     private final JPanel _localsPanel;
@@ -72,10 +72,10 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
      */
     private boolean _showAll;
 
-    public LocalsInspector(Inspection inspection, TeleNativeThread teleNativeThread, JitStackFrame jitStackFrame) {
+    public LocalsInspector(Inspection inspection, MaxThread maxThread, JitStackFrame jitStackFrame) {
         super(inspection, LongValue.from(jitStackFrame.framePointer().toLong()));
         assert jitStackFrame.targetMethod().compilerScheme() == maxVM().vmConfiguration().jitScheme();
-        _teleNativeThread = teleNativeThread;
+        _maxThread = maxThread;
         _jitStackFrame = jitStackFrame;
         final ClassMethodActor classMethodActor = jitStackFrame.targetMethod().classMethodActor();
         _locals = new WordValueLabel[classMethodActor.codeAttribute().maxLocals()];
@@ -110,7 +110,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
         if (isShowing() || force) {
             // First, refresh stack frame information.
             Pointer stackPointer = null;
-            final Sequence<StackFrame> frames = _teleNativeThread.frames();
+            final Sequence<StackFrame> frames = _maxThread.frames();
             for (StackFrame stackFrame : frames) {
                 if (stackFrame instanceof JitStackFrame) {
                     final JitStackFrame jitStackFrame = (JitStackFrame) stackFrame;

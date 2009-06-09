@@ -629,8 +629,8 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
         /**
          * @return the thread in the VM, if any, that is currently stopped at this breakpoint.
          */
-        TeleNativeThread triggerThread() {
-            for (TeleNativeThread thread : maxVM().threads()) {
+        MaxThread triggerThread() {
+            for (MaxThread thread : maxVMState().threads()) {
                 if (thread.breakpoint() == teleBreakpoint()) {
                     return thread;
                 }
@@ -862,7 +862,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
     public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
     }
 
-    public void stackFrameFocusChanged(StackFrame oldStackFrame, TeleNativeThread threadForStackFrame, StackFrame stackFrame) {
+    public void stackFrameFocusChanged(StackFrame oldStackFrame, MaxThread threadForStackFrame, StackFrame stackFrame) {
     }
 
     public void addressFocusChanged(Address oldAddress, Address address) {
@@ -874,7 +874,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
     public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
     }
 
-    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
+    public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxThread) {
     }
 
 }

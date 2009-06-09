@@ -80,7 +80,7 @@ public interface MaxVMState  {
      * @see #threadsStarted()
      * @see #threadsDied()
      */
-    Sequence<TeleNativeThread> threads();
+    Sequence<MaxThread> threads();
 
     /**
      * When the VM stops, the thread, if any, that was single stepped.
@@ -92,7 +92,7 @@ public interface MaxVMState  {
      * @return the thread just single stepped; null if none.
      * @see #threads()
      */
-    TeleNativeThread singleStepThread();
+    MaxThread singleStepThread();
 
     /**
      * When the VM stops, the threads, if any, that are currently at a breakpoint.
@@ -104,7 +104,7 @@ public interface MaxVMState  {
      * @return threads currently stopped at a breakpoint, empty if none.
      * @see #threads()
      */
-    Sequence<TeleNativeThread> breakpointThreads();
+    Sequence<MaxThread> breakpointThreads();
 
     /**
      * @return threads created since the previous state in the history; empty if none.
@@ -119,7 +119,7 @@ public interface MaxVMState  {
      *  @see #threads()
      * @see #threadsDied()
      */
-    Sequence<TeleNativeThread> threadsStarted();
+    Sequence<MaxThread> threadsStarted();
 
     /**
      * Threads that have died since the last state transition.
@@ -135,7 +135,7 @@ public interface MaxVMState  {
      * @see #threads()
      *  @see #threadsStarted()
      */
-    Sequence<TeleNativeThread> threadsDied();
+    Sequence<MaxThread> threadsDied();
 
     /**
      * Is the VM in the midst of a Garbage Collection at this state transition?
