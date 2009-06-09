@@ -39,7 +39,6 @@ public class Invoke extends StateSplit {
     final int _opcode;
     Instruction _object;
     Instruction[] _arguments;
-    List<BasicType> _signature;
     int _vtableIndex;
     final CiMethod _target;
 
@@ -63,13 +62,6 @@ public class Invoke extends StateSplit {
             setFlag(Flag.TargetIsLoaded);
             setFlag(Flag.TargetIsFinal, target.isFinalMethod());
             setFlag(Flag.TargetIsStrictfp, target.isStrictFP());
-        }
-        _signature = new ArrayList<BasicType>(args.length + 1);
-        if (_object != null) {
-            _signature.add(_object.type().basicType());
-        }
-        for (Instruction arg : args) {
-            _signature.add(arg.type().basicType());
         }
     }
 

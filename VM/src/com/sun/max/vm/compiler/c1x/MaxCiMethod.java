@@ -291,7 +291,7 @@ public class MaxCiMethod implements CiMethod {
         }
         final ClassMethodActor classMethodActor = asClassMethodActor("exceptionHandlers()");
         _exceptionHandlers = new ArrayList<CiExceptionHandler>();
-        for (ExceptionHandlerEntry entry : classMethodActor.codeAttribute().exceptionHandlerTable()) {
+        for (ExceptionHandlerEntry entry : classMethodActor.rawCodeAttribute().exceptionHandlerTable()) {
             _exceptionHandlers.add(new MaxCiExceptionHandler((char) entry.startPosition(),
                                                              (char) entry.endPosition(),
                                                              (char) entry.handlerPosition(),

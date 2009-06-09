@@ -88,7 +88,6 @@ public class GraphBuilder {
             ExceptionHandler h = new ExceptionHandler(desc);
             h.setEntryBlock(syncHandler);
             _scopeData.addExceptionHandler(h);
-            _scopeData.setHasHandler();
         }
 
         _vmap = new ValueMap();
@@ -115,8 +114,12 @@ public class GraphBuilder {
         if (syncHandler != null && syncHandler.state() != null) {
             Instruction lock = null;
             if (method.isSynchronized()) {
-                lock = null;
-                syncHandler.state().unlock();
+                if (method.isStatic()) {
+                    lock = new Constant(ConstType.forObject(method.holder().javaClass()));
+                } else {
+                    lock = _initialState.localAt(0);
+                }
+                syncHandler.state().unlock(); // pop the null off the stack
                 syncHandler.state().lock(scope, lock);
             }
             fillSyncHandler(lock, syncHandler, true);
@@ -161,10 +164,7 @@ public class GraphBuilder {
     }
 
     void pushRootScope(IRScope scope, BlockMap blockMap, BlockBegin start) {
-        ScopeData data = new ScopeData(null);
-        data.setScope(scope);
-        data.setBlockMap(blockMap);
-        _scopeData = data;
+        _scopeData = new ScopeData(null, scope, blockMap);
         _block = start;
     }
 
@@ -225,7 +225,7 @@ public class GraphBuilder {
     }
 
     public IRScope scope() {
-        return _scopeData.scope();
+        return _scopeData.scope;
     }
 
     public IRScope rootScope() {
@@ -330,9 +330,9 @@ public class GraphBuilder {
                 // Also check parent jsrs (if any) at this time to see whether
                 // they are using this local. We don't handle skipping over a
                 // ret.
-                for (ScopeData cur = _scopeData.parent();
-                        cur != null && cur.parsingJsr() && cur.scope() == scope();
-                        cur = cur.parent()) {
+                for (ScopeData cur = _scopeData.parent;
+                        cur != null && cur.parsingJsr() && cur.scope == scope();
+                        cur = cur.parent) {
                     if (cur.jsrEntryReturnAddressLocal() == index) {
                         throw new Bailout("subroutine overwrites return address from previous subroutine");
                     }
@@ -385,7 +385,7 @@ public class GraphBuilder {
 
         assert s != null : "exception handler state must be set";
         do {
-            assert curScopeData.scope() == s.scope() : "scopes do not match";
+            assert curScopeData.scope == s.scope() : "scopes do not match";
             assert bci == Instruction.SYNCHRONIZATION_ENTRY_BCI || bci == curScopeData.stream().currentBCI() : "invalid bci";
 
             // join with all potential exception handlers
@@ -401,16 +401,16 @@ public class GraphBuilder {
                 // if parsing a JSR, do not grab exception handlers from the parent
                 // scopes for this method (already got them, and they need to be cloned)
                 if (curScopeData.parsingJsr()) {
-                    IRScope tmp = curScopeData.scope();
-                    while (curScopeData.parent() != null && curScopeData.parent().scope() == tmp) {
-                        curScopeData = curScopeData.parent();
+                    IRScope tmp = curScopeData.scope;
+                    while (curScopeData.parent != null && curScopeData.parent.scope == tmp) {
+                        curScopeData = curScopeData.parent;
                     }
                 }
-                if (curScopeData.parent() != null) {
+                if (curScopeData.parent != null) {
                     s = s.popScope();
                 }
-                bci = curScopeData.scope().callerBCI();
-                curScopeData = curScopeData.parent();
+                bci = curScopeData.scope.callerBCI();
+                curScopeData = curScopeData.parent;
                 scopeCount++;
             }
 
@@ -1075,7 +1075,7 @@ public class GraphBuilder {
     }
 
     void jsr(int dest) {
-        for (ScopeData cur = _scopeData; cur != null && cur.parsingJsr() && cur.scope() == scope(); cur = cur.parent()) {
+        for (ScopeData cur = _scopeData; cur != null && cur.parsingJsr() && cur.scope == scope(); cur = cur.parent) {
             if (cur.jsrEntryBCI() == dest) {
                 // the jsr/ret pattern includes a recursive invocation
                 throw new Bailout("jsr/ret structure is too complicated");
@@ -1222,11 +1222,12 @@ public class GraphBuilder {
         if (x.isAppended()) {
             // the instruction has already been added
             return x;
-        } else if (C1XOptions.UseLocalValueNumbering) {
+        }
+        if (C1XOptions.UseLocalValueNumbering) {
             // look in the local value map
             Instruction r = _vmap.findInsert(x);
             if (r != x) {
-                assert r.isAppended() : "lvn result should already be linked";
+                assert r.isAppended() : "lvn result should already be appended";
                 return r;
             }
             // process the effects of adding this instruction
@@ -1235,29 +1236,30 @@ public class GraphBuilder {
 
         if (!(x instanceof Phi) && !(x instanceof Local)) {
             // add instructions to the basic block (if not a phi or a local)
-            assert x.next() == null : "instruction should not have been added yet";
+            assert x.next() == null : "instruction should not have been appended yet";
             _last = _last.setNext(x, bci);
             if (++_instructionCount >= C1XOptions.MaximumInstructionCount) {
                 // bailout if we've exceeded the maximum inlining size
                 throw new Bailout("Method and/or inlining is too large");
             }
-        }
 
-        assert _last == x;
-        if (x instanceof StateSplit) {
-            if (x instanceof Invoke || (x instanceof Intrinsic && !((Intrinsic) x).preservesState())) {
-                // conservatively kill all memory across calls
-                _memory.kill();
+            assert _last == x;
+            if (x instanceof StateSplit) {
+                if (x instanceof Invoke || (x instanceof Intrinsic && !((Intrinsic) x).preservesState())) {
+                    // conservatively kill all memory across calls
+                    _memory.kill();
+                }
+                // split the state for any state split operations
+                ((StateSplit) x).setState(_state.copy());
             }
-            // split the state for any state split operations
-            ((StateSplit) x).setState(_state.copy());
+
+            if (x.canTrap()) {
+                // connect the instruction to any exception handlers
+                assert _exceptionState != null || !hasHandler() : "must have setup exception state";
+                x.setExceptionHandlers(handleException(bci));
+            }
         }
 
-        if (x.canTrap()) {
-            // connect the instruction to any exception handlers
-            assert _exceptionState != null || !hasHandler() : "must have setup exception state";
-            x.setExceptionHandlers(handleException(bci));
-        }
         return x;
     }
 
@@ -1280,7 +1282,7 @@ public class GraphBuilder {
 
         // temporarily set up bytecode stream so we can append instructions
         // (only using the bci of this stream)
-        _scopeData.setStream(_scopeData.parent().stream());
+        _scopeData.setStream(_scopeData.parent.stream());
 
         BlockBegin jsrStartBlock = blockAt(jsrStart);
         assert jsrStartBlock != null;
@@ -1302,7 +1304,7 @@ public class GraphBuilder {
 
         if (cont.state() != null) {
             if (!cont.wasVisited()) {
-                _scopeData.parent().addToWorkList(cont);
+                _scopeData.parent.addToWorkList(cont);
             }
         }
 
@@ -1317,13 +1319,9 @@ public class GraphBuilder {
     }
 
     void pushScopeForJsr(BlockBegin jsrCont, int jsrStart) {
-        ScopeData data = new ScopeData(_scopeData);
-        data.setParsingJsr();
+        ScopeData data = new ScopeData(_scopeData, scope(), _scopeData.blockMap);
         data.setJsrEntryBCI(jsrStart);
         data.setJsrEntryReturnAddressLocal(-1);
-        // the block map must be cloned because it will be mutated while inlining JSR blocks
-        data.setBlockMap(_scopeData._blockMap);
-        data.setScope(scope());
         data.setupJsrExceptionHandlers();
         data.setContinuation(jsrCont);
         if (_scopeData.continuation() != null) {
@@ -1342,9 +1340,7 @@ public class GraphBuilder {
         calleeScope.setCallerState(_state);
         calleeScope.setStoresInLoops(blockMap.getStoresInLoops());
         _state = _state.pushScope(calleeScope);
-        ScopeData data = new ScopeData(_scopeData);
-        data.setScope(calleeScope);
-        data.setBlockMap(blockMap);
+        ScopeData data = new ScopeData(_scopeData, calleeScope, blockMap);
         data.setContinuation(continuation);
         _scopeData = data;
     }
@@ -1373,7 +1369,7 @@ public class GraphBuilder {
         }
 
         if (method.isSynchronized()) {
-            state.lock(scope(), null); // XXX: why don't we lock local 0?
+            state.lock(scope(), null); // XXX: why do we lock null?
         }
         return state;
     }
@@ -1475,7 +1471,7 @@ public class GraphBuilder {
 
         // temporarily set up the bytecode stream so we can append instructions
         // (using only the bci of the stream)
-        _scopeData.setStream(_scopeData.parent().stream());
+        _scopeData.setStream(_scopeData.parent.stream());
 
         // pass parameters into the callee state
         ValueStack calleeState = _state;
@@ -1557,7 +1553,7 @@ public class GraphBuilder {
             if (_scopeData.continuation().wasVisited()) {
                 // add continuation to work list instead of parsing it immediately
                 assert _last instanceof BlockEnd;
-                _scopeData.parent().addToWorkList(_scopeData.continuation());
+                _scopeData.parent.addToWorkList(_scopeData.continuation());
                 _skipBlock = true;
             }
         }
@@ -1583,7 +1579,6 @@ public class GraphBuilder {
         ExceptionHandler h = new ExceptionHandler(handler);
         h.setEntryBlock(syncHandler);
         _scopeData.addExceptionHandler(h);
-        _scopeData.setHasHandler();
     }
 
     void fillSyncHandler(Instruction lock, BlockBegin syncHandler, boolean defaultHandler) {
@@ -1691,12 +1686,12 @@ public class GraphBuilder {
 
     void popScope() {
         int numberOfLocks = scope().numberOfLocks();
-        _scopeData = _scopeData.parent();
+        _scopeData = _scopeData.parent;
         scope().setMinimumNumberOfLocks(numberOfLocks);
     }
 
     void popScopeForJsr() {
-        _scopeData = _scopeData.parent();
+        _scopeData = _scopeData.parent;
     }
 
     void setupOsrEntryBlock() {
