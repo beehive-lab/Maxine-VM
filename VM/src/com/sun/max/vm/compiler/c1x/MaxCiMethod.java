@@ -235,7 +235,7 @@ public class MaxCiMethod implements CiMethod {
         if (_methodActor instanceof VirtualMethodActor) {
             return ((VirtualMethodActor) _methodActor).vTableIndex();
         }
-        throw unresolved("vtableIndex()");
+        return -1;
     }
 
     /**
