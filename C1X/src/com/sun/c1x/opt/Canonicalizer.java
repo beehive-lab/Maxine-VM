@@ -86,11 +86,11 @@ public class Canonicalizer implements InstructionVisitor {
     }
 
     private Constant intInstr(int v) {
-        return addInstr(new Constant(ConstType.forInt(v)));
+        return addInstr(Constant.forInt(v));
     }
 
     private Constant longInstr(long v) {
-        return addInstr(new Constant(ConstType.forLong(v)));
+        return addInstr(Constant.forLong(v));
     }
 
     private Instruction setCanonical(Instruction x) {
@@ -98,30 +98,42 @@ public class Canonicalizer implements InstructionVisitor {
     }
 
     private Instruction setIntConstant(int val) {
-        return _canonical = new Constant(ConstType.forInt(val));
+        return _canonical = Constant.forInt(val);
     }
 
     private Instruction setBooleanConstant(boolean val) {
-        return _canonical = new Constant(ConstType.forBoolean(val));
+        return _canonical = Constant.forBoolean(val);
     }
 
     private Instruction setObjectConstant(Object val) {
         if (C1XOptions.SupportObjectConstants) {
-            return _canonical = new Constant(ConstType.forObject(val));
+            return _canonical = Constant.forObject(val);
         }
         return _canonical;
     }
 
     private Instruction setLongConstant(long val) {
-        return _canonical = new Constant(ConstType.forLong(val));
+        return _canonical = Constant.forLong(val);
     }
 
     private Instruction setFloatConstant(float val) {
-        return _canonical = new Constant(ConstType.forFloat(val));
+        return _canonical = Constant.forFloat(val);
     }
 
     private Instruction setDoubleConstant(double val) {
-        return _canonical = new Constant(ConstType.forDouble(val));
+        return _canonical = Constant.forDouble(val);
+    }
+
+    private Instruction setByteConstant(byte val) {
+        return _canonical = new Constant(ConstType.forByte(val));
+    }
+
+    private Instruction setCharConstant(char val) {
+        return _canonical = new Constant(ConstType.forChar(val));
+    }
+
+    private Instruction setShortConstant(short val) {
+        return _canonical = new Constant(ConstType.forShort(val));
     }
 
     private void moveConstantToRight(Op2 x) {
@@ -362,11 +374,11 @@ public class Canonicalizer implements InstructionVisitor {
                 // XXX: this is clunky, perhaps constantValue() should return ConstType?
                 switch (val.basicType()) {
                     case Boolean: setBooleanConstant(val.asBoolean()); break;
-                    case Char:    setCanonical(new Constant(ConstType.forChar(val.asChar()))); break;
+                    case Char:    setCharConstant(val.asChar()); break;
                     case Float:   setFloatConstant(val.asFloat()); break;
                     case Double:  setDoubleConstant(val.asDouble()); break;
-                    case Byte:    setCanonical(new Constant(ConstType.forByte(val.asByte()))); break;
-                    case Short:   setCanonical(new Constant(ConstType.forShort(val.asShort()))); break;
+                    case Byte:    setByteConstant(val.asByte()); break;
+                    case Short:   setShortConstant(val.asShort()); break;
                     case Int:     setIntConstant(val.asInt()); break;
                     case Long:    setLongConstant(val.asLong()); break;
                     case Object:
@@ -418,7 +430,7 @@ public class Canonicalizer implements InstructionVisitor {
                     setIntConstant(java.lang.reflect.Array.getLength(obj));
                 }
             }
-        } else if (array instanceof Constant && C1XOptions.SupportObjectConstants) {
+        } else if (C1XOptions.SupportObjectConstants && array instanceof Constant) {
             // the array itself is a constant object reference
             Object obj = array.type().asConstant().asObject();
             if (obj != null) {
@@ -572,9 +584,9 @@ public class Canonicalizer implements InstructionVisitor {
         if (type != BasicType.Illegal) {
             // if any of the above matched
             switch (i.opcode()) {
-                case Bytecodes.I2B: setCanonical(v); return;
-                case Bytecodes.I2S: setCanonical(v); return;
-                case Bytecodes.I2C: setCanonical(v); return;
+                case Bytecodes.I2B: if (type == BasicType.Byte) setCanonical(v); break;
+                case Bytecodes.I2S: if (type == BasicType.Byte || type == BasicType.Short) setCanonical(v); break;
+                case Bytecodes.I2C: if (type == BasicType.Char) setCanonical(v); break;
             }
         }
 
@@ -642,9 +654,17 @@ public class Canonicalizer implements InstructionVisitor {
                 // cast is redundant if exact type or declared type is already a subtype of the target type
                 setCanonical(o);
             }
-            if (o.type().isConstant() && o.type().asConstant().asObject() == null) {
-                // checkcast of null is null
-                setCanonical(o);
+            if (o.type().isConstant()) {
+                final Object obj = o.type().asConstant().asObject();
+                if (obj == null) {
+                    // checkcast of null is null
+                    setCanonical(o);
+                } else if (C1XOptions.SupportObjectConstants && C1XOptions.CanonicalizeObjectCheckCast) {
+                    if (i.targetClass().isInstance(obj)) {
+                        // fold the cast if it will succeed
+                        setCanonical(o);
+                    }
+                }
             }
         }
     }
@@ -659,9 +679,16 @@ public class Canonicalizer implements InstructionVisitor {
                 // XXX: why is it necessary to check (o instanceof New)? isn't exact type sufficient?
                 setIntConstant(exact.isSubtypeOf(i.targetClass()) ? 1 : 0);
             }
-            if (o.type().isConstant() && o.type().asConstant().asObject() == null) {
-                // instanceof of null is false
-                setIntConstant(0);
+            if (o.type().isConstant()) {
+                final Object obj = o.type().asConstant().asObject();
+                if (obj == null) {
+                    // instanceof of null is false
+                    setIntConstant(0);
+                } else if (C1XOptions.SupportObjectConstants && C1XOptions.CanonicalizeObjectInstanceOf) {
+                    // fold the instanceof test
+                    final boolean result = i.targetClass().isInstance(obj);
+                    setIntConstant(result ? 1 : 0);
+                }
             }
         }
     }

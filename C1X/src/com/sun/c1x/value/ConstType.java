@@ -229,18 +229,6 @@ public class ConstType extends ValueType {
     }
 
     /**
-     * Utility method to create a value type for an object constant.
-     * @param o the object value for which to create the value type
-     * @return a value type representing the object
-     */
-    public static ConstType forObject(Object o) {
-        if (o == null) {
-            return NULL_OBJECT;
-        }
-        return new ConstType(ValueTag.OBJECT_TAG, 1, o, true);
-    }
-
-    /**
      * Checks whether this constant is the default value for its type.
      * @return <code>true</code> if the value is the default value for its type; <code>false</code> otherwise
      */
@@ -332,8 +320,20 @@ public class ConstType extends ValueType {
      * @param i the address value for which to create the value type
      * @return a value type representing the address
      */
-    public static ConstType forAddress(int i) {
+    public static ConstType forJsr(int i) {
         return new ConstType(ValueTag.JSR_TAG, 1, i, false);
+    }
+
+    /**
+     * Utility method to create a value type for an object constant.
+     * @param o the object value for which to create the value type
+     * @return a value type representing the object
+     */
+    public static ConstType forObject(Object o) {
+        if (o == null) {
+            return NULL_OBJECT;
+        }
+        return new ConstType(ValueTag.OBJECT_TAG, 1, o, true);
     }
 
 }

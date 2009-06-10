@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.value;
 
-import com.sun.c1x.util.Util;
-
 /**
  * The <code>BasicType</code> enum represents an enumeration of types used in C1X.
  *
