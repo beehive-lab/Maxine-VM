@@ -159,7 +159,7 @@ public final class JavaProject {
         final File classpath = findClassesOnClasspath().getAbsoluteFile();
         final File projDir = ide.findVcsProjectDirectoryFromClasspathEntry(classpath);
         if (projDir == null) {
-            throw ProgramError.unexpected("Cannot find project directory for IDE: " + ide +", classpath = " + classpath);
+            throw ProgramError.unexpected("Cannot find project directory for IDE: " + ide + ", classpath = " + classpath);
         }
         return projDir;
     }
