@@ -50,7 +50,7 @@ public class List_reorder_bug {
         List itemPrev = null;
         while (item != null) {
             if (item._id == id) {
-                if (item._bool == true) {
+                if (item._bool) {
                     outcall(item._id);
                 }
                 if (itemPrev != null) {

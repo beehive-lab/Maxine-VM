@@ -376,7 +376,12 @@ public class BlockBegin extends StateSplit {
             }
 
             setState(newState);
-        } else if (existingState.isSameAcrossScopes(newState)) {
+        } else {
+
+            if (!C1XOptions.AssumeVerifiedBytecode && !existingState.isSameAcrossScopes(newState)) {
+                // stacks or locks do not match--bytecodes would not verify
+                throw new Bailout("stack or locks do not match");
+            }
 
             while (existingState.scope() != newState.scope()) {
                 // XXX: original code is not sure if this is necessary
@@ -384,33 +389,29 @@ public class BlockBegin extends StateSplit {
                 assert newState != null : "could not match scopes";
             }
 
-            assert existingState.scope() == newState.scope();
             assert existingState.localsSize() == newState.localsSize();
             assert existingState.stackSize() == newState.stackSize();
 
             if (wasVisited()) {
-                // this block better be a loop header
                 if (!isLoopHeader()) {
-                    // jsr/ret structure too complicated
+                    // not a loop header => jsr/ret structure too complicated
                     throw new Bailout("jsr/ret too complicated");
                 }
 
-                // check that all local and stack tags match
-                existingState.checkLocalAndStackTags(newState);
+                if (!C1XOptions.AssumeVerifiedBytecode) {
+                    // check that all local and stack tags match
+                    existingState.checkLocalAndStackTags(newState);
 
-                // verify all phis in locals and the stack
-                if (C1XOptions.ExtraPhiChecking) {
-                    existingState.checkPhis(this, newState);
+                    // verify all phis in locals and the stack
+                    if (C1XOptions.ExtraPhiChecking) {
+                        existingState.checkPhis(this, newState);
+                    }
                 }
             } else {
                 // there is an existing state, but the block was not visited yet
                 // do a merge of the stacks and locals
                 existingState.merge(this, newState);
             }
-
-        } else {
-            // stacks or locks do not match--bytecodes would not verify
-            throw new Bailout("stack or locks do not match");
         }
     }
 

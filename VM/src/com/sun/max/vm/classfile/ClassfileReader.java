@@ -1197,7 +1197,7 @@ public class ClassfileReader {
                 if (annotationInfo.annotationTypeDescriptor().equals(forJavaClass(TEMPLATE.class))) {
                     _flags |= TEMPLATE;
                 } else if (annotationInfo.annotationTypeDescriptor().equals(forJavaClass(PROTOTYPE_ONLY.class))) {
-                    ProgramError.unexpected("Trying to load a prototype only class");
+                    ProgramError.unexpected("Trying to load a prototype only class " + name);
                 }
             }
         }

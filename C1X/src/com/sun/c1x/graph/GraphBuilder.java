@@ -655,9 +655,9 @@ public class GraphBuilder {
         BlockBegin fsucc = blockAt(stream().nextBCI());
         int bci = stream().currentBCI();
         boolean isBackwards = tsucc.bci() <= bci || fsucc.bci() <= bci;
-        If ifnode = (If) append(new If(x, cond, false, y, tsucc, fsucc, isBackwards ? stateBefore : null, isBackwards));
-        if (profileBranches() && ifnode != null) {
-            ifnode.setProfile(method(), bci);
+        final Instruction instr = append(new If(x, cond, false, y, tsucc, fsucc, isBackwards ? stateBefore : null, isBackwards));
+        if (instr instanceof If && profileBranches()) {
+            ((If) instr).setProfile(method(), bci);
         }
     }
 
@@ -2064,7 +2064,7 @@ public class GraphBuilder {
     }
 
     boolean assumeLeafClass(CiType type) {
-        if (!C1XOptions.UseSlowPath && type.isLoaded()) {
+        if (!C1XOptions.TestSlowPath && type.isLoaded()) {
             if (type.isFinal()) {
                 return true;
             }
@@ -2078,7 +2078,7 @@ public class GraphBuilder {
     }
 
     boolean assumeLeafMethod(CiMethod method) {
-        if (!C1XOptions.UseSlowPath && method.isLoaded()) {
+        if (!C1XOptions.TestSlowPath && method.isLoaded()) {
             if (method.isFinalMethod()) {
                 return true;
             }
@@ -2105,5 +2105,13 @@ public class GraphBuilder {
     CiConstantPool constantPool() {
         // XXX: speed up the access to the constant pool
         return _compilation.runtime().getConstantPool(method());
+    }
+
+    /**
+     * Returns the number of instructions parsed into this graph.
+     * @return the number of instructions parsed into the graph
+     */
+    public int instructionCount() {
+        return _instructionCount;
     }
 }

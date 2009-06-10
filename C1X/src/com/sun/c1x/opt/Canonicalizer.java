@@ -168,7 +168,7 @@ public class Canonicalizer implements InstructionVisitor {
                     }
                 }
                 case ValueTag.FLOAT_TAG: {
-                    if (C1XOptions.FoldFloatingPoint) {
+                    if (C1XOptions.CanonicalizeFloatingPoint) {
                         // try to fold a floating point operation
                         Float val = Bytecodes.foldFloatOp2(i.opcode(), xt.asConstant().asFloat(), yt.asConstant().asFloat());
                         if (val != null) {
@@ -178,7 +178,7 @@ public class Canonicalizer implements InstructionVisitor {
                     }
                 }
                 case ValueTag.DOUBLE_TAG: {
-                    if (C1XOptions.FoldFloatingPoint) {
+                    if (C1XOptions.CanonicalizeFloatingPoint) {
                         // try to fold a floating point operation
                         Double val = Bytecodes.foldDoubleOp2(i.opcode(), xt.asConstant().asDouble(), yt.asConstant().asDouble());
                         if (val != null) {
@@ -222,7 +222,7 @@ public class Canonicalizer implements InstructionVisitor {
             case Bytecodes.ISUB: return y == 0 ? setCanonical(x) : null;
             case Bytecodes.IMUL: {
                 if (y == 1) return setCanonical(x);
-                if (y > 0 && (y & y - 1) == 0 && C1XOptions.ReduceMultipliesToShifts) {
+                if (y > 0 && (y & y - 1) == 0 && C1XOptions.CanonicalizeMultipliesToShifts) {
                     // strength reduce multiply by power of 2 to shift operation
                     return setCanonical(new ShiftOp(Bytecodes.ISHL, x, intInstr(Util.log2(y))));
                 }
@@ -288,7 +288,7 @@ public class Canonicalizer implements InstructionVisitor {
             case Bytecodes.LSUB: return y == 0 ? setCanonical(x) : null;
             case Bytecodes.LMUL: {
                 if (y == 1) return setCanonical(x);
-                if (y > 0 && (y & y - 1) == 0 && C1XOptions.ReduceMultipliesToShifts) {
+                if (y > 0 && (y & y - 1) == 0 && C1XOptions.CanonicalizeMultipliesToShifts) {
                     // strength reduce multiply by power of 2 to shift operation
                     return setCanonical(new ShiftOp(Bytecodes.LSHL, x, longInstr(Util.log2(y))));
                 }
@@ -377,7 +377,7 @@ public class Canonicalizer implements InstructionVisitor {
         // Eliminate narrowing conversions emitted by javac which are unnecessary when
         // writing the value to a field that is packed
         Instruction v = i.value();
-        if (v instanceof Convert && C1XOptions.EliminateNarrowingInStores) {
+        if (v instanceof Convert && C1XOptions.CanonicalizeNarrowingInStores) {
             Instruction nv = eliminateNarrowing(i.field().basicType(), (Convert) v);
             // limit this optimization to the current basic block
             if (nv != null && inCurrentBlock(v)) {
@@ -428,7 +428,7 @@ public class Canonicalizer implements InstructionVisitor {
         // Eliminate narrowing conversions emitted by javac which are unnecessary when
         // writing the value to an array (which is packed)
         Instruction v = i.value();
-        if (v instanceof Convert && C1XOptions.EliminateNarrowingInStores) {
+        if (v instanceof Convert && C1XOptions.CanonicalizeNarrowingInStores) {
             Instruction nv = eliminateNarrowing(i.elementType(), (Convert) v);
             if (nv != null && inCurrentBlock(v)) {
                 setCanonical(new StoreIndexed(i.array(), i.index(), i.length(), i.elementType(), nv, i.lockStack()));
@@ -496,7 +496,7 @@ public class Canonicalizer implements InstructionVisitor {
             switch (xt.tag()) {
                 case ValueTag.LONG_TAG:
                     setIntConstant(Bytecodes.foldLongCompare(xt.asConstant().asLong(), yt.asConstant().asLong()));
-                    // fall through
+                    break;
                 case ValueTag.FLOAT_TAG: {
                     Integer val = Bytecodes.foldFloatCompare(i.opcode(), xt.asConstant().asFloat(), yt.asConstant().asFloat());
                     assert val != null : "invalid opcode in float compare op";
@@ -665,7 +665,7 @@ public class Canonicalizer implements InstructionVisitor {
     }
 
     public void visitIntrinsic(Intrinsic i) {
-        if (!C1XOptions.FoldIntrinsics) {
+        if (!C1XOptions.CanonicalizeIntrinsics) {
             return;
         }
         Instruction[] args = i.arguments();
@@ -941,13 +941,13 @@ public class Canonicalizer implements InstructionVisitor {
             return;
         }
         int max = i.numberOfCases();
-        if (max == 1) {
+        if (max == 0) {
             // replace switch with Goto
             addInstr(v); // the value expression may produce side effects
             setCanonical(new Goto(i.defaultSuccessor(), i.stateBefore(), i.isSafepoint()));
             return;
         }
-        if (max == 2) {
+        if (max == 1) {
             // replace switch with If
             assert i.lowKey() == i.highKey();
             Constant key = intInstr(i.lowKey());
@@ -1054,7 +1054,7 @@ public class Canonicalizer implements InstructionVisitor {
         }
         if (index instanceof ArithmeticOp) {
             // try to match the index as a multiply by a constant
-            // note that this case will not happen if C1XOptions.ReduceMultipliesToShifts is true
+            // note that this case will not happen if C1XOptions.CanonicalizeMultipliesToShifts is true
             ArithmeticOp arith = (ArithmeticOp) index;
             ValueType st = arith.y().type();
             if (arith.opcode() == Bytecodes.IMUL && st.isConstant() && st.isInt()) {
@@ -1079,13 +1079,13 @@ public class Canonicalizer implements InstructionVisitor {
     }
 
     public void visitUnsafeGetRaw(UnsafeGetRaw i) {
-        if (C1XOptions.OptimizeUnsafes) {
+        if (C1XOptions.CanonicalizeUnsafes) {
             visitUnsafeRawOp(i);
         }
     }
 
     public void visitUnsafePutRaw(UnsafePutRaw i) {
-        if (C1XOptions.OptimizeUnsafes) {
+        if (C1XOptions.CanonicalizeUnsafes) {
             visitUnsafeRawOp(i);
         }
     }
