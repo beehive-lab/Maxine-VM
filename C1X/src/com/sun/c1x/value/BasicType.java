@@ -26,21 +26,34 @@ package com.sun.c1x.value;
  * @author Ben L. Titzer
  */
 public enum BasicType {
-    Boolean,
-    Char,
-    Float,
-    Double,
-    Byte,
-    Short,
-    Int,
-    Long,
-    Object,
-    Array,
-    Void,
+    Boolean('Z', "boolean"),
+    Char('C', "char"),
+    Float('F', "float"),
+    Double('D', "double"),
+    Byte('B', "byte"),
+    Short('S', "short"),
+    Int('I', "int"),
+    Long('J', "long"),
+    Object('L', "object"),
+    Array('[', "array"),
+    Void('V', "void"),
     Address,
     NarrowOop,
     Conflict,
     Illegal;
+
+    BasicType() {
+        _char = (char) 0;
+        _name = "???";
+    }
+
+    BasicType(char ch, String name) {
+        _char = ch;
+        _name = name;
+    }
+
+    public final char _char;
+    public final String _name;
 
     public static BasicType fromArrayTypeCode(int code) {
         switch (code) {

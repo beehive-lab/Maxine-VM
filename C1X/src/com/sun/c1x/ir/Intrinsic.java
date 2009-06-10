@@ -27,10 +27,11 @@ import com.sun.c1x.value.ValueType;
 import com.sun.c1x.C1XIntrinsic;
 
 /**
- * The <code>Intrinsic</code> instruction represents a call to a JDK method that has been intrinsified,
- * e.g. some math operations.
+ * The <code>Intrinsic</code> instruction represents a call to a JDK method
+ * that has been made {@linkplain C1XIntrinsic intrinsic}.
  *
  * @author Ben L. Titzer
+ * @see C1XIntrinsic
  */
 public class Intrinsic extends StateSplit {
 

@@ -3,7 +3,7 @@
     This configuration file was written by the eclipse-cs plugin configuration editor
 -->
 <!--
-    Checkstyle-Configuration: C1X
+    Checkstyle-Configuration: C1X Checkstyle checks
     Description: none
 -->
 <!DOCTYPE module PUBLIC "-//Puppy Crawl//DTD Check Configuration 1.2//EN" "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
@@ -63,9 +63,7 @@
             <property name="tokens" value="LITERAL_DO,LITERAL_ELSE,LITERAL_FINALLY,LITERAL_IF,LITERAL_TRY,LITERAL_WHILE,STATIC_INIT"/>
         </module>
         <module name="LeftCurly"/>
-        <module name="NeedBraces">
-            <property name="tokens" value="LITERAL_DO,LITERAL_FOR,LITERAL_WHILE"/>
-        </module>
+        <module name="NeedBraces"/>
         <module name="RightCurly"/>
         <module name="DoubleCheckedLocking">
             <property name="severity" value="error"/>

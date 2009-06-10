@@ -59,7 +59,7 @@ public class Phi extends Instruction {
 
     /**
      * Get the join block for this phi.
-     * @return the join block
+     * @return the join block of this phi
      */
     public BlockBegin block() {
         return _block;

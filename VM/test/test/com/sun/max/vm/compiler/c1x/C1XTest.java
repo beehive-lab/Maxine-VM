@@ -23,6 +23,7 @@ package test.com.sun.max.vm.compiler.c1x;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -45,11 +46,11 @@ public class C1XTest {
     private static final OptionSet _options = new OptionSet(true);
 
     private static final Option<Integer> _trace = _options.newIntegerOption("trace", 0,
-        "Sets the tracing level of the Maxine VM and runtime.");
+        "Set the tracing level of the Maxine VM and runtime.");
     private static final Option<Integer> _verbose = _options.newIntegerOption("verbose", 1,
-        "Sets the verbosity level of the testing framework.");
+        "Set the verbosity level of the testing framework.");
     private static final Option<Boolean> _print = _options.newBooleanOption("print-bailout", false,
-        "Prints bailout exceptions.");
+        "Print bailout exceptions.");
     private static final Option<Boolean> _clinit = _options.newBooleanOption("clinit", true,
         "Compile class initializer (<clinit>) methods");
     private static final Option<Boolean> _failFast = _options.newBooleanOption("fail-fast", true,
@@ -59,7 +60,7 @@ public class C1XTest {
     private static final Option<Boolean> _average = _options.newBooleanOption("average", true,
         "Report only the average compilation speed.");
     private static final Option<Integer> _warmup = _options.newIntegerOption("warmup", 0,
-        "Sets the number of warmup runs to execute before initiating the timed run.");
+        "Set the number of warmup runs to execute before initiating the timed run.");
     private static final Option<Boolean> _help = _options.newBooleanOption("help", false,
         "Show help message and exit.");
 
@@ -92,8 +93,16 @@ public class C1XTest {
 
         for (MethodActor actor : methods) {
             progress.begin(actor.toString());
-            if (compile(runtime, actor, _print.getValue(), false)) {
+            final C1XCompilation compilation = compile(runtime, actor, _print.getValue(), false);
+            if (compilation == null || compilation.startBlock() != null) {
                 progress.pass();
+
+                if (compilation != null && _verbose.getValue() >= 3) {
+                    final InstructionPrinter ip = new InstructionPrinter(new C1XPrintStream(Trace.stream()), true);
+                    final BlockPrinter bp = new BlockPrinter(ip, false, false);
+                    compilation.startBlock().iteratePreOrder(bp);
+                }
+
             } else {
                 progress.fail("failed");
                 if (_failFast.getValue()) {
@@ -107,7 +116,7 @@ public class C1XTest {
         reportTiming();
     }
 
-    private static boolean compile(MaxCiRuntime runtime, MethodActor method, boolean printBailout, boolean warmup) {
+    private static C1XCompilation compile(MaxCiRuntime runtime, MethodActor method, boolean printBailout, boolean warmup) {
         if (method instanceof ClassMethodActor && !method.isAbstract() && !method.isNative()) {
             final long startNs = System.nanoTime();
             final C1XCompilation compilation = new C1XCompilation(runtime, runtime.getCiMethod(method));
@@ -115,14 +124,14 @@ public class C1XTest {
                 if (printBailout) {
                     compilation.bailout().printStackTrace();
                 }
-                return false;
             }
             if (!warmup) {
                 // record the time for successful compilations
                 recordTime(method, compilation.totalInstructions(), System.nanoTime() - startNs);
             }
+            return compilation;
         }
-        return true;
+        return null;
     }
 
     private static List<MethodActor> findMethodsToCompile(String[] arguments) {

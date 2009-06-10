@@ -265,7 +265,9 @@ public class BlockMap {
                 case Bytecodes.DRETURN: // fall through
                 case Bytecodes.ARETURN: // fall through
                 case Bytecodes.RETURN:
-                    if (exceptionMap != null && exceptionMap._isObjectInit) exceptionMap.setCanTrap(bci);
+                    if (exceptionMap != null && exceptionMap._isObjectInit) {
+                        exceptionMap.setCanTrap(bci);
+                    }
                     _successorMap[bci] = NONE; // end of control flow
                     bci += 1; // these are all 1 byte opcodes
                     break;
@@ -343,7 +345,9 @@ public class BlockMap {
                 }
 
                 default: {
-                    if (exceptionMap != null && Bytecodes.canTrap(opcode)) exceptionMap.setCanTrap(bci);
+                    if (exceptionMap != null && Bytecodes.canTrap(opcode)) {
+                        exceptionMap.setCanTrap(bci);
+                    }
                     bci += Bytecodes.length(opcode); // all variable length instructions are handled above
                 }
             }
@@ -431,7 +435,9 @@ public class BlockMap {
         // clear active bit after successors are processed
         active.clear(blockIndex);
         block.setDepthFirstNumber(_blockNum--);
-        if (inLoop) _loopBlocks.add(block);
+        if (inLoop) {
+            _loopBlocks.add(block);
+        }
 
         return inLoop;
     }

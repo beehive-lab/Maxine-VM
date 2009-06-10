@@ -44,7 +44,7 @@ public class NewInstance extends StateSplit {
     }
 
     /**
-     * Gets the instance class being allocatd by this instruction.
+     * Gets the instance class being allocated by this instruction.
      * @return the instance class allocated
      */
     public CiType instanceClass() {
