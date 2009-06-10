@@ -50,7 +50,7 @@ public class C1XOptions {
     public static boolean OptimizeUnsafes = false;
     public static boolean ReduceMultipliesToShifts = false;
     public static boolean UseLocalValueNumbering = false;
-    public static boolean CSEArrayLength = false;
+    public static boolean AlwaysCSEArrayLength = false;
     public static boolean ProfileBranches = false;
     public static boolean ProfileCalls = false;
     public static boolean ProfileCheckcasts = false;

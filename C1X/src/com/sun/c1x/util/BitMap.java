@@ -51,7 +51,7 @@ public class BitMap {
         if (checkIndex(i) < 32) {
             _low32 |= 1 << i;
         } else {
-            int pos = i >> 5;
+            int pos = (i >> 5) - 1;
             int index = i & 31;
             _extra32[pos] |= 1 << index;
         }
