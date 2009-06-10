@@ -36,7 +36,7 @@ import java.util.ArrayList;
  */
 public class ValueStack {
 
-    private Instruction[] _values; // manages both stack and locals
+    private final Instruction[] _values; // manages both stack and locals
     private int _stackIndex;
     private final int _maxLocals;
 
@@ -62,7 +62,7 @@ public class ValueStack {
         final ValueStack other = new ValueStack(_scope, localsSize(), maxStackSize());
         if (withLocals && withStack) {
             // fast path: use array copy
-            System.arraycopy(_values, 0, other._values, 0, _values.length);
+            System.arraycopy(_values, 0, other._values, 0, valuesSize());
             other._stackIndex = _stackIndex;
         } else {
             if (withLocals) {
@@ -115,9 +115,9 @@ public class ValueStack {
         }
         if (_locks != null) {
             for (int i = 0; i < _locks.size(); i++) {
-                Instruction x = lockAt(i);
-                Instruction y = other.lockAt(i);
-                if (x != y) return false;
+                if (lockAt(i) != other.lockAt(i)) {
+                    return false;
+                }
             }
         }
         return true;
