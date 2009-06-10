@@ -433,9 +433,7 @@ public class GraphBuilder {
         // exception handler starts with an empty expression stack
         s.truncateStack(curScopeData.callerStackSize());
 
-        if (!entry.tryMerge(s)) {
-            throw new Bailout("error while joining with exception handler, probably due to jsr/ret");
-        }
+        entry.merge(s);
 
         // add current state for correct handling of phi functions
         int phiOperand = entry.addExceptionState(s);
@@ -1138,9 +1136,22 @@ public class GraphBuilder {
     }
 
     private boolean cseArrayLength(Instruction array) {
-        return C1XOptions.CSEArrayLength ||
-            (array instanceof AccessField && ((AccessField) array).field().isConstant()) ||
-            (array instanceof NewArray && ((NewArray) array).length().type().isConstant());
+        // checks whether an array length access should be generated for CSE
+        if (C1XOptions.AlwaysCSEArrayLength) {
+            // always access the length for CSE
+            return true;
+        } else if (array.type().isConstant()) {
+            // the array itself is a constant
+            return true;
+        } else if ((array instanceof AccessField && ((AccessField) array).field().isConstant())) {
+            // the length is derived from a constant array
+            return true;
+        } else  if (array instanceof NewArray) {
+            // the array is derived from an allocation
+            final Instruction length = ((NewArray) array).length();
+            return length != null && length.type().isConstant();
+        }
+        return false;
     }
 
     private void profileCall(Instruction receiver, CiType knownHolder) {
@@ -2034,9 +2045,7 @@ public class GraphBuilder {
         // propagate the state
         for (BlockBegin succ : end.successors()) {
             assert succ.predecessors().contains(_block);
-            if (!succ.tryMerge(_state)) {
-                throw new Bailout("block join failed");
-            }
+            succ.merge(_state);
             _scopeData.addToWorkList(succ);
         }
         _scopeData.setStream(null);

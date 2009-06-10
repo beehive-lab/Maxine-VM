@@ -32,6 +32,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.lang.Strings;
 
 /**
  * A simple harness to run the C1X compiler and test it in various modes, without
@@ -47,12 +48,16 @@ public class C1XTest {
         "Sets the tracing level of the Maxine VM and runtime.");
     private static final Option<Integer> _verbose = _options.newIntegerOption("verbose", 1,
         "Sets the verbosity level of the testing framework.");
-    private static final Option<Boolean> _clinit = _options.newBooleanOption("clinit", false,
-        "Compile class initialization methods.");
+    private static final Option<Boolean> _clinit = _options.newBooleanOption("clinit", true,
+        "Compile class initializer (<clinit>) methods");
     private static final Option<Boolean> _failFast = _options.newBooleanOption("fail-fast", true,
         "Stop compilation upon the first bailout.");
+    private static final Option<Boolean> _timing = _options.newBooleanOption("timing", false,
+        "Report compilation time for each successful compile.");
     private static final Option<Boolean> _help = _options.newBooleanOption("help", false,
         "Show help message and exit.");
+
+    private static final List<Timing> _timings = new ArrayList<Timing>();
 
     public static void main(String[] args) {
         _options.parseArguments(args);
@@ -87,15 +92,19 @@ public class C1XTest {
         }
 
         progress.report();
+        reportTiming();
     }
 
     private static boolean compile(MaxCiRuntime runtime, MethodActor method) {
-        if (method instanceof ClassMethodActor && !method.isAbstract()) {
+        if (method instanceof ClassMethodActor && !method.isAbstract() && !method.isNative()) {
+            final long startNs = System.nanoTime();
             final C1XCompilation compilation = new C1XCompilation(runtime, runtime.getCiMethod(method));
             if (compilation.startBlock() == null) {
                 compilation.bailout().printStackTrace();
                 return false;
             }
+            // record the time for successful compilations
+            recordTime(method, System.nanoTime() - startNs);
         }
         return true;
     }
@@ -127,11 +136,16 @@ public class C1XTest {
             for (String className : matchingClasses) {
                 try {
                     final ClassActor classActor = ClassActor.fromJava(Class.forName(className, false, C1XTest.class.getClassLoader()));
+                    if (classActor == null) {
+                        continue;
+                    }
 
                     if (colonIndex == -1) {
                         // Class only: compile all methods in class
                         for (MethodActor actor : classActor.localStaticMethodActors()) {
-                            methods.add(actor);
+                            if (_clinit.getValue() || actor != classActor.classInitializer()) {
+                                methods.add(actor);
+                            }
                         }
                         for (MethodActor actor : classActor.localVirtualMethodActors()) {
                             methods.add(actor);
@@ -167,6 +181,48 @@ public class C1XTest {
                     methods.add(method);
                 }
             }
+        }
+    }
+
+    private static void recordTime(MethodActor method, long ns) {
+        if (_timing.getValue()) {
+            _timings.add(new Timing((ClassMethodActor) method, ns));
+        }
+    }
+
+    private static void reportTiming() {
+        if (_timing.getValue()) {
+            double totalBcps = 0d;
+            int count = 0;
+            for (Timing timing : _timings) {
+                final MethodActor method = timing._classMethodActor;
+                final long ns = timing._nanoSeconds;
+                final double bcps = timing._bytecodesPerSecond;
+                System.out.print(Strings.padLengthWithSpaces("#" + timing._number, 6));
+                System.out.print(Strings.padLengthWithSpaces(method.toString(), 80) + ": ");
+                System.out.print(Strings.padLengthWithSpaces(13, ns + " ns "));
+                System.out.print(Strings.padLengthWithSpaces(18, Strings.fixedDouble(bcps, 2) + " bc/s"));
+                System.out.println();
+                totalBcps += bcps;
+                count++;
+            }
+            System.out.print("Average: ");
+            System.out.print(Strings.fixedDouble(totalBcps / count, 2) + " bc/s");
+            System.out.println();
+        }
+    }
+
+    private static class Timing {
+        private final int _number;
+        private final ClassMethodActor _classMethodActor;
+        private final long _nanoSeconds;
+        private final double _bytecodesPerSecond;
+
+        Timing(ClassMethodActor classMethodActor, long ns) {
+            _number = _timings.size();
+            _classMethodActor = classMethodActor;
+            _nanoSeconds = ns;
+            _bytecodesPerSecond = 1000000000 * (classMethodActor.rawCodeAttribute().code().length / (double) ns);
         }
     }
 }

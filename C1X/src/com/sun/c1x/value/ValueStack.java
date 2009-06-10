@@ -24,6 +24,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.util.Util;
 import com.sun.c1x.util.InstructionClosure;
 import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.Bailout;
 
 import java.util.ArrayList;
 
@@ -594,41 +595,53 @@ public class ValueStack {
         }
     }
 
-    public boolean checkLocalAndStackTags(ValueStack other) {
-        if (sizeMismatch(other)) return false;
-        for (int i = 0; i < valuesSize(); i++) {
-            if (!(_values[i] != null ? other._values[i] != null && _values[i].type().tag() == other._values[i].type().tag() : other._values[i] == null)) {
-                return false;
+    public void checkLocalAndStackTags(ValueStack other) {
+        checkSize(other);
+        final int max = valuesSize();
+        for (int i = 0; i < max; i++) {
+            Instruction x = _values[i];
+            if (x != null) {
+                Instruction y = other._values[i];
+                if (y != null) {
+                    if (x.type().tag() != y.type().tag()) {
+                        throw new Bailout("tag mismatch at " + i);
+                    }
+                } else {
+                    throw new Bailout("instruction missing at " + i);
+                }
             }
         }
-        return true;
     }
 
     private int valuesSize() {
         return _maxLocals + _stackIndex;
     }
 
-    public boolean checkPhis(BlockBegin block, ValueStack other) {
-        if (sizeMismatch(other)) return false;
-        for (int i = 0; i < valuesSize(); i++) {
+    public void checkPhis(BlockBegin block, ValueStack other) {
+        checkSize(other);
+        final int max = valuesSize();
+        for (int i = 0; i < max; i++) {
             Instruction x = _values[i];
             Instruction y = other._values[i];
-            if (x != y) {
+            if (x != null && x != y) {
                 if (!(x instanceof Phi) || ((Phi) x).block() != block) {
                     // x is not a phi, or is not a phi for this block
-                    return false;
+                    throw new Bailout("instruction is not a phi or null at " + i);
                 }
             }
         }
-        return true;
     }
 
-    private boolean sizeMismatch(ValueStack other) {
-        return other._stackIndex != _stackIndex || other._values.length != _values.length;
+    private void checkSize(ValueStack other) {
+        if (other._stackIndex != _stackIndex) {
+            throw new Bailout("stack sizes do not match");
+        } else if (other._values.length != _values.length) {
+            throw new Bailout("value sizes do not match");
+        }
     }
 
-    public boolean merge(BlockBegin block, ValueStack other) {
-        if (sizeMismatch(other)) return false;
+    public void merge(BlockBegin block, ValueStack other) {
+        checkSize(other);
         for (int i = 0; i < valuesSize(); i++) {
             Instruction x = _values[i];
             Instruction y = other._values[i];
@@ -650,7 +663,6 @@ public class ValueStack {
                 }
             }
         }
-        return true;
     }
 
     private Instruction checkTag(byte tag, Instruction x) {
