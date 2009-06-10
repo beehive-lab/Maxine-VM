@@ -248,7 +248,8 @@ public class Canonicalizer implements InstructionVisitor {
 
     private Instruction reduceShift(boolean islong, int opcode, int reverse, Instruction x, long y) {
         int mod = islong ? 0x3f : 0x1f;
-        if ((y & mod) == 0) {
+        long shift = y & mod;
+        if (shift == 0) {
             return setCanonical(x);
         }
         if (x instanceof ShiftOp) {
@@ -259,7 +260,8 @@ public class Canonicalizer implements InstructionVisitor {
                 if (s.opcode() == opcode) {
                     // this is a chained shift operation (e >> C >> K)
                     y = y + z;
-                    if ((y & mod) == 0) {
+                    shift = y & mod;
+                    if (shift == 0) {
                         return setCanonical(s.x());
                     }
                     // reduce to (e >> (C + K))
@@ -276,6 +278,10 @@ public class Canonicalizer implements InstructionVisitor {
                     return setCanonical(new ArithmeticOp(Bytecodes.IAND, s.x(), c, false, null));
                 }
             }
+        }
+        if (y != shift) {
+            // (y & mod) != y
+            return setCanonical(new ShiftOp(opcode, x, intInstr((int) shift)));
         }
         return null;
     }
@@ -364,7 +370,6 @@ public class Canonicalizer implements InstructionVisitor {
                     case Int:     setIntConstant(val.asInt()); break;
                     case Long:    setLongConstant(val.asLong()); break;
                     case Object:
-                    case Array:
                         if (C1XOptions.SupportObjectConstants) {
                             setObjectConstant(val.asObject()); break;
                         }
@@ -374,15 +379,17 @@ public class Canonicalizer implements InstructionVisitor {
     }
 
     public void visitStoreField(StoreField i) {
-        // Eliminate narrowing conversions emitted by javac which are unnecessary when
-        // writing the value to a field that is packed
-        Instruction v = i.value();
-        if (v instanceof Convert && C1XOptions.CanonicalizeNarrowingInStores) {
-            Instruction nv = eliminateNarrowing(i.field().basicType(), (Convert) v);
-            // limit this optimization to the current basic block
-            if (nv != null && inCurrentBlock(v)) {
-                setCanonical(new StoreField(i.object(), i.offset(), i.field(), nv, i.isStatic(),
-                                            i.lockStack(), i.stateBefore(), i.isLoaded(), i.isInitialized()));
+        if (C1XOptions.CanonicalizeNarrowingInStores) {
+            // Eliminate narrowing conversions emitted by javac which are unnecessary when
+            // writing the value to a field that is packed
+            Instruction v = i.value();
+            if (v instanceof Convert) {
+                Instruction nv = eliminateNarrowing(i.field().basicType(), (Convert) v);
+                // limit this optimization to the current basic block
+                if (nv != null && inCurrentBlock(v)) {
+                    setCanonical(new StoreField(i.object(), i.offset(), i.field(), nv, i.isStatic(),
+                                                i.lockStack(), i.stateBefore(), i.isLoaded(), i.isInitialized()));
+                }
             }
         }
     }
@@ -425,13 +432,15 @@ public class Canonicalizer implements InstructionVisitor {
     }
 
     public void visitStoreIndexed(StoreIndexed i) {
-        // Eliminate narrowing conversions emitted by javac which are unnecessary when
-        // writing the value to an array (which is packed)
-        Instruction v = i.value();
-        if (v instanceof Convert && C1XOptions.CanonicalizeNarrowingInStores) {
-            Instruction nv = eliminateNarrowing(i.elementType(), (Convert) v);
-            if (nv != null && inCurrentBlock(v)) {
-                setCanonical(new StoreIndexed(i.array(), i.index(), i.length(), i.elementType(), nv, i.lockStack()));
+        if (C1XOptions.CanonicalizeNarrowingInStores) {
+            // Eliminate narrowing conversions emitted by javac which are unnecessary when
+            // writing the value to an array (which is packed)
+            Instruction v = i.value();
+            if (v instanceof Convert) {
+                Instruction nv = eliminateNarrowing(i.elementType(), (Convert) v);
+                if (nv != null && inCurrentBlock(v)) {
+                    setCanonical(new StoreIndexed(i.array(), i.index(), i.length(), i.elementType(), nv, i.lockStack()));
+                }
             }
         }
     }

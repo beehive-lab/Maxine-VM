@@ -482,7 +482,6 @@ public class GraphBuilder {
             case Int: type = ConstType.forInt(con.asInt()); break;
             case Long: type = ConstType.forLong(con.asLong()); break;
             case Object: type = ConstType.forObject(con.asObject()); break;
-            case Array: type = ConstType.forObject(con.asObject()); break;
             default:
                 throw new Bailout("could not resolve constant");
         }
@@ -1079,7 +1078,7 @@ public class GraphBuilder {
                 throw new Bailout("jsr/ret structure is too complicated");
             }
         }
-        push(ValueType.ADDRESS_TYPE, append(new Constant(ConstType.forAddress(nextBCI()))));
+        push(ValueType.JSR_TYPE, append(new Constant(ConstType.forAddress(nextBCI()))));
         tryInlineJsr(dest);
     }
 

@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.value;
 
+import com.sun.c1x.util.Util;
+
 /**
  * The <code>BasicType</code> enum represents an enumeration of types used in C1X.
  *
@@ -27,21 +29,23 @@ package com.sun.c1x.value;
  */
 public enum BasicType {
     Boolean,
-    Char,
-    Float,
-    Double,
     Byte,
+    Char,
     Short,
     Int,
     Long,
+    Float,
+    Double,
     Object,
-    Array,
     Void,
-    Address,
-    NarrowOop,
-    Conflict,
+    Jsr,
     Illegal;
 
+    /**
+     * Gets the basic type for an array from the array type code in a {@link com.sun.c1x.bytecode.Bytecodes#NEWARRAY} bytecode.
+     * @param code the array type code operand
+     * @return the basic type for the array elements
+     */
     public static BasicType fromArrayTypeCode(int code) {
         switch (code) {
             case 4: return Boolean;
@@ -54,5 +58,68 @@ public enum BasicType {
             case 11: return Long;
         }
         throw new IllegalArgumentException("unknown array type code");
+    }
+
+    /**
+     * Checks whether this basic type is valid as the type of a field.
+     * @return <code>true</code> if this basic type is valid as the type of a Java field
+     */
+    public boolean isValidFieldType() {
+        return ordinal() <= Object.ordinal();
+    }
+
+    /**
+     * Checks whether this basic type is valid as the return type of a method.
+     * @return <code>true</code> if this basic type is valid as the return type of a Java method
+     */
+    public boolean isValidReturnType() {
+        return ordinal() <= Void.ordinal();
+    }
+
+    /**
+     * Checks whether this type is valid as an <code>int</code> on the Java operand stack.
+     * @return <code>true</code> if this type is represented by an <code>int</code> on the operand stack
+     */
+    public boolean isIntType() {
+        return ordinal() <= Int.ordinal();
+    }
+
+    /**
+     * Gets the basic type that represents this basic type when on the Java operand stack.
+     * @return the basic type used on the operand stack
+     */
+    public BasicType stackType() {
+        if (ordinal() <= Int.ordinal()) {
+            return Int;
+        }
+        return this;
+    }
+
+    /**
+     * Gets the size of this basic type in terms of the number of Java slots.
+     * @return the size of the basic type in slots
+     */
+    public int sizeInSlots() {
+        return this == Long || this == Double ? 2 : 1;
+    }
+
+    /**
+     * Gets the size of this basic type in bytes.
+     * @param oopSize the size of an object reference
+     * @return the size of this basic type in bytes
+     */
+    public int sizeInBytes(int oopSize) {
+        switch (this) {
+            case Boolean: return 1;
+            case Byte: return 1;
+            case Char: return 2;
+            case Short: return 2;
+            case Int: return 4;
+            case Long: return 8;
+            case Float: return 4;
+            case Double: return 8;
+            case Object: return oopSize;
+        }
+        throw new IllegalArgumentException("invalid BasicType " + this + " for .sizeInBytes()");
     }
 }

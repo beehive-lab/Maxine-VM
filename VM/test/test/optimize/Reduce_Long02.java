@@ -28,13 +28,13 @@ package test.optimize;
 public class Reduce_Long02 {
     public static long test(long arg) {
         if (arg == 0) {
-            return add();
+            return add(10);
         }
         if (arg == 1) {
             return sub();
         }
         if (arg == 2) {
-            return mul();
+            return mul(12);
         }
         if (arg == 3) {
             return div();
@@ -43,25 +43,23 @@ public class Reduce_Long02 {
             return mod();
         }
         if (arg == 5) {
-            return and();
+            return and(15);
         }
         if (arg == 6) {
-            return or();
+            return or(16);
         }
         if (arg == 7) {
-            return xor();
+            return xor(17);
         }
         return 0;
     }
-    public static long add() {
-        long x = 10;
+    public static long add(long x) {
         return 0 + x;
     }
     public static long sub() {
         return 11;
     }
-    public static long mul() {
-        long x = 12;
+    public static long mul(long x) {
         return 1 * x;
     }
     public static long div() {
@@ -70,16 +68,13 @@ public class Reduce_Long02 {
     public static long mod() {
         return 14;
     }
-    public static long and() {
-        long x = 15;
+    public static long and(long x) {
         return -1 & x;
     }
-    public static long or() {
-        long x = 16;
+    public static long or(long x) {
         return 0 | x;
     }
-    public static long xor() {
-        long x = 17;
+    public static long xor(long x) {
         return 0 ^ x;
     }
 

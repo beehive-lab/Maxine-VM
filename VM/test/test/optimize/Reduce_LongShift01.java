@@ -21,61 +21,48 @@
 package test.optimize;
 
 /*
- * Tests constant folding of integer operations.
+ * Tests optimization of integer operations.
  * @Harness: java
- * @Runs: 0=10L; 1=11L; 2=12L; 3=13L; 4=14L; 5=15L; 6=16L; 7=17L
+ * @Runs: 0=10L; 1=11L; 2=12L; 3=13L; 4=14L; 5=15L
  */
-public class Reduce_Long01 {
+public class Reduce_LongShift01 {
     public static long test(long arg) {
         if (arg == 0) {
-            return add(10);
+            return shift0(arg + 10);
         }
         if (arg == 1) {
-            return sub(11);
+            return shift1(arg + 10);
         }
         if (arg == 2) {
-            return mul(12);
+            return shift2(arg + 10);
         }
         if (arg == 3) {
-            return div(13);
+            return shift3(arg + 10);
         }
         if (arg == 4) {
-            return mod();
+            return shift4(arg + 10);
         }
         if (arg == 5) {
-            return and(15);
-        }
-        if (arg == 6) {
-            return or(16);
-        }
-        if (arg == 7) {
-            return xor(17);
+            return shift5(arg + 10);
         }
         return 0;
     }
-    public static long add(long x) {
-        return x + 0;
+    public static long shift0(long x) {
+        return x >> 0;
     }
-    public static long sub(long x) {
-        return x - 0;
+    public static long shift1(long x) {
+        return x >>> 0;
     }
-    public static long mul(long x) {
-        return x * 1;
+    public static long shift2(long x) {
+        return x << 0;
     }
-    public static long div(long x) {
-        return x / 1;
+    public static long shift3(long x) {
+        return x >> 64;
     }
-    public static long mod() {
-        return 14;
+    public static long shift4(long x) {
+        return x >>> 64;
     }
-    public static long and(long x) {
-        return x & -1;
+    public static long shift5(long x) {
+        return x << 64;
     }
-    public static long or(long x) {
-        return x | 0;
-    }
-    public static long xor(long x) {
-        return x ^ 0;
-    }
-
 }
