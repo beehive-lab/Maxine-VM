@@ -115,7 +115,7 @@ public class GraphBuilder {
             Instruction lock = null;
             if (method.isSynchronized()) {
                 if (method.isStatic()) {
-                    lock = new Constant(ConstType.forObject(method.holder().javaClass()));
+                    lock = Constant.forObject(method.holder().javaClass());
                 } else {
                     lock = _initialState.localAt(0);
                 }
@@ -203,7 +203,7 @@ public class GraphBuilder {
         if (profileBranches() && methodData != null) {
             // increment the invocation counter;
             // note that the normal append() won't work, so we do this manually
-            Instruction m = new Constant(ConstType.forObject(methodData.dataObject()));
+            Instruction m = Constant.forObject(methodData.dataObject());
             h.setNext(m, 0);
             Instruction p = new ProfileCounter(m, methodData.invocationCountOffset(), 1);
             m.setNext(p, 0);
@@ -468,22 +468,22 @@ public class GraphBuilder {
             CiType citype = con.asCiType();
             type = new ClassType(citype);
             if (!citype.isLoaded() || C1XOptions.TestPatching) {
-                push(type, append(new Constant(type, _state.copy())));
+                push(type, append(new Constant((ClassType) type, _state.copy())));
                 return;
             }
         }
         switch (con.basicType()) {
             case Boolean: type = ConstType.forBoolean(con.asBoolean()); break;
-            case Char: type = ConstType.forChar(con.asChar()); break;
-            case Float: type = ConstType.forFloat(con.asFloat()); break;
-            case Double: type = ConstType.forDouble(con.asDouble()); break;
-            case Byte: type = ConstType.forByte(con.asByte()); break;
-            case Short: type = ConstType.forShort(con.asShort()); break;
-            case Int: type = ConstType.forInt(con.asInt()); break;
-            case Long: type = ConstType.forLong(con.asLong()); break;
-            case Object: type = ConstType.forObject(con.asObject()); break;
+            case Char:    type = ConstType.forChar(con.asChar()); break;
+            case Float:   type = ConstType.forFloat(con.asFloat()); break;
+            case Double:  type = ConstType.forDouble(con.asDouble()); break;
+            case Byte:    type = ConstType.forByte(con.asByte()); break;
+            case Short:   type = ConstType.forShort(con.asShort()); break;
+            case Int:     type = ConstType.forInt(con.asInt()); break;
+            case Long:    type = ConstType.forLong(con.asLong()); break;
+            case Object:  type = ConstType.forObject(con.asObject()); break;
             default:
-                throw new Bailout("could not resolve constant");
+                throw new Bailout("invalid constant type on " + con);
         }
         push(type, append(new Constant(type.asConstant())));
     }
@@ -640,7 +640,7 @@ public class GraphBuilder {
         int index = stream().readLocalIndex();
         int delta = stream().readIncrement();
         Instruction x = _state.localAt(index);
-        Instruction y = append(new Constant(ConstType.forInt(delta)));
+        Instruction y = append(Constant.forInt(delta));
         _state.storeLocal(index, append(new ArithmeticOp(Bytecodes.IADD, x, y, method().isStrictFP(), null)));
     }
 
@@ -1078,7 +1078,7 @@ public class GraphBuilder {
                 throw new Bailout("jsr/ret structure is too complicated");
             }
         }
-        push(ValueType.JSR_TYPE, append(new Constant(ConstType.forAddress(nextBCI()))));
+        push(ValueType.JSR_TYPE, append(Constant.forJsr(nextBCI())));
         tryInlineJsr(dest);
     }
 
@@ -1204,7 +1204,7 @@ public class GraphBuilder {
     }
 
     private Instruction appendConstant(ConstType type) {
-        return appendWithBCI(new Constant(type), bci(), false); // don't bother trying to canonicalize a constant
+        return appendWithBCI(new Constant(type), bci(), false); // don't bother trying to canonicalize/lvn a constant
     }
 
     private Instruction append(Instruction x) {
@@ -1508,7 +1508,7 @@ public class GraphBuilder {
         // inline the locking code if the target method is synchronized
         if (target.isSynchronized()) {
             // lock the receiver object if it is an instance method, the class object otherwise
-            lock = target.isStatic() ? append(new Constant(ConstType.forObject(target.holder().javaClass()))) : _state.localAt(0);
+            lock = target.isStatic() ? append(Constant.forObject(target.holder().javaClass())) : _state.localAt(0);
             syncHandler = new BlockBegin(Instruction.SYNCHRONIZATION_ENTRY_BCI);
             inlineSyncEntry(lock, syncHandler);
             scope().computeLockStackSize();
