@@ -23,59 +23,31 @@ package test.optimize;
 /*
  * Tests constant folding of integer operations.
  * @Harness: java
- * @Runs: 0=10L; 1=11L; 2=12L; 3=13L; 4=14L; 5=15L; 6=16L; 7=17L
+ * @Runs: 0=-128; 1=-32768; 2=65535
  */
-public class Reduce_Long01 {
-    public static long test(long arg) {
+public class Fold_Convert01 {
+    public static int test(int arg) {
         if (arg == 0) {
-            return add(10);
+            return i2b();
         }
         if (arg == 1) {
-            return sub(11);
+            return i2s();
         }
         if (arg == 2) {
-            return mul(12);
+            return i2c();
         }
-        if (arg == 3) {
-            return div(13);
-        }
-        if (arg == 4) {
-            return mod();
-        }
-        if (arg == 5) {
-            return and(15);
-        }
-        if (arg == 6) {
-            return or(16);
-        }
-        if (arg == 7) {
-            return xor(17);
-        }
-        return 0;
+        return  0;
     }
-    public static long add(long x) {
-        return x + 0;
+    public static int i2b() {
+        int x = 0x00000080;
+        return (byte) x;
     }
-    public static long sub(long x) {
-        return x - 0;
+    public static int i2s() {
+        int x = 0x00008000;
+        return (short) x;
     }
-    public static long mul(long x) {
-        return x * 1;
+    public static int i2c() {
+        int x = 0xffffffff;
+        return (char) x;
     }
-    public static long div(long x) {
-        return x / 1;
-    }
-    public static long mod() {
-        return 14;
-    }
-    public static long and(long x) {
-        return x & -1;
-    }
-    public static long or(long x) {
-        return x | 0;
-    }
-    public static long xor(long x) {
-        return x ^ 0;
-    }
-
 }

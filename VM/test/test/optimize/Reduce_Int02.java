@@ -28,13 +28,13 @@ package test.optimize;
 public class Reduce_Int02 {
     public static int test(int arg) {
         if (arg == 0) {
-            return add();
+            return add(10);
         }
         if (arg == 1) {
             return sub();
         }
         if (arg == 2) {
-            return mul();
+            return mul(12);
         }
         if (arg == 3) {
             return div();
@@ -43,25 +43,23 @@ public class Reduce_Int02 {
             return mod();
         }
         if (arg == 5) {
-            return and();
+            return and(15);
         }
         if (arg == 6) {
-            return or();
+            return or(16);
         }
         if (arg == 7) {
-            return xor();
+            return xor(17);
         }
         return 0;
     }
-    public static int add() {
-        int x = 10;
+    public static int add(int x) {
         return 0 + x;
     }
     public static int sub() {
         return 11;
     }
-    public static int mul() {
-        int x = 12;
+    public static int mul(int x) {
         return 1 * x;
     }
     public static int div() {
@@ -70,16 +68,13 @@ public class Reduce_Int02 {
     public static int mod() {
         return 14;
     }
-    public static int and() {
-        int x = 15;
+    public static int and(int x) {
         return -1 & x;
     }
-    public static int or() {
-        int x = 16;
+    public static int or(int x) {
         return 0 | x;
     }
-    public static int xor() {
-        int x = 17;
+    public static int xor(int x) {
         return 0 ^ x;
     }
 

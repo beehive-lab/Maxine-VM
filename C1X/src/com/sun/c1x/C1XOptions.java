@@ -60,6 +60,8 @@ public class C1XOptions {
     public static boolean CanonicalizeConstantFields         = TRUE;
     public static boolean CanonicalizeUnsafes                = TRUE;
     public static boolean CanonicalizeMultipliesToShifts     = TRUE;
+    public static boolean CanonicalizeObjectCheckCast        = TRUE;
+    public static boolean CanonicalizeObjectInstanceOf       = TRUE;
 
     // local value numbering / load elimination settings
     public static boolean UseLocalValueNumbering             = ____;

@@ -21,61 +21,54 @@
 package test.optimize;
 
 /*
- * Tests constant folding of integer operations.
+ * Tests constant folding of integer comparisons.
  * @Harness: java
- * @Runs: 0=10L; 1=11L; 2=12L; 3=13L; 4=14L; 5=15L; 6=16L; 7=17L
+ * @Runs: 0=true; 1=true; 2=true; 3=false; 4=false; 5=false
  */
-public class Reduce_Long01 {
-    public static long test(long arg) {
+public class Fold_Double02 {
+    public static boolean test(int arg) {
         if (arg == 0) {
-            return add(10);
+            return equ();
         }
         if (arg == 1) {
-            return sub(11);
+            return neq();
         }
         if (arg == 2) {
-            return mul(12);
+            return geq();
         }
         if (arg == 3) {
-            return div(13);
+            return ge();
         }
         if (arg == 4) {
-            return mod();
+            return ltq();
         }
         if (arg == 5) {
-            return and(15);
+            return lt();
         }
-        if (arg == 6) {
-            return or(16);
-        }
-        if (arg == 7) {
-            return xor(17);
-        }
-        return 0;
+        return false;
     }
-    public static long add(long x) {
-        return x + 0;
+    static boolean equ() {
+        double x = 34;
+        return x == 34;
     }
-    public static long sub(long x) {
-        return x - 0;
+    static boolean neq() {
+        double x = 34;
+        return x != 33;
     }
-    public static long mul(long x) {
-        return x * 1;
+    static boolean geq() {
+        double x = 34;
+        return x >= 33;
     }
-    public static long div(long x) {
-        return x / 1;
+    static boolean ge() {
+        double x = 34;
+        return x > 35;
     }
-    public static long mod() {
-        return 14;
+    static boolean ltq() {
+        double x = 34;
+        return x <= 32;
     }
-    public static long and(long x) {
-        return x & -1;
+    static boolean lt() {
+        double x = 34;
+        return x < 31;
     }
-    public static long or(long x) {
-        return x | 0;
-    }
-    public static long xor(long x) {
-        return x ^ 0;
-    }
-
 }
