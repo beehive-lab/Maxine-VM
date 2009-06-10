@@ -51,7 +51,7 @@ public class C1XCompilation {
     Bailout _bailout;
 
     int _totalBlocks;
-    int _totalBytecodes;
+    int _totalInstructions;
 
     /**
      * Creates a new compilation for the specified method and runtime.
@@ -82,7 +82,9 @@ public class C1XCompilation {
     public BlockBegin startBlock() {
         try {
             if (_start == null) {
-                _start = new GraphBuilder(this, new IRScope(this, null, 0, _method, _osrBCI)).start();
+                final GraphBuilder builder = new GraphBuilder(this, new IRScope(this, null, 0, _method, _osrBCI));
+                _start = builder.start();
+                _totalInstructions = builder.instructionCount();
             }
         } catch (Bailout b) {
             _bailout = b;
@@ -230,5 +232,13 @@ public class C1XCompilation {
         map.cleanup();
         _totalBlocks += map.numberOfBlocks();
         return map;
+    }
+
+    /**
+     * Returns the number of bytecodes inlined into the compilation.
+     * @return the number of bytecodes
+     */
+    public int totalInstructions() {
+        return _totalInstructions;
     }
 }

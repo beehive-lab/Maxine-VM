@@ -38,6 +38,7 @@ public class NegateOp extends Instruction {
      */
     public NegateOp(Instruction x) {
         super(x.type().base());
+        _x = x;
     }
 
     /**
