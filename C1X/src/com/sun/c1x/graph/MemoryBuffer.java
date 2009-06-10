@@ -85,11 +85,15 @@ public class MemoryBuffer {
         if (load.isStatic()) {
             // the field is static, look in the static map
             Instruction r = _valueMap.get(field);
-            if (r != null) return r;
+            if (r != null) {
+                return r;
+            }
             _valueMap.put(field, load);
         } else {
             // see if the value for this object for this field is in the map
-            if (_objectMap.get(field) == load.object()) return _valueMap.get(field);
+            if (_objectMap.get(field) == load.object()) {
+                return _valueMap.get(field);
+            }
             _objectMap.put(field, load.object());
             _valueMap.put(field, load);
         }
@@ -126,7 +130,9 @@ public class MemoryBuffer {
             Instruction obj = _objectMap.get(field);
             if (obj == store.object()) {
                 // is this a redundant store?
-                if (value == _valueMap.get(field) && !field.isVolatile()) return null;
+                if (value == _valueMap.get(field) && !field.isVolatile()) {
+                    return null;
+                }
             }
             _objectMap.put(field, store.object());
             _valueMap.put(field, value);

@@ -124,6 +124,11 @@ public class MaxCiSignature implements CiSignature {
         return _descriptor.toString();
     }
 
+    @Override
+    public String toString() {
+        return asString();
+    }
+
     /**
      * Gets the size (in terms of Java slots) of the arguments, with or without a receiver object.
      * @param withReceiver <code>true</code> if a receiver argument should be added; <code>false</code> otherwise

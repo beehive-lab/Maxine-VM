@@ -51,8 +51,8 @@ public class ValueType {
      * @param size the size in words
      */
     public ValueType(byte tag, int size) {
-        this._tag = tag;
-        this._size = size;
+        _tag = tag;
+        _size = size;
     }
 
     /**
@@ -88,6 +88,14 @@ public class ValueType {
     }
 
     /**
+     * Checks whether this value type is long.
+     * @return <code>true</code> if this type is long
+     */
+    public final boolean isLong() {
+        return _tag == ValueTag.LONG_TAG;
+    }
+
+    /**
      * Checks whether this value type is float.
      * @return <code>true</code> if this type is float
      */
@@ -104,11 +112,26 @@ public class ValueType {
     }
 
     /**
+     * Checks if this is an {@code int}, {@code float}, {@code long} or {@code double} value type.
+     */
+    public final boolean isPrimitive() {
+        return isInt() || isFloat() || isLong() || isDouble();
+    }
+
+    /**
      * Checks whether this value type is an object type.
      * @return <code>true</code> if this type is an object
      */
     public final boolean isObject() {
         return _tag == ValueTag.OBJECT_TAG;
+    }
+
+    /**
+     * Checks whether this value type is an address type.
+     * @return <code>true</code> if this type is an address
+     */
+    public boolean isAddress() {
+        return _tag == ValueTag.JSR_TAG;
     }
 
     /**
@@ -270,5 +293,4 @@ public class ValueType {
         }
         return BasicType.Illegal;
     }
-
 }

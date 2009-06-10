@@ -94,6 +94,14 @@ public class Invoke extends StateSplit {
     }
 
     /**
+     * Gets the list of instructions that produce input for this instruction.
+     * @return the list of instructions that produce input
+     */
+    public Instruction[] arguments() {
+        return _arguments;
+    }
+
+    /**
      * Checks whether this instruction can trap.
      * @return <code>true</code>, conservatively assuming the called method may throw an exception
      */

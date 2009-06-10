@@ -101,7 +101,9 @@ public class GraphBuilder {
             }
             ValueType rt = returnValueType(method);
             Instruction result = null;
-            if (rt.tag() != ValueTag.VOID_TAG) result = pop(rt);
+            if (rt.tag() != ValueTag.VOID_TAG) {
+                result = pop(rt);
+            }
             methodReturn(result);
             BlockEnd end = (BlockEnd) _last;
             _block.setEnd(end);
@@ -473,16 +475,36 @@ public class GraphBuilder {
             }
         }
         switch (con.basicType()) {
-            case Boolean: type = ConstType.forBoolean(con.asBoolean()); break;
-            case Char: type = ConstType.forChar(con.asChar()); break;
-            case Float: type = ConstType.forFloat(con.asFloat()); break;
-            case Double: type = ConstType.forDouble(con.asDouble()); break;
-            case Byte: type = ConstType.forByte(con.asByte()); break;
-            case Short: type = ConstType.forShort(con.asShort()); break;
-            case Int: type = ConstType.forInt(con.asInt()); break;
-            case Long: type = ConstType.forLong(con.asLong()); break;
-            case Object: type = ConstType.forObject(con.asObject()); break;
-            case Array: type = ConstType.forObject(con.asObject()); break;
+            case Boolean:
+                type = ConstType.forBoolean(con.asBoolean());
+                break;
+            case Char:
+                type = ConstType.forChar(con.asChar());
+                break;
+            case Float:
+                type = ConstType.forFloat(con.asFloat());
+                break;
+            case Double:
+                type = ConstType.forDouble(con.asDouble());
+                break;
+            case Byte:
+                type = ConstType.forByte(con.asByte());
+                break;
+            case Short:
+                type = ConstType.forShort(con.asShort());
+                break;
+            case Int:
+                type = ConstType.forInt(con.asInt());
+                break;
+            case Long:
+                type = ConstType.forLong(con.asLong());
+                break;
+            case Object:
+                type = ConstType.forObject(con.asObject());
+                break;
+            case Array:
+                type = ConstType.forObject(con.asObject());
+                break;
             default:
                 throw new Bailout("could not resolve constant");
         }
@@ -786,7 +808,9 @@ public class GraphBuilder {
     }
 
     private void storeField(StoreField store) {
-        if (C1XOptions.EliminateFieldAccess) store = _memory.store(store);
+        if (C1XOptions.EliminateFieldAccess) {
+            store = _memory.store(store);
+        }
         if (store != null) {
             // the memory buffer did not find the store to be redundant
             append(store);
@@ -1067,7 +1091,9 @@ public class GraphBuilder {
         //       is too long (see also java bug 4327029, and comment in
         //       GraphBuilder::handle_exception()). This may cause 'under-
         //       flow' of the monitor stack => bailout instead.
-        if (_state.locksSize() < 1) throw new Bailout("monitor stack underflow");
+        if (_state.locksSize() < 1) {
+            throw new Bailout("monitor stack underflow");
+        }
         appendWithBCI(new MonitorExit(x, _state.unlock()), bci, false);
         killAll(); // prevent any optimizations across synchronization
     }
@@ -1374,7 +1400,9 @@ public class GraphBuilder {
             CiType type = sig.argumentType(i);
             ValueType vt = ValueType.fromBasicType(type.basicType());
             Local local = new Local(vt, index);
-            if (type.isLoaded()) local.setDeclaredType(type);
+            if (type.isLoaded()) {
+                local.setDeclaredType(type);
+            }
             state.storeLocal(index, local);
             index += vt.size();
         }
@@ -2001,7 +2029,7 @@ public class GraphBuilder {
                 case Bytecodes.CHECKCAST      : checkcast_(); break;
                 case Bytecodes.INSTANCEOF     : instanceof_(); break;
                 case Bytecodes.MONITORENTER   : monitorenter(apop(), s.currentBCI()); break;
-                case Bytecodes.MONITOREXIT    : monitorexit (apop(), s.currentBCI()); break;
+                case Bytecodes.MONITOREXIT    : monitorexit(apop(), s.currentBCI()); break;
                 case Bytecodes.MULTIANEWARRAY : newMultiArray(); break;
                 case Bytecodes.IFNULL         : ifNull(ValueType.OBJECT_TYPE, Condition.eql); break;
                 case Bytecodes.IFNONNULL      : ifNull(ValueType.OBJECT_TYPE, Condition.neq); break;
@@ -2095,7 +2123,9 @@ public class GraphBuilder {
         int rec = 0;
         IRScope scope = scope();
         while (scope != null) {
-            if (scope.method() != target) break;
+            if (scope.method() != target) {
+                break;
+            }
             scope = scope.caller();
             rec++;
         }
