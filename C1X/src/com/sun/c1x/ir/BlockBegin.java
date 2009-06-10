@@ -20,17 +20,11 @@
  */
 package com.sun.c1x.ir;
 
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
-import java.util.List;
+import java.util.*;
 
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.Bailout;
-import com.sun.c1x.util.BitMap;
-import com.sun.c1x.util.BlockClosure;
-import com.sun.c1x.util.InstructionVisitor;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>BlockBegin</code> instruction represents the beginning of a basic block,

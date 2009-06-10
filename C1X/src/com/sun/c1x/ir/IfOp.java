@@ -64,7 +64,7 @@ public class IfOp extends Op2 {
      * Gets the instruction that produces the value if the comparison is true.
      * @return the instruction producing the value upon true
      */
-    public Instruction trueVal() {
+    public Instruction trueValue() {
         return _trueVal;
     }
 
@@ -72,7 +72,7 @@ public class IfOp extends Op2 {
      * Gets the instruction that produces the value if the comparison is false.
      * @return the instruction producing the value upon false
      */
-    public Instruction falseVal() {
+    public Instruction falseValue() {
         return _falseVal;
     }
 

@@ -57,7 +57,7 @@ public enum Condition {
             case leq: return geq;
             case gtr: return lss;
             case geq: return leq;
-         }
+        }
         throw new IllegalArgumentException();
     }
 
@@ -88,6 +88,7 @@ public enum Condition {
                     case leq: return x <= y;
                     case gtr: return x > y;
                     case geq: return x >= y;
+
                 }
             }
             case ValueTag.LONG_TAG: {
@@ -108,6 +109,7 @@ public enum Condition {
                 switch (this) {
                     case eql: return x == y;
                     case neq: return x != y;
+
                 }
             }
             // XXX: folding of floating comparisons should be possible

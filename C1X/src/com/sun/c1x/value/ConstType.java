@@ -83,6 +83,15 @@ public class ConstType extends ValueType {
     }
 
     /**
+     * Gets this constant's value as a string.
+     *
+     * @return this constant's value as a string
+     */
+    public String valueString() {
+        return _value.toString();
+    }
+
+    /**
      * Modified merge operations for constants. Merge of two identical constants
      * will return the first. Merge of two constants of the same type will return
      * the common (nonconstant) value type. Meet of anything else results in the

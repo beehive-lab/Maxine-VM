@@ -23,7 +23,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.ci.CiExceptionHandler;
 import com.sun.c1x.lir.LIRInstr;
 
-import java.util.List;
+import java.util.*;
 
 /**
  * The <code>ExceptionHandler</code> class represents an exception handler for a Java bytecode method.
@@ -31,6 +31,9 @@ import java.util.List;
  * @author Ben L. Titzer
  */
 public class ExceptionHandler {
+
+    public static final List<ExceptionHandler> ZERO_HANDLERS = Collections.emptyList();
+
     private final CiExceptionHandler _handler;
     private BlockBegin _entryBlock;
     private List<LIRInstr> _entryCode;

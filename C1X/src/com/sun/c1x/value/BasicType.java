@@ -26,24 +26,35 @@ package com.sun.c1x.value;
  * @author Ben L. Titzer
  */
 public enum BasicType {
-    Boolean,
-    Byte,
-    Char,
-    Short,
-    Int,
-    Long,
-    Float,
-    Double,
-    Object,
-    Void,
-    Jsr,
+    Boolean('Z', "boolean"),
+    Char('C', "char"),
+    Float('F', "float"),
+    Double('D', "double"),
+    Byte('B', "byte"),
+    Short('S', "short"),
+    Int('I', "int"),
+    Long('J', "long"),
+    Object('L', "object"),
+    Array('[', "array"),
+    Void('V', "void"),
+    Address,
+    NarrowOop,
+    Conflict,
     Illegal;
 
-    /**
-     * Gets the basic type for an array from the array type code in a {@link com.sun.c1x.bytecode.Bytecodes#NEWARRAY} bytecode.
-     * @param code the array type code operand
-     * @return the basic type for the array elements
-     */
+    BasicType() {
+        _char = (char) 0;
+        _name = "???";
+    }
+
+    BasicType(char ch, String name) {
+        _char = ch;
+        _name = name;
+    }
+
+    public final char _char;
+    public final String _name;
+
     public static BasicType fromArrayTypeCode(int code) {
         switch (code) {
             case 4: return Boolean;

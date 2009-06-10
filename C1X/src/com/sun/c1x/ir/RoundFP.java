@@ -38,6 +38,7 @@ public class RoundFP extends Instruction {
      */
     public RoundFP(Instruction value) {
         super(value.type());
+        _value = value;
     }
 
     /**
