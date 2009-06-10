@@ -611,9 +611,21 @@ public class Canonicalizer implements InstructionVisitor {
         if (type != BasicType.Illegal) {
             // if any of the above matched
             switch (i.opcode()) {
-                case Bytecodes.I2B: if (type == BasicType.Byte) setCanonical(v); break;
-                case Bytecodes.I2S: if (type == BasicType.Byte || type == BasicType.Short) setCanonical(v); break;
-                case Bytecodes.I2C: if (type == BasicType.Char) setCanonical(v); break;
+                case Bytecodes.I2B:
+                    if (type == BasicType.Byte) {
+                        setCanonical(v);
+                    }
+                    break;
+                case Bytecodes.I2S:
+                    if (type == BasicType.Byte || type == BasicType.Short) {
+                        setCanonical(v);
+                    }
+                    break;
+                case Bytecodes.I2C:
+                    if (type == BasicType.Char) {
+                        setCanonical(v);
+                    }
+                    break;
             }
         }
 

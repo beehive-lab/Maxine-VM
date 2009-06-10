@@ -44,7 +44,7 @@ public class Fold_Convert03 {
     }
     public static float l2f() {
         long x = -33;
-        return (float) x;
+        return x;
     }
     public static float d2f() {
         double x = -78.1d;
