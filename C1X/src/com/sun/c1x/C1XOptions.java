@@ -95,7 +95,7 @@ public class C1XOptions {
     public static boolean DoNullCheckElimination             = ____;
     public static boolean DoProfileGuidedInlining            = ____;
     public static boolean DoTypeFlowAnalysis                 = ____;
-    public static int     ReOptUnresolvedCount               = 4;     
+    public static int     ReOptUnresolvedCount               = 4;
     public static boolean DetectCascadingInstanceOf          = ____;
     public static float   MonomorphicProfileRatio            = 0.85f;
     public static float   BimorphicProfileRatio              = 0.90f;

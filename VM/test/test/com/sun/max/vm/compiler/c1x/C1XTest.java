@@ -24,6 +24,7 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.max.collect.*;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.test.*;
@@ -32,8 +33,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.lang.Strings;
 
 /**
  * A simple harness to run the C1X compiler and test it in various modes, without
@@ -142,7 +141,6 @@ public class C1XTest {
             }.run(classpath);
 
             // for all found classes, search for matching methods
-        classes:
             for (String className : matchingClasses) {
                 try {
                     final Class<?> javaClass = Class.forName(className, false, C1XTest.class.getClassLoader());
