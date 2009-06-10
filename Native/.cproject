@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <?fileVersion 4.0.0?>
 
 <cproject>
@@ -72,11 +72,11 @@
 <externalSettings/>
 <extensions>
 <extension id="org.eclipse.cdt.core.ctagsindexer" point="org.eclipse.cdt.core.CIndexer">
-<attribute key="ctagslocationtype" value="ctags_path_default"/>
-<attribute key="ctagsindexincludes" value="false"/>
-<attribute key="ctagfilelocation" value=""/>
 <attribute key="ctagslocation" value=""/>
 <attribute key="ctagfiletype" value="ctags_internal"/>
+<attribute key="ctagsindexincludes" value="false"/>
+<attribute key="ctagslocationtype" value="ctags_path_default"/>
+<attribute key="ctagfilelocation" value=""/>
 </extension>
 <extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
 <extension id="org.eclipse.cdt.core.GNU_ELF" point="org.eclipse.cdt.core.BinaryParser">
@@ -102,7 +102,6 @@
 <pathentry base-path="Native" include="tele/linux" kind="inc" path="" system="true"/>
 <pathentry base-path="Native" include="tele/darwin" kind="inc" path="" system="true"/>
 <pathentry base-path="Native" include="tele/solaris" kind="inc" path="" system="true"/>
-<pathentry include="/usr/local/include" kind="inc" path="" system="true"/>
 <pathentry kind="out" path="build"/>
 <pathentry kind="src" path=""/>
 </storageModule>
