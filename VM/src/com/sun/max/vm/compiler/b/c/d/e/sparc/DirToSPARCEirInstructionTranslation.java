@@ -26,6 +26,7 @@ import com.sun.max.vm.compiler.dir.eir.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.sparc.SPARCEirInstruction.*;
 import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -172,7 +173,7 @@ public final class DirToSPARCEirInstructionTranslation extends DirToEirInstructi
     }
 
     public void visitJump(DirJump dirJump) {
-        Problem.unimplemented();
+        FatalError.unimplemented();
     }
 
     @Override

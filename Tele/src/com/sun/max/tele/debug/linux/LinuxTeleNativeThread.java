@@ -20,9 +20,9 @@
  */
 package com.sun.max.tele.debug.linux;
 
-import com.sun.max.program.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * @author Bernd Mathiske
@@ -80,11 +80,11 @@ public class LinuxTeleNativeThread extends TeleNativeThread {
 
     @Override
     protected boolean threadResume() {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 
     @Override
     public boolean threadSuspend() {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 }

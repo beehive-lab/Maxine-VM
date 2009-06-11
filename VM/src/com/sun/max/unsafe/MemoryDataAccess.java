@@ -23,7 +23,7 @@ package com.sun.max.unsafe;
 import java.nio.*;
 
 import com.sun.max.memory.*;
-import com.sun.max.program.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Implementation of {@link DataAccess} by direct main memory access.
@@ -50,15 +50,15 @@ public final class MemoryDataAccess implements DataAccess {
     }
 
     public int read(Address address, ByteBuffer buffer, int offset, int length) {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 
     public int write(ByteBuffer buffer, int offset, int length, Address toAddress) throws DataIOError {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 
     public void writeBuffer(Address address, ByteBuffer buffer) {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 
     public byte readByte(Address address) {

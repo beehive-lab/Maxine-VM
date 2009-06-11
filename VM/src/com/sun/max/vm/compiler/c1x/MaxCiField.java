@@ -20,12 +20,10 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import com.sun.c1x.ci.CiConstant;
-import com.sun.c1x.ci.CiField;
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.value.BasicType;
-import com.sun.max.vm.actor.member.FieldActor;
-import com.sun.max.vm.classfile.constant.FieldRefConstant;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.value.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.*;
 
 /**
  * The <code>MaxCiField</code> implements a compiler interface field. A field can

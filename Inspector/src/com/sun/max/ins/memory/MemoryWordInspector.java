@@ -40,6 +40,7 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -345,7 +346,7 @@ public final class MemoryWordInspector extends Inspector {
         _disabledInspectObjectAction = new InspectorAction(inspection, "Inspect object (Left-Button)") {
             @Override
             protected void procedure() {
-                Problem.error("Should not happen");
+                throw FatalError.unexpected("Should not happen");
             }
         };
         _disabledInspectObjectAction.setEnabled(false);

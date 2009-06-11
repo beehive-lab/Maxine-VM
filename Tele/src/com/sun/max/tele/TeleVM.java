@@ -65,6 +65,7 @@ import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reference.prototype.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -198,7 +199,7 @@ public abstract class TeleVM implements MaxVM {
                 teleVM = new GuestVMXenTeleVM(bootImageFile, bootImage, sourcepath, commandlineArguments, processID);
                 break;
             default:
-                Problem.unimplemented();
+                FatalError.unimplemented();
         }
         return teleVM;
     }
@@ -445,7 +446,7 @@ public abstract class TeleVM implements MaxVM {
                     _bootImageStart = loadBootImage(agent);
                     break;
                 default:
-                    Problem.unimplemented("need to get the boot image address from attached process somehow");
+                    FatalError.unexpected("need to get the boot image address from attached process somehow");
                     _bootImageStart = Pointer.zero();
             }
         } else {
@@ -484,7 +485,7 @@ public abstract class TeleVM implements MaxVM {
     protected abstract TeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException;
 
     protected TeleProcess attachToTeleProcess(int processID) {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 
     /**

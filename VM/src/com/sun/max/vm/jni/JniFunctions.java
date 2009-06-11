@@ -92,7 +92,7 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static int GetVersion(Pointer env) {
-        Problem.unimplemented();
+        FatalError.unimplemented();
         return -1;
     }
 
@@ -1984,19 +1984,19 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static JniHandle NewDirectByteBuffer(Pointer env, Pointer address, long capacity) {
-        Problem.unimplemented();
+        FatalError.unimplemented();
         return null;
     }
 
     @JNI_FUNCTION
     private static Pointer GetDirectBufferAddress(Pointer env, JniHandle buffer) {
-        Problem.unimplemented();
+        FatalError.unimplemented();
         return null;
     }
 
     @JNI_FUNCTION
     private static long GetDirectBufferCapacity(Pointer env, JniHandle buffer) {
-        Problem.unimplemented();
+        FatalError.unimplemented();
         return 0L;
     }
 

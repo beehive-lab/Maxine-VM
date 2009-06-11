@@ -30,6 +30,7 @@ import com.sun.max.vm.compiler.eir.sparc.*;
 import com.sun.max.vm.compiler.eir.sparc.SPARCEirInstruction.*;
 import com.sun.max.vm.interpreter.eir.*;
 import com.sun.max.vm.interpreter.eir.EirCPU.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -148,7 +149,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
                 cpu().writeStackPointer(sp);
                 assert cpu().readFramePointer().equals(fp);
             } else {
-                Problem.unimplemented();
+                FatalError.unimplemented();
             }
         }
     }
@@ -335,7 +336,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
 
 
     public void visit(SPARCEirCompareAndSwap instruction) {
-        Problem.unimplemented();
+        FatalError.unimplemented();
     }
 
 
@@ -1012,7 +1013,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
             final SPARCEirFrame currentFrame = (SPARCEirFrame) frame();
             currentFrame.registerWindow().restore(cpu());
         } else {
-            Problem.unimplemented();
+            FatalError.unimplemented();
         }
     }
 

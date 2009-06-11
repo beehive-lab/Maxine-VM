@@ -34,6 +34,7 @@ import com.sun.max.vm.compiler.eir.amd64.*;
 import com.sun.max.vm.compiler.eir.amd64.AMD64EirInstruction.*;
 import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.interpreter.eir.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -219,7 +220,7 @@ public class AMD64EirInterpreter extends EirInterpreter implements AMD64EirInstr
     }
 
     public void visit(AMD64EirCompareAndSwap compareAndSwap) {
-        Problem.unimplemented();
+        FatalError.unimplemented();
     }
 
     public void visit(AMD64EirInstruction.ADD_I32 instruction) {

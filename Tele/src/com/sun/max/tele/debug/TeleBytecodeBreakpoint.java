@@ -23,7 +23,6 @@ package com.sun.max.tele.debug;
 import java.util.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -34,6 +33,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.jit.amd64.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -83,7 +83,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                     _deoptimizer = AMD64Deoptimizer.deoptimizer();
                     break;
                 default:
-                    Problem.unimplemented();
+                    FatalError.unimplemented();
             }
         }
         return _deoptimizer;

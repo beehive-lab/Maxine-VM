@@ -27,6 +27,7 @@ import com.sun.max.collect.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;

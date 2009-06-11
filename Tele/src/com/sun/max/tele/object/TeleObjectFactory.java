@@ -218,7 +218,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
                     } else if (StaticHub.class.isAssignableFrom(javaClass)) {
                         teleObject = new TeleStaticHub(teleVM(), reference);
                     } else {
-                        Problem.error("invalid hybrid implementation type");
+                        throw FatalError.unexpected("invalid hybrid implementation type");
                     }
                 }
             }
@@ -240,7 +240,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
                 }
             }
         } else {
-            Problem.error("invalid object implementation type");
+            throw FatalError.unexpected("invalid object implementation type");
         }
 
         _oidToTeleObject.put(teleObject.getOID(), teleObject);

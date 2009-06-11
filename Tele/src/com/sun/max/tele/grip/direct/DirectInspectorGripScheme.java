@@ -34,6 +34,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * @author Bernd Mathiske
@@ -748,22 +749,22 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
     }
 
     public Word compareAndSwapWord(Grip grip, Offset offset, Word suspectedValue, Word newValue) {
-        Problem.unimplemented();
+        FatalError.unimplemented();
         return Word.zero();
     }
 
     public Word compareAndSwapWord(Grip grip, int offset, Word suspectedValue, Word newValue) {
-        Problem.unimplemented();
+        FatalError.unimplemented();
         return Word.zero();
     }
 
     public Reference compareAndSwapReference(Grip grip, Offset offset, Reference suspectedValue, Reference newValue) {
-        Problem.unimplemented();
+        FatalError.unimplemented();
         return null;
     }
 
     public Reference compareAndSwapReference(Grip grip, int offset, Reference suspectedValue, Reference newValue) {
-        Problem.unimplemented();
+        FatalError.unimplemented();
         return null;
     }
 }

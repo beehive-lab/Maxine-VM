@@ -21,7 +21,6 @@
 package com.sun.max.vm.compiler.cir.operator;
 
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
@@ -37,6 +36,7 @@ import com.sun.max.vm.compiler.cir.snippet.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 
@@ -76,7 +76,7 @@ public abstract class JavaOperator extends CirOperator {
     }
 
     public MethodActor foldingMethodActor() {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 
     public String name() {

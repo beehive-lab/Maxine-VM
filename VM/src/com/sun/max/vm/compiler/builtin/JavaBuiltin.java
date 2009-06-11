@@ -21,10 +21,9 @@
 package com.sun.max.vm.compiler.builtin;
 
 import com.sun.max.annotate.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.type.*;
 
 public abstract class JavaBuiltin extends Builtin {
@@ -723,7 +722,7 @@ public abstract class JavaBuiltin extends Builtin {
 
         @BUILTIN(builtinClass = FloatCompareL.class)
         public static int floatCompareL(float greater, float less) {
-            Problem.todo("NaN treatment");
+            // TODO: NaN treatment
             final Float f = greater;
             return f.compareTo(less);
         }
@@ -741,7 +740,7 @@ public abstract class JavaBuiltin extends Builtin {
 
         @BUILTIN(builtinClass = FloatCompareG.class)
         public static int floatCompareG(float greater, float less) {
-            Problem.todo("NaN treatment");
+            // TODO: NaN treatment
             final Float f = greater;
             return f.compareTo(less);
         }
@@ -759,7 +758,7 @@ public abstract class JavaBuiltin extends Builtin {
 
         @BUILTIN(builtinClass = DoubleCompareL.class)
         public static int doubleCompareL(double greater, double less) {
-            Problem.todo("NaN treatment");
+            // TODO: NaN treatment
             final Double d = greater;
             return d.compareTo(less);
         }
@@ -777,7 +776,7 @@ public abstract class JavaBuiltin extends Builtin {
 
         @BUILTIN(builtinClass = DoubleCompareG.class)
         public static int doubleCompareG(double greater, double less) {
-            Problem.todo("NaN treatment");
+            // TODO: NaN treatment
             final Double d = greater;
             return d.compareTo(less);
         }

@@ -36,6 +36,7 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Visual inspector and debugger for a Java method in the VM, able to display one or more kinds of code
@@ -194,7 +195,7 @@ public class JavaMethodInspector extends MethodInspector {
             case BYTECODES:
                 return new JTableBytecodeViewer(inspection(), this, _teleClassMethodActor, _teleTargetMethod);
             case JAVA_SOURCE:
-                Problem.unimplemented();
+                FatalError.unimplemented();
                 return null;
             default:
                 ProgramError.unexpected("Unexpected MethodCodeKind");

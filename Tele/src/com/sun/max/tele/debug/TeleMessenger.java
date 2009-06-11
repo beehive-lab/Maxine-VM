@@ -20,6 +20,7 @@
  */
 package com.sun.max.tele.debug;
 
+import com.sun.max.tele.*;
 import com.sun.max.vm.actor.member.*;
 
 public interface TeleMessenger {

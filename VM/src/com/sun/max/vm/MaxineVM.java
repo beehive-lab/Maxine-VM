@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm;
 
-import static com.sun.max.vm.VMOptions.register;
+import static com.sun.max.vm.VMOptions.*;
 
 import java.lang.reflect.*;
 import java.util.*;

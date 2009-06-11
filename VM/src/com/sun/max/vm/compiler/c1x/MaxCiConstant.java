@@ -20,10 +20,9 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import com.sun.c1x.ci.CiConstant;
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.value.BasicType;
-import com.sun.max.vm.value.Value;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.value.*;
+import com.sun.max.vm.value.*;
 
 /**
  * The <code>MaxCiConstant</code> represents a constant, such as a primitive or object

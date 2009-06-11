@@ -25,10 +25,10 @@ import java.util.*;
 import java.util.logging.*;
 
 import com.sun.max.jdwp.vm.proxy.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -82,8 +82,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     @Override
     public Value readFieldValue(FieldActor fieldActor) {
-        Problem.error("Maxine Array objects don't contain fields");
-        return null;
+        throw FatalError.unexpected("Maxine Array objects don't contain fields");
     }
 
     @Override

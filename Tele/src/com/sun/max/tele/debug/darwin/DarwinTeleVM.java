@@ -26,6 +26,7 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * @author Bernd Mathiske
@@ -39,7 +40,7 @@ public final class DarwinTeleVM extends TeleVM {
 
     @Override
     protected TeleProcess attachToTeleProcess(int processID) {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 
     public DarwinTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int processID) throws BootImageException {

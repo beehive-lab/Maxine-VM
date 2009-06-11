@@ -233,7 +233,7 @@ public class SPARCJitCompiler extends JitCompiler {
 
         switch (purpose) {
             case REFERENCE_MAP_PREPARING: {
-                Problem.unimplemented();
+                FatalError.unimplemented();
                 break;
             }
             case EXCEPTION_HANDLING: {

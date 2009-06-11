@@ -23,6 +23,7 @@ package com.sun.max.vm.code;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * A code manager that allocates virtual memory somewhere in the address space.
@@ -61,7 +62,7 @@ public class VariableAddressCodeManager extends CodeManager {
     @Override
     protected CodeRegion makeFreeCodeRegion() {
         if (_numberOfRuntimeCodeRegionsInUse >= _runtimeCodeRegions.length) {
-            Problem.unimplemented("cannot free code regions");
+            FatalError.unexpected("cannot free code regions");
         }
 
         final Address address = allocateCodeRegionMemory(Size.fromInt(RUNTIME_CODE_REGION_SIZE));

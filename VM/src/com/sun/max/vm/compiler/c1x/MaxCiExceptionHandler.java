@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import com.sun.c1x.ci.CiExceptionHandler;
+import com.sun.c1x.ci.*;
 
 /**
  * The <code>MaxCiExceptionHandler</code> represents an exception handler

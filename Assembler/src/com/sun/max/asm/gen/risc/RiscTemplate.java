@@ -65,7 +65,7 @@ public abstract class RiscTemplate extends Template implements RiscInstructionDe
     /**
      * Adds the value of a constant field to the opcode of the instruction and
      * updates the opcode mask to include the bits of the field.
-     * 
+     *
      * @param field a field containing a constant value
      * @param value the constant value
      */
@@ -107,7 +107,7 @@ public abstract class RiscTemplate extends Template implements RiscInstructionDe
 
     /**
      * Sets the internal name of this template from a given string it is not already set.
-     * 
+     *
      * @param string  a string specified in the to consider
      */
     public void visitString(String string) {
@@ -188,8 +188,7 @@ public abstract class RiscTemplate extends Template implements RiscInstructionDe
 
     @Override
     public Sequence<Operand> operands() {
-        Problem.unimplemented();
-        return null;
+        throw ProgramError.unexpected("unimplemented");
     }
 
     @Override

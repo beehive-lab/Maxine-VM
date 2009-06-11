@@ -43,6 +43,7 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * A table-based viewer for an (immutable) section of {@link TargetCode} in the VM.
@@ -713,7 +714,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             case ARM:
             case PPC:
             case IA32:
-                Problem.unimplemented();
+                FatalError.unimplemented();
                 return null;
         }
         ProgramError.unknownCase();

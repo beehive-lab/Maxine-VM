@@ -24,6 +24,7 @@ import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * A code manager that reserves and allocates virtual memory at a fixed address.
@@ -69,7 +70,7 @@ public class FixedAddressCodeManager extends CodeManager {
                 return codeRegion;
             }
         }
-        Problem.unimplemented("cannot free code regions");
+        FatalError.unexpected("cannot free code regions");
         return null;
     }
 

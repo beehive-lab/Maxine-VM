@@ -45,6 +45,7 @@ import com.sun.max.vm.compiler.target.sparc.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.jit.Stop.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.sparc.*;
@@ -565,7 +566,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
 
                 break;
             default: {
-                Problem.unimplemented();
+                FatalError.unimplemented();
             }
         }
     }

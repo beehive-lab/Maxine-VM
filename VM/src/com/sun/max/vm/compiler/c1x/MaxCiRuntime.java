@@ -23,10 +23,10 @@ package com.sun.max.vm.compiler.c1x;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -69,7 +69,7 @@ public class MaxCiRuntime implements CiRuntime {
      * @return the OSR frame
      */
     public CiOsrFrame getOsrFrame(CiMethod method, int bci) {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 
     /**
@@ -132,7 +132,7 @@ public class MaxCiRuntime implements CiRuntime {
      * @return a non-initialized instance of the specified compiler interface type
      */
     public Object allocateObject(CiType type) {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 
     /**
@@ -142,7 +142,7 @@ public class MaxCiRuntime implements CiRuntime {
      * @return an initialized array with the specified length and element type
      */
     public Object allocateArray(CiType type, int length) {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 
     /**

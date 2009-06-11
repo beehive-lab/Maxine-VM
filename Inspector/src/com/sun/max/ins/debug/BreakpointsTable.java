@@ -37,6 +37,7 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 
 
@@ -261,9 +262,8 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
                 case TRIGGER_THREAD:
                     return  breakpointData.triggerThreadName();
                 default:
-                    Problem.error("Unspected Breakpoint Data column");
+                    throw FatalError.unexpected("Unspected Breakpoint Data column");
             }
-            return null;
         }
 
         @Override
@@ -282,9 +282,8 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
                 case TRIGGER_THREAD:
                     return String.class;
                 default:
-                    Problem.error("Unspected Breakpoint Data column");
+                    throw FatalError.unexpected("Unspected Breakpoint Data column");
             }
-            return Object.class;
         }
 
         @Override
@@ -317,8 +316,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
                 }
                 count++;
             }
-            Problem.error("BreakpointsInspector.get(" + row + ") failed");
-            return null;
+            throw FatalError.unexpected("BreakpointsInspector.get(" + row + ") failed");
         }
 
         /**
@@ -842,7 +840,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
 
         @Override
         void setCondition(String conditionText) {
-            Problem.unimplemented("Conditional bytecode breakpoints not supported yet");
+            throw ProgramError.unexpected("unimplemented");
         }
 
         @Override

@@ -20,11 +20,9 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import com.sun.c1x.ci.CiSignature;
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.value.BasicType;
-import com.sun.max.vm.type.SignatureDescriptor;
-import com.sun.max.vm.type.TypeDescriptor;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.value.*;
+import com.sun.max.vm.type.*;
 
 /**
  * The <code>MaxCiSignature</code> class implements a method signature for the

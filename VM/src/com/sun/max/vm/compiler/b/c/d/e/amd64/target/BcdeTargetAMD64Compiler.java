@@ -265,7 +265,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                         }
                         // TODO: Get address of safepoint instruction at exception dispatcher site and scan
                         // the frame references based on its Java frame descriptor.
-                        Problem.unimplemented("Cannot reliably find safepoint at exception dispatcher site yet.");
+                        FatalError.unexpected("Cannot reliably find safepoint at exception dispatcher site yet.");
                     }
                 } else {
                     if (targetMethod.classMethodActor().isTrapStub()) {
@@ -280,7 +280,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                             } else {
                                 // TODO: Get address of safepoint instruction at exception dispatcher site and scan
                                 // the register references based on its Java frame descriptor.
-                                Problem.unimplemented("Cannot reliably find safepoint at exception dispatcher site yet.");
+                                FatalError.unexpected("Cannot reliably find safepoint at exception dispatcher site yet.");
                                 preparer.prepareRegisterReferenceMap(safepoint.getRegisterState(trapState), catchAddress.asPointer());
                             }
                         } else {

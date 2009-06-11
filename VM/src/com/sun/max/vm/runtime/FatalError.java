@@ -21,6 +21,8 @@
 package com.sun.max.vm.runtime;
 
 import com.sun.max.annotate.*;
+import com.sun.max.program.*;
+import com.sun.max.program.ProgramError.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
@@ -31,6 +33,14 @@ import com.sun.max.vm.thread.*;
  * @author Doug Simon
  */
 public final class FatalError extends Error {
+
+    static {
+        ProgramError.setHandler(new Handler() {
+            public void handle(String message, Throwable throwable) {
+                unexpected(message, throwable);
+            }
+        });
+    }
 
     /**
      * A breakpoint should be set on this method when debugging the VM so that
@@ -99,6 +109,10 @@ public final class FatalError extends Error {
         if (!condition) {
             unexpected(message);
         }
+    }
+
+    public static FatalError unimplemented() {
+        throw unexpected("Unimplemented");
     }
 
     static class ExitingGuard {

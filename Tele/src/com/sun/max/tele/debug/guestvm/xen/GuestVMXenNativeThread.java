@@ -20,9 +20,9 @@
  */
 package com.sun.max.tele.debug.guestvm.xen;
 
-import com.sun.max.program.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
 
 public class GuestVMXenNativeThread extends TeleNativeThread {
 
@@ -63,6 +63,6 @@ public class GuestVMXenNativeThread extends TeleNativeThread {
 
     @Override
     protected boolean threadResume() {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 }

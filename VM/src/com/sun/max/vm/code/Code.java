@@ -24,7 +24,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
@@ -75,7 +74,7 @@ public final class Code {
                 return new FixedAddressCodeManager();
             }
             default: {
-                Problem.unimplemented();
+                FatalError.unimplemented();
                 return null;
             }
         }

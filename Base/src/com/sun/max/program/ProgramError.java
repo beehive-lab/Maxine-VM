@@ -25,10 +25,21 @@ package com.sun.max.program;
  */
 public final class ProgramError extends Error {
 
-    private static final long serialVersionUID = 0;
 
-    private ProgramError(String message) {
-        this(message, null);
+    /**
+     *  Allows for the handle method to be messaged before throwing ProgramError.
+     * @author Paul Caprioli
+     */
+    public static interface Handler {
+        void handle(String message, Throwable throwable);
+    }
+
+    /**
+     * Sets a Handler to be used before throwing ProgramError.
+     * @param handler If non-null, its handle method is messaged before throwing ProgramError.
+     */
+    public static void setHandler(Handler handler) {
+        _handler = handler;
     }
 
     private ProgramError(String message, Throwable cause) {
@@ -37,17 +48,20 @@ public final class ProgramError extends Error {
 
     public static void check(boolean condition) {
         if (!condition) {
-            throw new ProgramError("Program Error");
+            unexpected("Program Error");
         }
     }
 
     public static void check(boolean condition, String message) {
         if (!condition) {
-            throw new ProgramError(message);
+            unexpected(message);
         }
     }
 
     public static ProgramError unexpected(String message, Throwable throwable) {
+        if (_handler != null) {
+            _handler.handle(message, throwable);
+        }
         throw new ProgramError("Unexpected Program Error: " + message, throwable);
     }
 
@@ -70,4 +84,8 @@ public final class ProgramError extends Error {
     public static ProgramError unknownCase(String caseValue) {
         throw unexpected("unknown switch case: " + caseValue);
     }
+
+    // Checkstyle: stop
+    private static Handler _handler = null;
+
 }

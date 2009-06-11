@@ -24,12 +24,12 @@ import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.BreakpointCondition.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.value.*;
 
@@ -321,7 +321,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
                         // - returns nothing - problem, should not happen
                     }
                 } else if (!breakpoint.isEnabled()) {
-                    Problem.unimplemented("found disabled tele breakpoint at same ip as VM breakpoint");
+                    FatalError.unexpected("found disabled tele breakpoint at same ip as VM breakpoint");
                 }
             }
         }

@@ -20,15 +20,15 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import java.util.*;
+
 import com.sun.c1x.ci.*;
-import com.sun.max.program.ProgramError;
-import com.sun.max.vm.actor.holder.ClassActor;
-import com.sun.max.vm.actor.member.FieldActor;
-import com.sun.max.vm.actor.member.MethodActor;
+import com.sun.max.program.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
-import com.sun.max.vm.type.SignatureDescriptor;
-import java.util.WeakHashMap;
 
 /**
  * The <code>MaxCiConstantPool</code> class implements a constant pool for
