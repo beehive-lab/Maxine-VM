@@ -21,7 +21,6 @@
 package com.sun.c1x.util;
 
 import static com.sun.c1x.ir.BlockBegin.BlockFlag.*;
-import static com.sun.c1x.ir.Instruction.*;
 
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
@@ -36,7 +35,6 @@ import com.sun.c1x.value.*;
  * @author Doug Simon
  */
 public class InstructionPrinter implements InstructionVisitor {
-
     /**
      * The columns printed in a tabulated instruction
      * {@linkplain InstructionPrinter#printInstructionListing(Instruction) listing}.
@@ -53,7 +51,7 @@ public class InstructionPrinter implements InstructionVisitor {
         USE(7, "use"),
 
         /**
-         * The instruction as {@linkplain Instruction#valueString(Instruction) value}.
+         * The instruction as {@linkplain InstructionPrinter#valueString(com.sun.c1x.ir.Instruction) value}.
          */
         VALUE(12, "tid"),
 
@@ -75,6 +73,7 @@ public class InstructionPrinter implements InstructionVisitor {
         /**
          * Prints this column's label to a given stream after padding the stream with '_' characters
          * until its {@linkplain C1XPrintStream#position() position} is equal to this column's position.
+         * @param out the print stream
          */
         public void printLabel(C1XPrintStream out) {
             out.fillTo(_position, '_');
@@ -84,6 +83,7 @@ public class InstructionPrinter implements InstructionVisitor {
         /**
          * Prints space characters to a given stream until its {@linkplain C1XPrintStream#position() position}
          * is equal to this column's position.
+         * @param out the print stream
          */
         public void advance(C1XPrintStream out) {
             out.fillTo(_position, ' ');
@@ -304,8 +304,10 @@ public class InstructionPrinter implements InstructionVisitor {
                 Instruction value = block.state().stackAt(i);
                 if (value != null) {
                     _out.println(localVariableOrStackSlotAsString(i, value, block));
+                    i += value.type().size();
+                } else {
+                    i++;
                 }
-                i += value.type().size();
             }
         }
     }
@@ -318,6 +320,7 @@ public class InstructionPrinter implements InstructionVisitor {
      * @param value the value of the local variable or stack slot
      * @param block if {@code value} is a phi, then its operands are formatted if {@code block} is its
      *            {@linkplain Phi#block() join point}
+     * @return the instruction representation as a string
      */
     public static String localVariableOrStackSlotAsString(int index, Instruction value, BlockBegin block) {
         StringBuilder sb = new StringBuilder(30);
@@ -340,7 +343,7 @@ public class InstructionPrinter implements InstructionVisitor {
             }
         }
         if (value != value.subst()) {
-            sb.append("alias " + valueString(value.subst()));
+            sb.append("alias ").append(valueString(value.subst()));
         }
         return sb.toString();
     }
@@ -353,10 +356,7 @@ public class InstructionPrinter implements InstructionVisitor {
      * @return {@code true} if {@code value} is a phi and its join block is {@code block}
      */
     public static boolean isPhiAtBlock(Instruction value, BlockBegin block) {
-        if (value instanceof Phi) {
-            return ((Phi) value).block() == block;
-        }
-        return false;
+        return value instanceof Phi && ((Phi) value).block() == block;
     }
 
     public void visitCheckCast(CheckCast checkcast) {
@@ -374,7 +374,7 @@ public class InstructionPrinter implements InstructionVisitor {
         } else if (type.isObject()) {
             // TODO: complete ValueType hierarchy with InstanceType, ArrayType, etc...
             _out.print("<object: TODO>");
-        } else if (type.isAddress()) {
+        } else if (type.isJsr()) {
             _out.print("bci:" + type.asConstant().valueString());
         } else {
             _out.print("???");
@@ -625,4 +625,17 @@ public class InstructionPrinter implements InstructionVisitor {
         }
         _out.print(", value " + valueString(unsafe.value()) + ')');
     }
+
+    /**
+     * Converts a given instruction to a value string. The representation of an instruction as
+     * a value is formed by concatenating the {@linkplain com.sun.c1x.value.ValueType#tchar() character} denoting its
+     * {@linkplain com.sun.c1x.ir.Instruction#type() type} and its {@linkplain com.sun.c1x.ir.Instruction#id()}. For example,
+     * "i13".
+     *
+     * @param value the instruction to convert to a value string. If {@code value == null}, then "null" is returned.
+     */
+    public static String valueString(Instruction value) {
+        return value == null ? "null" : "" + value.type().tchar() + value.id();
+    }
+
 }

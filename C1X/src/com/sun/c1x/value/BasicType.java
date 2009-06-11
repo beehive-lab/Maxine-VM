@@ -26,27 +26,28 @@ package com.sun.c1x.value;
  * @author Ben L. Titzer
  */
 public enum BasicType {
-    Boolean('Z', "boolean"),
-    Byte('B', "byte"),
-    Short('S', "short"),
-    Char('C', "char"),
-    Int('I', "int"),
-    Float('F', "float"),
-    Double('D', "double"),
-    Long('J', "long"),
-    Object('L', "object"),
-    Array('[', "array"),
-    Void('V', "void"),
-    Jsr('A', "jsr"),
-    Illegal('?', "???");
+    Boolean('Z', "boolean", 1),
+    Byte('B', "byte", 1),
+    Short('S', "short", 1),
+    Char('C', "char", 1),
+    Int('I', "int", 1),
+    Float('F', "float", 1),
+    Double('D', "double", 2),
+    Long('J', "long", 2),
+    Object('L', "object", 1),
+    Void('V', "void", 0),
+    Jsr('A', "jsr", 1),
+    Illegal('?', "???", 1);
 
-    BasicType(char ch, String name) {
+    BasicType(char ch, String name, int size) {
         _char = ch;
         _name = name;
+        _size = size;
     }
 
     public final char _char;
     public final String _name;
+    public final int _size;
 
     /**
      * Checks whether this basic type is valid as the type of a field.
@@ -88,7 +89,7 @@ public enum BasicType {
      * @return the size of the basic type in slots
      */
     public int sizeInSlots() {
-        return this == Long || this == Double ? 2 : 1;
+        return _size;
     }
 
     /**

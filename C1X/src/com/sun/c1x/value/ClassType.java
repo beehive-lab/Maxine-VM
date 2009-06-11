@@ -39,10 +39,10 @@ public class ClassType extends ValueType {
      * @param type the compiler interface type
      */
     public ClassType(CiType type) {
-        super(ValueTag.OBJECT_TAG, 1);
+        super(BasicType.Object);
         _type = type;
         if (type.isLoaded()) {
-            _constant = new ConstType(ValueTag.OBJECT_TAG, 1, type.javaClass(), true);
+            _constant = new ConstType(BasicType.Object, type.javaClass(), true);
         }
     }
 

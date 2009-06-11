@@ -21,7 +21,6 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.value.ConstType;
-import com.sun.c1x.value.ValueTag;
 
 /**
  * Condition codes used in conditionals.
@@ -77,8 +76,8 @@ public enum Condition {
      * <code>Boolean.FALSE</code> if the comparison is known to be false, <code>null</code> otherwise.
      */
     public Boolean foldCondition(ConstType lt, ConstType rt) {
-        switch (lt.tag()) {
-            case ValueTag.INT_TAG: {
+        switch (lt.basicType()) {
+            case Int: {
                 int x = lt.asInt();
                 int y = rt.asInt();
                 switch (this) {
@@ -91,7 +90,7 @@ public enum Condition {
 
                 }
             }
-            case ValueTag.LONG_TAG: {
+            case Long: {
                 long x = lt.asLong();
                 long y = rt.asLong();
                 switch (this) {
@@ -103,7 +102,7 @@ public enum Condition {
                     case geq: return x >= y;
                 }
             }
-            case ValueTag.OBJECT_TAG: {
+            case Object: {
                 Object x = lt.asObject();
                 Object y = rt.asObject();
                 switch (this) {
