@@ -197,7 +197,10 @@ projects=( \
     Inspector:src,test    \
 )
 
-maxine_cp=${JAVA_HOME}/lib/tools.jar
+if [ "$OS" != "Darwin" ]; then
+    maxine_cp=${JAVA_HOME}/lib/tools.jar
+fi
+
 for project in ${projects[@]}; do
     project_dir=${project/:*/}
     maxine_cp=${maxine_cp}:${maxine_dir}/${project_dir}/bin
@@ -638,17 +641,28 @@ c1x_help="process a list of classes and/or methods with the C1X compiler
 
         Object:wait String
 
-    will compile all methods in a class whose name contains "Object" where the
-    method name contains "wait" as well as all methods in a class whose name
+    will compile all methods in a class whose name matches "Object" where the
+    method name matches "wait" as well as all methods in a class whose name
     contains "String". The classes searched are those on the class path.
     
-    This command exists primarily to assist in the development of C1X.
+    The type of matching performed for a given class/method name is determined
+    by the position of '^' in the pattern name as follows:
+    
+    Position of '^'   | Match algorithm
+    ------------------+------------------
+    start AND end     | Equality
+    start             | Prefix
+    end               | Suffix
+    absent            | Substring
+    
+    For example, '^java.util:^toString^' matches all methods named 'toString' in
+    any class whose name start with 'java.util'.
     
     The output traced by this command is not guaranteed to be the same as the output
     for a compilation done at runtime. The code produced by a compiler is sensitive
     to the compilation context such as what classes have been resolved etc.
     
-    Use \"max compile -help\" to see what other options this command accepts."
+    Use \"max c1x -help\" to see what other options this command accepts."
 
 function run_c1x() {
     run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.compiler.c1x.C1XTest $@

@@ -20,6 +20,9 @@
  */
 package test.com.sun.max.vm.compiler.c1x;
 
+import static test.com.sun.max.vm.compiler.c1x.C1XTest.PatternType.*;
+
+import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.*;
@@ -49,8 +52,12 @@ public class C1XTest {
         "Set the tracing level of the Maxine VM and runtime.");
     private static final Option<Integer> _verbose = _options.newIntegerOption("verbose", 1,
         "Set the verbosity level of the testing framework.");
-    private static final Option<Boolean> _print = _options.newBooleanOption("print-bailout", false,
+    private static final Option<Boolean> _printBailout = _options.newBooleanOption("print-bailout", false,
         "Print bailout exceptions.");
+    private static final Option<Boolean> _printIr = _options.newBooleanOption("print-ir", false,
+        "Print IR of a method after compiling it.");
+    private static final Option<File> _outFile = _options.newFileOption("o", (File) null,
+        "A file to which output should be sent. If not specified, then output is sent to stdout.");
     private static final Option<Boolean> _clinit = _options.newBooleanOption("clinit", true,
         "Compile class initializer (<clinit>) methods");
     private static final Option<Boolean> _failFast = _options.newBooleanOption("fail-fast", true,
@@ -66,6 +73,8 @@ public class C1XTest {
 
     private static final List<Timing> _timings = new ArrayList<Timing>();
 
+    private static PrintStream _out = System.out;
+
     public static void main(String[] args) {
         _options.parseArguments(args);
         final String[] arguments = _options.getArguments();
@@ -75,15 +84,29 @@ public class C1XTest {
             return;
         }
 
+        if (_outFile.getValue() != null) {
+            try {
+                _out = new PrintStream(new FileOutputStream(_outFile.getValue()));
+                Trace.setStream(_out);
+            } catch (FileNotFoundException e) {
+                System.err.println("Could not open " + _outFile.getValue() + " for writing: " + e);
+                System.exit(1);
+            }
+        }
+
         Trace.on(_trace.getValue());
 
         // create the prototype
-        new PrototypeGenerator(_options).createJavaPrototype(false);
+        if (_verbose.getValue() > 0) {
+            _out.print("Creating Java prototype... ");
+            new PrototypeGenerator(_options).createJavaPrototype(false);
+            _out.println("done");
+        }
 
         // create MaxineRuntime
         final MaxCiRuntime runtime = new MaxCiRuntime();
         final List<MethodActor> methods = findMethodsToCompile(arguments);
-        final ProgressPrinter progress = new ProgressPrinter(System.out, methods.size(), _verbose.getValue(), false);
+        final ProgressPrinter progress = new ProgressPrinter(_out, methods.size(), _verbose.getValue(), false);
 
         for (int i = 0; i < _warmup.getValue(); i++) {
             for (MethodActor actor : methods) {
@@ -91,14 +114,15 @@ public class C1XTest {
             }
         }
 
-        for (MethodActor actor : methods) {
-            progress.begin(actor.toString());
-            final C1XCompilation compilation = compile(runtime, actor, _print.getValue(), false);
+        for (MethodActor methodActor : methods) {
+            progress.begin(methodActor.toString());
+            final C1XCompilation compilation = compile(runtime, methodActor, _printBailout.getValue(), false);
             if (compilation == null || compilation.startBlock() != null) {
                 progress.pass();
 
-                if (compilation != null && _verbose.getValue() >= 3) {
-                    final InstructionPrinter ip = new InstructionPrinter(new C1XPrintStream(Trace.stream()), true);
+                if (compilation != null && _printIr.getValue()) {
+                    _out.println(methodActor.format("IR for %H.%n(%p)"));
+                    final InstructionPrinter ip = new InstructionPrinter(new C1XPrintStream(_out), true);
                     final BlockPrinter bp = new BlockPrinter(ip, false, false);
                     compilation.startBlock().iteratePreOrder(bp);
                 }
@@ -106,7 +130,7 @@ public class C1XTest {
             } else {
                 progress.fail("failed");
                 if (_failFast.getValue()) {
-                    System.out.println("");
+                    _out.println("");
                     break;
                 }
             }
@@ -122,7 +146,7 @@ public class C1XTest {
             final C1XCompilation compilation = new C1XCompilation(runtime, runtime.getCiMethod(method));
             if (compilation.startBlock() == null) {
                 if (printBailout) {
-                    compilation.bailout().printStackTrace();
+                    compilation.bailout().printStackTrace(_out);
                 }
             }
             if (!warmup) {
@@ -134,22 +158,101 @@ public class C1XTest {
         return null;
     }
 
+    enum PatternType {
+        EXACT("matching") {
+            @Override
+            public boolean matches(String input, String pattern) {
+                return input.equals(pattern);
+            }
+        },
+        PREFIX("starting with") {
+            @Override
+            public boolean matches(String input, String pattern) {
+                return input.startsWith(pattern);
+            }
+        },
+        SUFFIX("ending with") {
+            @Override
+            public boolean matches(String input, String pattern) {
+                return input.endsWith(pattern);
+            }
+        },
+        CONTAINS("containing") {
+            @Override
+            public boolean matches(String input, String pattern) {
+                return input.contains(pattern);
+            }
+        };
+
+        final String _relationship;
+
+        private PatternType(String relationship) {
+            _relationship = relationship;
+        }
+
+        abstract boolean matches(String input, String pattern);
+
+        @Override
+        public String toString() {
+            return _relationship;
+        }
+    }
+
+    static class PatternMatcher {
+        final String _pattern;
+        // 1: exact, 2: prefix, 3: suffix, 4: substring
+        final PatternType _type;
+
+        public PatternMatcher(String pattern) {
+            if (pattern.startsWith("^") && pattern.endsWith("^")) {
+                _type = EXACT;
+                _pattern = pattern.substring(1, pattern.length() - 1);
+            } else if (pattern.startsWith("^")) {
+                _type = PREFIX;
+                _pattern = pattern.substring(1);
+            } else if (pattern.endsWith("^")) {
+                _type = SUFFIX;
+                _pattern = pattern.substring(0, pattern.length() - 1);
+            } else {
+                _type = CONTAINS;
+                _pattern = pattern;
+            }
+        }
+
+        boolean matches(String input) {
+            return _type.matches(input, _pattern);
+        }
+    }
+
     private static List<MethodActor> findMethodsToCompile(String[] arguments) {
         final Classpath classpath = Classpath.fromSystem();
-        final List<MethodActor> methods = new ArrayList<MethodActor>();
+        final List<MethodActor> methods = new ArrayList<MethodActor>() {
+            @Override
+            public boolean add(MethodActor e) {
+                final boolean result = super.add(e);
+                if ((size() % 1000) == 0 && _verbose.getValue() >= 1) {
+                    _out.print('.');
+                }
+                return result;
+            }
+        };
 
         for (int i = 0; i != arguments.length; ++i) {
             final String argument = arguments[i];
             final int colonIndex = argument.indexOf(':');
-            final String classNamePattern = colonIndex == -1 ? argument : argument.substring(0, colonIndex);
+            final PatternMatcher classNamePattern = new PatternMatcher(colonIndex == -1 ? argument : argument.substring(0, colonIndex));
 
             // search for matching classes on the class path
             final AppendableSequence<String> matchingClasses = new ArrayListSequence<String>();
+            if (_verbose.getValue() > 0) {
+                _out.print("Classes " + classNamePattern._type + " '" + classNamePattern._pattern + "'... ");
+            }
+
             new ClassSearch() {
                 @Override
                 protected boolean visitClass(String className) {
                     if (!className.endsWith("package-info")) {
-                        if (className.contains(classNamePattern)) {
+                        if (classNamePattern.matches(className)) {
                             matchingClasses.append(className);
                         }
                     }
@@ -157,6 +260,14 @@ public class C1XTest {
                 }
             }.run(classpath);
 
+            if (_verbose.getValue() > 0) {
+                _out.println(matchingClasses.length());
+            }
+
+            final int startMethods = methods.size();
+            if (_verbose.getValue() > 0) {
+                _out.print("Gathering methods");
+            }
             // for all found classes, search for matching methods
             for (String className : matchingClasses) {
                 try {
@@ -179,13 +290,13 @@ public class C1XTest {
                     } else {
                         // a method pattern was specified, find matching methods
                         final int parenIndex = argument.indexOf('(', colonIndex + 1);
-                        final String methodNamePattern;
+                        final PatternMatcher methodNamePattern;
                         final SignatureDescriptor signature;
                         if (parenIndex == -1) {
-                            methodNamePattern = argument.substring(colonIndex + 1);
+                            methodNamePattern = new PatternMatcher(argument.substring(colonIndex + 1));
                             signature = null;
                         } else {
-                            methodNamePattern = argument.substring(colonIndex + 1, parenIndex);
+                            methodNamePattern = new PatternMatcher(argument.substring(colonIndex + 1, parenIndex));
                             signature = SignatureDescriptor.create(argument.substring(parenIndex));
                         }
                         addMatchingMethods(methods, classActor, methodNamePattern, signature, classActor.localStaticMethodActors());
@@ -195,13 +306,16 @@ public class C1XTest {
                     ProgramWarning.message(classNotFoundException.toString());
                 }
             }
+            if (_verbose.getValue() > 0) {
+                _out.println(" " + (methods.size() - startMethods));
+            }
         }
         return methods;
     }
 
-    private static void addMatchingMethods(final List<MethodActor> methods, final ClassActor classActor, final String methodNamePattern, final SignatureDescriptor signature, MethodActor[] methodActors) {
+    private static void addMatchingMethods(final List<MethodActor> methods, final ClassActor classActor, final PatternMatcher methodNamePattern, final SignatureDescriptor signature, MethodActor[] methodActors) {
         for (final MethodActor method : methodActors) {
-            if (method.name().toString().contains(methodNamePattern)) {
+            if (methodNamePattern.matches(method.name().toString())) {
                 final SignatureDescriptor methodSignature = method.descriptor();
                 if (signature == null || signature.equals(methodSignature)) {
                     methods.add(method);
@@ -227,21 +341,21 @@ public class C1XTest {
                 final double bcps = timing.bytecodesPerSecond();
                 final double ips = timing.instructionsPerSecond();
                 if (!_average.getValue()) {
-                    System.out.print(Strings.padLengthWithSpaces("#" + timing._number, 6));
-                    System.out.print(Strings.padLengthWithSpaces(method.toString(), 80) + ": ");
-                    System.out.print(Strings.padLengthWithSpaces(13, ns + " ns "));
-                    System.out.print(Strings.padLengthWithSpaces(18, Strings.fixedDouble(bcps, 2) + " bytes/s"));
-                    System.out.print(Strings.padLengthWithSpaces(18, Strings.fixedDouble(ips, 2) + " insts/s"));
-                    System.out.println();
+                    _out.print(Strings.padLengthWithSpaces("#" + timing._number, 6));
+                    _out.print(Strings.padLengthWithSpaces(method.toString(), 80) + ": ");
+                    _out.print(Strings.padLengthWithSpaces(13, ns + " ns "));
+                    _out.print(Strings.padLengthWithSpaces(18, Strings.fixedDouble(bcps, 2) + " bytes/s"));
+                    _out.print(Strings.padLengthWithSpaces(18, Strings.fixedDouble(ips, 2) + " insts/s"));
+                    _out.println();
                 }
                 totalBcps += bcps;
                 totalIps += ips;
                 count++;
             }
-            System.out.print("Average: ");
-            System.out.print(Strings.fixedDouble(totalBcps / count, 2) + " bytes/s   ");
-            System.out.print(Strings.fixedDouble(totalIps / count, 2) + " insts/s");
-            System.out.println();
+            _out.print("Average: ");
+            _out.print(Strings.fixedDouble(totalBcps / count, 2) + " bytes/s   ");
+            _out.print(Strings.fixedDouble(totalIps / count, 2) + " insts/s");
+            _out.println();
         }
     }
 

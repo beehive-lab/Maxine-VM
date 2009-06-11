@@ -53,6 +53,7 @@ public class NegateOp extends Instruction {
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply to each value
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         _x = closure.apply(_x);
     }
@@ -61,6 +62,7 @@ public class NegateOp extends Instruction {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitNegateOp(this);
     }

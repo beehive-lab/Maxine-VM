@@ -68,6 +68,7 @@ public abstract class Switch extends BlockEnd {
      * Iterates over the inputs to this instruction.
      * @param closure the closure to apply
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         _value = closure.apply(_value);
     }

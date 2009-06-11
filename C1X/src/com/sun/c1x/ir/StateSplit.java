@@ -71,6 +71,7 @@ public abstract class StateSplit extends Instruction {
      * iterates over all the values in the value stack.
      * @param closure the closure to apply to each value
      */
+    @Override
     public void stateValuesDo(InstructionClosure closure) {
         if (_state != null) {
             _state.valuesDo(closure);

@@ -466,4 +466,16 @@ public abstract class Instruction {
     public boolean typeCheck(Instruction other) {
         return type().basicType() == other.type().basicType();
     }
+
+    /**
+     * Converts a given instruction to a value string. The representation of an instruction as
+     * a value is formed by concatenating the {@linkplain com.sun.c1x.value.ValueType#tchar() character} denoting its
+     * {@linkplain com.sun.c1x.ir.Instruction#type() type} and its {@linkplain com.sun.c1x.ir.Instruction#id()}. For example,
+     * "i13".
+     *
+     * @param value the instruction to convert to a value string. If {@code value == null}, then "null" is returned.
+     */
+    public static String valueString(Instruction value) {
+        return value == null ? "null" : "" + value.type().tchar() + value.id();
+    }
 }

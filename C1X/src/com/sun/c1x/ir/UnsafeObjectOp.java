@@ -77,6 +77,7 @@ public abstract class UnsafeObjectOp extends UnsafeOp {
      * Iterates over the input values of this instruction.
      * @param closure the closure to apply
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         super.inputValuesDo(closure);
         _object = closure.apply(_object);

@@ -60,6 +60,7 @@ public class Local extends Instruction {
      * Computes the declared type of the result of this instruction, if possible.
      * @return the declared type of the result of this instruction, if it is known; <code>null</code> otherwise
      */
+    @Override
     public CiType declaredType() {
         return _declaredType;
     }
@@ -68,6 +69,7 @@ public class Local extends Instruction {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to dispatch to
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitLocal(this);
     }

@@ -74,6 +74,7 @@ public class ConstType extends ValueType {
     /**
      * Converts this value type to a string.
      */
+    @Override
     public String toString() {
         final String val = _isObject ? "object@" + System.identityHashCode(_value) : _value.toString();
         return basicType()._name + " = " + val;
@@ -199,6 +200,7 @@ public class ConstType extends ValueType {
      * Computes the hashcode of this constant.
      * @return a suitable hashcode for this constant
      */
+    @Override
     public int hashCode() {
         if (_isObject) {
             return System.identityHashCode(_value);
@@ -212,6 +214,7 @@ public class ConstType extends ValueType {
      * @param o the object to compare equality
      * @return <code>true</code> if this constant is equivalent to the specified object
      */
+    @Override
     public boolean equals(Object o) {
         return o instanceof ConstType && equivalent((ConstType) o);
     }

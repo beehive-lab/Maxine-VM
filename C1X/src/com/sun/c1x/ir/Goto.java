@@ -46,6 +46,7 @@ public class Goto extends BlockEnd {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitGoto(this);
     }

@@ -66,6 +66,7 @@ public class LoadIndexed extends AccessIndexed {
      * Gets the declared type of this instruction's result.
      * @return the declared type
      */
+    @Override
     public CiType declaredType() {
         CiType arrayType = array().declaredType();
         if (arrayType == null) {
@@ -78,6 +79,7 @@ public class LoadIndexed extends AccessIndexed {
      * Gets the exact type of this instruction's result.
      * @return the exact type
      */
+    @Override
     public CiType exactType() {
         CiType type = declaredType();
         if (type == null || type.isTypeArrayClass()) {
@@ -91,6 +93,7 @@ public class LoadIndexed extends AccessIndexed {
         return null;
     }
 
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitLoadIndexed(this);
     }

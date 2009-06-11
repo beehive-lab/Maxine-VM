@@ -63,7 +63,7 @@ public class ProgressPrinter {
      */
     public void begin(String test) {
         _current = test;
-        if (_verbose >= 2) {
+        if (_verbose == 2) {
             printTest(test, _finished);
             _output.print("...");
         }
@@ -89,7 +89,7 @@ public class ProgressPrinter {
         if (_verbose > 0) {
             output(CTRL_RED, 'X', "failed");
         }
-        if (_verbose >= 2) {
+        if (_verbose == 2) {
             this._output.print("\t-> ");
             this._output.println(message);
         }
@@ -142,7 +142,7 @@ public class ProgressPrinter {
             } else if (_finished % 10 == 0) {
                 _output.print(' ');
             }
-        } else if (_verbose >= 2) {
+        } else if (_verbose == 2) {
             control(ctrl);
             _output.print(str);
             control(CTRL_NORM);

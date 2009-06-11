@@ -26,4 +26,5 @@ package com.sun.c1x;
  * @author Ben L. Titzer
  */
 public class C1XTunables {
+    // Nothing yet
 }

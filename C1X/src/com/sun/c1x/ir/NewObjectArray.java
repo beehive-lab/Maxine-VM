@@ -56,6 +56,7 @@ public class NewObjectArray extends NewArray {
      * Gets the exact type of this instruction.
      * @return the exact type of this instruction
      */
+    @Override
     public CiType exactType() {
         return _elementClass.arrayOf();
     }
@@ -64,6 +65,7 @@ public class NewObjectArray extends NewArray {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitNewObjectArray(this);
     }
