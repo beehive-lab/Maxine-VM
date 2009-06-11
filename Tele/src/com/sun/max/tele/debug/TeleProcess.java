@@ -619,6 +619,10 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      */
     protected abstract int write0(ByteBuffer buffer, int offset, int length, Address address);
 
+    public int maximumWatchpointCount() {
+        return 0;
+    }
+
     protected boolean activateWatchpoint(MemoryRegion memoryRegion) {
         return false;
     }

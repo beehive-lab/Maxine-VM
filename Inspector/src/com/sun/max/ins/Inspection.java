@@ -93,10 +93,10 @@ public final class Inspection {
 
         BreakpointPersistenceManager.initialize(this);
         _inspectionActions.refresh(true);
-        // Listen for VM state changes
+
         maxVM().addVMStateObserver(new VMStateObserver());
-        // Listen for changes in breakpoints
         maxVM().addBreakpointObserver(new BreakpointObserver());
+        maxVM().addWatchpointObserver(new WatchpointObserver());
 
         _inspectorMainFrame = new InspectorMainFrame(this, INSPECTOR_NAME, _settings, _inspectionActions);
 
@@ -348,29 +348,55 @@ public final class Inspection {
     }
 
     /**
-     * Handles reported breakpoint changes in the VM.
-     */
-    private void processBreakpointChange() {
-        Trace.line(TRACE_VALUE, tracePrefix() + "breakpoint state notification");
-        for (InspectionListener listener : _inspectionListeners.clone()) {
-            listener.breakpointSetChanged();
-        }
-    }
-
-    /**
-     * Handles reported breakpoint changes in the VM. Ensures that the event is handled only on the
+     * Propagates reported breakpoint changes in the VM.
+     * Ensures that notification is handled only on the
      * AWT event thread.
      */
     private final class BreakpointObserver implements Observer {
 
         public void update(Observable o, Object arg) {
             if (java.awt.EventQueue.isDispatchThread()) {
-                processBreakpointChange();
+                Trace.line(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
+                for (InspectionListener listener : _inspectionListeners.clone()) {
+                    listener.breakpointSetChanged();
+                }
             } else {
                 SwingUtilities.invokeLater(new Runnable() {
 
                     public void run() {
-                        processBreakpointChange();
+                        Trace.line(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
+                        for (InspectionListener listener : _inspectionListeners.clone()) {
+                            listener.breakpointSetChanged();
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    /**
+     * Propagates reported watchpoint changes in the VM.
+     * Ensures that notification is handled only on the
+     * AWT event thread.
+     */
+    private final class WatchpointObserver implements Observer {
+
+        public void update(Observable o, Object arg) {
+            if (java.awt.EventQueue.isDispatchThread()) {
+                Trace.line(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
+                for (InspectionListener listener : _inspectionListeners.clone()) {
+                    listener.watchpointSetChanged();
+                }
+                refreshAll(false);
+            } else {
+                SwingUtilities.invokeLater(new Runnable() {
+
+                    public void run() {
+                        Trace.line(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
+                        for (InspectionListener listener : _inspectionListeners.clone()) {
+                            listener.watchpointSetChanged();
+                        }
+                        refreshAll(false);
                     }
                 });
             }
@@ -463,9 +489,9 @@ public final class Inspection {
         Trace.begin(TRACE_VALUE, _threadTracer);
         final long startTimeMillis = System.currentTimeMillis();
         if (!maxVMState().threadsStarted().isEmpty() || !maxVMState().threadsDied().isEmpty()) {
-            for (MaxThread maxThread : maxVMState().threads()) {
+            for (MaxThread thread : maxVMState().threads()) {
                 for (InspectionListener listener : listeners) {
-                    listener.threadStateChanged(maxThread);
+                    listener.threadStateChanged(thread);
                 }
             }
         } else {
@@ -480,9 +506,9 @@ public final class Inspection {
             refreshAll(false);
             // Make visible the code at the IP of the thread that triggered the breakpoint.
             boolean atBreakpoint = false;
-            for (MaxThread maxThread : maxVMState().threads()) {
-                if (maxThread.breakpoint() != null) {
-                    focus().setThread(maxThread);
+            for (MaxThread thread : maxVMState().threads()) {
+                if (thread.breakpoint() != null) {
+                    focus().setThread(thread);
                     atBreakpoint = true;
                     break;
                 }

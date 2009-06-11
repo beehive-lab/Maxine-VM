@@ -33,17 +33,23 @@ import com.sun.max.ins.*;
  * Forwards mouse events to the appropriate table cell.
  *
  * @author Michael Van De Vanter
- *
  */
 public class TableCellMouseClickAdapter extends InspectorMouseClickAdapter {
 
     private final JTable _table;
 
+    /**
+     * A listener that forwards mouse events over a table to
+     * the particular cell at the mouse location.
+     */
     public TableCellMouseClickAdapter(Inspection inspection, JTable table) {
         super(inspection);
         _table = table;
     }
 
+    /**
+     * Forwards a mouse event to the table cell at the event location.
+     */
     @Override
     public void procedure(final MouseEvent mouseEvent) {
         // Locate the renderer under the event location and pass along the event.

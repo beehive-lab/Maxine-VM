@@ -20,19 +20,26 @@
  */
 package com.sun.max.tele;
 
+import com.sun.max.memory.*;
+
+
 /**
- * Response to an action or request that is inappropriate for the current state of the {@link TeleVM}.
+ * Access to a memory watchpoint in the Maxine VM.
  *
  * @author Michael Van De Vanter
  */
-public class TeleVMException extends Exception {
+public interface MaxWatchpoint {
 
-    public TeleVMException() {
-        super("");
-    }
+    /**
+     * @return the area of memory in the VM covered by this watchpoint; ; immutable, thread-safe.
+     */
+    MemoryRegion memoryRegion();
 
-    public TeleVMException(String message) {
-        super(message);
-    }
+    /**
+     * Removes the memory watchpoint from the VM.
+     *
+     * @return whether the removal succeeded.
+     */
+    boolean remove();
+
 }
-

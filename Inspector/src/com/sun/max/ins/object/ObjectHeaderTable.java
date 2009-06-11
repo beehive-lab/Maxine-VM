@@ -26,18 +26,15 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.table.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.object.TeleObject.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.type.*;
@@ -67,6 +64,8 @@ public class ObjectHeaderTable extends InspectorTable {
     private final ObjectHeaderTableModel _model;
     private final ObjectHeaderTableColumnModel _columnModel;
     private final TableColumn[] _columns;
+
+    private MaxVMState _lastRefreshedState = null;
 
     /**
      * A {@link JTable} specialized to display Maxine object fields.
@@ -108,11 +107,52 @@ public class ObjectHeaderTable extends InspectorTable {
                         _inspection.focus().setAddress(_model.rowToAddress(selectedRow));
                     }
                 }
+                if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
+                    final Point p = mouseEvent.getPoint();
+                    final int hitRowIndex = rowAtPoint(p);
+                    final int columnIndex = getColumnModel().getColumnIndexAtX(p.x);
+                    final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
+                    if (modelIndex == ObjectFieldColumnKind.TAG.ordinal()) {
+                        final InspectorMenu menu = new InspectorMenu();
+                        menu.add(actions().setWatchpoint(_model.rowToAddress(hitRowIndex), "Watch this memory word"));
+                        menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                    }
+                }
                 super.procedure(mouseEvent);
             }
         });
         refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
+    }
+
+    public void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
+            _objectOrigin = _teleObject.getCurrentOrigin();
+            _teleHub = _teleObject.getTeleHub();
+            final int oldSelectedRow = getSelectedRow();
+            final int newRow = _model.addressToRow(focus().address());
+            if (newRow >= 0) {
+                getSelectionModel().setSelectionInterval(newRow, newRow);
+            } else {
+                if (oldSelectedRow >= 0) {
+                    getSelectionModel().clearSelection();
+                }
+            }
+            for (TableColumn column : _columns) {
+                final Prober prober = (Prober) column.getCellRenderer();
+                prober.refresh(force);
+            }
+        }
+    }
+
+    public void redisplay() {
+        for (TableColumn column : _columns) {
+            final Prober prober = (Prober) column.getCellRenderer();
+            prober.redisplay();
+        }
+        invalidate();
+        repaint();
     }
 
     @Override
@@ -222,6 +262,18 @@ public class ObjectHeaderTable extends InspectorTable {
             return null;
         }
 
+        /**
+         * @return the memory watchpoint, if any, that is active at a row
+         */
+        public MaxWatchpoint rowToWatchpoint(int row) {
+            for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
+                if (watchpoint.memoryRegion().contains(rowToAddress(row))) {
+                    return watchpoint;
+                }
+            }
+            return null;
+        }
+
         public int addressToRow(Address address) {
             if (!address.isZero()) {
                 final int wordSize = maxVM().wordSize();
@@ -263,41 +315,14 @@ public class ObjectHeaderTable extends InspectorTable {
         }
     }
 
-    private final class TagRenderer extends PlainLabel implements TableCellRenderer, TextSearchable, Prober {
+    private final class TagRenderer extends MemoryTagTableCellRenderer implements TableCellRenderer {
 
         TagRenderer() {
-            super(_inspection, null);
+            super(_inspection);
         }
 
-        public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int col) {
-            String registerNameList = null;
-            final MaxThread thread = focus().thread();
-            if (thread != null) {
-                final TeleIntegerRegisters teleIntegerRegisters = thread.integerRegisters();
-                if (teleIntegerRegisters == null) {
-                    return gui().getMissingDataTableCellRederer();
-                }
-                final Address address = _model.rowToAddress(row);
-                final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(maxVM().wordSize()));
-                if (registerSymbols.isEmpty()) {
-                    setText("");
-                    setToolTipText("");
-                    setForeground(style().memoryDefaultTagTextColor());
-                } else {
-                    for (Symbol registerSymbol : registerSymbols) {
-                        final String name = registerSymbol.name();
-                        if (registerNameList == null) {
-                            registerNameList = name;
-                        } else {
-                            registerNameList = registerNameList + "," + name;
-                        }
-                    }
-                    setText(registerNameList + "--->");
-                    setToolTipText("Register(s): " + registerNameList + " in thread " + inspection().nameDisplay().longName(thread) + " point at this location");
-                    setForeground(style().memoryRegisterTagTextColor());
-                }
-            }
-            return this;
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            return getRenderer(_model.rowToAddress(row), focus().thread(), _model.rowToWatchpoint(row));
         }
     }
 
@@ -450,39 +475,6 @@ public class ObjectHeaderTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             return row == HEADER_HUB_ROW ? _regionLabel : _dummyLabel;
         }
-    }
-
-    public void redisplay() {
-        for (TableColumn column : _columns) {
-            final Prober prober = (Prober) column.getCellRenderer();
-            prober.redisplay();
-        }
-        invalidate();
-        repaint();
-    }
-
-    private MaxVMState _lastRefreshedState = null;
-
-    public void refresh(boolean force) {
-        if (maxVMState().newerThan(_lastRefreshedState) || force) {
-            _lastRefreshedState = maxVMState();
-            _objectOrigin = _teleObject.getCurrentOrigin();
-            _teleHub = _teleObject.getTeleHub();
-            final int oldSelectedRow = getSelectedRow();
-            final int newRow = _model.addressToRow(focus().address());
-            if (newRow >= 0) {
-                getSelectionModel().setSelectionInterval(newRow, newRow);
-            } else {
-                if (oldSelectedRow >= 0) {
-                    getSelectionModel().clearSelection();
-                }
-            }
-            for (TableColumn column : _columns) {
-                final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(force);
-            }
-        }
-
     }
 
 }

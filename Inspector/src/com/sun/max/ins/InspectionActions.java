@@ -35,6 +35,7 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.debug.TeleWatchpoint.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -664,6 +665,39 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction viewBreakpoints() {
         return _viewBreakpoints;
+    }
+
+
+    /**
+     * Action:  makes visible and highlights the {@link WatchpointsInspector}.
+     */
+    final class ViewWatchpointsAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Watchpoints";
+
+        ViewWatchpointsAction(String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            _refreshableActions.append(this);
+        }
+
+        @Override
+        protected void procedure() {
+            WatchpointsInspector.make(inspection()).highlight();
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(maxVM().watchpointsEnabled());
+        }
+    }
+
+    private InspectorAction _viewWatchpoints = new ViewWatchpointsAction(null);
+
+    /**
+     * @return an Action that will make visible the {@link WatchpointsInspector}.
+     */
+    public final InspectorAction viewWatchpoints() {
+        return _viewWatchpoints;
     }
 
 
@@ -1767,9 +1801,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             // Most likely situation is that we are just about to call a native method in which case RAX is the address
-            final MaxThread maxThread = focus().thread();
-            assert maxThread != null;
-            final Address indirectCallAddress = maxThread.integerRegisters().getCallRegisterValue();
+            final MaxThread thread = focus().thread();
+            assert thread != null;
+            final Address indirectCallAddress = thread.integerRegisters().getCallRegisterValue();
             final Address initialAddress = indirectCallAddress == null ? maxVM().bootImageStart() : indirectCallAddress;
             new AddressInputDialog(inspection(), initialAddress, "View native code containing code address...", "View Code") {
                 @Override
@@ -1831,7 +1865,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     /**
      * @return an Action that will remove the currently selected breakpoint, if any.
      */
-    public final InspectorAction removeBreakpoint() {
+    public final InspectorAction removeSelectedBreakpoint() {
         return _removeBreakpoint;
     }
 
@@ -2439,36 +2473,171 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
 
-    final class SetWatchpointAction extends InspectorAction {
+    /**
+     * Action:  removes the watchpoint from the VM that is currently selected.
+     */
+    final class RemoveSelectedWatchpointAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Set watchpoint...";
+        private static final String DEFAULT_TITLE = "Remove selected watchpoint";
 
-        SetWatchpointAction(String title) {
+        RemoveSelectedWatchpointAction(String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
+            _refreshableActions.append(this);
+            focus().addListener(new InspectionFocusAdapter() {
+                @Override
+                public void watchpointFocusSet(MaxWatchpoint oldWatchpoint, MaxWatchpoint watchpoint) {
+                    refresh(false);
+                }
+            });
         }
 
         @Override
         protected void procedure() {
-            new AddressInputDialog(inspection(), maxVM().bootImageStart(), "Set word watch point at address...", "Watch") {
-                @Override
-                public void entered(Address address) {
-                    final Address start = address;
-                    final Size size = Size.fromInt(Word.size());
-                    maxVM().makeWatchpoint(new RuntimeMemoryRegion(start, size));
-                }
-            };
+            final MaxWatchpoint watchpoint = focus().watchpoint();
+            if (watchpoint != null) {
+                watchpoint.remove();
+                focus().setWatchpoint(null);
+            } else {
+                gui().errorMessage("No watchpoint selected");
+            }
         }
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess()  && focus().codeLocation().hasTargetCodeLocation());
+            setEnabled(focus().hasWatchpoint());
         }
     }
 
-    private final SetWatchpointAction _setWatchpoint = new SetWatchpointAction(null);
+    private InspectorAction _removeWatchpoint = new RemoveSelectedWatchpointAction(null);
 
-    public final SetWatchpointAction setWatchpoint() {
-        return _setWatchpoint;
+    /**
+     * @return an Action that will remove the currently selected breakpoint, if any.
+     */
+    public final InspectorAction removeSelectedWatchpoint() {
+        return _removeWatchpoint;
+    }
+
+
+    /**
+     * Action: removes all existing watchpoints in the VM.
+     */
+    final class RemoveAllWatchpointsAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Remove all watchpoints";
+
+        RemoveAllWatchpointsAction(String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            _refreshableActions.append(this);
+            inspection().addInspectionListener(new InspectionListenerAdapter() {
+                @Override
+                public void watchpointSetChanged() {
+                    refresh(true);
+                }
+            });
+        }
+
+        @Override
+        protected void procedure() {
+            focus().setWatchpoint(null);
+            for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
+                watchpoint.remove();
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(maxVM().watchpoints().length() > 0);
+        }
+    }
+
+    private InspectorAction _removeAllWatchpoints = new RemoveAllWatchpointsAction(null);
+
+    /**
+     * @return an Action that will remove all watchpoints in the VM.
+     */
+    public final InspectorAction removeAllWatchpoints() {
+        return _removeAllWatchpoints;
+    }
+
+
+     /**
+     * Action: set a memory watchpoint, interactive if no location specified.
+     */
+    final class SetWatchpointAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Watch memory word";
+        private final Address _address;
+
+        SetWatchpointAction() {
+            super(inspection(), "Watch memory word at address...");
+            _address = null;
+        }
+
+        SetWatchpointAction(Address address, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            _address = address;
+        }
+
+        @Override
+        protected void procedure() {
+            if (_address != null) {
+                final Address start = _address;
+                final Size size = Size.fromInt(Word.size());
+                try {
+                    final MaxWatchpoint watchpoint = maxVM().makeWatchpoint(new RuntimeMemoryRegion(start, size));
+                    if (watchpoint == null) {
+                        gui().errorMessage("Watchpoint creation failed");
+                    } else {
+                        inspection().focus().setWatchpoint(watchpoint);
+                    }
+                } catch (TooManyWatchpointsException tooManyWatchpointsException) {
+                    gui().errorMessage(tooManyWatchpointsException.getMessage());
+                }
+            } else {
+                new AddressInputDialog(inspection(), maxVM().bootImageStart(), "Watch word at address...", "Watch") {
+                    @Override
+                    public void entered(Address address) {
+                        final Address start = address;
+                        final Size size = Size.fromInt(Word.size());
+                        try {
+                            final MaxWatchpoint watchpoint = maxVM().makeWatchpoint(new RuntimeMemoryRegion(start, size));
+                            if (watchpoint == null) {
+                                gui().errorMessage("Watchpoint creation failed");
+                            } else {
+                                inspection().focus().setWatchpoint(watchpoint);
+                            }
+                        } catch (TooManyWatchpointsException tooManyWatchpointsException) {
+                            gui().errorMessage(tooManyWatchpointsException.getMessage());
+                        }
+                    }
+                };
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(inspection().hasProcess()  && maxVM().watchpointsEnabled());
+        }
+    }
+
+    private final SetWatchpointAction _setWatchpointAction = new SetWatchpointAction();
+
+    /**
+     * @return an interactive Action that will set a memory watchpoint in the VM.
+     */
+    public final InspectorAction setWatchpoint() {
+        return _setWatchpointAction;
+    }
+
+    /**
+     * Creates an action that will set a watchpoint.
+     *
+     * @param address a memory location in the VM
+     * @param string a title for the action, use default name if null
+     * @return an Action that will set a memory watchpoint at the address.
+     */
+    public final InspectorAction setWatchpoint(Address address, String string) {
+        return new SetWatchpointAction(address, string);
     }
 
     /**

@@ -412,6 +412,11 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     }
 
     @Override
+    public Border watchpointTagBorder() {
+        return debugEnabledTargetBreakpointTagBorder();
+    }
+
+    @Override
     public Color debugIPTextColor() {
         return _debugIPTextColor;
     }

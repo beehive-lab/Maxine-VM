@@ -29,27 +29,30 @@ import javax.swing.table.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.value.*;
 import com.sun.max.tele.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.value.*;
 
 
 /**
- * A table specialized for displaying the threads in the VM.
+ * A table specialized for displaying memory watchpoints in the VM.
  *
  * @author Michael Van De Vanter
  */
-public final class ThreadsTable extends InspectorTable {
+public class WatchpointsTable extends InspectorTable {
 
-    private final ThreadsTableModel _model;
-    private final ThreadsColumnModel _columnModel;
+    private final WatchpointsTableModel _model;
+    private final WatchpointsColumnModel _columnModel;
     private final TableColumn[] _columns;
 
     private MaxVMState _lastRefreshedState = null;
 
-    ThreadsTable(Inspection inspection, ThreadsViewPreferences viewPreferences) {
+    WatchpointsTable(Inspection inspection, WatchpointsViewPreferences viewPreferences) {
         super(inspection);
-        _model = new ThreadsTableModel();
-        _columns = new TableColumn[ThreadsColumnKind.VALUES.length()];
-        _columnModel = new ThreadsColumnModel(viewPreferences);
+        _model = new WatchpointsTableModel();
+        _columns = new TableColumn[WatchpointsColumnKind.VALUES.length()];
+        _columnModel = new WatchpointsColumnModel(viewPreferences);
 
         setModel(_model);
         setColumnModel(_columnModel);
@@ -67,12 +70,12 @@ public final class ThreadsTable extends InspectorTable {
     }
 
     /**
-     * Sets table selection to thread, if any, that is the current user focus.
+     * Sets table selection to the memory watchpoint, if any, that is the current user focus.
      */
     @Override
     public void updateFocusSelection() {
-        final MaxThread thread = inspection().focus().thread();
-        final int row = _model.findRow(thread);
+        final MaxWatchpoint watchpoint = inspection().focus().watchpoint();
+        final int row = _model.findRow(watchpoint);
         if (row < 0) {
             clearSelection();
         } else  if (row != getSelectedRow()) {
@@ -89,6 +92,8 @@ public final class ThreadsTable extends InspectorTable {
                 prober.refresh(force);
             }
         }
+        invalidate();
+        repaint();
     }
 
     public void redisplay() {
@@ -109,7 +114,7 @@ public final class ThreadsTable extends InspectorTable {
                 final Point p = mouseEvent.getPoint();
                 final int index = _columnModel.getColumnIndexAtX(p.x);
                 final int modelIndex = _columnModel.getColumn(index).getModelIndex();
-                return ThreadsColumnKind.VALUES.get(modelIndex).toolTipText();
+                return WatchpointsColumnKind.VALUES.get(modelIndex).toolTipText();
             }
         };
     }
@@ -122,26 +127,26 @@ public final class ThreadsTable extends InspectorTable {
         if (!listSelectionEvent.getValueIsAdjusting()) {
             final int row = getSelectedRow();
             if (row >= 0) {
-                final MaxThread thread = (MaxThread) getValueAt(row, 0);
-                focus().setThread(thread);
+                final MaxWatchpoint watchpoint = (MaxWatchpoint) getValueAt(row, 0);
+                if (watchpoint != null) {
+                    focus().setWatchpoint(watchpoint);
+                }
             }
         }
     }
 
-    private final class ThreadsColumnModel extends DefaultTableColumnModel {
+    private final class WatchpointsColumnModel extends DefaultTableColumnModel {
 
-        private final ThreadsViewPreferences _viewPreferences;
+        private final WatchpointsViewPreferences _viewPreferences;
 
-        private ThreadsColumnModel(ThreadsViewPreferences viewPreferences) {
+        private WatchpointsColumnModel(WatchpointsViewPreferences viewPreferences) {
             _viewPreferences = viewPreferences;
-            createColumn(ThreadsColumnKind.ID, new IDCellRenderer(inspection()));
-            createColumn(ThreadsColumnKind.HANDLE, new HandleCellRenderer(inspection()));
-            createColumn(ThreadsColumnKind.KIND, new KindCellRenderer(inspection()));
-            createColumn(ThreadsColumnKind.NAME, new NameCellRenderer(inspection()));
-            createColumn(ThreadsColumnKind.STATUS, new StatusCellRenderer(inspection()));
+            createColumn(WatchpointsColumnKind.START, new StartAddressCellRenderer(inspection()));
+            createColumn(WatchpointsColumnKind.END, new EndAddressCellRenderer(inspection()));
+            createColumn(WatchpointsColumnKind.REGION, new RegionRenderer(inspection()));
         }
 
-        private void createColumn(ThreadsColumnKind columnKind, TableCellRenderer renderer) {
+        private void createColumn(WatchpointsColumnKind columnKind, TableCellRenderer renderer) {
             final int col = columnKind.ordinal();
             _columns[col] = new TableColumn(col, 0, renderer, null);
             _columns[col].setHeaderValue(columnKind.label());
@@ -154,10 +159,11 @@ public final class ThreadsTable extends InspectorTable {
     }
 
     /**
-     * A table data model wrapped around the thread list in the
-     * current state of the VM. The list goes empty with the process dies.
+     * A table data model built around the list of current watchpoints in the VM.
+     *
+     * @author Michael Van De Vanter
      */
-    private final class ThreadsTableModel extends AbstractTableModel {
+    private final class WatchpointsTableModel extends AbstractTableModel {
 
         void refresh() {
             fireTableDataChanged();
@@ -165,18 +171,18 @@ public final class ThreadsTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return ThreadsColumnKind.VALUES.length();
+            return WatchpointsColumnKind.VALUES.length();
         }
 
         public int getRowCount() {
-            return maxVMState().threads().length();
+            return maxVM().watchpoints().length();
         }
 
         public Object getValueAt(int row, int col) {
             int count = 0;
-            for (MaxThread thread : maxVMState().threads()) {
+            for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
                 if (count == row) {
-                    return thread;
+                    return watchpoint;
                 }
                 count++;
             }
@@ -185,13 +191,13 @@ public final class ThreadsTable extends InspectorTable {
 
         @Override
         public Class< ? > getColumnClass(int c) {
-            return MaxThread.class;
+            return MaxWatchpoint.class;
         }
 
-        public int findRow(MaxThread findThread) {
+        int findRow(MaxWatchpoint findWatchpoint) {
             int row = 0;
-            for (MaxThread thread : maxVMState().threads()) {
-                if (thread.equals(findThread)) {
+            for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
+                if (watchpoint.equals(findWatchpoint)) {
                     return row;
                 }
                 row++;
@@ -201,23 +207,16 @@ public final class ThreadsTable extends InspectorTable {
 
     }
 
-    private final class IDCellRenderer extends PlainLabel implements TableCellRenderer {
+    private final class StartAddressCellRenderer extends WordValueLabel implements TableCellRenderer {
 
-        IDCellRenderer(Inspection inspection) {
-            super(inspection, null);
+        public StartAddressCellRenderer(Inspection inspection) {
+            super(inspection, ValueMode.WORD, Address.zero());
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final MaxThread thread = (MaxThread) value;
-            final int id = thread.id();
-            if (id < 0) {
-                setText("");
-                setToolTipText("Not a VM thread");
-            } else {
-                final String threadIdText = Long.toString(id);
-                setText(threadIdText);
-                setToolTipText("VM thread ID:  " + threadIdText);
-            }
+            final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
+            setValue(new WordValue(watchpoint.memoryRegion().start()));
+
             if (row == getSelectionModel().getMinSelectionIndex()) {
                 setBackground(style().defaultCodeAlternateBackgroundColor());
             } else {
@@ -227,17 +226,15 @@ public final class ThreadsTable extends InspectorTable {
         }
     }
 
-    private final class HandleCellRenderer extends PlainLabel implements TableCellRenderer {
+    private final class EndAddressCellRenderer extends WordValueLabel implements TableCellRenderer {
 
-        HandleCellRenderer(Inspection inspection) {
-            super(inspection, null);
+        public EndAddressCellRenderer(Inspection inspection) {
+            super(inspection, ValueMode.WORD, Address.zero());
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final MaxThread thread = (MaxThread) value;
-            final String handleString = Long.toString(thread.handle());
-            setText(handleString);
-            setToolTipText("Native thread handle:  " + handleString);
+            final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
+            setValue(new WordValue(watchpoint.memoryRegion().end()));
             if (row == getSelectionModel().getMinSelectionIndex()) {
                 setBackground(style().defaultCodeAlternateBackgroundColor());
             } else {
@@ -247,65 +244,15 @@ public final class ThreadsTable extends InspectorTable {
         }
     }
 
-    private final class KindCellRenderer extends PlainLabel implements TableCellRenderer {
+    private final class RegionRenderer extends MemoryRegionValueLabel implements TableCellRenderer {
 
-        KindCellRenderer(Inspection inspection) {
-            super(inspection, null);
+        public RegionRenderer(Inspection inspection) {
+            super(inspection);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final MaxThread thread = (MaxThread) value;
-            final MaxVMThread maxVMThread = thread.maxVMThread();
-            String kind;
-            if (maxVMThread != null) {
-                kind = "Java";
-            } else {
-                if (thread.isPrimordial()) {
-                    kind = "primordial";
-                } else {
-                    kind = "native";
-                }
-            }
-            setText(kind);
-            setToolTipText("Kind:  " + kind);
-            if (row == getSelectionModel().getMinSelectionIndex()) {
-                setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                setBackground(style().defaultTextBackgroundColor());
-            }
-            return this;
-        }
-    }
-
-    private final class NameCellRenderer extends JavaNameLabel implements TableCellRenderer {
-
-        NameCellRenderer(Inspection inspection) {
-            super(inspection, null);
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final MaxThread thread = (MaxThread) value;
-            setValue(inspection().nameDisplay().shortName(thread), "Name:  " + inspection().nameDisplay().longName(thread));
-            if (row == getSelectionModel().getMinSelectionIndex()) {
-                setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                setBackground(style().javaNameBackgroundColor());
-            }
-            return this;
-        }
-    }
-
-    private final class StatusCellRenderer extends PlainLabel implements TableCellRenderer {
-
-        StatusCellRenderer(Inspection inspection) {
-            super(inspection, null);
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final MaxThread thread = (MaxThread) value;
-            final String status = thread.state().toString();
-            setText(status);
-            setToolTipText("Status:  " + status);
+            final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
+            setValue(new WordValue(watchpoint.memoryRegion().start()));
             if (row == getSelectionModel().getMinSelectionIndex()) {
                 setBackground(style().defaultCodeAlternateBackgroundColor());
             } else {

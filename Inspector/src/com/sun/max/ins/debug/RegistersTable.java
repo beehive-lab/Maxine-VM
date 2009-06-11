@@ -47,9 +47,11 @@ public class RegistersTable extends InspectorTable {
     private RegistersColumnModel _columnModel;
     private final TableColumn[] _columns;
 
-    public RegistersTable(Inspection inspection, MaxThread maxThread, RegistersViewPreferences viewPreferences) {
+    private MaxVMState _lastRefreshedState = null;
+
+    public RegistersTable(Inspection inspection, MaxThread thread, RegistersViewPreferences viewPreferences) {
         super(inspection);
-        _model = new RegistersTableModel(maxThread);
+        _model = new RegistersTableModel(thread);
         _columns = new TableColumn[RegistersColumnKind.VALUES.length()];
         _columnModel = new RegistersColumnModel(viewPreferences);
         setModel(_model);
@@ -66,8 +68,6 @@ public class RegistersTable extends InspectorTable {
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
-
-    private MaxVMState _lastRefreshedState = null;
 
     public void refresh(boolean force) {
         if (maxVMState().newerThan(_lastRefreshedState) || force) {
@@ -139,17 +139,17 @@ public class RegistersTable extends InspectorTable {
      */
     private final class RegistersTableModel extends DefaultTableModel {
 
-        private final MaxThread _maxThread;
+        private final MaxThread _thread;
 
         private int _nRegisters = 0;
 
         private final RegisterInfo[] _registerInfos;
 
-        RegistersTableModel(MaxThread maxThread) {
-            _maxThread = maxThread;
-            final TeleIntegerRegisters integerRegisters = _maxThread.integerRegisters();
-            final TeleStateRegisters stateRegisters = _maxThread.stateRegisters();
-            final TeleFloatingPointRegisters floatingPointRegisters = _maxThread.floatingPointRegisters();
+        RegistersTableModel(MaxThread thread) {
+            _thread = thread;
+            final TeleIntegerRegisters integerRegisters = _thread.integerRegisters();
+            final TeleStateRegisters stateRegisters = _thread.stateRegisters();
+            final TeleFloatingPointRegisters floatingPointRegisters = _thread.floatingPointRegisters();
             _nRegisters = integerRegisters.symbolizer().numberOfValues()
                  + stateRegisters.symbolizer().numberOfValues()
                  + floatingPointRegisters.symbolizer().numberOfValues();

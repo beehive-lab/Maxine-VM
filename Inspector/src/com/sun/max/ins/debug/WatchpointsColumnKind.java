@@ -18,28 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.object;
+package com.sun.max.ins.debug;
 
 import com.sun.max.collect.*;
 
 
 /**
- * Defines the columns supported by the object inspector when viewing object fields.
+ * Defines the columns that can be displayed describing a watchpoint in the VM.
  *
  * @author Michael Van De Vanter
  */
-public enum ObjectFieldColumnKind {
-    TAG("Tag", "Tags: register targets, watchpoints, ...", true, 10) {
-        @Override
-        public boolean canBeMadeInvisible() {
-            return false;
-        }
-    },
-    ADDRESS("Addr.", "Memory address of field", false, -1),
-    OFFSET("Offset", "Field location relative to object origin (bytes)", false, 20),
-    TYPE("Type", "Type of field", true, 20),
-    NAME("Field", "Field name", true, 20),
-    VALUE("Value", "Field value", true, 20),
+public enum WatchpointsColumnKind {
+    START("Start", "Starting address", true, 20),
+    END("End", "Ending address", true, 20),
     REGION("Region", "Memory region pointed to by value", false, 20);
 
     private final String _label;
@@ -47,11 +38,12 @@ public enum ObjectFieldColumnKind {
     private final boolean _defaultVisibility;
     private final int _minWidth;
 
-    private ObjectFieldColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
+    private WatchpointsColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
         _label = label;
         _toolTipText = toolTipText;
         _defaultVisibility = defaultVisibility;
         _minWidth = minWidth;
+        assert defaultVisibility || canBeMadeInvisible();
     }
 
     /**
@@ -62,7 +54,7 @@ public enum ObjectFieldColumnKind {
     }
 
     /**
-     * @return text to appear in the column header's toolTip, null if none specified
+     * @return text to appear in the column header's toolTip, null if none specified.
      */
     public String toolTipText() {
         return _toolTipText;
@@ -75,11 +67,9 @@ public enum ObjectFieldColumnKind {
         return _minWidth;
     }
 
-    /**
-     * Determines if this column should be visible by default; default true.
-     */
-    public boolean defaultVisibility() {
-        return _defaultVisibility;
+    @Override
+    public String toString() {
+        return _label;
     }
 
     /**
@@ -89,11 +79,12 @@ public enum ObjectFieldColumnKind {
         return true;
     }
 
-    @Override
-    public String toString() {
-        return _label;
+    /**
+     * Determines if this column should be visible by default; default true.
+     */
+    public boolean defaultVisibility() {
+        return _defaultVisibility;
     }
 
-    public static final IndexedSequence<ObjectFieldColumnKind> VALUES = new ArraySequence<ObjectFieldColumnKind>(values());
-
+    public static final IndexedSequence<WatchpointsColumnKind> VALUES = new ArraySequence<WatchpointsColumnKind>(values());
 }
