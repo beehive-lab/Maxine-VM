@@ -26,7 +26,14 @@ import com.sun.c1x.value.ConstType;
  * Condition codes used in conditionals.
  */
 public enum Condition {
-    eql, neq, lss, leq, gtr, geq;
+    eql("=="), neq("!="), lss("<"), leq("<="), gtr(">"), geq(">=");
+
+    public final String _operator;
+
+
+    private Condition(String operator) {
+        _operator = operator;
+    }
 
     /**
      * Negate this conditional.
@@ -87,8 +94,8 @@ public enum Condition {
                     case leq: return x <= y;
                     case gtr: return x > y;
                     case geq: return x >= y;
-
                 }
+                break;
             }
             case Long: {
                 long x = lt.asLong();
@@ -101,6 +108,7 @@ public enum Condition {
                     case gtr: return x > y;
                     case geq: return x >= y;
                 }
+                break;
             }
             case Object: {
                 Object x = lt.asObject();
@@ -108,8 +116,8 @@ public enum Condition {
                 switch (this) {
                     case eql: return x == y;
                     case neq: return x != y;
-
                 }
+                break;
             }
             // XXX: folding of floating comparisons should be possible
         }

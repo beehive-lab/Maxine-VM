@@ -91,6 +91,7 @@ public class ProfileCall extends Instruction {
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         if (_object != null) {
             _object = closure.apply(_object);
@@ -101,6 +102,7 @@ public class ProfileCall extends Instruction {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitProfileCall(this);
     }

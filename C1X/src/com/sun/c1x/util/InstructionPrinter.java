@@ -21,6 +21,7 @@
 package com.sun.c1x.util;
 
 import static com.sun.c1x.ir.BlockBegin.BlockFlag.*;
+import static com.sun.c1x.ir.Instruction.*;
 
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
@@ -51,7 +52,7 @@ public class InstructionPrinter implements InstructionVisitor {
         USE(7, "use"),
 
         /**
-         * The instruction as {@linkplain InstructionPrinter#valueString(com.sun.c1x.ir.Instruction) value}.
+         * The instruction as {@linkplain Instruction#valueString(com.sun.c1x.ir.Instruction) value}.
          */
         VALUE(12, "tid"),
 
@@ -102,18 +103,6 @@ public class InstructionPrinter implements InstructionVisitor {
         return _out;
     }
 
-    public static String binaryOperationAsString(Op2 i) {
-        return valueString(i.x()) + ' ' + Bytecodes.operator(i.opcode()) + ' ' + valueString(i.y());
-    }
-
-    public static String arrayAccessAsString(AccessIndexed indexed) {
-        return valueString(indexed) + '[' + valueString(indexed.index()) + ']';
-    }
-
-    public static String fieldAccessAsString(AccessField field) {
-        return valueString(field.object()) + "._" + field.offset();
-    }
-
     /**
      * Prints a given instruction as an expression or statement.
      *
@@ -161,7 +150,7 @@ public class InstructionPrinter implements InstructionVisitor {
     }
 
     public void visitArithmeticOp(ArithmeticOp arithOp) {
-        _out.print(binaryOperationAsString(arithOp));
+        _out.print(valueString(arithOp.x()) + ' ' + Bytecodes.operator(arithOp.opcode()) + ' ' + valueString(arithOp.y()));
     }
 
     public void visitArrayLength(ArrayLength i) {
@@ -364,16 +353,28 @@ public class InstructionPrinter implements InstructionVisitor {
     }
 
     public void visitCompareOp(CompareOp compareOp) {
-        _out.print(binaryOperationAsString(compareOp));
+        _out.print(valueString(compareOp.x()) + ' ' + Bytecodes.operator(compareOp.opcode()) + ' ' + valueString(compareOp.y()));
     }
 
     public void visitConstant(Constant constant) {
         ValueType type = constant.type();
-        if (type.isPrimitive()) {
+        if (type == ConstType.NULL_OBJECT) {
+            _out.print("null");
+        } else if (type.isPrimitive()) {
             _out.print(type.asConstant().valueString());
+        } else if (type.isClass()) {
+            ClassType k = (ClassType) type;
+            if (k.ciType().isLoaded()) {
+                _out.print("<unloaded> ");
+            }
+            _out.print("class " + k.ciType().name());
         } else if (type.isObject()) {
-            // TODO: complete ValueType hierarchy with InstanceType, ArrayType, etc...
-            _out.print("<object: TODO>");
+            Object object = type.asConstant().asObject();
+            if (object instanceof String) {
+                _out.print('"' + object.toString() + '"');
+            } else {
+                _out.print("<object: " + object.getClass().getName() + '@' + System.identityHashCode(object) + '>');
+            }
         } else if (type.isJsr()) {
             _out.print("bci:" + type.asConstant().valueString());
         } else {
@@ -386,7 +387,7 @@ public class InstructionPrinter implements InstructionVisitor {
     }
 
     public void visitExceptionObject(ExceptionObject i) {
-        _out.print("incomeing exception");
+        _out.print("incoming exception");
     }
 
     public void visitGoto(Goto go2) {
@@ -397,7 +398,7 @@ public class InstructionPrinter implements InstructionVisitor {
     }
 
     public void visitIf(If i) {
-        _out.print("if " + valueString(i.x()) + ' ' + i.condition().name() + ' ' + valueString(i.y()) +
+        _out.print("if " + valueString(i.x()) + ' ' + i.condition()._operator + ' ' + valueString(i.y()) +
                    " then B" + i.successors().get(0).blockID() + " else B" + i.successors().get(1).blockID());
         if (i.isSafepoint()) {
             _out.print(" (safepoint)");
@@ -409,7 +410,7 @@ public class InstructionPrinter implements InstructionVisitor {
     }
 
     public void visitIfOp(IfOp i) {
-        _out.print(valueString(i.x()) + ' ' + i.condition().name() + ' ' + valueString(i.y()) +
+        _out.print(valueString(i.x()) + ' ' + i.condition()._operator + ' ' + valueString(i.y()) +
                    " ? " + valueString(i.trueValue()) + " : " + valueString(i.falseValue()));
     }
 
@@ -448,11 +449,11 @@ public class InstructionPrinter implements InstructionVisitor {
     }
 
     public void visitLoadField(LoadField i) {
-        _out.print(fieldAccessAsString(i) + " (" + i.field().type().basicType()._char + ")");
+        _out.print(valueString(i.object()) + "._" + i.offset() + " (" + i.field().type().basicType()._char + ")");
     }
 
     public void visitLoadIndexed(LoadIndexed load) {
-        _out.print(arrayAccessAsString(load) + " (" + load.type().tchar() + ')');
+        _out.print(valueString(load) + '[' + valueString(load.index()) + "] (" + load.type().tchar() + ')');
     }
 
     public void visitLocal(Local local) {
@@ -460,7 +461,7 @@ public class InstructionPrinter implements InstructionVisitor {
     }
 
     public void visitLogicOp(LogicOp logicOp) {
-        _out.print(binaryOperationAsString(logicOp));
+        _out.print(valueString(logicOp.x()) + ' ' + Bytecodes.operator(logicOp.opcode()) + ' ' + valueString(logicOp.y()));
     }
 
     public void visitLookupSwitch(LookupSwitch lswitch) {
@@ -557,25 +558,23 @@ public class InstructionPrinter implements InstructionVisitor {
     }
 
     public void visitShiftOp(ShiftOp shiftOp) {
-        _out.print(binaryOperationAsString(shiftOp));
+        _out.print(valueString(shiftOp.x()) + ' ' + Bytecodes.operator(shiftOp.opcode()) + ' ' + valueString(shiftOp.y()));
     }
 
     public void visitStoreField(StoreField store) {
-        _out.print(fieldAccessAsString(store) + " := " + valueString(store.value()) + " (" + store.field().type().basicType()._char + ')');
+        _out.print((valueString(store.object()) + "._" + store.offset()) + " := " + valueString(store.value()) + " (" + store.field().type().basicType()._char + ')');
     }
 
     public void visitStoreIndexed(StoreIndexed store) {
-        _out.print(arrayAccessAsString(store) + " := " + valueString(store.value()) + " (" + store.type().tchar() + ')');
+        _out.print(valueString(store) + '[' + valueString(store.index()) + "] := " + valueString(store.value()) + " (" + store.type().tchar() + ')');
     }
 
     public void visitTableSwitch(TableSwitch tswitch) {
         _out.print("tableswitch ");
-
-        // output()->print("tableswitch ");
-       if (tswitch.isSafepoint()) {
-           _out.print("(safepoint) ");
-       }
-       _out.println(valueString(tswitch.value()));
+        if (tswitch.isSafepoint()) {
+            _out.print("(safepoint) ");
+        }
+        _out.println(valueString(tswitch.value()));
         int l = tswitch.numberOfCases();
         for (int i = 0; i < l; i++) {
             InstructionLineColumn.INSTRUCTION.advance(_out);
@@ -620,18 +619,6 @@ public class InstructionPrinter implements InstructionVisitor {
             _out.print(", index " + unsafe.index() + ", log2_scale " + unsafe.log2Scale());
         }
         _out.print(", value " + valueString(unsafe.value()) + ')');
-    }
-
-    /**
-     * Converts a given instruction to a value string. The representation of an instruction as
-     * a value is formed by concatenating the {@linkplain com.sun.c1x.value.ValueType#tchar() character} denoting its
-     * {@linkplain com.sun.c1x.ir.Instruction#type() type} and its {@linkplain com.sun.c1x.ir.Instruction#id()}. For example,
-     * "i13".
-     *
-     * @param value the instruction to convert to a value string. If {@code value == null}, then "null" is returned.
-     */
-    public static String valueString(Instruction value) {
-        return value == null ? "null" : "" + value.type().tchar() + value.id();
     }
 
 }

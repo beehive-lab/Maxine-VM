@@ -89,6 +89,7 @@ public class StoreIndexed extends AccessIndexed {
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply to each instruction
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         super.inputValuesDo(closure);
         _value = closure.apply(_value);
@@ -98,6 +99,7 @@ public class StoreIndexed extends AccessIndexed {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitStoreIndexed(this);
     }

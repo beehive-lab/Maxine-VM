@@ -43,18 +43,22 @@ public class BytecodeTableSwitch extends BytecodeSwitch {
         return readWord(_aligned + 8);
     }
 
+    @Override
     public int defaultOffset() {
         return readWord(_aligned);
     }
 
+    @Override
     public int offsetAt(int i) {
         return readWord(_aligned + 12 + 4 * i);
     }
 
+    @Override
     public int numberOfCases() {
         return highKey() - lowKey() + 1;
     }
 
+    @Override
     public int size() {
         return _aligned + 12 + 4 * numberOfCases() - _bci;
     }

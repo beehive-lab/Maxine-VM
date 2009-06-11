@@ -80,6 +80,8 @@ public class C1XPrintStream {
             int index = s.lastIndexOf(LINE_SEPARATOR);
             if (index != -1) {
                 _position = s.length() - index - LINE_SEPARATOR.length();
+            } else {
+                _position += s.length();
             }
         } else {
             assert s.indexOf(LINE_SEPARATOR) == -1;

@@ -47,10 +47,26 @@ public class ClassType extends ValueType {
     }
 
     /**
+     * Checks if this is {@linkplain ClassType class type}.
+     */
+    @Override
+    public boolean isClass() {
+        return true;
+    }
+
+    /**
+     * Gets the compiler interface type represented by this type.
+     */
+    public CiType ciType() {
+        return _type;
+    }
+
+    /**
      * Checks whether this value type is a constant. In the case of ClassType instances,
      * this is a constant if the class is loaded.
      * @return <code>true</code> if this value type is a constant
      */
+    @Override
     public boolean isConstant() {
         return _type.isLoaded();
     }
@@ -60,6 +76,7 @@ public class ClassType extends ValueType {
      * this is a constant if the class is loaded.
      * @return a constant representing this value type if it is a constant
      */
+    @Override
     public ConstType asConstant() {
         return _constant;
     }

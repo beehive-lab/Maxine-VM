@@ -171,6 +171,7 @@ public class Canonicalizer implements InstructionVisitor {
                         setIntConstant(val); // the operation was successfully folded to an int
                         return;
                     }
+                    break;
                 }
                 case Long: {
                     Long val = Bytecodes.foldLongOp2(i.opcode(), xt.asConstant().asLong(), yt.asConstant().asLong());
@@ -178,6 +179,7 @@ public class Canonicalizer implements InstructionVisitor {
                         setLongConstant(val); // the operation was successfully folded to a long
                         return;
                     }
+                    break;
                 }
                 case Float: {
                     if (C1XOptions.CanonicalizeFloatingPoint) {
@@ -188,6 +190,7 @@ public class Canonicalizer implements InstructionVisitor {
                             return;
                         }
                     }
+                    break;
                 }
                 case Double: {
                     if (C1XOptions.CanonicalizeFloatingPoint) {
@@ -198,6 +201,7 @@ public class Canonicalizer implements InstructionVisitor {
                             return;
                         }
                     }
+                    break;
                 }
             }
         }
@@ -213,11 +217,13 @@ public class Canonicalizer implements InstructionVisitor {
                     if (reduceIntOp2(i, x, yt.asConstant().asInt()) != null) {
                         return;
                     }
+                    break;
                 }
                 case Long: {
                     if (reduceLongOp2(i, x, yt.asConstant().asLong()) != null) {
                         return;
                     }
+                    break;
                 }
                 // XXX: note that other cases are possible, but harder
                 // floating point operations need to be extra careful
@@ -524,6 +530,7 @@ public class Canonicalizer implements InstructionVisitor {
                         setIntConstant(val);
                         return;
                     }
+                    break;
                 case Double:
                     if (xt.isConstant()) {
                         double xval = xt.asConstant().asDouble(); // get the actual value of x (and y since x == y)
@@ -532,6 +539,7 @@ public class Canonicalizer implements InstructionVisitor {
                         setIntConstant(val);
                         return;
                     }
+                    break;
                 // note that there are no integer CompareOps
             }
         }

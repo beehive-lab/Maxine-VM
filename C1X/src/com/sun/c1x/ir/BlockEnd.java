@@ -131,6 +131,7 @@ public abstract class BlockEnd extends StateSplit {
         return _successors;
     }
 
+    @Override
     public void otherValuesDo(InstructionClosure closure) {
         if (_stateBefore != null) {
             _stateBefore.valuesDo(closure);

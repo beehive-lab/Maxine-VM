@@ -84,6 +84,7 @@ public class CheckCast extends TypeCheck {
      * Gets the declared type of the result of this instruction.
      * @return the declared type of the result
      */
+    @Override
     public CiType declaredType() {
         return _targetClass;
     }
@@ -92,6 +93,7 @@ public class CheckCast extends TypeCheck {
      * Gets the exact type of the result of this instruction.
      * @return the exact type of the result
      */
+    @Override
     public CiType exactType() {
         return _targetClass.exactType();
     }
@@ -100,6 +102,7 @@ public class CheckCast extends TypeCheck {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitCheckCast(this);
     }

@@ -210,6 +210,7 @@ public class IRScope {
         return _callees.get(i);
     }
 
+    @Override
     public String toString() {
         if (_caller == null) {
             return "root-scope: " + _method;

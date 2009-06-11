@@ -72,6 +72,7 @@ public class StoreField extends AccessField {
      * to the object receiver value and the written value.
      * @param closure the closure to apply to each value
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         super.inputValuesDo(closure);
         _value = closure.apply(_value);
@@ -81,6 +82,7 @@ public class StoreField extends AccessField {
      * Implements this instruction's half of the visitor interface.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitStoreField(this);
     }
