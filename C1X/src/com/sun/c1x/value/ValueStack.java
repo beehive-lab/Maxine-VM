@@ -195,7 +195,7 @@ public class ValueStack {
     public void invalidateLocal(int i) {
         Instruction x = _values[i];
         if (isDoubleWord(x)) {
-            assert checkHiWord(i, x);
+            assertHigh(_values[i + 1]);
             _values[i + 1] = null;
         }
         _values[i] = null;
@@ -322,7 +322,7 @@ public class ValueStack {
      * @param x the instruction to push onto the stack
      */
     public void push(BasicType type, Instruction x) {
-        xpush(checkTag(type, x));
+        xpush(assertType(type, x));
         if (type.sizeInSlots() == 2) {
             xpush(null);
         }
@@ -342,7 +342,7 @@ public class ValueStack {
      * @param x the instruction to push onto the stack
      */
     public void ipush(Instruction x) {
-        xpush(checkTag(BasicType.Int, x));
+        xpush(assertInt(x));
     }
 
     /**
@@ -350,7 +350,7 @@ public class ValueStack {
      * @param x the instruction to push onto the stack
      */
     public void fpush(Instruction x) {
-        xpush(checkTag(BasicType.Float, x));
+        xpush(assertFloat(x));
     }
 
     /**
@@ -358,7 +358,7 @@ public class ValueStack {
      * @param x the instruction to push onto the stack
      */
     public void apush(Instruction x) {
-        xpush(checkTag(BasicType.Object, x));
+        xpush(assertObject(x));
     }
 
     /**
@@ -366,7 +366,7 @@ public class ValueStack {
      * @param x the instruction to push onto the stack
      */
     public void jpush(Instruction x) {
-        xpush(checkTag(BasicType.Jsr, x));
+        xpush(assertJsr(x));
     }
 
     /**
@@ -374,7 +374,7 @@ public class ValueStack {
      * @param x the instruction to push onto the stack
      */
     public void lpush(Instruction x) {
-        xpush(checkTag(BasicType.Long, x));
+        xpush(assertLong(x));
         xpush(null);
     }
 
@@ -383,7 +383,7 @@ public class ValueStack {
      * @param x the instruction to push onto the stack
      */
     public void dpush(Instruction x) {
-        xpush(checkTag(BasicType.Double, x));
+        xpush(assertDouble(x));
         xpush(null);
     }
 
@@ -396,7 +396,7 @@ public class ValueStack {
         if (basicType.sizeInSlots() == 2) {
             xpop();
         }
-        return checkTag(basicType, xpop());
+        return assertType(basicType, xpop());
     }
 
     /**
@@ -413,7 +413,7 @@ public class ValueStack {
      * @return x the instruction popped off the stack
      */
     public Instruction ipop() {
-        return checkTag(BasicType.Int, xpop());
+        return assertInt(xpop());
     }
 
     /**
@@ -421,7 +421,7 @@ public class ValueStack {
      * @return x the instruction popped off the stack
      */
     public Instruction fpop() {
-        return checkTag(BasicType.Float, xpop());
+        return assertFloat(xpop());
     }
 
     /**
@@ -429,7 +429,7 @@ public class ValueStack {
      * @return x the instruction popped off the stack
      */
     public Instruction apop() {
-        return checkTag(BasicType.Object, xpop());
+        return assertObject(xpop());
     }
 
     /**
@@ -437,7 +437,7 @@ public class ValueStack {
      * @return x the instruction popped off the stack
      */
     public Instruction jpop() {
-        return checkTag(BasicType.Jsr, xpop());
+        return assertJsr(xpop());
     }
 
     /**
@@ -445,9 +445,8 @@ public class ValueStack {
      * @return x the instruction popped off the stack
      */
     public Instruction lpop() {
-        final Instruction high = xpop();
-        assert high == null;
-        return checkTag(BasicType.Long, xpop());
+        assertHigh(xpop());
+        return assertLong(xpop());
     }
 
     /**
@@ -455,9 +454,8 @@ public class ValueStack {
      * @return x the instruction popped off the stack
      */
     public Instruction dpop() {
-        final Instruction high = xpop();
-        assert high == null;
-        return checkTag(BasicType.Double, xpop());
+        assertHigh(xpop());
+        return assertDouble(xpop());
     }
 
     /**
@@ -655,21 +653,51 @@ public class ValueStack {
         }
     }
 
-    private boolean typeMismatch(Instruction x, Instruction y) {
+    private static boolean typeMismatch(Instruction x, Instruction y) {
         return y.type().basicType() != x.type().basicType();
     }
 
-    private Instruction checkTag(BasicType basicType, Instruction x) {
+    private static Instruction assertType(BasicType basicType, Instruction x) {
         assert x.type().basicType() == basicType;
         return x;
     }
 
-    private boolean isDoubleWord(Instruction x) {
+    private static Instruction assertLong(Instruction x) {
+        assert x.type().basicType() == BasicType.Long;
+        return x;
+    }
+
+    private static Instruction assertJsr(Instruction x) {
+        assert x.type().basicType() == BasicType.Jsr;
+        return x;
+    }
+
+    private static Instruction assertInt(Instruction x) {
+        assert x.type().basicType() == BasicType.Int;
+        return x;
+    }
+
+    private static Instruction assertFloat(Instruction x) {
+        assert x.type().basicType() == BasicType.Float;
+        return x;
+    }
+
+    private static Instruction assertObject(Instruction x) {
+        assert x.type().basicType() == BasicType.Object;
+        return x;
+    }
+
+    private static Instruction assertDouble(Instruction x) {
+        assert x.type().basicType() == BasicType.Double;
+        return x;
+    }
+
+    private static void assertHigh(Instruction x) {
+        assert x == null;
+    }
+
+    private static boolean isDoubleWord(Instruction x) {
         return x != null && x.type().isDoubleWord();
     }
 
-    private boolean checkHiWord(int i, Instruction x) {
-        Instruction h = _values[i + 1];
-        return h == null || (h instanceof HiWord) && ((HiWord) h).lowWord() == x;
-    }
 }

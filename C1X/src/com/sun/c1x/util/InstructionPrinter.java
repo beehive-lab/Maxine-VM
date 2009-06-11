@@ -396,10 +396,6 @@ public class InstructionPrinter implements InstructionVisitor {
         }
     }
 
-    public void visitHiWord(HiWord i) {
-        Util.shouldNotReachHere();
-    }
-
     public void visitIf(If i) {
         _out.print("if " + valueString(i.x()) + ' ' + i.condition().name() + ' ' + valueString(i.y()) +
                    " then B" + i.successors().get(0).blockID() + " else B" + i.successors().get(1).blockID());

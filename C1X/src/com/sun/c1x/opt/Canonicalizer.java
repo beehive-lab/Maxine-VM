@@ -376,10 +376,6 @@ public class Canonicalizer implements InstructionVisitor {
         return nv;
     }
 
-    public void visitHiWord(HiWord i) {
-        // do nothing.
-    }
-
     public void visitPhi(Phi i) {
         // do nothing.
     }
