@@ -89,6 +89,7 @@ public abstract class AccessIndexed extends AccessArray {
      * Iterates over the input values of this instruction.
      * @param closure the closure to apply to each of the input values
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         super.inputValuesDo(closure);
         _index = closure.apply(_index);

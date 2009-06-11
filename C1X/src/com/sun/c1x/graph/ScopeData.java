@@ -453,6 +453,7 @@ public class ScopeData {
      * Converts this scope data to a string for debugging purposes.
      * @return a string representation of this scope data
      */
+    @Override
     public String toString() {
         if (parsingJsr()) {
             return "jsr@" + _jsrEntryBci + " data for " + _scope.toString();

@@ -51,6 +51,7 @@ public class LoadField extends AccessField {
      * Gets the declared type of the field being accessed.
      * @return the declared type of the field being accessed.
      */
+    @Override
     public CiType declaredType() {
         return field().type();
     }
@@ -61,6 +62,7 @@ public class LoadField extends AccessField {
      * then the exact type is the same as the declared type. Otherwise it is <code>null</code>
      * @return the exact type of the field if known; <code>null</code> otherwise
      */
+    @Override
     public CiType exactType() {
         CiType type = declaredType();
         if (type.isTypeArrayClass()) {
@@ -78,6 +80,7 @@ public class LoadField extends AccessField {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitLoadField(this);
     }

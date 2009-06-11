@@ -105,6 +105,7 @@ public class Invoke extends StateSplit {
      * Checks whether this instruction can trap.
      * @return <code>true</code>, conservatively assuming the called method may throw an exception
      */
+    @Override
     public boolean canTrap() {
         return true;
     }
@@ -122,6 +123,7 @@ public class Invoke extends StateSplit {
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply to each instruction
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         if (_object != null) {
             _object = closure.apply(_object);
@@ -135,6 +137,7 @@ public class Invoke extends StateSplit {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitInvoke(this);
     }

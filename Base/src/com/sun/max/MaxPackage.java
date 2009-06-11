@@ -55,21 +55,6 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
     }
 
     /**
-     * The package prefix of all classes that are part of the Maxine code base.
-     */
-    public static final String MAX_CLASS_PACKAGE_PREFIX = new Package().name();
-
-    /**
-     * Determines if a given class is part of the Maxine code base.
-     *
-     * @param javaClass the class to test
-     * @return true if {@code javaClass.getName()} starts with {@link #MAX_CLASS_PACKAGE_PREFIX}
-     */
-    public static boolean isMaxClass(Class javaClass) {
-        return javaClass.getName().startsWith(MAX_CLASS_PACKAGE_PREFIX);
-    }
-
-    /**
      * Gets an instance of the class named "Package" in a named package.
      *
      * @param packageName denotes the name of a package which may contain a subclass of {@link MaxPackage} named
@@ -88,9 +73,7 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
             return (MaxPackage) packageClass.newInstance();
         } catch (ClassNotFoundException e) {
         } catch (InstantiationException e) {
-            e.printStackTrace();
         } catch (IllegalAccessException e) {
-            e.printStackTrace();
         }
         return null;
     }

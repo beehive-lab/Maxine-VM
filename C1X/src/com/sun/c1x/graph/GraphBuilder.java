@@ -2065,6 +2065,7 @@ public class GraphBuilder {
 
         // connect to begin and set state
         // NOTE that inlining may have changed the block we are parsing
+        assert end != null;
         _block.setEnd(end);
         end.setState(_state);
         // propagate the state

@@ -341,6 +341,7 @@ public class BlockBegin extends StateSplit {
      * Implements half of the visitor pattern for this instruction.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitBlockBegin(this);
     }
@@ -517,6 +518,7 @@ public class BlockBegin extends StateSplit {
         copyBlockFlag(other, BlockBegin.BlockFlag.WasVisited);
     }
 
+    @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("block #");

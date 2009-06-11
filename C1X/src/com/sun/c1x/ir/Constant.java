@@ -68,6 +68,7 @@ public class Constant extends Instruction {
      * such as a class constant that must be resolved.
      * @return <code>true</code> if this instruction can cause a trap
      */
+    @Override
     public boolean canTrap() {
         return _state != null;
     }
@@ -76,6 +77,7 @@ public class Constant extends Instruction {
      * Implements half of the visitor pattern for this instruction.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitConstant(this);
     }
@@ -102,6 +104,7 @@ public class Constant extends Instruction {
      * this method iterates over any values in the state if this constant may need patching.
      * @param closure the closure to apply to each value
      */
+    @Override
     public void otherValuesDo(InstructionClosure closure) {
         if (_state != null) {
             _state.valuesDo(closure);

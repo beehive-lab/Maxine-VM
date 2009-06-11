@@ -205,6 +205,7 @@ public class C1XCompilation {
      * Converts this compilation to a string.
      * @return a string representation of this compilation
      */
+    @Override
     public String toString() {
         if (isOsrCompilation()) {
             return "osr-compile @ " + _osrBCI + ": " + _method;

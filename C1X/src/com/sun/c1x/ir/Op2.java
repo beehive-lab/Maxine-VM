@@ -88,6 +88,7 @@ public abstract class Op2 extends Instruction {
      * Iterates over the inputs to this instruction.
      * @param closure the closure to apply to each input value
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         _x = closure.apply(_x);
         _x = closure.apply(_y);
