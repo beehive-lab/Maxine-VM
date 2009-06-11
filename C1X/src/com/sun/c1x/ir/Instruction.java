@@ -463,16 +463,7 @@ public abstract class Instruction {
         otherValuesDo(closure);
     }
 
-    /**
-     * Converts a given instruction to a value string. The representation of an instruction as
-     * a value is formed by concatenating the {@linkplain ValueType#tchar() character} denoting its
-     * {@linkplain Instruction#type() type} and its {@linkplain Instruction#id()}. For example,
-     * "i13".
-     *
-     * @param value the instruction to convert to a value string. If {@code value == null}, then "null" is returned.
-     */
-    public static String valueString(Instruction value) {
-        return value == null ? "null" : "" + value.type().tchar() + value.id();
+    public boolean typeCheck(Instruction other) {
+        return type().basicType() == other.type().basicType();
     }
-
 }

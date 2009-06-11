@@ -60,7 +60,7 @@ public class TableSwitch extends Switch {
      * @return the high key
      */
     public int highKey() {
-        return _lowKey + numberOfCases() + 1;
+        return _lowKey + numberOfCases();
     }
 
     /**

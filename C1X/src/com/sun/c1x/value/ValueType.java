@@ -32,43 +32,31 @@ import com.sun.c1x.util.Util;
  */
 public class ValueType {
 
-    public static final ValueType INT_TYPE = new ValueType(ValueTag.INT_TAG, 1);
-    public static final ValueType LONG_TYPE = new ValueType(ValueTag.LONG_TAG, 2);
-    public static final ValueType FLOAT_TYPE = new ValueType(ValueTag.FLOAT_TAG, 1);
-    public static final ValueType DOUBLE_TYPE = new ValueType(ValueTag.DOUBLE_TAG, 2);
-    public static final ValueType JSR_TYPE = new ValueType(ValueTag.JSR_TAG, 1);
-    public static final ValueType OBJECT_TYPE = new ValueType(ValueTag.OBJECT_TAG, 1);
-    public static final ValueType ILLEGAL_TYPE = new ValueType(ValueTag.ILLEGAL_TAG, 1);
-    public static final ValueType VOID_TYPE = new ValueType(ValueTag.VOID_TAG, 0);
+    public static final ValueType INT_TYPE = new ValueType(BasicType.Int);
+    public static final ValueType LONG_TYPE = new ValueType(BasicType.Long);
+    public static final ValueType FLOAT_TYPE = new ValueType(BasicType.Float);
+    public static final ValueType DOUBLE_TYPE = new ValueType(BasicType.Double);
+    public static final ValueType JSR_TYPE = new ValueType(BasicType.Jsr);
+    public static final ValueType OBJECT_TYPE = new ValueType(BasicType.Object);
+    public static final ValueType ILLEGAL_TYPE = new ValueType(BasicType.Illegal);
+    public static final ValueType VOID_TYPE = new ValueType(BasicType.Void);
 
-    private final int _size;
-    private final byte _tag;
+    private final BasicType _basicType;
 
     /**
-     * The base constructor for a value type accepts a type tag and a size (in words)
-     * of this object.
-     * @param tag the type tag for this value type
-     * @param size the size in words
+     * The base constructor for a value type accepts a basic type.
+     * @param basicType the basic type
      */
-    public ValueType(byte tag, int size) {
-        _tag = tag;
-        _size = size;
+    public ValueType(BasicType basicType) {
+        _basicType = basicType.stackType();
     }
 
     /**
-     * Returns the size of this value type in words.
-     * @return the size of this value type in words
+     * Returns the size of this value type in slots.
+     * @return the size of this value type in slots
      */
     public int size() {
-        return _size;
-    }
-
-    /**
-     * Returns the type tag of this value type.
-     * @return the type tag of this value type
-     */
-    public byte tag() {
-        return _tag;
+        return _basicType.sizeInSlots();
     }
 
     /**
@@ -76,7 +64,7 @@ public class ValueType {
      * @return <code>true</code> if this type is void
      */
     public final boolean isVoid() {
-        return _tag == ValueTag.VOID_TAG;
+        return _basicType == BasicType.Void;
     }
 
     /**
@@ -84,7 +72,7 @@ public class ValueType {
      * @return <code>true</code> if this type is int
      */
     public final boolean isInt() {
-        return _tag == ValueTag.INT_TAG;
+        return _basicType == BasicType.Int;
     }
 
     /**
@@ -92,7 +80,7 @@ public class ValueType {
      * @return <code>true</code> if this type is long
      */
     public final boolean isLong() {
-        return _tag == ValueTag.LONG_TAG;
+        return _basicType == BasicType.Long;
     }
 
     /**
@@ -100,7 +88,7 @@ public class ValueType {
      * @return <code>true</code> if this type is float
      */
     public final boolean isFloat() {
-        return _tag == ValueTag.FLOAT_TAG;
+        return _basicType == BasicType.Float;
     }
 
     /**
@@ -108,7 +96,7 @@ public class ValueType {
      * @return <code>true</code> if this type is double
      */
     public final boolean isDouble() {
-        return _tag == ValueTag.DOUBLE_TAG;
+        return _basicType == BasicType.Double;
     }
 
     /**
@@ -123,15 +111,15 @@ public class ValueType {
      * @return <code>true</code> if this type is an object
      */
     public final boolean isObject() {
-        return _tag == ValueTag.OBJECT_TAG;
+        return _basicType == BasicType.Object;
     }
 
     /**
      * Checks whether this value type is an address type.
      * @return <code>true</code> if this type is an address
      */
-    public boolean isAddress() {
-        return _tag == ValueTag.JSR_TAG;
+    public boolean isJsr() {
+        return _basicType == BasicType.Jsr;
     }
 
     /**
@@ -139,7 +127,7 @@ public class ValueType {
      * @return <code>true</code> if this type is illegal
      */
     public final boolean isIllegal() {
-        return _tag == ValueTag.ILLEGAL_TAG;
+        return _basicType == BasicType.Illegal;
     }
 
     /**
@@ -159,7 +147,7 @@ public class ValueType {
      * @return true if this type is represented by a single word
      */
     public boolean isSingleWord() {
-        return _size == 1;
+        return _basicType.sizeInSlots() == 1;
     }
 
     /**
@@ -167,7 +155,7 @@ public class ValueType {
      * @return <code>true</code> if this type is represented by two words
      */
     public boolean isDoubleWord() {
-        return _size == 2;
+        return _basicType.sizeInSlots() == 2;
     }
 
     /**
@@ -175,7 +163,7 @@ public class ValueType {
      * @return the type character for this type
      */
     public char tchar() {
-        return ValueTag.tagChar(_tag);
+        return _basicType._char;
     }
 
     /**
@@ -183,7 +171,7 @@ public class ValueType {
      * @return the name of this value type
      */
     public String name() {
-        return ValueTag.tagName(_tag);
+        return _basicType._name;
     }
 
     /**
@@ -192,8 +180,8 @@ public class ValueType {
      * @return the result of the meet operation for these two types
      */
     public final ValueType meet(ValueType other) {
-        if (other._tag == this._tag) {
-            return base(_tag);
+        if (other._basicType == this._basicType) {
+            return base();
         }
         return ILLEGAL_TYPE;
     }
@@ -206,19 +194,7 @@ public class ValueType {
         if (getClass() == ValueType.class) {
             return this;
         }
-        return base(_tag);
-    }
-
-    /**
-     * Performs the merge operation on this type and another type.
-     * @param other the other value type
-     * @return the result of the merge operation for these two types
-     */
-    public ValueType merge(ValueType other) {
-        if (other._tag == this._tag && other.getClass() == ValueType.class) {
-            return this;
-        }
-        return ILLEGAL_TYPE;
+        return base(_basicType);
     }
 
     /**
@@ -233,23 +209,24 @@ public class ValueType {
      * Converts this value type to a string.
      */
     public String toString() {
-        return ValueTag.tagName(_tag);
+        return _basicType._name;
     }
 
     /**
      * Gets the base value type for the specified value tag.
-     * @param tag the value tag
+     * @param basicType the basic type
      * @return the value type
      */
-    public static ValueType base(byte tag) {
-        switch (tag) {
-            case ValueTag.JSR_TAG: return JSR_TYPE;
-            case ValueTag.INT_TAG: return INT_TYPE;
-            case ValueTag.FLOAT_TAG: return FLOAT_TYPE;
-            case ValueTag.LONG_TAG: return LONG_TYPE;
-            case ValueTag.DOUBLE_TAG: return DOUBLE_TYPE;
-            case ValueTag.OBJECT_TAG: return OBJECT_TYPE;
-            case ValueTag.ILLEGAL_TAG: return ILLEGAL_TYPE;
+    public static ValueType base(BasicType basicType) {
+        switch (basicType) {
+            // PERF: could be sped up with an array
+            case Jsr: return JSR_TYPE;
+            case Int: return INT_TYPE;
+            case Float: return FLOAT_TYPE;
+            case Long: return LONG_TYPE;
+            case Double: return DOUBLE_TYPE;
+            case Object: return OBJECT_TYPE;
+            case Illegal: return ILLEGAL_TYPE;
         }
         throw Util.shouldNotReachHere();
     }
@@ -281,15 +258,7 @@ public class ValueType {
      * @return the basic type
      */
     public BasicType basicType() {
-        switch (_tag) {
-            case ValueTag.INT_TAG: return BasicType.Int;
-            case ValueTag.LONG_TAG: return BasicType.Long;
-            case ValueTag.FLOAT_TAG: return BasicType.Float;
-            case ValueTag.DOUBLE_TAG: return BasicType.Double;
-            case ValueTag.OBJECT_TAG: return BasicType.Object;
-            case ValueTag.JSR_TAG: return BasicType.Jsr;
-            case ValueTag.VOID_TAG: return BasicType.Void;
-        }
-        return BasicType.Illegal;
+        return _basicType;
     }
+
 }

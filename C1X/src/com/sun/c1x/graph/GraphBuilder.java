@@ -101,7 +101,7 @@ public class GraphBuilder {
             }
             ValueType rt = returnValueType(method);
             Instruction result = null;
-            if (rt.tag() != ValueTag.VOID_TAG) {
+            if (!rt.isVoid()) {
                 result = pop(rt);
             }
             methodReturn(result);
@@ -279,12 +279,12 @@ public class GraphBuilder {
     }
 
     void push(ValueType type, Instruction x) {
-        _state.push(type.tag(), x);
+        _state.push(type.basicType(), x);
     }
 
     void pushReturn(ValueType type, Instruction x) {
         if (!type.isVoid()) {
-            _state.push(type.tag(), x);
+            _state.push(type.basicType(), x);
         }
     }
 
@@ -309,7 +309,7 @@ public class GraphBuilder {
     }
 
     Instruction pop(ValueType type) {
-        return _state.pop(type.tag());
+        return _state.pop(type.basicType());
     }
 
     void loadLocal(ValueType type, int index) {
@@ -326,7 +326,7 @@ public class GraphBuilder {
             // address for jsrs since we don't handle arbitrary jsr/ret
             // constructs. Here we are figuring out in which circumstances we
             // need to bail out.
-            if (x.type().tag() == ValueTag.JSR_TAG) {
+            if (x.type().isJsr()) {
                 _scopeData.setJsrEntryReturnAddressLocal(index);
 
                 // Also check parent jsrs (if any) at this time to see whether
@@ -351,7 +351,7 @@ public class GraphBuilder {
 
     Instruction roundFp(Instruction x) {
         if (C1XOptions.RoundFPResults && C1XOptions.SSEVersion < 2) {
-            if (x.type().tag() == ValueTag.DOUBLE_TAG
+            if (x.type().isDouble()
                     && !(x instanceof Constant)
                     && !(x instanceof Local)
                     && !(x instanceof RoundFP)) {
@@ -500,9 +500,6 @@ public class GraphBuilder {
                 type = ConstType.forLong(con.asLong());
                 break;
             case Object:
-                type = ConstType.forObject(con.asObject());
-                break;
-            case Array:
                 type = ConstType.forObject(con.asObject());
                 break;
             default:
@@ -1030,7 +1027,7 @@ public class GraphBuilder {
             // trim back stack to the caller's stack size
             _state.truncateStack(_scopeData.callerStackSize());
             if (x != null) {
-                _state.push(x.type().tag(), x);
+                _state.push(x.type().basicType(), x);
             }
             Goto gotoCallee = new Goto(_scopeData.continuation(), null, false);
 
@@ -1044,7 +1041,7 @@ public class GraphBuilder {
             // return value, if any, of the inlined method on operand stack.
             _state = _scopeData.continuationState().copy();
             if (x != null) {
-                _state.push(x.type().tag(), x);
+                _state.push(x.type().basicType(), x);
             }
 
             // The current bci() is in the wrong scope, so use the bci() of

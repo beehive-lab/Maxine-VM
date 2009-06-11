@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.util;
 
-import static com.sun.c1x.ir.Instruction.*;
-
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
 
@@ -83,7 +81,7 @@ public class BlockPrinter implements BlockClosure {
                 out.print(", ");
             }
             Instruction value = stack.stackAt(i);
-            out.print(i + ":" + valueString(value));
+            out.print(i + ":" + InstructionPrinter.valueString(value));
             i += value.type().size();
             if (value instanceof Phi) {
                 Phi phi = (Phi) value;
@@ -111,7 +109,7 @@ public class BlockPrinter implements BlockClosure {
                     // synchronized methods push null on the lock stack
                     out.print("this");
                 } else {
-                    out.print(valueString(value));
+                    out.print(InstructionPrinter.valueString(value));
                 }
             }
             out.print("]");

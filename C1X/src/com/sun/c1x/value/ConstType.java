@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.value;
 
-import com.sun.c1x.C1XOptions;
-
 /**
  * The <code>ConstType</code> class represents a value type for a constant on the stack
  * or in a local variable. This class implements the functionality provided by the
@@ -32,7 +30,7 @@ import com.sun.c1x.C1XOptions;
  */
 public class ConstType extends ValueType {
 
-    public static final ConstType NULL_OBJECT = new ConstType(ValueTag.OBJECT_TAG, 1, null, true);
+    public static final ConstType NULL_OBJECT = new ConstType(BasicType.Object, null, true);
     public static final ConstType INT_MINUS_1 = ConstType.forInt(-1);
     public static final ConstType INT_0 = ConstType.forInt(0);
     public static final ConstType INT_1 = ConstType.forInt(1);
@@ -54,13 +52,12 @@ public class ConstType extends ValueType {
     /**
      * Create a new constant type represented by the specified object reference or boxed
      * primitive.
-     * @param tag the type tag of this constant
-     * @param size the size of this constant
+     * @param type the type of this constant
      * @param value the value of this constant
      * @param isObject true if this constant is an object reference; false otherwise
      */
-    public ConstType(byte tag, int size, Object value, boolean isObject) {
-        super(tag, size);
+    public ConstType(BasicType type, Object value, boolean isObject) {
+        super(type);
         _value = value;
         _isObject = isObject;
     }
@@ -79,7 +76,7 @@ public class ConstType extends ValueType {
      */
     public String toString() {
         final String val = _isObject ? "object@" + System.identityHashCode(_value) : _value.toString();
-        return ValueTag.tagName(tag())  + " = " + val;
+        return basicType()._name + " = " + val;
     }
 
     /**
@@ -91,24 +88,6 @@ public class ConstType extends ValueType {
         return _value.toString();
     }
 
-    /**
-     * Modified merge operations for constants. Merge of two identical constants
-     * will return the first. Merge of two constants of the same type will return
-     * the common (nonconstant) value type. Meet of anything else results in the
-     * illegal value type.
-     * @param other the other value type to merge with
-     * @return the value type representing the meet operation
-     */
-    public ValueType merge(ValueType other) {
-        if (tag() != other.tag()) {
-            return ILLEGAL_TYPE;
-        }
-        if (C1XOptions.MergeEquivalentConstants && equivalent(other)) {
-            return this;
-        }
-        return new ValueType(tag(), size());
-    }
-
     public boolean equivalent(ValueType other) {
         if (other == this) {
             return true;
@@ -116,7 +95,7 @@ public class ConstType extends ValueType {
         if (other instanceof ConstType) {
             ConstType cother = (ConstType) other;
             // must have equivalent tags to be equal
-            if (tag() != cother.tag()) {
+            if (basicType() != cother.basicType()) {
                 return false;
             }
             // use == for object references and .equals() for boxed types
@@ -242,12 +221,12 @@ public class ConstType extends ValueType {
      * @return <code>true</code> if the value is the default value for its type; <code>false</code> otherwise
      */
     public boolean isDefaultValue() {
-        switch (tag()) {
-            case ValueTag.INT_TAG: return asInt() == 0;
-            case ValueTag.LONG_TAG: return asLong() == 0;
-            case ValueTag.FLOAT_TAG: return asFloat() == 0.0f; // TODO: be careful about -0.0
-            case ValueTag.DOUBLE_TAG: return asDouble() == 0.0d; // TODO: be careful about -0.0
-            case ValueTag.OBJECT_TAG: return asObject() == null;
+        switch (basicType()) {
+            case Int: return asInt() == 0;
+            case Long: return asLong() == 0;
+            case Float: return asFloat() == 0.0f; // TODO: be careful about -0.0
+            case Double: return asDouble() == 0.0d; // TODO: be careful about -0.0
+            case Object: return asObject() == null;
         }
         return false;
     }
@@ -258,7 +237,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the double
      */
     public static ConstType forDouble(double d) {
-        return new ConstType(ValueTag.DOUBLE_TAG, 2, d, false);
+        return new ConstType(BasicType.Double, d, false);
     }
 
     /**
@@ -267,7 +246,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the float
      */
     public static ConstType forFloat(float f) {
-        return new ConstType(ValueTag.FLOAT_TAG, 1, f, false);
+        return new ConstType(BasicType.Float, f, false);
     }
 
     /**
@@ -276,7 +255,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the long
      */
     public static ConstType forLong(long i) {
-        return new ConstType(ValueTag.LONG_TAG, 2, i, false);
+        return new ConstType(BasicType.Long, i, false);
     }
 
     /**
@@ -285,7 +264,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the integer
      */
     public static ConstType forInt(int i) {
-        return new ConstType(ValueTag.INT_TAG, 1, i, false);
+        return new ConstType(BasicType.Int, i, false);
     }
 
     /**
@@ -294,7 +273,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the byte
      */
     public static ConstType forByte(byte i) {
-        return new ConstType(ValueTag.INT_TAG, 1, i, false);
+        return new ConstType(BasicType.Int, i, false);
     }
 
     /**
@@ -303,7 +282,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the boolean
      */
     public static ConstType forBoolean(boolean i) {
-        return new ConstType(ValueTag.INT_TAG, 1, i, false);
+        return new ConstType(BasicType.Int, i, false);
     }
 
     /**
@@ -312,7 +291,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the char
      */
     public static ConstType forChar(char i) {
-        return new ConstType(ValueTag.INT_TAG, 1, i, false);
+        return new ConstType(BasicType.Int, i, false);
     }
 
     /**
@@ -321,7 +300,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the short
      */
     public static ConstType forShort(short i) {
-        return new ConstType(ValueTag.INT_TAG, 1, i, false);
+        return new ConstType(BasicType.Int, i, false);
     }
 
     /**
@@ -330,7 +309,7 @@ public class ConstType extends ValueType {
      * @return a value type representing the address
      */
     public static ConstType forJsr(int i) {
-        return new ConstType(ValueTag.JSR_TAG, 1, i, false);
+        return new ConstType(BasicType.Jsr, i, false);
     }
 
     /**
@@ -342,7 +321,7 @@ public class ConstType extends ValueType {
         if (o == null) {
             return NULL_OBJECT;
         }
-        return new ConstType(ValueTag.OBJECT_TAG, 1, o, true);
+        return new ConstType(BasicType.Object, o, true);
     }
 
 }
