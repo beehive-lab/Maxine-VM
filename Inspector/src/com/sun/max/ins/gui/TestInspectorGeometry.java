@@ -68,6 +68,10 @@ public class TestInspectorGeometry implements InspectorGeometry {
         return _testFrameDefaultBounds;
     }
 
+    public Rectangle watchpointsFrameDefaultBounds() {
+        return _testFrameDefaultBounds;
+    }
+
     public Rectangle threadLocalsFrameDefaultBounds() {
         return _testFrameDefaultBounds;
     }

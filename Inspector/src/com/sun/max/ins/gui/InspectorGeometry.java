@@ -61,6 +61,11 @@ public interface InspectorGeometry {
     Rectangle breakpointsFrameDefaultBounds();
 
     /**
+     * @return default geometry for the {@linkWatchpointsInspector}.
+     */
+    Rectangle watchpointsFrameDefaultBounds();
+
+    /**
      * @return default geometry for the {@link ThreadLocalsInspector}.
      */
     Rectangle threadLocalsFrameDefaultBounds();

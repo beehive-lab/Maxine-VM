@@ -26,15 +26,14 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.table.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.object.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -50,18 +49,20 @@ public final class ThreadLocalsTable extends InspectorTable {
 
     private final TeleThreadLocalValues _values;
     private final ThreadLocalsViewPreferences _preferences;
-    private final MaxThread _maxThread;
+    private final MaxThread _thread;
 
     private final ThreadLocalsTableModel _model;
     private final ThreadLocalsTableColumnModel _columnModel;
     private final TableColumn[] _columns;
 
+    private MaxVMState _lastRefreshedState = null;
+
     /**
      * A {@link JTable} specialized to display Maxine thread local fields.
      */
-    public ThreadLocalsTable(Inspection inspection, MaxThread maxThread, TeleThreadLocalValues values, ThreadLocalsViewPreferences preferences) {
+    public ThreadLocalsTable(Inspection inspection, MaxThread thread, TeleThreadLocalValues values, ThreadLocalsViewPreferences preferences) {
         super(inspection);
-        _maxThread = maxThread;
+        _thread = thread;
         _values = values;
         _preferences = preferences;
         _model = new ThreadLocalsTableModel();
@@ -88,6 +89,17 @@ public final class ThreadLocalsTable extends InspectorTable {
                         setAddressFocus(address);
                     }
                 }
+                if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
+                    final Point p = mouseEvent.getPoint();
+                    final int hitRowIndex = rowAtPoint(p);
+                    final int columnIndex = getColumnModel().getColumnIndexAtX(p.x);
+                    final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
+                    if (modelIndex == ObjectFieldColumnKind.TAG.ordinal()) {
+                        final InspectorMenu menu = new InspectorMenu();
+                        menu.add(actions().setWatchpoint(_model.rowToAddress(hitRowIndex), "Watch this memory word"));
+                        menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                    }
+                }
                 super.procedure(mouseEvent);
             }
         });
@@ -98,6 +110,34 @@ public final class ThreadLocalsTable extends InspectorTable {
 
     private void setAddressFocus(Address address) {
         inspection().focus().setAddress(address);
+    }
+
+    public void redisplay() {
+        for (TableColumn column : _columns) {
+            final Prober prober = (Prober) column.getCellRenderer();
+            prober.redisplay();
+        }
+        invalidate();
+        repaint();
+    }
+
+    public void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
+            final int oldSelectedRow = getSelectedRow();
+            final int newRow = _model.addressToRow(focus().address());
+            if (newRow >= 0) {
+                getSelectionModel().setSelectionInterval(newRow, newRow);
+            } else {
+                if (oldSelectedRow >= 0) {
+                    getSelectionModel().clearSelection();
+                }
+            }
+            for (TableColumn column : _columns) {
+                final Prober prober = (Prober) column.getCellRenderer();
+                prober.refresh(force);
+            }
+        }
     }
 
     @Override
@@ -161,6 +201,19 @@ public final class ThreadLocalsTable extends InspectorTable {
             return _values.start().plus(rowToOffset(row));
         }
 
+
+        /**
+         * @return the memory watchpoint, if any, that is active at a row
+         */
+        public MaxWatchpoint rowToWatchpoint(int row) {
+            for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
+                if (watchpoint.memoryRegion().contains(rowToAddress(row))) {
+                    return watchpoint;
+                }
+            }
+            return null;
+        }
+
         public int addressToRow(Address address) {
             if (!address.isZero()) {
                 if (address.greaterEqual(_values.start()) && address.lessThan(_values.end())) {
@@ -199,38 +252,14 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
     }
 
-    private final class TagRenderer extends PlainLabel implements TableCellRenderer, TextSearchable, Prober {
+    private final class TagRenderer extends MemoryTagTableCellRenderer implements TableCellRenderer {
 
         TagRenderer(Inspection inspection) {
-            super(inspection, null);
+            super(inspection);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final Address address = _model.rowToAddress(row);
-            String registerNameList = null;
-            final TeleIntegerRegisters teleIntegerRegisters = _maxThread.integerRegisters();
-            if (teleIntegerRegisters == null) {
-                return gui().getMissingDataTableCellRederer();
-            }
-            final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(maxVM().wordSize()));
-            if (registerSymbols.isEmpty()) {
-                setText("");
-                setToolTipText("");
-                setForeground(style().memoryDefaultTagTextColor());
-            } else {
-                for (Symbol registerSymbol : registerSymbols) {
-                    final String name = registerSymbol.name();
-                    if (registerNameList == null) {
-                        registerNameList = name;
-                    } else {
-                        registerNameList = registerNameList + "," + name;
-                    }
-                }
-                setText(registerNameList + "->");
-                setToolTipText("Register(s): " + registerNameList + " in thread " + inspection().nameDisplay().longName(_maxThread) + " point at this location");
-                setForeground(style().memoryRegisterTagTextColor());
-            }
-            return this;
+            return getRenderer(_model.rowToAddress(row), _thread, _model.rowToWatchpoint(row));
         }
     }
 
@@ -348,36 +377,6 @@ public final class ThreadLocalsTable extends InspectorTable {
                 _labels[row] = label;
             }
             return label;
-        }
-    }
-
-    public void redisplay() {
-        for (TableColumn column : _columns) {
-            final Prober prober = (Prober) column.getCellRenderer();
-            prober.redisplay();
-        }
-        invalidate();
-        repaint();
-    }
-
-    private MaxVMState _lastRefreshedState = null;
-
-    public void refresh(boolean force) {
-        if (maxVMState().newerThan(_lastRefreshedState) || force) {
-            _lastRefreshedState = maxVMState();
-            final int oldSelectedRow = getSelectedRow();
-            final int newRow = _model.addressToRow(focus().address());
-            if (newRow >= 0) {
-                getSelectionModel().setSelectionInterval(newRow, newRow);
-            } else {
-                if (oldSelectedRow >= 0) {
-                    getSelectionModel().clearSelection();
-                }
-            }
-            for (TableColumn column : _columns) {
-                final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(force);
-            }
         }
     }
 

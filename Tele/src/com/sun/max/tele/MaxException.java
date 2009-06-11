@@ -18,40 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins;
-
-import com.sun.max.tele.*;
+package com.sun.max.tele;
 
 /**
- * An abstract adapter class for receiving inspection events.
- * The methods in this class are empty.  This class exists
- * as a convenience for creating listener objects.
- *
- * Extend this class, override the methods of interest, and
- * register with the inspection via
- * {@link Inspection#addInspectionListener(InspectionListener)} and
- * {@link Inspection#removeInspectionListener(InspectionListener)}.
+ * Abstract parent class for all checked exceptions that might be
+ * thrown by client interfaces in the Tele layer of code.
  *
  * @author Michael Van De Vanter
  */
-public abstract class InspectionListenerAdapter implements InspectionListener {
+public abstract class MaxException extends Exception {
 
-    public void vmStateChanged(boolean force) {
+    protected MaxException() {
+        super("");
     }
 
-    public void threadStateChanged(MaxThread thread) {
+    protected MaxException(String message) {
+        super(message);
     }
-
-    public void breakpointSetChanged() {
-    }
-
-    public void watchpointSetChanged() {
-    }
-
-    public void viewConfigurationChanged() {
-    }
-
-    public void vmProcessTerminated() {
-    }
-
 }
+

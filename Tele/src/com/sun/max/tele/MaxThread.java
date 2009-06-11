@@ -141,7 +141,7 @@ public interface MaxThread {
     /**
      * Gets the return address of the next-to-top frame on the stack. This will be null in the case where this thread is
      * in native code that was entered via a native method annotated with {@link C_FUNCTION}. The stub for such methods
-     * do not leave the breadcrumbs on the stack that record how to find caller frames.
+     * do not leave the bread crumbs on the stack that record how to find caller frames.
      */
     Pointer getReturnAddress();
 
@@ -171,6 +171,5 @@ public interface MaxThread {
      * Immutable; thread-safe.
      */
     boolean isJava();
-
 
 }

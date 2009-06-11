@@ -47,7 +47,7 @@ public interface ViewFocusListener {
     /**
      * Notifies that the global thread focus has been set (view state only), non-null once running.
      */
-    void threadFocusSet(MaxThread oldMaxThread, MaxThread maxThread);
+    void threadFocusSet(MaxThread oldThread, MaxThread thread);
 
     /**
      * Notifies that the global stack frame focus has been changed (view state only), non-null once running.
@@ -68,6 +68,11 @@ public interface ViewFocusListener {
      * Notifies that the breakpoint focus has been changed (view state only), possibly to null.
      */
     void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint);
+
+    /**
+     * Notifies that the watchpoint focus has been changed (view state only), possibly to null.
+     */
+    void watchpointFocusSet(MaxWatchpoint oldWatchpoint, MaxWatchpoint watchpoint);
 
     /**
      * Notifies that the heap object focus has changed (view state only), possibly to null.

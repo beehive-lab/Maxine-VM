@@ -48,6 +48,8 @@ public class BootImageTable extends InspectorTable {
     private BootImageColumnModel _columnModel;
     private final TableColumn[] _columns;
 
+    private MaxVMState _lastRefreshedState = null;
+
     public BootImageTable(Inspection inspection, TableColumnVisibilityPreferences<BootImageColumnKind> viewPreferences) {
         super(inspection);
         _model = new BootImageTableModel(inspection);
@@ -66,8 +68,6 @@ public class BootImageTable extends InspectorTable {
         refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
-
-    private MaxVMState _lastRefreshedState = null;
 
     public void refresh(boolean force) {
         if (maxVMState().newerThan(_lastRefreshedState) || force) {

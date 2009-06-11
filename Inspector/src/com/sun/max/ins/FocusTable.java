@@ -105,6 +105,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
         FRAME("Stack Frame", "Current stack frame of interest in the Inspector"),
         CODE("Code Location", "Current code location of interest in the Inspector"),
         BREAKPOINT("Breakpoint", "Current breakpoint of interest in the Inspector"),
+        WATCHPOINT("Watchpoint", "Current watchpoint of interest in the Inspector"),
         ADDRESS("Memory Address", "Current memory address of interest in the Inspector"),
         OBJECT("Heap Object", "Current heap object of interest in the Inspector"),
         REGION("Memory Region", "Current memory region of interest in the Inspector");
@@ -162,6 +163,19 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
 
         refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
+    }
+
+    public void refresh(boolean force) {
+        if (force) {
+            for (TableColumn column : _columns) {
+                final Prober prober = (Prober) column.getCellRenderer();
+                prober.refresh(force);
+            }
+            _model.refresh();
+        }
+    }
+
+    public void redisplay() {
     }
 
     @Override
@@ -248,11 +262,11 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
             _labels[FocusRowKind.THREAD.ordinal()] = new JavaNameLabel(inspection, "") {
                 @Override
                 public void refresh(boolean force) {
-                    final MaxThread maxThread = inspection().focus().thread();
-                    if (maxThread == null) {
+                    final MaxThread thread = inspection().focus().thread();
+                    if (thread == null) {
                         setValue("null", "No thread focus");
                     } else {
-                        final String longName = inspection().nameDisplay().longNameWithState(maxThread);
+                        final String longName = inspection().nameDisplay().longNameWithState(thread);
                         setValue(longName, "Thread focus = " + longName);
                     }
                 }
@@ -287,10 +301,22 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
                 public void refresh(boolean force) {
                     final TeleBreakpoint teleBreakpoint = inspection().focus().breakpoint();
                     if (teleBreakpoint == null) {
-                        setValue(null, "No code location focus");
+                        setValue(null, "No breakpoint focus");
                     } else {
                         final String longName = inspection().nameDisplay().longName(teleBreakpoint.teleCodeLocation());
                         setValue(longName, "Breakpoint focus = " + longName);
+                    }
+                }
+            };
+            _labels[FocusRowKind.WATCHPOINT.ordinal()] = new PlainLabel(inspection, "") {
+                @Override
+                public void refresh(boolean force) {
+                    final MaxWatchpoint watchpoint = inspection().focus().watchpoint();
+                    if (watchpoint == null) {
+                        setValue("null", "No watchpoint focus");
+                    } else {
+                        final String longName = watchpoint.toString();
+                        setValue(longName, "Watchpoint focus = " + longName);
                     }
                 }
             };
@@ -356,7 +382,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
         refresh(true);
     }
 
-    public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxThread) {
+    public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
         refresh(true);
     }
 
@@ -376,21 +402,12 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
         refresh(true);
     }
 
-    public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
+    public  void watchpointFocusSet(MaxWatchpoint oldWatchpoint, MaxWatchpoint watchpoint) {
         refresh(true);
     }
 
-    public void redisplay() {
-    }
-
-    public void refresh(boolean force) {
-        if (force) {
-            for (TableColumn column : _columns) {
-                final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(force);
-            }
-            _model.refresh();
-        }
+    public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
+        refresh(true);
     }
 
 }

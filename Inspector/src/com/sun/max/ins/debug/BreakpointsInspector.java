@@ -29,6 +29,7 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.debug.*;
 
 /**
  * Singleton inspector that displays information about all kinds of breakpoints that might be set in the VM.
@@ -38,6 +39,8 @@ import com.sun.max.program.*;
  * @author Michael Van De Vanter
  */
 public final class BreakpointsInspector extends Inspector implements TableColumnViewPreferenceListener {
+
+    private static final int TRACE_VALUE = 1;
 
     // Set to null when inspector closed.
     private static BreakpointsInspector _breakpointsInspector;
@@ -77,11 +80,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
 
     @Override
     protected void createView() {
-        if (_table != null) {
-            focus().removeListener(_table);
-        }
         _table = new BreakpointsTable(inspection(), _viewPreferences);
-        focus().addListener(_table);
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _table);
         frame().setContentPane(scrollPane);
     }
@@ -129,7 +128,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
             menu.add(methodEntryBreakpoints);
             menu.add(inspection().actions().setTargetCodeBreakpointAtObjectInitializer());
             menu.addSeparator();
-            menu.add(inspection().actions().removeBreakpoint());
+            menu.add(inspection().actions().removeSelectedBreakpoint());
             menu.add(inspection().actions().removeAllTargetCodeBreakpoints());
             menu.add(inspection().actions().removeAllBytecodeBreakpoints());
         }
@@ -160,16 +159,22 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
         refreshView(true);
     }
 
+    @Override
+    public  void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
+        if (_table != null) {
+            _table.updateFocusSelection();
+        }
+    }
+
     public void tableColumnViewPreferencesChanged() {
         reconstructView();
     }
 
     @Override
     public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing");
+        Trace.line(TRACE_VALUE, tracePrefix() + " closing");
         _breakpointsInspector = null;
         _viewPreferences.removeListener(this);
-        focus().removeListener(_table);
         super.inspectorClosing();
     }
 

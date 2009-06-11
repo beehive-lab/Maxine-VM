@@ -31,46 +31,58 @@ import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 
+
 /**
- * A singleton inspector that displays the list of threads running in the process of the VM.
+ * Singleton inspector that displays information about memory watchpoints set in the VM.
+ * Wrappers with extra information about each breakpoint are kept in a model.
  *
  * @author Michael Van De Vanter
  */
-public final class ThreadsInspector extends Inspector implements TableColumnViewPreferenceListener {
+public final class WatchpointsInspector extends Inspector implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 1;
 
     // Set to null when inspector closed.
-    private static ThreadsInspector _threadsInspector;
+    private static WatchpointsInspector _watchpointsInspector;
+
     /**
-     * Display the (singleton) threads inspector, creating it if needed.
+     * Displays the (singleton) watchpoints inspector.
+     * @return  The watchpoints inspector, possibly newly created.
      */
-    public static ThreadsInspector make(Inspection inspection) {
-        if (_threadsInspector == null) {
-            _threadsInspector = new ThreadsInspector(inspection);
+    public static WatchpointsInspector make(Inspection inspection) {
+        if (_watchpointsInspector == null) {
+            _watchpointsInspector = new WatchpointsInspector(inspection);
         }
-        return _threadsInspector;
+        return _watchpointsInspector;
     }
 
-    private final SaveSettingsListener _saveSettingsListener = createGeometrySettingsClient(this, "threadsInspector");
-
-    private ThreadsTable _table;
+    private final SaveSettingsListener _saveSettingsListener = createGeometrySettingsClient(this, "watchpointsInspector");
 
     // This is a singleton viewer, so only use a single level of view preferences.
-    private final ThreadsViewPreferences _viewPreferences;
+    private final WatchpointsViewPreferences _viewPreferences;
 
-    private ThreadsInspector(Inspection inspection) {
+    private WatchpointsTable _table;
+
+    private WatchpointsInspector(Inspection inspection) {
         super(inspection);
         Trace.begin(TRACE_VALUE,  tracePrefix() + " initializing");
-        _viewPreferences = ThreadsViewPreferences.globalPreferences(inspection());
+        _viewPreferences = WatchpointsViewPreferences.globalPreferences(inspection());
         _viewPreferences.addListener(this);
         createFrame(null);
+        frame().add(new WatchpointFrameMenuItems());
         Trace.end(TRACE_VALUE,  tracePrefix() + " initializing");
     }
 
     @Override
     protected Rectangle defaultFrameBounds() {
-        return inspection().geometry().threadsFrameDefaultBounds();
+        return inspection().geometry().watchpointsFrameDefaultBounds();
+    }
+
+    @Override
+    protected void createView() {
+        _table = new WatchpointsTable(inspection(), _viewPreferences);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _table);
+        frame().setContentPane(scrollPane);
     }
 
     @Override
@@ -85,27 +97,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
 
     @Override
     public String getTextForTitle() {
-        return "Threads";
-    }
-
-    @Override
-    public void createView() {
-        _table = new ThreadsTable(inspection(), _viewPreferences);
-        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _table);
-        frame().setContentPane(scrollPane);
-    }
-
-    @Override
-    protected void refreshView(boolean force) {
-        _table.refresh(force);
-        super.refreshView(force);
-    }
-
-    @Override
-    public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
-        if (_table != null) {
-            _table.updateFocusSelection();
-        }
+        return "Watchpoints";
     }
 
     @Override
@@ -113,7 +105,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<ThreadsColumnKind>(inspection(), "Threads View Options", _viewPreferences);
+                new TableColumnVisibilityPreferences.Dialog<WatchpointsColumnKind>(inspection(), "Watchpoints View Options", _viewPreferences);
             }
         };
     }
@@ -123,8 +115,49 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         return getDefaultPrintAction();
     }
 
+    /**
+     * Menu items not dependent on mouse location, suitable for the frame.
+     */
+    private final class WatchpointFrameMenuItems implements InspectorMenuItems {
+        // TODO (mlvdv) add watchpoint frame menu items
+        public void addTo(InspectorMenu menu) {
+            menu.add(actions().setWatchpoint());
+            menu.addSeparator();
+            menu.add(actions().removeSelectedWatchpoint());
+            menu.add(actions().removeAllWatchpoints());
+        }
+
+        public Inspection inspection() {
+            return WatchpointsInspector.this.inspection();
+        }
+
+        public void refresh(boolean force) {
+        }
+
+        public void redisplay() {
+        }
+    }
+
+    @Override
+    protected void refreshView(boolean force) {
+        _table.refresh(force);
+        super.refreshView(force);
+    }
+
     public void viewConfigurationChanged() {
         reconstructView();
+    }
+
+    @Override
+    public void watchpointSetChanged() {
+        refreshView(true);
+    }
+
+    @Override
+    public void watchpointFocusSet(MaxWatchpoint oldWatchpoint, MaxWatchpoint watchpoint) {
+        if (_table != null) {
+            _table.updateFocusSelection();
+        }
     }
 
     public void tableColumnViewPreferencesChanged() {
@@ -133,8 +166,8 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
 
     @Override
     public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing");
-        _threadsInspector = null;
+        Trace.line(TRACE_VALUE, tracePrefix() + " closing");
+        _watchpointsInspector = null;
         _viewPreferences.removeListener(this);
         super.inspectorClosing();
     }

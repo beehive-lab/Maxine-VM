@@ -176,8 +176,13 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
         menu.addSeparator();
         menu.add(_actions.toggleBytecodeBreakpoint());
         menu.add(_actions.removeAllBytecodeBreakpoints());
-        menu.addSeparator();
-        menu.add(_actions.setWatchpoint());
+        if (maxVM().watchpointsEnabled()) {
+            menu.addSeparator();
+            final JMenuItem viewWatchpointsMenuItem = new JMenuItem(_actions.viewWatchpoints());
+            viewWatchpointsMenuItem.setText("View Watchpoints");
+            menu.add(viewWatchpointsMenuItem);
+            menu.add(_actions.setWatchpoint());
+        }
 
         return menu;
     }
@@ -192,6 +197,9 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
         menu.add(_actions.viewStack());
         menu.add(_actions.viewMethodCode());
         menu.add(_actions.viewBreakpoints());
+        if (maxVM().watchpointsEnabled()) {
+            menu.add(_actions.viewWatchpoints());
+        }
         return menu;
     }
 

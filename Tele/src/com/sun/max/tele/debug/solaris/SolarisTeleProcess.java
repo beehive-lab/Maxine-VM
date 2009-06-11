@@ -176,6 +176,12 @@ public final class SolarisTeleProcess extends TeleProcess {
     private native boolean nativeActivateWatchpoint(long processHandle, long start, long size);
 
     @Override
+    public int maximumWatchpointCount() {
+        // Only permit one for the time being, until more machinery is in place.
+        return 1;
+    }
+
+    @Override
     protected boolean activateWatchpoint(MemoryRegion memoryRegion) {
         return nativeActivateWatchpoint(_processHandle, memoryRegion.start().toLong(), memoryRegion.size().toLong());
     }

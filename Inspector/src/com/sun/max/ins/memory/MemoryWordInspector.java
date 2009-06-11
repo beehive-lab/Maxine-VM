@@ -254,7 +254,7 @@ public final class MemoryWordInspector extends Inspector {
     }
 
     @Override
-    public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxThread) {
+    public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
         // Revise any indications of registers pointing at inspected locations.
         refreshView(true);
     }
