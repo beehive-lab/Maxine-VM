@@ -51,7 +51,7 @@ public class C1XCompilation {
     Bailout _bailout;
 
     int _totalBlocks;
-    int _totalBytecodes;
+    int _totalInstructions;
 
     /**
      * Creates a new compilation for the specified method and runtime.
@@ -82,7 +82,9 @@ public class C1XCompilation {
     public BlockBegin startBlock() {
         try {
             if (_start == null) {
-                _start = new GraphBuilder(this, new IRScope(this, null, 0, _method, _osrBCI)).start();
+                final GraphBuilder builder = new GraphBuilder(this, new IRScope(this, null, 0, _method, _osrBCI));
+                _start = builder.start();
+                _totalInstructions = builder.instructionCount();
             }
         } catch (Bailout b) {
             _bailout = b;
@@ -200,6 +202,18 @@ public class C1XCompilation {
     }
 
     /**
+     * Converts this compilation to a string.
+     * @return a string representation of this compilation
+     */
+    @Override
+    public String toString() {
+        if (isOsrCompilation()) {
+            return "osr-compile @ " + _osrBCI + ": " + _method;
+        }
+        return "compile: " + _method;
+    }
+
+    /**
      * Builds the block map for the specified method.
      * @param method the method for which to build the block map
      * @param osrBCI the OSR bytecode index; <code>-1</code> if this is not an OSR
@@ -219,5 +233,13 @@ public class C1XCompilation {
         map.cleanup();
         _totalBlocks += map.numberOfBlocks();
         return map;
+    }
+
+    /**
+     * Returns the number of bytecodes inlined into the compilation.
+     * @return the number of bytecodes
+     */
+    public int totalInstructions() {
+        return _totalInstructions;
     }
 }

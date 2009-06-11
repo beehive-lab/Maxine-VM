@@ -64,7 +64,7 @@ public class IfOp extends Op2 {
      * Gets the instruction that produces the value if the comparison is true.
      * @return the instruction producing the value upon true
      */
-    public Instruction trueVal() {
+    public Instruction trueValue() {
         return _trueVal;
     }
 
@@ -72,7 +72,7 @@ public class IfOp extends Op2 {
      * Gets the instruction that produces the value if the comparison is false.
      * @return the instruction producing the value upon false
      */
-    public Instruction falseVal() {
+    public Instruction falseValue() {
         return _falseVal;
     }
 
@@ -88,6 +88,7 @@ public class IfOp extends Op2 {
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply to each instruction
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         super.inputValuesDo(closure);
         _trueVal = closure.apply(_trueVal);
@@ -98,6 +99,7 @@ public class IfOp extends Op2 {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitIfOp(this);
     }

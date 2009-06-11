@@ -38,6 +38,7 @@ public class RoundFP extends Instruction {
      */
     public RoundFP(Instruction value) {
         super(value.type());
+        _value = value;
     }
 
     /**
@@ -52,6 +53,7 @@ public class RoundFP extends Instruction {
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         _value = closure.apply(_value);
     }
@@ -60,6 +62,7 @@ public class RoundFP extends Instruction {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitRoundFP(this);
     }

@@ -86,11 +86,11 @@ public class Canonicalizer implements InstructionVisitor {
     }
 
     private Constant intInstr(int v) {
-        return addInstr(new Constant(ConstType.forInt(v)));
+        return addInstr(Constant.forInt(v));
     }
 
     private Constant longInstr(long v) {
-        return addInstr(new Constant(ConstType.forLong(v)));
+        return addInstr(Constant.forLong(v));
     }
 
     private Instruction setCanonical(Instruction x) {
@@ -98,30 +98,42 @@ public class Canonicalizer implements InstructionVisitor {
     }
 
     private Instruction setIntConstant(int val) {
-        return _canonical = new Constant(ConstType.forInt(val));
+        return _canonical = Constant.forInt(val);
     }
 
     private Instruction setBooleanConstant(boolean val) {
-        return _canonical = new Constant(ConstType.forBoolean(val));
+        return _canonical = Constant.forBoolean(val);
     }
 
     private Instruction setObjectConstant(Object val) {
         if (C1XOptions.SupportObjectConstants) {
-            return _canonical = new Constant(ConstType.forObject(val));
+            return _canonical = Constant.forObject(val);
         }
         return _canonical;
     }
 
     private Instruction setLongConstant(long val) {
-        return _canonical = new Constant(ConstType.forLong(val));
+        return _canonical = Constant.forLong(val);
     }
 
     private Instruction setFloatConstant(float val) {
-        return _canonical = new Constant(ConstType.forFloat(val));
+        return _canonical = Constant.forFloat(val);
     }
 
     private Instruction setDoubleConstant(double val) {
-        return _canonical = new Constant(ConstType.forDouble(val));
+        return _canonical = Constant.forDouble(val);
+    }
+
+    private Instruction setByteConstant(byte val) {
+        return _canonical = new Constant(ConstType.forByte(val));
+    }
+
+    private Instruction setCharConstant(char val) {
+        return _canonical = new Constant(ConstType.forChar(val));
+    }
+
+    private Instruction setShortConstant(short val) {
+        return _canonical = new Constant(ConstType.forShort(val));
     }
 
     private void moveConstantToRight(Op2 x) {
@@ -152,23 +164,25 @@ public class Canonicalizer implements InstructionVisitor {
         ValueType yt = y.type();
         if (xt.isConstant() && yt.isConstant()) {
             // both operands are constants, try constant folding
-            switch (xt.tag()) {
-                case ValueTag.INT_TAG: {
+            switch (xt.basicType()) {
+                case Int: {
                     Integer val = Bytecodes.foldIntOp2(i.opcode(), xt.asConstant().asInt(), yt.asConstant().asInt());
                     if (val != null) {
                         setIntConstant(val); // the operation was successfully folded to an int
                         return;
                     }
+                    break;
                 }
-                case ValueTag.LONG_TAG: {
+                case Long: {
                     Long val = Bytecodes.foldLongOp2(i.opcode(), xt.asConstant().asLong(), yt.asConstant().asLong());
                     if (val != null) {
                         setLongConstant(val); // the operation was successfully folded to a long
                         return;
                     }
+                    break;
                 }
-                case ValueTag.FLOAT_TAG: {
-                    if (C1XOptions.FoldFloatingPoint) {
+                case Float: {
+                    if (C1XOptions.CanonicalizeFloatingPoint) {
                         // try to fold a floating point operation
                         Float val = Bytecodes.foldFloatOp2(i.opcode(), xt.asConstant().asFloat(), yt.asConstant().asFloat());
                         if (val != null) {
@@ -176,9 +190,10 @@ public class Canonicalizer implements InstructionVisitor {
                             return;
                         }
                     }
+                    break;
                 }
-                case ValueTag.DOUBLE_TAG: {
-                    if (C1XOptions.FoldFloatingPoint) {
+                case Double: {
+                    if (C1XOptions.CanonicalizeFloatingPoint) {
                         // try to fold a floating point operation
                         Double val = Bytecodes.foldDoubleOp2(i.opcode(), xt.asConstant().asDouble(), yt.asConstant().asDouble());
                         if (val != null) {
@@ -186,6 +201,7 @@ public class Canonicalizer implements InstructionVisitor {
                             return;
                         }
                     }
+                    break;
                 }
             }
         }
@@ -196,22 +212,24 @@ public class Canonicalizer implements InstructionVisitor {
         yt = i.y().type();
         if (yt.isConstant()) {
             // the right side is a constant, try strength reduction
-            switch (xt.tag()) {
-                case ValueTag.INT_TAG: {
+            switch (xt.basicType()) {
+                case Int: {
                     if (reduceIntOp2(i, x, yt.asConstant().asInt()) != null) {
                         return;
                     }
+                    break;
                 }
-                case ValueTag.LONG_TAG: {
+                case Long: {
                     if (reduceLongOp2(i, x, yt.asConstant().asLong()) != null) {
                         return;
                     }
+                    break;
                 }
                 // XXX: note that other cases are possible, but harder
                 // floating point operations need to be extra careful
             }
         }
-        assert i.type().tag() == _canonical.type().tag();
+        assert i.typeCheck(_canonical);
     }
 
     private Instruction reduceIntOp2(Op2 original, Instruction x, int y) {
@@ -221,8 +239,10 @@ public class Canonicalizer implements InstructionVisitor {
             case Bytecodes.IADD: return y == 0 ? setCanonical(x) : null;
             case Bytecodes.ISUB: return y == 0 ? setCanonical(x) : null;
             case Bytecodes.IMUL: {
-                if (y == 1) return setCanonical(x);
-                if (y > 0 && (y & y - 1) == 0 && C1XOptions.ReduceMultipliesToShifts) {
+                if (y == 1) {
+                    return setCanonical(x);
+                }
+                if (y > 0 && (y & y - 1) == 0 && C1XOptions.CanonicalizeMultipliesToShifts) {
                     // strength reduce multiply by power of 2 to shift operation
                     return setCanonical(new ShiftOp(Bytecodes.ISHL, x, intInstr(Util.log2(y))));
                 }
@@ -231,11 +251,15 @@ public class Canonicalizer implements InstructionVisitor {
             case Bytecodes.IDIV: return y == 1 ? setCanonical(x) : null;
             case Bytecodes.IREM: return y == 1 ? setCanonical(x) : null;
             case Bytecodes.IAND: {
-                if (y == -1) return setCanonical(x);
+                if (y == -1) {
+                    return setCanonical(x);
+                }
                 return y == 0 ? setIntConstant(0) : null;
             }
             case Bytecodes.IOR: {
-                if (y == -1) return setIntConstant(-1);
+                if (y == -1) {
+                    return setIntConstant(-1);
+                }
                 return y == 0 ? setCanonical(x) : null;
             }
             case Bytecodes.IXOR: return y == 0 ? setCanonical(x) : null;
@@ -248,7 +272,8 @@ public class Canonicalizer implements InstructionVisitor {
 
     private Instruction reduceShift(boolean islong, int opcode, int reverse, Instruction x, long y) {
         int mod = islong ? 0x3f : 0x1f;
-        if ((y & mod) == 0) {
+        long shift = y & mod;
+        if (shift == 0) {
             return setCanonical(x);
         }
         if (x instanceof ShiftOp) {
@@ -259,7 +284,8 @@ public class Canonicalizer implements InstructionVisitor {
                 if (s.opcode() == opcode) {
                     // this is a chained shift operation (e >> C >> K)
                     y = y + z;
-                    if ((y & mod) == 0) {
+                    shift = y & mod;
+                    if (shift == 0) {
                         return setCanonical(s.x());
                     }
                     // reduce to (e >> (C + K))
@@ -269,13 +295,20 @@ public class Canonicalizer implements InstructionVisitor {
                 if (s.opcode() == reverse && y == z) {
                     // this is a chained shift of the form (e >> K << K)
                     long mask = -1;
-                    if (opcode == Bytecodes.IUSHR || opcode == Bytecodes.LUSHR) mask = mask >>> y;
-                    else mask = mask << y;
+                    if (opcode == Bytecodes.IUSHR || opcode == Bytecodes.LUSHR) {
+                        mask = mask >>> y;
+                    } else {
+                        mask = mask << y;
+                    }
                     // reduce to (e & mask)
                     Instruction c = islong ? longInstr(mask) : intInstr((int) mask);
                     return setCanonical(new ArithmeticOp(Bytecodes.IAND, s.x(), c, false, null));
                 }
             }
+        }
+        if (y != shift) {
+            // (y & mod) != y
+            return setCanonical(new ShiftOp(opcode, x, intInstr((int) shift)));
         }
         return null;
     }
@@ -287,8 +320,10 @@ public class Canonicalizer implements InstructionVisitor {
             case Bytecodes.LADD: return y == 0 ? setCanonical(x) : null;
             case Bytecodes.LSUB: return y == 0 ? setCanonical(x) : null;
             case Bytecodes.LMUL: {
-                if (y == 1) return setCanonical(x);
-                if (y > 0 && (y & y - 1) == 0 && C1XOptions.ReduceMultipliesToShifts) {
+                if (y == 1) {
+                    return setCanonical(x);
+                }
+                if (y > 0 && (y & y - 1) == 0 && C1XOptions.CanonicalizeMultipliesToShifts) {
                     // strength reduce multiply by power of 2 to shift operation
                     return setCanonical(new ShiftOp(Bytecodes.LSHL, x, longInstr(Util.log2(y))));
                 }
@@ -297,11 +332,15 @@ public class Canonicalizer implements InstructionVisitor {
             case Bytecodes.LDIV: return y == 1 ? setCanonical(x) : null;
             case Bytecodes.LREM: return y == 1 ? setCanonical(x) : null;
             case Bytecodes.LAND: {
-                if (y == -1) return setCanonical(x);
+                if (y == -1) {
+                    return setCanonical(x);
+                }
                 return y == 0 ? setLongConstant(0) : null;
             }
             case Bytecodes.LOR: {
-                if (y == -1) return setLongConstant(-1);
+                if (y == -1) {
+                    return setLongConstant(-1);
+                }
                 return y == 0 ? setCanonical(x) : null;
             }
             case Bytecodes.LXOR: return y == 0 ? setCanonical(x) : null;
@@ -324,15 +363,23 @@ public class Canonicalizer implements InstructionVisitor {
     private Instruction eliminateNarrowing(BasicType type, Convert c) {
         Instruction nv = null;
         switch (c.opcode()) {
-            case Bytecodes.I2B: if (type == BasicType.Byte) nv = c.value(); break;
-            case Bytecodes.I2S: if (type == BasicType.Short || type == BasicType.Byte) nv = c.value(); break;
-            case Bytecodes.I2C: if (type == BasicType.Char || type == BasicType.Byte) nv = c.value(); break;
+            case Bytecodes.I2B:
+                if (type == BasicType.Byte) {
+                    nv = c.value();
+                }
+                break;
+            case Bytecodes.I2S:
+                if (type == BasicType.Short || type == BasicType.Byte) {
+                    nv = c.value();
+                }
+                break;
+            case Bytecodes.I2C:
+                if (type == BasicType.Char || type == BasicType.Byte) {
+                    nv = c.value();
+                }
+                break;
         }
         return nv;
-    }
-
-    public void visitHiWord(HiWord i) {
-        // do nothing.
     }
 
     public void visitPhi(Phi i) {
@@ -356,15 +403,14 @@ public class Canonicalizer implements InstructionVisitor {
                 // XXX: this is clunky, perhaps constantValue() should return ConstType?
                 switch (val.basicType()) {
                     case Boolean: setBooleanConstant(val.asBoolean()); break;
-                    case Char:    setCanonical(new Constant(ConstType.forChar(val.asChar()))); break;
+                    case Char:    setCharConstant(val.asChar()); break;
                     case Float:   setFloatConstant(val.asFloat()); break;
                     case Double:  setDoubleConstant(val.asDouble()); break;
-                    case Byte:    setCanonical(new Constant(ConstType.forByte(val.asByte()))); break;
-                    case Short:   setCanonical(new Constant(ConstType.forShort(val.asShort()))); break;
+                    case Byte:    setByteConstant(val.asByte()); break;
+                    case Short:   setShortConstant(val.asShort()); break;
                     case Int:     setIntConstant(val.asInt()); break;
                     case Long:    setLongConstant(val.asLong()); break;
                     case Object:
-                    case Array:
                         if (C1XOptions.SupportObjectConstants) {
                             setObjectConstant(val.asObject()); break;
                         }
@@ -374,15 +420,17 @@ public class Canonicalizer implements InstructionVisitor {
     }
 
     public void visitStoreField(StoreField i) {
-        // Eliminate narrowing conversions emitted by javac which are unnecessary when
-        // writing the value to a field that is packed
-        Instruction v = i.value();
-        if (v instanceof Convert && C1XOptions.EliminateNarrowingInStores) {
-            Instruction nv = eliminateNarrowing(i.field().basicType(), (Convert) v);
-            // limit this optimization to the current basic block
-            if (nv != null && inCurrentBlock(v)) {
-                setCanonical(new StoreField(i.object(), i.offset(), i.field(), nv, i.isStatic(),
-                                            i.lockStack(), i.stateBefore(), i.isLoaded(), i.isInitialized()));
+        if (C1XOptions.CanonicalizeNarrowingInStores) {
+            // Eliminate narrowing conversions emitted by javac which are unnecessary when
+            // writing the value to a field that is packed
+            Instruction v = i.value();
+            if (v instanceof Convert) {
+                Instruction nv = eliminateNarrowing(i.field().basicType(), (Convert) v);
+                // limit this optimization to the current basic block
+                if (nv != null && inCurrentBlock(v)) {
+                    setCanonical(new StoreField(i.object(), i.offset(), i.field(), nv, i.isStatic(),
+                                                i.lockStack(), i.stateBefore(), i.isLoaded(), i.isInitialized()));
+                }
             }
         }
     }
@@ -411,7 +459,7 @@ public class Canonicalizer implements InstructionVisitor {
                     setIntConstant(java.lang.reflect.Array.getLength(obj));
                 }
             }
-        } else if (array instanceof Constant && C1XOptions.SupportObjectConstants) {
+        } else if (C1XOptions.SupportObjectConstants && array instanceof Constant) {
             // the array itself is a constant object reference
             Object obj = array.type().asConstant().asObject();
             if (obj != null) {
@@ -425,13 +473,15 @@ public class Canonicalizer implements InstructionVisitor {
     }
 
     public void visitStoreIndexed(StoreIndexed i) {
-        // Eliminate narrowing conversions emitted by javac which are unnecessary when
-        // writing the value to an array (which is packed)
-        Instruction v = i.value();
-        if (v instanceof Convert && C1XOptions.EliminateNarrowingInStores) {
-            Instruction nv = eliminateNarrowing(i.elementType(), (Convert) v);
-            if (nv != null && inCurrentBlock(v)) {
-                setCanonical(new StoreIndexed(i.array(), i.index(), i.length(), i.elementType(), nv, i.lockStack()));
+        if (C1XOptions.CanonicalizeNarrowingInStores) {
+            // Eliminate narrowing conversions emitted by javac which are unnecessary when
+            // writing the value to an array (which is packed)
+            Instruction v = i.value();
+            if (v instanceof Convert) {
+                Instruction nv = eliminateNarrowing(i.elementType(), (Convert) v);
+                if (nv != null && inCurrentBlock(v)) {
+                    setCanonical(new StoreIndexed(i.array(), i.index(), i.length(), i.elementType(), nv, i.lockStack()));
+                }
             }
         }
     }
@@ -439,14 +489,14 @@ public class Canonicalizer implements InstructionVisitor {
     public void visitNegateOp(NegateOp i) {
         ValueType vt = i.x().type();
         if (vt.isConstant()) {
-            switch (vt.tag()) {
-                case ValueTag.INT_TAG: setIntConstant(-vt.asConstant().asInt()); return;
-                case ValueTag.LONG_TAG: setLongConstant(-vt.asConstant().asLong()); return;
-                case ValueTag.FLOAT_TAG: setFloatConstant(-vt.asConstant().asFloat()); return;
-                case ValueTag.DOUBLE_TAG: setDoubleConstant(-vt.asConstant().asDouble()); return;
+            switch (vt.basicType()) {
+                case Int: setIntConstant(-vt.asConstant().asInt()); return;
+                case Long: setLongConstant(-vt.asConstant().asLong()); return;
+                case Float: setFloatConstant(-vt.asConstant().asFloat()); return;
+                case Double: setDoubleConstant(-vt.asConstant().asDouble()); return;
             }
         }
-        assert vt.tag() == _canonical.type().tag();
+        assert vt.basicType() == _canonical.type().basicType();
     }
 
     public void visitArithmeticOp(ArithmeticOp i) {
@@ -470,9 +520,9 @@ public class Canonicalizer implements InstructionVisitor {
         ValueType yt = y.type();
         if (x == y) {
             // x and y are generated by the same instruction
-            switch (xt.tag()) {
-                case ValueTag.LONG_TAG: setIntConstant(0); return;
-                case ValueTag.FLOAT_TAG:
+            switch (xt.basicType()) {
+                case Long: setIntConstant(0); return;
+                case Float:
                     if (xt.isConstant()) {
                         float xval = xt.asConstant().asFloat(); // get the actual value of x (and y since x == y)
                         Integer val = Bytecodes.foldFloatCompare(i.opcode(), xval, xval);
@@ -480,7 +530,8 @@ public class Canonicalizer implements InstructionVisitor {
                         setIntConstant(val);
                         return;
                     }
-                case ValueTag.DOUBLE_TAG:
+                    break;
+                case Double:
                     if (xt.isConstant()) {
                         double xval = xt.asConstant().asDouble(); // get the actual value of x (and y since x == y)
                         Integer val = Bytecodes.foldDoubleCompare(i.opcode(), xval, xval);
@@ -488,22 +539,23 @@ public class Canonicalizer implements InstructionVisitor {
                         setIntConstant(val);
                         return;
                     }
+                    break;
                 // note that there are no integer CompareOps
             }
         }
         if (xt.isConstant() && yt.isConstant()) {
             // both x and y are constants
-            switch (xt.tag()) {
-                case ValueTag.LONG_TAG:
+            switch (xt.basicType()) {
+                case Long:
                     setIntConstant(Bytecodes.foldLongCompare(xt.asConstant().asLong(), yt.asConstant().asLong()));
-                    // fall through
-                case ValueTag.FLOAT_TAG: {
+                    break;
+                case Float: {
                     Integer val = Bytecodes.foldFloatCompare(i.opcode(), xt.asConstant().asFloat(), yt.asConstant().asFloat());
                     assert val != null : "invalid opcode in float compare op";
                     setIntConstant(val);
                     return;
                 }
-                case ValueTag.DOUBLE_TAG: {
+                case Double: {
                     Integer val = Bytecodes.foldDoubleCompare(i.opcode(), xt.asConstant().asDouble(), yt.asConstant().asDouble());
                     assert val != null : "invalid opcode in float compare op";
                     setIntConstant(val);
@@ -511,7 +563,7 @@ public class Canonicalizer implements InstructionVisitor {
                 }
             }
         }
-        assert i.type().tag() == _canonical.type().tag();
+        assert i.typeCheck(_canonical);
     }
 
     public void visitIfOp(IfOp i) {
@@ -523,8 +575,8 @@ public class Canonicalizer implements InstructionVisitor {
         ValueType xt = v.type();
         if (xt.isConstant()) {
             // fold conversions between primitive types
+            // Checkstyle: stop
             switch (i.opcode()) {
-                // Checkstyle: stop
                 case Bytecodes.I2B: setIntConstant   ((byte)   xt.asConstant().asInt()); return;
                 case Bytecodes.I2S: setIntConstant   ((short)  xt.asConstant().asInt()); return;
                 case Bytecodes.I2C: setIntConstant   ((char)   xt.asConstant().asInt()); return;
@@ -539,8 +591,8 @@ public class Canonicalizer implements InstructionVisitor {
                 case Bytecodes.D2F: setFloatConstant ((float)  xt.asConstant().asDouble()); return;
                 case Bytecodes.D2I: setIntConstant   ((int)    xt.asConstant().asDouble()); return;
                 case Bytecodes.D2L: setLongConstant  ((long)   xt.asConstant().asDouble()); return;
-                // Checkstyle: resume
             }
+            // Checkstyle: resume
         }
 
         BasicType type = BasicType.Illegal;
@@ -563,9 +615,21 @@ public class Canonicalizer implements InstructionVisitor {
         if (type != BasicType.Illegal) {
             // if any of the above matched
             switch (i.opcode()) {
-                case Bytecodes.I2B: setCanonical(v); return;
-                case Bytecodes.I2S: setCanonical(v); return;
-                case Bytecodes.I2C: setCanonical(v); return;
+                case Bytecodes.I2B:
+                    if (type == BasicType.Byte) {
+                        setCanonical(v);
+                    }
+                    break;
+                case Bytecodes.I2S:
+                    if (type == BasicType.Byte || type == BasicType.Short) {
+                        setCanonical(v);
+                    }
+                    break;
+                case Bytecodes.I2C:
+                    if (type == BasicType.Char) {
+                        setCanonical(v);
+                    }
+                    break;
             }
         }
 
@@ -628,14 +692,24 @@ public class Canonicalizer implements InstructionVisitor {
         if (i.targetClass().isLoaded()) {
             Instruction o = i.object();
             CiType type = o.exactType();
-            if (type == null) type = o.declaredType();
+            if (type == null) {
+                type = o.declaredType();
+            }
             if (type != null && type.isLoaded() && type.isSubtypeOf(i.targetClass())) {
                 // cast is redundant if exact type or declared type is already a subtype of the target type
                 setCanonical(o);
             }
-            if (o.type().isConstant() && o.type().asConstant().asObject() == null) {
-                // checkcast of null is null
-                setCanonical(o);
+            if (o.type().isConstant()) {
+                final Object obj = o.type().asConstant().asObject();
+                if (obj == null) {
+                    // checkcast of null is null
+                    setCanonical(o);
+                } else if (C1XOptions.SupportObjectConstants && C1XOptions.CanonicalizeObjectCheckCast) {
+                    if (i.targetClass().isInstance(obj)) {
+                        // fold the cast if it will succeed
+                        setCanonical(o);
+                    }
+                }
             }
         }
     }
@@ -650,9 +724,16 @@ public class Canonicalizer implements InstructionVisitor {
                 // XXX: why is it necessary to check (o instanceof New)? isn't exact type sufficient?
                 setIntConstant(exact.isSubtypeOf(i.targetClass()) ? 1 : 0);
             }
-            if (o.type().isConstant() && o.type().asConstant().asObject() == null) {
-                // instanceof of null is false
-                setIntConstant(0);
+            if (o.type().isConstant()) {
+                final Object obj = o.type().asConstant().asObject();
+                if (obj == null) {
+                    // instanceof of null is false
+                    setIntConstant(0);
+                } else if (C1XOptions.SupportObjectConstants && C1XOptions.CanonicalizeObjectInstanceOf) {
+                    // fold the instanceof test
+                    final boolean result = i.targetClass().isInstance(obj);
+                    setIntConstant(result ? 1 : 0);
+                }
             }
         }
     }
@@ -665,7 +746,7 @@ public class Canonicalizer implements InstructionVisitor {
     }
 
     public void visitIntrinsic(Intrinsic i) {
-        if (!C1XOptions.FoldIntrinsics) {
+        if (!C1XOptions.CanonicalizeIntrinsics) {
             return;
         }
         Instruction[] args = i.arguments();
@@ -680,12 +761,16 @@ public class Canonicalizer implements InstructionVisitor {
             // but is relatively heavyweight and causes bootstrap problems
             case java_lang_Object$hashCode: {
                 Object object = argAsObject(args, 0);
-                if (object != null) setIntConstant(System.identityHashCode(object));
+                if (object != null) {
+                    setIntConstant(System.identityHashCode(object));
+                }
                 return;
             }
             case java_lang_Object$getClass: {
                 Object object = argAsObject(args, 0);
-                if (object != null) setObjectConstant(object.getClass());
+                if (object != null) {
+                    setObjectConstant(object.getClass());
+                }
                 return;
             }
 
@@ -693,43 +778,59 @@ public class Canonicalizer implements InstructionVisitor {
             case java_lang_Class$isAssignableFrom: {
                 Class<?> javaClass = argAsClass(args, 0);
                 Class<?> otherClass = argAsClass(args, 1);
-                if (javaClass != null && otherClass != null) setBooleanConstant(javaClass.isAssignableFrom(otherClass));
+                if (javaClass != null && otherClass != null) {
+                    setBooleanConstant(javaClass.isAssignableFrom(otherClass));
+                }
                 return;
             }
             case java_lang_Class$isInstance: {
                 Class<?> javaClass = argAsClass(args, 0);
                 Object object = argAsObject(args, 1);
-                if (javaClass != null && object != null) setBooleanConstant(javaClass.isInstance(object));
+                if (javaClass != null && object != null) {
+                    setBooleanConstant(javaClass.isInstance(object));
+                }
                 return;
             }
             case java_lang_Class$getModifiers: {
                 Class<?> javaClass = argAsClass(args, 0);
-                if (javaClass != null) setIntConstant(javaClass.getModifiers());
+                if (javaClass != null) {
+                    setIntConstant(javaClass.getModifiers());
+                }
                 return;
             }
             case java_lang_Class$isInterface: {
                 Class<?> javaClass = argAsClass(args, 0);
-                if (javaClass != null) setBooleanConstant(javaClass.isInterface());
+                if (javaClass != null) {
+                    setBooleanConstant(javaClass.isInterface());
+                }
                 return;
             }
             case java_lang_Class$isArray: {
                 Class<?> javaClass = argAsClass(args, 0);
-                if (javaClass != null) setBooleanConstant(javaClass.isArray());
+                if (javaClass != null) {
+                    setBooleanConstant(javaClass.isArray());
+                }
                 return;
             }
             case java_lang_Class$isPrimitive: {
                 Class<?> javaClass = argAsClass(args, 0);
-                if (javaClass != null) setBooleanConstant(javaClass.isPrimitive());
+                if (javaClass != null) {
+                    setBooleanConstant(javaClass.isPrimitive());
+                }
                 return;
             }
             case java_lang_Class$getSuperclass: {
                 Class<?> javaClass = argAsClass(args, 0);
-                if (javaClass != null) setObjectConstant(javaClass.getSuperclass());
+                if (javaClass != null) {
+                    setObjectConstant(javaClass.getSuperclass());
+                }
                 return;
             }
             case java_lang_Class$getComponentType: {
                 Class<?> javaClass = argAsClass(args, 0);
-                if (javaClass != null) setObjectConstant(javaClass.getComponentType());
+                if (javaClass != null) {
+                    setObjectConstant(javaClass.getComponentType());
+                }
                 return;
             }
 
@@ -737,19 +838,25 @@ public class Canonicalizer implements InstructionVisitor {
             case java_lang_String$compareTo: {
                 String s1 = argAsString(args, 0);
                 String s2 = argAsString(args, 1);
-                if (s1 != null && s2 != null) setIntConstant(s1.compareTo(s2));
+                if (s1 != null && s2 != null) {
+                    setIntConstant(s1.compareTo(s2));
+                }
                 return;
             }
             case java_lang_String$indexOf: {
                 String s1 = argAsString(args, 0);
                 String s2 = argAsString(args, 1);
-                if (s1 != null && s2 != null) setIntConstant(s1.indexOf(s2));
+                if (s1 != null && s2 != null) {
+                    setIntConstant(s1.indexOf(s2));
+                }
                 return;
             }
             case java_lang_String$equals: {
                 String s1 = argAsString(args, 0);
                 String s2 = argAsString(args, 1);
-                if (s1 != null && s2 != null) setBooleanConstant(s1.equals(s2));
+                if (s1 != null && s2 != null) {
+                    setBooleanConstant(s1.equals(s2));
+                }
                 return;
             }
 
@@ -788,18 +895,22 @@ public class Canonicalizer implements InstructionVisitor {
             // java.lang.System
             case java_lang_System$identityHashCode: {
                 Object object = argAsObject(args, 0);
-                if (object != null) setIntConstant(System.identityHashCode(object));
+                if (object != null) {
+                    setIntConstant(System.identityHashCode(object));
+                }
                 return;
             }
 
             // java.lang.reflect.Array
             case java_lang_reflect_Array$getLength: {
                 Object object = argAsObject(args, 0);
-                if (object != null && object.getClass().isArray()) setIntConstant(java.lang.reflect.Array.getLength(object));
+                if (object != null && object.getClass().isArray()) {
+                    setIntConstant(java.lang.reflect.Array.getLength(object));
+                }
                 return;
             }
         }
-        assert _canonical.type().tag() == i.type().tag();
+        assert i.typeCheck(_canonical);
     }
 
     public void visitBlockBegin(BlockBegin i) {
@@ -941,15 +1052,14 @@ public class Canonicalizer implements InstructionVisitor {
             return;
         }
         int max = i.numberOfCases();
-        if (max == 1) {
+        if (max == 0) {
             // replace switch with Goto
             addInstr(v); // the value expression may produce side effects
             setCanonical(new Goto(i.defaultSuccessor(), i.stateBefore(), i.isSafepoint()));
             return;
         }
-        if (max == 2) {
+        if (max == 1) {
             // replace switch with If
-            assert i.lowKey() == i.highKey();
             Constant key = intInstr(i.lowKey());
             setCanonical(new If(v, Condition.eql, false, key, i.successors().get(0), i.defaultSuccessor(), i.stateBefore(), i.isSafepoint()));
         }
@@ -1054,7 +1164,7 @@ public class Canonicalizer implements InstructionVisitor {
         }
         if (index instanceof ArithmeticOp) {
             // try to match the index as a multiply by a constant
-            // note that this case will not happen if C1XOptions.ReduceMultipliesToShifts is true
+            // note that this case will not happen if C1XOptions.CanonicalizeMultipliesToShifts is true
             ArithmeticOp arith = (ArithmeticOp) index;
             ValueType st = arith.y().type();
             if (arith.opcode() == Bytecodes.IMUL && st.isConstant() && st.isInt()) {
@@ -1079,13 +1189,13 @@ public class Canonicalizer implements InstructionVisitor {
     }
 
     public void visitUnsafeGetRaw(UnsafeGetRaw i) {
-        if (C1XOptions.OptimizeUnsafes) {
+        if (C1XOptions.CanonicalizeUnsafes) {
             visitUnsafeRawOp(i);
         }
     }
 
     public void visitUnsafePutRaw(UnsafePutRaw i) {
-        if (C1XOptions.OptimizeUnsafes) {
+        if (C1XOptions.CanonicalizeUnsafes) {
             visitUnsafeRawOp(i);
         }
     }

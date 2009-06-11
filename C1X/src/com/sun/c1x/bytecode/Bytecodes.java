@@ -434,7 +434,7 @@ public class Bytecodes {
         def(INVOKEVIRTUAL       , "invokevirtual"       , "bjj"  , FLAG_TRAP);
         def(INVOKESPECIAL       , "invokespecial"       , "bjj"  , FLAG_TRAP);
         def(INVOKESTATIC        , "invokestatic"        , "bjj"  , FLAG_TRAP);
-        def(INVOKEINTERFACE     , "invokeinterface"     , "bjj"  , FLAG_TRAP);
+        def(INVOKEINTERFACE     , "invokeinterface"     , "bjja_", FLAG_TRAP);
         def(XXXUNUSEDXXX        , "xxxunusedxxx"        , ""     );
         def(NEW                 , "new"                 , "bii"  , FLAG_TRAP);
         def(NEWARRAY            , "newarray"            , "bc"   , FLAG_TRAP);
@@ -491,22 +491,95 @@ public class Bytecodes {
         return length;
     }
 
+    /**
+     * Gets the mnemonic for a given opcode.
+     *
+     * @param opcode an opcode
+     * @return the mnemonic for {@code opcode}
+     * @throws IndexOutOfBoundsException if {@code opcode} is not a legal opcode
+     */
     public static String name(int opcode) {
         return _names[opcode];
     }
 
+    /**
+     * Determines if a given opcode denotes an instruction that can cause an implicit exception.
+     *
+     * @param opcode an opcode to test
+     * @return {@code true} if {@code opcode} can cause an implicit exception, {@code false} otherwise
+     */
     public static boolean canTrap(int opcode) {
         return (_flags[opcode] & FLAG_TRAP) != 0;
     }
 
+    /**
+     * Determines if a given opcode denotes an instruction that loads a local variable to the operand stack.
+     *
+     * @param opcode an opcode to test
+     * @return {@code true} if {@code opcode} loads a local variable to the operand stack, {@code false} otherwise
+     */
     public static boolean isLoad(int opcode) {
         return (_flags[opcode] & FLAG_LOAD) != 0;
     }
 
+    /**
+     * Determines if a given opcode denotes an instruction that stores a value to local variable after popping it from
+     * the operand stack.
+     *
+     * @param opcode an opcode to test
+     * @return {@code true} if {@code opcode} stores a value to a local variable, {@code false} otherwise
+     */
     public static boolean isStore(int opcode) {
         return (_flags[opcode] & FLAG_STORE) != 0;
     }
 
+    /**
+     * Gets an arithmetic operator name for a given opcode. If {@code opcode} does not denote an
+     * arithmetic instruction, then the {@linkplain #name(int) name} of the opcode is returned
+     * instead.
+     *
+     * @param op an opcode
+     */
+    public static String operator(int op) {
+        switch (op) {
+            // arithmetic ops
+            case Bytecodes.IADD : // fall through
+            case Bytecodes.LADD : // fall through
+            case Bytecodes.FADD : // fall through
+            case Bytecodes.DADD : return "+";
+            case Bytecodes.ISUB : // fall through
+            case Bytecodes.LSUB : // fall through
+            case Bytecodes.FSUB : // fall through
+            case Bytecodes.DSUB : return "-";
+            case Bytecodes.IMUL : // fall through
+            case Bytecodes.LMUL : // fall through
+            case Bytecodes.FMUL : // fall through
+            case Bytecodes.DMUL : return "*";
+            case Bytecodes.IDIV : // fall through
+            case Bytecodes.LDIV : // fall through
+            case Bytecodes.FDIV : // fall through
+            case Bytecodes.DDIV : return "/";
+            case Bytecodes.IREM : // fall through
+            case Bytecodes.LREM : // fall through
+            case Bytecodes.FREM : // fall through
+            case Bytecodes.DREM : return "%";
+            // shift ops
+            case Bytecodes.ISHL : // fall through
+            case Bytecodes.LSHL : return "<<";
+            case Bytecodes.ISHR : // fall through
+            case Bytecodes.LSHR : return ">>";
+            case Bytecodes.IUSHR: // fall through
+            case Bytecodes.LUSHR: return ">>>";
+            // logic ops
+            case Bytecodes.IAND : // fall through
+            case Bytecodes.LAND : return "&";
+            case Bytecodes.IOR  : // fall through
+            case Bytecodes.LOR  : return "|";
+            case Bytecodes.IXOR : // fall through
+            case Bytecodes.LXOR : return "^";
+        }
+        return Bytecodes.name(op);
+    }
 
     /**
      * This method attempts to fold a binary operation on two constant integer inputs.
@@ -605,21 +678,32 @@ public class Bytecodes {
     }
 
     public static int foldLongCompare(long x, long y) {
-        if (x < y) return -1;
-        if (x == y) return 0;
+        if (x < y) {
+            return -1;
+        }
+        if (x == y) {
+            return 0;
+        }
         return 1;
     }
 
     public static Integer foldFloatCompare(int opcode, float x, float y) {
         // unfortunately we cannot write Java source to generate FCMPL or FCMPG
         int result = 0;
-        if (x < y) result = -1;
-        else if (x > y) result = 1;
+        if (x < y) {
+            result = -1;
+        } else if (x > y) {
+            result = 1;
+        }
         if (opcode == FCMPL) {
-            if (Float.isNaN(x) || Float.isNaN(y)) return -1;
+            if (Float.isNaN(x) || Float.isNaN(y)) {
+                return -1;
+            }
             return result;
         } else if (opcode == FCMPG) {
-            if (Float.isNaN(x) || Float.isNaN(y)) return 1;
+            if (Float.isNaN(x) || Float.isNaN(y)) {
+                return 1;
+            }
             return result;
         }
         return null; // unknown compare opcode
@@ -628,13 +712,20 @@ public class Bytecodes {
     public static Integer foldDoubleCompare(int opcode, double x, double y) {
         // unfortunately we cannot write Java source to generate DCMPL or DCMPG
         int result = 0;
-        if (x < y) result = -1;
-        else if (x > y) result = 1;
+        if (x < y) {
+            result = -1;
+        } else if (x > y) {
+            result = 1;
+        }
         if (opcode == DCMPL) {
-            if (Double.isNaN(x) || Double.isNaN(y)) return -1;
+            if (Double.isNaN(x) || Double.isNaN(y)) {
+                return -1;
+            }
             return result;
         } else if (opcode == DCMPG) {
-            if (Double.isNaN(x) || Double.isNaN(y)) return 1;
+            if (Double.isNaN(x) || Double.isNaN(y)) {
+                return 1;
+            }
             return result;
         }
         return null; // unknown compare opcode

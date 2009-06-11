@@ -86,7 +86,7 @@ public class IndentWriter {
         }
     }
 
-    public void printWhite(int width) {
+    public void printSpaces(int width) {
         for (int i = 0; i < width; i++) {
             _writer.print(" ");
         }
@@ -103,7 +103,7 @@ public class IndentWriter {
             }
         }
         _writer.print(text);
-        printWhite(width - text.length());
+        printSpaces(width - text.length());
     }
 
     public void print(String s) {

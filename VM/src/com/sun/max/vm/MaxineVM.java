@@ -25,7 +25,9 @@ import static com.sun.max.vm.VMOptions.register;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.annotate.*;
+import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -275,20 +277,47 @@ public final class MaxineVM {
         return isPrototypeOnly(Classes.getDeclaringClass(member));
     }
 
+    @PROTOTYPE_ONLY
+    private static final Map<Class, Boolean> _prototypeClasses = new HashMap<Class, Boolean>();
+
     /**
-     * Determines if a given class exists only for prototyping purposes and should not be part of a generated target
-     * image.
+     * Determines if a given class exists only for prototyping purposes and should not be part
+     * of a generated target image. A class is determined to be a prototype-only class if any
+     * of the following apply:
+     *
+     * 1. It is annotated with {@link PROTOTYPE_ONLY}.
+     * 2. It is nested class in an {@linkplain Class#getEnclosingClass() enclosing} prototype-only class.
+     * 3. It is in a {@linkplain MaxPackage#fromClass(Class) Maxine package} that is not a {@linkplain BasePackage base},
+     *    {@linkplain AsmPackage assembler}, {@linkplain VMPackage VM} or test package.
      */
     @PROTOTYPE_ONLY
     public static boolean isPrototypeOnly(Class<?> javaClass) {
+        final Boolean value = _prototypeClasses.get(javaClass);
+        if (value != null) {
+            return value.booleanValue();
+        }
+
         if (javaClass.getAnnotation(PROTOTYPE_ONLY.class) != null) {
+            _prototypeClasses.put(javaClass, Boolean.TRUE);
             return true;
+        }
+
+        final MaxPackage maxPackage = MaxPackage.fromClass(javaClass);
+        if (maxPackage != null) {
+            if (maxPackage.getClass().getSuperclass() == MaxPackage.class) {
+                final boolean isTestPackage = maxPackage.name().startsWith("test.com.sun.max.");
+                _prototypeClasses.put(javaClass, !isTestPackage);
+                return !isTestPackage;
+            }
         }
 
         final Class<?> enclosingClass = javaClass.getEnclosingClass();
         if (enclosingClass != null) {
-            return isPrototypeOnly(enclosingClass);
+            final boolean result = isPrototypeOnly(enclosingClass);
+            _prototypeClasses.put(javaClass, Boolean.valueOf(result));
+            return result;
         }
+        _prototypeClasses.put(javaClass, Boolean.FALSE);
         return false;
     }
 

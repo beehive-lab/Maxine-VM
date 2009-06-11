@@ -201,45 +201,56 @@ public enum C1XIntrinsic {
     private static HashMap<String, HashMap<String, C1XIntrinsic>> _intrinsicMap = new HashMap<String, HashMap<String, C1XIntrinsic>>(100);
 
     private final String _className;
+    private final String _simpleClassName;
     private final String _methodName;
     private final String _signature;
 
     C1XIntrinsic(String signature) {
-        String name = name();
-        // parse the class and method name from the name of this enum
-        int index = name.indexOf('$');
-        _className = name.substring(0, index).replace('_', '.');
-        _methodName = name.substring(index + 1);
-        _signature = signature;
+        this(null, signature);
     }
 
     C1XIntrinsic(String methodName, String signature) {
         String name = name();
         // parse the class name from the name of this enum
         int index = name.indexOf('$');
+        assert index != -1;
         _className = name.substring(0, index).replace('_', '.');
-        _methodName = methodName;
+        _methodName = methodName == null ? name.substring(index + 1) : methodName;
         _signature = signature;
+        index = _className.lastIndexOf('.');
+        if (index == -1) {
+            _simpleClassName = _className;
+        } else {
+            _simpleClassName = _className.substring(index + 1);
+        }
     }
 
     /**
-     * Gets the name of the class that holds this method.
-     * @return the name of the class
+     * Gets the name of the class in which this method is declared.
+     * @return the name of the class declaring this intrinsic method
      */
     public String className() {
         return _className;
     }
 
     /**
-     * Gets the name of the intrinsic method.
-     * @return the name of the method
+     * Gets the {@linkplain Class#getSimpleName() simple} name of the class in which this method is declared.
+     * @return the simple name of the class declaring this intrinsic method
+     */
+    public String simpleClassName() {
+        return _simpleClassName;
+    }
+
+    /**
+     * Gets the name of this intrinsic method.
+     * @return the name of this method
      */
     public String methodName() {
         return _methodName;
     }
 
     /**
-     * Gets the signature of the method as a string.
+     * Gets the signature of this intrinsic method as a string.
      * @return the signature
      */
     public String signature() {

@@ -24,6 +24,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.util.Util;
 import com.sun.c1x.util.InstructionClosure;
 import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.Bailout;
 
 import java.util.ArrayList;
 
@@ -35,7 +36,7 @@ import java.util.ArrayList;
  */
 public class ValueStack {
 
-    private Instruction[] _values; // manages both stack and locals
+    private final Instruction[] _values; // manages both stack and locals
     private int _stackIndex;
     private final int _maxLocals;
 
@@ -61,7 +62,7 @@ public class ValueStack {
         final ValueStack other = new ValueStack(_scope, localsSize(), maxStackSize());
         if (withLocals && withStack) {
             // fast path: use array copy
-            System.arraycopy(_values, 0, other._values, 0, _values.length);
+            System.arraycopy(_values, 0, other._values, 0, valuesSize());
             other._stackIndex = _stackIndex;
         } else {
             if (withLocals) {
@@ -108,15 +109,15 @@ public class ValueStack {
         for (int i = 0; i < _stackIndex; i++) {
             Instruction x = stackAt(i);
             Instruction y = other.stackAt(i);
-            if (x != y && x.type().tag() != x.type().tag()) {
+            if (x != y && typeMismatch(x, y)) {
                 return false;
             }
         }
         if (_locks != null) {
             for (int i = 0; i < _locks.size(); i++) {
-                Instruction x = lockAt(i);
-                Instruction y = other.lockAt(i);
-                if (x != y) return false;
+                if (lockAt(i) != other.lockAt(i)) {
+                    return false;
+                }
             }
         }
         return true;
@@ -194,7 +195,7 @@ public class ValueStack {
     public void invalidateLocal(int i) {
         Instruction x = _values[i];
         if (isDoubleWord(x)) {
-            assert checkHiWord(i, x);
+            assertHigh(_values[i + 1]);
             _values[i + 1] = null;
         }
         _values[i] = null;
@@ -317,18 +318,13 @@ public class ValueStack {
 
     /**
      * Pushes an instruction onto the stack with the expected type.
-     * @param tag the type expected for this instruction
+     * @param type the type expected for this instruction
      * @param x the instruction to push onto the stack
      */
-    public void push(byte tag, Instruction x) {
-        switch (tag) {
-            case ValueTag.INT_TAG: ipush(x); return;
-            case ValueTag.LONG_TAG: lpush(x); return;
-            case ValueTag.FLOAT_TAG: fpush(x); return;
-            case ValueTag.DOUBLE_TAG: dpush(x); return;
-            case ValueTag.OBJECT_TAG: apush(x); return;
-            case ValueTag.JSR_TAG: jpush(x); return;
-            default: throw Util.shouldNotReachHere();
+    public void push(BasicType type, Instruction x) {
+        xpush(assertType(type, x));
+        if (type.sizeInSlots() == 2) {
+            xpush(null);
         }
     }
 
@@ -346,7 +342,7 @@ public class ValueStack {
      * @param x the instruction to push onto the stack
      */
     public void ipush(Instruction x) {
-        xpush(checkTag(ValueTag.INT_TAG, x));
+        xpush(assertInt(x));
     }
 
     /**
@@ -354,7 +350,7 @@ public class ValueStack {
      * @param x the instruction to push onto the stack
      */
     public void fpush(Instruction x) {
-        xpush(checkTag(ValueTag.FLOAT_TAG, x));
+        xpush(assertFloat(x));
     }
 
     /**
@@ -362,7 +358,7 @@ public class ValueStack {
      * @param x the instruction to push onto the stack
      */
     public void apush(Instruction x) {
-        xpush(checkTag(ValueTag.OBJECT_TAG, x));
+        xpush(assertObject(x));
     }
 
     /**
@@ -370,7 +366,7 @@ public class ValueStack {
      * @param x the instruction to push onto the stack
      */
     public void jpush(Instruction x) {
-        xpush(checkTag(ValueTag.JSR_TAG, x));
+        xpush(assertJsr(x));
     }
 
     /**
@@ -378,7 +374,7 @@ public class ValueStack {
      * @param x the instruction to push onto the stack
      */
     public void lpush(Instruction x) {
-        xpush(checkTag(ValueTag.LONG_TAG, x));
+        xpush(assertLong(x));
         xpush(null);
     }
 
@@ -387,25 +383,20 @@ public class ValueStack {
      * @param x the instruction to push onto the stack
      */
     public void dpush(Instruction x) {
-        xpush(checkTag(ValueTag.DOUBLE_TAG, x));
+        xpush(assertDouble(x));
         xpush(null);
     }
 
     /**
      * Pops an instruction off the stack with the expected type.
-     * @param tag the tag of the expected type
+     * @param basicType the tag of the expected type
      * @return the instruction on the top of the stack
      */
-    public Instruction pop(byte tag) {
-        switch (tag) {
-            case ValueTag.INT_TAG: return ipop();
-            case ValueTag.LONG_TAG: return lpop();
-            case ValueTag.FLOAT_TAG: return fpop();
-            case ValueTag.DOUBLE_TAG: return dpop();
-            case ValueTag.OBJECT_TAG: return apop();
-            case ValueTag.JSR_TAG: return jpop();
-            default: throw Util.shouldNotReachHere();
+    public Instruction pop(BasicType basicType) {
+        if (basicType.sizeInSlots() == 2) {
+            xpop();
         }
+        return assertType(basicType, xpop());
     }
 
     /**
@@ -422,7 +413,7 @@ public class ValueStack {
      * @return x the instruction popped off the stack
      */
     public Instruction ipop() {
-        return checkTag(ValueTag.INT_TAG, xpop());
+        return assertInt(xpop());
     }
 
     /**
@@ -430,7 +421,7 @@ public class ValueStack {
      * @return x the instruction popped off the stack
      */
     public Instruction fpop() {
-        return checkTag(ValueTag.FLOAT_TAG, xpop());
+        return assertFloat(xpop());
     }
 
     /**
@@ -438,7 +429,7 @@ public class ValueStack {
      * @return x the instruction popped off the stack
      */
     public Instruction apop() {
-        return checkTag(ValueTag.OBJECT_TAG, xpop());
+        return assertObject(xpop());
     }
 
     /**
@@ -446,7 +437,7 @@ public class ValueStack {
      * @return x the instruction popped off the stack
      */
     public Instruction jpop() {
-        return checkTag(ValueTag.JSR_TAG, xpop());
+        return assertJsr(xpop());
     }
 
     /**
@@ -454,9 +445,8 @@ public class ValueStack {
      * @return x the instruction popped off the stack
      */
     public Instruction lpop() {
-        final Instruction high = xpop();
-        assert high == null;
-        return checkTag(ValueTag.LONG_TAG, xpop());
+        assertHigh(xpop());
+        return assertLong(xpop());
     }
 
     /**
@@ -464,9 +454,8 @@ public class ValueStack {
      * @return x the instruction popped off the stack
      */
     public Instruction dpop() {
-        final Instruction high = xpop();
-        assert high == null;
-        return checkTag(ValueTag.DOUBLE_TAG, xpop());
+        assertHigh(xpop());
+        return assertDouble(xpop());
     }
 
     /**
@@ -594,38 +583,53 @@ public class ValueStack {
         }
     }
 
-    public boolean checkLocalAndStackTags(ValueStack other) {
-        if (sizeMismatch(other)) return false;
-        for (int i = 0; i < valuesSize(); i++) {
-            if (!(_values[i] != null ? other._values[i] != null && _values[i].type().tag() == other._values[i].type().tag() : other._values[i] == null)) {
-                return false;
+    public void checkLocalAndStackTags(ValueStack other) {
+        checkSize(other);
+        final int max = valuesSize();
+        for (int i = 0; i < max; i++) {
+            Instruction x = _values[i];
+            if (x != null) {
+                Instruction y = other._values[i];
+                if (y != null) {
+                    if (typeMismatch(x, y)) {
+                        throw new Bailout("tag mismatch at " + i);
+                    }
+                } else {
+                    throw new Bailout("instruction missing at " + i);
+                }
             }
         }
-        return true;
     }
 
     private int valuesSize() {
         return _maxLocals + _stackIndex;
     }
 
-    public boolean checkPhis(BlockBegin block, ValueStack other) {
-        if (sizeMismatch(other)) return false;
-        for (int i = 0; i < valuesSize(); i++) {
+    public void checkPhis(BlockBegin block, ValueStack other) {
+        checkSize(other);
+        final int max = valuesSize();
+        for (int i = 0; i < max; i++) {
             Instruction x = _values[i];
             Instruction y = other._values[i];
-            if (x != y && !(x instanceof Phi) || ((Phi) x).block() != block) {
-                return false;
+            if (x != null && x != y) {
+                if (!(x instanceof Phi) || ((Phi) x).block() != block) {
+                    // x is not a phi, or is not a phi for this block
+                    throw new Bailout("instruction is not a phi or null at " + i);
+                }
             }
         }
-        return true;
     }
 
-    private boolean sizeMismatch(ValueStack other) {
-        return other._stackIndex != _stackIndex || other._values.length != _values.length;
+    private void checkSize(ValueStack other) {
+        if (other._stackIndex != _stackIndex) {
+            throw new Bailout("stack sizes do not match");
+        } else if (other._values.length != _values.length) {
+            throw new Bailout("value sizes do not match");
+        }
     }
 
-    public boolean merge(BlockBegin block, ValueStack other) {
-        if (sizeMismatch(other)) return false;
+    public void merge(BlockBegin block, ValueStack other) {
+        checkSize(other);
         for (int i = 0; i < valuesSize(); i++) {
             Instruction x = _values[i];
             Instruction y = other._values[i];
@@ -636,7 +640,7 @@ public class ValueStack {
                 }
                 if (i < _maxLocals) {
                     // this a local
-                    if (y == null || y.type().tag() != x.type().tag()) {
+                    if (y == null || typeMismatch(x, y)) {
                         invalidateLocal(i); // it has become invalid
                     } else {
                         setupPhiForLocal(block, i); // it needs a phi
@@ -647,20 +651,53 @@ public class ValueStack {
                 }
             }
         }
-        return true;
     }
 
-    private Instruction checkTag(byte tag, Instruction x) {
-        assert x.type().tag() == tag;
+    private static boolean typeMismatch(Instruction x, Instruction y) {
+        return y.type().basicType() != x.type().basicType();
+    }
+
+    private static Instruction assertType(BasicType basicType, Instruction x) {
+        assert x.type().basicType() == basicType;
         return x;
     }
 
-    private boolean isDoubleWord(Instruction x) {
+    private static Instruction assertLong(Instruction x) {
+        assert x.type().basicType() == BasicType.Long;
+        return x;
+    }
+
+    private static Instruction assertJsr(Instruction x) {
+        assert x.type().basicType() == BasicType.Jsr;
+        return x;
+    }
+
+    private static Instruction assertInt(Instruction x) {
+        assert x.type().basicType() == BasicType.Int;
+        return x;
+    }
+
+    private static Instruction assertFloat(Instruction x) {
+        assert x.type().basicType() == BasicType.Float;
+        return x;
+    }
+
+    private static Instruction assertObject(Instruction x) {
+        assert x.type().basicType() == BasicType.Object;
+        return x;
+    }
+
+    private static Instruction assertDouble(Instruction x) {
+        assert x.type().basicType() == BasicType.Double;
+        return x;
+    }
+
+    private static void assertHigh(Instruction x) {
+        assert x == null;
+    }
+
+    private static boolean isDoubleWord(Instruction x) {
         return x != null && x.type().isDoubleWord();
     }
 
-    private boolean checkHiWord(int i, Instruction x) {
-        Instruction h = _values[i + 1];
-        return h == null || (h instanceof HiWord) && ((HiWord) h).lowWord() == x;
-    }
 }

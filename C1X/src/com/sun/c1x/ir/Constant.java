@@ -20,9 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
-import com.sun.c1x.value.ConstType;
+import com.sun.c1x.value.*;
 import com.sun.c1x.util.InstructionVisitor;
 import com.sun.c1x.util.InstructionClosure;
 
@@ -36,11 +34,21 @@ public class Constant extends Instruction {
 
     private ValueStack _state;
 
+    /**
+     * Constructs a new instruction representing the specified constant.
+     * @param type the constant
+     */
     public Constant(ConstType type) {
         super(type);
     }
 
-    public Constant(ValueType type, ValueStack state) {
+    /**
+     * Constructs a new instruction representing the specified constant, which
+     * may be an unresolved class reference that needs to be resolved.
+     * @param type the constant
+     * @param state the state, needed for deopt/gc in resolution code
+     */
+    public Constant(ClassType type, ValueStack state) {
         super(type);
         _state = state;
     }
@@ -60,6 +68,7 @@ public class Constant extends Instruction {
      * such as a class constant that must be resolved.
      * @return <code>true</code> if this instruction can cause a trap
      */
+    @Override
     public boolean canTrap() {
         return _state != null;
     }
@@ -68,6 +77,7 @@ public class Constant extends Instruction {
      * Implements half of the visitor pattern for this instruction.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitConstant(this);
     }
@@ -94,9 +104,78 @@ public class Constant extends Instruction {
      * this method iterates over any values in the state if this constant may need patching.
      * @param closure the closure to apply to each value
      */
+    @Override
     public void otherValuesDo(InstructionClosure closure) {
         if (_state != null) {
             _state.valuesDo(closure);
         }
     }
+
+    /**
+     * Utility method to create an instruction for a double constant.
+     * @param d the double value for which to create the instruction
+     * @return an instruction representing the double
+     */
+    public static Constant forDouble(double d) {
+        return new Constant(ConstType.forDouble(d));
+    }
+
+    /**
+     * Utility method to create an instruction for a float constant.
+     * @param f the float value for which to create the instruction
+     * @return an instruction representing the float
+     */
+    public static Constant forFloat(float f) {
+        return new Constant(ConstType.forFloat(f));
+    }
+
+    /**
+     * Utility method to create an instruction for an long constant.
+     * @param i the long value for which to create the instruction
+     * @return an instruction representing the long
+     */
+    public static Constant forLong(long i) {
+        return new Constant(ConstType.forLong(i));
+    }
+
+    /**
+     * Utility method to create an instruction for an integer constant.
+     * @param i the integer value for which to create the instruction
+     * @return an instruction representing the integer
+     */
+    public static Constant forInt(int i) {
+        return new Constant(ConstType.forInt(i));
+    }
+
+    /**
+     * Utility method to create an instruction for a boolean constant.
+     * @param i the boolean value for which to create the instruction
+     * @return an instruction representing the boolean
+     */
+    public static Constant forBoolean(boolean i) {
+        return new Constant(ConstType.forBoolean(i));
+    }
+
+    /**
+     * Utility method to create an instruction for an address (jsr/ret address) constant.
+     * @param i the address value for which to create the instruction
+     * @return an instruction representing the address
+     */
+    public static Constant forJsr(int i) {
+        return new Constant(ConstType.forJsr(i));
+    }
+
+    /**
+     * Utility method to create an instruction for an object constant.
+     * @param o the object value for which to create the instruction
+     * @return an instruction representing the object
+     */
+    public static Constant forObject(Object o) {
+        final Constant constant = new Constant(ConstType.forObject(o));
+        if (o != null) {
+            constant.setFlag(Instruction.Flag.NonNull);
+        }
+        return constant;
+    }
+
 }

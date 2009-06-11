@@ -325,7 +325,7 @@ public class MaxCiType implements CiType {
             case DOUBLE:
                 return BasicType.Double;
             case WORD:
-                return BasicType.Address;
+                return BasicType.Jsr;
             case REFERENCE:
                 return BasicType.Object;
             case VOID:

@@ -39,11 +39,26 @@ public class ClassType extends ValueType {
      * @param type the compiler interface type
      */
     public ClassType(CiType type) {
-        super(ValueTag.OBJECT_TAG, 1);
+        super(BasicType.Object);
         _type = type;
         if (type.isLoaded()) {
-            _constant = new ConstType(ValueTag.OBJECT_TAG, 1, type.javaClass(), true);
+            _constant = new ConstType(BasicType.Object, type.javaClass(), true);
         }
+    }
+
+    /**
+     * Checks if this is {@linkplain ClassType class type}.
+     */
+    @Override
+    public boolean isClass() {
+        return true;
+    }
+
+    /**
+     * Gets the compiler interface type represented by this type.
+     */
+    public CiType ciType() {
+        return _type;
     }
 
     /**
@@ -51,6 +66,7 @@ public class ClassType extends ValueType {
      * this is a constant if the class is loaded.
      * @return <code>true</code> if this value type is a constant
      */
+    @Override
     public boolean isConstant() {
         return _type.isLoaded();
     }
@@ -60,6 +76,7 @@ public class ClassType extends ValueType {
      * this is a constant if the class is loaded.
      * @return a constant representing this value type if it is a constant
      */
+    @Override
     public ConstType asConstant() {
         return _constant;
     }

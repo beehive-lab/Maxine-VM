@@ -27,10 +27,11 @@ import com.sun.c1x.value.ValueType;
 import com.sun.c1x.C1XIntrinsic;
 
 /**
- * The <code>Intrinsic</code> instruction represents a call to a JDK method that has been intrinsified,
- * e.g. some math operations.
+ * The <code>Intrinsic</code> instruction represents a call to a JDK method
+ * that has been made {@linkplain C1XIntrinsic intrinsic}.
  *
  * @author Ben L. Titzer
+ * @see C1XIntrinsic
  */
 public class Intrinsic extends StateSplit {
 
@@ -120,6 +121,7 @@ public class Intrinsic extends StateSplit {
      * Checks whether this intrinsic can cause a trap.
      * @return <code>true</code> if this intrinsic can cause a trap
      */
+    @Override
     public boolean canTrap() {
         return checkFlag(Flag.CanTrap);
     }
@@ -128,6 +130,7 @@ public class Intrinsic extends StateSplit {
      * Iterates over the state values of this instruction.
      * @param closure the closure to apply
      */
+    @Override
     public void stateValuesDo(InstructionClosure closure) {
         if (_lockStack != null) {
             _lockStack.valuesDo(closure);
@@ -138,6 +141,7 @@ public class Intrinsic extends StateSplit {
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         for (int i = 0; i < _arguments.length; i++) {
             _arguments[i] = closure.apply(_arguments[i]);
@@ -148,6 +152,7 @@ public class Intrinsic extends StateSplit {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitIntrinsic(this);
     }

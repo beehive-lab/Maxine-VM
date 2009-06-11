@@ -79,6 +79,7 @@ public class ArithmeticOp extends Op2 {
      * Iterates over the other values in this instruction.
      * @param closure the closure to apply to each instruction
      */
+    @Override
     public void otherValuesDo(InstructionClosure closure) {
         if (_lockStack != null) {
             _lockStack.valuesDo(closure);
@@ -90,6 +91,7 @@ public class ArithmeticOp extends Op2 {
      * only division and remainder operations can cause traps.
      * @return <code>true</code> if this instruction can cause a trap
      */
+    @Override
     public boolean canTrap() {
         switch (_opcode) {
             case Bytecodes.IDIV:
@@ -105,6 +107,7 @@ public class ArithmeticOp extends Op2 {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitArithmeticOp(this);
     }

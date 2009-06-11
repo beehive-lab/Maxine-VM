@@ -60,13 +60,14 @@ public class TableSwitch extends Switch {
      * @return the high key
      */
     public int highKey() {
-        return _lowKey + numberOfCases() + 1;
+        return _lowKey + numberOfCases();
     }
 
     /**
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitTableSwitch(this);
     }

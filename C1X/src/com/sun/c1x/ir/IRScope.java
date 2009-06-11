@@ -210,6 +210,15 @@ public class IRScope {
         return _callees.get(i);
     }
 
+    @Override
+    public String toString() {
+        if (_caller == null) {
+            return "root-scope: " + _method;
+        } else {
+            return "inline-scope @ " + _callerBCI + ": " + _method;
+        }
+    }
+
     /**
      * Gets the caller bytecode index of the top scope.
      * @return the bytecode index of the caller of the top scope

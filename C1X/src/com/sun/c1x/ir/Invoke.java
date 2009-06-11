@@ -20,14 +20,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.InstructionVisitor;
-import com.sun.c1x.util.InstructionClosure;
-import com.sun.c1x.value.ValueType;
-import com.sun.c1x.value.BasicType;
-import com.sun.c1x.ci.CiMethod;
-
-import java.util.List;
-import java.util.ArrayList;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>Invoke</code> instruction represents all kinds of method calls.
@@ -39,7 +34,6 @@ public class Invoke extends StateSplit {
     final int _opcode;
     Instruction _object;
     Instruction[] _arguments;
-    List<BasicType> _signature;
     int _vtableIndex;
     final CiMethod _target;
 
@@ -63,13 +57,6 @@ public class Invoke extends StateSplit {
             setFlag(Flag.TargetIsLoaded);
             setFlag(Flag.TargetIsFinal, target.isFinalMethod());
             setFlag(Flag.TargetIsStrictfp, target.isStrictFP());
-        }
-        _signature = new ArrayList<BasicType>(args.length + 1);
-        if (_object != null) {
-            _signature.add(_object.type().basicType());
-        }
-        for (Instruction arg : args) {
-            _signature.add(arg.type().basicType());
         }
     }
 
@@ -107,9 +94,18 @@ public class Invoke extends StateSplit {
     }
 
     /**
+     * Gets the list of instructions that produce input for this instruction.
+     * @return the list of instructions that produce input
+     */
+    public Instruction[] arguments() {
+        return _arguments;
+    }
+
+    /**
      * Checks whether this instruction can trap.
      * @return <code>true</code>, conservatively assuming the called method may throw an exception
      */
+    @Override
     public boolean canTrap() {
         return true;
     }
@@ -127,6 +123,7 @@ public class Invoke extends StateSplit {
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply to each instruction
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         if (_object != null) {
             _object = closure.apply(_object);
@@ -140,6 +137,7 @@ public class Invoke extends StateSplit {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitInvoke(this);
     }

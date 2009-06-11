@@ -51,7 +51,7 @@ public class MaxCiRuntime implements CiRuntime {
      */
     public CiConstantPool getConstantPool(CiMethod method) {
         final ClassMethodActor classMethodActor = this.asClassMethodActor(method, "getConstantPool()");
-        final ConstantPool cp = classMethodActor.codeAttribute().constantPool();
+        final ConstantPool cp = classMethodActor.rawCodeAttribute().constantPool();
         synchronized (this) {
             MaxCiConstantPool constantPool = _constantPools.get(cp);
             if (constantPool == null) {

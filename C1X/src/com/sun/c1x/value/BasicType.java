@@ -26,21 +26,91 @@ package com.sun.c1x.value;
  * @author Ben L. Titzer
  */
 public enum BasicType {
-    Boolean,
-    Char,
-    Float,
-    Double,
-    Byte,
-    Short,
-    Int,
-    Long,
-    Object,
-    Array,
-    Void,
-    Address,
-    NarrowOop,
-    Conflict,
-    Illegal;
+    Boolean('Z', "boolean", 1),
+    Byte('B', "byte", 1),
+    Short('S', "short", 1),
+    Char('C', "char", 1),
+    Int('I', "int", 1),
+    Float('F', "float", 1),
+    Double('D', "double", 2),
+    Long('J', "long", 2),
+    Object('L', "object", 1),
+    Void('V', "void", 0),
+    Jsr('A', "jsr", 1),
+    Illegal('?', "???", 1);
+
+    BasicType(char ch, String name, int size) {
+        _char = ch;
+        _name = name;
+        _size = size;
+    }
+
+    public final char _char;
+    public final String _name;
+    public final int _size;
+
+    /**
+     * Checks whether this basic type is valid as the type of a field.
+     * @return <code>true</code> if this basic type is valid as the type of a Java field
+     */
+    public boolean isValidFieldType() {
+        return ordinal() <= Object.ordinal();
+    }
+
+    /**
+     * Checks whether this basic type is valid as the return type of a method.
+     * @return <code>true</code> if this basic type is valid as the return type of a Java method
+     */
+    public boolean isValidReturnType() {
+        return ordinal() <= Void.ordinal();
+    }
+
+    /**
+     * Checks whether this type is valid as an <code>int</code> on the Java operand stack.
+     * @return <code>true</code> if this type is represented by an <code>int</code> on the operand stack
+     */
+    public boolean isIntType() {
+        return ordinal() <= Int.ordinal();
+    }
+
+    /**
+     * Gets the basic type that represents this basic type when on the Java operand stack.
+     * @return the basic type used on the operand stack
+     */
+    public BasicType stackType() {
+        if (ordinal() <= Int.ordinal()) {
+            return Int;
+        }
+        return this;
+    }
+
+    /**
+     * Gets the size of this basic type in terms of the number of Java slots.
+     * @return the size of the basic type in slots
+     */
+    public int sizeInSlots() {
+        return _size;
+    }
+
+    /**
+     * Gets the size of this basic type in bytes.
+     * @param oopSize the size of an object reference
+     * @return the size of this basic type in bytes
+     */
+    public int sizeInBytes(int oopSize) {
+        switch (this) {
+            case Boolean: return 1;
+            case Byte: return 1;
+            case Char: return 2;
+            case Short: return 2;
+            case Int: return 4;
+            case Long: return 8;
+            case Float: return 4;
+            case Double: return 8;
+            case Object: return oopSize;
+        }
+        throw new IllegalArgumentException("invalid BasicType " + this + " for .sizeInBytes()");
+    }
 
     public static BasicType fromArrayTypeCode(int code) {
         switch (code) {
@@ -55,4 +125,5 @@ public enum BasicType {
         }
         throw new IllegalArgumentException("unknown array type code");
     }
+
 }

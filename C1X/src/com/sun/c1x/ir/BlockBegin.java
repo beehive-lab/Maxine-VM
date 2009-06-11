@@ -20,16 +20,11 @@
  */
 package com.sun.c1x.ir;
 
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
-import java.util.List;
+import java.util.*;
 
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.util.BitMap;
-import com.sun.c1x.util.BlockClosure;
-import com.sun.c1x.util.InstructionVisitor;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>BlockBegin</code> instruction represents the beginning of a basic block,
@@ -346,18 +341,19 @@ public class BlockBegin extends StateSplit {
      * Implements half of the visitor pattern for this instruction.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitBlockBegin(this);
     }
 
-    public boolean tryMerge(ValueStack newState) {
+    public void merge(ValueStack newState) {
         ValueStack existingState = state();
 
         if (existingState == null) {
             // this is the first state for the block
             if (wasVisited()) {
                 // this can happen for complex jsr/ret patterns; just bail out
-                return false;
+                throw new Bailout("jsr/ret too complex");
             }
 
             // copy state because it is modified
@@ -375,7 +371,12 @@ public class BlockBegin extends StateSplit {
             }
 
             setState(newState);
-        } else if (existingState.isSameAcrossScopes(newState)) {
+        } else {
+
+            if (!C1XOptions.AssumeVerifiedBytecode && !existingState.isSameAcrossScopes(newState)) {
+                // stacks or locks do not match--bytecodes would not verify
+                throw new Bailout("stack or locks do not match");
+            }
 
             while (existingState.scope() != newState.scope()) {
                 // XXX: original code is not sure if this is necessary
@@ -383,38 +384,30 @@ public class BlockBegin extends StateSplit {
                 assert newState != null : "could not match scopes";
             }
 
-            assert existingState.scope() == newState.scope();
             assert existingState.localsSize() == newState.localsSize();
             assert existingState.stackSize() == newState.stackSize();
 
             if (wasVisited()) {
-                // this block better be a loop header
                 if (!isLoopHeader()) {
-                    // jsr/ret structure too complicated
-                    return false;
+                    // not a loop header => jsr/ret structure too complicated
+                    throw new Bailout("jsr/ret too complicated");
                 }
 
-                // check that all local and stack tags match
-                if (!existingState.checkLocalAndStackTags(newState)) {
-                    return false;
-                }
+                if (!C1XOptions.AssumeVerifiedBytecode) {
+                    // check that all local and stack tags match
+                    existingState.checkLocalAndStackTags(newState);
 
-                // verify all phis in locals and the stack
-                if (C1XOptions.ExtraPhiChecking && !existingState.checkPhis(this, newState)) {
-                    return false;
+                    // verify all phis in locals and the stack
+                    if (C1XOptions.ExtraPhiChecking) {
+                        existingState.checkPhis(this, newState);
+                    }
                 }
             } else {
                 // there is an existing state, but the block was not visited yet
                 // do a merge of the stacks and locals
                 existingState.merge(this, newState);
             }
-
-        } else {
-            // stacks or locks do not match--bytecodes would not verify
-            return false;
         }
-
-        return true;
     }
 
     private void invalidateDeadLocals(ValueStack newState, BitMap liveness) {
@@ -451,11 +444,6 @@ public class BlockBegin extends StateSplit {
                 }
             }
         }
-    }
-
-    public void merge(ValueStack newState) {
-        boolean b = tryMerge(newState);
-        assert b : "merge failed";
     }
 
     public final boolean isStandardEntry() {
@@ -530,6 +518,7 @@ public class BlockBegin extends StateSplit {
         copyBlockFlag(other, BlockBegin.BlockFlag.WasVisited);
     }
 
+    @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("block #");

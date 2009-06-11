@@ -27,43 +27,79 @@ package com.sun.c1x;
  * @author Ben L. Titzer
  */
 public class C1XOptions {
-    public static int MaximumInstructionCount = 37000;
-    public static float MaximumInlineRatio = 0.90f;
-    public static int MaximumInlineSize = 35;
-    public static int MaximumTrivialSize = 6;
-    public static int MaximumInlineLevel = 9;
-    public static int MaximumRecursiveInlineLevel = 1;
-    public static int MaximumDesiredSize = 8000;
-    public static int SSEVersion = 2;
 
-    public static boolean MergeEquivalentConstants = false;
-    public static boolean PinAllInstructions = false;
-    public static boolean InlineMethodsWithExceptionHandlers = false;
-    public static boolean InlineSynchronizedMethods = false;
-    public static boolean TestPatching = false;
-    public static boolean PrintInitialBlockList = false;
-    public static boolean RoundFPResults = false;
-    public static boolean EliminateNarrowingInStores = false;
-    public static boolean EliminateFieldAccess = false;
-    public static boolean CanonicalizeInstructions = false;
-    public static boolean SupportObjectConstants = false;
-    public static boolean OptimizeUnsafes = false;
-    public static boolean ReduceMultipliesToShifts = false;
-    public static boolean UseLocalValueNumbering = false;
-    public static boolean CSEArrayLength = false;
-    public static boolean ProfileBranches = false;
-    public static boolean ProfileCalls = false;
-    public static boolean ProfileCheckcasts = false;
-    public static boolean ProfileInlinedCalls = false;
-    public static boolean UseCHA = false;
-    public static boolean UseSlowPath = true;
-    public static boolean UseDeopt = false;
-    public static boolean UseCHALeafMethods = false;
-    public static boolean UseInlineCaches = false;
-    public static boolean CanonicalizeConstantFields = false;
-    public static boolean RegisterFinalizersAtInit = true;
-    public static boolean FoldIntrinsics = false;
-    public static boolean FoldFloatingPoint = false;
-    public static boolean ExtraPhiChecking = true;
-    public static boolean ComputeStoresInLoops = false;
+    private static final boolean ____ = false;
+    private static final boolean TRUE = true;
+
+    // inlining settings
+    public static boolean InlineMethodsWithExceptionHandlers = ____;
+    public static boolean InlineSynchronizedMethods          = ____;
+    public static int     MaximumInstructionCount            = 37000;
+    public static float   MaximumInlineRatio                 = 0.90f;
+    public static int     MaximumInlineSize                  = 35;
+    public static int     MaximumTrivialSize                 = 6;
+    public static int     MaximumInlineLevel                 = 9;
+    public static int     MaximumRecursiveInlineLevel        = 1;
+    public static int     MaximumDesiredSize                 = 8000;
+
+    // floating point settings
+    public static int SSEVersion                             = 2;
+    public static boolean RoundFPResults                     = ____;
+
+    // debugging settings
+    public static boolean PinAllInstructions                 = ____;
+    public static boolean TestPatching                       = ____;
+    public static boolean TestSlowPath                       = TRUE;
+    public static boolean PrintInitialBlockList              = ____;
+
+    // canonicalizer settings
+    public static boolean CanonicalizeInstructions           = TRUE;
+    public static boolean CanonicalizeIntrinsics             = TRUE;
+    public static boolean CanonicalizeFloatingPoint          = TRUE;
+    public static boolean CanonicalizeNarrowingInStores      = TRUE;
+    public static boolean CanonicalizeConstantFields         = TRUE;
+    public static boolean CanonicalizeUnsafes                = TRUE;
+    public static boolean CanonicalizeMultipliesToShifts     = TRUE;
+    public static boolean CanonicalizeObjectCheckCast        = TRUE;
+    public static boolean CanonicalizeObjectInstanceOf       = TRUE;
+
+    // local value numbering / load elimination settings
+    public static boolean UseLocalValueNumbering             = ____;
+    public static boolean EliminateFieldAccess               = ____;
+    public static boolean AlwaysCSEArrayLength               = ____;
+
+    // profiling settings
+    public static boolean ProfileBranches                    = ____;
+    public static boolean ProfileCalls                       = ____;
+    public static boolean ProfileCheckcasts                  = ____;
+    public static boolean ProfileInlinedCalls                = ____;
+
+    // optimistic optimization settings
+    public static boolean UseCHA                             = ____;
+    public static boolean UseDeopt                           = ____;
+    public static boolean UseCHALeafMethods                  = ____;
+
+    // state merging settings
+    public static boolean MergeEquivalentConstants           = ____;
+    public static boolean ComputeStoresInLoops               = TRUE;
+    public static boolean AssumeVerifiedBytecode             = ____;
+    public static boolean ExtraPhiChecking                   = TRUE;
+
+    // miscellaneous settings
+    public static boolean SupportObjectConstants             = TRUE;
+    public static boolean UseInlineCaches                    = ____;
+    public static boolean RegisterFinalizersAtInit           = TRUE;
+
+    // future settings
+    public static boolean DoGlobalValueNumbering             = ____;
+    public static boolean DoArrayBoundsCheckElimination      = ____;
+    public static boolean DistinguishExceptionHandlerCode    = ____;
+    public static boolean DoNullCheckElimination             = ____;
+    public static boolean DoProfileGuidedInlining            = ____;
+    public static boolean DoTypeFlowAnalysis                 = ____;
+    public static int     ReOptUnresolvedCount               = 4;
+    public static boolean DetectCascadingInstanceOf          = ____;
+    public static float   MonomorphicProfileRatio            = 0.85f;
+    public static float   BimorphicProfileRatio              = 0.90f;
+    public static int     MaximumTypeSwitchInlining          = 10;
 }

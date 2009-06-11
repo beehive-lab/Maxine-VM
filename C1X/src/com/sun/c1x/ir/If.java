@@ -57,7 +57,7 @@ public class If extends BlockEnd {
         _x = x;
         _y = y;
         _condition = cond;
-        assert x.type().tag() == y.type().tag();
+        assert x.typeCheck(y);
         setFlag(Flag.UnorderedIsTrue, unorderedIsTrue);
         _successors.add(trueSucc);
         _successors.add(falseSucc);
@@ -190,6 +190,7 @@ public class If extends BlockEnd {
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         _x = closure.apply(_x);
         _y = closure.apply(_y);
@@ -199,6 +200,7 @@ public class If extends BlockEnd {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitIf(this);
     }

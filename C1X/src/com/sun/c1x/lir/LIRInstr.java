@@ -26,4 +26,5 @@ package com.sun.c1x.lir;
  * @author Ben L. Titzer
  */
 public class LIRInstr {
+    // Nothing yet
 }

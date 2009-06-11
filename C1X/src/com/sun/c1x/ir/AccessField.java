@@ -166,6 +166,7 @@ public abstract class AccessField extends Instruction {
      * is if it either requires a null check or needs patching.
      * @return <code>true</code> if this field access can cause a trap
      */
+    @Override
     public boolean canTrap() {
         return needsPatching() || (!checkFlag(Flag.IsStatic) && !_object.isNonNull());
     }
@@ -175,6 +176,7 @@ public abstract class AccessField extends Instruction {
      * it is only the receiver object of the field access.
      * @param closure the closure to apply to each value
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         _object = closure.apply(_object);
     }
@@ -185,6 +187,7 @@ public abstract class AccessField extends Instruction {
      * in the lock stack.
      * @param closure the closure to apply to each value
      */
+    @Override
     public void otherValuesDo(InstructionClosure closure) {
         if (_stateBefore != null) {
             _stateBefore.valuesDo(closure);

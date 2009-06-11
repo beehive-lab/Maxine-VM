@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.ValueType;
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.util.InstructionClosure;
+import com.sun.c1x.bytecode.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>Op2</code> class is the base of arithmetic and logic operations with two inputs.
@@ -49,8 +49,10 @@ public abstract class Op2 extends Instruction {
     }
 
     /**
-     * Gets the opcode of this instruction. See {@link com.sun.c1x.bytecode.Bytecodes}.
+     * Gets the opcode of this instruction.
+     *
      * @return the opcode of this instruction
+     * @see Bytecodes
      */
     public int opcode() {
         return _opcode;
@@ -86,6 +88,7 @@ public abstract class Op2 extends Instruction {
      * Iterates over the inputs to this instruction.
      * @param closure the closure to apply to each input value
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         _x = closure.apply(_x);
         _x = closure.apply(_y);

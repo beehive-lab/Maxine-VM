@@ -97,7 +97,8 @@ public abstract class Instruction {
     private Instruction _next;
     private Instruction _subst;
 
-    private List<ExceptionHandler> _exceptionHandlers;
+
+    private List<ExceptionHandler> _exceptionHandlers = ExceptionHandler.ZERO_HANDLERS;
 
     private LIROperand _lirOperand;
 
@@ -164,7 +165,7 @@ public abstract class Instruction {
     }
 
     /**
-     * Gets the value type of this instruction.
+     * Gets the type of the value pushed to the stack by this instruction.
      * @return the value type of this instruction
      */
     public final ValueType type() {
@@ -462,4 +463,19 @@ public abstract class Instruction {
         otherValuesDo(closure);
     }
 
+    public boolean typeCheck(Instruction other) {
+        return type().basicType() == other.type().basicType();
+    }
+
+    /**
+     * Converts a given instruction to a value string. The representation of an instruction as
+     * a value is formed by concatenating the {@linkplain com.sun.c1x.value.ValueType#tchar() character} denoting its
+     * {@linkplain com.sun.c1x.ir.Instruction#type() type} and its {@linkplain com.sun.c1x.ir.Instruction#id()}. For example,
+     * "i13".
+     *
+     * @param value the instruction to convert to a value string. If {@code value == null}, then "null" is returned.
+     */
+    public static String valueString(Instruction value) {
+        return value == null ? "null" : "" + value.type().tchar() + value.id();
+    }
 }
