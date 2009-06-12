@@ -121,7 +121,7 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
     private final class WatchpointFrameMenuItems implements InspectorMenuItems {
         // TODO (mlvdv) add watchpoint frame menu items
         public void addTo(InspectorMenu menu) {
-            menu.add(actions().setWatchpoint());
+            menu.add(actions().setWordWatchpoint());
             menu.addSeparator();
             menu.add(actions().removeSelectedWatchpoint());
             menu.add(actions().removeAllWatchpoints());

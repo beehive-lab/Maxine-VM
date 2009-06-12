@@ -215,7 +215,7 @@ public class WatchpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
-            setValue(new WordValue(watchpoint.memoryRegion().start()));
+            setValue(new WordValue(watchpoint.start()));
 
             if (row == getSelectionModel().getMinSelectionIndex()) {
                 setBackground(style().defaultCodeAlternateBackgroundColor());
@@ -234,7 +234,7 @@ public class WatchpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
-            setValue(new WordValue(watchpoint.memoryRegion().end()));
+            setValue(new WordValue(watchpoint.end()));
             if (row == getSelectionModel().getMinSelectionIndex()) {
                 setBackground(style().defaultCodeAlternateBackgroundColor());
             } else {
@@ -252,7 +252,7 @@ public class WatchpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
-            setValue(new WordValue(watchpoint.memoryRegion().start()));
+            setValue(new WordValue(watchpoint.start()));
             if (row == getSelectionModel().getMinSelectionIndex()) {
                 setBackground(style().defaultCodeAlternateBackgroundColor());
             } else {
