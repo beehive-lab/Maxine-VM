@@ -27,6 +27,7 @@ import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
+import com.sun.max.tele.debug.TeleWatchpoint.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
@@ -600,10 +601,11 @@ public interface MaxVM {
 
     /**
      * All existing bytecode breakpoints.
+     * <br>
+     *  Modification safe against breakpoint removal.
      *
      * @return all existing bytecode breakpoints in the VM.
-     * Modification safe against breakpoint removal.
-     */
+      */
     Iterable<TeleBytecodeBreakpoint> bytecodeBreakpoints();
 
     /**
@@ -628,12 +630,43 @@ public interface MaxVM {
     TeleBytecodeBreakpoint getBytecodeBreakpoint(Key key);
 
     /**
+     * @return are watchpoints enabled in the VM?
+     */
+    boolean watchpointsEnabled();
+
+    /**
+     * Adds a observer for watchpoint changes in the VM.
+     *
+     * @param listener will be notified whenever watchpoints in VM change.
+     */
+    void addWatchpointObserver(Observer observer);
+
+    /**
      * Creates a new memory watchpoint in the VM.
      *
-     * @param memoryRegion a memory region in the VM
-     * @return a possibly new memory watchpoint
+     * @param address start of a memory region in the VM
+     * @param size size of the memory region in the VM
+     * @return a new memory watchpoint
+     * @throws TooManyWatchpointsException
+     * @throws DuplicateWatchpointException when the watchpoint overlaps in whole or part with an existing watchpoint
      */
-    TeleWatchpoint makeWatchpoint(MemoryRegion memoryRegion);
+    MaxWatchpoint setWatchpoint(Address address, Size size)  throws TooManyWatchpointsException, DuplicateWatchpointException;
+
+    /**
+     * @param address a memory address in the VM
+     * @return the watchpoint whose memory region includes the address, null if none.
+     */
+    MaxWatchpoint findWatchpoint(Address address);
+
+    /**
+     * All existing memory watchpoints set in the VM.
+     * <br>
+     * Immutable collection; membership is thread-safe; likely implemented as a copy.
+     *
+     * @return all existing watchpoints; empty if none.
+     * .
+     */
+    IterableWithLength<MaxWatchpoint> watchpoints();
 
     /**
      * Sets debugging trace level for the transport

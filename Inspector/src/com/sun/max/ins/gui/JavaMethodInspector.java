@@ -325,9 +325,9 @@ public class JavaMethodInspector extends MethodInspector {
      * Global thread selection has been set, though possibly unchanged; update all viewers.
      */
     @Override
-    public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxThread) {
+    public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
         for (CodeViewer codeViewer : _codeViewers.values()) {
-            codeViewer.updateThreadFocus(maxThread);
+            codeViewer.updateThreadFocus(thread);
         }
     }
 

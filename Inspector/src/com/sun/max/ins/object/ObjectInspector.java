@@ -146,7 +146,7 @@ public abstract class ObjectInspector extends Inspector {
     }
 
     @Override
-    public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxThread) {
+    public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
         // Object inspector displays are sensitive to the current thread selection.
         refreshView(true);
     }
@@ -183,7 +183,17 @@ public abstract class ObjectInspector extends Inspector {
         super.inspectorClosing();
     }
 
-     /**
+    @Override
+    public void watchpointSetChanged() {
+        refreshView(false);
+    }
+
+    @Override
+    public void vmProcessTerminated() {
+        dispose();
+    }
+
+    /**
      * @return whether to display the "Address" column for headers, tuples, and arrays
      */
     boolean showAddresses() {
@@ -435,11 +445,6 @@ public abstract class ObjectInspector extends Inspector {
             inspection.gui().moveToMiddle(this);
             setVisible(true);
         }
-    }
-
-    @Override
-    public void vmProcessTerminated() {
-        dispose();
     }
 
 }

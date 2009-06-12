@@ -73,7 +73,7 @@ public abstract class CodeViewer extends InspectorPanel {
 
     public abstract boolean updateCodeFocus(TeleCodeLocation teleCodeLocation);
 
-    public void updateThreadFocus(MaxThread maxThread) {
+    public void updateThreadFocus(MaxThread thread) {
         updateCaches(false);
     }
 
@@ -308,13 +308,13 @@ public abstract class CodeViewer extends InspectorPanel {
             return _stackFrame;
         }
 
-        private final MaxThread _maxThread;
+        private final MaxThread _thread;
 
         /**
          * @return the thread in whose stack the frame resides.
          */
         public MaxThread thread() {
-            return _maxThread;
+            return _thread;
         }
 
         private final int _stackPosition;
@@ -326,9 +326,9 @@ public abstract class CodeViewer extends InspectorPanel {
             return _stackPosition;
         }
 
-        public StackFrameInfo(StackFrame stackFrame, MaxThread maxThread, int stackPosition) {
+        public StackFrameInfo(StackFrame stackFrame, MaxThread thread, int stackPosition) {
             _stackFrame = stackFrame;
-            _maxThread = maxThread;
+            _thread = thread;
             _stackPosition = stackPosition;
         }
     }
@@ -348,13 +348,13 @@ public abstract class CodeViewer extends InspectorPanel {
     private MaxVMState _lastRefreshedState = null;
 
     private void updateCaches(boolean force) {
-        final MaxThread maxThread = inspection().focus().thread();
-        if (maxThread != _threadForCache || maxVMState().newerThan(_lastRefreshedState) || force) {
+        final MaxThread thread = inspection().focus().thread();
+        if (thread != _threadForCache || maxVMState().newerThan(_lastRefreshedState) || force) {
             _lastRefreshedState = maxVMState();
             updateStackCache();
             // Active rows depend on the stack cache.
             updateActiveRows();
-            _threadForCache = maxThread;
+            _threadForCache = thread;
         }
     }
 

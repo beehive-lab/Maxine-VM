@@ -22,6 +22,7 @@ package com.sun.max.program;
 
 /**
  * @author Bernd Mathiske
+ * @author Michael Van De Vanter
  */
 public final class ProgramError extends Error {
 
@@ -46,12 +47,18 @@ public final class ProgramError extends Error {
         super(message, cause);
     }
 
+    /**
+     * Throws an error if condition not true.
+     */
     public static void check(boolean condition) {
         if (!condition) {
             unexpected("Program Error");
         }
     }
 
+    /**
+     * Throws an error if condition not true.
+     */
     public static void check(boolean condition, String message) {
         if (!condition) {
             unexpected(message);

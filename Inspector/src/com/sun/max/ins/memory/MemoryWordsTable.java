@@ -50,6 +50,8 @@ public class MemoryWordsTable extends InspectorTable {
     private final MemoryWordsColumnModel _columnModel;
     private final TableColumn[] _columns;
 
+    private MaxVMState _lastRefreshedState = null;
+
     public MemoryWordsTable(final ObjectInspector objectInspector, TeleObject teleObject) {
         this(objectInspector, teleObject.getCurrentOrigin(), teleObject.getCurrentSize().toInt());
 
@@ -78,8 +80,24 @@ public class MemoryWordsTable extends InspectorTable {
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
-    MemoryWordsViewPreferences preferences() {
-        return _columnModel.localPreferences();
+    public void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
+            _model.refresh();
+            for (TableColumn column : _columns) {
+                final Prober prober = (Prober) column.getCellRenderer();
+                prober.refresh(force);
+            }
+        }
+    }
+
+    public void redisplay() {
+        for (TableColumn column : _columns) {
+            final Prober prober = (Prober) column.getCellRenderer();
+            prober.redisplay();
+        }
+        invalidate();
+        repaint();
     }
 
     @Override
@@ -118,10 +136,6 @@ public class MemoryWordsTable extends InspectorTable {
             createColumn(MemoryWordsColumnKind.POSITION, new PositionRenderer(inspection()));
             createColumn(MemoryWordsColumnKind.VALUE, new ValueRenderer(inspection()));
             createColumn(MemoryWordsColumnKind.REGION, new RegionRenderer(inspection()));
-        }
-
-        private MemoryWordsViewPreferences localPreferences() {
-            return _localPreferences;
         }
 
         private void createColumn(MemoryWordsColumnKind columnKind, TableCellRenderer renderer) {
@@ -231,28 +245,6 @@ public class MemoryWordsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
             setValue(WordValue.from(maxVM().readWord(_startAddress.plus(row * maxVM().wordSize()))));
             return this;
-        }
-    }
-
-    public void redisplay() {
-        for (TableColumn column : _columns) {
-            final Prober prober = (Prober) column.getCellRenderer();
-            prober.redisplay();
-        }
-        invalidate();
-        repaint();
-    }
-
-    private MaxVMState _lastRefreshedState = null;
-
-    public void refresh(boolean force) {
-        if (maxVMState().newerThan(_lastRefreshedState) || force) {
-            _lastRefreshedState = maxVMState();
-            _model.refresh();
-            for (TableColumn column : _columns) {
-                final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(force);
-            }
         }
     }
 }

@@ -56,7 +56,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     // This is a singleton viewer, so only use a single level of view preferences.
     private final RegistersViewPreferences _viewPreferences;
 
-    private MaxThread _maxThread;
+    private MaxThread _thread;
     private RegistersTable _table;
 
     private RegistersInspector(Inspection inspection) {
@@ -76,11 +76,11 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
 
     @Override
     protected void createView() {
-        _maxThread = inspection().focus().thread();
-        if (_maxThread == null) {
+        _thread = inspection().focus().thread();
+        if (_thread == null) {
             _table = null;
         } else {
-            _table = new RegistersTable(inspection(), _maxThread, _viewPreferences);
+            _table = new RegistersTable(inspection(), _thread, _viewPreferences);
         }
         frame().setContentPane(new InspectorScrollPane(inspection(), _table));
         updateFrameTitle();
@@ -99,8 +99,8 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     @Override
     public String getTextForTitle() {
         String title = "Registers: ";
-        if (_maxThread != null) {
-            title += inspection().nameDisplay().longNameWithState(_maxThread);
+        if (_thread != null) {
+            title += inspection().nameDisplay().longNameWithState(_thread);
         }
         return title;
     }
@@ -129,7 +129,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     }
 
     @Override
-    public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxThread) {
+    public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
         reconstructView();
     }
 
