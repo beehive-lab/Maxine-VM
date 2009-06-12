@@ -627,4 +627,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         return false;
     }
 
+    protected boolean deactivateWatchpoint(MemoryRegion memoryRegion) {
+        return false;
+    }
+
+
 }

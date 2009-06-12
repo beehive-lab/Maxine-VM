@@ -21,6 +21,7 @@
 package com.sun.max.tele;
 
 import com.sun.max.memory.*;
+import com.sun.max.program.*;
 
 
 /**
@@ -28,17 +29,18 @@ import com.sun.max.memory.*;
  *
  * @author Michael Van De Vanter
  */
-public interface MaxWatchpoint {
+public interface MaxWatchpoint extends MemoryRegion {
 
     /**
-     * @return the area of memory in the VM covered by this watchpoint; ; immutable, thread-safe.
+     * @return true while the watchpoint is active in the VM; false when deleted from VM.
      */
-    MemoryRegion memoryRegion();
+    boolean isActive();
 
     /**
      * Removes the memory watchpoint from the VM.
      *
      * @return whether the removal succeeded.
+     * @throws ProgramError when not active (already deleted)
      */
     boolean remove();
 

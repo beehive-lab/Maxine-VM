@@ -114,7 +114,9 @@ public class ObjectHeaderTable extends InspectorTable {
                     final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
                     if (modelIndex == ObjectFieldColumnKind.TAG.ordinal()) {
                         final InspectorMenu menu = new InspectorMenu();
-                        menu.add(actions().setWatchpoint(_model.rowToAddress(hitRowIndex), "Watch this memory word"));
+                        final Address address = _model.rowToAddress(hitRowIndex);
+                        menu.add(actions().setWordWatchpoint(address, "Watch this memory word"));
+                        menu.add(actions().removeWatchpoint(address, "Un-watch this memory word"));
                         menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                     }
                 }
@@ -267,7 +269,7 @@ public class ObjectHeaderTable extends InspectorTable {
          */
         public MaxWatchpoint rowToWatchpoint(int row) {
             for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
-                if (watchpoint.memoryRegion().contains(rowToAddress(row))) {
+                if (watchpoint.contains(rowToAddress(row))) {
                     return watchpoint;
                 }
             }

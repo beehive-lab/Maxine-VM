@@ -181,7 +181,7 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
             final JMenuItem viewWatchpointsMenuItem = new JMenuItem(_actions.viewWatchpoints());
             viewWatchpointsMenuItem.setText("View Watchpoints");
             menu.add(viewWatchpointsMenuItem);
-            menu.add(_actions.setWatchpoint());
+            menu.add(_actions.setWordWatchpoint());
         }
 
         return menu;

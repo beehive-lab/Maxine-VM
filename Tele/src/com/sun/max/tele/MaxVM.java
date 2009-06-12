@@ -644,12 +644,20 @@ public interface MaxVM {
     /**
      * Creates a new memory watchpoint in the VM.
      *
-     * @param memoryRegion a memory region in the VM
-     * @return a possibly new memory watchpoint
+     * @param address start of a memory region in the VM
+     * @param size size of the memory region in the VM
+     * @return a new memory watchpoint
+     * @throws TooManyWatchpointsException
+     * @throws DuplicateWatchpointException when the watchpoint overlaps in whole or part with an existing watchpoint
      */
-    MaxWatchpoint makeWatchpoint(MemoryRegion memoryRegion)  throws TooManyWatchpointsException;
+    MaxWatchpoint setWatchpoint(Address address, Size size)  throws TooManyWatchpointsException, DuplicateWatchpointException;
 
-    boolean removeWatchpoint(MaxWatchpoint maxWatchpoint);
+    /**
+     * @param address a memory address in the VM
+     * @return the watchpoint whose memory region includes the address, null if none.
+     */
+    MaxWatchpoint findWatchpoint(Address address);
+
     /**
      * All existing memory watchpoints set in the VM.
      * <br>

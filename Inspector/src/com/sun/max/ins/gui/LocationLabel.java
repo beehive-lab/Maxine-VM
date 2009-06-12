@@ -48,7 +48,7 @@ public abstract class LocationLabel extends InspectorLabel {
         menu.add(inspection().actions().copyWord(address, null));
         menu.add(inspection().actions().inspectMemory(address, null));
         menu.add(inspection().actions().inspectMemoryWords(address, null));
-        menu.add(inspection().actions().setWatchpoint(address, null));
+        menu.add(inspection().actions().setWordWatchpoint(address, null));
         return menu;
     }
 
