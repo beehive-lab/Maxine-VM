@@ -153,7 +153,9 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         _desktopMenu.add(actions.viewStack());
         _desktopMenu.add(actions.viewMethodCode());
         _desktopMenu.add(actions.viewBreakpoints());
-        _desktopMenu.add(actions.viewWatchpoints());
+        if (_inspection.maxVM().watchpointsEnabled()) {
+            _desktopMenu.add(actions.viewWatchpoints());
+        }
 
         _desktopPane.addMouseListener(new InspectorMouseClickAdapter(_inspection) {
             @Override

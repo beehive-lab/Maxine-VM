@@ -90,16 +90,19 @@ public final class ThreadLocalsTable extends InspectorTable {
                     }
                 }
                 if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
-                    final Point p = mouseEvent.getPoint();
-                    final int hitRowIndex = rowAtPoint(p);
-                    final int columnIndex = getColumnModel().getColumnIndexAtX(p.x);
-                    final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
-                    if (modelIndex == ObjectFieldColumnKind.TAG.ordinal()) {
-                        final InspectorMenu menu = new InspectorMenu();
-                        final Address address = _model.rowToAddress(hitRowIndex);
-                        menu.add(actions().setWordWatchpoint(address, "Watch this memory word"));
-                        menu.add(actions().removeWatchpoint(address, "Un-watch this memory word"));
-                        menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                    if (maxVM().watchpointsEnabled()) {
+                        // So far, only watchpoint-related items on this popup menu.
+                        final Point p = mouseEvent.getPoint();
+                        final int hitRowIndex = rowAtPoint(p);
+                        final int columnIndex = getColumnModel().getColumnIndexAtX(p.x);
+                        final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
+                        if (modelIndex == ObjectFieldColumnKind.TAG.ordinal()) {
+                            final InspectorMenu menu = new InspectorMenu();
+                            final Address address = _model.rowToAddress(hitRowIndex);
+                            menu.add(actions().setWordWatchpoint(address, "Watch this memory word"));
+                            menu.add(actions().removeWatchpoint(address, "Un-watch this memory word"));
+                            menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                        }
                     }
                 }
                 super.procedure(mouseEvent);
