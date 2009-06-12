@@ -124,5 +124,5 @@ public interface InspectorGUI {
      */
     Frame frame();
 
-    InspectorLabel getMissingDataTableCellRederer();
+    InspectorLabel getMissingDataTableCellRenderer();
 }

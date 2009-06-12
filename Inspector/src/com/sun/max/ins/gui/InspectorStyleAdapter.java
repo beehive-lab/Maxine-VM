@@ -368,6 +368,10 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return debugDisabledTargetBreakpointTagBorder();
     }
 
+    public Border watchpointTagBorder() {
+        return _debugEnabledBreakpointTagBorder;
+    }
+
     public Color debugIPTextColor() {
         return defaultCodeColor();
     }

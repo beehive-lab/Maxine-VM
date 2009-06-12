@@ -40,6 +40,7 @@ import com.sun.max.program.Classpath.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
+import com.sun.max.tele.debug.TeleWatchpoint.*;
 import com.sun.max.tele.debug.darwin.*;
 import com.sun.max.tele.debug.guestvm.xen.*;
 import com.sun.max.tele.debug.linux.*;
@@ -1108,14 +1109,51 @@ public abstract class TeleVM implements MaxVM {
         return _bytecodeBreakpointFactory.getBreakpoint(key);
     }
 
-    public final TeleWatchpoint makeWatchpoint(MemoryRegion memoryRegion) {
-        return _teleProcess.watchpointFactory().makeWatchpoint(memoryRegion);
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxVM#watchpointsEnabled()
+     */
+    public final boolean watchpointsEnabled() {
+        return _teleProcess.maximumWatchpointCount() > 0;
     }
 
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxVM#addWatchpointObserver(java.util.Observer)
+     */
+    public final void addWatchpointObserver(Observer observer) {
+        _teleProcess.watchpointFactory().addObserver(observer);
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxVM#setWatchpoint(com.sun.max.unsafe.Address, com.sun.max.unsafe.Size)
+     */
+    public final MaxWatchpoint setWatchpoint(Address address, Size size) throws TooManyWatchpointsException, DuplicateWatchpointException {
+        return _teleProcess.watchpointFactory().setWatchpoint(address, size);
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxVM#findWatchpoint(com.sun.max.unsafe.Address)
+     */
+    public final MaxWatchpoint findWatchpoint(Address address) {
+        return _teleProcess.watchpointFactory().findWatchpoint(address);
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxVM#watchpoints()
+     */
+    public final IterableWithLength<MaxWatchpoint> watchpoints() {
+        return _teleProcess.watchpointFactory().watchpoints();
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxVM#setTransportDebugLevel(int)
+     */
     public final void setTransportDebugLevel(int level) {
         _teleProcess.setTransportDebugLevel(level);
     }
 
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxVM#transportDebugLevel()
+     */
     public final int transportDebugLevel() {
         return _teleProcess.transportDebugLevel();
     }

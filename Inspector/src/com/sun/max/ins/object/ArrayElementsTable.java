@@ -26,15 +26,12 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.table.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -70,6 +67,8 @@ public final class ArrayElementsTable extends InspectorTable {
     private final ArrayElementsTableModel _model;
     private final ArrayElementsTableColumnModel _columnModel;
     private final TableColumn[] _columns;
+
+    private MaxVMState _lastRefreshedState = null;
 
     /**
      * A {@link JTable} specialized to display Maxine array elements.
@@ -126,11 +125,76 @@ public final class ArrayElementsTable extends InspectorTable {
                         _inspection.focus().setAddress(_model.rowToAddress(selectedRow));
                     }
                 }
+                if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
+                    final Point p = mouseEvent.getPoint();
+                    final int hitRowIndex = rowAtPoint(p);
+                    final int columnIndex = getColumnModel().getColumnIndexAtX(p.x);
+                    final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
+                    if (modelIndex == ObjectFieldColumnKind.TAG.ordinal()) {
+                        final InspectorMenu menu = new InspectorMenu();
+                        final Address address = _model.rowToAddress(hitRowIndex);
+                        menu.add(actions().setWordWatchpoint(address, "Watch this memory word"));
+                        menu.add(actions().removeWatchpoint(address, "Un-watch this memory word"));
+                        menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                    }
+                }
                 super.procedure(mouseEvent);
             }
         });
         refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this, MAXIMUM_ROWS_FOR_COMPUTING_COLUMN_WIDTHS);
+    }
+
+    public void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
+            _objectOrigin = _teleObject.getCurrentOrigin();
+            // Update the mapping between array elements and displayed rows.
+            if (_objectInspector.hideNullArrayElements()) {
+                final int previousVisibleCount = _visibleElementCount;
+                _visibleElementCount = 0;
+                for (int index = 0; index < _arrayLength; index++) {
+                    if (!maxVM().getElementValue(_elementKind, _objectReference, index).isZero()) {
+                        _rowToElementMap[_visibleElementCount++] = index;
+                    }
+                }
+                if (previousVisibleCount != _visibleElementCount) {
+                    _model.fireTableDataChanged();
+                }
+            } else {
+                if (_visibleElementCount != _arrayLength) {
+                    // Previously hiding but no longer; reset map
+                    for (int index = 0; index < _arrayLength; index++) {
+                        _rowToElementMap[index] = index;
+                    }
+                    _visibleElementCount = _arrayLength;
+                }
+            }
+            // Update selection, based on global address focus.
+            final int oldSelectedRow = getSelectedRow();
+            final int newRow = _model.addressToRow(focus().address());
+            if (newRow >= 0) {
+                getSelectionModel().setSelectionInterval(newRow, newRow);
+            } else {
+                if (oldSelectedRow >= 0) {
+                    getSelectionModel().clearSelection();
+                }
+            }
+            //
+            for (TableColumn column : _columns) {
+                final Prober prober = (Prober) column.getCellRenderer();
+                prober.refresh(force);
+            }
+        }
+    }
+
+    public void redisplay() {
+        for (TableColumn column : _columns) {
+            final Prober prober = (Prober) column.getCellRenderer();
+            prober.redisplay();
+        }
+        invalidate();
+        repaint();
     }
 
     @Override
@@ -203,6 +267,18 @@ public final class ArrayElementsTable extends InspectorTable {
         }
 
         /**
+         * @return the memory watchpoint, if any, that is active at a row
+         */
+        public MaxWatchpoint rowToWatchpoint(int row) {
+            for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
+                if (watchpoint.contains(rowToAddress(row))) {
+                    return watchpoint;
+                }
+            }
+            return null;
+        }
+
+        /**
          * @param address a memory address in the VM.
          * @return the displayed table row that shows the array element at an address;
          * -1 if the address is not in the array, or if that element is currently hidden..
@@ -251,41 +327,14 @@ public final class ArrayElementsTable extends InspectorTable {
         }
     }
 
-    private final class TagRenderer extends PlainLabel implements TableCellRenderer, TextSearchable, Prober {
+    private final class TagRenderer extends MemoryTagTableCellRenderer implements TableCellRenderer {
 
         TagRenderer() {
-            super(_inspection, null);
+            super(_inspection);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            String registerNameList = null;
-            final MaxThread thread = focus().thread();
-            if (thread != null) {
-                final TeleIntegerRegisters teleIntegerRegisters = thread.integerRegisters();
-                if (teleIntegerRegisters == null) {
-                    return gui().getMissingDataTableCellRederer();
-                }
-                final Address address = _model.rowToAddress(row);
-                final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(maxVM().wordSize()));
-                if (registerSymbols.isEmpty()) {
-                    setText("");
-                    setToolTipText("");
-                    setForeground(style().memoryDefaultTagTextColor());
-                } else {
-                    for (Symbol registerSymbol : registerSymbols) {
-                        final String name = registerSymbol.name();
-                        if (registerNameList == null) {
-                            registerNameList = name;
-                        } else {
-                            registerNameList = registerNameList + "," + name;
-                        }
-                    }
-                    setText(registerNameList + "--->");
-                    setToolTipText("Register(s): " + registerNameList + " in thread " + inspection().nameDisplay().longName(thread) + " point at this location");
-                    setForeground(style().memoryRegisterTagTextColor());
-                }
-            }
-            return this;
+            return getRenderer(_model.rowToAddress(row), focus().thread(), _model.rowToWatchpoint(row));
         }
     }
 
@@ -410,60 +459,6 @@ public final class ArrayElementsTable extends InspectorTable {
                 _labels[elementRow] = label;
             }
             return label;
-        }
-    }
-
-    public void redisplay() {
-        for (TableColumn column : _columns) {
-            final Prober prober = (Prober) column.getCellRenderer();
-            prober.redisplay();
-        }
-        invalidate();
-        repaint();
-    }
-
-    private MaxVMState _lastRefreshedState = null;
-
-    public void refresh(boolean force) {
-        if (maxVMState().newerThan(_lastRefreshedState) || force) {
-            _lastRefreshedState = maxVMState();
-            _objectOrigin = _teleObject.getCurrentOrigin();
-            // Update the mapping between array elements and displayed rows.
-            if (_objectInspector.hideNullArrayElements()) {
-                final int previousVisibleCount = _visibleElementCount;
-                _visibleElementCount = 0;
-                for (int index = 0; index < _arrayLength; index++) {
-                    if (!maxVM().getElementValue(_elementKind, _objectReference, index).isZero()) {
-                        _rowToElementMap[_visibleElementCount++] = index;
-                    }
-                }
-                if (previousVisibleCount != _visibleElementCount) {
-                    _model.fireTableDataChanged();
-                }
-            } else {
-                if (_visibleElementCount != _arrayLength) {
-                    // Previously hiding but no longer; reset map
-                    for (int index = 0; index < _arrayLength; index++) {
-                        _rowToElementMap[index] = index;
-                    }
-                    _visibleElementCount = _arrayLength;
-                }
-            }
-            // Update selection, based on global address focus.
-            final int oldSelectedRow = getSelectedRow();
-            final int newRow = _model.addressToRow(focus().address());
-            if (newRow >= 0) {
-                getSelectionModel().setSelectionInterval(newRow, newRow);
-            } else {
-                if (oldSelectedRow >= 0) {
-                    getSelectionModel().clearSelection();
-                }
-            }
-            //
-            for (TableColumn column : _columns) {
-                final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(force);
-            }
         }
     }
 

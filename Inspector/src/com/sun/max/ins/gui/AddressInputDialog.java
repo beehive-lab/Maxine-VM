@@ -47,7 +47,11 @@ public abstract class AddressInputDialog extends InspectorDialog {
 
         @Override
         protected void procedure() {
-            _addressInputField.attemptUpdate();
+            try {
+                _addressInputField.attemptUpdate();
+            } catch (NumberFormatException numberFormatException) {
+                gui().errorMessage("Badly formed address: " + numberFormatException.getMessage());
+            }
         }
     }
 

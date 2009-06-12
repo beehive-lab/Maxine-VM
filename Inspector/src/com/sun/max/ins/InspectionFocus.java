@@ -149,19 +149,19 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * Sets the code location to the current InstructionPointer of the newly focused thread.
      * This is a view state change that can happen when there is no change to VM  state.
      */
-    public void setThread(MaxThread maxThread) {
-        assert maxThread != null;
-        if (!maxThread.equals(_thread)) {
+    public void setThread(MaxThread thread) {
+        assert thread != null;
+        if (!thread.equals(_thread)) {
             final MaxThread oldThread = _thread;
-            _thread = maxThread;
+            _thread = thread;
             Trace.line(TRACE_VALUE, _threadFocusTracer);
             for (ViewFocusListener listener : _listeners.clone()) {
-                listener.threadFocusSet(oldThread, maxThread);
+                listener.threadFocusSet(oldThread, thread);
             }
             // User Model Policy:  when thread focus changes, restore an old frame focus if possible.
             // If no record of a prior choice and thread is at a breakpoint, focus there.
             // Else focus on the top frame.
-            final StackFrame previousStackFrame = _frameSelections.get(maxThread);
+            final StackFrame previousStackFrame = _frameSelections.get(thread);
             StackFrame newStackFrame = null;
             if (previousStackFrame != null) {
                 for (StackFrame stackFrame : _thread.frames()) {
@@ -173,7 +173,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             }
             if (newStackFrame != null) {
                 // Reset frame selection to one previously selected by the user
-                setStackFrame(maxThread, newStackFrame, false);
+                setStackFrame(thread, newStackFrame, false);
             } else {
                 // No prior frame selection
                 final TeleTargetBreakpoint breakpoint = _thread.breakpoint();
@@ -182,7 +182,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
                     setBreakpoint(breakpoint);
                 } else {
                     // default is to focus on the top frame
-                    setStackFrame(maxThread, maxThread.frames().first(), false);
+                    setStackFrame(thread, thread.frames().first(), false);
                 }
             }
             // User Model Policy:  when thread focus changes, also set the memory region focus to the thread's stack.
@@ -217,21 +217,21 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * Sets the current thread to be the thread of the frame.
      * This is a view state change that can happen when there is no change to VM state.
      *
-     * @param maxThread the thread in whose stack the frame resides
+     * @param thread the thread in whose stack the frame resides
      * @param stackFrame the frame on which to focus.
      * @param interactiveForNative whether (should a side effect be to land in a native method) the user should be consulted if unknown.
      */
-    public void setStackFrame(MaxThread maxThread, StackFrame stackFrame, boolean interactiveForNative) {
-        if (!maxThread.equals(_threadForStackFrame) || !stackFrame.isSameFrame(_stackFrame)) {
+    public void setStackFrame(MaxThread thread, StackFrame stackFrame, boolean interactiveForNative) {
+        if (!thread.equals(_threadForStackFrame) || !stackFrame.isSameFrame(_stackFrame)) {
             final StackFrame oldStackFrame = _stackFrame;
-            _threadForStackFrame = maxThread;
+            _threadForStackFrame = thread;
             _stackFrame = stackFrame;
-            _frameSelections.put(maxThread, stackFrame);
+            _frameSelections.put(thread, stackFrame);
             Trace.line(TRACE_VALUE, _stackFrameFocusTracer);
             // For consistency, be sure we're in the right thread context before doing anything with the stack frame.
-            setThread(maxThread);
+            setThread(thread);
             for (ViewFocusListener listener : _listeners.clone()) {
-                listener.stackFrameFocusChanged(oldStackFrame, maxThread, stackFrame);
+                listener.stackFrameFocusChanged(oldStackFrame, thread, stackFrame);
             }
         }
         // User Model Policy:  When a stack frame becomes the focus, then also focus on the code at the frame's instruction pointer.
@@ -330,9 +330,9 @@ public class InspectionFocus extends AbstractInspectionHolder {
             }
             // User Model Policy:  When a stack memory region gets selected for focus, also set focus to the thread owning the stack.
 //            if (_memoryRegion != null) {
-//                final MaxThread maxThread = teleVM().threadContaining(_memoryRegion.start());
-//                if (maxThread != null) {
-//                    setThread(maxThread);
+//                final MaxThread thread = teleVM().threadContaining(_memoryRegion.start());
+//                if (thread != null) {
+//                    setThread(thread);
 //                }
 //            }
         }
@@ -378,9 +378,9 @@ public class InspectionFocus extends AbstractInspectionHolder {
         }
         if (teleBreakpoint != null) {
             MaxThread threadAtBreakpoint = null;
-            for (MaxThread maxThread : maxVMState().threads()) {
-                if (maxThread.breakpoint() == teleBreakpoint) {
-                    threadAtBreakpoint = maxThread;
+            for (MaxThread thread : maxVMState().threads()) {
+                if (thread.breakpoint() == teleBreakpoint) {
+                    threadAtBreakpoint = thread;
                     break;
                 }
             }
@@ -394,6 +394,47 @@ public class InspectionFocus extends AbstractInspectionHolder {
             }
         }
     }
+
+
+    private MaxWatchpoint _watchpoint;
+
+    private final Object _watchpointFocusTracer = new Object() {
+        @Override
+        public String toString() {
+            return tracePrefix() + "Focus(Watchpoint):  " + (_watchpoint == null ? "null" : _watchpoint.toString());
+        }
+    };
+
+    /**
+     * Currently selected watchpoint, typically controlled by the {@link WatchpointsInspector}.
+     * May be null.
+     */
+    public MaxWatchpoint watchpoint() {
+        return _watchpoint;
+    }
+
+    /**
+     * Is there a currently selected watchpoint in the WatchpointsInspector.
+     */
+    public boolean hasWatchpoint() {
+        return _watchpoint != null;
+    }
+
+    /**
+     * Selects a watchpoint that is of immediate visual interest to the user, possibly null.
+     * This is view state only, not necessarily related to VM execution.
+     */
+    public void setWatchpoint(MaxWatchpoint watchpoint) {
+        if (_watchpoint != watchpoint) {
+            final MaxWatchpoint oldWatchpoint = _watchpoint;
+            _watchpoint = watchpoint;
+            Trace.line(TRACE_VALUE, _watchpointFocusTracer);
+            for (ViewFocusListener listener : _listeners.clone()) {
+                listener.watchpointFocusSet(oldWatchpoint, watchpoint);
+            }
+        }
+    }
+
 
     private TeleObject _heapObject;
 

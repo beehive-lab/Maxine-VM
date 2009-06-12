@@ -41,12 +41,17 @@ public interface InspectionListener {
     /**
      * Notifies that the state associated with a particular thread  in the VM has changed.
      */
-    void threadStateChanged(MaxThread maxThread);
+    void threadStateChanged(MaxThread thread);
 
     /**
      * Notifies that the set of breakpoints in the VM has changed.
      */
     void breakpointSetChanged();
+
+    /**
+     * Notifies that the set of watchpoints in the VM has changed.
+     */
+    void watchpointSetChanged();
 
     /**
      * Notifies that an important aspect of view style/parameters/configuration have changed,

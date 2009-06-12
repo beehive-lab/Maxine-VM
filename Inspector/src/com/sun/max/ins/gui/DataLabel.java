@@ -308,6 +308,7 @@ public abstract class DataLabel extends InspectorLabel {
                             menu.add(inspection().actions().copyWord(_address, "Copy address to clipboard"));
                             menu.add(inspection().actions().inspectMemory(_address, null));
                             menu.add(inspection().actions().inspectMemoryWords(_address, null));
+                            menu.add(inspection().actions().setWordWatchpoint(_address, null));
                             menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                             break;
                         }
