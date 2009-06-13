@@ -30,7 +30,6 @@ import javax.swing.table.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
@@ -38,19 +37,20 @@ import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.*;
 
 
 /**
- * A table specialized for displaying the breakpoints in the VM.
+ * A table specialized for displaying code breakpoints in the VM.
  *
  * @author Michael Van De Vanter
  */
-public final class BreakpointsTable extends InspectorTable  implements ViewFocusListener {
+public final class BreakpointsTable extends InspectorTable {
 
     private final BreakpointsTableModel _model;
     private BreakpointsColumnModel _columnModel;
     private final TableColumn[] _columns;
+
+    private MaxVMState _lastStateRefreshed = null;
 
     public BreakpointsTable(Inspection inspection, BreakpointsViewPreferences viewPreferences) {
         super(inspection);
@@ -70,13 +70,14 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
         addMouseListener(new BreakpointInspectorMouseClickAdapter(inspection()));
         refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
-        updateSelection();
+        updateFocusSelection();
     }
 
     /**
      * Sets table selection to breakpoint, if any, that is the current user focus.
      */
-    private void updateSelection() {
+    @Override
+    public void updateFocusSelection() {
         final TeleBreakpoint teleBreakpoint = inspection().focus().breakpoint();
         final int row = _model.findRow(teleBreakpoint);
         if (row < 0) {
@@ -85,8 +86,6 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
             setRowSelectionInterval(row, row);
         }
     }
-
-    private MaxVMState _lastStateRefreshed = null;
 
     public void refresh(boolean force) {
         if (maxVMState().newerThan(_lastStateRefreshed) || force) {
@@ -111,20 +110,6 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
     }
 
     @Override
-    protected JTableHeader createDefaultTableHeader() {
-        // Custom table header with tooltips that describe the column data.
-        return new JTableHeader(_columnModel) {
-            @Override
-            public String getToolTipText(MouseEvent mouseEvent) {
-                final Point p = mouseEvent.getPoint();
-                final int index = _columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = _columnModel.getColumn(index).getModelIndex();
-                return BreakpointsColumnKind.VALUES.get(modelIndex).toolTipText();
-            }
-        };
-    }
-
-    @Override
     public void valueChanged(ListSelectionEvent listSelectionEvent) {
         // Row selection changed, perhaps by user mouse click or navigation;
         // update user focus to follow the selection.
@@ -139,6 +124,20 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
                 }
             }
         }
+    }
+
+    @Override
+    protected JTableHeader createDefaultTableHeader() {
+        // Custom table header with tooltips that describe the column data.
+        return new JTableHeader(_columnModel) {
+            @Override
+            public String getToolTipText(MouseEvent mouseEvent) {
+                final Point p = mouseEvent.getPoint();
+                final int index = _columnModel.getColumnIndexAtX(p.x);
+                final int modelIndex = _columnModel.getColumn(index).getModelIndex();
+                return BreakpointsColumnKind.VALUES.get(modelIndex).toolTipText();
+            }
+        };
     }
 
     private final class BreakpointsColumnModel extends DefaultTableColumnModel {
@@ -169,6 +168,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
 
     /**
      * A table data model built around the list of current breakpoints in the VM.
+     *
      * @author Michael Van De Vanter
      */
     private final class BreakpointsTableModel extends DefaultTableModel {
@@ -851,28 +851,6 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
         TeleBytecodeBreakpoint.Key key() {
             return _key;
         }
-    }
-
-    public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
-        updateSelection();
-    }
-
-    public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-    }
-
-    public void stackFrameFocusChanged(StackFrame oldStackFrame, MaxThread threadForStackFrame, StackFrame stackFrame) {
-    }
-
-    public void addressFocusChanged(Address oldAddress, Address address) {
-    }
-
-    public void memoryRegionFocusChanged(MemoryRegion oldMemoryRegion, MemoryRegion memoryRegion) {
-    }
-
-    public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
-    }
-
-    public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxThread) {
     }
 
 }

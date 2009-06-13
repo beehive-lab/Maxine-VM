@@ -138,24 +138,24 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * @return human readable string identifying a VM thread in a standard format.
      */
-    public String longName(MaxVMThread maxVMThread) {
-        final MaxThread maxThread = maxVMThread.maxThread();
-        if (maxThread != null) {
-            return shortName(maxVMThread) + " [" + maxThread.handle() + "]";
+    public String longName(MaxVMThread vmThread) {
+        final MaxThread thread = vmThread.maxThread();
+        if (thread != null) {
+            return shortName(vmThread) + " [" + thread.handle() + "]";
         }
-        return shortName(maxVMThread);
+        return shortName(vmThread);
     }
 
     /**
      * @return human readable string identifying a VM thread in a standard format.
      */
-    public String longNameWithState(MaxVMThread maxVMThread) {
-        final MaxThread maxThread = maxVMThread.maxThread();
+    public String longNameWithState(MaxVMThread vmThread) {
+        final MaxThread thread = vmThread.maxThread();
         final StringBuilder result = new StringBuilder(20);
-        result.append(shortName(maxVMThread));
-        if (maxThread != null) {
-            result.append(" [").append(maxThread.handle()).append("]");
-            result.append(" (").append(maxThread.state()).append(")");
+        result.append(shortName(vmThread));
+        if (thread != null) {
+            result.append(" [").append(thread.handle()).append("]");
+            result.append(" (").append(thread.state()).append(")");
         }
         return result.toString();
     }
@@ -163,15 +163,15 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * @return human readable string identifying a thread in a terse standard format.
      */
-    public String shortName(MaxThread maxThread) {
-        if (maxThread == null) {
+    public String shortName(MaxThread thread) {
+        if (thread == null) {
             return "null";
         }
-        if (maxThread.isPrimordial()) {
+        if (thread.isPrimordial()) {
             return "primordial";
         }
-        if (maxThread.maxVMThread() != null) {
-            return shortName(maxThread.maxVMThread());
+        if (thread.maxVMThread() != null) {
+            return shortName(thread.maxVMThread());
         }
         return "native unnamed";
     }
@@ -179,27 +179,27 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * @return human readable string identifying a thread in a standard format.
      */
-    public String longName(MaxThread maxThread) {
-        if (maxThread == null) {
+    public String longName(MaxThread thread) {
+        if (thread == null) {
             return "null";
         }
-        if (maxThread.maxVMThread() != null) {
-            return longName(maxThread.maxVMThread());
+        if (thread.maxVMThread() != null) {
+            return longName(thread.maxVMThread());
         }
-        return shortName(maxThread) + " [" + maxThread.handle() + "]";
+        return shortName(thread) + " [" + thread.handle() + "]";
     }
 
     /**
      * @return human readable string identifying a thread in a standard format.
      */
-    public String longNameWithState(MaxThread maxThread) {
-        if (maxThread == null) {
+    public String longNameWithState(MaxThread thread) {
+        if (thread == null) {
             return "null";
         }
-        if (maxThread.maxVMThread() != null) {
-            return longNameWithState(maxThread.maxVMThread());
+        if (thread.maxVMThread() != null) {
+            return longNameWithState(thread.maxVMThread());
         }
-        return shortName(maxThread) + " [" + maxThread.handle() + "] (" + maxThread.state() + ")";
+        return shortName(thread) + " [" + thread.handle() + "] (" + thread.state() + ")";
     }
 
     /**
@@ -439,7 +439,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
                 }
                 teleObjectClass = teleObjectClass.getSuperclass();
             }
-            ProgramError.unexpected("InspectorNameDisplay failed to find render for teleObject = " + teleObject);
+            ProgramError.unexpected("InspectorNameDisplay failed to find renderer for teleObject = " + teleObject);
         }
         return null;
     }
@@ -462,7 +462,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
                 }
                 teleObjectClass = teleObjectClass.getSuperclass();
             }
-            ProgramError.unexpected("InspectorNameDisplay failed to find render for teleObject = " + teleObject);
+            ProgramError.unexpected("InspectorNameDisplay failed to find renderer for teleObject = " + teleObject);
         }
         return null;
     }

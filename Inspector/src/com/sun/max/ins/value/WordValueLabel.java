@@ -205,14 +205,14 @@ public class WordValueLabel extends ValueLabel {
     private TeleTargetMethod _teleTargetMethod;
 
     /** Non-null if a stack reference. */
-    private MaxThread _maxThread;
+    private MaxThread _thread;
 
     @Override
     public void setValue(Value newValue) {
         _teleObject = null;
         _teleClassActor = null;
         _teleTargetMethod = null;
-        _maxThread = null;
+        _thread = null;
 
         if (newValue == VoidValue.VOID) {
             _valueKind = ValueKind.INVALID;
@@ -256,8 +256,8 @@ public class WordValueLabel extends ValueLabel {
                     }
                 } else {
                     final Address address = newValue.toWord().asAddress();
-                    _maxThread = maxVM().threadContaining(address);
-                    if (_maxThread != null) {
+                    _thread = maxVM().threadContaining(address);
+                    if (_thread != null) {
                         _valueKind = _valueMode == ValueMode.REFERENCE ? ValueKind.STACK_LOCATION_TEXT : ValueKind.STACK_LOCATION;
                     } else {
                         if (_valueMode == ValueMode.REFERENCE || _valueMode == ValueMode.LITERAL_REFERENCE) {
@@ -380,8 +380,8 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordDataFont());
                 setForeground(style().wordStackLocationDataColor());
                 setText(hexString);
-                final String threadName = inspection().nameDisplay().longName(_maxThread);
-                final long offset = value().asWord().asAddress().minus(_maxThread.stack().start()).toLong();
+                final String threadName = inspection().nameDisplay().longName(_thread);
+                final long offset = value().asWord().asAddress().minus(_thread.stack().start()).toLong();
                 final String hexOffsetString = offset >= 0 ? ("+0x" + Long.toHexString(offset)) : "0x" + Long.toHexString(offset);
                 setToolTipText("Stack:  thread=" + threadName + ", offset=" + hexOffsetString);
                 break;
@@ -389,8 +389,8 @@ public class WordValueLabel extends ValueLabel {
             case STACK_LOCATION_TEXT: {
                 setFont(style().wordAlternateTextFont());
                 setForeground(style().wordStackLocationDataColor());
-                final String threadName = inspection().nameDisplay().longName(_maxThread);
-                final long offset = value().asWord().asAddress().minus(_maxThread.stack().start()).toLong();
+                final String threadName = inspection().nameDisplay().longName(_thread);
+                final long offset = value().asWord().asAddress().minus(_thread.stack().start()).toLong();
                 final String decimalOffsetString = offset >= 0 ? ("+" + offset) : Long.toString(offset);
                 setText(threadName + " " + decimalOffsetString);
                 setToolTipText("Stack:  thread=" + threadName + ", addr=0x" +  Long.toHexString(value().asWord().asAddress().toLong()));

@@ -62,7 +62,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     // This is a singleton viewer, so only use a single level of view preferences.
     private final ThreadLocalsViewPreferences _viewPreferences;
 
-    private MaxThread _maxThread;
+    private MaxThread _thread;
     private JTabbedPane _tabbedPane;
 
     private ThreadLocalsInspector(Inspection inspection) {
@@ -82,13 +82,13 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
     @Override
     protected void createView() {
-        _maxThread = inspection().focus().thread();
+        _thread = inspection().focus().thread();
         _tabbedPane = new JTabbedPane();
-        if (_maxThread != null) {
+        if (_thread != null) {
             for (Safepoint.State state : Safepoint.State.CONSTANTS) {
-                final TeleThreadLocalValues values = _maxThread.threadLocalsFor(state);
+                final TeleThreadLocalValues values = _thread.threadLocalsFor(state);
                 if (values != null) {
-                    final ThreadLocalsPanel panel = new ThreadLocalsPanel(inspection(), _maxThread, values, _viewPreferences);
+                    final ThreadLocalsPanel panel = new ThreadLocalsPanel(inspection(), _thread, values, _viewPreferences);
                     _tabbedPane.add(state.toString(), panel);
                 }
             }
@@ -111,8 +111,8 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     @Override
     public String getTextForTitle() {
         String title = "Thread Locals: ";
-        if (_maxThread != null) {
-            title += inspection().nameDisplay().longNameWithState(_maxThread);
+        if (_thread != null) {
+            title += inspection().nameDisplay().longNameWithState(_thread);
         }
         return title;
     }
@@ -161,11 +161,11 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
         boolean panelsAddedOrRemoved = false;
         for (Safepoint.State state : Safepoint.State.CONSTANTS) {
-            final TeleThreadLocalValues values = _maxThread.threadLocalsFor(state);
+            final TeleThreadLocalValues values = _thread.threadLocalsFor(state);
             final ThreadLocalsPanel panel = threadLocalsPanelFor(state);
             if (values != null) {
                 if (panel == null) {
-                    _tabbedPane.add(state.toString(), new ThreadLocalsPanel(inspection(), _maxThread, values, _viewPreferences));
+                    _tabbedPane.add(state.toString(), new ThreadLocalsPanel(inspection(), _thread, values, _viewPreferences));
                     panelsAddedOrRemoved = true;
                 }
             } else {
@@ -194,12 +194,17 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     }
 
     @Override
-    public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxThread) {
+    public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
         reconstructView();
     }
 
     public void tableColumnViewPreferencesChanged() {
         reconstructView();
+    }
+
+    @Override
+    public void watchpointSetChanged() {
+        refreshView(false);
     }
 
     @Override
