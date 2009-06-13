@@ -23,6 +23,7 @@ package test.com.sun.max.vm.compiler.c1x;
 import static test.com.sun.max.vm.compiler.c1x.C1XTest.PatternType.*;
 
 import java.io.*;
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.c1x.*;
@@ -31,6 +32,7 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
+import com.sun.max.program.option.OptionSet.*;
 import com.sun.max.test.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -54,8 +56,6 @@ public class C1XTest {
         "Set the verbosity level of the testing framework.");
     private static final Option<Boolean> _printBailout = _options.newBooleanOption("print-bailout", false,
         "Print bailout exceptions.");
-    private static final Option<Boolean> _printIr = _options.newBooleanOption("print-ir", false,
-        "Print IR of a method after compiling it.");
     private static final Option<File> _outFile = _options.newFileOption("o", (File) null,
         "A file to which output should be sent. If not specified, then output is sent to stdout.");
     private static final Option<Boolean> _clinit = _options.newBooleanOption("clinit", true,
@@ -70,6 +70,41 @@ public class C1XTest {
         "Set the number of warmup runs to execute before initiating the timed run.");
     private static final Option<Boolean> _help = _options.newBooleanOption("help", false,
         "Show help message and exit.");
+
+    static {
+        for (final Field field : C1XOptions.class.getFields()) {
+            if (Modifier.isStatic(field.getModifiers())) {
+                if (field.getType() == boolean.class) {
+                    final String name = field.getName();
+                    try {
+                        final boolean defaultValue = field.getBoolean(null);
+                        _options.addOption(new Option<Boolean>("XX:+" + name, defaultValue, OptionTypes.BOOLEAN_TYPE, "Enable the " + name + " option.") {
+                            @Override
+                            public void setValue(Boolean value) {
+                                try {
+                                    field.setBoolean(null, true);
+                                } catch (Exception e) {
+                                    ProgramError.unexpected("Error updating the value of " + field, e);
+                                }
+                            }
+                        }, Syntax.EQUALS_OR_BLANK);
+                        _options.addOption(new Option<Boolean>("XX:-" + name, !defaultValue, OptionTypes.BOOLEAN_TYPE, "Disable the " + name + " option.") {
+                            @Override
+                            public void setValue(Boolean value) {
+                                try {
+                                    field.setBoolean(null, false);
+                                } catch (Exception e) {
+                                    ProgramError.unexpected("Error updating the value of " + field, e);
+                                }
+                            }
+                        }, Syntax.EQUALS_OR_BLANK);
+                    } catch (Exception e) {
+                        ProgramError.unexpected("Error reading the value of " + field, e);
+                    }
+                }
+            }
+        }
+    }
 
     private static final List<Timing> _timings = new ArrayList<Timing>();
 
@@ -120,9 +155,10 @@ public class C1XTest {
             if (compilation == null || compilation.startBlock() != null) {
                 progress.pass();
 
-                if (compilation != null && _printIr.getValue()) {
+                if (compilation != null && C1XOptions.PrintIR) {
                     _out.println(methodActor.format("IR for %H.%n(%p)"));
-                    final InstructionPrinter ip = new InstructionPrinter(new C1XPrintStream(_out), true);
+                    final LogStream out = new LogStream(_out);
+                    final InstructionPrinter ip = new InstructionPrinter(out, true);
                     final BlockPrinter bp = new BlockPrinter(ip, false, false);
                     compilation.startBlock().iteratePreOrder(bp);
                 }

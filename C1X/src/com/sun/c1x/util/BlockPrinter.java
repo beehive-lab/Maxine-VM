@@ -53,7 +53,7 @@ public class BlockPrinter implements BlockClosure {
 
     public void printBlock(BlockBegin block, boolean liveOnly) {
         _ip.printInstruction(block);
-        C1XPrintStream out = _ip.out();
+        LogStream out = _ip.out();
         out.println();
         printStack(block.state(), out);
         out.println();
@@ -71,7 +71,7 @@ public class BlockPrinter implements BlockClosure {
 
     }
 
-    private static void printStack(ValueStack stack, C1XPrintStream out) {
+    private static void printStack(ValueStack stack, LogStream out) {
         int startPosition = out.position();
         if (stack.stackEmpty()) {
           out.print("empty stack");
@@ -87,9 +87,9 @@ public class BlockPrinter implements BlockClosure {
             i += value.type().size();
             if (value instanceof Phi) {
                 Phi phi = (Phi) value;
-                if (phi.operand() != null) {
+                if (phi.lirOperand() != null) {
                     out.print(" ");
-                    out.print(phi.operand().toString());
+                    out.print(phi.lirOperand().toString());
                 }
             }
           }

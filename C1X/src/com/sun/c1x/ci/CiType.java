@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.ci;
 
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.BasicType;
 
 /**
@@ -28,7 +29,19 @@ import com.sun.c1x.value.BasicType;
  * @author Ben L. Titzer
  */
 public interface CiType {
+    /**
+     * Gets the name of this type in internal form. The following are examples of strings returned by this method:
+     * <pre>
+     *     "Ljava/lang/Object;"
+     *     "I"
+     *     "[[B"
+     * </pre>
+     * To convert this name to it Java programming language form, use {@link Util#toJavaName(CiType)}.
+     *
+     * @return the name of this type in internal form
+     */
     String name();
+
     Class<?> javaClass();
     boolean hasSubclass();
     boolean hasFinalizer();

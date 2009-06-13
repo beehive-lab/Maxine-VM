@@ -51,6 +51,8 @@ public class C1XOptions {
     public static boolean TestPatching                       = ____;
     public static boolean TestSlowPath                       = TRUE;
     public static boolean PrintInitialBlockList              = ____;
+    public static boolean PrintIR                            = ____;
+    public static boolean PrintCFGToFile                     = ____;
 
     // canonicalizer settings
     public static boolean CanonicalizeInstructions           = TRUE;

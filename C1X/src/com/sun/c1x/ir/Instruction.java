@@ -20,14 +20,13 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.ValueType;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.lir.LIROperand;
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.util.InstructionVisitor;
-import com.sun.c1x.util.InstructionClosure;
+import java.util.*;
 
-import java.util.List;
+import com.sun.c1x.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.lir.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>Instruction</code> class represents a node in the IR. Each instruction
@@ -336,7 +335,7 @@ public abstract class Instruction {
      * Gets the LIR operand associated with this instruction.
      * @return the LIR operand for this instruction
      */
-    public Object operand() {
+    public Object lirOperand() {
         return _lirOperand;
     }
 
@@ -344,7 +343,7 @@ public abstract class Instruction {
      * Sets the LIR operand associated with this instruction.
      * @param operand the operand to associate with this instruction
      */
-    public void setOperand(LIROperand operand) {
+    public void setLirOperand(LIROperand operand) {
         _lirOperand = operand;
     }
 
@@ -352,7 +351,7 @@ public abstract class Instruction {
      * Clears the LIR operand associated with this instruction by setting it
      * to an illegal operand.
      */
-    public void clearOperand() {
+    public void clearLirOperand() {
         // TODO: set the _lirOperand to an illegal operand
         _lirOperand = null;
     }
@@ -465,6 +464,47 @@ public abstract class Instruction {
 
     public boolean typeCheck(Instruction other) {
         return type().basicType() == other.type().basicType();
+    }
+
+    @Override
+    public String toString() {
+        return valueString(this);
+    }
+
+    /**
+     * Formats a given instruction as value is a {@linkplain ValueStack frame state}. If the instruction is a phi defined at a given
+     * block, its {@linkplain Phi#lirOperand() operands} are appended to the returned string.
+     *
+     * @param index the index of the value in the frame state
+     * @param value the frame state value
+     * @param block if {@code value} is a phi, then its operands are formatted if {@code block} is its
+     *            {@linkplain Phi#block() join point}
+     * @return the instruction representation as a string
+     */
+    public static String stateString(int index, Instruction value, BlockBegin block) {
+        StringBuilder sb = new StringBuilder(30);
+        sb.append(String.format("%2d  %s", index, valueString(value)));
+        if (value instanceof Phi) {
+            Phi phi = (Phi) value;
+            // print phi operands
+            if (phi.block() == block) {
+                sb.append(" [");
+                for (int j = 0; j < phi.operandCount(); j++) {
+                    sb.append(' ');
+                    Instruction operand = phi.operandAt(j);
+                    if (operand != null) {
+                        sb.append(valueString(operand));
+                    } else {
+                        sb.append("NULL");
+                    }
+                }
+                sb.append("] ");
+            }
+        }
+        if (value != value.subst()) {
+            sb.append("alias ").append(valueString(value.subst()));
+        }
+        return sb.toString();
     }
 
     /**

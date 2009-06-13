@@ -23,6 +23,7 @@ package com.sun.max.vm.object.host;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.c1x.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -240,6 +241,7 @@ public final class HostObjectAccess {
         _objectMap.put(_mainThread.getThreadGroup(), threadGroup);
         _objectMap.put(threadGroup, threadGroup);
         _objectMap.put(MaxineVM.host(), MaxineVM.target());
+        _objectMap.put(TTY.out, new LogStream(Log.os));
         _objectMap.put(WithoutAccessCheck.getStaticField(System.class, "props"), JDKInterceptor._initialSystemProperties);
     }
 }

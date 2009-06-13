@@ -20,15 +20,13 @@
  */
 package com.sun.c1x.graph;
 
-import com.sun.c1x.ir.BlockBegin;
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.ci.CiExceptionHandler;
-import com.sun.c1x.C1XIntrinsic;
-import com.sun.c1x.C1XOptions;
-
 import java.util.*;
+
+import com.sun.c1x.*;
+import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>BlockMap</code> class builds a mapping between bytecodes and basic blocks
@@ -121,13 +119,13 @@ public class BlockMap {
     /**
      * Creates a new BlockMap instance from the specified bytecode.
      * @param method the compiler interface method containing the code
-     * @param firstBlock the first block number to use
+     * @param firstBlockNum the first block number to use
      */
-    public BlockMap(CiMethod method, int firstBlock) {
+    public BlockMap(CiMethod method, int firstBlockNum) {
         byte[] code = method.code();
         _code = code;
-        _firstBlock = firstBlock;
-        _blockNum = firstBlock;
+        _firstBlock = firstBlockNum;
+        _blockNum = firstBlockNum;
         _blockMap = new BlockBegin[code.length];
         _successorMap = new BlockBegin[code.length][];
         _loopBlocks = new ArrayList<BlockBegin>();
@@ -410,12 +408,12 @@ public class BlockMap {
         if (visited.get(blockIndex)) {
             if (active.get(blockIndex)) {
                 // reached block via backward branch
-                block.setLoopHeader(true);
+                block.setParserLoopHeader(true);
                 _loopBlocks.add(block);
                 return true;
             }
             // return whether the block is already a loop header
-            return block.isLoopHeader();
+            return block.isParserLoopHeader();
         }
 
         visited.set(blockIndex);

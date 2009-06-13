@@ -26,27 +26,43 @@ package com.sun.c1x.value;
  * @author Ben L. Titzer
  */
 public enum BasicType {
-    Boolean('Z', "boolean", 1),
-    Byte('B', "byte", 1),
-    Short('S', "short", 1),
-    Char('C', "char", 1),
-    Int('I', "int", 1),
-    Float('F', "float", 1),
-    Double('D', "double", 2),
-    Long('J', "long", 2),
-    Object('L', "object", 1),
-    Void('V', "void", 0),
-    Jsr('A', "jsr", 1),
-    Illegal('?', "???", 1);
+    Boolean('z', "boolean", "jboolean", 1),
+    Byte('b', "byte", "jbyte", 1),
+    Short('s', "short", "jshort", 1),
+    Char('c', "char", "jchar", 1),
+    Int('i', "int", "jint", 1),
+    Float('f', "float", "jfloat", 1),
+    Double('d', "double", "jdouble", 2),
+    Long('l', "long", "jlong", 2),
+    Object('a', "object", "jobject", 1),
+    Void('v', "void", null, 0),
+    Jsr('r', "jsr", null, 1),
+    Illegal(' ', "illegal", null, -1);
 
-    BasicType(char ch, String name, int size) {
+    BasicType(char ch, String name, String jniName, int size) {
         _char = ch;
         _name = name;
+        _jniName = jniName;
         _size = size;
     }
 
     public final char _char;
+
+    /**
+     * The name of this basic type which will also be it Java programming language name if
+     * it is {@linkplain #isPrimitiveType() primitive} or {@code void}.
+     */
     public final String _name;
+
+    /**
+     * The JNI name of this basic type which null if this basic type is not a valid JNI type.
+     */
+    public final String _jniName;
+
+    /**
+     * The size of this basic type in terms of abstract JVM words. Note that this may
+     * differ with actual size of this type in it machine representation.
+     */
     public final int _size;
 
     /**
@@ -70,6 +86,15 @@ public enum BasicType {
      * @return <code>true</code> if this type is represented by an <code>int</code> on the operand stack
      */
     public boolean isIntType() {
+        return ordinal() <= Int.ordinal();
+    }
+
+    /**
+     * Checks whether this type is a Java primitive type.
+     * @return {@code true} if this is {@link #Boolean}, {@link #Byte}, {@link #Char}, {@link #Short},
+     *                                 {@link #Int}, {@link #Float} or {@link #Double}.
+     */
+    public boolean isPrimitiveType() {
         return ordinal() <= Int.ordinal();
     }
 
@@ -123,7 +148,20 @@ public enum BasicType {
             case 10: return Int;
             case 11: return Long;
         }
-        throw new IllegalArgumentException("unknown array type code");
+        throw new IllegalArgumentException("unknown array type code: " + code);
     }
 
+    public static BasicType fromPrimitiveOrVoidTypeChar(char ch) {
+        switch (ch) {
+            case 'Z': return Boolean;
+            case 'C': return Char;
+            case 'F': return Float;
+            case 'D': return Double;
+            case 'B': return Byte;
+            case 'S': return Short;
+            case 'I': return Int;
+            case 'J': return Long;
+        }
+        throw new IllegalArgumentException("unknown primitive or void type character: " + ch);
+    }
 }

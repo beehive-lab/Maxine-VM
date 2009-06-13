@@ -154,7 +154,7 @@ public class GraphBuilder {
         CiSignature sig = method.signatureType();
         int max = sig.arguments();
         for (int i = 0; i < max; i++) {
-            BasicType type = sig.argumentBasicType(i);
+            BasicType type = sig.argumentBasicTypeAt(i);
             ValueType vt = ValueType.fromBasicType(type);
             loadLocal(vt, index);
             index += vt.size();
@@ -1343,7 +1343,7 @@ public class GraphBuilder {
         }
 
         BlockBegin jsrCont = _scopeData.jsrContinuation();
-        assert jsrCont == cont && (!jsrCont.wasVisited() || jsrCont.isLoopHeader());
+        assert jsrCont == cont && (!jsrCont.wasVisited() || jsrCont.isParserLoopHeader());
         assert _last != null && _last instanceof BlockEnd;
 
         // continuation is in work list, so end iteration of current block
@@ -1394,7 +1394,7 @@ public class GraphBuilder {
         CiSignature sig = method.signatureType();
         int max = sig.arguments();
         for (int i = 0; i < max; i++) {
-            CiType type = sig.argumentType(i);
+            CiType type = sig.argumentTypeAt(i);
             ValueType vt = ValueType.fromBasicType(type.basicType());
             Local local = new Local(vt, index);
             if (type.isLoaded()) {
@@ -1541,7 +1541,7 @@ public class GraphBuilder {
         }
 
         BlockBegin calleeStartBlock = blockAt(0);
-        if (calleeStartBlock.isLoopHeader()) {
+        if (calleeStartBlock.isParserLoopHeader()) {
             // the block is a loop header, so we have to insert a goto
             Goto gotoCallee = new Goto(calleeStartBlock, null, false);
             gotoCallee.setState(_state);
@@ -1557,7 +1557,7 @@ public class GraphBuilder {
 
         // ready to resume parsing in inlined method
         // (either in the current block or the callee's start)
-        iterateAllBlocks(!calleeStartBlock.isLoopHeader());
+        iterateAllBlocks(!calleeStartBlock.isParserLoopHeader());
 
         assert continuationExisted || !continuationBlock.wasVisited() : "continuation should not have been parsed if we created it";
 

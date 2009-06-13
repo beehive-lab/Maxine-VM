@@ -29,8 +29,8 @@ import com.sun.c1x.value.BasicType;
  */
 public interface CiSignature {
     int arguments();
-    CiType argumentType(int which);
-    BasicType argumentBasicType(int which);
+    CiType argumentTypeAt(int index);
+    BasicType argumentBasicTypeAt(int index);
     CiType returnType();
     BasicType returnBasicType();
     String asString();

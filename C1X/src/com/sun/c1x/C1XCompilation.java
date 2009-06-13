@@ -20,6 +20,8 @@
  */
 package com.sun.c1x;
 
+import java.io.*;
+
 import com.sun.c1x.ci.CiMethod;
 import com.sun.c1x.ci.CiOsrFrame;
 import com.sun.c1x.ci.CiRuntime;
@@ -28,6 +30,7 @@ import com.sun.c1x.graph.BlockMap;
 import com.sun.c1x.graph.GraphBuilder;
 import com.sun.c1x.ir.BlockBegin;
 import com.sun.c1x.ir.IRScope;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>Compilation</code> class encapsulates global information about the compilation
@@ -81,10 +84,23 @@ public class C1XCompilation {
      */
     public BlockBegin startBlock() {
         try {
-            if (_start == null) {
+            if (_start == null && _bailout == null) {
+                CFGPrinter cfgPrinter = null;
+                if (C1XOptions.PrintCFGToFile) {
+                    OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
+                    if (cfgFileStream != null) {
+                        cfgPrinter = new CFGPrinter(cfgFileStream);
+                        cfgPrinter.printCompilation(method());
+                    }
+                }
+
                 final GraphBuilder builder = new GraphBuilder(this, new IRScope(this, null, 0, _method, _osrBCI));
                 _start = builder.start();
                 _totalInstructions = builder.instructionCount();
+
+                if (C1XOptions.PrintCFGToFile && cfgPrinter != null) {
+                    cfgPrinter.printCFG(_start, "After Generation of HIR", true, false);
+                }
             }
         } catch (Bailout b) {
             _bailout = b;
@@ -229,6 +245,14 @@ public class C1XCompilation {
         }
         if (!map.build(!isOsrCompilation && C1XOptions.ComputeStoresInLoops)) {
             throw new Bailout("build of BlockMap failed for " + method);
+        } else {
+            if (C1XOptions.PrintCFGToFile) {
+                OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
+                if (cfgFileStream != null) {
+                    CFGPrinter cfgPrinter = new CFGPrinter(cfgFileStream);
+                    cfgPrinter.printCFG(map, method.codeSize(), "BlockListBuilder " + Util.format("%f %r %H.%n(%p)", method, true), false, false);
+                }
+            }
         }
         map.cleanup();
         _totalBlocks += map.numberOfBlocks();
