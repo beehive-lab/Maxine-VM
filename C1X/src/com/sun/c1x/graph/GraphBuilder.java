@@ -166,8 +166,9 @@ public class GraphBuilder {
     }
 
     void pushRootScope(IRScope scope, BlockMap blockMap, BlockBegin start) {
-        _scopeData = new ScopeData(null, scope, blockMap);
-        _scopeData._constantPool = _compilation._runtime.getConstantPool(scope.method());
+        BytecodeStream stream = new BytecodeStream(scope.method().code());
+        CiConstantPool constantPool = _compilation._runtime.getConstantPool(scope.method());
+        _scopeData = new ScopeData(null, scope, blockMap, stream, constantPool);
         _block = start;
     }
 
@@ -245,10 +246,6 @@ public class GraphBuilder {
 
     public BytecodeStream stream() {
         return _scopeData._stream;
-    }
-
-    public int code() {
-        return stream().currentBC();
     }
 
     public int bci() {
@@ -1315,11 +1312,6 @@ public class GraphBuilder {
         // push callee scope
         pushScopeForJsr(cont, jsrStart);
 
-        // temporarily set up bytecode stream so we can append instructions
-        // (only using the bci of this stream)
-        _scopeData._stream = _scopeData._parent._stream;
-        _scopeData._constantPool = _scopeData._parent._constantPool;
-
         BlockBegin jsrStartBlock = blockAt(jsrStart);
         assert jsrStartBlock != null;
         assert !jsrStartBlock.wasVisited();
@@ -1330,9 +1322,6 @@ public class GraphBuilder {
         append(gotoSub);
         _block.setEnd(gotoSub);
         _last = _block = jsrStartBlock;
-
-        // clear the bytecode stream (?)
-        _scopeData._stream = null;
 
         _scopeData.addToWorkList(jsrStartBlock);
 
@@ -1355,7 +1344,9 @@ public class GraphBuilder {
     }
 
     void pushScopeForJsr(BlockBegin jsrCont, int jsrStart) {
-        ScopeData data = new ScopeData(_scopeData, scope(), _scopeData._blockMap);
+        BytecodeStream stream = new BytecodeStream(scope().method().code());
+        CiConstantPool constantPool = _scopeData._constantPool;
+        ScopeData data = new ScopeData(_scopeData, scope(), _scopeData._blockMap, stream, constantPool);
         data.setJsrEntryBCI(jsrStart);
         data.setJsrEntryReturnAddressLocal(-1);
         data.setupJsrExceptionHandlers();
@@ -1376,7 +1367,9 @@ public class GraphBuilder {
         calleeScope.setCallerState(_state);
         calleeScope.setStoresInLoops(blockMap.getStoresInLoops());
         _state = _state.pushScope(calleeScope);
-        ScopeData data = new ScopeData(_scopeData, calleeScope, blockMap);
+        BytecodeStream stream = new BytecodeStream(target.code());
+        CiConstantPool constantPool = _compilation._runtime.getConstantPool(target);
+        ScopeData data = new ScopeData(_scopeData, calleeScope, blockMap, stream, constantPool);
         data.setContinuation(continuation);
         _scopeData = data;
     }
@@ -1510,11 +1503,6 @@ public class GraphBuilder {
         // push the target scope
         pushScope(target, continuationBlock);
 
-        // temporarily set up the bytecode stream so we can append instructions
-        // (using only the bci of the stream)
-        _scopeData._stream = _scopeData._parent._stream;
-        _scopeData._constantPool = _scopeData._parent._constantPool;
-
         // pass parameters into the callee state
         ValueStack calleeState = _state;
         ValueStack callerState = scope().callerState();
@@ -1557,9 +1545,6 @@ public class GraphBuilder {
             _last = _block = calleeStartBlock;
             _scopeData.addToWorkList(calleeStartBlock);
         }
-
-        // clear out the bytecode stream
-        _scopeData._stream = null;
 
         // ready to resume parsing in inlined method
         // (either in the current block or the callee's start)
@@ -1743,13 +1728,10 @@ public class GraphBuilder {
         assert _compilation.isOsrCompilation();
 
         int osrBCI = _compilation.osrBCI();
-        CiMethod method = method();
-        BytecodeStream s = new BytecodeStream(method.code());
+        BytecodeStream s = _scopeData._stream;
         CiOsrFrame frame = _compilation.getOsrFrame();
         s.setBCI(osrBCI);
         s.next(); // XXX: why go to next bytecode?
-        _scopeData._stream = s;
-        _scopeData._constantPool = _compilation._runtime.getConstantPool(method);
 
         // create a new block to contain the OSR setup code
         _osrEntry = new BlockBegin(osrBCI);
@@ -1781,7 +1763,7 @@ public class GraphBuilder {
             if (local != null) {
                 // this is a live local according to compiler
                 if (local.type().isObject() && !frame.isLiveObject(i)) {
-                    // the interpreter thinks this is live, but not the interpreter
+                    // the compiler thinks this is live, but not the interpreter
                     // pretend that it passed null
                     get = appendConstant(ConstType.NULL_OBJECT);
                 } else {
@@ -1798,17 +1780,13 @@ public class GraphBuilder {
         append(g);
         _osrEntry.setEnd(g);
         target.merge(_osrEntry.end().state());
-        _scopeData._stream = null;
     }
 
     BlockEnd iterateBytecodesForBlock(int bci) {
         _skipBlock = false;
         assert _state != null;
-        CiMethod method = method();
-        BytecodeStream s = new BytecodeStream(method.code());
+        BytecodeStream s = _scopeData._stream;
         s.setBCI(bci);
-        _scopeData._stream = s;
-        _scopeData._constantPool = _compilation._runtime.getConstantPool(method);
 
         BlockBegin block = _block;
         BlockEnd end = null;
@@ -1823,13 +1801,12 @@ public class GraphBuilder {
                 _last = _last.setNext(end, prevBCI);
                 break;
             }
+            // read the opcode
             int opcode = s.currentBC();
+
             // check whether the bytecode can cause an exception
-            if (hasHandler() && Bytecodes.canTrap(opcode)) {
-                _exceptionState = _state.copy();
-            } else {
-                _exceptionState = null;
-            }
+            _exceptionState = hasHandler() && Bytecodes.canTrap(opcode) ? _state.copy() : null;
+
             // check for active JSR during OSR compilation
             if (_compilation.isOsrCompilation()
                     && scope().isTopScope()
@@ -1837,6 +1814,7 @@ public class GraphBuilder {
                     && s.currentBCI() == _compilation.osrBCI()) {
                 throw new Bailout("OSR not supported while a JSR is active");
             }
+
             // push an exception object onto the stack if we are parsing an exception handler
             if (pushException) {
                 apush(append(new ExceptionObject()));
@@ -2086,7 +2064,6 @@ public class GraphBuilder {
             succ.merge(_state);
             _scopeData.addToWorkList(succ);
         }
-        _scopeData._stream = null;
         return end;
     }
 
