@@ -57,7 +57,7 @@ public class If extends BlockEnd {
         _x = x;
         _y = y;
         _condition = cond;
-        assert x.typeCheck(y);
+        assert Instruction.sameBasicType(x, y);
         setFlag(Flag.UnorderedIsTrue, unorderedIsTrue);
         _successors.add(trueSucc);
         _successors.add(falseSucc);

@@ -394,7 +394,7 @@ public class BlockBegin extends StateSplit {
 
                 if (!C1XOptions.AssumeVerifiedBytecode) {
                     // check that all local and stack tags match
-                    existingState.checkLocalAndStackTags(newState);
+                    existingState.invalidateMismatchedLocalPhis(this, newState);
 
                     // verify all phis in locals and the stack
                     if (C1XOptions.ExtraPhiChecking) {

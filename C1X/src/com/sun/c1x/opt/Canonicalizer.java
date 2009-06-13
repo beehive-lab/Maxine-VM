@@ -171,6 +171,7 @@ public class Canonicalizer implements InstructionVisitor {
                         setIntConstant(val); // the operation was successfully folded to an int
                         return;
                     }
+                    break;
                 }
                 case Long: {
                     Long val = Bytecodes.foldLongOp2(i.opcode(), xt.asConstant().asLong(), yt.asConstant().asLong());
@@ -178,6 +179,7 @@ public class Canonicalizer implements InstructionVisitor {
                         setLongConstant(val); // the operation was successfully folded to a long
                         return;
                     }
+                    break;
                 }
                 case Float: {
                     if (C1XOptions.CanonicalizeFloatingPoint) {
@@ -188,6 +190,7 @@ public class Canonicalizer implements InstructionVisitor {
                             return;
                         }
                     }
+                    break;
                 }
                 case Double: {
                     if (C1XOptions.CanonicalizeFloatingPoint) {
@@ -198,6 +201,7 @@ public class Canonicalizer implements InstructionVisitor {
                             return;
                         }
                     }
+                    break;
                 }
             }
         }
@@ -213,17 +217,19 @@ public class Canonicalizer implements InstructionVisitor {
                     if (reduceIntOp2(i, x, yt.asConstant().asInt()) != null) {
                         return;
                     }
+                    break;
                 }
                 case Long: {
                     if (reduceLongOp2(i, x, yt.asConstant().asLong()) != null) {
                         return;
                     }
+                    break;
                 }
                 // XXX: note that other cases are possible, but harder
                 // floating point operations need to be extra careful
             }
         }
-        assert i.typeCheck(_canonical);
+        assert Instruction.sameBasicType(i, _canonical);
     }
 
     private Instruction reduceIntOp2(Op2 original, Instruction x, int y) {
@@ -484,10 +490,10 @@ public class Canonicalizer implements InstructionVisitor {
         ValueType vt = i.x().type();
         if (vt.isConstant()) {
             switch (vt.basicType()) {
-                case Int: setIntConstant(-vt.asConstant().asInt()); return;
-                case Long: setLongConstant(-vt.asConstant().asLong()); return;
-                case Float: setFloatConstant(-vt.asConstant().asFloat()); return;
-                case Double: setDoubleConstant(-vt.asConstant().asDouble()); return;
+                case Int: setIntConstant(-vt.asConstant().asInt()); break;
+                case Long: setLongConstant(-vt.asConstant().asLong()); break;
+                case Float: setFloatConstant(-vt.asConstant().asFloat()); break;
+                case Double: setDoubleConstant(-vt.asConstant().asDouble()); break;
             }
         }
         assert vt.basicType() == _canonical.type().basicType();
@@ -545,17 +551,17 @@ public class Canonicalizer implements InstructionVisitor {
                     Integer val = Bytecodes.foldFloatCompare(i.opcode(), xt.asConstant().asFloat(), yt.asConstant().asFloat());
                     assert val != null : "invalid opcode in float compare op";
                     setIntConstant(val);
-                    return;
+                    break;
                 }
                 case Double: {
                     Integer val = Bytecodes.foldDoubleCompare(i.opcode(), xt.asConstant().asDouble(), yt.asConstant().asDouble());
                     assert val != null : "invalid opcode in float compare op";
                     setIntConstant(val);
-                    return;
+                    break;
                 }
             }
         }
-        assert i.typeCheck(_canonical);
+        assert Instruction.sameBasicType(i, _canonical);
     }
 
     public void visitIfOp(IfOp i) {
@@ -902,7 +908,7 @@ public class Canonicalizer implements InstructionVisitor {
                 return;
             }
         }
-        assert i.typeCheck(_canonical);
+        assert Instruction.sameBasicType(i, _canonical);
     }
 
     public void visitBlockBegin(BlockBegin i) {

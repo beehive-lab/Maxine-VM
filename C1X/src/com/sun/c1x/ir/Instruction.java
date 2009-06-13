@@ -376,16 +376,25 @@ public abstract class Instruction {
     //========================== Value numbering support =================================
 
     /**
-     * Compute the hashcode of this Instruction. Local and global value numbering
-     * optimizations use a hash map to implement equivalency checking, and all
-     * instruction subclasses therefore must define .equals() and .hashCode().
-     * The default implementation is to return the id of this instruction,
-     * and object identity is used.
+     * Compute the value number of this Instruction. Local and global value numbering
+     * optimizations use a hash map, and the value number provides a hash code.
+     * If the instruction cannot be value numbered, then this method should return
+     * {@code 0}.
      * @return the hashcode of this instruction
      */
-    @Override
-    public int hashCode() {
-        return _id;
+    public int valueNumber() {
+        return 0;
+    }
+
+    /**
+     * Checks that this instruction is equal to another instruction for the purposes
+     * of value numbering.
+     * @param i the other instruction
+     * @return <code>true</code> if this instruction is equivalent to the specified
+     * instruction w.r.t. value numbering
+     */
+    public boolean valueEqual(Instruction i) {
+        return false;
     }
 
     /**
@@ -463,7 +472,28 @@ public abstract class Instruction {
         otherValuesDo(closure);
     }
 
-    public boolean typeCheck(Instruction other) {
-        return type().basicType() == other.type().basicType();
+    public static boolean sameBasicType(Instruction i, Instruction other) {
+        return i.type().basicType() == other.type().basicType();
     }
+
+    public static int hash1(int hash, Instruction x) {
+        // always set at least one bit in case the hash wraps to zero
+        return 0x10000000 | (hash + 7 * System.identityHashCode(x));
+    }
+
+    public static int hash2(int hash, Instruction x, Instruction y) {
+        // always set at least one bit in case the hash wraps to zero
+        return 0x20000000 | (hash + 7 * System.identityHashCode(x) + 11 * System.identityHashCode(y));
+    }
+
+    public static int hash3(int hash, Instruction x, Instruction y, Instruction z) {
+        // always set at least one bit in case the hash wraps to zero
+        return 0x30000000 | (hash + 7 * System.identityHashCode(x) + 11 * System.identityHashCode(y) + 13 * System.identityHashCode(z));
+    }
+
+    public static int hash4(int hash, Instruction x, Instruction y, Instruction z, Instruction w) {
+        // always set at least one bit in case the hash wraps to zero
+        return 0x40000000 | (hash + 7 * System.identityHashCode(x) + 11 * System.identityHashCode(y) + 13 * System.identityHashCode(z) + 17 * System.identityHashCode(w));
+    }
+
 }

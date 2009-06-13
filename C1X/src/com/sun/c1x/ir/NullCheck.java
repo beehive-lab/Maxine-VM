@@ -23,6 +23,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.util.InstructionVisitor;
 import com.sun.c1x.util.InstructionClosure;
 import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.bytecode.Bytecodes;
 
 /**
  * The <code>NullCheck</code> class represents an explicit null check instruction.
@@ -77,11 +78,7 @@ public class NullCheck extends Instruction {
      * @param canTrap <code>true</code> if this instruction can cause a trap
      */
     public void setCanTrap(boolean canTrap) {
-        if (canTrap) {
-            setFlag(Flag.CanTrap);
-        } else {
-            clearFlag(Flag.CanTrap);
-        }
+        setFlag(Flag.CanTrap, canTrap);
     }
 
     /**
@@ -117,4 +114,19 @@ public class NullCheck extends Instruction {
     public void accept(InstructionVisitor v) {
         v.visitNullCheck(this);
     }
+
+    @Override
+    public int valueNumber() {
+        return hash1(Bytecodes.IFNONNULL, _object);
+    }
+
+    @Override
+    public boolean valueEqual(Instruction i) {
+        if (i instanceof NullCheck) {
+            NullCheck o = (NullCheck) i;
+            return _object == o._object;
+        }
+        return false;
+    }
+
 }
