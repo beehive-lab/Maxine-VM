@@ -20,23 +20,67 @@
  */
 package com.sun.max.program;
 
+
 /**
+ * A collection of static methods for reporting a warning when an unexpected, non-fatal condition is encountered.
+ *
  * @author Bernd Mathiske
+ * @author Doug Simon
  */
 public final class ProgramWarning {
 
+    /**
+     * Implemented by a client that can {@linkplain ProgramWarning#setHandler(Handler) register}
+     * itself to handle program warnings instead of having them printed to {@link System#err}.
+     */
+    public static interface Handler {
+
+        /**
+         * Handles display a given warning message.
+         *
+         * @param message a warning message
+         */
+        void handle(String message);
+    }
+
+    /**
+     * Registers a handler to which warnings are redirected. Any previously registered handler
+     * is overwritten and discarded.
+     *
+     * @param handler if non-null, this object's {@link Handler#handle(String)} method is messaged instead of
+     *            printing the warning to {@link System#err} a ProgramError.
+     */
+    public static void setHandler(Handler handler) {
+        _handler = handler;
+    }
+
+    private static Handler _handler;
+
     private ProgramWarning() {
-
     }
 
+    /**
+     * Prints a given warning message.
+     *
+     * @param warning the warning message to print
+     */
     public static void message(String warning) {
-        System.err.println("WARNING: " + warning);
+        if (_handler != null) {
+            _handler.handle(warning);
+        } else {
+            System.err.println("WARNING: " + warning);
+        }
     }
 
+    /**
+     * Checks a given condition and if it's {@code false}, the appropriate warning message is printed.
+     *
+     * @param condition a condition to test
+     * @param message the warning message to be printed if {@code condition == false}
+     */
     public static void check(boolean condition, String warning) {
         if (!condition) {
             message(warning);
         }
     }
-
 }
