@@ -42,12 +42,12 @@ public class ScopeData {
     final IRScope _scope;
     // bci-to-block mapping
     final BlockMap _blockMap;
+    // the bytecode stream
+    final BytecodeStream _stream;
+    // the constant pool
+    final CiConstantPool _constantPool;
     // whether this scope or any parent scope has exception handlers
     boolean _hasHandler;
-    // the bytecode stream
-    BytecodeStream _stream;
-    // the constant pool
-    CiConstantPool _constantPool;
     // the worklist of blocks, managed like a sorted list
     BlockBegin[] _workList;
     // the current position in the worklist
@@ -103,11 +103,15 @@ public class ScopeData {
      * @param parent the parent scope data
      * @param scope the IR scope
      * @param bm the block map for this scope
+     * @param stream the bytecode stream
+     * @param constantPool the constant pool
      */
-    public ScopeData(ScopeData parent, IRScope scope, BlockMap bm) {
+    public ScopeData(ScopeData parent, IRScope scope, BlockMap bm, BytecodeStream stream, CiConstantPool constantPool) {
         this._parent = parent;
         this._scope = scope;
         this._blockMap = bm;
+        this._stream = stream;
+        this._constantPool = constantPool;
         if (parent != null) {
             _maxInlineSize = (int) (C1XOptions.MaximumInlineRatio * parent.maxInlineSize());
             if (_maxInlineSize < C1XOptions.MaximumTrivialSize) {
