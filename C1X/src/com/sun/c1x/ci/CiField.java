@@ -33,8 +33,10 @@ public interface CiField {
     BasicType basicType();
     CiType holder();
     boolean willLink(CiType where, int opcode);
+    boolean isLoaded();
     boolean isVolatile();
     boolean isConstant();
+    boolean isStatic();
     int offset();
     CiConstant constantValue();
 }

@@ -20,12 +20,16 @@
  */
 package com.sun.c1x.util;
 
-import java.util.List;
+import java.util.*;
+
+import com.sun.c1x.ci.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>Util</code> class contains a number of utility methods used throughout the compiler.
  *
  * @author Ben L. Titzer
+ * @author Doug Simon
  */
 public class Util {
 
@@ -82,4 +86,228 @@ public class Util {
         return (T) object;
     }
 
+    private static String internalNameToJava(String name) {
+        switch (name.charAt(0)) {
+            case 'L':
+                return name.substring(1, name.length() - 1).replace('/', '.');
+            case '[':
+                return internalNameToJava(name.substring(1)) + "[]";
+            default:
+                if (name.length() != 1) {
+                    throw new IllegalArgumentException("Illegal internal name: " + name);
+                }
+                return BasicType.fromPrimitiveOrVoidTypeChar(name.charAt(0))._name;
+        }
+    }
+
+    /**
+     * Converts a given type to its Java programming language name. The following are examples of strings returned by this method:
+     * <pre>
+     *     qualified == true:
+     *         java.lang.Object
+     *         int
+     *         boolean[][]
+     *     qualified == false:
+     *         Object
+     *         int
+     *         boolean[][]
+     * </pre>
+     *
+     * @param ciType the type to be converted to a Java name
+     * @param qualified specifies if the package prefix of the type should be included in the returned name
+     * @return the Java name corresponding to {@code ciType}
+     */
+    public static String toJavaName(CiType ciType, boolean qualified) {
+        BasicType basicType = ciType.basicType();
+        if (basicType.isPrimitiveType() || basicType == BasicType.Void) {
+            return basicType._name;
+        }
+        String string = internalNameToJava(ciType.name());
+        if (qualified) {
+            return string;
+        }
+        final int lastDot = string.lastIndexOf('.');
+        if (lastDot != -1) {
+            string = string.substring(lastDot + 1);
+        }
+        return string;
+    }
+
+    /**
+     * Converts a given type to its Java programming language name. The following are examples of strings returned by this method:
+     * <pre>
+     *      java.lang.Object
+     *      int
+     *      boolean[][]
+     * </pre>
+     *
+     * @param ciType the type to be converted to a Java name
+     * @return the Java name corresponding to {@code ciType}
+     */
+    public static String toJavaName(CiType ciType) {
+        return internalNameToJava(ciType.name());
+    }
+
+    /**
+     * Gets a string for a given method formatted according to a given format specification. A format specification is
+     * composed of characters that are to be copied verbatim to the result and specifiers that denote an attribute of
+     * the method that is to be copied to the result. A specifier is a single character preceded by a '%' character. The
+     * accepted specifiers and the method attribute they denote are described below:
+     *
+     * <pre>
+     *     Specifier | Description                                          | Example(s)
+     *     ----------+------------------------------------------------------------------------------------------
+     *     'R'       | Qualified return type                                | "int" "java.lang.String"
+     *     'r'       | Unqualified return type                              | "int" "String"
+     *     'H'       | Qualified holder                                     | "java.util.Map.Entry"
+     *     'h'       | Unqualified holder                                   | "Entry"
+     *     'n'       | Method name                                          | "add"
+     *     'P'       | Qualified parameter types, separated by ', '         | "int, java.lang.String"
+     *     'p'       | Unqualified parameter types, separated by ', '       | "int, String"
+     *     'f'       | Indicator if method is unresolved, static or virtual | "unresolved" "static" "virtual"
+     *     '%'       | A '%' character                                      | "%"
+     * </pre>
+     *
+     * @param format a format specification
+     * @param method the method to be formatted
+     * @param basicTypes if {@code true} then the types in {@code method}'s signature are printed in the
+     *            {@linkplain BasicType#_jniName JNI} form of their {@linkplain BasicType basic type}
+     * @return the result of formatting this method according to {@code format}
+     * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
+     */
+    public static String format(String format, CiMethod method, boolean basicTypes) throws IllegalFormatException {
+        final StringBuilder sb = new StringBuilder();
+        int index = 0;
+        CiSignature sig = method.signatureType();
+        while (index < format.length()) {
+            final char ch = format.charAt(index++);
+            if (ch == '%') {
+                if (index >= format.length()) {
+                    throw new UnknownFormatConversionException("An unquoted '%' character cannot terminate a method format specification");
+                }
+                final char specifier = format.charAt(index++);
+                boolean qualified = false;
+                switch (specifier) {
+                    case 'R':
+                        qualified = true;
+                        // fall through
+                    case 'r': {
+                        sb.append(basicTypes ? sig.returnBasicType()._jniName : toJavaName(sig.returnType(), qualified));
+                        break;
+                    }
+                    case 'H':
+                        qualified = true;
+                        // fall through
+                    case 'h': {
+                        sb.append(toJavaName(method.holder(), qualified));
+                        break;
+                    }
+                    case 'n': {
+                        sb.append(method.name());
+                        break;
+                    }
+                    case 'P':
+                        qualified = true;
+                        // fall through
+                    case 'p': {
+                        for (int i = 0; i < sig.arguments(); i++) {
+                            if (i != 0) {
+                                sb.append(", ");
+                            }
+                            sb.append(basicTypes ? sig.argumentBasicTypeAt(i)._jniName : toJavaName(sig.argumentTypeAt(i), qualified));
+                        }
+                        break;
+                    }
+                    case 'f': {
+                        sb.append(!method.isLoaded() ? "unresolved" : method.isStatic() ? "static" : "virtual");
+                        break;
+                    }
+                    case '%': {
+                        sb.append('%');
+                        break;
+                    }
+                    default: {
+                        throw new UnknownFormatConversionException(String.valueOf(specifier));
+                    }
+                }
+            } else {
+                sb.append(ch);
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Gets a string for a given field formatted according to a given format specification. A format specification is
+     * composed of characters that are to be copied verbatim to the result and specifiers that denote an attribute of
+     * the field that is to be copied to the result. A specifier is a single character preceded by a '%' character. The
+     * accepted specifiers and the field attribute they denote are described below:
+     *
+     * <pre>
+     *     Specifier | Description                                          | Example(s)
+     *     ----------+------------------------------------------------------------------------------------------
+     *     'T'       | Qualified field type                                 | "int" "java.lang.String"
+     *     't'       | Unqualified field type                               | "int" "String"
+     *     'H'       | Qualified holder                                     | "java.util.Map.Entry"
+     *     'h'       | Unqualified holder                                   | "Entry"
+     *     'n'       | Field name                                           | "amount"
+     *     'f'       | Indicator if field is unresolved, static or instance | "unresolved" "static" "instance"
+     *     '%'       | A '%' character                                      | "%"
+     * </pre>
+     *
+     * @param format a format specification
+     * @param field the field to be formatted
+     * @param basicTypes if {@code true} then the field's type is printed in the
+     *            {@linkplain BasicType#_jniName JNI} form of its {@linkplain BasicType basic type}
+     * @return the result of formatting this field according to {@code format}
+     * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
+     */
+    public static String format(String format, CiField field, boolean basicTypes) throws IllegalFormatException {
+        final StringBuilder sb = new StringBuilder();
+        int index = 0;
+        while (index < format.length()) {
+            final char ch = format.charAt(index++);
+            if (ch == '%') {
+                if (index >= format.length()) {
+                    throw new UnknownFormatConversionException("An unquoted '%' character cannot terminate a field format specification");
+                }
+                final char specifier = format.charAt(index++);
+                boolean qualified = false;
+                switch (specifier) {
+                    case 'T':
+                        qualified = true;
+                        // fall through
+                    case 't': {
+                        sb.append(basicTypes ? field.basicType()._jniName : toJavaName(field.type(), qualified));
+                        break;
+                    }
+                    case 'H':
+                        qualified = true;
+                        // fall through
+                    case 'h': {
+                        sb.append(toJavaName(field.holder(), qualified));
+                        break;
+                    }
+                    case 'n': {
+                        sb.append(field.name());
+                        break;
+                    }
+                    case 'f': {
+                        sb.append(!field.isLoaded() ? "unresolved" : field.isStatic() ? "static" : "instance");
+                        break;
+                    }
+                    case '%': {
+                        sb.append('%');
+                        break;
+                    }
+                    default: {
+                        throw new UnknownFormatConversionException(String.valueOf(specifier));
+                    }
+                }
+            } else {
+                sb.append(ch);
+            }
+        }
+        return sb.toString();
+    }
 }

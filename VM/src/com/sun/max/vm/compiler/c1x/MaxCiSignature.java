@@ -62,7 +62,7 @@ public class MaxCiSignature implements CiSignature {
      * @param index the index of the argument
      * @return the type of the specified argument
      */
-    public CiType argumentType(int index) {
+    public CiType argumentTypeAt(int index) {
         if (_ciTypes == null) {
             final int max = _descriptor.numberOfParameters();
             _ciTypes = new MaxCiType[max];
@@ -80,7 +80,7 @@ public class MaxCiSignature implements CiSignature {
      * @param index the index of the argument
      * @return the basic type of the argument
      */
-    public BasicType argumentBasicType(int index) {
+    public BasicType argumentBasicTypeAt(int index) {
         if (_basicTypes == null) {
             final int max = _descriptor.numberOfParameters();
             _basicTypes = new BasicType[max];

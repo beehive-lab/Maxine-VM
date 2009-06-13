@@ -25,6 +25,7 @@ import java.io.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
+import com.sun.max.program.ProgramWarning.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
@@ -86,7 +87,6 @@ public final class Log {
      * interpreted to mean the native standard output and error streams respectively.
      */
     public static final OutputStream os = new LogOutputStream();
-
 
     /**
      * The singleton VM print stream. This print stream sends all its output to {@link #os}.
@@ -738,6 +738,16 @@ public final class Log {
     }
 
     static {
+        ProgramWarning.setHandler(new Handler() {
+            public void handle(String message) {
+                if (MaxineVM.isPrototyping()) {
+                    System.err.println(message);
+                } else {
+                    Log.println(message);
+                }
+            }
+        });
+
         new CriticalNativeMethod(Log.class, "log_lock");
         new CriticalNativeMethod(Log.class, "log_unlock");
 

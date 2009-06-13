@@ -366,7 +366,7 @@ public class BlockBegin extends StateSplit {
             }
 
             // if the block is a loop header, insert all necessary phis
-            if (isLoopHeader()) {
+            if (isParserLoopHeader()) {
                 insertLoopPhis(newState);
             }
 
@@ -388,7 +388,7 @@ public class BlockBegin extends StateSplit {
             assert existingState.stackSize() == newState.stackSize();
 
             if (wasVisited()) {
-                if (!isLoopHeader()) {
+                if (!isParserLoopHeader()) {
                     // not a loop header => jsr/ret structure too complicated
                     throw new Bailout("jsr/ret too complicated");
                 }
@@ -462,6 +462,22 @@ public class BlockBegin extends StateSplit {
         setBlockFlag(BlockFlag.OsrEntry, value);
     }
 
+    public final boolean isBackwardBranchTarget() {
+        return checkBlockFlag(BlockFlag.BackwardBranchTarget);
+    }
+
+    public final void setBackwardBranchTarget(boolean value) {
+        setBlockFlag(BlockFlag.BackwardBranchTarget, value);
+    }
+
+    public final boolean isCriticalEdgeSplit() {
+        return checkBlockFlag(BlockFlag.CriticalEdgeSplit);
+    }
+
+    public final void setCriticalEdgeSplit(boolean value) {
+        setBlockFlag(BlockFlag.CriticalEdgeSplit, value);
+    }
+
     public final boolean isExceptionEntry() {
         return checkBlockFlag(BlockFlag.ExceptionEntry);
     }
@@ -494,14 +510,29 @@ public class BlockBegin extends StateSplit {
         setBlockFlag(BlockFlag.WasVisited, value);
     }
 
-    public final boolean isLoopHeader() {
+    public final boolean isParserLoopHeader() {
         return checkBlockFlag(BlockFlag.ParserLoopHeader);
     }
 
-    public final void setLoopHeader(boolean value) {
+    public final void setParserLoopHeader(boolean value) {
         setBlockFlag(BlockFlag.ParserLoopHeader, value);
     }
 
+    public final boolean isLinearScanLoopHeader() {
+        return checkBlockFlag(BlockFlag.LinearScanLoopHeader);
+    }
+
+    public final void setLinearScanLoopHeader(boolean value) {
+        setBlockFlag(BlockFlag.LinearScanLoopHeader, value);
+    }
+
+    public final boolean isLinearScanLoopEnd() {
+        return checkBlockFlag(BlockFlag.LinearScanLoopEnd);
+    }
+
+    public final void setLinearScanLoopEnd(boolean value) {
+        setBlockFlag(BlockFlag.LinearScanLoopEnd, value);
+    }
 
     private void setBlockFlag(BlockFlag flag, boolean value) {
         if (value) {
