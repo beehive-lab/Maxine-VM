@@ -46,18 +46,18 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
     /**
      * Display and highlight an inspector for stack frame locals.
      */
-    public static LocalsInspector make(Inspection inspection, MaxThread maxThread, JitStackFrame jitStackFrame) {
+    public static LocalsInspector make(Inspection inspection, MaxThread thread, JitStackFrame jitStackFrame) {
         // CLEANUP: probably want to hide the use of calleeFramePointer in framePointer() ?
         final Pointer localsBasePointer = jitStackFrame.localsPointer(0);
         final UniqueInspector.Key<LocalsInspector> key = UniqueInspector.Key.create(LocalsInspector.class, localsBasePointer.toLong());
         LocalsInspector localsInspector = UniqueInspector.find(inspection, key);
         if (localsInspector == null) {
-            localsInspector = new LocalsInspector(inspection, maxThread, jitStackFrame);
+            localsInspector = new LocalsInspector(inspection, thread, jitStackFrame);
         }
         return localsInspector;
     }
 
-    private final MaxThread _maxThread;
+    private final MaxThread _thread;
     private final JitStackFrame _jitStackFrame;
 
     private final JPanel _localsPanel;
@@ -72,10 +72,10 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
      */
     private boolean _showAll;
 
-    public LocalsInspector(Inspection inspection, MaxThread maxThread, JitStackFrame jitStackFrame) {
+    public LocalsInspector(Inspection inspection, MaxThread thread, JitStackFrame jitStackFrame) {
         super(inspection, LongValue.from(jitStackFrame.framePointer().toLong()));
         assert jitStackFrame.targetMethod().compilerScheme() == maxVM().vmConfiguration().jitScheme();
-        _maxThread = maxThread;
+        _thread = thread;
         _jitStackFrame = jitStackFrame;
         final ClassMethodActor classMethodActor = jitStackFrame.targetMethod().classMethodActor();
         _locals = new WordValueLabel[classMethodActor.codeAttribute().maxLocals()];
@@ -110,7 +110,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
         if (isShowing() || force) {
             // First, refresh stack frame information.
             Pointer stackPointer = null;
-            final Sequence<StackFrame> frames = _maxThread.frames();
+            final Sequence<StackFrame> frames = _thread.frames();
             for (StackFrame stackFrame : frames) {
                 if (stackFrame instanceof JitStackFrame) {
                     final JitStackFrame jitStackFrame = (JitStackFrame) stackFrame;

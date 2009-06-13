@@ -122,7 +122,7 @@ public class StackInspector extends Inspector {
 
     private final SaveSettingsListener _saveSettingsListener = createGeometrySettingsClient(this, "stackInspector");
 
-    private MaxThread _maxThread = null;
+    private MaxThread _thread = null;
     private InspectorPanel _contentPane = null;
     private  DefaultListModel _stackFrameListModel = null;
     private JList _stackFrameList = null;
@@ -136,16 +136,16 @@ public class StackInspector extends Inspector {
     private StackFramePanel<? extends StackFrame> _selectedFrame;
 
     @Override
-    public void threadStateChanged(MaxThread maxThread) {
-        if (maxThread.equals(_maxThread)) {
-            _stateChanged = maxThread.framesChanged();
+    public void threadStateChanged(MaxThread thread) {
+        if (thread.equals(_thread)) {
+            _stateChanged = thread.framesChanged();
         }
-        super.threadStateChanged(maxThread);
+        super.threadStateChanged(thread);
     }
 
     @Override
     public void stackFrameFocusChanged(StackFrame oldStackFrame, MaxThread threadForStackFrame, StackFrame newStackFrame) {
-        if (threadForStackFrame == _maxThread) {
+        if (threadForStackFrame == _thread) {
             final int oldIndex = _stackFrameList.getSelectedIndex();
             for (int index = 0; index < _stackFrameListModel.getSize(); index++) {
                 final StackFrame stackFrame = (StackFrame) _stackFrameListModel.get(index);
@@ -250,18 +250,18 @@ public class StackInspector extends Inspector {
 
     @Override
     public void createView() {
-        _maxThread = inspection().focus().thread();
+        _thread = inspection().focus().thread();
         _contentPane = new InspectorPanel(inspection(), new BorderLayout());
-        if (_maxThread != null) {
+        if (_thread != null) {
             _stackFrameListModel = new DefaultListModel();
             _stackFrameList = new JList(_stackFrameListModel);
             _stackFrameList.setCellRenderer(_stackFrameListCellRenderer);
 
             final JPanel header = new InspectorPanel(inspection(), new SpringLayout());
             header.add(new TextLabel(inspection(), "start: "));
-            header.add(new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, _maxThread.stack().start()));
+            header.add(new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, _thread.stack().start()));
             header.add(new TextLabel(inspection(), "size: "));
-            header.add(new DataLabel.IntAsDecimal(inspection(), _maxThread.stack().size().toInt()));
+            header.add(new DataLabel.IntAsDecimal(inspection(), _thread.stack().size().toInt()));
             SpringUtilities.makeCompactGrid(header, 2);
             _contentPane.add(header, BorderLayout.NORTH);
 
@@ -306,7 +306,7 @@ public class StackInspector extends Inspector {
 
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                // System.err.println("setting divider location in stack inspector for " + inspection().inspectionThreadName(_maxThread));
+                // System.err.println("setting divider location in stack inspector for " + inspection().inspectionThreadName(_thread));
                 // Try to place the split pane divider in the middle of the split pane's space initially
                 _splitPane.setDividerLocation(0.5d);
             }
@@ -316,16 +316,16 @@ public class StackInspector extends Inspector {
     @Override
     public String getTextForTitle() {
         String title = "Stack: ";
-        if (_maxThread != null) {
-            title += inspection().nameDisplay().longNameWithState(_maxThread);
+        if (_thread != null) {
+            title += inspection().nameDisplay().longNameWithState(_thread);
         }
         return title;
     }
 
     @Override
     protected void refreshView(boolean force) {
-        if (_maxThread != null) {
-            final Sequence<StackFrame> frames = _maxThread.frames();
+        if (_thread != null && _thread.isLive()) {
+            final Sequence<StackFrame> frames = _thread.frames();
             assert !frames.isEmpty();
             if (_stateChanged || force) {
                 _stackFrameListModel.clear();
@@ -356,7 +356,7 @@ public class StackInspector extends Inspector {
 
 
     @Override
-    public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxThread) {
+    public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
         reconstructView();
     }
 
@@ -626,7 +626,7 @@ public class StackInspector extends Inspector {
                 case MouseEvent.BUTTON1: {
                     final int index = _stackFrameList.getSelectedIndex();
                     final StackFrame stackFrame = (StackFrame) _stackFrameListModel.get(index);
-                    inspection().focus().setStackFrame(_maxThread, stackFrame, true);
+                    inspection().focus().setStackFrame(_thread, stackFrame, true);
                 }
             }
         }
@@ -692,7 +692,7 @@ public class StackInspector extends Inspector {
                 if (index >= 0 && index < _stackFrameListModel.getSize()) {
                     final StackFrame stackFrame = (StackFrame) _stackFrameListModel.get(index);
                     if (stackFrame instanceof JitStackFrame) {
-                        LocalsInspector.make(inspection(), _maxThread, (JitStackFrame) stackFrame).highlight();
+                        LocalsInspector.make(inspection(), _thread, (JitStackFrame) stackFrame).highlight();
                     }
                 }
             }

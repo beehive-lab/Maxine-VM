@@ -36,10 +36,10 @@ import com.sun.max.vm.stack.*;
  */
 public class InspectionFocusAdapter implements ViewFocusListener {
 
-    public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
+    public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
     }
 
-    public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
+    public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
     }
 
     public void stackFrameFocusChanged(StackFrame oldStackFrame, MaxThread threadForStackFrame, StackFrame stackFrame) {
@@ -51,10 +51,13 @@ public class InspectionFocusAdapter implements ViewFocusListener {
     public void memoryRegionFocusChanged(MemoryRegion oldMemoryRegion, MemoryRegion memoryRegion) {
     }
 
-    public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
+    public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
     }
 
-    public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxThread) {
+    public void watchpointFocusSet(MaxWatchpoint oldWatchpoint, MaxWatchpoint watchpoint) {
+    }
+
+    public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
     }
 
 }

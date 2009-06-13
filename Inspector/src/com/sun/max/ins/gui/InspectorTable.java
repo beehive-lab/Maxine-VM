@@ -130,6 +130,12 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         }
     }
 
+    /**
+     * Notifies subclasses that some focus state of interest has changed, typically
+     * causing the table's row selection to follow the new focus.
+     */
+    public void updateFocusSelection() {
+    }
 
     /**
      * Scrolls the table to display the specified range (with a few rows before or after if possible).

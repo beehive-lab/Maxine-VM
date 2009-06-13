@@ -206,14 +206,14 @@ public abstract class BytecodeViewer extends CodeViewer {
     @Override
     protected void updateStackCache() {
         if (haveTargetCodeAddresses()) {
-            final MaxThread maxThread = inspection().focus().thread();
-            final Sequence<StackFrame> frames = maxThread.frames();
+            final MaxThread thread = inspection().focus().thread();
+            final Sequence<StackFrame> frames = thread.frames();
             for (int row = 0; row < _bytecodeInstructions.length(); row++) {
                 int stackPosition = 0;
                 StackFrameInfo stackFrameInfo = null;
                 for (StackFrame frame : frames) {
                     if (rowContainsAddress(row, frame.instructionPointer())) {
-                        stackFrameInfo = new StackFrameInfo(frame, maxThread, stackPosition);
+                        stackFrameInfo = new StackFrameInfo(frame, thread, stackPosition);
                         break;
                     }
                     stackPosition++;

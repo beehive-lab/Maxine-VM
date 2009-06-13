@@ -157,19 +157,9 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
         private final TeleVM _teleVM;
         private final byte[] _code;
 
-        /**
-         * Gets the bytes encoding the platform dependent instruction(s) representing a breakpoint.
-         */
-        public byte[] code() {
-            return _code.clone();
-        }
-
-        /**
-         * Gets number of bytes that encode the platform dependent instruction(s) representing a breakpoint.
-         */
-        public int codeSize() {
-            return _code.length;
-        }
+        // The map implementations are not thread-safe; the factory must take care of that.
+        private final Map<Long, TeleTargetBreakpoint> _breakpoints = new HashMap<Long, TeleTargetBreakpoint>();
+        private final Map<Long, TeleTargetBreakpoint> _transientBreakpoints = new HashMap<Long, TeleTargetBreakpoint>();
 
         public Factory(TeleVM teleVM) {
             _teleVM = teleVM;
@@ -187,9 +177,19 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
             });
         }
 
-        private final Map<Long, TeleTargetBreakpoint> _breakpoints = new HashMap<Long, TeleTargetBreakpoint>();
+        /**
+         * Gets the bytes encoding the platform dependent instruction(s) representing a breakpoint.
+         */
+        public byte[] code() {
+            return _code.clone();
+        }
 
-        private final Map<Long, TeleTargetBreakpoint> _transientBreakpoints = new HashMap<Long, TeleTargetBreakpoint>();
+        /**
+         * Gets number of bytes that encode the platform dependent instruction(s) representing a breakpoint.
+         */
+        public int codeSize() {
+            return _code.length;
+        }
 
         /**
          * @return all the {@linkplain TeleBreakpoint#isTransient() persistent} target code breakpoints that currently exist
@@ -329,7 +329,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
         /**
          * Removes the breakpoint, if it exists, at specified target code address in the {@link TeleVM}.
          */
-        public synchronized void removeBreakpointAt(Address address) {
+        private synchronized void removeBreakpointAt(Address address) {
             _breakpoints.remove(address.toLong());
             setChanged();
             notifyObservers();

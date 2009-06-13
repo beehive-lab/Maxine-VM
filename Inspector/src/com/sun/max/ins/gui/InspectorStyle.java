@@ -215,6 +215,7 @@ public interface InspectorStyle {
     Border debugDisabledTargetBreakpointTagBorder();
     Border debugEnabledBytecodeBreakpointTagBorder();
     Border debugDisabledBytecodeBreakpointTagBorder();
+    Border watchpointTagBorder();
 
     Color debugIPTextColor();
     Color debugIPTagColor();

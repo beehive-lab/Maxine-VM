@@ -40,14 +40,23 @@ import com.sun.max.util.*;
 import com.sun.max.vm.stack.*;
 
 /**
- * An inspector combines an aggregation of {@link Prober}s in a frame.
+ * <p>
+ * An inspector combines an aggregation of {@link Prober}s in a frame.</p>
+ * <p>
+ * <b>Event Notification</b>:
+ * This abstract class ensures that very Inspector listens for {@linkplain InspectionListener Inspection Events}
+ * as well as {@linkplain ViewFocusListener Focus Events}.  Any Inspector implementation
+ * that wishes to receive such notifications must do so by overriding the appropriate
+ * methods in interfaces {@link InspectionListener} and {@link ViewFocusListener},
+ * for which empty methods are provided in this abstract class.</p>
+ *<p>
+ * <b>Implementation notes</b>:  for historical reasons an {@link Inspector} <i>has a</i> Frame,
+ * rather than being a specialized subclass of Frame.  This creates a number of
+ * awkward interfaces, which may be cleaned up in the fullness of time. (mlvdv May '09)</p>
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  *
- * Implementation notes:  for historical reasons an {@link Inspector} has a Frame,
- * rather than being a specialized subclass of Frame.  This creates a number of
- * awkward interfaces, which may be cleaned up in the fullness of time. (mlvdv May '09)
  */
 public abstract class Inspector extends AbstractInspectionHolder implements InspectionListener, ViewFocusListener {
 
@@ -184,10 +193,13 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         refreshView(force);
     }
 
-    public void threadStateChanged(MaxThread maxThread) {
+    public void threadStateChanged(MaxThread thread) {
     }
 
     public void breakpointSetChanged() {
+    }
+
+    public void watchpointSetChanged() {
     }
 
     public void vmProcessTerminated() {
@@ -209,6 +221,9 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     }
 
     public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
+    }
+
+    public void watchpointFocusSet(MaxWatchpoint oldWatchpoint, MaxWatchpoint watchpoint) {
     }
 
     public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {

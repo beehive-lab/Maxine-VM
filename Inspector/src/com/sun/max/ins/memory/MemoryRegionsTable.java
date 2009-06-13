@@ -36,12 +36,10 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.stack.*;
 import com.sun.max.vm.value.*;
 
 
@@ -50,7 +48,7 @@ import com.sun.max.vm.value.*;
  *
  * @author Michael Van De Vanter
  */
-public class MemoryRegionsTable extends InspectorTable  implements ViewFocusListener {
+public class MemoryRegionsTable extends InspectorTable {
 
     private final HeapRegionDisplay _bootHeapRegionDisplay;
     private final CodeRegionDisplay _bootCodeRegionDisplay;
@@ -61,6 +59,8 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
     private final MemoryRegionsTableModel _model;
     private final MemoryRegionsColumnModel _columnModel;
     private final TableColumn[] _columns;
+
+    private MaxVMState _lastRefreshedState = null;
 
     MemoryRegionsTable(Inspection inspection, MemoryRegionsViewPreferences viewPreferences) {
         super(inspection);
@@ -84,13 +84,14 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
         addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
         refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
-        updateSelection();
+        updateFocusSelection();
     }
 
     /**
      * Sets table selection to the memory region, if any, that is the current user focus.
      */
-    private void updateSelection() {
+    @Override
+    public void updateFocusSelection() {
         final MemoryRegion memoryRegion = inspection().focus().memoryRegion();
         final int row = _model.findRow(memoryRegion);
         if (row < 0) {
@@ -98,6 +99,26 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
         } else  if (row != getSelectedRow()) {
             setRowSelectionInterval(row, row);
         }
+    }
+
+    public void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
+            _model.refresh();
+            for (TableColumn column : _columns) {
+                final Prober prober = (Prober) column.getCellRenderer();
+                prober.refresh(force);
+            }
+        }
+    }
+
+    public void redisplay() {
+        for (TableColumn column : _columns) {
+            final Prober prober = (Prober) column.getCellRenderer();
+            prober.redisplay();
+        }
+        invalidate();
+        repaint();
     }
 
     @Override
@@ -532,47 +553,5 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
 
     }
 
-    public void redisplay() {
-        for (TableColumn column : _columns) {
-            final Prober prober = (Prober) column.getCellRenderer();
-            prober.redisplay();
-        }
-        invalidate();
-        repaint();
-    }
 
-    private MaxVMState _lastRefreshedState = null;
-
-    public void refresh(boolean force) {
-        if (maxVMState().newerThan(_lastRefreshedState) || force) {
-            _lastRefreshedState = maxVMState();
-            _model.refresh();
-            for (TableColumn column : _columns) {
-                final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(force);
-            }
-        }
-    }
-
-    public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
-    }
-
-    public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-    }
-
-    public void stackFrameFocusChanged(StackFrame oldStackFrame, MaxThread threadForStackFrame, StackFrame stackFrame) {
-    }
-
-    public void addressFocusChanged(Address oldAddress, Address address) {
-    }
-
-    public void memoryRegionFocusChanged(MemoryRegion oldMemoryRegion, MemoryRegion memoryRegion) {
-        updateSelection();
-    }
-
-    public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
-    }
-
-    public void threadFocusSet(MaxThread oldTeleNativeThread, MaxThread teleNativeThread) {
-    }
 }
