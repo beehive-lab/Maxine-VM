@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.util;
 
+import com.sun.c1x.ir.Instruction;
+
 import java.util.List;
 
 /**

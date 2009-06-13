@@ -22,6 +22,7 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.util.InstructionVisitor;
 import com.sun.c1x.util.InstructionClosure;
+import com.sun.c1x.bytecode.Bytecodes;
 
 /**
  * The <code>RoundFP</code> class instruction is used for rounding on Intel.
@@ -64,4 +65,19 @@ public class RoundFP extends Instruction {
     public void accept(InstructionVisitor v) {
         v.visitRoundFP(this);
     }
+
+    @Override
+    public int valueNumber() {
+        return hash1(Bytecodes.D2F, _value); // just use d2f for the hash code
+    }
+
+    @Override
+    public boolean valueEqual(Instruction i) {
+        if (i instanceof RoundFP) {
+            RoundFP o = (RoundFP) i;
+            return _value == o._value;
+        }
+        return false;
+    }
+
 }

@@ -101,4 +101,19 @@ public class IfOp extends Op2 {
     public void accept(InstructionVisitor v) {
         v.visitIfOp(this);
     }
+
+    @Override
+    public int valueNumber() {
+        return hash4(_cond.hashCode(), _x, _y, _trueVal, _falseVal);
+    }
+
+    @Override
+    public boolean valueEqual(Instruction i) {
+        if (i instanceof IfOp) {
+            IfOp o = (IfOp) i;
+            return _opcode == o._opcode && _x == o._x && _y == o._y && _trueVal == o._trueVal && _falseVal == o._falseVal;
+        }
+        return false;
+    }
+
 }

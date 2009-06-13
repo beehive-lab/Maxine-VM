@@ -85,9 +85,8 @@ public class PhiSimplifier implements BlockClosure {
             int max = phi.operandCount();
             for (int i = 0; i < max; i++) {
                 Instruction oldInstr = phi.operandAt(i);
-                assert oldInstr != null;
 
-                if (oldInstr.type().isIllegal()) {
+                if (oldInstr == null || oldInstr.type().isIllegal()) {
                     // if one operand is illegal, make the entire phi illegal
                     phi.makeIllegal();
                     phi.clearPhiFlag(Phi.PhiFlag.Visited);

@@ -84,4 +84,22 @@ public class StoreField extends AccessField {
     public void accept(InstructionVisitor v) {
         v.visitStoreField(this);
     }
+
+    @Override
+    public int valueNumber() {
+        if (_object != null) {
+            return hash2(_field.hashCode(), _object, _value);
+        }
+        return hash1(_field.hashCode(), _value);
+    }
+
+    @Override
+    public boolean valueEqual(Instruction i) {
+        if (i instanceof StoreField) {
+            StoreField o = (StoreField) i;
+            return _field == o._field && _object == o._object && _value == o._value;
+        }
+        return false;
+    }
+
 }

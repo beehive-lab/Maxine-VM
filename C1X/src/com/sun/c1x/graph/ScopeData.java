@@ -24,6 +24,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.bytecode.BytecodeStream;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.C1XOptions;
+import com.sun.c1x.ci.CiConstantPool;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -45,6 +46,8 @@ public class ScopeData {
     boolean _hasHandler;
     // the bytecode stream
     BytecodeStream _stream;
+    // the constant pool
+    CiConstantPool _constantPool;
     // the worklist of blocks, managed like a sorted list
     BlockBegin[] _workList;
     // the current position in the worklist
@@ -153,22 +156,6 @@ public class ScopeData {
      */
     public boolean hasHandler() {
         return _hasHandler;
-    }
-
-    /**
-     * Gets the bytecode stream for this ScopeData.
-     * @return the bytecode stream
-     */
-    public BytecodeStream stream() {
-        return _stream;
-    }
-
-    /**
-     * Sets the bytecode stream for this ScopeData.
-     * @param stream the bytecode stream
-     */
-    public void setStream(BytecodeStream stream) {
-        _stream = stream;
     }
 
     /**
@@ -344,17 +331,20 @@ public class ScopeData {
         assert parsingJsr();
 
         List<ExceptionHandler> shandlers = _scope.exceptionHandlers();
-        List<ExceptionHandler> handlers = new ArrayList<ExceptionHandler>(shandlers.size());
-        for (ExceptionHandler h : shandlers) {
-            ExceptionHandler n = new ExceptionHandler(h);
-            if (n.handlerBCI() != Instruction.SYNCHRONIZATION_ENTRY_BCI) {
-                n.setEntryBlock(blockAt(h.handlerBCI()));
-            } else {
-                assert n.entryBlock().checkBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler);
+        if (shandlers != null) {
+            _jsrHandlers = new ArrayList<ExceptionHandler>(shandlers.size());
+            for (ExceptionHandler h : shandlers) {
+                ExceptionHandler n = new ExceptionHandler(h);
+                if (n.handlerBCI() != Instruction.SYNCHRONIZATION_ENTRY_BCI) {
+                    n.setEntryBlock(blockAt(h.handlerBCI()));
+                } else {
+                    assert n.entryBlock().checkBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler);
+                }
+                _jsrHandlers.add(n);
             }
-            handlers.add(n);
+        } else {
+            _jsrHandlers = new ArrayList<ExceptionHandler>(0);
         }
-        _jsrHandlers = handlers;
     }
 
     /**

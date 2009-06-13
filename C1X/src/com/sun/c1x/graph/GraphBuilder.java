@@ -167,6 +167,7 @@ public class GraphBuilder {
 
     void pushRootScope(IRScope scope, BlockMap blockMap, BlockBegin start) {
         _scopeData = new ScopeData(null, scope, blockMap);
+        _scopeData._constantPool = _compilation._runtime.getConstantPool(scope.method());
         _block = start;
     }
 
@@ -243,7 +244,7 @@ public class GraphBuilder {
     }
 
     public BytecodeStream stream() {
-        return _scopeData.stream();
+        return _scopeData._stream;
     }
 
     public int code() {
@@ -388,7 +389,7 @@ public class GraphBuilder {
         assert s != null : "exception handler state must be set";
         do {
             assert curScopeData._scope == s.scope() : "scopes do not match";
-            assert bci == Instruction.SYNCHRONIZATION_ENTRY_BCI || bci == curScopeData.stream().currentBCI() : "invalid bci";
+            assert bci == Instruction.SYNCHRONIZATION_ENTRY_BCI || bci == curScopeData._stream.currentBCI() : "invalid bci";
 
             // join with all potential exception handlers
             for (ExceptionHandler h : curScopeData.exceptionHandlers()) {
@@ -1316,7 +1317,8 @@ public class GraphBuilder {
 
         // temporarily set up bytecode stream so we can append instructions
         // (only using the bci of this stream)
-        _scopeData.setStream(_scopeData._parent.stream());
+        _scopeData._stream = _scopeData._parent._stream;
+        _scopeData._constantPool = _scopeData._parent._constantPool;
 
         BlockBegin jsrStartBlock = blockAt(jsrStart);
         assert jsrStartBlock != null;
@@ -1330,7 +1332,7 @@ public class GraphBuilder {
         _last = _block = jsrStartBlock;
 
         // clear the bytecode stream (?)
-        _scopeData.setStream(null);
+        _scopeData._stream = null;
 
         _scopeData.addToWorkList(jsrStartBlock);
 
@@ -1415,6 +1417,9 @@ public class GraphBuilder {
     }
 
     boolean checkInliningConditions(CiMethod target) {
+        if (!C1XOptions.InlineMethods) {
+            return cannotInline(target, "all inlining is turned off");
+        }
         if (scope().level() > C1XOptions.MaximumInlineLevel) {
             return cannotInline(target, "inlining too deep");
         }
@@ -1431,10 +1436,10 @@ public class GraphBuilder {
         if (!target.holder().isInitialized()) {
             return cannotInline(target, "holder is not initialized");
         }
-        if (_compilation.runtime().mustNotInline(target)) {
+        if (_compilation._runtime.mustNotInline(target)) {
             return cannotInline(target, "inlining excluded by runtime");
         }
-        if (_compilation.runtime().mustNotCompile(target)) {
+        if (_compilation._runtime.mustNotCompile(target)) {
             return cannotInline(target, "compile excluded by runtime");
         }
         if (target.isAbstract()) {
@@ -1507,7 +1512,8 @@ public class GraphBuilder {
 
         // temporarily set up the bytecode stream so we can append instructions
         // (using only the bci of the stream)
-        _scopeData.setStream(_scopeData._parent.stream());
+        _scopeData._stream = _scopeData._parent._stream;
+        _scopeData._constantPool = _scopeData._parent._constantPool;
 
         // pass parameters into the callee state
         ValueStack calleeState = _state;
@@ -1553,7 +1559,7 @@ public class GraphBuilder {
         }
 
         // clear out the bytecode stream
-        _scopeData.setStream(null);
+        _scopeData._stream = null;
 
         // ready to resume parsing in inlined method
         // (either in the current block or the callee's start)
@@ -1666,6 +1672,9 @@ public class GraphBuilder {
             // this method is not an intrinsic
             return false;
         }
+        if (!C1XOptions.InlineIntrinsics) {
+            return cannotInline(target, "inlining of intrinsics is turned off");
+        }
         boolean preservesState = true;
         boolean canTrap = false;
 
@@ -1734,11 +1743,13 @@ public class GraphBuilder {
         assert _compilation.isOsrCompilation();
 
         int osrBCI = _compilation.osrBCI();
-        BytecodeStream s = new BytecodeStream(method().code());
+        CiMethod method = method();
+        BytecodeStream s = new BytecodeStream(method.code());
         CiOsrFrame frame = _compilation.getOsrFrame();
         s.setBCI(osrBCI);
         s.next(); // XXX: why go to next bytecode?
-        _scopeData.setStream(s);
+        _scopeData._stream = s;
+        _scopeData._constantPool = _compilation._runtime.getConstantPool(method);
 
         // create a new block to contain the OSR setup code
         _osrEntry = new BlockBegin(osrBCI);
@@ -1787,15 +1798,17 @@ public class GraphBuilder {
         append(g);
         _osrEntry.setEnd(g);
         target.merge(_osrEntry.end().state());
-        _scopeData.setStream(null);
+        _scopeData._stream = null;
     }
 
     BlockEnd iterateBytecodesForBlock(int bci) {
         _skipBlock = false;
         assert _state != null;
-        BytecodeStream s = new BytecodeStream(method().code());
+        CiMethod method = method();
+        BytecodeStream s = new BytecodeStream(method.code());
         s.setBCI(bci);
-        _scopeData.setStream(s);
+        _scopeData._stream = s;
+        _scopeData._constantPool = _compilation._runtime.getConstantPool(method);
 
         BlockBegin block = _block;
         BlockEnd end = null;
@@ -2073,7 +2086,7 @@ public class GraphBuilder {
             succ.merge(_state);
             _scopeData.addToWorkList(succ);
         }
-        _scopeData.setStream(null);
+        _scopeData._stream = null;
         return end;
     }
 
@@ -2130,8 +2143,7 @@ public class GraphBuilder {
     }
 
     CiConstantPool constantPool() {
-        // XXX: speed up the access to the constant pool
-        return _compilation.runtime().getConstantPool(method());
+        return _scopeData._constantPool;
     }
 
     /**

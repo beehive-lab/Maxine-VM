@@ -117,12 +117,12 @@ public class C1XTest {
     }
 
     private static C1XCompilation compile(MaxCiRuntime runtime, MethodActor method, boolean printBailout, boolean warmup) {
-        if (method instanceof ClassMethodActor && !method.isAbstract() && !method.isNative()) {
+        if (isCompilable(method)) {
             final long startNs = System.nanoTime();
             final C1XCompilation compilation = new C1XCompilation(runtime, runtime.getCiMethod(method));
             if (compilation.startBlock() == null) {
                 if (printBailout) {
-                    compilation.bailout().printStackTrace();
+                    compilation.bailout().printStackTrace(System.out);
                 }
             }
             if (!warmup) {
@@ -132,6 +132,10 @@ public class C1XTest {
             return compilation;
         }
         return null;
+    }
+
+    private static boolean isCompilable(MethodActor method) {
+        return method instanceof ClassMethodActor && !method.isAbstract() && !method.isNative() && !method.isBuiltin() && !method.isUnsafeCast();
     }
 
     private static List<MethodActor> findMethodsToCompile(String[] arguments) {
@@ -161,7 +165,7 @@ public class C1XTest {
             for (String className : matchingClasses) {
                 try {
                     final Class<?> javaClass = Class.forName(className, false, C1XTest.class.getClassLoader());
-                    final ClassActor classActor = ClassActor.fromJava(javaClass);
+                    ClassActor classActor = getClassActorNonfatal(javaClass);
                     if (classActor == null) {
                         continue;
                     }
@@ -197,6 +201,16 @@ public class C1XTest {
             }
         }
         return methods;
+    }
+
+    private static ClassActor getClassActorNonfatal(Class<?> javaClass) {
+        ClassActor classActor = null;
+        try {
+            classActor = ClassActor.fromJava(javaClass);
+        } catch (Throwable t) {
+            // do nothing.
+        }
+        return classActor;
     }
 
     private static void addMatchingMethods(final List<MethodActor> methods, final ClassActor classActor, final String methodNamePattern, final SignatureDescriptor signature, MethodActor[] methodActors) {
