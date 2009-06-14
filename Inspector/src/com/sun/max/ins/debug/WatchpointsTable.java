@@ -22,6 +22,8 @@ package com.sun.max.ins.debug;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.ref.*;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -30,8 +32,8 @@ import javax.swing.table.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.tele.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
 
 
@@ -207,40 +209,133 @@ public class WatchpointsTable extends InspectorTable {
 
     }
 
-    private final class StartAddressCellRenderer extends WordValueLabel implements TableCellRenderer {
+    private final class StartAddressCellRenderer extends DefaultTableCellRenderer implements Prober{
+
+        private final Inspection _inspection;
+        private final Map<MaxWatchpoint, WeakReference<WordValueLabel> > _watchpointToLabelMap = new HashMap<MaxWatchpoint, WeakReference<WordValueLabel> >();
 
         public StartAddressCellRenderer(Inspection inspection) {
-            super(inspection, ValueMode.WORD, Address.zero());
+            _inspection = inspection;
         }
 
+        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
-            setValue(new WordValue(watchpoint.start()));
-
-            if (row == getSelectionModel().getMinSelectionIndex()) {
-                setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                setBackground(style().defaultTextBackgroundColor());
+            WeakReference<WordValueLabel> labelReference = _watchpointToLabelMap.get(watchpoint);
+            if (labelReference != null && labelReference.get() == null) {
+                // has been collected
+                _watchpointToLabelMap.remove(labelReference);
+                labelReference = null;
             }
-            return this;
+            if (labelReference == null) {
+                labelReference = new WeakReference<WordValueLabel>(new WatchpointStartWordValueLabel(inspection(), ValueMode.WORD, watchpoint));
+                _watchpointToLabelMap.put(watchpoint, labelReference);
+            }
+            final WordValueLabel label = labelReference.get();
+            if (row == getSelectionModel().getMinSelectionIndex()) {
+                label.setBackground(style().defaultCodeAlternateBackgroundColor());
+            } else {
+                label.setBackground(style().defaultTextBackgroundColor());
+            }
+            return label;
+        }
+
+        public void redisplay() {
+            for (WeakReference<WordValueLabel> labelReference : _watchpointToLabelMap.values()) {
+                final WordValueLabel label = labelReference.get();
+                if (label != null) {
+                    label.redisplay();
+                }
+            }
+        }
+
+        public void refresh(boolean force) {
+            for (WeakReference<WordValueLabel> labelReference : _watchpointToLabelMap.values()) {
+                final WordValueLabel label = labelReference.get();
+                if (label != null) {
+                    label.refresh(force);
+                }
+            }
+        }
+
+        private final class WatchpointStartWordValueLabel extends WordValueLabel {
+
+            private final MaxWatchpoint _watchpoint;
+
+            WatchpointStartWordValueLabel(Inspection inspection, WordValueLabel.ValueMode valueMode, MaxWatchpoint watchpoint) {
+                super(inspection, valueMode, watchpoint.start());
+                _watchpoint = watchpoint;
+            }
+
+            @Override
+            public Value fetchValue() {
+                return _watchpoint == null ? null : new WordValue(_watchpoint.start());
+            }
         }
     }
 
-    private final class EndAddressCellRenderer extends WordValueLabel implements TableCellRenderer {
+    private final class EndAddressCellRenderer extends DefaultTableCellRenderer implements Prober{
+
+        private final Inspection _inspection;
+        private final Map<MaxWatchpoint, WeakReference<WordValueLabel> > _watchpointToLabelMap = new HashMap<MaxWatchpoint, WeakReference<WordValueLabel> >();
 
         public EndAddressCellRenderer(Inspection inspection) {
-            super(inspection, ValueMode.WORD, Address.zero());
+            _inspection = inspection;
         }
 
+        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
-            setValue(new WordValue(watchpoint.end()));
-            if (row == getSelectionModel().getMinSelectionIndex()) {
-                setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                setBackground(style().defaultTextBackgroundColor());
+            WeakReference<WordValueLabel> labelReference = _watchpointToLabelMap.get(watchpoint);
+            if (labelReference != null && labelReference.get() == null) {
+                // has been collected
+                _watchpointToLabelMap.remove(labelReference);
+                labelReference = null;
             }
-            return this;
+            if (labelReference == null) {
+                labelReference = new WeakReference<WordValueLabel>(new WatchpointEndWordValueLabel(inspection(), ValueMode.WORD, watchpoint));
+                _watchpointToLabelMap.put(watchpoint, labelReference);
+            }
+            final WordValueLabel label = labelReference.get();
+            if (row == getSelectionModel().getMinSelectionIndex()) {
+                label.setBackground(style().defaultCodeAlternateBackgroundColor());
+            } else {
+                label.setBackground(style().defaultTextBackgroundColor());
+            }
+            return label;
+        }
+
+        public void redisplay() {
+            for (WeakReference<WordValueLabel> labelReference : _watchpointToLabelMap.values()) {
+                final WordValueLabel label = labelReference.get();
+                if (label != null) {
+                    label.redisplay();
+                }
+            }
+        }
+
+        public void refresh(boolean force) {
+            for (WeakReference<WordValueLabel> labelReference : _watchpointToLabelMap.values()) {
+                final WordValueLabel label = labelReference.get();
+                if (label != null) {
+                    label.refresh(force);
+                }
+            }
+        }
+
+        private final class WatchpointEndWordValueLabel extends WordValueLabel {
+
+            private final MaxWatchpoint _watchpoint;
+
+            WatchpointEndWordValueLabel(Inspection inspection, WordValueLabel.ValueMode valueMode, MaxWatchpoint watchpoint) {
+                super(inspection, valueMode, watchpoint.end());
+                _watchpoint = watchpoint;
+            }
+
+            @Override
+            public Value fetchValue() {
+                return _watchpoint == null ? null : new WordValue(_watchpoint.end());
+            }
         }
     }
 

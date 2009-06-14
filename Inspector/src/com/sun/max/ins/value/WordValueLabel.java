@@ -26,6 +26,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.memory.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
@@ -41,6 +42,8 @@ import com.sun.max.vm.value.*;
  * with multiple display modes and user interaction affordances.
  */
 public class WordValueLabel extends ValueLabel {
+
+    private static final int TRACE_VALUE = 1;
 
     /**
      * The expected kind of word value. The visual
@@ -508,6 +511,8 @@ public class WordValueLabel extends ValueLabel {
         if (_suffix != null) {
             setText(getText() + _suffix);
         }
+        invalidate();
+        repaint();
     }
 
     private InspectorAction getToggleDisplayTextAction() {
@@ -614,6 +619,7 @@ public class WordValueLabel extends ValueLabel {
 
                 @Override
                 public void procedure() {
+                    Trace.line(TRACE_VALUE, "WVL: " + _valueKind.toString() + "->" + newValueKind);
                     _valueKind = newValueKind;
                     WordValueLabel.this.updateText();
                 }
