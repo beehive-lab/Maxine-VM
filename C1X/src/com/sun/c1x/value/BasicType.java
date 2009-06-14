@@ -35,7 +35,7 @@ public enum BasicType {
     Double('d', "double", "jdouble", 2),
     Long('l', "long", "jlong", 2),
     Object('a', "object", "jobject", 1),
-    Void('v', "void", null, 0),
+    Void('v', "void", "void", 0),
     Jsr('r', "jsr", null, 1),
     Illegal(' ', "illegal", null, -1);
 

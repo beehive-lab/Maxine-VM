@@ -87,7 +87,7 @@ public class CFGPrinter {
      */
     public void printCompilation(CiMethod method) {
         begin("compilation");
-        _out.print("name \"").print(method.name()).println('"');
+        _out.print("name \" ").print(Util.format("%H::%n", method, true)).println('"');
         _out.print("method \"").print(Util.format("%f %r %H.%n(%p)", method, true)).println('"');
         _out.print("date ").println(System.currentTimeMillis());
         end("compilation");
@@ -111,19 +111,19 @@ public class CFGPrinter {
 
         _out.print("predecessors ");
         for (BlockBegin pred : block.predecessors()) {
-          _out.print("\"B").print(pred.blockID()).print('"');
+          _out.print("\"B").print(pred.blockID()).print("\" ");
         }
         _out.println();
 
         _out.print("successors ");
         for (BlockBegin succ : successors) {
-            _out.print("\"B").print(succ.blockID()).print('"');
+            _out.print("\"B").print(succ.blockID()).print("\" ");
         }
         _out.println();
 
         _out.print("xhandlers");
         for (BlockBegin handler : handlers) {
-            _out.print("\"B").print(handler.blockID()).print('"');
+            _out.print("\"B").print(handler.blockID()).print("\" ");
         }
         _out.println();
 
