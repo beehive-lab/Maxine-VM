@@ -528,9 +528,10 @@ public abstract class TeleVM implements MaxVM {
                     long epoch,
                     TeleNativeThread singleStepThread,
                     Sequence<TeleNativeThread> breakpointThreads,
+                    Collection<TeleNativeThread> threads,
                     Sequence<TeleNativeThread> threadsStarted,
                     Sequence<TeleNativeThread> threadsDied) {
-        _teleVMState = new TeleVMState(processState, epoch, singleStepThread, breakpointThreads, threadsStarted, threadsDied, _isInGC, _teleVMState);
+        _teleVMState = new TeleVMState(processState, epoch, singleStepThread, breakpointThreads, threads, threadsStarted, threadsDied, _isInGC, _teleVMState);
         final Sequence<TeleVMStateObserver> observers;
         synchronized (_observers) {
             observers = _observers.clone();

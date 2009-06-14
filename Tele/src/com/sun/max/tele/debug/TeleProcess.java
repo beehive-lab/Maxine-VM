@@ -366,7 +366,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             _threadsDied.isEmpty() ? EMPTY_THREAD_SEQUENCE : new ArrayListSequence<TeleNativeThread>(_threadsDied);
         _threadsStarted.clear();
         _threadsDied.clear();
-        teleVM().notifyStateChange(_processState, _epoch, _lastSingleStepThread, breakpointThreads, threadsStarted, threadsDied);
+        teleVM().notifyStateChange(_processState, _epoch, _lastSingleStepThread, breakpointThreads, _handleToThreadMap.values(), threadsStarted, threadsDied);
     }
 
     /**

@@ -21,6 +21,7 @@
 package com.sun.max.tele;
 
 import java.io.*;
+import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.tele.debug.*;
@@ -51,6 +52,7 @@ public final class TeleVMState implements MaxVMState {
      * @param epoch current process epoch counter
      * @param singleStepThread thread just single-stepped, null if none
      * @param breakpointThreads threads currently at a breakpoint, empty if none
+     * @param threads TODO
      * @param threadsStarted threads created since the previous state
      * @param threadsDied threads died since the previous state
      * @param isInGC is the VM, when paused, in a GC
@@ -60,10 +62,10 @@ public final class TeleVMState implements MaxVMState {
                     long epoch,
                     TeleNativeThread singleStepThread,
                     Sequence<TeleNativeThread> breakpointThreads,
+                    Collection<TeleNativeThread> threads,
                     Sequence<TeleNativeThread> threadsStarted,
                     Sequence<TeleNativeThread> threadsDied,
-                    boolean isInGC,
-                    TeleVMState previous) {
+                    boolean isInGC, TeleVMState previous) {
         _processState = processState;
         _serialID = previous == null ? 0 : previous.serialID() + 1;
         _epoch = epoch;
@@ -82,10 +84,8 @@ public final class TeleVMState implements MaxVMState {
             // No changes since predecessor; share the thread list.
             _threads = previous.threads();
         } else {
-            final IdentityHashSet<MaxThread> newThreads = new IdentityHashSet<MaxThread>(previous.threads());
-            newThreads.removeAll(threadsDied);
-            newThreads.addAll(threadsStarted);
-            _threads = new VectorSequence<MaxThread>(newThreads);
+            // There have been some thread changes; make a new (immutable) sequence for the new state
+            _threads = new VectorSequence<MaxThread>(threads);
         }
     }
 
