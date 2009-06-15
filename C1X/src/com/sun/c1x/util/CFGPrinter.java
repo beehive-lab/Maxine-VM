@@ -230,7 +230,7 @@ public class CFGPrinter {
         do {
             begin("locals");
             _out.print("size ").println(state.localsSize());
-            _out.print("method \"").print(Util.format("%f %r %H.%n(%p)", state.scope().method(), true)).println('"');
+            _out.print("method \"").print(Util.format("%f %r %H.%n(%p)", state.scope().method, true)).println('"');
             int i = 0;
             while (i < state.localsSize()) {
                 Instruction value = state.localAt(i);
