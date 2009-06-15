@@ -440,7 +440,7 @@ public class ScopeData {
      * @return <code>true</code> if there are no more blocks in the worklist
      */
     public boolean isWorkListEmpty() {
-        return _workList == null || _workListIndex == 0;
+        return _workListIndex == 0;
     }
 
     /**

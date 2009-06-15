@@ -349,10 +349,7 @@ public class GraphBuilder {
 
     Instruction roundFp(Instruction x) {
         if (C1XOptions.RoundFPResults && C1XOptions.SSEVersion < 2) {
-            if (x.type().isDouble()
-                    && !(x instanceof Constant)
-                    && !(x instanceof Local)
-                    && !(x instanceof RoundFP)) {
+            if (x.type().isDouble() && !(x instanceof Constant) && !(x instanceof Local) && !(x instanceof RoundFP)) {
                 return append(new RoundFP(x));
             }
         }
@@ -503,7 +500,7 @@ public class GraphBuilder {
             default:
                 throw new Bailout("invalid constant type on " + con);
         }
-        push(type, append(new Constant(type.asConstant())));
+        push(type, appendConstant(type.asConstant()));
     }
 
     void loadIndexed(BasicType type) {
@@ -679,14 +676,14 @@ public class GraphBuilder {
     }
 
     void ifZero(ValueType type, Condition cond) {
-        Instruction y = append(new Constant(ConstType.INT_0));
+        Instruction y = appendConstant(ConstType.INT_0);
         ValueStack stateBefore = _state.copy();
         Instruction x = ipop();
         ifNode(x, cond, y, stateBefore);
     }
 
     void ifNull(ValueType type, Condition cond) {
-        Instruction y = append(new Constant(ConstType.NULL_OBJECT));
+        Instruction y = appendConstant(ConstType.NULL_OBJECT);
         ValueStack stateBefore = _state.copy();
         Instruction x = apop();
         ifNode(x, cond, y, stateBefore);
@@ -709,7 +706,7 @@ public class GraphBuilder {
         CiType type = constantPool().lookupType(stream().readCPI());
         ValueStack stateBefore = valueStackIfClassNotLoaded(type);
         CheckCast c = new CheckCast(type, apop(), stateBefore);
-        apush(appendSplit(c));
+        apush(append(c));
         if (assumeLeafClass(type)) {
             c.setDirectCompare();
         }
@@ -722,7 +719,7 @@ public class GraphBuilder {
         CiType type = constantPool().lookupType(stream().readCPI());
         ValueStack stateBefore = valueStackIfClassNotLoaded(type);
         InstanceOf i = new InstanceOf(type, apop(), stateBefore);
-        ipush(appendSplit(i));
+        ipush(append(i));
         if (assumeLeafClass(type)) {
             i.setDirectCompare();
         }
@@ -733,18 +730,18 @@ public class GraphBuilder {
         assert !type.isLoaded() || type.isInstanceClass();
         NewInstance n = new NewInstance(type);
         _memory.newInstance(n);
-        apush(appendSplit(n));
+        apush(append(n));
     }
 
     void newTypeArray() {
-        apush(appendSplit(new NewTypeArray(ipop(), BasicType.fromArrayTypeCode(stream().readLocalIndex()))));
+        apush(append(new NewTypeArray(ipop(), BasicType.fromArrayTypeCode(stream().readLocalIndex()))));
     }
 
     void newObjectArray() {
         CiType type = constantPool().lookupType(stream().readCPI());
         ValueStack stateBefore = valueStackIfClassNotLoaded(type);
         NewArray n = new NewObjectArray(type, ipop(), stateBefore);
-        apush(appendSplit(n));
+        apush(append(n));
     }
 
     void newMultiArray() {
@@ -756,7 +753,7 @@ public class GraphBuilder {
             dims[i] = ipop();
         }
         NewArray n = new NewMultiArray(type, dims, stateBefore);
-        apush(appendSplit(n));
+        apush(append(n));
     }
 
     void accessField(int opcode) {
@@ -903,7 +900,7 @@ public class GraphBuilder {
     private void appendInvoke(int opcode, ValueType resultType, Instruction receiver, Instruction[] args, CiMethod target) {
         int vtableIndex = target.vtableIndex();
         Invoke invoke = new Invoke(opcode, resultType, receiver, args, vtableIndex, target);
-        appendSplit(invoke);
+        append(invoke);
         if (method().isStrictFP()) {
             pushReturn(resultType, roundFp(invoke));
         } else {
@@ -997,8 +994,8 @@ public class GraphBuilder {
         if (needsCheck) {
             // append a call to the registration intrinsic
             loadLocal(ValueType.OBJECT_TYPE, 0);
-            appendSplit(new Intrinsic(ValueType.VOID_TYPE, C1XIntrinsic.java_lang_Object$init,
-                                      _state.popArguments(1), true, lockStack(), true, true));
+            append(new Intrinsic(ValueType.VOID_TYPE, C1XIntrinsic.java_lang_Object$init,
+                                          _state.popArguments(1), true, lockStack(), true, true));
         }
 
     }
@@ -1058,7 +1055,7 @@ public class GraphBuilder {
             } else {
                 receiver = append(new Constant(new ClassType(method().holder()), null));
             }
-            appendSplit(new MonitorExit(receiver, _state.unlock()));
+            append(new MonitorExit(receiver, _state.unlock()));
         }
         append(new Return(x));
     }
@@ -1188,7 +1185,7 @@ public class GraphBuilder {
                 int offset = mdo.invocationCountOffset();
                 if (offset >= 0) {
                     // if the method data object exists and it has an entry for the invocation count
-                    Instruction m = appendConstant(ConstType.forObject(mdo.dataObject()));
+                    Instruction m = append(Constant.forObject(mdo.dataObject()));
                     append(new ProfileCounter(m, offset, 1));
                 }
             }
@@ -1202,7 +1199,7 @@ public class GraphBuilder {
                 int offset = mdo.bciCountOffset(bci);
                 if (offset >= 0) {
                     // if the method data object exists and it has an entry for the bytecode index
-                    Instruction m = appendConstant(ConstType.forObject(mdo.dataObject()));
+                    Instruction m = append(Constant.forObject(mdo.dataObject()));
                     append(new ProfileCounter(m, offset, 1));
                 }
             }
@@ -1230,11 +1227,6 @@ public class GraphBuilder {
     }
 
     private Instruction append(Instruction x) {
-        assert !(x instanceof StateSplit) || (x instanceof BlockEnd);
-        return appendWithBCI(x, bci(), C1XOptions.CanonicalizeInstructions);
-    }
-
-    private Instruction appendSplit(StateSplit x) {
         return appendWithBCI(x, bci(), C1XOptions.CanonicalizeInstructions);
     }
 
@@ -1266,7 +1258,7 @@ public class GraphBuilder {
             _vmap.processEffects(x);
         }
 
-        if (!(x instanceof Phi) && !(x instanceof Local)) {
+        if (!(x instanceof Phi || x instanceof Local)) {
             // add instructions to the basic block (if not a phi or a local)
             assert x.next() == null : "instruction should not have been appended yet";
             _last = _last.setNext(x, bci);
@@ -1275,7 +1267,6 @@ public class GraphBuilder {
                 throw new Bailout("Method and/or inlining is too large");
             }
 
-            assert _last == x;
             if (x instanceof StateSplit) {
                 if (x instanceof Invoke || (x instanceof Intrinsic && !((Intrinsic) x).preservesState())) {
                     // conservatively kill all memory across calls
@@ -1677,7 +1668,7 @@ public class GraphBuilder {
 
         // create the intrinsic node
         Intrinsic result = new Intrinsic(resultType, intrinsic, args, hasReceiver, lockStack(), preservesState, canTrap);
-        Instruction value = appendSplit(result);
+        Instruction value = append(result);
         pushReturn(resultType, value);
         return true;
     }
