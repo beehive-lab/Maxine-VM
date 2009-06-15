@@ -51,7 +51,7 @@ public class C1XOptions {
     // debugging settings
     public static boolean PinAllInstructions                 = ____;
     public static boolean TestPatching                       = ____;
-    public static boolean TestSlowPath                       = TRUE;
+    public static boolean TestSlowPath                       = ____;
     public static boolean PrintInitialBlockList              = ____;
 
     // canonicalizer settings
