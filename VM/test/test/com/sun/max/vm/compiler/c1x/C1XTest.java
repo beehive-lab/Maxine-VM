@@ -312,7 +312,7 @@ public class C1XTest {
             for (String className : matchingClasses) {
                 try {
                     final Class<?> javaClass = Class.forName(className, false, C1XTest.class.getClassLoader());
-                    ClassActor classActor = getClassActorNonfatal(javaClass);
+                    final ClassActor classActor = getClassActorNonfatal(javaClass);
                     if (classActor == null) {
                         continue;
                     }
