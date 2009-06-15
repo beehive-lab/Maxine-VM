@@ -116,6 +116,26 @@ public class MaxCiField implements CiField {
     }
 
     /**
+     * Checks whether this compiler interface field is loaded (i.e. resolved).
+     * @return <code>true</code> if this field is loaded
+     */
+    public boolean isLoaded() {
+        return _fieldActor != null;
+    }
+
+    /**
+     * Checks whether this field is static.
+     * @return <code>true</code> if this field is static
+     * @throws MaxCiUnresolved if the field is unresolved
+     */
+    public boolean isStatic() {
+        if (_fieldActor != null) {
+            return _fieldActor.isStatic();
+        }
+        throw unresolved("isStatic()");
+    }
+
+    /**
      * Checks whether this field is volatile.
      * @return <code>true</code> if the field is volatile
      * @throws MaxCiUnresolved if the field is unresolved

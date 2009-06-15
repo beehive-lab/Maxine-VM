@@ -29,8 +29,13 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.thread.*;
 
 /**
+ * A collection of static methods for reporting errors indicating some fatal condition
+ * that should cause a hard exit of the VM. All errors reported by use of {@link ProgramError}
+ * are rerouted to use this class.
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
+ * @author Paul Caprioli
  */
 public final class FatalError extends Error {
 
@@ -54,18 +59,55 @@ public final class FatalError extends Error {
         super(msg);
     }
 
+    /**
+     * Reports the occurrence of some error condition.
+     *
+     * This method never returns normally.
+     *
+     * @param message a message describing the error condition. This value may be {@code null}.
+     * @see #unexpected(String, Address, Throwable)
+     */
     public static FatalError unexpected(String message) {
-        throw unexpected(message, Address.zero());
+        throw unexpected(message, Address.zero(), null);
     }
 
+    /**
+     * Reports the occurrence of some error condition.
+     *
+     * This method never returns normally.
+     *
+     * @param message a message describing the error condition. This value may be {@code null}.
+     * @param throwable an exception given more detail on the cause of the error condition. This value may be {@code null}.
+     * @see #unexpected(String, Address, Throwable)
+     */
     public static FatalError unexpected(String message, Throwable throwable) {
         throw unexpected(message, Address.zero(), throwable);
     }
 
+    /**
+     * Reports the occurrence of a trap that occurred while executing native code.
+     *
+     * This method never returns normally.
+     *
+     * @param message a message describing the trap. This value may be {@code null}.
+     * @param nativeTrapAddress the address reported by the OS at which the trap occurred
+     * @see #unexpected(String, Address, Throwable)
+     */
     public static FatalError unexpected(String message, Address nativeTrapAddress) {
         throw unexpected(message, nativeTrapAddress, null);
     }
 
+    /**
+     * Reports the occurrence of some error condition. Before exiting the VM, this method attempts to
+     * print a stack trace.
+     *
+     * This method never returns normally.
+     *
+     * @param message a message describing the trap. This value may be {@code null}.
+     * @param throwable an exception given more detail on the cause of the error condition. This value may be {@code null}.
+     * @param nativeTrapAddress if this value is not equal to {@link Address#zero()}, then it is the address reported by
+     *            the OS at which a trap occurred
+     */
     public static FatalError unexpected(String message, Address nativeTrapAddress, Throwable throwable) {
         if (MaxineVM.isPrototyping()) {
             throw new FatalError(message);
@@ -99,20 +141,39 @@ public final class FatalError extends Error {
         throw unreachable;
     }
 
+    /**
+     * Causes the VM to print an error message and exit immediately.
+     *
+     * @param message the error message to print
+     */
     public static void crash(String message) {
         Log.println(message);
         MaxineVM.native_exit(11); // should be symbolic
     }
 
+    /**
+     * Checks a given condition and if it is {@code false}, a fatal error is raised.
+     *
+     * @param condition a condition to test
+     * @param message a message describing the error condition being tested
+     */
     @INLINE
     public static void check(boolean condition, String message) {
         if (!condition) {
-            unexpected(message);
+            unexpected(message, Address.zero(), null);
         }
     }
 
+    /**
+     * Reports that an unimplemented piece of VM functionality was encountered.
+     *
+     * This method never returns normally.
+     *
+     * @see #unexpected(String, Address, Throwable)
+     */
+
     public static FatalError unimplemented() {
-        throw unexpected("Unimplemented");
+        throw unexpected("Unimplemented", Address.zero(), null);
     }
 
     static class ExitingGuard {

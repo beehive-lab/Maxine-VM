@@ -20,13 +20,12 @@
  */
 package com.sun.c1x.util;
 
-import static com.sun.c1x.ir.BlockBegin.BlockFlag.*;
 import static com.sun.c1x.ir.Instruction.*;
+import static com.sun.c1x.util.InstructionPrinter.InstructionLineColumn.*;
 
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ir.BlockBegin.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -52,7 +51,7 @@ public class InstructionPrinter implements InstructionVisitor {
         USE(7, "use"),
 
         /**
-         * The instruction as {@linkplain Instruction#valueString(com.sun.c1x.ir.Instruction) value}.
+         * The instruction as a {@linkplain Instruction#valueString(com.sun.c1x.ir.Instruction) value}.
          */
         VALUE(12, "tid"),
 
@@ -73,33 +72,33 @@ public class InstructionPrinter implements InstructionVisitor {
 
         /**
          * Prints this column's label to a given stream after padding the stream with '_' characters
-         * until its {@linkplain C1XPrintStream#position() position} is equal to this column's position.
+         * until its {@linkplain LogStream#position() position} is equal to this column's position.
          * @param out the print stream
          */
-        public void printLabel(C1XPrintStream out) {
-            out.fillTo(_position, '_');
+        public void printLabel(LogStream out) {
+            out.fillTo(_position + out.indentation(), '_');
             out.print(_label);
         }
 
         /**
-         * Prints space characters to a given stream until its {@linkplain C1XPrintStream#position() position}
+         * Prints space characters to a given stream until its {@linkplain LogStream#position() position}
          * is equal to this column's position.
          * @param out the print stream
          */
-        public void advance(C1XPrintStream out) {
-            out.fillTo(_position, ' ');
+        public void advance(LogStream out) {
+            out.fillTo(_position + out.indentation(), ' ');
         }
     }
 
-    private final C1XPrintStream _out;
+    private final LogStream _out;
     private final boolean _printPhis;
 
-    public InstructionPrinter(C1XPrintStream out, boolean printPhis) {
+    public InstructionPrinter(LogStream out, boolean printPhis) {
         _out = out;
         _printPhis = printPhis;
     }
 
-    public C1XPrintStream out() {
+    public LogStream out() {
         return _out;
     }
 
@@ -116,11 +115,11 @@ public class InstructionPrinter implements InstructionVisitor {
      * Prints a header for the tabulated data printed by {@link #printInstructionListing(Instruction)}.
      */
     public void printInstructionListingHeader() {
-        InstructionLineColumn.BCI.printLabel(_out);
-        InstructionLineColumn.USE.printLabel(_out);
-        InstructionLineColumn.VALUE.printLabel(_out);
-        InstructionLineColumn.INSTRUCTION.printLabel(_out);
-        InstructionLineColumn.END.printLabel(_out);
+        BCI.printLabel(_out);
+        USE.printLabel(_out);
+        VALUE.printLabel(_out);
+        INSTRUCTION.printLabel(_out);
+        END.printLabel(_out);
         _out.println();
     }
 
@@ -134,97 +133,99 @@ public class InstructionPrinter implements InstructionVisitor {
         if (instruction.isPinned()) {
             _out.print('.');
         }
-        InstructionLineColumn.BCI.advance(_out);
-        _out.print(instruction.bci());
 
-        InstructionLineColumn.USE.advance(_out);
-        _out.print("0");
-
-        InstructionLineColumn.VALUE.advance(_out);
-        _out.print(valueString(instruction));
-
-        InstructionLineColumn.INSTRUCTION.advance(_out);
+        int indentation = _out.indentation();
+        _out.fillTo(BCI._position + indentation, ' ').
+             print(instruction.bci()).
+             fillTo(USE._position + indentation, ' ').
+             print("0").
+             fillTo(VALUE._position + indentation, ' ').
+             print(instruction).
+             fillTo(INSTRUCTION._position + indentation, ' ');
         printInstruction(instruction);
-
         _out.println();
     }
 
     public void visitArithmeticOp(ArithmeticOp arithOp) {
-        _out.print(valueString(arithOp.x()) + ' ' + Bytecodes.operator(arithOp.opcode()) + ' ' + valueString(arithOp.y()));
+        _out.print(arithOp.x()).
+             print(' ').
+             print(Bytecodes.operator(arithOp.opcode())).
+             print(' ').
+             print(arithOp.y());
     }
 
     public void visitArrayLength(ArrayLength i) {
-        _out.print(valueString(i.array()) + ".length");
+        _out.print(i.array()).print(".length");
     }
 
     public void visitBase(Base i) {
-        _out.print("std entry B" + i.standardEntry().blockID());
+        _out.print("std entry B").print(i.standardEntry().blockID());
         if (i.successors().size() > 1) {
-          _out.print(" osr entry B" + i.osrEntry().blockID());
+          _out.print(" osr entry B").print(i.osrEntry().blockID());
         }
     }
 
     public void visitBlockBegin(BlockBegin block) {
         // print block id
         BlockEnd end = block.end();
-        _out.print("B" + block.blockID() + " ");
+        _out.print("B").print(block.blockID()).print(" ");
 
         // print flags
         StringBuilder sb = new StringBuilder(8);
-        if (block.checkBlockFlag(BlockFlag.StandardEntry)) {
+        if (block.isStandardEntry()) {
             sb.append('S');
         }
-        if (block.checkBlockFlag(OsrEntry)) {
+        if (block.isOsrEntry()) {
             sb.append('O');
         }
-        if (block.checkBlockFlag(ExceptionEntry)) {
+        if (block.isExceptionEntry()) {
             sb.append('E');
         }
-        if (block.checkBlockFlag(SubroutineEntry)) {
+        if (block.isSubroutineEntry()) {
             sb.append('s');
         }
-        if (block.checkBlockFlag(ParserLoopHeader)) {
+        if (block.isParserLoopHeader()) {
             sb.append("LH");
         }
-        if (block.checkBlockFlag(BackwardBranchTarget)) {
+        if (block.isBackwardBranchTarget()) {
             sb.append('b');
         }
-        if (block.checkBlockFlag(WasVisited)) {
+        if (block.wasVisited()) {
             sb.append('V');
         }
         if (sb.length() != 0) {
-            _out.print('(' + sb.toString() + ')');
+            _out.print('(').print(sb.toString()).print(')');
         }
 
         // print block bci range
-        _out.print('[' + block.bci() + ", " + (end == null ? -1 : end.bci()) + ']');
+        _out.print('[').print(block.bci()).print(", ").print((end == null ? -1 : end.bci())).print(']');
 
         // print block successors
         if (end != null && end.successors().size() > 0) {
             _out.print(" .");
             for (BlockBegin successor : end.successors()) {
-                _out.print(" B" + successor.blockID());
+                _out.print(" B").print(successor.blockID());
             }
         }
         // print exception handlers
         if (!block.exceptionHandlers().isEmpty()) {
             _out.print(" (xhandlers");
             for (BlockBegin handler : block.exceptionHandlerBlocks()) {
-                _out.print(" B" + handler.blockID());
+                _out.print(" B").print(handler.blockID());
             }
             _out.print(')');
         }
 
         // print dominator block
         if (block.dominator() != null) {
-            _out.print(" dom B" + block.dominator().blockID());
+            _out.print(" dom B").print(block.dominator().blockID());
         }
 
         // print predecessors
         if (!block.predecessors().isEmpty()) {
             _out.print(" pred:");
             for (BlockBegin pred : block.predecessors()) {
-                _out.print(" B" + pred.blockID());
+                _out.print(" B").print(pred.blockID());
             }
         }
 
@@ -272,7 +273,7 @@ public class InstructionPrinter implements InstructionVisitor {
                 while (i < state.localsSize()) {
                     Instruction value = state.localAt(i);
                     if (value != null) {
-                        _out.println(localVariableOrStackSlotAsString(i, value, block));
+                        _out.println(stateString(i, value, block));
                         // also ignore illegal HiWords
                         i += value.type().isIllegal() ? 1 : value.type().size();
                     } else {
@@ -292,49 +293,13 @@ public class InstructionPrinter implements InstructionVisitor {
             while (i < block.state().stackSize()) {
                 Instruction value = block.state().stackAt(i);
                 if (value != null) {
-                    _out.println(localVariableOrStackSlotAsString(i, value, block));
+                    _out.println(stateString(i, value, block));
                     i += value.type().size();
                 } else {
                     i++;
                 }
             }
         }
-    }
-
-    /**
-     * Formats a given instruction as local variable or stack slot value. If the instruction is a phi defined at a given
-     * block, its {@linkplain Phi#operand() operands} are appended to the returned string.
-     *
-     * @param index the index of the local variable or stack slot
-     * @param value the value of the local variable or stack slot
-     * @param block if {@code value} is a phi, then its operands are formatted if {@code block} is its
-     *            {@linkplain Phi#block() join point}
-     * @return the instruction representation as a string
-     */
-    public static String localVariableOrStackSlotAsString(int index, Instruction value, BlockBegin block) {
-        StringBuilder sb = new StringBuilder(30);
-        sb.append(String.format("%2d  %s", index, valueString(value)));
-        if (value instanceof Phi) {
-            Phi phi = (Phi) value;
-            // print phi operands
-            if (phi.block() == block) {
-                sb.append(" [");
-                for (int j = 0; j < phi.operandCount(); j++) {
-                    sb.append(' ');
-                    Instruction operand = phi.operandAt(j);
-                    if (operand != null) {
-                        sb.append(valueString(operand));
-                    } else {
-                        sb.append("NULL");
-                    }
-                }
-                sb.append("] ");
-            }
-        }
-        if (value != value.subst()) {
-            sb.append("alias ").append(valueString(value.subst()));
-        }
-        return sb.toString();
     }
 
     /**
@@ -349,11 +314,18 @@ public class InstructionPrinter implements InstructionVisitor {
     }
 
     public void visitCheckCast(CheckCast checkcast) {
-        _out.print("checkcast(" + valueString(checkcast.object()) + ") " + checkcast.targetClass().name());
+        _out.print("checkcast(").
+             print(checkcast.object()).
+             print(") ").
+             print(checkcast.targetClass().name());
     }
 
     public void visitCompareOp(CompareOp compareOp) {
-        _out.print(valueString(compareOp.x()) + ' ' + Bytecodes.operator(compareOp.opcode()) + ' ' + valueString(compareOp.y()));
+        _out.print(compareOp.x()).
+             print(' ').
+             print(Bytecodes.operator(compareOp.opcode())).
+             print(' ').
+             print(compareOp.y());
     }
 
     public void visitConstant(Constant constant) {
@@ -367,23 +339,23 @@ public class InstructionPrinter implements InstructionVisitor {
             if (k.ciType().isLoaded()) {
                 _out.print("<unloaded> ");
             }
-            _out.print("class " + k.ciType().name());
+            _out.print("class ").print(k.ciType().name());
         } else if (type.isObject()) {
             Object object = type.asConstant().asObject();
             if (object instanceof String) {
-                _out.print('"' + object.toString() + '"');
+                _out.print('"').print(object.toString()).print('"');
             } else {
-                _out.print("<object: " + object.getClass().getName() + '@' + System.identityHashCode(object) + '>');
+                _out.print("<object: ").print(object.getClass().getName()).print('@').print(System.identityHashCode(object)).print('>');
             }
         } else if (type.isJsr()) {
-            _out.print("bci:" + type.asConstant().valueString());
+            _out.print("bci:").print(type.asConstant().valueString());
         } else {
             _out.print("???");
         }
     }
 
     public void visitConvert(Convert convert) {
-        _out.print(Bytecodes.name(convert.opcode() + '(') + valueString(convert.value()) + ')');
+        _out.print(Bytecodes.name(convert.opcode())).print('(').print(convert.value()).print(')');
     }
 
     public void visitExceptionObject(ExceptionObject i) {
@@ -391,15 +363,23 @@ public class InstructionPrinter implements InstructionVisitor {
     }
 
     public void visitGoto(Goto go2) {
-        _out.print("goto B" + go2.defaultSuccessor().blockID());
+        _out.print("goto B").print(go2.defaultSuccessor().blockID());
         if (go2.isSafepoint()) {
             _out.print(" (safepoint)");
         }
     }
 
     public void visitIf(If i) {
-        _out.print("if " + valueString(i.x()) + ' ' + i.condition()._operator + ' ' + valueString(i.y()) +
-                   " then B" + i.successors().get(0).blockID() + " else B" + i.successors().get(1).blockID());
+        _out.print("if ").
+             print(i.x()).
+             print(' ').
+             print(i.condition()._operator).
+             print(' ').
+             print(i.y()).
+             print(" then B").
+             print(i.successors().get(0).blockID()).
+             print(" else B").
+             print(i.successors().get(1).blockID());
         if (i.isSafepoint()) {
             _out.print(" (safepoint)");
         }
@@ -410,58 +390,70 @@ public class InstructionPrinter implements InstructionVisitor {
     }
 
     public void visitIfOp(IfOp i) {
-        _out.print(valueString(i.x()) + ' ' + i.condition()._operator + ' ' + valueString(i.y()) +
-                   " ? " + valueString(i.trueValue()) + " : " + valueString(i.falseValue()));
+        _out.print(i.x()).
+             print(' ').
+             print(i.condition()._operator).
+             print(' ').
+             print(i.y()).
+             print(" ? ").
+             print(i.trueValue()).
+             print(" : ").
+             print(i.falseValue());
     }
 
     public void visitInstanceOf(InstanceOf i) {
-        _out.print("instanceof(" + valueString(i.object()) + ") " + i.targetClass().name());
+        _out.print("instanceof(").print(i.object()).print(") ").print(i.targetClass().name());
     }
 
     public void visitIntrinsic(Intrinsic intrinsic) {
-        _out.print(intrinsic.intrinsic().simpleClassName() + '.' + intrinsic.intrinsic().name() + '(');
+        _out.print(intrinsic.intrinsic().simpleClassName()).print('.').print(intrinsic.intrinsic().name()).print('(');
         for (int i = 0; i < intrinsic.arguments().length; i++) {
           if (i > 0) {
               _out.print(", ");
           }
-          _out.print(valueString(intrinsic.arguments()[i]));
+          _out.print(intrinsic.arguments()[i]);
         }
         _out.print(')');
     }
 
     public void visitInvoke(Invoke invoke) {
         if (invoke.object() != null) {
-            _out.print(valueString(invoke.object()) + '.');
+            _out.print(invoke.object()).print('.');
           }
 
-          _out.print(Bytecodes.name(invoke.opcode()) + '(');
+          _out.print(Bytecodes.name(invoke.opcode())).print('(');
           Instruction[] arguments = invoke.arguments();
           for (int i = 0; i < arguments.length; i++) {
               if (i > 0) {
                   _out.print(", ");
               }
-              _out.print(valueString(arguments[i]));
+              _out.print(arguments[i]);
           }
           _out.println(')');
-          InstructionLineColumn.INSTRUCTION.advance(_out);
+          INSTRUCTION.advance(_out);
           CiMethod target = invoke.target();
-          _out.print(target.holder().name() + '.' + target.name() + target.signatureType().asString());
+          _out.print(target.holder().name()).print('.').print(target.name()).print(target.signatureType().asString());
     }
 
     public void visitLoadField(LoadField i) {
-        _out.print(valueString(i.object()) + "._" + i.offset() + " (" + i.field().type().basicType()._char + ")");
+        _out.print(i.object()).
+             print("._").
+             print(i.offset()).
+             print(" (").
+             print(i.field().type().basicType()._char).
+             print(")");
     }
 
     public void visitLoadIndexed(LoadIndexed load) {
-        _out.print(valueString(load) + '[' + valueString(load.index()) + "] (" + load.type().tchar() + ')');
+        _out.print(load).print('[').print(load.index()).print("] (").print(load.type().tchar()).print(')');
     }
 
     public void visitLocal(Local local) {
-        _out.print("local[index " + local.javaIndex() + ']');
+        _out.print("local[index ").print(local.javaIndex()).print(']');
     }
 
     public void visitLogicOp(LogicOp logicOp) {
-        _out.print(valueString(logicOp.x()) + ' ' + Bytecodes.operator(logicOp.opcode()) + ' ' + valueString(logicOp.y()));
+        _out.print(logicOp.x()).print(' ').print(Bytecodes.operator(logicOp.opcode())).print(' ').print(logicOp.y());
     }
 
     public void visitLookupSwitch(LookupSwitch lswitch) {
@@ -469,31 +461,31 @@ public class InstructionPrinter implements InstructionVisitor {
         if (lswitch.isSafepoint()) {
             _out.print("(safepoint) ");
         }
-        _out.println(valueString(lswitch.value()));
+        _out.println(lswitch.value());
         int l = lswitch.numberOfCases();
         for (int i = 0; i < l; i++) {
-            InstructionLineColumn.INSTRUCTION.advance(_out);
+            INSTRUCTION.advance(_out);
             _out.printf("case %5d: B%d%n", lswitch.keyAt(i), lswitch.successors().get(i).blockID());
         }
-        InstructionLineColumn.INSTRUCTION.advance(_out);
-        _out.print("default   : B" + lswitch.defaultSuccessor().blockID());
+        INSTRUCTION.advance(_out);
+        _out.print("default   : B").print(lswitch.defaultSuccessor().blockID());
 
     }
 
     public void visitMonitorEnter(MonitorEnter monitorenter) {
-        _out.print("enter monitor[" + monitorenter.lockNumber() + "](" + valueString(monitorenter.object()) + ')');
+        _out.print("enter monitor[").print(monitorenter.lockNumber()).print("](").print(monitorenter.object()).print(')');
     }
 
     public void visitMonitorExit(MonitorExit monitorexit) {
-        _out.print("exit monitor[" + monitorexit.lockNumber() + "](" + valueString(monitorexit.object()) + ')');
+        _out.print("exit monitor[").print(monitorexit.lockNumber()).print("](").print(monitorexit.object()).print(')');
     }
 
     public void visitNegateOp(NegateOp negate) {
-        _out.print('-' + valueString(negate));
+        _out.print('-').print(negate);
     }
 
     public void visitNewInstance(NewInstance newInstance) {
-        _out.print("new instance " + newInstance.instanceClass().name());
+        _out.print("new instance ").print(newInstance.instanceClass().name());
     }
 
     public void visitNewMultiArray(NewMultiArray newMultiArray) {
@@ -503,21 +495,21 @@ public class InstructionPrinter implements InstructionVisitor {
           if (i > 0) {
               _out.print(", ");
           }
-          _out.print(valueString(dimensions[i]));
+          _out.print(dimensions[i]);
         }
-        _out.print("] " + newMultiArray.elementType().name());
+        _out.print("] ").print(newMultiArray.elementType().name());
     }
 
     public void visitNewObjectArray(NewObjectArray newObjectArray) {
-        _out.print("new object array [" + newObjectArray.length() + "] " + newObjectArray.elementClass().name());
+        _out.print("new object array [").print(newObjectArray.length()).print("] ").print(newObjectArray.elementClass().name());
     }
 
     public void visitNewTypeArray(NewTypeArray newTypeArray) {
-        _out.print("new " + newTypeArray.elementType().name() + " array [" + newTypeArray.length() + ']');
+        _out.print("new ").print(newTypeArray.elementType().name()).print(" array [").print(newTypeArray.length()).print(']');
     }
 
     public void visitNullCheck(NullCheck i) {
-        _out.print("null_check(" + valueString(i.object()) + ')');
+        _out.print("null_check(").print(i.object()).print(')');
         if (!i.canTrap()) {
           _out.print(" (eliminated)");
         }
@@ -533,40 +525,40 @@ public class InstructionPrinter implements InstructionVisitor {
 
     public void visitProfileCall(ProfileCall profileCall) {
         final CiMethod method = profileCall.method();
-        _out.print("profile " + valueString(profileCall.object()) + method.holder().name() + '.' + method.name());
+        _out.print("profile ").print(profileCall.object()).print(method.holder().name()).print('.').print(method.name());
         if (profileCall.knownHolder() != null) {
-          _out.print(", " + profileCall.knownHolder().name());
+          _out.print(", ").print(profileCall.knownHolder().name());
         }
         _out.print(')');
     }
 
     public void visitProfileCounter(ProfileCounter i) {
         // TODO: Recognize interpreter invocation counter specially
-        _out.print("counter [" + valueString(i.mdo()) + " + " + i.offset() + "] += " + i.increment());
+        _out.print("counter [").print(i.mdo()).print(").print(").print(i.offset()).print("] += ").print(i.increment());
     }
 
     public void visitReturn(Return ret) {
         if (ret.result() == null) {
             _out.print("return");
         } else {
-            _out.print(ret.type().tchar() + "return " + valueString(ret.result()));
+            _out.print(ret.type().tchar()).print("return ").print(ret.result());
         }
     }
 
     public void visitRoundFP(RoundFP i) {
-        _out.print("roundfp " + valueString(i.value()));
+        _out.print("roundfp ").print(i.value());
     }
 
     public void visitShiftOp(ShiftOp shiftOp) {
-        _out.print(valueString(shiftOp.x()) + ' ' + Bytecodes.operator(shiftOp.opcode()) + ' ' + valueString(shiftOp.y()));
+        _out.print(shiftOp.x()).print(' ').print(Bytecodes.operator(shiftOp.opcode())).print(' ').print(shiftOp.y());
     }
 
     public void visitStoreField(StoreField store) {
-        _out.print((valueString(store.object()) + "._" + store.offset()) + " := " + valueString(store.value()) + " (" + store.field().type().basicType()._char + ')');
+        _out.print(store.object()).print("._").print(store.offset()).print(" := ").print(store.value()).print(" (").print(store.field().type().basicType()._char).print(')');
     }
 
     public void visitStoreIndexed(StoreIndexed store) {
-        _out.print(valueString(store) + '[' + valueString(store.index()) + "] := " + valueString(store.value()) + " (" + store.type().tchar() + ')');
+        _out.print(store).print('[').print(store.index()).print("] := ").print(store.value()).print(" (").print(store.type().tchar()).print(')');
     }
 
     public void visitTableSwitch(TableSwitch tswitch) {
@@ -574,51 +566,51 @@ public class InstructionPrinter implements InstructionVisitor {
         if (tswitch.isSafepoint()) {
             _out.print("(safepoint) ");
         }
-        _out.println(valueString(tswitch.value()));
+        _out.println(tswitch.value());
         int l = tswitch.numberOfCases();
         for (int i = 0; i < l; i++) {
-            InstructionLineColumn.INSTRUCTION.advance(_out);
+            INSTRUCTION.advance(_out);
             _out.printf("case %5d: B%d%n", tswitch.lowKey() + i, tswitch.successors().get(i).blockID());
         }
-        InstructionLineColumn.INSTRUCTION.advance(_out);
-        _out.print("default   : B" + tswitch.defaultSuccessor().blockID());
+        INSTRUCTION.advance(_out);
+        _out.print("default   : B").print(tswitch.defaultSuccessor().blockID());
     }
 
     public void visitThrow(Throw i) {
-        _out.print("throw " + valueString(i.exception()));
+        _out.print("throw ").print(i.exception());
     }
 
     public void visitUnsafeGetObject(UnsafeGetObject unsafe) {
-        _out.print("UnsafeGetObject.(" + valueString(unsafe.object()) + ", " + unsafe.offset() + ')');
+        _out.print("UnsafeGetObject.(").print(unsafe.object()).print(", ").print(unsafe.offset()).print(')');
     }
 
     public void visitUnsafeGetRaw(UnsafeGetRaw unsafe) {
-        _out.print("UnsafeGetRaw.(base " + valueString(unsafe.base()));
+        _out.print("UnsafeGetRaw.(base ").print(unsafe.base());
         if (unsafe.hasIndex()) {
-            _out.print(", index " + unsafe.index() + ", log2_scale " + unsafe.log2Scale());
+            _out.print(", index ").print(unsafe.index()).print(", log2_scale ").print(unsafe.log2Scale());
         }
         _out.print(')');
     }
 
     public void visitUnsafePrefetchRead(UnsafePrefetchRead unsafe) {
-        _out.print("UnsafePrefetchRead.(" + valueString(unsafe.object()) + ", " + unsafe.offset() + ')');
+        _out.print("UnsafePrefetchRead.(").print(unsafe.object()).print(", ").print(unsafe.offset()).print(')');
     }
 
     public void visitUnsafePrefetchWrite(UnsafePrefetchWrite unsafe) {
-        _out.print("UnsafePrefetchWrite.(" + valueString(unsafe.object()) + ", " + unsafe.offset() + ')');
+        _out.print("UnsafePrefetchWrite.(").print(unsafe.object()).print(", ").print(unsafe.offset()).print(')');
     }
 
     public void visitUnsafePutObject(UnsafePutObject unsafe) {
-        _out.print("UnsafePutObject.(" + valueString(unsafe.object()) + ", " + unsafe.offset() +
-                        ", value " + valueString(unsafe.value()) + ')');
+        _out.print("UnsafePutObject.(").print(unsafe.object()).print(", ").print(unsafe.offset() +
+                        ", value ").print(unsafe.value()).print(')');
     }
 
     public void visitUnsafePutRaw(UnsafePutRaw unsafe) {
-        _out.print("UnsafePutRaw.(base " + valueString(unsafe.base()));
+        _out.print("UnsafePutRaw.(base ").print(unsafe.base());
         if (unsafe.hasIndex()) {
-            _out.print(", index " + unsafe.index() + ", log2_scale " + unsafe.log2Scale());
+            _out.print(", index ").print(unsafe.index()).print(", log2_scale ").print(unsafe.log2Scale());
         }
-        _out.print(", value " + valueString(unsafe.value()) + ')');
+        _out.print(", value ").print(unsafe.value()).print(')');
     }
 
 }
