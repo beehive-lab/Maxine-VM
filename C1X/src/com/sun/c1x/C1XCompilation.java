@@ -41,8 +41,8 @@ import com.sun.c1x.util.*;
  */
 public class C1XCompilation {
 
-    final CiRuntime _runtime;
-    final CiMethod _method;
+    public final CiRuntime _runtime;
+    public final CiMethod _method;
     final int _osrBCI;
 
     BlockBegin _start;
@@ -105,7 +105,7 @@ public class C1XCompilation {
         } catch (Bailout b) {
             _bailout = b;
         } catch (Throwable t) {
-            _bailout = new Bailout("unexpected exception", t);
+            _bailout = new Bailout("Unexpected exception while compiling: " + this.method(), t);
         }
         return _start;
     }
@@ -124,14 +124,6 @@ public class C1XCompilation {
      */
     public CiMethod method() {
         return _method;
-    }
-
-    /**
-     * Gets the runtime for this compilation.
-     * @return the runtime
-     */
-    public CiRuntime runtime() {
-        return _runtime;
     }
 
     /**

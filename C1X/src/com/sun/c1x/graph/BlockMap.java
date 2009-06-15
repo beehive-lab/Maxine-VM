@@ -455,7 +455,7 @@ public class BlockMap {
                 } else {
                     bci += Bytecodes.length(code, bci);
                 }
-                if (_blockMap[bci] != null) {
+                if (bci >= code.length || _blockMap[bci] != null) {
                     // stop when we reach the next block
                     break;
                 }

@@ -64,16 +64,7 @@ public class LoadField extends AccessField {
      */
     @Override
     public CiType exactType() {
-        CiType type = declaredType();
-        if (type.isTypeArrayClass()) {
-            return type;
-        }
-        if (type.isInstanceClass()) {
-            if (type.isLoaded() && type.isFinal()) {
-                return type;
-            }
-        }
-        return null;
+        return declaredType().exactType();
     }
 
     /**
@@ -84,4 +75,22 @@ public class LoadField extends AccessField {
     public void accept(InstructionVisitor v) {
         v.visitLoadField(this);
     }
+
+    @Override
+    public int valueNumber() {
+        if (_object != null) {
+            return hash1(_field.hashCode(), _object);
+        }
+        return 0x60000000 | _field.hashCode();
+    }
+
+    @Override
+    public boolean valueEqual(Instruction i) {
+        if (i instanceof LoadField) {
+            LoadField o = (LoadField) i;
+            return _field == o._field && _object == o._object;
+        }
+        return false;
+    }
+
 }

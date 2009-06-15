@@ -79,4 +79,18 @@ public class Convert extends Instruction {
     public void accept(InstructionVisitor v) {
         v.visitConvert(this);
     }
+
+    @Override
+    public int valueNumber() {
+        return hash1(_opcode, _value);
+    }
+
+    @Override
+    public boolean valueEqual(Instruction i) {
+        if (i instanceof Convert) {
+            Convert o = (Convert) i;
+            return _opcode == o._opcode && _value == o._value;
+        }
+        return false;
+    }
 }
