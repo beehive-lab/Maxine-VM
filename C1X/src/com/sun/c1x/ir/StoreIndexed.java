@@ -103,4 +103,19 @@ public class StoreIndexed extends AccessIndexed {
     public void accept(InstructionVisitor v) {
         v.visitStoreIndexed(this);
     }
+
+    @Override
+    public int valueNumber() {
+        return hash3(125, _array, _index, _value);
+    }
+
+    @Override
+    public boolean valueEqual(Instruction i) {
+        if (i instanceof StoreIndexed) {
+            StoreIndexed o = (StoreIndexed) i;
+            return _array == o._array && _index == o._index && _value == o._value;
+        }
+        return false;
+    }
+
 }

@@ -24,6 +24,7 @@ import com.sun.c1x.util.InstructionVisitor;
 import com.sun.c1x.ci.CiType;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.value.ValueType;
+import com.sun.c1x.bytecode.Bytecodes;
 
 /**
  * The <code>InstanceOf</code> instruction represents an instanceof test.
@@ -50,4 +51,19 @@ public class InstanceOf extends TypeCheck {
     public void accept(InstructionVisitor v) {
         v.visitInstanceOf(this);
     }
+
+    @Override
+    public int valueNumber() {
+        return hash1(Bytecodes.INSTANCEOF, _object);
+    }
+
+    @Override
+    public boolean valueEqual(Instruction i) {
+        if (i instanceof InstanceOf) {
+            InstanceOf o = (InstanceOf) i;
+            return _targetClass == o._targetClass && _object == o._object;
+        }
+        return false;
+    }
+
 }

@@ -207,7 +207,13 @@ public class MaxCiType implements CiType {
      * @throws MaxCiUnresolved if the class is not resolved
      */
     public CiType elementType() {
-        return _constantPool.canonicalCiType(asArrayClassActor("elementType()").elementClassActor());
+        if (_classActor instanceof ArrayClassActor) {
+            // the type is already resolved
+            return _constantPool.canonicalCiType(_classActor.elementClassActor());
+        } else {
+            // the type is not resolved, but we can get the type of the elements
+            return new MaxCiType(_constantPool, _typeDescriptor.elementTypeDescriptor());
+        }
     }
 
     /**
@@ -319,7 +325,7 @@ public class MaxCiType implements CiType {
             case DOUBLE:
                 return BasicType.Double;
             case WORD:
-                return BasicType.Jsr;
+                return BasicType.Object; // TODO: this is not really an object!
             case REFERENCE:
                 return BasicType.Object;
             case VOID:

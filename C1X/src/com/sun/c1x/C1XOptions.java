@@ -32,6 +32,8 @@ public class C1XOptions {
     private static final boolean TRUE = true;
 
     // inlining settings
+    public static boolean InlineMethods                      = ____;
+    public static boolean InlineIntrinsics                   = ____;
     public static boolean InlineMethodsWithExceptionHandlers = ____;
     public static boolean InlineSynchronizedMethods          = ____;
     public static int     MaximumInstructionCount            = 37000;
@@ -49,7 +51,7 @@ public class C1XOptions {
     // debugging settings
     public static boolean PinAllInstructions                 = ____;
     public static boolean TestPatching                       = ____;
-    public static boolean TestSlowPath                       = TRUE;
+    public static boolean TestSlowPath                       = ____;
     public static boolean PrintInitialBlockList              = ____;
     public static boolean PrintIR                            = ____;
     public static boolean PrintCFGToFile                     = ____;
@@ -67,7 +69,7 @@ public class C1XOptions {
 
     // local value numbering / load elimination settings
     public static boolean UseLocalValueNumbering             = ____;
-    public static boolean EliminateFieldAccess               = ____;
+    public static boolean EliminateFieldAccess               = TRUE;
     public static boolean AlwaysCSEArrayLength               = ____;
 
     // profiling settings
