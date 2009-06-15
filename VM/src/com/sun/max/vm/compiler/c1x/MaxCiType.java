@@ -210,10 +210,9 @@ public class MaxCiType implements CiType {
         if (_classActor instanceof ArrayClassActor) {
             // the type is already resolved
             return _constantPool.canonicalCiType(_classActor.elementClassActor());
-        } else {
-            // the type is not resolved, but we can get the type of the elements
-            return new MaxCiType(_constantPool, _typeDescriptor.elementTypeDescriptor());
         }
+        // the type is not resolved, but we can get the type of the elements
+        return new MaxCiType(_constantPool, _typeDescriptor.elementTypeDescriptor());
     }
 
     /**
