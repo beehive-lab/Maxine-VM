@@ -514,8 +514,8 @@ public class ValueStack {
      * method into this one
      */
     public ValueStack pushScope(IRScope scope) {
-        assert scope.caller() == _scope;
-        CiMethod method = scope.method();
+        assert scope.caller == _scope;
+        CiMethod method = scope.method;
         ValueStack res = new ValueStack(scope, method.maxLocals(), maxStackSize() + method.maxStackSize());
         res.replaceStack(this);
         res.replaceLocks(this);
@@ -528,11 +528,11 @@ public class ValueStack {
      * @return a new value stack representing the state at exit from this value stack
      */
     public ValueStack popScope() {
-        IRScope callingScope = _scope.caller();
-        int maxStack = maxStackSize() - _scope.method().maxStackSize();
+        IRScope callingScope = _scope.caller;
+        int maxStack = maxStackSize() - _scope.method.maxStackSize();
         assert callingScope != null;
         assert maxStack >= 0;
-        ValueStack res = new ValueStack(callingScope, callingScope.method().maxLocals(), maxStack);
+        ValueStack res = new ValueStack(callingScope, callingScope.method.maxLocals(), maxStack);
         res.replaceStack(this);
         res.replaceLocks(this);
         res.replaceLocals(callingScope.callerState());
@@ -594,7 +594,7 @@ public class ValueStack {
                         if (x instanceof Phi && ((Phi) x).block() == block) {
                             _values[i] = null;
                         } else {
-                            throw new Bailout("type mismatch at " + i + " @ " + block.bci() + " in " + block + " in " + scope().method());
+                            throw new Bailout("type mismatch at " + i + " @ " + block.bci() + " in " + block + " in " + scope().method);
                         }
                     }
                 }

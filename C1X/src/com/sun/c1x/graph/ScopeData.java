@@ -37,15 +37,15 @@ import java.util.ArrayList;
 public class ScopeData {
     // XXX: refactor and split this class into ScopeData, JsrScopeData, and InlineScopeData
 
-    final ScopeData _parent;
+    final ScopeData parent;
     // the IR scope
-    final IRScope _scope;
+    final IRScope scope;
     // bci-to-block mapping
-    final BlockMap _blockMap;
+    final BlockMap blockMap;
     // the bytecode stream
-    final BytecodeStream _stream;
+    final BytecodeStream stream;
     // the constant pool
-    final CiConstantPool _constantPool;
+    final CiConstantPool constantPool;
     // whether this scope or any parent scope has exception handlers
     boolean _hasHandler;
     // the worklist of blocks, managed like a sorted list
@@ -102,16 +102,16 @@ public class ScopeData {
      * Constructs a new ScopeData instance with the specified parent ScopeData.
      * @param parent the parent scope data
      * @param scope the IR scope
-     * @param bm the block map for this scope
+     * @param blockMap the block map for this scope
      * @param stream the bytecode stream
      * @param constantPool the constant pool
      */
-    public ScopeData(ScopeData parent, IRScope scope, BlockMap bm, BytecodeStream stream, CiConstantPool constantPool) {
-        this._parent = parent;
-        this._scope = scope;
-        this._blockMap = bm;
-        this._stream = stream;
-        this._constantPool = constantPool;
+    public ScopeData(ScopeData parent, IRScope scope, BlockMap blockMap, BytecodeStream stream, CiConstantPool constantPool) {
+        this.parent = parent;
+        this.scope = scope;
+        this.blockMap = blockMap;
+        this.stream = stream;
+        this.constantPool = constantPool;
         if (parent != null) {
             _maxInlineSize = (int) (C1XOptions.MaximumInlineRatio * parent.maxInlineSize());
             if (_maxInlineSize < C1XOptions.MaximumTrivialSize) {
@@ -140,18 +140,18 @@ public class ScopeData {
             // instructions in some cases).
             BlockBegin block = _jsrDuplicatedBlocks[bci];
             if (block == null) {
-                BlockBegin parent = this._parent.blockAt(bci);
-                if (parent != null) {
-                    BlockBegin newBlock = new BlockBegin(parent.bci());
-                    newBlock.setDepthFirstNumber(parent.depthFirstNumber());
-                    newBlock.copyBlockFlags(parent);
+                BlockBegin p = this.parent.blockAt(bci);
+                if (p != null) {
+                    BlockBegin newBlock = new BlockBegin(p.bci());
+                    newBlock.setDepthFirstNumber(p.depthFirstNumber());
+                    newBlock.copyBlockFlags(p);
                     _jsrDuplicatedBlocks[bci] = newBlock;
                     block = newBlock;
                 }
             }
             return block;
         }
-        return _blockMap.get(bci);
+        return blockMap.get(bci);
     }
 
     /**
@@ -175,7 +175,7 @@ public class ScopeData {
      * @return the size of the stack
      */
     public int callerStackSize() {
-        ValueStack state = _scope.callerState();
+        ValueStack state = scope.callerState();
         return state == null ? 0 : state.stackSize();
     }
 
@@ -233,7 +233,7 @@ public class ScopeData {
      */
     public void setJsrEntryBCI(int bci) {
         assert bci > 0 : "jsr cannot possibly jump to BCI 0";
-        _jsrDuplicatedBlocks = new BlockBegin[_scope.method().codeSize()];
+        _jsrDuplicatedBlocks = new BlockBegin[scope.method.codeSize()];
         _jsrEntryBci = bci;
     }
 
@@ -275,7 +275,7 @@ public class ScopeData {
      */
     public int numberOfReturns() {
         if (parsingJsr()) {
-            return _parent.numberOfReturns();
+            return parent.numberOfReturns();
         }
         return _numReturns;
     }
@@ -285,7 +285,7 @@ public class ScopeData {
      */
     public void incrementNumberOfReturns() {
         if (parsingJsr()) {
-            _parent.incrementNumberOfReturns();
+            parent.incrementNumberOfReturns();
         } else {
             _numReturns++;
         }
@@ -334,7 +334,7 @@ public class ScopeData {
     public void setupJsrExceptionHandlers() {
         assert parsingJsr();
 
-        List<ExceptionHandler> shandlers = _scope.exceptionHandlers();
+        List<ExceptionHandler> shandlers = scope.exceptionHandlers();
         if (shandlers != null) {
             _jsrHandlers = new ArrayList<ExceptionHandler>(shandlers.size());
             for (ExceptionHandler h : shandlers) {
@@ -358,7 +358,7 @@ public class ScopeData {
     public List<ExceptionHandler> exceptionHandlers() {
         if (_jsrHandlers == null) {
             assert !parsingJsr();
-            return _scope.exceptionHandlers();
+            return scope.exceptionHandlers();
         }
         return _jsrHandlers;
     }
@@ -370,7 +370,7 @@ public class ScopeData {
     public void addExceptionHandler(ExceptionHandler handler) {
         if (_jsrHandlers == null) {
             assert !parsingJsr();
-            _scope.addExceptionHandler(handler);
+            scope.addExceptionHandler(handler);
         } else {
             _jsrHandlers.add(handler);
         }
@@ -450,9 +450,9 @@ public class ScopeData {
     @Override
     public String toString() {
         if (parsingJsr()) {
-            return "jsr@" + _jsrEntryBci + " data for " + _scope.toString();
+            return "jsr@" + _jsrEntryBci + " data for " + scope.toString();
         } else {
-            return "data for " + _scope.toString();
+            return "data for " + scope.toString();
         }
 
     }

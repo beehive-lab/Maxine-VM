@@ -360,7 +360,7 @@ public class BlockBegin extends StateSplit {
             newState = newState.copy();
 
             // if a liveness map is available, use it to invalidate dead locals
-            BitMap liveness = newState.scope().method().liveness(bci());
+            BitMap liveness = newState.scope().method.liveness(bci());
             if (liveness != null) {
                 invalidateDeadLocals(newState, liveness);
             }
