@@ -69,7 +69,7 @@ public class WordValueLabel extends ValueLabel {
      * Possible visual presentations of a word, constrained by the {@linkplain ValueMode valueMode} of the
      * label and its value.
      */
-    private enum ValueKind {
+    private enum DisplayMode {
         WORD,
         NULL,
         INVALID_OBJECT_REFERENCE, // something about this reference is decidedly broken
@@ -93,7 +93,7 @@ public class WordValueLabel extends ValueLabel {
         INVALID // this value is completely invalid
     }
 
-    private ValueKind _valueKind;
+    private DisplayMode _displayMode;
 
     private String _prefix;
 
@@ -171,7 +171,7 @@ public class WordValueLabel extends ValueLabel {
                     case MouseEvent.BUTTON3: {
                         final InspectorMenu menu = new InspectorMenu();
                         menu.add(new WordValueMenuItems(inspection(), value()));
-                        switch (_valueKind) {
+                        switch (_displayMode) {
                             case OBJECT_REFERENCE:
                             case OBJECT_REFERENCE_TEXT: {
                                 final TeleObject teleObject = maxVM().makeTeleObject(maxVM().wordToReference(value().toWord()));
@@ -218,36 +218,36 @@ public class WordValueLabel extends ValueLabel {
         _thread = null;
 
         if (newValue == VoidValue.VOID) {
-            _valueKind = ValueKind.INVALID;
+            _displayMode = DisplayMode.INVALID;
         } else if (_valueMode == ValueMode.FLAGS_REGISTER) {
             if (newValue == null) {
-                _valueKind = ValueKind.INVALID;
-            } else if (_valueKind == null) {
-                _valueKind = ValueKind.FLAGS;
+                _displayMode = DisplayMode.INVALID;
+            } else if (_displayMode == null) {
+                _displayMode = DisplayMode.FLAGS;
             }
         } else if (_valueMode == ValueMode.FLOATING_POINT) {
             if (newValue == null) {
-                _valueKind = ValueKind.INVALID;
-            } else if (_valueKind == null) {
-                _valueKind = ValueKind.DOUBLE;
+                _displayMode = DisplayMode.INVALID;
+            } else if (_displayMode == null) {
+                _displayMode = DisplayMode.DOUBLE;
             }
         } else if (!inspection().investigateWordValues()) {
             if (_valueMode == ValueMode.REFERENCE || _valueMode == ValueMode.LITERAL_REFERENCE) {
-                _valueKind = ValueKind.UNCHECKED_REFERENCE;
+                _displayMode = DisplayMode.UNCHECKED_REFERENCE;
             } else if (_valueMode == ValueMode.CALL_ENTRY_POINT || _valueMode == ValueMode.CALL_RETURN_POINT) {
-                _valueKind = ValueKind.UNCHECKED_CALL_POINT;
+                _displayMode = DisplayMode.UNCHECKED_CALL_POINT;
             } else {
-                _valueKind = ValueKind.UNCHECKED_WORD;
+                _displayMode = DisplayMode.UNCHECKED_WORD;
             }
         } else {
-            _valueKind = ValueKind.WORD;
+            _displayMode = DisplayMode.WORD;
             if (maxVM().isBootImageRelocated()) {
                 if (newValue == null || newValue.isZero()) {
                     if (_valueMode == ValueMode.REFERENCE) {
-                        _valueKind = ValueKind.NULL;
+                        _displayMode = DisplayMode.NULL;
                     }
                 } else if (maxVM().isValidReference(maxVM().wordToReference(newValue.toWord()))) {
-                    _valueKind = (_valueMode == ValueMode.REFERENCE || _valueMode == ValueMode.LITERAL_REFERENCE) ? ValueKind.OBJECT_REFERENCE_TEXT : ValueKind.OBJECT_REFERENCE;
+                    _displayMode = (_valueMode == ValueMode.REFERENCE || _valueMode == ValueMode.LITERAL_REFERENCE) ? DisplayMode.OBJECT_REFERENCE_TEXT : DisplayMode.OBJECT_REFERENCE;
                     final TeleReference reference = (TeleReference) maxVM().wordToReference(newValue.toWord());
 
                     try {
@@ -255,16 +255,16 @@ public class WordValueLabel extends ValueLabel {
                     } catch (Throwable throwable) {
                         // If we don't catch this the views will not be updated at all.
                         _teleObject = null;
-                        _valueKind = ValueKind.INVALID_OBJECT_REFERENCE;
+                        _displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                     }
                 } else {
                     final Address address = newValue.toWord().asAddress();
                     _thread = maxVM().threadContaining(address);
                     if (_thread != null) {
-                        _valueKind = _valueMode == ValueMode.REFERENCE ? ValueKind.STACK_LOCATION_TEXT : ValueKind.STACK_LOCATION;
+                        _displayMode = _valueMode == ValueMode.REFERENCE ? DisplayMode.STACK_LOCATION_TEXT : DisplayMode.STACK_LOCATION;
                     } else {
                         if (_valueMode == ValueMode.REFERENCE || _valueMode == ValueMode.LITERAL_REFERENCE) {
-                            _valueKind = ValueKind.INVALID_OBJECT_REFERENCE;
+                            _displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                         } else {
                             _teleTargetMethod = maxVM().makeTeleTargetMethod(newValue.toWord().asAddress());
                             if (_teleTargetMethod != null) {
@@ -272,17 +272,17 @@ public class WordValueLabel extends ValueLabel {
                                 final Word jitEntryPoint = codeStart.plus(CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart());
                                 final Word optimizedEntryPoint = codeStart.plus(CallEntryPoint.OPTIMIZED_ENTRY_POINT.offsetFromCodeStart());
                                 if (newValue.toWord().equals(optimizedEntryPoint) || newValue.toWord().equals(jitEntryPoint)) {
-                                    _valueKind = (_valueMode == ValueMode.CALL_ENTRY_POINT) ? ValueKind.CALL_ENTRY_POINT_TEXT : ValueKind.CALL_ENTRY_POINT;
+                                    _displayMode = (_valueMode == ValueMode.CALL_ENTRY_POINT) ? DisplayMode.CALL_ENTRY_POINT_TEXT : DisplayMode.CALL_ENTRY_POINT;
                                 } else {
-                                    _valueKind = (_valueMode == ValueMode.CALL_RETURN_POINT) ? ValueKind.CALL_RETURN_POINT : ValueKind.CALL_RETURN_POINT;
+                                    _displayMode = (_valueMode == ValueMode.CALL_RETURN_POINT) ? DisplayMode.CALL_RETURN_POINT : DisplayMode.CALL_RETURN_POINT;
                                 }
                             } else if (_valueMode == ValueMode.ITABLE_ENTRY) {
                                 final TeleClassActor teleClassActor = maxVM().findTeleClassActor(newValue.asWord().asAddress().toInt());
                                 if (teleClassActor != null) {
                                     _teleClassActor = teleClassActor;
-                                    _valueKind = ValueKind.CLASS_ACTOR;
+                                    _displayMode = DisplayMode.CLASS_ACTOR;
                                 } else {
-                                    _valueKind = ValueKind.CLASS_ACTOR_ID;
+                                    _displayMode = DisplayMode.CLASS_ACTOR_ID;
                                 }
                             }
                         }
@@ -313,7 +313,7 @@ public class WordValueLabel extends ValueLabel {
             return;
         }
         final String hexString = (_valueMode == ValueMode.INTEGER_REGISTER || _valueMode == ValueMode.FLAGS_REGISTER || _valueMode == ValueMode.FLOATING_POINT) ? value.toWord().toPaddedHexString('0') : value.toWord().toHexString();
-        switch (_valueKind) {
+        switch (_displayMode) {
             case WORD: {
                 setFont(style().wordDataFont());
                 setForeground(value.isZero() ? style().wordNullDataColor() : style().wordDataColor());
@@ -375,7 +375,7 @@ public class WordValueLabel extends ValueLabel {
                     System.out.println("WVL: setAlternateReferenceText error" + noClassDefFoundError);
                 }
                 System.out.println("WVL:  set AlternateReferenceText failed");
-                _valueKind = ValueKind.OBJECT_REFERENCE;
+                _displayMode = DisplayMode.OBJECT_REFERENCE;
                 updateText();
                 break;
             }
@@ -516,15 +516,15 @@ public class WordValueLabel extends ValueLabel {
     }
 
     private InspectorAction getToggleDisplayTextAction() {
-        ValueKind alternateValueKind = _valueKind;
+        DisplayMode alternateValueKind = _displayMode;
         if (_valueMode == ValueMode.FLAGS_REGISTER) {
-            switch (_valueKind) {
+            switch (_displayMode) {
                 case WORD: {
-                    alternateValueKind = ValueKind.FLAGS;
+                    alternateValueKind = DisplayMode.FLAGS;
                     break;
                 }
                 case FLAGS: {
-                    alternateValueKind = ValueKind.WORD;
+                    alternateValueKind = DisplayMode.WORD;
                     break;
                 }
                 default: {
@@ -535,15 +535,15 @@ public class WordValueLabel extends ValueLabel {
         if (_valueMode == ValueMode.FLOATING_POINT) {
             switch (alternateValueKind) {
                 case WORD: {
-                    alternateValueKind = ValueKind.DOUBLE;
+                    alternateValueKind = DisplayMode.DOUBLE;
                     break;
                 }
                 case DOUBLE: {
-                    alternateValueKind = ValueKind.FLOAT;
+                    alternateValueKind = DisplayMode.FLOAT;
                     break;
                 }
                 case FLOAT: {
-                    alternateValueKind = ValueKind.WORD;
+                    alternateValueKind = DisplayMode.WORD;
                     break;
                 }
                 default: {
@@ -554,11 +554,11 @@ public class WordValueLabel extends ValueLabel {
         if (_valueMode == ValueMode.INTEGER_REGISTER) {
             switch (alternateValueKind) {
                 case WORD: {
-                    alternateValueKind = ValueKind.DECIMAL;
+                    alternateValueKind = DisplayMode.DECIMAL;
                     break;
                 }
                 case DECIMAL: {
-                    alternateValueKind = ValueKind.WORD;
+                    alternateValueKind = DisplayMode.WORD;
                     break;
                 }
                 default: {
@@ -568,59 +568,59 @@ public class WordValueLabel extends ValueLabel {
         }
         switch (alternateValueKind) {
             case OBJECT_REFERENCE: {
-                alternateValueKind = ValueKind.OBJECT_REFERENCE_TEXT;
+                alternateValueKind = DisplayMode.OBJECT_REFERENCE_TEXT;
                 break;
             }
             case OBJECT_REFERENCE_TEXT: {
-                alternateValueKind = ValueKind.OBJECT_REFERENCE;
+                alternateValueKind = DisplayMode.OBJECT_REFERENCE;
                 break;
             }
             case STACK_LOCATION: {
-                alternateValueKind = ValueKind.STACK_LOCATION_TEXT;
+                alternateValueKind = DisplayMode.STACK_LOCATION_TEXT;
                 break;
             }
             case STACK_LOCATION_TEXT: {
-                alternateValueKind = ValueKind.STACK_LOCATION;
+                alternateValueKind = DisplayMode.STACK_LOCATION;
                 break;
             }
             case CALL_ENTRY_POINT: {
-                alternateValueKind = ValueKind.CALL_ENTRY_POINT_TEXT;
+                alternateValueKind = DisplayMode.CALL_ENTRY_POINT_TEXT;
                 break;
             }
             case CALL_ENTRY_POINT_TEXT: {
-                alternateValueKind = ValueKind.CALL_ENTRY_POINT;
+                alternateValueKind = DisplayMode.CALL_ENTRY_POINT;
                 break;
             }
             case CLASS_ACTOR_ID: {
                 if (_teleClassActor != null) {
-                    alternateValueKind = ValueKind.CLASS_ACTOR;
+                    alternateValueKind = DisplayMode.CLASS_ACTOR;
                 }
                 break;
             }
             case CLASS_ACTOR: {
-                alternateValueKind = ValueKind.CLASS_ACTOR_ID;
+                alternateValueKind = DisplayMode.CLASS_ACTOR_ID;
                 break;
             }
             case CALL_RETURN_POINT: {
-                alternateValueKind = ValueKind.CALL_RETURN_POINT_TEXT;
+                alternateValueKind = DisplayMode.CALL_RETURN_POINT_TEXT;
                 break;
             }
             case CALL_RETURN_POINT_TEXT: {
-                alternateValueKind = ValueKind.CALL_RETURN_POINT;
+                alternateValueKind = DisplayMode.CALL_RETURN_POINT;
                 break;
             }
             default: {
                 break;
             }
         }
-        if (alternateValueKind != _valueKind) {
-            final ValueKind newValueKind = alternateValueKind;
+        if (alternateValueKind != _displayMode) {
+            final DisplayMode newValueKind = alternateValueKind;
             return new InspectorAction(inspection(), "Toggle alternate display text") {
 
                 @Override
                 public void procedure() {
-                    Trace.line(TRACE_VALUE, "WVL: " + _valueKind.toString() + "->" + newValueKind);
-                    _valueKind = newValueKind;
+                    Trace.line(TRACE_VALUE, "WVL: " + _displayMode.toString() + "->" + newValueKind);
+                    _displayMode = newValueKind;
                     WordValueLabel.this.updateText();
                 }
             };
@@ -630,7 +630,7 @@ public class WordValueLabel extends ValueLabel {
 
     private InspectorAction getInspectValueAction(Value value) {
         InspectorAction action = null;
-        switch (_valueKind) {
+        switch (_displayMode) {
             case OBJECT_REFERENCE:
             case UNCHECKED_REFERENCE:
             case OBJECT_REFERENCE_TEXT: {
@@ -682,7 +682,7 @@ public class WordValueLabel extends ValueLabel {
         InspectorAction action = null;
         if (value != VoidValue.VOID) {
             final Address address = value.toWord().asAddress();
-            switch (_valueKind) {
+            switch (_displayMode) {
                 case INVALID_OBJECT_REFERENCE:
                 case UNCHECKED_REFERENCE:
                 case OBJECT_REFERENCE:
@@ -721,7 +721,7 @@ public class WordValueLabel extends ValueLabel {
         InspectorAction action = null;
         if (value != VoidValue.VOID) {
             final Address address = value.toWord().asAddress();
-            switch (_valueKind) {
+            switch (_displayMode) {
                 case INVALID_OBJECT_REFERENCE:
                 case UNCHECKED_REFERENCE:
                 case OBJECT_REFERENCE:

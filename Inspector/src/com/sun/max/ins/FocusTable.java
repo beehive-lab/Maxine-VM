@@ -159,7 +159,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
         setRowSelectionAllowed(false);
         setColumnSelectionAllowed(false);
         //setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        //addMouseListener(new FocusInspectorMouseClickAdapter(inspection()));
+        addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
 
         refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);

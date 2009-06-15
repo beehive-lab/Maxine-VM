@@ -341,6 +341,7 @@ public final class ThreadLocalsTable extends InspectorTable {
                         return VoidValue.VOID;
                     }
                 };
+                _labels[row] = label;
             }
             return label;
         }
