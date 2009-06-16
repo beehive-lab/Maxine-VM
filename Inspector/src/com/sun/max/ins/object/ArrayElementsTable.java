@@ -402,17 +402,27 @@ public final class ArrayElementsTable extends InspectorTable {
             InspectorLabel label = _labels[index];
             if (label == null) {
                 if (_elementKind == Kind.REFERENCE) {
-                    label = new WordValueLabel(_inspection, WordValueLabel.ValueMode.REFERENCE) {
+                    label = new WordValueLabel(_inspection, WordValueLabel.ValueMode.REFERENCE, ArrayElementsTable.this) {
                         @Override
                         public Value fetchValue() {
                             return maxVM().getElementValue(_elementKind, _objectReference, _startIndex + index);
                         }
+                        @Override
+                        public void updateText() {
+                            super.updateText();
+                            ArrayElementsTable.this.repaint();
+                        }
                     };
                 } else if (_elementKind == Kind.WORD) {
-                    label = new WordValueLabel(_inspection, _wordValueMode) {
+                    label = new WordValueLabel(_inspection, _wordValueMode, ArrayElementsTable.this) {
                         @Override
                         public Value fetchValue() {
                             return maxVM().getElementValue(_elementKind, _objectReference, _startIndex + index);
+                        }
+                        @Override
+                        public void updateText() {
+                            super.updateText();
+                            ArrayElementsTable.this.repaint();
                         }
                     };
                 } else {
@@ -420,6 +430,11 @@ public final class ArrayElementsTable extends InspectorTable {
                         @Override
                         public Value fetchValue() {
                             return maxVM().getElementValue(_elementKind, _objectReference, _startIndex + index);
+                        }
+                        @Override
+                        public void updateText() {
+                            super.updateText();
+                            ArrayElementsTable.this.repaint();
                         }
                     };
                 }

@@ -243,7 +243,7 @@ public class RegistersTable extends InspectorTable {
             _labels = new WordValueLabel[_model.getRowCount()];
             for (int row = 0; row < _model.getRowCount(); row++) {
                 final RegisterInfo registerInfo = (RegisterInfo) _model.getValueAt(row, 0);
-                _labels[row] = new WordValueLabel(inspection, _model.getValueMode(row)) {
+                _labels[row] = new WordValueLabel(inspection, _model.getValueMode(row), RegistersTable.this) {
 
                     @Override
                     protected Value fetchValue() {

@@ -215,7 +215,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
     private void initPanelView() {
         final JitTargetMethod targetMethod = _jitStackFrame.targetMethod();
         final Word callEntryPoint = targetMethod.codeStart();
-        final WordValueLabel header = new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, callEntryPoint);
+        final WordValueLabel header = new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, callEntryPoint, _localsPanel);
         // header.setToolTipText(_jitStackFrame.targetMethod().name());
         _localsPanel.add(new Space(4));
         _localsPanel.add(header);
@@ -226,7 +226,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
 
         for (int  localVarIndex =  0; localVarIndex < _locals.length; localVarIndex++) {
             final Word localVar = readlocalVariable(localVarIndex);
-            final WordValueLabel label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, localVar);
+            final WordValueLabel label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, localVar, _localsPanel);
             JLabel indexLabel = new LocalIndex(localVarIndex);
             final int bytecodePosition = targetMethod.bytecodePositionFor(_jitStackFrame.instructionPointer());
             if (bytecodePosition != -1) {
@@ -254,14 +254,14 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
         final int tos = _showAll ? _stack.length : topOfStack(_stackDepth);
         for (int stackSlotIndex = 0; stackSlotIndex <  tos; stackSlotIndex++) {
             final Word stackItem = readStackSlot(stackSlotIndex);
-            final WordValueLabel label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, stackItem);
+            final WordValueLabel label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, stackItem, _localsPanel);
             label.setBackground(InspectorStyle.SunYellow2);
             _stack[stackSlotIndex] = label;
             _stackPanel.add(createStackPointerLabel(stackSlotIndex));
             _stackPanel.add(label);
         }
         for (int stackSlotIndex = tos; stackSlotIndex  < _stack.length; stackSlotIndex++) {
-            final WordValueLabel label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, Word.zero());
+            final WordValueLabel label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, Word.zero(), _localsPanel);
             label.setBackground(InspectorStyle.SunYellow2);
             _stack[stackSlotIndex] = label;
             _stackPanel.add(createStackPointerLabel(stackSlotIndex));

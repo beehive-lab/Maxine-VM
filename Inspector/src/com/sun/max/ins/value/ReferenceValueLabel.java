@@ -30,7 +30,7 @@ import com.sun.max.vm.reference.*;
 public class ReferenceValueLabel extends WordValueLabel {
 
     public ReferenceValueLabel(Inspection inspection, Reference reference) {
-        super(inspection, ValueMode.REFERENCE, reference.toOrigin());
+        super(inspection, ValueMode.REFERENCE, reference.toOrigin(), null);
     }
 
     public ReferenceValueLabel(Inspection inspection, TeleReferenceValue referenceValue) {

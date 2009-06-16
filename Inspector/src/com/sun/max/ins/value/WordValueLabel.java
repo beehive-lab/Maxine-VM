@@ -20,6 +20,7 @@
  */
 package com.sun.max.ins.value;
 
+import java.awt.*;
 import java.awt.event.*;
 
 import com.sun.max.ins.*;
@@ -44,6 +45,10 @@ import com.sun.max.vm.value.*;
 public class WordValueLabel extends ValueLabel {
 
     private static final int TRACE_VALUE = 1;
+
+    // Optionally supplied component that needs to be
+    // repainted when this label changes its appearance.
+    private final Component _parent;
 
     /**
      * The expected kind of word value. The visual
@@ -124,23 +129,44 @@ public class WordValueLabel extends ValueLabel {
 
     /**
      * Creates a display label for a word of machine data, initially set to null.
-     * Automatically updated if {@link ValueLabel#fetchValue()} is overridden.
+     * <br>
+     * Content of label is supplied by override {@link ValueLabel#fetchValue()}, which
+     * gets called initially and when the label is refreshed.
+     * <br>
+     * Display state can be toggled between alternate presentations in some situations.
+     * <br>
+     * Can be used as a cell renderer in a table, but the enclosing table must be explicitly repainted
+     * when the display state is toggled; this will be done automatically if the table is passed in
+     * as the parent component.
      *
+     * @param inspection
      * @param valueMode presumed type of value for the word, influences display modes
+     * @param parent a component that should be repainted when the display state is toggled;
      */
-    public WordValueLabel(Inspection inspection, ValueMode valueMode) {
-        this(inspection, valueMode, Word.zero());
+    public WordValueLabel(Inspection inspection, ValueMode valueMode, Component parent) {
+        this(inspection, valueMode, Word.zero(), parent);
     }
 
     /**
-     * Creates a display label for a word of machine data.
-     * Automatically updated if {@link ValueLabel#fetchValue()} is overridden.
+     * Creates a display label for a word of machine data, initially set to null.
+     * <br>
+     * Content of label is set initially by parameter.  It can be updated by overriding{@link ValueLabel#fetchValue()}, which
+     * gets called initially and when the label is refreshed.
+     * <br>
+     * Display state can be toggled between alternate presentations in some situations.
+     * <br>
+     * Can be used as a cell renderer in a table, but the enclosing table must be explicitly repainted
+     * when the display state is toggled; this will be done automatically if the table is passed in
+     * as the parent component.
      *
+     * @param inspection
      * @param valueMode presumed type of value for the word, influences display modes
-     * @param word initial value for word
+     * @param word initial value for content.
+     * @param parent a component that should be repainted when the display state is toggled;
      */
-    public WordValueLabel(Inspection inspection, ValueMode valueMode, Word word) {
+    public WordValueLabel(Inspection inspection, ValueMode valueMode, Word word, Component parent) {
         super(inspection, null);
+        _parent = parent;
         _valueMode = valueMode;
         initializeValue();
         if (value() == null) {
@@ -310,6 +336,9 @@ public class WordValueLabel extends ValueLabel {
             setForeground(style().wordInvalidDataColor());
             setText("void");
             setToolTipText("Location not in allocated regions");
+            if (_parent != null) {
+                _parent.repaint();
+            }
             return;
         }
         final String hexString = (_valueMode == ValueMode.INTEGER_REGISTER || _valueMode == ValueMode.FLAGS_REGISTER || _valueMode == ValueMode.FLOATING_POINT) ? value.toWord().toPaddedHexString('0') : value.toWord().toHexString();
@@ -511,8 +540,9 @@ public class WordValueLabel extends ValueLabel {
         if (_suffix != null) {
             setText(getText() + _suffix);
         }
-        invalidate();
-        repaint();
+        if (_parent != null) {
+            _parent.repaint();
+        }
     }
 
     private InspectorAction getToggleDisplayTextAction() {
