@@ -212,7 +212,7 @@ public class ValueStack {
             if (x.type().isIllegal()) {
                 return null;
             }
-            assert x.type().isSingleWord() || _values[i + 1] == null;
+            assert x.type().isSingleWord() || _values[i + 1] == null || _values[i + 1] instanceof Phi;
         }
         return x;
     }
@@ -514,8 +514,8 @@ public class ValueStack {
      * method into this one
      */
     public ValueStack pushScope(IRScope scope) {
-        assert scope.caller() == _scope;
-        CiMethod method = scope.method();
+        assert scope.caller == _scope;
+        CiMethod method = scope.method;
         ValueStack res = new ValueStack(scope, method.maxLocals(), maxStackSize() + method.maxStackSize());
         res.replaceStack(this);
         res.replaceLocks(this);
@@ -528,11 +528,11 @@ public class ValueStack {
      * @return a new value stack representing the state at exit from this value stack
      */
     public ValueStack popScope() {
-        IRScope callingScope = _scope.caller();
-        int maxStack = maxStackSize() - _scope.method().maxStackSize();
+        IRScope callingScope = _scope.caller;
+        int maxStack = maxStackSize() - _scope.method.maxStackSize();
         assert callingScope != null;
         assert maxStack >= 0;
-        ValueStack res = new ValueStack(callingScope, callingScope.method().maxLocals(), maxStack);
+        ValueStack res = new ValueStack(callingScope, callingScope.method.maxLocals(), maxStack);
         res.replaceStack(this);
         res.replaceLocks(this);
         res.replaceLocals(callingScope.callerState());
@@ -583,19 +583,20 @@ public class ValueStack {
         }
     }
 
-    public void checkLocalAndStackTags(ValueStack other) {
+    public void invalidateMismatchedLocalPhis(BlockBegin block, ValueStack other) {
         checkSize(other);
-        final int max = valuesSize();
-        for (int i = 0; i < max; i++) {
+        for (int i = 0; i < _maxLocals; i++) {
             Instruction x = _values[i];
             if (x != null) {
                 Instruction y = other._values[i];
-                if (y != null) {
+                if (x != y) {
                     if (typeMismatch(x, y)) {
-                        throw new Bailout("tag mismatch at " + i);
+                        if (x instanceof Phi && ((Phi) x).block() == block) {
+                            _values[i] = null;
+                        } else {
+                            throw new Bailout("type mismatch at " + i + " @ " + block.bci() + " in " + block + " in " + scope().method);
+                        }
                     }
-                } else {
-                    throw new Bailout("instruction missing at " + i);
                 }
             }
         }
@@ -654,41 +655,41 @@ public class ValueStack {
     }
 
     private static boolean typeMismatch(Instruction x, Instruction y) {
-        return y.type().basicType() != x.type().basicType();
+        return y == null || x.type().basicType() != y.type().basicType();
     }
 
     private static Instruction assertType(BasicType basicType, Instruction x) {
-        assert x.type().basicType() == basicType;
+        assert x != null && x.type().basicType() == basicType;
         return x;
     }
 
     private static Instruction assertLong(Instruction x) {
-        assert x.type().basicType() == BasicType.Long;
+        assert x != null && x.type().basicType() == BasicType.Long;
         return x;
     }
 
     private static Instruction assertJsr(Instruction x) {
-        assert x.type().basicType() == BasicType.Jsr;
+        assert x != null && x.type().basicType() == BasicType.Jsr;
         return x;
     }
 
     private static Instruction assertInt(Instruction x) {
-        assert x.type().basicType() == BasicType.Int;
+        assert x != null && x.type().basicType() == BasicType.Int;
         return x;
     }
 
     private static Instruction assertFloat(Instruction x) {
-        assert x.type().basicType() == BasicType.Float;
+        assert x != null && x.type().basicType() == BasicType.Float;
         return x;
     }
 
     private static Instruction assertObject(Instruction x) {
-        assert x.type().basicType() == BasicType.Object;
+        assert x != null && x.type().basicType() == BasicType.Object;
         return x;
     }
 
     private static Instruction assertDouble(Instruction x) {
-        assert x.type().basicType() == BasicType.Double;
+        assert x != null && x.type().basicType() == BasicType.Double;
         return x;
     }
 

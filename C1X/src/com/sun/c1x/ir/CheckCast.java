@@ -25,6 +25,7 @@ import com.sun.c1x.ci.CiType;
 import com.sun.c1x.ci.CiMethod;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.value.ValueType;
+import com.sun.c1x.bytecode.Bytecodes;
 
 /**
  * The <code>CheckCast</code> instruction represents a checkcast bytecode.
@@ -106,4 +107,19 @@ public class CheckCast extends TypeCheck {
     public void accept(InstructionVisitor v) {
         v.visitCheckCast(this);
     }
+
+    @Override
+    public int valueNumber() {
+        return _targetClass.isLoaded() ? hash1(Bytecodes.CHECKCAST, _object) : 0;
+    }
+
+    @Override
+    public boolean valueEqual(Instruction i) {
+        if (i instanceof CheckCast) {
+            CheckCast o = (CheckCast) i;
+            return _targetClass == o._targetClass && _object == o._object;
+        }
+        return false;
+    }
+
 }

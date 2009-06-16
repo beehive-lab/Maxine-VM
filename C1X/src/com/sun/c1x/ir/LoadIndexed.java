@@ -81,20 +81,27 @@ public class LoadIndexed extends AccessIndexed {
      */
     @Override
     public CiType exactType() {
-        CiType type = declaredType();
-        if (type == null || type.isTypeArrayClass()) {
-            return type;
-        }
-        if (type.isInstanceClass()) {
-            if (type.isLoaded() && type.isFinal()) {
-                return type;
-            }
-        }
-        return null;
+        CiType declared = declaredType();
+        return declared != null ? declared.exactType() : null;
     }
 
     @Override
     public void accept(InstructionVisitor v) {
         v.visitLoadIndexed(this);
     }
+
+    @Override
+    public int valueNumber() {
+        return hash2(124, _array, _index);
+    }
+
+    @Override
+    public boolean valueEqual(Instruction i) {
+        if (i instanceof LoadIndexed) {
+            LoadIndexed o = (LoadIndexed) i;
+            return _array == o._array && _index == o._index;
+        }
+        return false;
+    }
+
 }

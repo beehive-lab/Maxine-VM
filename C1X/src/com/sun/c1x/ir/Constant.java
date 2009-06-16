@@ -178,4 +178,16 @@ public class Constant extends Instruction {
         return constant;
     }
 
+    @Override
+    public int valueNumber() {
+        ValueType vt = type();
+        return vt.isConstant() ? 0x50000000 | vt.hashCode() : 0;
+    }
+
+    @Override
+    public boolean valueEqual(Instruction i) {
+        // basic type comparison is all that's necessary for constants
+        return i instanceof Constant && i.type().equals(type());
+    }
+
 }

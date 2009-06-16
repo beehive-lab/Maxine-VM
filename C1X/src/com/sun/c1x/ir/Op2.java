@@ -94,4 +94,17 @@ public abstract class Op2 extends Instruction {
         _x = closure.apply(_y);
     }
 
+    @Override
+    public int valueNumber() {
+        return hash2(_opcode, _x, _y);
+    }
+
+    @Override
+    public boolean valueEqual(Instruction i) {
+        if (i instanceof Op2) {
+            Op2 o = (Op2) i;
+            return _opcode == o._opcode && _x == o._x && _y == o._y;
+        }
+        return false;
+    }
 }
