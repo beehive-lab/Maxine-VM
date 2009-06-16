@@ -415,7 +415,7 @@ public class MemoryRegionsTable extends InspectorTable {
 
         public WordValueLabel startLabel() {
             if (_startLabel == null) {
-                _startLabel = new WordValueLabel(inspection(), ValueMode.WORD) {
+                _startLabel = new WordValueLabel(inspection(), ValueMode.WORD, MemoryRegionsTable.this) {
                     @Override
                     public Value fetchValue() {
                         return WordValue.from(MemoryRegionDisplay.this.start());
@@ -429,7 +429,7 @@ public class MemoryRegionsTable extends InspectorTable {
 
         public WordValueLabel endLabel() {
             if (_endLabel == null) {
-                _endLabel = new WordValueLabel(inspection(), ValueMode.WORD) {
+                _endLabel = new WordValueLabel(inspection(), ValueMode.WORD, MemoryRegionsTable.this) {
                     @Override
                     public Value fetchValue() {
                         return WordValue.from(MemoryRegionDisplay.this.end());
