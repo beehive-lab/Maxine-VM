@@ -55,7 +55,7 @@ public final class FatalError extends Error {
     private static void breakpoint() {
     }
 
-    private FatalError(String msg) {
+    private FatalError(String msg, Throwable throwable) {
         super(msg);
     }
 
@@ -110,7 +110,7 @@ public final class FatalError extends Error {
      */
     public static FatalError unexpected(String message, Address nativeTrapAddress, Throwable throwable) {
         if (MaxineVM.isPrototyping()) {
-            throw new FatalError(message);
+            throw new FatalError(message, throwable);
         }
 
         breakpoint();
