@@ -44,7 +44,7 @@ public interface AMD64TargetMethod {
         }
 
         public static void patchCallSite(TargetMethod targetMethod, int callOffset, Word callEntryPoint) {
-            patchRipCode(targetMethod, callOffset, callEntryPoint.asAddress().toLong(), false);
+            patchRipCode(targetMethod, callOffset, callEntryPoint.asAddress().toLong(), RCALL);
         }
 
         public static void forwardTo(TargetMethod oldTargetMethod, TargetMethod newTargetMethod) {
@@ -55,16 +55,16 @@ public interface AMD64TargetMethod {
             final long newOptEntry = CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
             final long newJitEntry = CallEntryPoint.JIT_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
 
-            patchRipCode(oldTargetMethod, CallEntryPoint.OPTIMIZED_ENTRY_POINT.offsetFromCodeStart(), newOptEntry, true);
-            patchRipCode(oldTargetMethod, CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart(), newJitEntry, true);
+            patchRipCode(oldTargetMethod, CallEntryPoint.OPTIMIZED_ENTRY_POINT.offsetFromCodeStart(), newOptEntry, RJMP);
+            patchRipCode(oldTargetMethod, CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart(), newJitEntry, RJMP);
         }
 
-        private static void patchRipCode(TargetMethod targetMethod, int offset, long target, boolean jump) {
+        private static void patchRipCode(TargetMethod targetMethod, int offset, long target, byte controlTransferOpcode) {
             // TODO: patching RIP code is probably not thread safe!
             final Pointer callSite = targetMethod.codeStart().plus(offset);
             final byte[] code = targetMethod.code();
             final int displacement = (int) (target - (callSite.toLong() + 5));
-            ArraySetSnippet.SetByte.setByte(code, offset, jump ? RJMP : RCALL);
+            ArraySetSnippet.SetByte.setByte(code, offset, controlTransferOpcode);
             ArraySetSnippet.SetByte.setByte(code, offset + 1, (byte) displacement);
             ArraySetSnippet.SetByte.setByte(code, offset + 2, (byte) (displacement >> 8));
             ArraySetSnippet.SetByte.setByte(code, offset + 3, (byte) (displacement >> 16));
