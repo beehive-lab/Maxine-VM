@@ -43,7 +43,7 @@ public class Bytes {
 
     public static int beU2(byte[] data, int bci) {
         // big-endian unsigned 2-byte quantity
-        return ((data[bci] << 8) & 0xff) | (data[bci + 1] & 0xff);
+        return ((data[bci] & 0xff) << 8) | (data[bci + 1] & 0xff);
     }
 
     public static int beS4(byte[] data, int bci) {

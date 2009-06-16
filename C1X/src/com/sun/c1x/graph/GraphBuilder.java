@@ -67,7 +67,7 @@ public class GraphBuilder {
         _compilation = compilation;
         _memory = new MemoryBuffer();
         int osrBCI = compilation.osrBCI();
-        BlockMap blockMap = compilation.getBlockMap(scope.method(), osrBCI);
+        BlockMap blockMap = compilation.getBlockMap(scope.method, osrBCI);
         BlockBegin startBlock = blockMap.get(0);
 
         pushRootScope(scope, blockMap, startBlock);
@@ -166,7 +166,9 @@ public class GraphBuilder {
     }
 
     void pushRootScope(IRScope scope, BlockMap blockMap, BlockBegin start) {
-        _scopeData = new ScopeData(null, scope, blockMap);
+        BytecodeStream stream = new BytecodeStream(scope.method.code());
+        CiConstantPool constantPool = _compilation._runtime.getConstantPool(scope.method);
+        _scopeData = new ScopeData(null, scope, blockMap, stream, constantPool);
         _block = start;
     }
 
@@ -227,27 +229,23 @@ public class GraphBuilder {
     }
 
     public IRScope scope() {
-        return _scopeData._scope;
+        return _scopeData.scope;
     }
 
     public IRScope rootScope() {
         IRScope root = scope();
-        while (root.caller() != null) {
-            root = root.caller();
+        while (root.caller != null) {
+            root = root.caller;
         }
         return root;
     }
 
     public CiMethod method() {
-        return scope().method();
+        return scope().method;
     }
 
     public BytecodeStream stream() {
-        return _scopeData.stream();
-    }
-
-    public int code() {
-        return stream().currentBC();
+        return _scopeData.stream;
     }
 
     public int bci() {
@@ -332,9 +330,9 @@ public class GraphBuilder {
                 // Also check parent jsrs (if any) at this time to see whether
                 // they are using this local. We don't handle skipping over a
                 // ret.
-                for (ScopeData cur = _scopeData._parent;
-                        cur != null && cur.parsingJsr() && cur._scope == scope();
-                        cur = cur._parent) {
+                for (ScopeData cur = _scopeData.parent;
+                        cur != null && cur.parsingJsr() && cur.scope == scope();
+                        cur = cur.parent) {
                     if (cur.jsrEntryReturnAddressLocal() == index) {
                         throw new Bailout("subroutine overwrites return address from previous subroutine");
                     }
@@ -351,10 +349,7 @@ public class GraphBuilder {
 
     Instruction roundFp(Instruction x) {
         if (C1XOptions.RoundFPResults && C1XOptions.SSEVersion < 2) {
-            if (x.type().isDouble()
-                    && !(x instanceof Constant)
-                    && !(x instanceof Local)
-                    && !(x instanceof RoundFP)) {
+            if (x.type().isDouble() && !(x instanceof Constant) && !(x instanceof Local) && !(x instanceof RoundFP)) {
                 return append(new RoundFP(x));
             }
         }
@@ -387,8 +382,8 @@ public class GraphBuilder {
 
         assert s != null : "exception handler state must be set";
         do {
-            assert curScopeData._scope == s.scope() : "scopes do not match";
-            assert bci == Instruction.SYNCHRONIZATION_ENTRY_BCI || bci == curScopeData.stream().currentBCI() : "invalid bci";
+            assert curScopeData.scope == s.scope() : "scopes do not match";
+            assert bci == Instruction.SYNCHRONIZATION_ENTRY_BCI || bci == curScopeData.stream.currentBCI() : "invalid bci";
 
             // join with all potential exception handlers
             for (ExceptionHandler h : curScopeData.exceptionHandlers()) {
@@ -403,16 +398,16 @@ public class GraphBuilder {
                 // if parsing a JSR, do not grab exception handlers from the parent
                 // scopes for this method (already got them, and they need to be cloned)
                 if (curScopeData.parsingJsr()) {
-                    IRScope tmp = curScopeData._scope;
-                    while (curScopeData._parent != null && curScopeData._parent._scope == tmp) {
-                        curScopeData = curScopeData._parent;
+                    IRScope tmp = curScopeData.scope;
+                    while (curScopeData.parent != null && curScopeData.parent.scope == tmp) {
+                        curScopeData = curScopeData.parent;
                     }
                 }
-                if (curScopeData._parent != null) {
+                if (curScopeData.parent != null) {
                     s = s.popScope();
                 }
-                bci = curScopeData._scope.callerBCI();
-                curScopeData = curScopeData._parent;
+                bci = curScopeData.scope.callerBCI();
+                curScopeData = curScopeData.parent;
                 scopeCount++;
             }
 
@@ -505,7 +500,7 @@ public class GraphBuilder {
             default:
                 throw new Bailout("invalid constant type on " + con);
         }
-        push(type, append(new Constant(type.asConstant())));
+        push(type, appendConstant(type.asConstant()));
     }
 
     void loadIndexed(BasicType type) {
@@ -620,7 +615,7 @@ public class GraphBuilder {
         Instruction y = pop(type);
         Instruction x = pop(type);
         Instruction result = append(new ArithmeticOp(opcode, x, y, method().isStrictFP(), stack));
-        if (scope().method().isStrictFP()) {
+        if (scope().method.isStrictFP()) {
             result = roundFp(result);
         }
         push(type, result);
@@ -681,14 +676,14 @@ public class GraphBuilder {
     }
 
     void ifZero(ValueType type, Condition cond) {
-        Instruction y = append(new Constant(ConstType.INT_0));
+        Instruction y = appendConstant(ConstType.INT_0);
         ValueStack stateBefore = _state.copy();
         Instruction x = ipop();
         ifNode(x, cond, y, stateBefore);
     }
 
     void ifNull(ValueType type, Condition cond) {
-        Instruction y = append(new Constant(ConstType.NULL_OBJECT));
+        Instruction y = appendConstant(ConstType.NULL_OBJECT);
         ValueStack stateBefore = _state.copy();
         Instruction x = apop();
         ifNode(x, cond, y, stateBefore);
@@ -711,7 +706,7 @@ public class GraphBuilder {
         CiType type = constantPool().lookupType(stream().readCPI());
         ValueStack stateBefore = valueStackIfClassNotLoaded(type);
         CheckCast c = new CheckCast(type, apop(), stateBefore);
-        apush(appendSplit(c));
+        apush(append(c));
         if (assumeLeafClass(type)) {
             c.setDirectCompare();
         }
@@ -724,7 +719,7 @@ public class GraphBuilder {
         CiType type = constantPool().lookupType(stream().readCPI());
         ValueStack stateBefore = valueStackIfClassNotLoaded(type);
         InstanceOf i = new InstanceOf(type, apop(), stateBefore);
-        ipush(appendSplit(i));
+        ipush(append(i));
         if (assumeLeafClass(type)) {
             i.setDirectCompare();
         }
@@ -735,18 +730,18 @@ public class GraphBuilder {
         assert !type.isLoaded() || type.isInstanceClass();
         NewInstance n = new NewInstance(type);
         _memory.newInstance(n);
-        apush(appendSplit(n));
+        apush(append(n));
     }
 
     void newTypeArray() {
-        apush(appendSplit(new NewTypeArray(ipop(), BasicType.fromArrayTypeCode(stream().readLocalIndex()))));
+        apush(append(new NewTypeArray(ipop(), BasicType.fromArrayTypeCode(stream().readLocalIndex()))));
     }
 
     void newObjectArray() {
         CiType type = constantPool().lookupType(stream().readCPI());
         ValueStack stateBefore = valueStackIfClassNotLoaded(type);
         NewArray n = new NewObjectArray(type, ipop(), stateBefore);
-        apush(appendSplit(n));
+        apush(append(n));
     }
 
     void newMultiArray() {
@@ -758,7 +753,7 @@ public class GraphBuilder {
             dims[i] = ipop();
         }
         NewArray n = new NewMultiArray(type, dims, stateBefore);
-        apush(appendSplit(n));
+        apush(append(n));
     }
 
     void accessField(int opcode) {
@@ -905,7 +900,7 @@ public class GraphBuilder {
     private void appendInvoke(int opcode, ValueType resultType, Instruction receiver, Instruction[] args, CiMethod target) {
         int vtableIndex = target.vtableIndex();
         Invoke invoke = new Invoke(opcode, resultType, receiver, args, vtableIndex, target);
-        appendSplit(invoke);
+        append(invoke);
         if (method().isStrictFP()) {
             pushReturn(resultType, roundFp(invoke));
         } else {
@@ -999,8 +994,8 @@ public class GraphBuilder {
         if (needsCheck) {
             // append a call to the registration intrinsic
             loadLocal(ValueType.OBJECT_TYPE, 0);
-            appendSplit(new Intrinsic(ValueType.VOID_TYPE, C1XIntrinsic.java_lang_Object$init,
-                                      _state.popArguments(1), true, lockStack(), true, true));
+            append(new Intrinsic(ValueType.VOID_TYPE, C1XIntrinsic.java_lang_Object$init,
+                                          _state.popArguments(1), true, lockStack(), true, true));
         }
 
     }
@@ -1060,7 +1055,7 @@ public class GraphBuilder {
             } else {
                 receiver = append(new Constant(new ClassType(method().holder()), null));
             }
-            appendSplit(new MonitorExit(receiver, _state.unlock()));
+            append(new MonitorExit(receiver, _state.unlock()));
         }
         append(new Return(x));
     }
@@ -1096,7 +1091,7 @@ public class GraphBuilder {
     }
 
     void jsr(int dest) {
-        for (ScopeData cur = _scopeData; cur != null && cur.parsingJsr() && cur._scope == scope(); cur = cur._parent) {
+        for (ScopeData cur = _scopeData; cur != null && cur.parsingJsr() && cur.scope == scope(); cur = cur.parent) {
             if (cur.jsrEntryBCI() == dest) {
                 // the jsr/ret pattern includes a recursive invocation
                 throw new Bailout("jsr/ret structure is too complicated");
@@ -1190,7 +1185,7 @@ public class GraphBuilder {
                 int offset = mdo.invocationCountOffset();
                 if (offset >= 0) {
                     // if the method data object exists and it has an entry for the invocation count
-                    Instruction m = appendConstant(ConstType.forObject(mdo.dataObject()));
+                    Instruction m = append(Constant.forObject(mdo.dataObject()));
                     append(new ProfileCounter(m, offset, 1));
                 }
             }
@@ -1204,7 +1199,7 @@ public class GraphBuilder {
                 int offset = mdo.bciCountOffset(bci);
                 if (offset >= 0) {
                     // if the method data object exists and it has an entry for the bytecode index
-                    Instruction m = appendConstant(ConstType.forObject(mdo.dataObject()));
+                    Instruction m = append(Constant.forObject(mdo.dataObject()));
                     append(new ProfileCounter(m, offset, 1));
                 }
             }
@@ -1232,11 +1227,6 @@ public class GraphBuilder {
     }
 
     private Instruction append(Instruction x) {
-        assert !(x instanceof StateSplit) || (x instanceof BlockEnd);
-        return appendWithBCI(x, bci(), C1XOptions.CanonicalizeInstructions);
-    }
-
-    private Instruction appendSplit(StateSplit x) {
         return appendWithBCI(x, bci(), C1XOptions.CanonicalizeInstructions);
     }
 
@@ -1268,7 +1258,7 @@ public class GraphBuilder {
             _vmap.processEffects(x);
         }
 
-        if (!(x instanceof Phi) && !(x instanceof Local)) {
+        if (!(x instanceof Phi || x instanceof Local)) {
             // add instructions to the basic block (if not a phi or a local)
             assert x.next() == null : "instruction should not have been appended yet";
             _last = _last.setNext(x, bci);
@@ -1277,7 +1267,6 @@ public class GraphBuilder {
                 throw new Bailout("Method and/or inlining is too large");
             }
 
-            assert _last == x;
             if (x instanceof StateSplit) {
                 if (x instanceof Invoke || (x instanceof Intrinsic && !((Intrinsic) x).preservesState())) {
                     // conservatively kill all memory across calls
@@ -1314,10 +1303,6 @@ public class GraphBuilder {
         // push callee scope
         pushScopeForJsr(cont, jsrStart);
 
-        // temporarily set up bytecode stream so we can append instructions
-        // (only using the bci of this stream)
-        _scopeData.setStream(_scopeData._parent.stream());
-
         BlockBegin jsrStartBlock = blockAt(jsrStart);
         assert jsrStartBlock != null;
         assert !jsrStartBlock.wasVisited();
@@ -1329,16 +1314,13 @@ public class GraphBuilder {
         _block.setEnd(gotoSub);
         _last = _block = jsrStartBlock;
 
-        // clear the bytecode stream (?)
-        _scopeData.setStream(null);
-
         _scopeData.addToWorkList(jsrStartBlock);
 
         iterateAllBlocks(false);
 
         if (cont.state() != null) {
             if (!cont.wasVisited()) {
-                _scopeData._parent.addToWorkList(cont);
+                _scopeData.parent.addToWorkList(cont);
             }
         }
 
@@ -1353,7 +1335,9 @@ public class GraphBuilder {
     }
 
     void pushScopeForJsr(BlockBegin jsrCont, int jsrStart) {
-        ScopeData data = new ScopeData(_scopeData, scope(), _scopeData._blockMap);
+        BytecodeStream stream = new BytecodeStream(scope().method.code());
+        CiConstantPool constantPool = _scopeData.constantPool;
+        ScopeData data = new ScopeData(_scopeData, scope(), _scopeData.blockMap, stream, constantPool);
         data.setJsrEntryBCI(jsrStart);
         data.setJsrEntryReturnAddressLocal(-1);
         data.setupJsrExceptionHandlers();
@@ -1369,12 +1353,14 @@ public class GraphBuilder {
     void pushScope(CiMethod target, BlockBegin continuation) {
         IRScope calleeScope = new IRScope(_compilation, scope(), bci(), target, -1);
         scope().addCallee(calleeScope);
-        BlockMap blockMap = _compilation.getBlockMap(calleeScope.method(), -1);
+        BlockMap blockMap = _compilation.getBlockMap(calleeScope.method, -1);
 
         calleeScope.setCallerState(_state);
         calleeScope.setStoresInLoops(blockMap.getStoresInLoops());
         _state = _state.pushScope(calleeScope);
-        ScopeData data = new ScopeData(_scopeData, calleeScope, blockMap);
+        BytecodeStream stream = new BytecodeStream(target.code());
+        CiConstantPool constantPool = _compilation._runtime.getConstantPool(target);
+        ScopeData data = new ScopeData(_scopeData, calleeScope, blockMap, stream, constantPool);
         data.setContinuation(continuation);
         _scopeData = data;
     }
@@ -1415,7 +1401,10 @@ public class GraphBuilder {
     }
 
     boolean checkInliningConditions(CiMethod target) {
-        if (scope().level() > C1XOptions.MaximumInlineLevel) {
+        if (!C1XOptions.InlineMethods) {
+            return cannotInline(target, "all inlining is turned off");
+        }
+        if (scope().level > C1XOptions.MaximumInlineLevel) {
             return cannotInline(target, "inlining too deep");
         }
         if (!target.isLoaded()) {
@@ -1431,10 +1420,10 @@ public class GraphBuilder {
         if (!target.holder().isInitialized()) {
             return cannotInline(target, "holder is not initialized");
         }
-        if (_compilation.runtime().mustNotInline(target)) {
+        if (_compilation._runtime.mustNotInline(target)) {
             return cannotInline(target, "inlining excluded by runtime");
         }
-        if (_compilation.runtime().mustNotCompile(target)) {
+        if (_compilation._runtime.mustNotCompile(target)) {
             return cannotInline(target, "compile excluded by runtime");
         }
         if (target.isAbstract()) {
@@ -1458,7 +1447,7 @@ public class GraphBuilder {
         if ("<init>".equals(target.name()) && target.holder().isSubtypeOf(_compilation.throwableType())) {
             // don't inline constructors of throwable classes unless the inlining tree is
             // rooted in a throwable class
-            if (!rootScope().method().holder().isSubtypeOf(_compilation.throwableType())) {
+            if (!rootScope().method.holder().isSubtypeOf(_compilation.throwableType())) {
                 return cannotInline(target, "don't inline Throwable constructors");
             }
         }
@@ -1505,10 +1494,6 @@ public class GraphBuilder {
         // push the target scope
         pushScope(target, continuationBlock);
 
-        // temporarily set up the bytecode stream so we can append instructions
-        // (using only the bci of the stream)
-        _scopeData.setStream(_scopeData._parent.stream());
-
         // pass parameters into the callee state
         ValueStack calleeState = _state;
         ValueStack callerState = scope().callerState();
@@ -1552,9 +1537,6 @@ public class GraphBuilder {
             _scopeData.addToWorkList(calleeStartBlock);
         }
 
-        // clear out the bytecode stream
-        _scopeData.setStream(null);
-
         // ready to resume parsing in inlined method
         // (either in the current block or the callee's start)
         iterateAllBlocks(!calleeStartBlock.isParserLoopHeader());
@@ -1589,7 +1571,7 @@ public class GraphBuilder {
             if (_scopeData.continuation().wasVisited()) {
                 // add continuation to work list instead of parsing it immediately
                 assert _last instanceof BlockEnd;
-                _scopeData._parent.addToWorkList(_scopeData.continuation());
+                _scopeData.parent.addToWorkList(_scopeData.continuation());
                 _skipBlock = true;
             }
         }
@@ -1666,6 +1648,9 @@ public class GraphBuilder {
             // this method is not an intrinsic
             return false;
         }
+        if (!C1XOptions.InlineIntrinsics) {
+            return cannotInline(target, "inlining of intrinsics is turned off");
+        }
         boolean preservesState = true;
         boolean canTrap = false;
 
@@ -1683,7 +1668,7 @@ public class GraphBuilder {
 
         // create the intrinsic node
         Intrinsic result = new Intrinsic(resultType, intrinsic, args, hasReceiver, lockStack(), preservesState, canTrap);
-        Instruction value = appendSplit(result);
+        Instruction value = append(result);
         pushReturn(resultType, value);
         return true;
     }
@@ -1722,23 +1707,22 @@ public class GraphBuilder {
 
     void popScope() {
         int numberOfLocks = scope().numberOfLocks();
-        _scopeData = _scopeData._parent;
+        _scopeData = _scopeData.parent;
         scope().setMinimumNumberOfLocks(numberOfLocks);
     }
 
     void popScopeForJsr() {
-        _scopeData = _scopeData._parent;
+        _scopeData = _scopeData.parent;
     }
 
     void setupOsrEntryBlock() {
         assert _compilation.isOsrCompilation();
 
         int osrBCI = _compilation.osrBCI();
-        BytecodeStream s = new BytecodeStream(method().code());
+        BytecodeStream s = _scopeData.stream;
         CiOsrFrame frame = _compilation.getOsrFrame();
         s.setBCI(osrBCI);
         s.next(); // XXX: why go to next bytecode?
-        _scopeData.setStream(s);
 
         // create a new block to contain the OSR setup code
         _osrEntry = new BlockBegin(osrBCI);
@@ -1770,7 +1754,7 @@ public class GraphBuilder {
             if (local != null) {
                 // this is a live local according to compiler
                 if (local.type().isObject() && !frame.isLiveObject(i)) {
-                    // the interpreter thinks this is live, but not the interpreter
+                    // the compiler thinks this is live, but not the interpreter
                     // pretend that it passed null
                     get = appendConstant(ConstType.NULL_OBJECT);
                 } else {
@@ -1787,15 +1771,13 @@ public class GraphBuilder {
         append(g);
         _osrEntry.setEnd(g);
         target.merge(_osrEntry.end().state());
-        _scopeData.setStream(null);
     }
 
     BlockEnd iterateBytecodesForBlock(int bci) {
         _skipBlock = false;
         assert _state != null;
-        BytecodeStream s = new BytecodeStream(method().code());
+        BytecodeStream s = _scopeData.stream;
         s.setBCI(bci);
-        _scopeData.setStream(s);
 
         BlockBegin block = _block;
         BlockEnd end = null;
@@ -1810,13 +1792,12 @@ public class GraphBuilder {
                 _last = _last.setNext(end, prevBCI);
                 break;
             }
+            // read the opcode
             int opcode = s.currentBC();
+
             // check whether the bytecode can cause an exception
-            if (hasHandler() && Bytecodes.canTrap(opcode)) {
-                _exceptionState = _state.copy();
-            } else {
-                _exceptionState = null;
-            }
+            _exceptionState = hasHandler() && Bytecodes.canTrap(opcode) ? _state.copy() : null;
+
             // check for active JSR during OSR compilation
             if (_compilation.isOsrCompilation()
                     && scope().isTopScope()
@@ -1824,6 +1805,7 @@ public class GraphBuilder {
                     && s.currentBCI() == _compilation.osrBCI()) {
                 throw new Bailout("OSR not supported while a JSR is active");
             }
+
             // push an exception object onto the stack if we are parsing an exception handler
             if (pushException) {
                 apush(append(new ExceptionObject()));
@@ -2074,7 +2056,6 @@ public class GraphBuilder {
             succ.merge(_state);
             _scopeData.addToWorkList(succ);
         }
-        _scopeData.setStream(null);
         return end;
     }
 
@@ -2121,18 +2102,17 @@ public class GraphBuilder {
         int rec = 0;
         IRScope scope = scope();
         while (scope != null) {
-            if (scope.method() != target) {
+            if (scope.method != target) {
                 break;
             }
-            scope = scope.caller();
+            scope = scope.caller;
             rec++;
         }
         return rec;
     }
 
     CiConstantPool constantPool() {
-        // XXX: speed up the access to the constant pool
-        return _compilation.runtime().getConstantPool(method());
+        return _scopeData.constantPool;
     }
 
     /**
