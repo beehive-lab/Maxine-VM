@@ -44,7 +44,7 @@ public interface CiOsrFrame {
 
     /**
      * Checks whether the local variable is live at the OSR location, and is
-     * also an object
+     * also an object.
      * @param local the local index
      * @return {@code true} if the local variable is live and is an object
      */
