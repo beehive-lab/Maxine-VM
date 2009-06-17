@@ -96,7 +96,7 @@ public abstract class Op2 extends Instruction {
 
     @Override
     public int valueNumber() {
-        return hash2(_opcode, _x, _y);
+        return Util.hash2(_opcode, _x, _y);
     }
 
     @Override

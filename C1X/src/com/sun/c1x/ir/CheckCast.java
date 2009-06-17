@@ -21,6 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.util.InstructionVisitor;
+import com.sun.c1x.util.Util;
 import com.sun.c1x.ci.CiType;
 import com.sun.c1x.ci.CiMethod;
 import com.sun.c1x.value.ValueStack;
@@ -110,7 +111,7 @@ public class CheckCast extends TypeCheck {
 
     @Override
     public int valueNumber() {
-        return _targetClass.isLoaded() ? hash1(Bytecodes.CHECKCAST, _object) : 0;
+        return _targetClass.isLoaded() ? Util.hash1(Bytecodes.CHECKCAST, _object) : 0;
     }
 
     @Override
