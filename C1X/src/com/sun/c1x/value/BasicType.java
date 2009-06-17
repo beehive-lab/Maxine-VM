@@ -21,7 +21,8 @@
 package com.sun.c1x.value;
 
 /**
- * The <code>BasicType</code> enum represents an enumeration of types used in C1X.
+ * The <code>BasicType</code> enum represents the basic kinds of types in C1X,
+ * including the primitive types, objects, {@code void}, and bytecode addresses used in JSR.
  *
  * @author Ben L. Titzer
  */
@@ -40,30 +41,33 @@ public enum BasicType {
     Illegal(' ', "illegal", null, -1);
 
     BasicType(char ch, String name, String jniName, int size) {
-        _ch = ch;
-        _name = name;
-        _jniName = jniName;
-        _size = size;
+        this.basicChar = ch;
+        this.javaName = name;
+        this.jniName = jniName;
+        this.size = size;
     }
 
-    public final char _ch;
+    /**
+     * The name of the basic type as a single character.
+     */
+    public final char basicChar;
 
     /**
      * The name of this basic type which will also be it Java programming language name if
      * it is {@linkplain #isPrimitiveType() primitive} or {@code void}.
      */
-    public final String _name;
+    public final String javaName;
 
     /**
-     * The JNI name of this basic type which null if this basic type is not a valid JNI type.
+     * The JNI name of this basic type; {@code null} if this basic type is not a valid JNI type.
      */
-    public final String _jniName;
+    public final String jniName;
 
     /**
      * The size of this basic type in terms of abstract JVM words. Note that this may
      * differ with actual size of this type in it machine representation.
      */
-    public final int _size;
+    public final int size;
 
     /**
      * Checks whether this basic type is valid as the type of a field.
@@ -92,10 +96,10 @@ public enum BasicType {
     /**
      * Checks whether this type is a Java primitive type.
      * @return {@code true} if this is {@link #Boolean}, {@link #Byte}, {@link #Char}, {@link #Short},
-     *                                 {@link #Int}, {@link #Float} or {@link #Double}.
+     *                                 {@link #Int}, {@link #Long}, {@link #Float} or {@link #Double}.
      */
     public boolean isPrimitiveType() {
-        return ordinal() <= Int.ordinal();
+        return ordinal() <= Long.ordinal();
     }
 
     /**
@@ -114,7 +118,7 @@ public enum BasicType {
      * @return the size of the basic type in slots
      */
     public int sizeInSlots() {
-        return _size;
+        return size;
     }
 
     /**
@@ -137,6 +141,12 @@ public enum BasicType {
         throw new IllegalArgumentException("invalid BasicType " + this + " for .sizeInBytes()");
     }
 
+    /**
+     * Gets the basic type of array elements for the array type code that appears
+     * in a {@link com.sun.c1x.bytecode.Bytecodes#NEWARRAY newarray} bytecode.
+     * @param code the array type code
+     * @return the basic type from the array type code
+     */
     public static BasicType fromArrayTypeCode(int code) {
         switch (code) {
             case 4: return Boolean;
@@ -151,6 +161,11 @@ public enum BasicType {
         throw new IllegalArgumentException("unknown array type code: " + code);
     }
 
+    /**
+     * Gets the basic type from the character describing a primitive or void.
+     * @param ch the character
+     * @return the basic type
+     */
     public static BasicType fromPrimitiveOrVoidTypeChar(char ch) {
         switch (ch) {
             case 'Z': return Boolean;
@@ -161,6 +176,7 @@ public enum BasicType {
             case 'S': return Short;
             case 'I': return Int;
             case 'J': return Long;
+            case 'V': return Void;
         }
         throw new IllegalArgumentException("unknown primitive or void type character: " + ch);
     }

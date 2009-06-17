@@ -170,7 +170,7 @@ public class ValueType {
      * @return the type character for this type
      */
     public char tchar() {
-        return _basicType._ch;
+        return _basicType.basicChar;
     }
 
     /**
@@ -178,7 +178,7 @@ public class ValueType {
      * @return the name of this value type
      */
     public String name() {
-        return _basicType._name;
+        return _basicType.javaName;
     }
 
     /**
@@ -217,7 +217,7 @@ public class ValueType {
      */
     @Override
     public String toString() {
-        return _basicType._name;
+        return _basicType.javaName;
     }
 
     /**

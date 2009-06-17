@@ -24,6 +24,7 @@ import com.sun.c1x.ci.CiField;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.util.InstructionClosure;
 import com.sun.c1x.util.InstructionVisitor;
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>StoreField</code> instruction represents a write to a static or instance field.
@@ -90,9 +91,9 @@ public class StoreField extends AccessField {
     @Override
     public int valueNumber() {
         if (_object != null) {
-            return hash2(_field.hashCode(), _object, _value);
+            return Util.hash2(_field.hashCode(), _object, _value);
         }
-        return hash1(_field.hashCode(), _value);
+        return Util.hash1(_field.hashCode(), _value);
     }
 
     @Override

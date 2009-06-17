@@ -21,19 +21,54 @@
 package com.sun.c1x.ci;
 
 /**
- * The <code>CiRuntime</code> class provides an implementation of a number of runtime calls that are
- * used by C1X. C1X may insert calls to the implementation of these methods into compiled code,
- * typically as the slow path.
+ * The <code>CiRuntime</code> class provides the major interface between the compiler and the
+ * runtime system, including access to constant pools, OSR frames, inlining requirements,
+ * and runtime calls such as checkcast. C1X may insert calls to the
+ * implementation of these methods into compiled code, typically as the slow path.
  *
  * @author Ben L. Titzer
  */
 public interface CiRuntime {
+    /**
+     * Gets the constant pool for a method.
+     * @param method the method
+     * @return the constant pool for the method
+     */
     CiConstantPool getConstantPool(CiMethod method);
+
+    /**
+     * Gets an {@link com.sun.c1x.ci.CiOsrFrame OSR frame} instance for the specified method
+     * at the specified OSR bytecode index.
+     * @param method the method
+     * @param bci the bytecode index
+     * @return an OSR frame that describes the layout of the frame
+     */
     CiOsrFrame getOsrFrame(CiMethod method, int bci);
 
+    /**
+     * Checks whether the specified method is required to be inlined (for semantic reasons).
+     * @param method the method being called
+     * @return {@code true} if the method must be inlined; {@code false} to let the compiler
+     * use its own heuristics
+     */
     boolean mustInline(CiMethod method);
+
+    /**
+     * Checks whether the specified method must not be inlined (for semantic reasons).
+     * @param method the method being called
+     * @return {@code true} if the method must not be inlined; {@code false} to let the compiler
+     * use its own heuristics
+     */
     boolean mustNotInline(CiMethod method);
+
+    /**
+     * Checks whether the specified method cannot be compiled.
+     * @param method the method being called
+     * @return {@code true} if the method cannot be compiled
+     */
     boolean mustNotCompile(CiMethod method);
+
+    // Hypothetical runtime calls:
 
     boolean instanceOf(Object object, CiType type);
     Object checkCast(Object object, CiType type);

@@ -134,7 +134,9 @@ public class C1XTest {
         // create the prototype
         if (_verbose.getValue() > 0) {
             _out.print("Creating Java prototype... ");
-            new PrototypeGenerator(_options).createJavaPrototype(false);
+        }
+        new PrototypeGenerator(_options).createJavaPrototype(false);
+        if (_verbose.getValue() > 0) {
             _out.println("done");
         }
 
@@ -144,8 +146,18 @@ public class C1XTest {
         final ProgressPrinter progress = new ProgressPrinter(_out, methods.size(), _verbose.getValue(), false);
 
         for (int i = 0; i < _warmup.getValue(); i++) {
+            if (_verbose.getValue() > 0) {
+                if (i == 0) {
+                    _out.print("Warming up");
+                }
+                _out.print(".");
+                _out.flush();
+            }
             for (MethodActor actor : methods) {
                 compile(runtime, actor, false, true);
+            }
+            if (_verbose.getValue() > 0 && i == _warmup.getValue() - 1) {
+                _out.print("\n");
             }
         }
 
