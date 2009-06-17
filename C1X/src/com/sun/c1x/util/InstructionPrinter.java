@@ -440,7 +440,7 @@ public class InstructionPrinter implements InstructionVisitor {
              print("._").
              print(i.offset()).
              print(" (").
-             print(i.field().type().basicType()._char).
+             print(i.field().type().basicType()._ch).
              print(")");
     }
 
@@ -554,7 +554,7 @@ public class InstructionPrinter implements InstructionVisitor {
     }
 
     public void visitStoreField(StoreField store) {
-        _out.print(store.object()).print("._").print(store.offset()).print(" := ").print(store.value()).print(" (").print(store.field().type().basicType()._char).print(')');
+        _out.print(store.object()).print("._").print(store.offset()).print(" := ").print(store.value()).print(" (").print(store.field().type().basicType()._ch).print(')');
     }
 
     public void visitStoreIndexed(StoreIndexed store) {

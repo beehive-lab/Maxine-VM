@@ -170,7 +170,7 @@ public class ValueType {
      * @return the type character for this type
      */
     public char tchar() {
-        return _basicType._char;
+        return _basicType._ch;
     }
 
     /**

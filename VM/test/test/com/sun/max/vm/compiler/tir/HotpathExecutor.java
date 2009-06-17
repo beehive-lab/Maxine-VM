@@ -107,7 +107,7 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
     }
 
     public void initialize(JavaTestCase testCase, boolean loadingPackages) {
-        final ClassActor classActor = ClassActor.fromJava(testCase._class);
+        final ClassActor classActor = ClassActor.fromJava(testCase._clazz);
         final StaticMethodActor staticMethodActor = classActor.findLocalStaticMethodActor("test");
         if (staticMethodActor != null) {
             testCase._slot1 = classActor;

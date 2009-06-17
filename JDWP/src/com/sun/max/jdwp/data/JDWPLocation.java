@@ -31,21 +31,21 @@ import java.io.*;
 public class JDWPLocation {
 
     private byte _type;
-    private ID.ClassID _class;
+    private ID.ClassID _clazz;
     private ID.MethodID _method;
     private long _index;
 
     public JDWPLocation(InputStream is) throws IOException {
         final DataInputStream dis = new DataInputStream(is);
         _type = dis.readByte();
-        _class = ID.read(is, ID.ClassID.class);
+        _clazz = ID.read(is, ID.ClassID.class);
         _method = ID.read(is, ID.MethodID.class);
         _index = dis.readLong();
     }
 
     public JDWPLocation(byte type, ID.ClassID klass, ID.MethodID method, long index) {
         _type = type;
-        _class = klass;
+        _clazz = klass;
         _method = method;
         _index = index;
     }
@@ -53,7 +53,7 @@ public class JDWPLocation {
     public void write(OutputStream os) throws IOException {
         final DataOutputStream dos = new DataOutputStream(os);
         dos.writeByte(_type);
-        _class.write(os);
+        _clazz.write(os);
         _method.write(os);
         dos.writeLong(_index);
     }
@@ -63,7 +63,7 @@ public class JDWPLocation {
     }
 
     public ID.ClassID getClassID() {
-        return _class;
+        return _clazz;
     }
 
     public ID.MethodID getMethodID() {
@@ -84,7 +84,7 @@ public class JDWPLocation {
     public boolean equals(Object obj) {
         if (obj instanceof JDWPLocation) {
             final JDWPLocation other = (JDWPLocation) obj;
-            return other._type == _type && other._index == _index && other._class.equals(other._class) && other._method.equals(_method);
+            return other._type == _type && other._index == _index && other._clazz.equals(other._clazz) && other._method.equals(_method);
         }
         return super.equals(obj);
     }

@@ -40,13 +40,13 @@ public enum BasicType {
     Illegal(' ', "illegal", null, -1);
 
     BasicType(char ch, String name, String jniName, int size) {
-        _char = ch;
+        _ch = ch;
         _name = name;
         _jniName = jniName;
         _size = size;
     }
 
-    public final char _char;
+    public final char _ch;
 
     /**
      * The name of this basic type which will also be it Java programming language name if

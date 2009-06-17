@@ -37,11 +37,11 @@ public class GlobalMetrics {
     }
 
     static class MetricSet<Metric_Type extends Metric> {
-        private final Class<Metric_Type> _class;
+        private final Class<Metric_Type> _clazz;
         private final Map<String, Metric_Type> _metrics = new HashMap<String, Metric_Type>();
 
         MetricSet(Class<Metric_Type> mClass) {
-            _class = mClass;
+            _clazz = mClass;
         }
     }
 
