@@ -32,7 +32,7 @@ public final class Class_isInstance03 {
 
     static final String _string = "";
     static final Object _object = new Object();
-    static final Class_isInstance03 _this = new Class_isInstance03();
+    static final Class_isInstance03 _thisObject = new Class_isInstance03();
 
     public static boolean test(int i) {
         Object object = null;
@@ -43,7 +43,7 @@ public final class Class_isInstance03 {
             object = _string;
         }
         if (i == 2) {
-            object = _this;
+            object = _thisObject;
         }
         return Class_isInstance03.class.isInstance(object);
     }

@@ -32,7 +32,7 @@ public final class Class_cast01 {
 
     static final String _string = "";
     static final Object _object = new Object();
-    static final Class_cast01 _this = new Class_cast01();
+    static final Class_cast01 _thisObject = new Class_cast01();
 
     public static int test(int i) {
         if (i == 0) {
@@ -46,7 +46,7 @@ public final class Class_cast01 {
             }
         }
         if (i == 2) {
-            if (Object.class.cast(_this) == null) {
+            if (Object.class.cast(_thisObject) == null) {
                 return -1;
             }
         }

@@ -36,7 +36,7 @@ public final class Object_getClass01 {
 
     static final Object _object = new Object();
     static final Object _string = new String();
-    static final Object_getClass01 _this = new Object_getClass01();
+    static final Object_getClass01 _thisObject = new Object_getClass01();
 
     public static String test(int i) {
         if (i == 0) {
@@ -46,10 +46,10 @@ public final class Object_getClass01 {
             return _string.getClass().toString();
         }
         if (i == 2) {
-            return _this.getClass().toString();
+            return _thisObject.getClass().toString();
         }
         if (i == 3) {
-            return _this.getClass().getClass().toString();
+            return _thisObject.getClass().getClass().toString();
         }
         return null;
     }

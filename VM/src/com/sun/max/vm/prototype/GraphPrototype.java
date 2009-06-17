@@ -196,7 +196,7 @@ public class GraphPrototype extends Prototype {
      * and those that do not.
      */
     static class ClassInfo {
-        final Class _class;
+        final Class _clazz;
         final boolean _instanceIsMutable;
         final boolean _staticTupleIsMutable;
 
@@ -212,7 +212,7 @@ public class GraphPrototype extends Prototype {
          * @param clazz the java class
          */
         ClassInfo(Class clazz, ClassInfo superInfo) {
-            _class = clazz;
+            _clazz = clazz;
 
             final AppendableSequence<ReferenceFieldInfo> instanceFields = new LinkSequence<ReferenceFieldInfo>();
             final AppendableSequence<ReferenceFieldInfo> staticFields = new LinkSequence<ReferenceFieldInfo>();
@@ -242,7 +242,7 @@ public class GraphPrototype extends Prototype {
         }
 
         boolean isReferenceArray() {
-            final Class componentType = _class.getComponentType();
+            final Class componentType = _clazz.getComponentType();
             return componentType != null && !componentType.isPrimitive() && !Word.class.isAssignableFrom(componentType);
         }
 
@@ -284,7 +284,7 @@ public class GraphPrototype extends Prototype {
         @Override
         public boolean equals(Object obj) {
             if (obj instanceof ClassInfo) {
-                return ((ClassInfo) obj)._class.equals(_class);
+                return ((ClassInfo) obj)._clazz.equals(_clazz);
             }
             return false;
         }
@@ -296,7 +296,7 @@ public class GraphPrototype extends Prototype {
          */
         @Override
         public int hashCode() {
-            return _class.hashCode();
+            return _clazz.hashCode();
         }
 
         /**
@@ -306,7 +306,7 @@ public class GraphPrototype extends Prototype {
          */
         @Override
         public String toString() {
-            return _class.toString();
+            return _clazz.toString();
         }
 
         /**
@@ -342,7 +342,7 @@ public class GraphPrototype extends Prototype {
          * @param stream
          */
         public void printTo(PrintStream stream) {
-            stream.println(_class.getName() + ": mutable-instance=" + _instanceIsMutable + ", mutable-static-tuple=" + _staticTupleIsMutable);
+            stream.println(_clazz.getName() + ": mutable-instance=" + _instanceIsMutable + ", mutable-static-tuple=" + _staticTupleIsMutable);
             if (!_instanceFields.isEmpty()) {
                 stream.println("  instance fields:");
                 for (ReferenceFieldInfo fieldInfo : _instanceFields) {
