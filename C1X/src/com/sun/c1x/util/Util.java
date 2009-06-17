@@ -26,7 +26,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>Util</code> class contains a number of utility methods used throughout the compiler.
+ * The <code>Util</code> class contains a motley collection of utility methods used throughout the compiler.
  *
  * @author Ben L. Titzer
  * @author Doug Simon
@@ -52,26 +52,48 @@ public class Util {
         return false;
     }
 
+    /**
+     * Checks whether the specified integer is a power of two.
+     * @param val the value to check
+     * @return {@code true} if the value is a power of two; {@code false} otherwise
+     */
     public static boolean isPowerOf2(int val) {
         return val != 0 && (val & val - 1) == 0;
     }
 
+    /**
+     * Checks whether the specified long is a power of two.
+     * @param val the value to check
+     * @return {@code true} if the value is a power of two; {@code false} otherwise
+     */
     public static boolean isPowerOf2(long val) {
         return val != 0 && (val & val - 1) == 0;
     }
 
+    /**
+     * Computes the log (base 2) of the specified integer, rounding down.
+     * (E.g {@code log2(8) = 3}, {@code log2(21) = 4})
+     * @param val the value
+     * @return the log base 2 of the value
+     */
     public static int log2(int val) {
         assert val > 0 && isPowerOf2(val);
         return 32 - Integer.numberOfLeadingZeros(val);
     }
 
+    /**
+     * Computes the log (base 2) of the specified long, rounding down.
+     * (E.g {@code log2(8) = 3}, {@code log2(21) = 4})
+     * @param val the value
+     * @return the log base 2 of the value
+     */
     public static int log2(long val) {
         assert val > 0 && isPowerOf2(val);
         return 64 - Long.numberOfLeadingZeros(val);
     }
 
     /**
-     * Statically cast an object to an arbitrary Object type WITHOUT eliminating dynamic erasure checks.
+     * Statically cast an object to an arbitrary Object type. Dynamically checked.
      */
     @SuppressWarnings("unchecked")
     public static <T> T uncheckedCast(Class<T> type, Object object) {
@@ -79,7 +101,7 @@ public class Util {
     }
 
     /**
-     * Statically cast an object to an arbitrary Object type WITHOUT eliminating dynamic erasure checks.
+     * Statically cast an object to an arbitrary Object type. Dynamically checked.
      */
     @SuppressWarnings("unchecked")
     public static <T> T uncheckedCast(Object object) {
@@ -96,7 +118,7 @@ public class Util {
                 if (name.length() != 1) {
                     throw new IllegalArgumentException("Illegal internal name: " + name);
                 }
-                return BasicType.fromPrimitiveOrVoidTypeChar(name.charAt(0))._name;
+                return BasicType.fromPrimitiveOrVoidTypeChar(name.charAt(0)).javaName;
         }
     }
 
@@ -120,7 +142,7 @@ public class Util {
     public static String toJavaName(CiType ciType, boolean qualified) {
         BasicType basicType = ciType.basicType();
         if (basicType.isPrimitiveType() || basicType == BasicType.Void) {
-            return basicType._name;
+            return basicType.javaName;
         }
         String string = internalNameToJava(ciType.name());
         if (qualified) {
@@ -171,7 +193,7 @@ public class Util {
      * @param format a format specification
      * @param method the method to be formatted
      * @param basicTypes if {@code true} then the types in {@code method}'s signature are printed in the
-     *            {@linkplain BasicType#_jniName JNI} form of their {@linkplain BasicType basic type}
+     *            {@linkplain BasicType#jniName JNI} form of their {@linkplain BasicType basic type}
      * @return the result of formatting this method according to {@code format}
      * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
      */
@@ -192,7 +214,7 @@ public class Util {
                         qualified = true;
                         // fall through
                     case 'r': {
-                        sb.append(basicTypes ? sig.returnBasicType()._jniName : toJavaName(sig.returnType(), qualified));
+                        sb.append(basicTypes ? sig.returnBasicType().jniName : toJavaName(sig.returnType(), qualified));
                         break;
                     }
                     case 'H':
@@ -214,7 +236,7 @@ public class Util {
                             if (i != 0) {
                                 sb.append(", ");
                             }
-                            sb.append(basicTypes ? sig.argumentBasicTypeAt(i)._jniName : toJavaName(sig.argumentTypeAt(i), qualified));
+                            sb.append(basicTypes ? sig.argumentBasicTypeAt(i).jniName : toJavaName(sig.argumentTypeAt(i), qualified));
                         }
                         break;
                     }
@@ -258,7 +280,7 @@ public class Util {
      * @param format a format specification
      * @param field the field to be formatted
      * @param basicTypes if {@code true} then the field's type is printed in the
-     *            {@linkplain BasicType#_jniName JNI} form of its {@linkplain BasicType basic type}
+     *            {@linkplain BasicType#jniName JNI} form of its {@linkplain BasicType basic type}
      * @return the result of formatting this field according to {@code format}
      * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
      */
@@ -278,7 +300,7 @@ public class Util {
                         qualified = true;
                         // fall through
                     case 't': {
-                        sb.append(basicTypes ? field.basicType()._jniName : toJavaName(field.type(), qualified));
+                        sb.append(basicTypes ? field.basicType().jniName : toJavaName(field.type(), qualified));
                         break;
                     }
                     case 'H':
@@ -309,5 +331,64 @@ public class Util {
             }
         }
         return sb.toString();
+    }
+
+    /**
+     * Converts a Java source-language class name into the internal form.
+     * @param className the class name
+     * @return the internal name form of the class name
+     */
+    public static String toInternalName(String className) {
+        return "L" + className.replace('.', '/') + ";";
+    }
+
+    /**
+     * Utility method to combine a base hash with the identity hash of one or more objects.
+     * @param hash the base hash
+     * @param x the object to add to the hash
+     * @return the combined hash
+     */
+    public static int hash1(int hash, Object x) {
+        // always set at least one bit in case the hash wraps to zero
+        return 0x10000000 | (hash + 7 * System.identityHashCode(x));
+    }
+
+    /**
+     * Utility method to combine a base hash with the identity hash of one or more objects.
+     * @param hash the base hash
+     * @param x the first object to add to the hash
+     * @param y the second object to add to the hash
+     * @return the combined hash
+     */
+    public static int hash2(int hash, Object x, Object y) {
+        // always set at least one bit in case the hash wraps to zero
+        return 0x20000000 | (hash + 7 * System.identityHashCode(x) + 11 * System.identityHashCode(y));
+    }
+
+    /**
+     * Utility method to combine a base hash with the identity hash of one or more objects.
+     * @param hash the base hash
+     * @param x the first object to add to the hash
+     * @param y the second object to add to the hash
+     * @param z the third object to add to the hash
+     * @return the combined hash
+     */
+    public static int hash3(int hash, Object x, Object y, Object z) {
+        // always set at least one bit in case the hash wraps to zero
+        return 0x30000000 | (hash + 7 * System.identityHashCode(x) + 11 * System.identityHashCode(y) + 13 * System.identityHashCode(z));
+    }
+
+    /**
+     * Utility method to combine a base hash with the identity hash of one or more objects.
+     * @param hash the base hash
+     * @param x the first object to add to the hash
+     * @param y the second object to add to the hash
+     * @param z the third object to add to the hash
+     * @param w the fourth object to add to the hash
+     * @return the combined hash
+     */
+    public static int hash4(int hash, Object x, Object y, Object z, Object w) {
+        // always set at least one bit in case the hash wraps to zero
+        return 0x40000000 | (hash + 7 * System.identityHashCode(x) + 11 * System.identityHashCode(y) + 13 * System.identityHashCode(z) + 17 * System.identityHashCode(w));
     }
 }

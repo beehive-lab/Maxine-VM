@@ -24,6 +24,7 @@ import com.sun.c1x.ci.CiField;
 import com.sun.c1x.ci.CiType;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.util.InstructionVisitor;
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>LoadField</code> instruction a read of a static or instance field.
@@ -79,7 +80,7 @@ public class LoadField extends AccessField {
     @Override
     public int valueNumber() {
         if (_object != null) {
-            return hash1(_field.hashCode(), _object);
+            return Util.hash1(_field.hashCode(), _object);
         }
         return 0x60000000 | _field.hashCode();
     }

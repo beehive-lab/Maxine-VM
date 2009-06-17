@@ -58,7 +58,7 @@ public class If extends BlockEnd {
         _y = y;
         _condition = cond;
         assert Instruction.sameBasicType(x, y);
-        setFlag(Flag.UnorderedIsTrue, unorderedIsTrue);
+        initFlag(Flag.UnorderedIsTrue, unorderedIsTrue);
         _successors.add(trueSucc);
         _successors.add(falseSucc);
     }

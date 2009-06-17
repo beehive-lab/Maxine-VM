@@ -25,37 +25,174 @@ import com.sun.c1x.util.BitMap;
 import java.util.List;
 
 /**
- * The <code>CiMethod</code> class definition.
+ * The <code>CiMethod</code> interface represents resolved and unresolved methods.
+ * Methods, like fields and types, are resolved through {@link CiConstantPool constant
+ * pools}, and their actual implementation is provided by the {@link CiRuntime runtime}
+ * to the compiler. Note that some operations are only available on resolved methods.
  *
  * @author Ben L. Titzer
  */
 public interface CiMethod {
 
+    /**
+     * Gets the name of the method as a string.
+     * @return the name of the method
+     */
     String name();
+
+    /**
+     * Gets the holder of the method as a compiler interface type.
+     * @return the holder
+     */
     CiType holder();
+
+    /**
+     * Gets the signature of the method.
+     * @return the signature of the method
+     */
     CiSignature signatureType();
+
+    /**
+     * Gets the bytecode of the method, if the method has bytecode.
+     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return the bytecode of the method
+     */
     byte[] code();
-    int maxLocals();
-    int maxStackSize();
 
-    boolean hasBalancedMonitors();
-    boolean hasExceptionHandlers();
-    boolean isLoaded();
-    boolean isAbstract();
-    boolean isNative();
-    boolean isFinalMethod();
-    boolean isSynchronized();
-    boolean isStrictFP();
-    boolean isStatic();
-    boolean isOverridden();
-    boolean willLink(CiType where, int opcode);
-    int vtableIndex();
-
-    CiMethodData methodData();
-    BitMap liveness(int bci);
-
-    boolean canBeStaticallyBound();
+    /**
+     * Gets the size of the bytecode of the method, if the method has bytecode.
+     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return the size of the bytecode of the method
+     */
     int codeSize();
 
+    /**
+     * Gets the maximum number of locals used in this method's bytecode.
+     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return the maximum number of locals
+     */
+    int maxLocals();
+
+    /**
+     * Gets the maximum number of stack slots used in this method's bytecode.
+     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return the maximum number of stack slots
+     */
+    int maxStackSize();
+
+    /**
+     * Checks whether this method has balanced monitor operations.
+     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method has balanced monitor operations
+     */
+    boolean hasBalancedMonitors();
+
+    /**
+     * Checks whether the method has any exception handlers.
+     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method has an exception handlers
+     */
+    boolean hasExceptionHandlers();
+
+    /**
+     * Checks whether this method is loaded (i.e. is resolved).
+     * @return {@code true} if the method is resolved
+     */
+    boolean isLoaded();
+
+    /**
+     * Checks whether this method is abstract.
+     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method is abstract
+     */
+    boolean isAbstract();
+
+    /**
+     * Checks whether this method is native.
+     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method is native
+     */
+    boolean isNative();
+
+    /**
+     * Checks whether this method is final.
+     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method is final
+     */
+    boolean isFinalMethod();
+
+    /**
+     * Checks whether this method is synchronized.
+     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method is synchronized
+     */
+    boolean isSynchronized();
+
+    /**
+     * Checks whether this method is strict w.r.t. floating point.
+     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method is strict
+     */
+    boolean isStrictFP();
+
+    /**
+     * Checks whether this method is static.
+     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method is static
+     */
+    boolean isStatic();
+
+    /**
+     * Checks whether this method has been overriden. Decisions made based
+     * on a method being overriden must be registered as dependencies.
+     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method has been overriden
+     */
+    boolean isOverridden();
+
+    /**
+     * Checks whether this method reference will link correctly at runtime
+     * for the specified location and operation.
+     * @param where the location where the operation occurs
+     * @param opcode the bytecode operation
+     * @return {@code true} if the method reference will link correctly at runtime
+     */
+    boolean willLink(CiType where, int opcode);
+
+    /**
+     * For virtual methods, this method returns the index into the virtual table
+     * of the method.
+     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return the virtual table index
+     */
+    int vtableIndex();
+
+    /**
+     * Gets the {@link CiMethodData method data} for this method, which stores instrumentation,
+     * including invocation counts, branch counts, etc.
+     * @return the method data object, if it exists; {@code null} otherwise
+     */
+    CiMethodData methodData();
+
+    /**
+     * Gets the liveness map for local variables at the specified bytecode index, if it exists.
+     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     * @param bci the bytecode index
+     * @return the liveness map at the specified index, if it is available; {@code null} otherwise
+     */
+    BitMap liveness(int bci);
+
+    /**
+     * Checks whether this method can be statically bound (i.e. it is final or private or static).
+     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true if this method can be statically bound)
+     */
+    boolean canBeStaticallyBound();
+
+    /**
+     * Gets the list of exception handlers for this method.
+     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return the list of exception handlers
+     */
     List<CiExceptionHandler> exceptionHandlers();
 }

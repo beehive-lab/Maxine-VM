@@ -95,20 +95,27 @@ public class GraphBuilder {
         C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(method);
         if (intrinsic != null) {
             // the root method is an intrinsic; load the parameters onto the stack and try to inline it
+            _state = _initialState.copy();
             loadParameters(method);
-            if (!tryInlineIntrinsic(method)) {
-                throw new Bailout("could not inline intrinsic method " + method);
+
+            if (tryInlineIntrinsic(method)) {
+                // pop the return value off the stack
+                ValueType rt = returnValueType(method);
+                Instruction result = null;
+                if (!rt.isVoid()) {
+                    result = pop(rt);
+                }
+                methodReturn(result);
+                BlockEnd end = (BlockEnd) _last;
+                _block.setEnd(end);
+                end.setState(_state);
+            } else {
+                // do the normal parsing
+                _scopeData.addToWorkList(startBlock);
+                iterateAllBlocks(false);
             }
-            ValueType rt = returnValueType(method);
-            Instruction result = null;
-            if (!rt.isVoid()) {
-                result = pop(rt);
-            }
-            methodReturn(result);
-            BlockEnd end = (BlockEnd) _last;
-            _block.setEnd(end);
-            end.setState(_state);
         } else {
+            // do the normal parsing
             _scopeData.addToWorkList(startBlock);
             iterateAllBlocks(false);
         }
