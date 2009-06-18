@@ -149,7 +149,8 @@ public class ValueMap {
         Link[] ntable = new Link[table.length * 3 + 4];
         if (parentKill != null) {
             // first add all the (live) parent's entries by cloning them
-            for (Link l : table) {
+            for (int i = 0; i < table.length; i++) {
+                Link l = table[i];
                 while (l != null && l.map == this) {
                     l = l.next; // skip entries in this map
                 }
@@ -162,7 +163,8 @@ public class ValueMap {
             }
         }
 
-        for (Link l : table) {
+        for (int i = 0; i < table.length; i++) {
+            Link l = table[i];
             // now add all the new entries
             while (l != null && l.map == this) {
                 int index = l.valueNumber % ntable.length;
@@ -263,7 +265,9 @@ public class ValueMap {
 
         @Override
         public void visitIntrinsic(Intrinsic i) {
-            if (!i.preservesState()) killMemory();
+            if (!i.preservesState()) {
+                killMemory();
+            }
         }
 
         @Override
