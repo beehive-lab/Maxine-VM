@@ -29,28 +29,28 @@ import java.util.*;
  */
 public class IndexedSequencePool<PoolObject_Type extends PoolObject> extends Pool<PoolObject_Type> {
 
-    protected final IndexedSequence<PoolObject_Type> _indexedSequence;
-    private final int _length;
+    protected final IndexedSequence<PoolObject_Type> indexedSequence;
+    private final int length;
 
     public IndexedSequencePool(IndexedSequence<PoolObject_Type> indexedSequence) {
-        _indexedSequence = indexedSequence;
-        _length = indexedSequence.length();
+        this.indexedSequence = indexedSequence;
+        length = indexedSequence.length();
     }
 
     @Override
     public PoolObject_Type get(int serial) {
-        assert _indexedSequence.length() == _length;
-        return _indexedSequence.get(serial);
+        assert indexedSequence.length() == length;
+        return indexedSequence.get(serial);
     }
 
     @Override
     public int length() {
-        assert _indexedSequence.length() == _length;
-        return _indexedSequence.length();
+        assert indexedSequence.length() == length;
+        return indexedSequence.length();
     }
 
     public Iterator<PoolObject_Type> iterator() {
-        assert _indexedSequence.length() == _length;
-        return _indexedSequence.iterator();
+        assert indexedSequence.length() == length;
+        return indexedSequence.iterator();
     }
 }

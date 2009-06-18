@@ -34,18 +34,18 @@ public class SortedLongArrayMapping<Value_Type> {
     public SortedLongArrayMapping() {
     }
 
-    private long[] _keys;
-    private Object[] _values;
+    private long[] keys;
+    private Object[] values;
 
     private int findIndex(long key) {
-        if (_keys == null) {
+        if (keys == null) {
             return 0;
         }
         int left = 0;
-        int right = _keys.length;
+        int right = keys.length;
         while (right > left) {
             final int middle = left + ((right - left) >> 1);
-            final long middleKey = _keys[middle];
+            final long middleKey = keys[middle];
             if (middleKey == key) {
                 return middle;
             } else if (middleKey > key) {
@@ -62,35 +62,35 @@ public class SortedLongArrayMapping<Value_Type> {
      * @return the value corresponding to the key or null if the key is not found
      */
     public Value_Type get(long key) {
-        if (_keys == null) {
+        if (keys == null) {
             return null;
         }
         final int index = findIndex(key);
-        if (index < _keys.length && _keys[index] == key) {
+        if (index < keys.length && keys[index] == key) {
             final Class<Value_Type> type = null;
-            return StaticLoophole.cast(type, _values[index]);
+            return StaticLoophole.cast(type, values[index]);
         }
         return null;
     }
 
     public void put(long key, Value_Type value) {
         final int index = findIndex(key);
-        if (_keys != null && index < _keys.length && _keys[index] == key) {
-            _values[index] = value;
+        if (keys != null && index < keys.length && keys[index] == key) {
+            values[index] = value;
         } else {
-            _keys = Longs.insert(_keys, index, key);
-            _values = Arrays.insert(Object.class, _values, index, value);
+            keys = Longs.insert(keys, index, key);
+            values = Arrays.insert(Object.class, values, index, value);
         }
     }
 
     public void remove(long key) {
-        if (_keys == null) {
+        if (keys == null) {
             return;
         }
         final int index = findIndex(key);
-        if (_keys[index] == key) {
-            _keys = Longs.remove(_keys, index);
-            _values = Arrays.remove(Object.class, _values, index);
+        if (keys[index] == key) {
+            keys = Longs.remove(keys, index);
+            values = Arrays.remove(Object.class, values, index);
         }
     }
 }

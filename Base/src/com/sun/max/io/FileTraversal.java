@@ -29,7 +29,7 @@ import java.io.*;
  */
 public class FileTraversal {
 
-    private boolean _stopped;
+    private boolean stopped;
 
     /**
      * Handles a standard file resource encountered during the traversal.
@@ -67,7 +67,7 @@ public class FileTraversal {
      * {@link #visitOther(File)} to prematurely terminate a traversal.
      */
     protected final void stop() {
-        _stopped = true;
+        stopped = true;
     }
 
     /**
@@ -78,7 +78,7 @@ public class FileTraversal {
      *                the file or directory at which to start the traversal
      */
     public void run(File file) {
-        _stopped = false;
+        stopped = false;
         visit(file);
     }
 
@@ -86,7 +86,7 @@ public class FileTraversal {
      * Determines if the traversal was stopped before every file in the file hierarchy was traversed.
      */
     public boolean wasStopped() {
-        return _stopped;
+        return stopped;
     }
 
     private boolean visit(File entry) {
@@ -100,12 +100,12 @@ public class FileTraversal {
         } else {
             visitOther(entry);
         }
-        if (_stopped) {
+        if (stopped) {
             return false;
         }
         if (subdirectoryToTraverse != null) {
             traverse(subdirectoryToTraverse);
-            if (_stopped) {
+            if (stopped) {
                 return false;
             }
         }

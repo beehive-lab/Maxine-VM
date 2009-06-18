@@ -37,15 +37,15 @@ public class GlobalMetrics {
     }
 
     static class MetricSet<Metric_Type extends Metric> {
-        private final Class<Metric_Type> _clazz;
-        private final Map<String, Metric_Type> _metrics = new HashMap<String, Metric_Type>();
+        private final Class<Metric_Type> clazz;
+        private final Map<String, Metric_Type> metrics = new HashMap<String, Metric_Type>();
 
         MetricSet(Class<Metric_Type> mClass) {
-            _clazz = mClass;
+            clazz = mClass;
         }
     }
 
-    protected static final Map<Class<? extends Metric>, MetricSet> _metricSets = new HashMap<Class<? extends Metric>, MetricSet>();
+    protected static final Map<Class<? extends Metric>, MetricSet> metricSets = new HashMap<Class<? extends Metric>, MetricSet>();
 
     /**
      * This method allocates a new counter with the specified name and adds it to the global
@@ -100,9 +100,9 @@ public class GlobalMetrics {
     }
 
     public static <Metric_Type extends Metric> Metric_Type getMetric(String name, Class<Metric_Type> mClass) {
-        final MetricSet<Metric_Type> metricSet = StaticLoophole.cast(_metricSets.get(mClass));
+        final MetricSet<Metric_Type> metricSet = StaticLoophole.cast(metricSets.get(mClass));
         if (metricSet != null) {
-            final Metric_Type metric = metricSet._metrics.get(name);
+            final Metric_Type metric = metricSet.metrics.get(name);
             if (metric != null) {
                 return metric;
             }
@@ -111,12 +111,12 @@ public class GlobalMetrics {
     }
 
     public static <Metric_Type extends Metric> Metric_Type setMetric(String name, Class<Metric_Type> mClass, Metric_Type metric) {
-        MetricSet<Metric_Type> metricSet = StaticLoophole.cast(_metricSets.get(mClass));
+        MetricSet<Metric_Type> metricSet = StaticLoophole.cast(metricSets.get(mClass));
         if (metricSet == null) {
             metricSet = new MetricSet<Metric_Type>(mClass);
-            _metricSets.put(mClass, metricSet);
+            metricSets.put(mClass, metricSet);
         }
-        metricSet._metrics.put(name, metric);
+        metricSet.metrics.put(name, metric);
         return metric;
     }
 
@@ -124,8 +124,8 @@ public class GlobalMetrics {
      * Resets of all the currently registered metrics.
      */
     public static synchronized void reset() {
-        for (MetricSet<? extends Metric> metricSet : _metricSets.values()) {
-            for (Metric metric : metricSet._metrics.values()) {
+        for (MetricSet<? extends Metric> metricSet : metricSets.values()) {
+            for (Metric metric : metricSet.metrics.values()) {
                 metric.reset();
             }
         }
@@ -138,16 +138,16 @@ public class GlobalMetrics {
      */
     public static synchronized void report(PrintStream stream) {
         final Map<String, Metric> allMetrics = new HashMap<String, Metric>();
-        for (MetricSet<? extends Metric> metricSet : _metricSets.values()) {
-            allMetrics.putAll(metricSet._metrics);
+        for (MetricSet<? extends Metric> metricSet : metricSets.values()) {
+            allMetrics.putAll(metricSet.metrics);
         }
 
         Map.Entry<String, Metric>[] array = StaticLoophole.cast(new Map.Entry[allMetrics.size()]);
         array = allMetrics.entrySet().toArray(array);
         Arrays.sort(array, new GlobalMetrics.EntryComparator());
         for (Map.Entry<String, Metric> entry : array) {
-            if (entry.getKey().length() > Metrics._longestMetricName) {
-                Metrics._longestMetricName = entry.getKey().length();
+            if (entry.getKey().length() > Metrics.longestMetricName) {
+                Metrics.longestMetricName = entry.getKey().length();
             }
         }
         for (Map.Entry<String, Metric> entry : array) {

@@ -51,11 +51,11 @@ public final class ProgramError extends Error {
      * Registers a handler to which error reporting is redirected. Any previously registered handler
      * is overwritten and discarded.
      *
-     * @param handler if non-null, this object's {@link Handler#handle(String, Throwable)} method is messaged instead of
+     * @param h if non-null, this object's {@link Handler#handle(String, Throwable)} method is messaged instead of
      *            raising a ProgramError.
      */
-    public static void setHandler(Handler handler) {
-        _handler = handler;
+    public static void setHandler(Handler h) {
+        handler = h;
     }
 
     private ProgramError(String message, Throwable cause) {
@@ -98,8 +98,8 @@ public final class ProgramError extends Error {
      * @param throwable an exception given more detail on the cause of the error condition. This value may be {@code null}.
      */
     public static ProgramError unexpected(String message, Throwable throwable) {
-        if (_handler != null) {
-            _handler.handle(message, throwable);
+        if (handler != null) {
+            handler.handle(message, throwable);
         }
         if (message == null) {
             throw new ProgramError("Unexpected Program Error:", throwable);
@@ -167,5 +167,5 @@ public final class ProgramError extends Error {
     }
 
     // Checkstyle: stop
-    private static Handler _handler = null;
+    private static Handler handler = null;
 }

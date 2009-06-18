@@ -27,13 +27,13 @@ import java.util.*;
  * implement this interface.
  * <p>
  * This class also includes a number of factory methods for creating {@code Mapping} instances with various properties.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
 public abstract class HashMapping<Key_Type, Value_Type> implements Mapping<Key_Type, Value_Type> {
 
-    private final HashEquivalence<Key_Type> _equivalence;
+    private final HashEquivalence<Key_Type> equivalence;
 
     /**
      * Determines if two given keys are equal.
@@ -41,7 +41,7 @@ public abstract class HashMapping<Key_Type, Value_Type> implements Mapping<Key_T
      * Subclasses override this method to define equivalence without delegating to a {@link HashEquivalence} object.
      */
     protected boolean equivalent(Key_Type key1, Key_Type key2) {
-        return _equivalence.equivalent(key1, key2);
+        return equivalence.equivalent(key1, key2);
     }
 
     /**
@@ -52,12 +52,12 @@ public abstract class HashMapping<Key_Type, Value_Type> implements Mapping<Key_T
     protected int hashCode(Key_Type key) {
         // Don't guard against a negative number here as the caller needs to convert the hash code into a valid index
         // which will involve range checking anyway
-        return _equivalence.hashCode(key);
+        return equivalence.hashCode(key);
     }
 
     /**
      * Creates a hash table.
-     * 
+     *
      * @param equivalence
      *            the semantics to be used for comparing keys. If {@code null} is provided, then {@link HashEquality} is
      *            used.
@@ -65,9 +65,9 @@ public abstract class HashMapping<Key_Type, Value_Type> implements Mapping<Key_T
     protected HashMapping(HashEquivalence<Key_Type> equivalence) {
         if (equivalence == null) {
             final Class<HashEquality<Key_Type>> type = null;
-            _equivalence = HashEquality.instance(type);
+            this.equivalence = HashEquality.instance(type);
         } else {
-            _equivalence = equivalence;
+            this.equivalence = equivalence;
         }
     }
 
@@ -88,17 +88,17 @@ public abstract class HashMapping<Key_Type, Value_Type> implements Mapping<Key_T
      */
     public IterableWithLength<Value_Type> values() {
         return new HashMappingIterable<Value_Type>() {
-            private final IterableWithLength<Key_Type> _keys = keys();
+            private final IterableWithLength<Key_Type> keys = keys();
             public Iterator<Value_Type> iterator() {
                 return new Iterator<Value_Type>() {
-                    private final Iterator<Key_Type> _keyIterator = _keys.iterator();
+                    private final Iterator<Key_Type> keyIterator = keys.iterator();
 
                     public boolean hasNext() {
-                        return _keyIterator.hasNext();
+                        return keyIterator.hasNext();
                     }
 
                     public Value_Type next() {
-                        return get(_keyIterator.next());
+                        return get(keyIterator.next());
                     }
 
                     public void remove() {

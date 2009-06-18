@@ -24,10 +24,10 @@ import com.sun.max.collect.*;
 
 /**
  * Deferred Runnables.
- * 
+ *
  * Creating a Deferrable either causes immediate execution of its 'run()' method
  * or queues it for deferred execution later on when 'runAll()' is called.
- * 
+ *
  * @author Bernd Mathiske
  */
 public abstract class Deferrable implements Runnable {
@@ -43,32 +43,32 @@ public abstract class Deferrable implements Runnable {
 
     public static final class Queue {
 
-        private AppendableSequence<Deferrable> _deferrables;
+        private AppendableSequence<Deferrable> deferrables;
 
         private Queue() {
         }
 
         synchronized void handle(Deferrable deferrable) {
-            if (_deferrables != null) {
-                _deferrables.append(deferrable);
+            if (deferrables != null) {
+                deferrables.append(deferrable);
             } else {
                 deferrable.run();
             }
         }
 
         public synchronized void deferAll() {
-            _deferrables = new LinkSequence<Deferrable>();
+            deferrables = new LinkSequence<Deferrable>();
         }
 
         public synchronized void runAll() {
-            while (_deferrables != null) {
-                final Sequence<Deferrable> deferrables = _deferrables;
-                _deferrables = new LinkSequence<Deferrable>();
-                for (Deferrable deferrable : deferrables) {
+            while (deferrables != null) {
+                final Sequence<Deferrable> oldDeferrables = this.deferrables;
+                this.deferrables = new LinkSequence<Deferrable>();
+                for (Deferrable deferrable : oldDeferrables) {
                     deferrable.run();
                 }
-                if (_deferrables.isEmpty()) {
-                    _deferrables = null;
+                if (oldDeferrables.isEmpty()) {
+                    this.deferrables = null;
                 }
             }
         }

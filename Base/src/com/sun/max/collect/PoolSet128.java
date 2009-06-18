@@ -40,12 +40,12 @@ public class PoolSet128<PoolObject_Type extends PoolObject> extends PoolSet<Pool
     /**
      * Bit vector representation of the low part of this set. The 2^k bit indicates the presence of _pool.get(k) in this set.
      */
-    private long _setLow;
+    private long setLow;
 
     /**
      * Bit vector representation of the low part of this set. The 2^k bit indicates the presence of _pool.get(k + 64) in this set.
      */
-    private long _setHigh;
+    private long setHigh;
 
     /**
      * Creates an empty pool set for a pool with 128 objects or less.
@@ -57,18 +57,18 @@ public class PoolSet128<PoolObject_Type extends PoolObject> extends PoolSet<Pool
 
     @Override
     public int length() {
-        return Long.bitCount(_setLow) + Long.bitCount(_setHigh);
+        return Long.bitCount(setLow) + Long.bitCount(setHigh);
     }
 
     @Override
     public void clear() {
-        _setLow = 0L;
-        _setHigh = 0L;
+        setLow = 0L;
+        setHigh = 0L;
     }
 
     @Override
     public boolean isEmpty() {
-        return _setLow == 0L && _setHigh == 0L;
+        return setLow == 0L && setHigh == 0L;
     }
 
     @INLINE
@@ -90,37 +90,37 @@ public class PoolSet128<PoolObject_Type extends PoolObject> extends PoolSet<Pool
         }
 
         final int serial = value.serial();
-        assert _pool.get(serial) == value;
+        assert pool.get(serial) == value;
         if (serial < 64) {
-            return (serialToBit(serial) & _setLow) != 0;
+            return (serialToBit(serial) & setLow) != 0;
         }
-        return (serialToBit(serial - 64) & _setHigh) != 0;
+        return (serialToBit(serial - 64) & setHigh) != 0;
     }
 
     @Override
     public void add(PoolObject_Type value) {
         final int serial = value.serial();
-        assert _pool.get(serial) == value;
+        assert pool.get(serial) == value;
         if (serial < 64) {
-            _setLow |= serialToBit(serial);
+            setLow |= serialToBit(serial);
         } else {
-            _setHigh |= serialToBit(serial - 64);
+            setHigh |= serialToBit(serial - 64);
         }
     }
 
     @Override
     public PoolSet128<PoolObject_Type> addAll() {
-        final int poolLength = _pool.length();
+        final int poolLength = pool.length();
         if (poolLength == 0) {
             return this;
         }
         if (poolLength <= 64) {
             final long highestBit = 1L << poolLength - 1;
-            _setLow = highestBit | (highestBit - 1);
+            setLow = highestBit | (highestBit - 1);
         } else {
             final long highestBit = 1L << (poolLength - 64) - 1;
-            _setHigh = highestBit | (highestBit - 1);
-            _setLow = -1L;
+            setHigh = highestBit | (highestBit - 1);
+            setLow = -1L;
         }
         assert length() == poolLength;
         return this;
@@ -130,8 +130,8 @@ public class PoolSet128<PoolObject_Type extends PoolObject> extends PoolSet<Pool
     public void or(PoolSet<PoolObject_Type> others) {
         if (others instanceof PoolSet128) {
             final PoolSet128 poolSet128 = (PoolSet128) others;
-            _setLow |= poolSet128._setLow;
-            _setHigh |= poolSet128._setHigh;
+            setLow |= poolSet128.setLow;
+            setHigh |= poolSet128.setHigh;
         } else {
             if (!others.isEmpty()) {
                 for (PoolObject_Type element : others) {
@@ -145,16 +145,16 @@ public class PoolSet128<PoolObject_Type extends PoolObject> extends PoolSet<Pool
     public boolean remove(PoolObject_Type value) {
         if (!isEmpty()) {
             final int serial = value.serial();
-            assert _pool.get(serial) == value;
+            assert pool.get(serial) == value;
             final boolean present;
             if (serial < 64) {
                 final long bit = serialToBit(serial);
-                present = (bit & _setLow) != 0;
-                _setLow &= ~bit;
+                present = (bit & setLow) != 0;
+                setLow &= ~bit;
             } else {
                 final long bit = serialToBit(serial - 64);
-                present = (bit & _setHigh) != 0;
-                _setHigh &= ~bit;
+                present = (bit & setHigh) != 0;
+                setHigh &= ~bit;
             }
             return present;
         }
@@ -166,40 +166,40 @@ public class PoolSet128<PoolObject_Type extends PoolObject> extends PoolSet<Pool
         if (isEmpty()) {
             throw new NoSuchElementException();
         }
-        long bit = Long.lowestOneBit(_setLow);
+        long bit = Long.lowestOneBit(setLow);
         if (bit != 0) {
-            _setLow &= ~bit;
-            return _pool.get(bitToSerial(bit));
+            setLow &= ~bit;
+            return pool.get(bitToSerial(bit));
         }
-        bit = Long.lowestOneBit(_setHigh);
+        bit = Long.lowestOneBit(setHigh);
         assert bit != 0;
-        _setHigh &= ~bit;
-        return _pool.get(bitToSerial(bit) + 64);
+        setHigh &= ~bit;
+        return pool.get(bitToSerial(bit) + 64);
     }
 
     @Override
     public void and(PoolSet<PoolObject_Type> others) {
         if (others instanceof PoolSet128) {
             final PoolSet128 poolSet128 = (PoolSet128) others;
-            _setLow &= poolSet128._setLow;
-            _setHigh &= poolSet128._setHigh;
+            setLow &= poolSet128.setLow;
+            setHigh &= poolSet128.setHigh;
         } else {
-            long setLow = _setLow;
-            while (setLow != 0) {
-                final long bit = Long.lowestOneBit(setLow);
+            long oldSetLow = this.setLow;
+            while (oldSetLow != 0) {
+                final long bit = Long.lowestOneBit(oldSetLow);
                 final int serial = bitToSerial(bit);
-                setLow &= ~bit;
-                if (!others.contains(_pool.get(serial))) {
-                    _setLow &= ~bit;
+                oldSetLow &= ~bit;
+                if (!others.contains(pool.get(serial))) {
+                    this.setLow &= ~bit;
                 }
             }
-            long setHigh = _setHigh;
-            while (setHigh != 0) {
-                final long bit = Long.lowestOneBit(setHigh);
+            long oldSetHigh = this.setHigh;
+            while (oldSetHigh != 0) {
+                final long bit = Long.lowestOneBit(oldSetHigh);
                 final int serial = bitToSerial(bit) + 64;
-                setHigh &= ~bit;
-                if (!others.contains(_pool.get(serial))) {
-                    _setHigh &= ~bit;
+                oldSetHigh &= ~bit;
+                if (!others.contains(pool.get(serial))) {
+                    this.setHigh &= ~bit;
                 }
             }
         }
@@ -209,17 +209,17 @@ public class PoolSet128<PoolObject_Type extends PoolObject> extends PoolSet<Pool
     public boolean containsAll(PoolSet<PoolObject_Type> others) {
         if (others instanceof PoolSet128) {
             final PoolSet128 poolSet128 = (PoolSet128) others;
-            return (_setLow & poolSet128._setLow) == poolSet128._setLow &&
-                   (_setHigh & poolSet128._setHigh) == poolSet128._setHigh;
+            return (setLow & poolSet128.setLow) == poolSet128.setLow &&
+                   (setHigh & poolSet128.setHigh) == poolSet128.setHigh;
         }
         return super.containsAll(others);
     }
 
     @Override
     public PoolSet<PoolObject_Type> clone() {
-        final PoolSet128<PoolObject_Type> poolSet = new PoolSet128<PoolObject_Type>(_pool);
-        poolSet._setLow = _setLow;
-        poolSet._setHigh = _setHigh;
+        final PoolSet128<PoolObject_Type> poolSet = new PoolSet128<PoolObject_Type>(pool);
+        poolSet.setLow = setLow;
+        poolSet.setHigh = setHigh;
         return poolSet;
     }
 
@@ -229,14 +229,14 @@ public class PoolSet128<PoolObject_Type extends PoolObject> extends PoolSet<Pool
     public Iterator<PoolObject_Type> iterator() {
         return new Iterator<PoolObject_Type>() {
 
-            private int _count = length();
-            private boolean _inHighSet;
-            private long _current = _setLow;
-            private long _currentBit = -1L;
-            private long _nextSetBit = Long.lowestOneBit(_setLow);
+            private int count = length();
+            private boolean inHighSet;
+            private long current = setLow;
+            private long currentBit = -1L;
+            private long nextSetBit = Long.lowestOneBit(setLow);
 
             public boolean hasNext() {
-                return _count != 0;
+                return count != 0;
             }
 
             public PoolObject_Type next() {
@@ -244,33 +244,33 @@ public class PoolSet128<PoolObject_Type extends PoolObject> extends PoolSet<Pool
                     throw new NoSuchElementException();
                 }
 
-                _currentBit = Long.lowestOneBit(_current);
-                if (_currentBit == 0) {
-                    assert !_inHighSet;
-                    _inHighSet = true;
-                    _current = _setHigh;
-                    _currentBit = Long.lowestOneBit(_current);
+                currentBit = Long.lowestOneBit(current);
+                if (currentBit == 0) {
+                    assert !inHighSet;
+                    inHighSet = true;
+                    current = setHigh;
+                    currentBit = Long.lowestOneBit(current);
                 }
 
-                final int serial = bitToSerial(_currentBit);
-                _current &= ~_currentBit;
-                _count--;
-                if (_inHighSet) {
-                    return _pool.get(serial + 64);
+                final int serial = bitToSerial(currentBit);
+                current &= ~currentBit;
+                count--;
+                if (inHighSet) {
+                    return pool.get(serial + 64);
                 }
-                return _pool.get(serial);
+                return pool.get(serial);
             }
 
             public void remove() {
-                if (_currentBit == -1L) {
+                if (currentBit == -1L) {
                     throw new IllegalStateException();
                 }
-                if (_inHighSet) {
-                    _setHigh &= ~_currentBit;
+                if (inHighSet) {
+                    setHigh &= ~currentBit;
                 } else {
-                    _setLow &= ~_currentBit;
+                    setLow &= ~currentBit;
                 }
-                _currentBit = -1;
+                currentBit = -1;
             }
         };
     }

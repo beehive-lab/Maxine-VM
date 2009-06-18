@@ -36,24 +36,24 @@ import com.sun.max.util.*;
  */
 public class TestEngine {
 
-    protected int _verbose = 2;
+    protected int verbose = 2;
 
-    protected final LinkedList<TestCase> _allTests;
-    protected final LinkedList<TestCase> _failTests;
-    protected final LinkedList<TestCase> _passTests;
-    protected final LinkedList<File> _skipFiles;
-    protected final Queue<TestCase> _queue;
-    protected final Registry<TestHarness> _registry;
-    protected int _finished;
-    protected ProgressPrinter _progress;
+    protected final LinkedList<TestCase> allTests;
+    protected final LinkedList<TestCase> failTests;
+    protected final LinkedList<TestCase> passTests;
+    protected final LinkedList<File> skipFiles;
+    protected final Queue<TestCase> queue;
+    protected final Registry<TestHarness> registry;
+    protected int finished;
+    protected ProgressPrinter progress;
 
     public TestEngine(Registry<TestHarness> registry) {
-        _allTests = new LinkedList<TestCase>();
-        _failTests = new LinkedList<TestCase>();
-        _passTests = new LinkedList<TestCase>();
-        _skipFiles = new LinkedList<File>();
-        _queue = new LinkedList<TestCase>();
-        _registry = registry;
+        allTests = new LinkedList<TestCase>();
+        failTests = new LinkedList<TestCase>();
+        passTests = new LinkedList<TestCase>();
+        skipFiles = new LinkedList<File>();
+        queue = new LinkedList<TestCase>();
+        this.registry = registry;
     }
 
     public static void main(String[] args) {
@@ -63,24 +63,24 @@ public class TestEngine {
     }
 
     public synchronized void addTest(TestCase testCase) {
-        testCase._testNumber = _allTests.size();
-        _allTests.add(testCase);
-        _queue.offer(testCase);
+        testCase.testNumber = allTests.size();
+        allTests.add(testCase);
+        queue.offer(testCase);
     }
 
     public synchronized void skipFile(File file) {
-        _skipFiles.add(file);
+        skipFiles.add(file);
     }
 
     public void setVerboseLevel(int level) {
-        _verbose = level;
+        verbose = level;
     }
 
     public void report(PrintStream stream) {
-        _progress.report();
-        if (_skipFiles.size() > 0) {
-            stream.println(_skipFiles.size() + " file(s) skipped");
-            for (File f : _skipFiles) {
+        progress.report();
+        if (skipFiles.size() > 0) {
+            stream.println(skipFiles.size() + " file(s) skipped");
+            for (File f : skipFiles) {
                 stream.println(f.getName());
             }
         }
@@ -88,8 +88,8 @@ public class TestEngine {
 
     public void parseAndRunTests(String[] args) {
         parseTests(args, true);
-        _progress = new ProgressPrinter(System.out, _allTests.size(), _verbose, false);
-        for (TestCase tcase = _queue.poll(); tcase != null; tcase = _queue.poll()) {
+        progress = new ProgressPrinter(System.out, allTests.size(), verbose, false);
+        for (TestCase tcase = queue.poll(); tcase != null; tcase = queue.poll()) {
             runTest(tcase);
         }
     }
@@ -97,16 +97,16 @@ public class TestEngine {
     public void parseTests(String[] args, boolean sort) {
         for (String arg : args) {
             final File f = new File(arg);
-            parseTests(f, _registry, sort);
+            parseTests(f, registry, sort);
         }
     }
 
     public Iterable<TestCase> getAllTests() {
-        return _allTests;
+        return allTests;
     }
 
     private synchronized TestCase dequeue() {
-        return _queue.remove();
+        return queue.remove();
     }
 
     private void runTest(TestCase testCase) {
@@ -116,32 +116,32 @@ public class TestEngine {
             testCase.test();
             final Class<TestHarness<TestCase>> type = null;
             // evaluate the result of test
-            final TestResult result = StaticLoophole.cast(type, testCase._harness).evaluateTest(this, testCase);
-            testCase._result = result;
+            final TestResult result = StaticLoophole.cast(type, testCase.harness).evaluateTest(this, testCase);
+            testCase.result = result;
         } catch (Throwable t) {
             // there was an exception evaluating the result of the test
-            testCase._result = new TestResult.UnexpectedException("Unexpected exception in test evaluation", t);
+            testCase.result = new TestResult.UnexpectedException("Unexpected exception in test evaluation", t);
         } finally {
             finishTest(testCase);
         }
     }
 
     private synchronized void startTest(TestCase testCase) {
-        _progress.begin(testCase._file.toString());
+        progress.begin(testCase.file.toString());
     }
 
     private synchronized void finishTest(TestCase testCase) {
-        final boolean passed = testCase._result.isSuccess();
+        final boolean passed = testCase.result.isSuccess();
         if (passed) {
-            _passTests.add(testCase);
-            _progress.pass();
+            passTests.add(testCase);
+            progress.pass();
         } else {
-            _failTests.add(testCase);
-            _progress.fail(testCase._result.failureMessage(testCase));
+            failTests.add(testCase);
+            progress.fail(testCase.result.failureMessage(testCase));
         }
     }
 
-    private void parseTests(File file, Registry<TestHarness> registry, boolean sort) {
+    private void parseTests(File file, Registry<TestHarness> reg, boolean sort) {
         // TODO: instead of generating program errors, generate test errors
         if (!file.exists()) {
             ProgramError.unexpected("file " + file + " not found.");
@@ -149,11 +149,11 @@ public class TestEngine {
         if (file.isDirectory()) {
             for (File dirFile : getFilesFromDirectory(file, sort)) {
                 if (!dirFile.isDirectory()) {
-                    parseFile(dirFile, registry);
+                    parseFile(dirFile, reg);
                 }
             }
         } else {
-            parseFile(file, registry);
+            parseFile(file, reg);
         }
     }
 
@@ -165,7 +165,7 @@ public class TestEngine {
         return list;
     }
 
-    private void parseFile(File file, Registry<TestHarness> registry) {
+    private void parseFile(File file, Registry<TestHarness> reg) {
         try {
             final Properties props = parseTestProperties(file);
             final String hname = props.getProperty("Harness");
@@ -173,7 +173,7 @@ public class TestEngine {
             if (hname != null) {
                 // only try to create tests if a harness is specified.
                 try {
-                    final TestHarness harness = registry.getInstance(hname, false);
+                    final TestHarness harness = reg.getInstance(hname, false);
                     if (harness == null) {
                         ProgramError.unexpected("invalid harness: " + hname);
                     } else {
@@ -230,13 +230,13 @@ public class TestEngine {
         return vars;
     }
 
-    private boolean _loadingPackages;
+    private boolean loadingPackages;
 
     public boolean loadingPackages() {
-        return _loadingPackages;
+        return loadingPackages;
     }
 
     public void setLoadingPackages(boolean loadingPackages) {
-        _loadingPackages = loadingPackages;
+        this.loadingPackages = loadingPackages;
     }
 }

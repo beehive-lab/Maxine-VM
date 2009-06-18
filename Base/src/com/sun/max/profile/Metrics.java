@@ -39,7 +39,7 @@ public final class Metrics {
         // do nothing.
     }
 
-    private static boolean _enabled;
+    private static boolean enabled;
 
     public interface Metric {
         void reset();
@@ -52,85 +52,85 @@ public final class Metrics {
      * @author Ben L. Titzer
      */
     public static class Counter implements Metric {
-        protected int _count;
-        protected long _accumulation;
+        protected int count;
+        protected long accumulation;
 
         public synchronized void increment() {
-            _count++;
+            count++;
         }
 
         public synchronized void accumulate(long value) {
-            _count++;
-            _accumulation += value;
+            count++;
+            accumulation += value;
         }
 
         public synchronized int getCount() {
-            return _count;
+            return count;
         }
 
         public synchronized long getAccumulation() {
-            return _accumulation;
+            return accumulation;
         }
 
         public synchronized void reset() {
-            _count = 0;
-            _accumulation = 0;
+            count = 0;
+            accumulation = 0;
         }
 
         public synchronized void report(String name, PrintStream stream) {
-            if (_accumulation > 0) {
-                final double average = _accumulation / (double) _count;
-                Metrics.report(stream, name, "total", "--", String.valueOf(_accumulation), "accumulated");
-                Metrics.report(stream, name, "average", "--", String.valueOf(average), "accumulated (" + _count + " counted)");
+            if (accumulation > 0) {
+                final double average = accumulation / (double) count;
+                Metrics.report(stream, name, "total", "--", String.valueOf(accumulation), "accumulated");
+                Metrics.report(stream, name, "average", "--", String.valueOf(average), "accumulated (" + count + " counted)");
             } else {
-                Metrics.report(stream, name, "total", "--", String.valueOf(_count), "counted");
+                Metrics.report(stream, name, "total", "--", String.valueOf(count), "counted");
             }
         }
     }
 
     public static class Rate implements Metric {
 
-        protected final Counter _counter;
-        protected final Clock _clock;
-        protected long _firstTicks;
-        protected long _lastAccumulation;
-        protected long _lastTicks;
+        protected final Counter counter;
+        protected final Clock clock;
+        protected long firstTicks;
+        protected long lastAccumulation;
+        protected long lastTicks;
 
         public Rate(Counter counter, Clock clock) {
-            _counter = counter;
-            _clock = clock;
-            _firstTicks = clock.getTicks();
-            _lastTicks = _firstTicks;
+            this.counter = counter;
+            this.clock = clock;
+            firstTicks = clock.getTicks();
+            lastTicks = firstTicks;
         }
 
         public double getRate() {
-            return (_counter._accumulation - _lastAccumulation) / (double) (_clock.getTicks() - _lastTicks);
+            return (counter.accumulation - lastAccumulation) / (double) (clock.getTicks() - lastTicks);
         }
 
         public double getAverageRate() {
-            return (_counter._accumulation) / (double) (_clock.getTicks() - _firstTicks);
+            return (counter.accumulation) / (double) (clock.getTicks() - firstTicks);
         }
 
         public void reset() {
-            _firstTicks = _clock.getTicks();
-            _lastTicks = _firstTicks;
-            _lastAccumulation = 0;
+            firstTicks = clock.getTicks();
+            lastTicks = firstTicks;
+            lastAccumulation = 0;
         }
 
         public void resetRate() {
-            _lastAccumulation = _counter._accumulation;
-            _lastTicks = _clock.getTicks();
+            lastAccumulation = counter.accumulation;
+            lastTicks = clock.getTicks();
         }
 
         public void report(String name, PrintStream stream) {
             double inst = getRate();
             double avg = getAverageRate();
-            if (_clock.getHZ() == 0) {
+            if (clock.getHZ() == 0) {
                 Metrics.report(stream, name, "inst.", "--", String.valueOf(inst), "/ tick");
                 Metrics.report(stream, name, "average", "--", String.valueOf(avg), "/ tick");
             } else {
-                inst = inst / _clock.getHZ();
-                avg = avg / _clock.getHZ();
+                inst = inst / clock.getHZ();
+                avg = avg / clock.getHZ();
                 Metrics.report(stream, name, "inst.", "--", String.valueOf(inst), "/ second");
                 Metrics.report(stream, name, "average", "--", String.valueOf(avg), "/ second");
             }
@@ -147,18 +147,18 @@ public final class Metrics {
     public static class Distribution<Value_Type> implements Metric {
 
         static class Counted implements Comparable<Counted> {
-            final int _total;
-            final Object _value;
+            final int total;
+            final Object value;
 
             public Counted(Object value, int total) {
-                _total = total;
-                _value = value;
+                this.total = total;
+                this.value = value;
             }
 
             public int compareTo(Counted o) {
-                if (o._total < _total) {
+                if (o.total < total) {
                     return -1;
-                } else if (o._total > _total) {
+                } else if (o.total > total) {
                     return 1;
                 }
                 return 0;
@@ -166,10 +166,10 @@ public final class Metrics {
 
         }
 
-        protected int _total;
+        protected int total;
 
         public int getTotal() {
-            return _total;
+            return total;
         }
 
         public int getCount(Value_Type value) {
@@ -177,7 +177,7 @@ public final class Metrics {
         }
 
         public void reset() {
-            _total = 0;
+            total = 0;
         }
 
         public Map<Value_Type, Integer> asMap() {
@@ -194,7 +194,7 @@ public final class Metrics {
             }
             Arrays.sort(counts);
             for (Counted counted : counts) {
-                stream.printf("  %-10d : %s\n", counted._total, counted._value);
+                stream.printf("  %-10d : %s\n", counted.total, counted.value);
             }
         }
     }
@@ -224,14 +224,14 @@ public final class Metrics {
     }
 
     public static boolean enabled() {
-        return _enabled;
+        return enabled;
     }
 
-    static int _longestMetricName = 16;
+    static int longestMetricName = 16;
 
     public static void report(PrintStream out, String metricName, String runName, String benchName, String value, String units) {
         out.print("@metric ");
-        out.print(Strings.padLengthWithSpaces(metricName, _longestMetricName + 1));
+        out.print(Strings.padLengthWithSpaces(metricName, longestMetricName + 1));
         out.print(" ");
         out.print(Strings.padLengthWithSpaces(runName, 9));
         out.print(" ");
@@ -244,6 +244,6 @@ public final class Metrics {
     }
 
     public static void enable(boolean enable) {
-        _enabled = enable;
+        enabled = enable;
     }
 }

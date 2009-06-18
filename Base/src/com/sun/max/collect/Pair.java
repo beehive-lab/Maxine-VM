@@ -34,30 +34,30 @@ public class Pair<First_Type, Second_Type> {
         return new Pair<First_Type, Second_Type>(kind, operation);
     }
 
-    private First_Type _first;
-    private Second_Type _second;
+    private First_Type first;
+    private Second_Type second;
 
     public First_Type first() {
-        return _first;
+        return first;
     }
 
     public Second_Type second() {
-        return _second;
+        return second;
     }
 
     public Pair(First_Type first, Second_Type second) {
-        this._first = first;
-        this._second = second;
+        this.first = first;
+        this.second = second;
     }
 
     @Override
     public int hashCode() {
-        return _first.hashCode() ^ _second.hashCode();
+        return first.hashCode() ^ second.hashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
         final Pair<First_Type, Second_Type> other = StaticLoophole.cast(obj);
-        return (_first == other._first || _first.equals(other._first)) && (_second == other._second || _second.equals(other._second));
+        return (first == other.first || first.equals(other.first)) && (second == other.second || second.equals(other.second));
     }
 }

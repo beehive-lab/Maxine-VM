@@ -19,7 +19,7 @@
  * Company, Ltd.
  */
 /**
- * 
+ *
  */
 package com.sun.max.test;
 
@@ -33,29 +33,29 @@ import java.util.*;
  */
 public abstract class TestCase {
 
-    public final File _file;
-    public final Properties _props;
-    public final TestHarness _harness;
-    public int _testNumber;
-    public long _startTime;
-    public long _endTime;
-    public Throwable _thrown;
-    public TestResult _result;
+    public final File file;
+    public final Properties props;
+    public final TestHarness harness;
+    public int testNumber;
+    public long startTime;
+    public long endTime;
+    public Throwable thrown;
+    public TestResult result;
 
     protected TestCase(TestHarness harness, File file, Properties props) {
-        _harness = harness;
-        _file = file;
-        _props = props;
+        this.harness = harness;
+        this.file = file;
+        this.props = props;
     }
 
     public void test() {
         try {
-            _startTime = System.currentTimeMillis();
+            startTime = System.currentTimeMillis();
             run();
         } catch (Throwable t) {
-            _thrown = t;
+            thrown = t;
         } finally {
-            _endTime = System.currentTimeMillis();
+            endTime = System.currentTimeMillis();
         }
     }
 

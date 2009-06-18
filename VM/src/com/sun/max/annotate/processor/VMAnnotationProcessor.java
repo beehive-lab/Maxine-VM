@@ -43,7 +43,7 @@ public class VMAnnotationProcessor extends BaseAnnotationProcessor {
     @Override
     public synchronized void init(ProcessingEnvironment environment) {
         super.init(environment);
-        _cFunctionAnnotationElement = _elementUtils.getTypeElement(C_FUNCTION.class.getName());
+        _cFunctionAnnotationElement = elementUtils.getTypeElement(C_FUNCTION.class.getName());
         _cFunctionScanner = new CFunctionScanner();
     }
 

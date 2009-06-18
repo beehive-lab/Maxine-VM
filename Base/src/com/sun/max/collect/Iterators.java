@@ -83,15 +83,15 @@ public final class Iterators {
             return empty();
         }
         return new Iterator<Element_Type>() {
-            int _currentIteratorIndex;
+            int currentIteratorIndex;
             public boolean hasNext() {
-                if (_currentIteratorIndex == iterators.length) {
+                if (currentIteratorIndex == iterators.length) {
                     return false;
                 }
-                if (iterators[_currentIteratorIndex].hasNext()) {
+                if (iterators[currentIteratorIndex].hasNext()) {
                     return true;
                 }
-                _currentIteratorIndex++;
+                currentIteratorIndex++;
                 return hasNext();
             }
 
@@ -99,7 +99,7 @@ public final class Iterators {
                 if (!hasNext()) {
                     throw new NoSuchElementException();
                 }
-                return iterators[_currentIteratorIndex].next();
+                return iterators[currentIteratorIndex].next();
             }
 
             public void remove() {

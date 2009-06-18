@@ -27,19 +27,19 @@ package com.sun.max.util;
  */
 public class Random {
 
-    private long _value;
+    private long value;
 
     public Random(long seed) {
-        _value = seed;
+        value = seed;
     }
 
     public int nextInt(int length) {
-        _value = _value * 1237 + 13;
-        return (int) (Math.abs(_value) % length);
+        value = value * 1237 + 13;
+        return (int) (Math.abs(value) % length);
     }
 
     public int previewNextInt(int length) {
-        final long tmpValue = _value * 1237 + 13;
+        final long tmpValue = value * 1237 + 13;
         return (int) (Math.abs(tmpValue) % length);
     }
 

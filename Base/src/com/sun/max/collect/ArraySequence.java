@@ -33,10 +33,10 @@ import com.sun.max.lang.Arrays;
  */
 public class ArraySequence<Element_Type> implements MutableSequence<Element_Type> {
 
-    private final Element_Type[] _array;
+    private final Element_Type[] array;
 
     public ArraySequence(Element_Type... array) {
-        _array = array;
+        this.array = array;
     }
 
     public static <T> Sequence<T> of(T... elements) {
@@ -45,46 +45,46 @@ public class ArraySequence<Element_Type> implements MutableSequence<Element_Type
 
     public ArraySequence(int length) {
         final Class<Element_Type[]> arrayType = null;
-        _array = StaticLoophole.cast(arrayType, new Object[length]);
+        array = StaticLoophole.cast(arrayType, new Object[length]);
     }
 
     public ArraySequence(Sequence<Element_Type> elements) {
         final Class<Element_Type[]> arrayType = null;
-        _array = StaticLoophole.cast(arrayType, new Object[elements.length()]);
+        array = StaticLoophole.cast(arrayType, new Object[elements.length()]);
         int i = 0;
         for (Element_Type element : elements) {
-            _array[i++] = element;
+            array[i++] = element;
         }
     }
 
     public ArraySequence(Collection<Element_Type> collection) {
         final Class<Element_Type[]> arrayType = null;
-        _array = StaticLoophole.cast(arrayType, collection.toArray());
+        array = StaticLoophole.cast(arrayType, collection.toArray());
     }
 
     public boolean isEmpty() {
-        return _array.length == 0;
+        return array.length == 0;
     }
 
     public int length() {
-        return _array.length;
+        return array.length;
     }
 
     public Element_Type first() {
-        return _array[0];
+        return array[0];
     }
 
     public Element_Type last() {
-        return _array[_array.length - 1];
+        return array[array.length - 1];
     }
 
     public Element_Type get(int index) {
-        return _array[index];
+        return array[index];
     }
 
     public Element_Type set(int index, Element_Type value) {
-        final Element_Type previousValue = _array[index];
-        _array[index] = value;
+        final Element_Type previousValue = array[index];
+        array[index] = value;
         return previousValue;
     }
 
@@ -94,7 +94,7 @@ public class ArraySequence<Element_Type> implements MutableSequence<Element_Type
             return false;
         }
         if (other instanceof ArraySequence) {
-            return Arrays.equals(_array, ((ArraySequence) other)._array);
+            return Arrays.equals(array, ((ArraySequence) other).array);
         }
 
         final Sequence sequence = (Sequence) other;
@@ -104,21 +104,21 @@ public class ArraySequence<Element_Type> implements MutableSequence<Element_Type
     @Override
     public int hashCode() {
         int result = 0;
-        final int delta = (_array.length >> 2) + 1;
-        for (int i = 0; i < _array.length; i += delta) {
-            final Element_Type element = _array[i];
+        final int delta = (array.length >> 2) + 1;
+        for (int i = 0; i < array.length; i += delta) {
+            final Element_Type element = array[i];
             result += element == null ? i : element.hashCode();
         }
         return result;
     }
 
     public Iterator<Element_Type> iterator() {
-        return Arrays.iterator(_array);
+        return Arrays.iterator(array);
     }
 
     @Override
     public Sequence<Element_Type> clone() {
-        return new ArraySequence<Element_Type>(_array.clone());
+        return new ArraySequence<Element_Type>(array.clone());
     }
 
     public static <From_Type, To_Type> Sequence<To_Type> map(Sequence<From_Type> from, Class<To_Type> toType, MapFunction<From_Type, To_Type> mapFunction) {
@@ -132,12 +132,12 @@ public class ArraySequence<Element_Type> implements MutableSequence<Element_Type
     }
 
     public Collection<Element_Type> toCollection() {
-        return java.util.Arrays.asList(_array);
+        return java.util.Arrays.asList(array);
     }
 
     @Override
     public String toString() {
-        return Arrays.toString(_array, ", ");
+        return Arrays.toString(array, ", ");
     }
 
     public static final class Static {

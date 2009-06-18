@@ -32,7 +32,7 @@ import com.sun.max.lang.*;
 /**
  * An operand field defines an instruction field whose value is given as a parameter in the generated
  * assembler method. The field is also a parameter in the external assembler syntax unless
- * it's {@link #_type value type} implements {@link ExternalMnemonicSuffixArgument} in which
+ * it's {@link #type value type} implements {@link ExternalMnemonicSuffixArgument} in which
  * case, the field's value is represented as a suffix of the mnemonic in the external assembler syntax.
  * 
  * @author Bernd Mathiske

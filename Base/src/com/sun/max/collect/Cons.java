@@ -35,20 +35,20 @@ import com.sun.max.lang.*;
  */
 public class Cons<Element_Type> implements LinearCollection<Element_Type> {
 
-    private final Element_Type _head;
-    private final Cons<Element_Type> _tail;
+    private final Element_Type head;
+    private final Cons<Element_Type> tail;
 
     public Cons(Element_Type head, Cons<Element_Type> tail) {
-        _head = head;
-        _tail = tail;
+        this.head = head;
+        this.tail = tail;
     }
 
     public Element_Type head() {
-        return _head;
+        return head;
     }
 
     public Cons<Element_Type> tail() {
-        return _tail;
+        return tail;
     }
 
     public int length() {
@@ -65,20 +65,20 @@ public class Cons<Element_Type> implements LinearCollection<Element_Type> {
     public Iterator<Element_Type> iterator() {
         final Class<Cons<Element_Type>> type = null;
         return new Iterator<Element_Type>() {
-            private final Cons<Element_Type> _start = StaticLoophole.cast(type, Cons.this);
-            private Cons<Element_Type> _list = _start;
+            private final Cons<Element_Type> start = StaticLoophole.cast(type, Cons.this);
+            private Cons<Element_Type> list = start;
 
             public boolean hasNext() {
-                return _list != null;
+                return list != null;
             }
             public Element_Type next() {
-                if (_list == null) {
+                if (list == null) {
                     throw new NoSuchElementException();
                 }
-                final Element_Type result = _list.head();
-                _list = _list.tail();
-                if (_list == _start) {
-                    _list = null;
+                final Element_Type result = list.head();
+                list = list.tail();
+                if (list == start) {
+                    list = null;
                 }
                 return result;
             }
