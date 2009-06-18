@@ -25,7 +25,7 @@ import com.sun.max.collect.*;
 
 /**
  * Description of an assembly instruction operand.
- * 
+ *
  * @author Bernd Mathiske
  */
 public abstract class X86Operand implements Operand {
@@ -36,14 +36,14 @@ public abstract class X86Operand implements Operand {
         public static final IndexedSequence<Designation> VALUES = new ArraySequence<Designation>(values());
     }
 
-    private Designation _designation;
+    private final Designation designation;
 
     protected X86Operand(Designation designation) {
-        _designation = designation;
+        this.designation = designation;
     }
 
     public Designation designation() {
-        return _designation;
+        return designation;
     }
 
 }

@@ -29,7 +29,7 @@ import java.io.*;
  */
 public class TruncatedInputException extends EOFException {
 
-    private final int _nRead;
+    private final int nRead;
 
     /**
      * @param s Exception message
@@ -37,7 +37,7 @@ public class TruncatedInputException extends EOFException {
      */
     public TruncatedInputException(String s, int n) {
         super(s);
-        _nRead = n;
+        nRead = n;
     }
 
     /**
@@ -45,7 +45,7 @@ public class TruncatedInputException extends EOFException {
      * @return Length of input read before EOF.
      */
     public int inputLength() {
-        return _nRead;
+        return nRead;
     }
 
 }

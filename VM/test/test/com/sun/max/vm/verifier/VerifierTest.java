@@ -274,7 +274,7 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
             if (classpathFile == null) {
                 fail("Could not find class " + name + " on class path: " + classpath);
             }
-            classActor = ClassfileReader.defineClassActor(name, VmClassLoader.VM_CLASS_LOADER, classpathFile._contents, null, classpathFile._classpathEntry);
+            classActor = ClassfileReader.defineClassActor(name, VmClassLoader.VM_CLASS_LOADER, classpathFile.contents, null, classpathFile.classpathEntry);
         }
         return classActor;
     }

@@ -29,7 +29,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 // START GENERATED LABEL ASSEMBLER METHODS
     /**
      * Pseudo-external assembler syntax: {@code brz{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brz,pn        %g0, . -131072}
+     * Example disassembly syntax: {@code brz,pn        %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -44,7 +44,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brlez{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brlez,pn      %g0, . -131072}
+     * Example disassembly syntax: {@code brlez,pn      %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -59,7 +59,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brlz{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brlz,pn       %g0, . -131072}
+     * Example disassembly syntax: {@code brlz,pn       %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -74,7 +74,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brnz{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brnz,pn       %g0, . -131072}
+     * Example disassembly syntax: {@code brnz,pn       %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -89,7 +89,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brgz{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brgz,pn       %g0, . -131072}
+     * Example disassembly syntax: {@code brgz,pn       %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -104,7 +104,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brgez{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brgez,pn      %g0, . -131072}
+     * Example disassembly syntax: {@code brgez,pn      %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -119,7 +119,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brz  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brz           %g0, . -131072}
+     * Example disassembly syntax: {@code brz           %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -134,7 +134,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brlez  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brlez         %g0, . -131072}
+     * Example disassembly syntax: {@code brlez         %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -149,7 +149,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brlz  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brlz          %g0, . -131072}
+     * Example disassembly syntax: {@code brlz          %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -164,7 +164,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brnz  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brnz          %g0, . -131072}
+     * Example disassembly syntax: {@code brnz          %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -179,7 +179,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brgz  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brgz          %g0, . -131072}
+     * Example disassembly syntax: {@code brgz          %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -194,7 +194,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brgez  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brgez         %g0, . -131072}
+     * Example disassembly syntax: {@code brgez         %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -209,7 +209,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code br[z|lez|lz|nz|gz|gez]{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brz,pn        %g0, . -131072}
+     * Example disassembly syntax: {@code brz,pn        %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -224,7 +224,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fba{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fba           . -8388608}
+     * Example disassembly syntax: {@code fba           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -239,7 +239,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbn{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbn           . -8388608}
+     * Example disassembly syntax: {@code fbn           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -254,7 +254,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbu{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbu           . -8388608}
+     * Example disassembly syntax: {@code fbu           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -269,7 +269,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbg{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbg           . -8388608}
+     * Example disassembly syntax: {@code fbg           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -284,7 +284,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbug{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbug          . -8388608}
+     * Example disassembly syntax: {@code fbug          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -299,7 +299,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbl{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbl           . -8388608}
+     * Example disassembly syntax: {@code fbl           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -314,7 +314,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbul{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbul          . -8388608}
+     * Example disassembly syntax: {@code fbul          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -329,7 +329,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fblg{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fblg          . -8388608}
+     * Example disassembly syntax: {@code fblg          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -344,7 +344,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbne{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbne          . -8388608}
+     * Example disassembly syntax: {@code fbne          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -359,7 +359,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbe{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbe           . -8388608}
+     * Example disassembly syntax: {@code fbe           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -374,7 +374,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbue{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbue          . -8388608}
+     * Example disassembly syntax: {@code fbue          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -389,7 +389,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbge{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbge          . -8388608}
+     * Example disassembly syntax: {@code fbge          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -404,7 +404,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbuge{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbuge         . -8388608}
+     * Example disassembly syntax: {@code fbuge         L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -419,7 +419,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fble{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fble          . -8388608}
+     * Example disassembly syntax: {@code fble          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -434,7 +434,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbule{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbule         . -8388608}
+     * Example disassembly syntax: {@code fbule         L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -449,7 +449,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbo{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbo           . -8388608}
+     * Example disassembly syntax: {@code fbo           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -464,7 +464,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fba  }<i>label</i>
-     * Example disassembly syntax: {@code fba           . -8388608}
+     * Example disassembly syntax: {@code fba           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -479,7 +479,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbn  }<i>label</i>
-     * Example disassembly syntax: {@code fbn           . -8388608}
+     * Example disassembly syntax: {@code fbn           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -494,7 +494,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbu  }<i>label</i>
-     * Example disassembly syntax: {@code fbu           . -8388608}
+     * Example disassembly syntax: {@code fbu           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -509,7 +509,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbg  }<i>label</i>
-     * Example disassembly syntax: {@code fbg           . -8388608}
+     * Example disassembly syntax: {@code fbg           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -524,7 +524,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbug  }<i>label</i>
-     * Example disassembly syntax: {@code fbug          . -8388608}
+     * Example disassembly syntax: {@code fbug          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -539,7 +539,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbl  }<i>label</i>
-     * Example disassembly syntax: {@code fbl           . -8388608}
+     * Example disassembly syntax: {@code fbl           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -554,7 +554,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbul  }<i>label</i>
-     * Example disassembly syntax: {@code fbul          . -8388608}
+     * Example disassembly syntax: {@code fbul          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -569,7 +569,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fblg  }<i>label</i>
-     * Example disassembly syntax: {@code fblg          . -8388608}
+     * Example disassembly syntax: {@code fblg          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -584,7 +584,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbne  }<i>label</i>
-     * Example disassembly syntax: {@code fbne          . -8388608}
+     * Example disassembly syntax: {@code fbne          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -599,7 +599,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbe  }<i>label</i>
-     * Example disassembly syntax: {@code fbe           . -8388608}
+     * Example disassembly syntax: {@code fbe           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -614,7 +614,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbue  }<i>label</i>
-     * Example disassembly syntax: {@code fbue          . -8388608}
+     * Example disassembly syntax: {@code fbue          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -629,7 +629,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbge  }<i>label</i>
-     * Example disassembly syntax: {@code fbge          . -8388608}
+     * Example disassembly syntax: {@code fbge          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -644,7 +644,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbuge  }<i>label</i>
-     * Example disassembly syntax: {@code fbuge         . -8388608}
+     * Example disassembly syntax: {@code fbuge         L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -659,7 +659,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fble  }<i>label</i>
-     * Example disassembly syntax: {@code fble          . -8388608}
+     * Example disassembly syntax: {@code fble          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -674,7 +674,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbule  }<i>label</i>
-     * Example disassembly syntax: {@code fbule         . -8388608}
+     * Example disassembly syntax: {@code fbule         L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -689,7 +689,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbo  }<i>label</i>
-     * Example disassembly syntax: {@code fbo           . -8388608}
+     * Example disassembly syntax: {@code fbo           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -704,7 +704,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fb[a|n|u|g|ug|l|ul|lg|ne|e|ue|ge|uge|le|ule|o]{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fba           . -8388608}
+     * Example disassembly syntax: {@code fba           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -719,7 +719,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fba{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fba,pn        %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fba,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -734,7 +734,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbn{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbn,pn        %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbn,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -749,7 +749,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbu{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbu,pn        %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbu,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -764,7 +764,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbg{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbg,pn        %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbg,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -779,7 +779,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbug{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbug,pn       %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbug,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -794,7 +794,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbl{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbl,pn        %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbl,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -809,7 +809,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbul{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbul,pn       %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbul,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -824,7 +824,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fblg{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fblg,pn       %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fblg,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -839,7 +839,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbne{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbne,pn       %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbne,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -854,7 +854,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbe{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbe,pn        %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbe,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -869,7 +869,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbue{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbue,pn       %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbue,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -884,7 +884,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbge{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbge,pn       %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbge,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -899,7 +899,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbuge{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbuge,pn      %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbuge,pn      %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -914,7 +914,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fble{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fble,pn       %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fble,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -929,7 +929,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbule{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbule,pn      %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbule,pn      %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -944,7 +944,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbo{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbo,pn        %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbo,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -959,7 +959,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fba  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fba           %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fba           %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -974,7 +974,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbn  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbn           %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbn           %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -989,7 +989,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbu  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbu           %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbu           %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1004,7 +1004,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbg  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbg           %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbg           %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1019,7 +1019,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbug  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbug          %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbug          %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1034,7 +1034,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbl  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbl           %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbl           %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1049,7 +1049,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbul  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbul          %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbul          %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1064,7 +1064,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fblg  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fblg          %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fblg          %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1079,7 +1079,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbne  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbne          %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbne          %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1094,7 +1094,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbe  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbe           %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbe           %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1109,7 +1109,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbue  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbue          %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbue          %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1124,7 +1124,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbge  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbge          %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbge          %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1139,7 +1139,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbuge  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbuge         %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbuge         %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1154,7 +1154,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fble  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fble          %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fble          %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1169,7 +1169,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbule  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbule         %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbule         %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1184,7 +1184,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbo  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbo           %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbo           %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1199,7 +1199,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fb[a|n|u|g|ug|l|ul|lg|ne|e|ue|ge|uge|le|ule|o]{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fba,pn        %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fba,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1214,7 +1214,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code ba{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code ba            . -8388608}
+     * Example disassembly syntax: {@code ba            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1229,7 +1229,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bn{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bn            . -8388608}
+     * Example disassembly syntax: {@code bn            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1244,7 +1244,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bne{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bne           . -8388608}
+     * Example disassembly syntax: {@code bne           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1259,7 +1259,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code be{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code be            . -8388608}
+     * Example disassembly syntax: {@code be            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1274,7 +1274,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bg{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bg            . -8388608}
+     * Example disassembly syntax: {@code bg            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1289,7 +1289,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code ble{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code ble           . -8388608}
+     * Example disassembly syntax: {@code ble           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1304,7 +1304,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bge{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bge           . -8388608}
+     * Example disassembly syntax: {@code bge           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1319,7 +1319,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bl{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bl            . -8388608}
+     * Example disassembly syntax: {@code bl            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1334,7 +1334,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bgu{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bgu           . -8388608}
+     * Example disassembly syntax: {@code bgu           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1349,7 +1349,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bleu{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bleu          . -8388608}
+     * Example disassembly syntax: {@code bleu          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1364,7 +1364,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bcc{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bcc           . -8388608}
+     * Example disassembly syntax: {@code bcc           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1379,7 +1379,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bcs{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bcs           . -8388608}
+     * Example disassembly syntax: {@code bcs           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1394,7 +1394,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bpos{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bpos          . -8388608}
+     * Example disassembly syntax: {@code bpos          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1409,7 +1409,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bneg{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bneg          . -8388608}
+     * Example disassembly syntax: {@code bneg          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1424,7 +1424,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bvc{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bvc           . -8388608}
+     * Example disassembly syntax: {@code bvc           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1439,7 +1439,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bvs{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bvs           . -8388608}
+     * Example disassembly syntax: {@code bvs           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1454,7 +1454,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code ba  }<i>label</i>
-     * Example disassembly syntax: {@code ba            . -8388608}
+     * Example disassembly syntax: {@code ba            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1469,7 +1469,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bn  }<i>label</i>
-     * Example disassembly syntax: {@code bn            . -8388608}
+     * Example disassembly syntax: {@code bn            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1484,7 +1484,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bne  }<i>label</i>
-     * Example disassembly syntax: {@code bne           . -8388608}
+     * Example disassembly syntax: {@code bne           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1499,7 +1499,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code be  }<i>label</i>
-     * Example disassembly syntax: {@code be            . -8388608}
+     * Example disassembly syntax: {@code be            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1514,7 +1514,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bg  }<i>label</i>
-     * Example disassembly syntax: {@code bg            . -8388608}
+     * Example disassembly syntax: {@code bg            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1529,7 +1529,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code ble  }<i>label</i>
-     * Example disassembly syntax: {@code ble           . -8388608}
+     * Example disassembly syntax: {@code ble           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1544,7 +1544,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bge  }<i>label</i>
-     * Example disassembly syntax: {@code bge           . -8388608}
+     * Example disassembly syntax: {@code bge           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1559,7 +1559,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bl  }<i>label</i>
-     * Example disassembly syntax: {@code bl            . -8388608}
+     * Example disassembly syntax: {@code bl            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1574,7 +1574,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bgu  }<i>label</i>
-     * Example disassembly syntax: {@code bgu           . -8388608}
+     * Example disassembly syntax: {@code bgu           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1589,7 +1589,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bleu  }<i>label</i>
-     * Example disassembly syntax: {@code bleu          . -8388608}
+     * Example disassembly syntax: {@code bleu          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1604,7 +1604,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bcc  }<i>label</i>
-     * Example disassembly syntax: {@code bcc           . -8388608}
+     * Example disassembly syntax: {@code bcc           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1619,7 +1619,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bcs  }<i>label</i>
-     * Example disassembly syntax: {@code bcs           . -8388608}
+     * Example disassembly syntax: {@code bcs           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1634,7 +1634,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bpos  }<i>label</i>
-     * Example disassembly syntax: {@code bpos          . -8388608}
+     * Example disassembly syntax: {@code bpos          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1649,7 +1649,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bneg  }<i>label</i>
-     * Example disassembly syntax: {@code bneg          . -8388608}
+     * Example disassembly syntax: {@code bneg          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1664,7 +1664,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bvc  }<i>label</i>
-     * Example disassembly syntax: {@code bvc           . -8388608}
+     * Example disassembly syntax: {@code bvc           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1679,7 +1679,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bvs  }<i>label</i>
-     * Example disassembly syntax: {@code bvs           . -8388608}
+     * Example disassembly syntax: {@code bvs           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1694,7 +1694,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code b[a|n|ne|e|g|le|ge|l|gu|leu|cc|cs|pos|neg|vc|vs]{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code ba            . -8388608}
+     * Example disassembly syntax: {@code ba            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -1709,7 +1709,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code ba{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code ba,pn         %icc, . -1048576}
+     * Example disassembly syntax: {@code ba,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1724,7 +1724,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bn{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bn,pn         %icc, . -1048576}
+     * Example disassembly syntax: {@code bn,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1739,7 +1739,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bne{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bne,pn        %icc, . -1048576}
+     * Example disassembly syntax: {@code bne,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1754,7 +1754,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code be{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code be,pn         %icc, . -1048576}
+     * Example disassembly syntax: {@code be,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1769,7 +1769,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bg{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bg,pn         %icc, . -1048576}
+     * Example disassembly syntax: {@code bg,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1784,7 +1784,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code ble{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code ble,pn        %icc, . -1048576}
+     * Example disassembly syntax: {@code ble,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1799,7 +1799,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bge{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bge,pn        %icc, . -1048576}
+     * Example disassembly syntax: {@code bge,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1814,7 +1814,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bl{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bl,pn         %icc, . -1048576}
+     * Example disassembly syntax: {@code bl,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1829,7 +1829,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bgu{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bgu,pn        %icc, . -1048576}
+     * Example disassembly syntax: {@code bgu,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1844,7 +1844,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bleu{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bleu,pn       %icc, . -1048576}
+     * Example disassembly syntax: {@code bleu,pn       %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1859,7 +1859,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bcc{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bcc,pn        %icc, . -1048576}
+     * Example disassembly syntax: {@code bcc,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1874,7 +1874,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bcs{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bcs,pn        %icc, . -1048576}
+     * Example disassembly syntax: {@code bcs,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1889,7 +1889,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bpos{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bpos,pn       %icc, . -1048576}
+     * Example disassembly syntax: {@code bpos,pn       %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1904,7 +1904,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bneg{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bneg,pn       %icc, . -1048576}
+     * Example disassembly syntax: {@code bneg,pn       %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1919,7 +1919,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bvc{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bvc,pn        %icc, . -1048576}
+     * Example disassembly syntax: {@code bvc,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1934,7 +1934,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bvs{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bvs,pn        %icc, . -1048576}
+     * Example disassembly syntax: {@code bvs,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1949,7 +1949,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code ba  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code ba            %icc, . -1048576}
+     * Example disassembly syntax: {@code ba            %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1964,7 +1964,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bn  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bn            %icc, . -1048576}
+     * Example disassembly syntax: {@code bn            %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1979,7 +1979,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bne  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bne           %icc, . -1048576}
+     * Example disassembly syntax: {@code bne           %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -1994,7 +1994,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code be  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code be            %icc, . -1048576}
+     * Example disassembly syntax: {@code be            %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -2009,7 +2009,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bg  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bg            %icc, . -1048576}
+     * Example disassembly syntax: {@code bg            %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -2024,7 +2024,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code ble  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code ble           %icc, . -1048576}
+     * Example disassembly syntax: {@code ble           %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -2039,7 +2039,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bge  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bge           %icc, . -1048576}
+     * Example disassembly syntax: {@code bge           %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -2054,7 +2054,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bl  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bl            %icc, . -1048576}
+     * Example disassembly syntax: {@code bl            %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -2069,7 +2069,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bgu  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bgu           %icc, . -1048576}
+     * Example disassembly syntax: {@code bgu           %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -2084,7 +2084,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bleu  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bleu          %icc, . -1048576}
+     * Example disassembly syntax: {@code bleu          %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -2099,7 +2099,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bcc  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bcc           %icc, . -1048576}
+     * Example disassembly syntax: {@code bcc           %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -2114,7 +2114,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bcs  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bcs           %icc, . -1048576}
+     * Example disassembly syntax: {@code bcs           %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -2129,7 +2129,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bpos  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bpos          %icc, . -1048576}
+     * Example disassembly syntax: {@code bpos          %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -2144,7 +2144,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bneg  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bneg          %icc, . -1048576}
+     * Example disassembly syntax: {@code bneg          %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -2159,7 +2159,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bvc  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bvc           %icc, . -1048576}
+     * Example disassembly syntax: {@code bvc           %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -2174,7 +2174,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bvs  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bvs           %icc, . -1048576}
+     * Example disassembly syntax: {@code bvs           %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -2189,7 +2189,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code b[a|n|ne|e|g|le|ge|l|gu|leu|cc|cs|pos|neg|vc|vs]{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code ba,pn         %icc, . -1048576}
+     * Example disassembly syntax: {@code ba,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -2204,7 +2204,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code call  }<i>label</i>
-     * Example disassembly syntax: {@code call          . -2147483648}
+     * Example disassembly syntax: {@code call          L1: -2147483648}
      * <p>
      * Constraint: {@code (-2147483648 <= label && label <= 2147483644) && ((label % 4) == 0)}<br />
      *
@@ -2219,7 +2219,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code iprefetch  }<i>label</i>
-     * Example disassembly syntax: {@code iprefetch     . -1048576}
+     * Example disassembly syntax: {@code iprefetch     L1: -1048576}
      * <p>
      * This is a synthetic instruction equivalent to: {@code b(N, A, PT, XCC, label)}
      * <p>
@@ -2237,380 +2237,380 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     class brz_190 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final GPR _rs1;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final GPR rs1;
         brz_190(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, GPR rs1, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _rs1 = rs1;
+            this.a = a;
+            this.p = p;
+            this.rs1 = rs1;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            brz(_a, _p, _rs1, offsetAsInt());
+            brz(a, p, rs1, offsetAsInt());
         }
     }
 
     class brlez_191 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final GPR _rs1;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final GPR rs1;
         brlez_191(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, GPR rs1, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _rs1 = rs1;
+            this.a = a;
+            this.p = p;
+            this.rs1 = rs1;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            brlez(_a, _p, _rs1, offsetAsInt());
+            brlez(a, p, rs1, offsetAsInt());
         }
     }
 
     class brlz_192 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final GPR _rs1;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final GPR rs1;
         brlz_192(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, GPR rs1, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _rs1 = rs1;
+            this.a = a;
+            this.p = p;
+            this.rs1 = rs1;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            brlz(_a, _p, _rs1, offsetAsInt());
+            brlz(a, p, rs1, offsetAsInt());
         }
     }
 
     class brnz_193 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final GPR _rs1;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final GPR rs1;
         brnz_193(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, GPR rs1, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _rs1 = rs1;
+            this.a = a;
+            this.p = p;
+            this.rs1 = rs1;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            brnz(_a, _p, _rs1, offsetAsInt());
+            brnz(a, p, rs1, offsetAsInt());
         }
     }
 
     class brgz_194 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final GPR _rs1;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final GPR rs1;
         brgz_194(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, GPR rs1, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _rs1 = rs1;
+            this.a = a;
+            this.p = p;
+            this.rs1 = rs1;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            brgz(_a, _p, _rs1, offsetAsInt());
+            brgz(a, p, rs1, offsetAsInt());
         }
     }
 
     class brgez_195 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final GPR _rs1;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final GPR rs1;
         brgez_195(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, GPR rs1, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _rs1 = rs1;
+            this.a = a;
+            this.p = p;
+            this.rs1 = rs1;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            brgez(_a, _p, _rs1, offsetAsInt());
+            brgez(a, p, rs1, offsetAsInt());
         }
     }
 
     class brz_196 extends InstructionWithOffset {
-        private final GPR _rs1;
+        private final GPR rs1;
         brz_196(int startPosition, int endPosition, GPR rs1, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _rs1 = rs1;
+            this.rs1 = rs1;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            brz(_rs1, offsetAsInt());
+            brz(rs1, offsetAsInt());
         }
     }
 
     class brlez_197 extends InstructionWithOffset {
-        private final GPR _rs1;
+        private final GPR rs1;
         brlez_197(int startPosition, int endPosition, GPR rs1, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _rs1 = rs1;
+            this.rs1 = rs1;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            brlez(_rs1, offsetAsInt());
+            brlez(rs1, offsetAsInt());
         }
     }
 
     class brlz_198 extends InstructionWithOffset {
-        private final GPR _rs1;
+        private final GPR rs1;
         brlz_198(int startPosition, int endPosition, GPR rs1, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _rs1 = rs1;
+            this.rs1 = rs1;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            brlz(_rs1, offsetAsInt());
+            brlz(rs1, offsetAsInt());
         }
     }
 
     class brnz_199 extends InstructionWithOffset {
-        private final GPR _rs1;
+        private final GPR rs1;
         brnz_199(int startPosition, int endPosition, GPR rs1, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _rs1 = rs1;
+            this.rs1 = rs1;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            brnz(_rs1, offsetAsInt());
+            brnz(rs1, offsetAsInt());
         }
     }
 
     class brgz_200 extends InstructionWithOffset {
-        private final GPR _rs1;
+        private final GPR rs1;
         brgz_200(int startPosition, int endPosition, GPR rs1, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _rs1 = rs1;
+            this.rs1 = rs1;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            brgz(_rs1, offsetAsInt());
+            brgz(rs1, offsetAsInt());
         }
     }
 
     class brgez_201 extends InstructionWithOffset {
-        private final GPR _rs1;
+        private final GPR rs1;
         brgez_201(int startPosition, int endPosition, GPR rs1, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _rs1 = rs1;
+            this.rs1 = rs1;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            brgez(_rs1, offsetAsInt());
+            brgez(rs1, offsetAsInt());
         }
     }
 
     class br_202 extends InstructionWithOffset {
-        private final BPr _cond;
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final GPR _rs1;
+        private final BPr cond;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final GPR rs1;
         br_202(int startPosition, int endPosition, BPr cond, AnnulBit a, BranchPredictionBit p, GPR rs1, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _cond = cond;
-            _a = a;
-            _p = p;
-            _rs1 = rs1;
+            this.cond = cond;
+            this.a = a;
+            this.p = p;
+            this.rs1 = rs1;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            br(_cond, _a, _p, _rs1, offsetAsInt());
+            br(cond, a, p, rs1, offsetAsInt());
         }
     }
 
     class fba_203 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         fba_203(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fba(_a, offsetAsInt());
+            fba(a, offsetAsInt());
         }
     }
 
     class fbn_204 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         fbn_204(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbn(_a, offsetAsInt());
+            fbn(a, offsetAsInt());
         }
     }
 
     class fbu_205 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         fbu_205(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbu(_a, offsetAsInt());
+            fbu(a, offsetAsInt());
         }
     }
 
     class fbg_206 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         fbg_206(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbg(_a, offsetAsInt());
+            fbg(a, offsetAsInt());
         }
     }
 
     class fbug_207 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         fbug_207(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbug(_a, offsetAsInt());
+            fbug(a, offsetAsInt());
         }
     }
 
     class fbl_208 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         fbl_208(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbl(_a, offsetAsInt());
+            fbl(a, offsetAsInt());
         }
     }
 
     class fbul_209 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         fbul_209(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbul(_a, offsetAsInt());
+            fbul(a, offsetAsInt());
         }
     }
 
     class fblg_210 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         fblg_210(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fblg(_a, offsetAsInt());
+            fblg(a, offsetAsInt());
         }
     }
 
     class fbne_211 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         fbne_211(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbne(_a, offsetAsInt());
+            fbne(a, offsetAsInt());
         }
     }
 
     class fbe_212 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         fbe_212(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbe(_a, offsetAsInt());
+            fbe(a, offsetAsInt());
         }
     }
 
     class fbue_213 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         fbue_213(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbue(_a, offsetAsInt());
+            fbue(a, offsetAsInt());
         }
     }
 
     class fbge_214 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         fbge_214(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbge(_a, offsetAsInt());
+            fbge(a, offsetAsInt());
         }
     }
 
     class fbuge_215 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         fbuge_215(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbuge(_a, offsetAsInt());
+            fbuge(a, offsetAsInt());
         }
     }
 
     class fble_216 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         fble_216(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fble(_a, offsetAsInt());
+            fble(a, offsetAsInt());
         }
     }
 
     class fbule_217 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         fbule_217(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbule(_a, offsetAsInt());
+            fbule(a, offsetAsInt());
         }
     }
 
     class fbo_218 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         fbo_218(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbo(_a, offsetAsInt());
+            fbo(a, offsetAsInt());
         }
     }
 
@@ -2775,674 +2775,674 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     class fb_235 extends InstructionWithOffset {
-        private final FBfcc _cond;
-        private final AnnulBit _a;
+        private final FBfcc cond;
+        private final AnnulBit a;
         fb_235(int startPosition, int endPosition, FBfcc cond, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _cond = cond;
-            _a = a;
+            this.cond = cond;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fb(_cond, _a, offsetAsInt());
+            fb(cond, a, offsetAsInt());
         }
     }
 
     class fba_236 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final FCCOperand _n;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final FCCOperand n;
         fba_236(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _n = n;
+            this.a = a;
+            this.p = p;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fba(_a, _p, _n, offsetAsInt());
+            fba(a, p, n, offsetAsInt());
         }
     }
 
     class fbn_237 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final FCCOperand _n;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final FCCOperand n;
         fbn_237(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _n = n;
+            this.a = a;
+            this.p = p;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbn(_a, _p, _n, offsetAsInt());
+            fbn(a, p, n, offsetAsInt());
         }
     }
 
     class fbu_238 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final FCCOperand _n;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final FCCOperand n;
         fbu_238(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _n = n;
+            this.a = a;
+            this.p = p;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbu(_a, _p, _n, offsetAsInt());
+            fbu(a, p, n, offsetAsInt());
         }
     }
 
     class fbg_239 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final FCCOperand _n;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final FCCOperand n;
         fbg_239(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _n = n;
+            this.a = a;
+            this.p = p;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbg(_a, _p, _n, offsetAsInt());
+            fbg(a, p, n, offsetAsInt());
         }
     }
 
     class fbug_240 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final FCCOperand _n;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final FCCOperand n;
         fbug_240(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _n = n;
+            this.a = a;
+            this.p = p;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbug(_a, _p, _n, offsetAsInt());
+            fbug(a, p, n, offsetAsInt());
         }
     }
 
     class fbl_241 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final FCCOperand _n;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final FCCOperand n;
         fbl_241(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _n = n;
+            this.a = a;
+            this.p = p;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbl(_a, _p, _n, offsetAsInt());
+            fbl(a, p, n, offsetAsInt());
         }
     }
 
     class fbul_242 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final FCCOperand _n;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final FCCOperand n;
         fbul_242(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _n = n;
+            this.a = a;
+            this.p = p;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbul(_a, _p, _n, offsetAsInt());
+            fbul(a, p, n, offsetAsInt());
         }
     }
 
     class fblg_243 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final FCCOperand _n;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final FCCOperand n;
         fblg_243(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _n = n;
+            this.a = a;
+            this.p = p;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fblg(_a, _p, _n, offsetAsInt());
+            fblg(a, p, n, offsetAsInt());
         }
     }
 
     class fbne_244 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final FCCOperand _n;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final FCCOperand n;
         fbne_244(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _n = n;
+            this.a = a;
+            this.p = p;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbne(_a, _p, _n, offsetAsInt());
+            fbne(a, p, n, offsetAsInt());
         }
     }
 
     class fbe_245 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final FCCOperand _n;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final FCCOperand n;
         fbe_245(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _n = n;
+            this.a = a;
+            this.p = p;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbe(_a, _p, _n, offsetAsInt());
+            fbe(a, p, n, offsetAsInt());
         }
     }
 
     class fbue_246 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final FCCOperand _n;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final FCCOperand n;
         fbue_246(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _n = n;
+            this.a = a;
+            this.p = p;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbue(_a, _p, _n, offsetAsInt());
+            fbue(a, p, n, offsetAsInt());
         }
     }
 
     class fbge_247 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final FCCOperand _n;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final FCCOperand n;
         fbge_247(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _n = n;
+            this.a = a;
+            this.p = p;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbge(_a, _p, _n, offsetAsInt());
+            fbge(a, p, n, offsetAsInt());
         }
     }
 
     class fbuge_248 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final FCCOperand _n;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final FCCOperand n;
         fbuge_248(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _n = n;
+            this.a = a;
+            this.p = p;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbuge(_a, _p, _n, offsetAsInt());
+            fbuge(a, p, n, offsetAsInt());
         }
     }
 
     class fble_249 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final FCCOperand _n;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final FCCOperand n;
         fble_249(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _n = n;
+            this.a = a;
+            this.p = p;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fble(_a, _p, _n, offsetAsInt());
+            fble(a, p, n, offsetAsInt());
         }
     }
 
     class fbule_250 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final FCCOperand _n;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final FCCOperand n;
         fbule_250(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _n = n;
+            this.a = a;
+            this.p = p;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbule(_a, _p, _n, offsetAsInt());
+            fbule(a, p, n, offsetAsInt());
         }
     }
 
     class fbo_251 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final FCCOperand _n;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final FCCOperand n;
         fbo_251(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _n = n;
+            this.a = a;
+            this.p = p;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbo(_a, _p, _n, offsetAsInt());
+            fbo(a, p, n, offsetAsInt());
         }
     }
 
     class fba_252 extends InstructionWithOffset {
-        private final FCCOperand _n;
+        private final FCCOperand n;
         fba_252(int startPosition, int endPosition, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _n = n;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fba(_n, offsetAsInt());
+            fba(n, offsetAsInt());
         }
     }
 
     class fbn_253 extends InstructionWithOffset {
-        private final FCCOperand _n;
+        private final FCCOperand n;
         fbn_253(int startPosition, int endPosition, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _n = n;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbn(_n, offsetAsInt());
+            fbn(n, offsetAsInt());
         }
     }
 
     class fbu_254 extends InstructionWithOffset {
-        private final FCCOperand _n;
+        private final FCCOperand n;
         fbu_254(int startPosition, int endPosition, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _n = n;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbu(_n, offsetAsInt());
+            fbu(n, offsetAsInt());
         }
     }
 
     class fbg_255 extends InstructionWithOffset {
-        private final FCCOperand _n;
+        private final FCCOperand n;
         fbg_255(int startPosition, int endPosition, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _n = n;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbg(_n, offsetAsInt());
+            fbg(n, offsetAsInt());
         }
     }
 
     class fbug_256 extends InstructionWithOffset {
-        private final FCCOperand _n;
+        private final FCCOperand n;
         fbug_256(int startPosition, int endPosition, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _n = n;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbug(_n, offsetAsInt());
+            fbug(n, offsetAsInt());
         }
     }
 
     class fbl_257 extends InstructionWithOffset {
-        private final FCCOperand _n;
+        private final FCCOperand n;
         fbl_257(int startPosition, int endPosition, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _n = n;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbl(_n, offsetAsInt());
+            fbl(n, offsetAsInt());
         }
     }
 
     class fbul_258 extends InstructionWithOffset {
-        private final FCCOperand _n;
+        private final FCCOperand n;
         fbul_258(int startPosition, int endPosition, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _n = n;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbul(_n, offsetAsInt());
+            fbul(n, offsetAsInt());
         }
     }
 
     class fblg_259 extends InstructionWithOffset {
-        private final FCCOperand _n;
+        private final FCCOperand n;
         fblg_259(int startPosition, int endPosition, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _n = n;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fblg(_n, offsetAsInt());
+            fblg(n, offsetAsInt());
         }
     }
 
     class fbne_260 extends InstructionWithOffset {
-        private final FCCOperand _n;
+        private final FCCOperand n;
         fbne_260(int startPosition, int endPosition, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _n = n;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbne(_n, offsetAsInt());
+            fbne(n, offsetAsInt());
         }
     }
 
     class fbe_261 extends InstructionWithOffset {
-        private final FCCOperand _n;
+        private final FCCOperand n;
         fbe_261(int startPosition, int endPosition, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _n = n;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbe(_n, offsetAsInt());
+            fbe(n, offsetAsInt());
         }
     }
 
     class fbue_262 extends InstructionWithOffset {
-        private final FCCOperand _n;
+        private final FCCOperand n;
         fbue_262(int startPosition, int endPosition, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _n = n;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbue(_n, offsetAsInt());
+            fbue(n, offsetAsInt());
         }
     }
 
     class fbge_263 extends InstructionWithOffset {
-        private final FCCOperand _n;
+        private final FCCOperand n;
         fbge_263(int startPosition, int endPosition, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _n = n;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbge(_n, offsetAsInt());
+            fbge(n, offsetAsInt());
         }
     }
 
     class fbuge_264 extends InstructionWithOffset {
-        private final FCCOperand _n;
+        private final FCCOperand n;
         fbuge_264(int startPosition, int endPosition, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _n = n;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbuge(_n, offsetAsInt());
+            fbuge(n, offsetAsInt());
         }
     }
 
     class fble_265 extends InstructionWithOffset {
-        private final FCCOperand _n;
+        private final FCCOperand n;
         fble_265(int startPosition, int endPosition, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _n = n;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fble(_n, offsetAsInt());
+            fble(n, offsetAsInt());
         }
     }
 
     class fbule_266 extends InstructionWithOffset {
-        private final FCCOperand _n;
+        private final FCCOperand n;
         fbule_266(int startPosition, int endPosition, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _n = n;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbule(_n, offsetAsInt());
+            fbule(n, offsetAsInt());
         }
     }
 
     class fbo_267 extends InstructionWithOffset {
-        private final FCCOperand _n;
+        private final FCCOperand n;
         fbo_267(int startPosition, int endPosition, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _n = n;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fbo(_n, offsetAsInt());
+            fbo(n, offsetAsInt());
         }
     }
 
     class fb_268 extends InstructionWithOffset {
-        private final FBfcc _cond;
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final FCCOperand _n;
+        private final FBfcc cond;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final FCCOperand n;
         fb_268(int startPosition, int endPosition, FBfcc cond, AnnulBit a, BranchPredictionBit p, FCCOperand n, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _cond = cond;
-            _a = a;
-            _p = p;
-            _n = n;
+            this.cond = cond;
+            this.a = a;
+            this.p = p;
+            this.n = n;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            fb(_cond, _a, _p, _n, offsetAsInt());
+            fb(cond, a, p, n, offsetAsInt());
         }
     }
 
     class ba_269 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         ba_269(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            ba(_a, offsetAsInt());
+            ba(a, offsetAsInt());
         }
     }
 
     class bn_270 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         bn_270(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bn(_a, offsetAsInt());
+            bn(a, offsetAsInt());
         }
     }
 
     class bne_271 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         bne_271(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bne(_a, offsetAsInt());
+            bne(a, offsetAsInt());
         }
     }
 
     class be_272 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         be_272(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            be(_a, offsetAsInt());
+            be(a, offsetAsInt());
         }
     }
 
     class bg_273 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         bg_273(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bg(_a, offsetAsInt());
+            bg(a, offsetAsInt());
         }
     }
 
     class ble_274 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         ble_274(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            ble(_a, offsetAsInt());
+            ble(a, offsetAsInt());
         }
     }
 
     class bge_275 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         bge_275(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bge(_a, offsetAsInt());
+            bge(a, offsetAsInt());
         }
     }
 
     class bl_276 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         bl_276(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bl(_a, offsetAsInt());
+            bl(a, offsetAsInt());
         }
     }
 
     class bgu_277 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         bgu_277(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bgu(_a, offsetAsInt());
+            bgu(a, offsetAsInt());
         }
     }
 
     class bleu_278 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         bleu_278(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bleu(_a, offsetAsInt());
+            bleu(a, offsetAsInt());
         }
     }
 
     class bcc_279 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         bcc_279(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bcc(_a, offsetAsInt());
+            bcc(a, offsetAsInt());
         }
     }
 
     class bcs_280 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         bcs_280(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bcs(_a, offsetAsInt());
+            bcs(a, offsetAsInt());
         }
     }
 
     class bpos_281 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         bpos_281(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bpos(_a, offsetAsInt());
+            bpos(a, offsetAsInt());
         }
     }
 
     class bneg_282 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         bneg_282(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bneg(_a, offsetAsInt());
+            bneg(a, offsetAsInt());
         }
     }
 
     class bvc_283 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         bvc_283(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bvc(_a, offsetAsInt());
+            bvc(a, offsetAsInt());
         }
     }
 
     class bvs_284 extends InstructionWithOffset {
-        private final AnnulBit _a;
+        private final AnnulBit a;
         bvs_284(int startPosition, int endPosition, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bvs(_a, offsetAsInt());
+            bvs(a, offsetAsInt());
         }
     }
 
@@ -3607,482 +3607,482 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     class b_301 extends InstructionWithOffset {
-        private final Bicc _cond;
-        private final AnnulBit _a;
+        private final Bicc cond;
+        private final AnnulBit a;
         b_301(int startPosition, int endPosition, Bicc cond, AnnulBit a, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _cond = cond;
-            _a = a;
+            this.cond = cond;
+            this.a = a;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            b(_cond, _a, offsetAsInt());
+            b(cond, a, offsetAsInt());
         }
     }
 
     class ba_302 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final ICCOperand _i_or_x_cc;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final ICCOperand i_or_x_cc;
         ba_302(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _i_or_x_cc = i_or_x_cc;
+            this.a = a;
+            this.p = p;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            ba(_a, _p, _i_or_x_cc, offsetAsInt());
+            ba(a, p, i_or_x_cc, offsetAsInt());
         }
     }
 
     class bn_303 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final ICCOperand _i_or_x_cc;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final ICCOperand i_or_x_cc;
         bn_303(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _i_or_x_cc = i_or_x_cc;
+            this.a = a;
+            this.p = p;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bn(_a, _p, _i_or_x_cc, offsetAsInt());
+            bn(a, p, i_or_x_cc, offsetAsInt());
         }
     }
 
     class bne_304 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final ICCOperand _i_or_x_cc;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final ICCOperand i_or_x_cc;
         bne_304(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _i_or_x_cc = i_or_x_cc;
+            this.a = a;
+            this.p = p;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bne(_a, _p, _i_or_x_cc, offsetAsInt());
+            bne(a, p, i_or_x_cc, offsetAsInt());
         }
     }
 
     class be_305 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final ICCOperand _i_or_x_cc;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final ICCOperand i_or_x_cc;
         be_305(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _i_or_x_cc = i_or_x_cc;
+            this.a = a;
+            this.p = p;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            be(_a, _p, _i_or_x_cc, offsetAsInt());
+            be(a, p, i_or_x_cc, offsetAsInt());
         }
     }
 
     class bg_306 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final ICCOperand _i_or_x_cc;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final ICCOperand i_or_x_cc;
         bg_306(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _i_or_x_cc = i_or_x_cc;
+            this.a = a;
+            this.p = p;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bg(_a, _p, _i_or_x_cc, offsetAsInt());
+            bg(a, p, i_or_x_cc, offsetAsInt());
         }
     }
 
     class ble_307 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final ICCOperand _i_or_x_cc;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final ICCOperand i_or_x_cc;
         ble_307(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _i_or_x_cc = i_or_x_cc;
+            this.a = a;
+            this.p = p;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            ble(_a, _p, _i_or_x_cc, offsetAsInt());
+            ble(a, p, i_or_x_cc, offsetAsInt());
         }
     }
 
     class bge_308 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final ICCOperand _i_or_x_cc;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final ICCOperand i_or_x_cc;
         bge_308(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _i_or_x_cc = i_or_x_cc;
+            this.a = a;
+            this.p = p;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bge(_a, _p, _i_or_x_cc, offsetAsInt());
+            bge(a, p, i_or_x_cc, offsetAsInt());
         }
     }
 
     class bl_309 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final ICCOperand _i_or_x_cc;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final ICCOperand i_or_x_cc;
         bl_309(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _i_or_x_cc = i_or_x_cc;
+            this.a = a;
+            this.p = p;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bl(_a, _p, _i_or_x_cc, offsetAsInt());
+            bl(a, p, i_or_x_cc, offsetAsInt());
         }
     }
 
     class bgu_310 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final ICCOperand _i_or_x_cc;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final ICCOperand i_or_x_cc;
         bgu_310(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _i_or_x_cc = i_or_x_cc;
+            this.a = a;
+            this.p = p;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bgu(_a, _p, _i_or_x_cc, offsetAsInt());
+            bgu(a, p, i_or_x_cc, offsetAsInt());
         }
     }
 
     class bleu_311 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final ICCOperand _i_or_x_cc;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final ICCOperand i_or_x_cc;
         bleu_311(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _i_or_x_cc = i_or_x_cc;
+            this.a = a;
+            this.p = p;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bleu(_a, _p, _i_or_x_cc, offsetAsInt());
+            bleu(a, p, i_or_x_cc, offsetAsInt());
         }
     }
 
     class bcc_312 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final ICCOperand _i_or_x_cc;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final ICCOperand i_or_x_cc;
         bcc_312(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _i_or_x_cc = i_or_x_cc;
+            this.a = a;
+            this.p = p;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bcc(_a, _p, _i_or_x_cc, offsetAsInt());
+            bcc(a, p, i_or_x_cc, offsetAsInt());
         }
     }
 
     class bcs_313 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final ICCOperand _i_or_x_cc;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final ICCOperand i_or_x_cc;
         bcs_313(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _i_or_x_cc = i_or_x_cc;
+            this.a = a;
+            this.p = p;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bcs(_a, _p, _i_or_x_cc, offsetAsInt());
+            bcs(a, p, i_or_x_cc, offsetAsInt());
         }
     }
 
     class bpos_314 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final ICCOperand _i_or_x_cc;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final ICCOperand i_or_x_cc;
         bpos_314(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _i_or_x_cc = i_or_x_cc;
+            this.a = a;
+            this.p = p;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bpos(_a, _p, _i_or_x_cc, offsetAsInt());
+            bpos(a, p, i_or_x_cc, offsetAsInt());
         }
     }
 
     class bneg_315 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final ICCOperand _i_or_x_cc;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final ICCOperand i_or_x_cc;
         bneg_315(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _i_or_x_cc = i_or_x_cc;
+            this.a = a;
+            this.p = p;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bneg(_a, _p, _i_or_x_cc, offsetAsInt());
+            bneg(a, p, i_or_x_cc, offsetAsInt());
         }
     }
 
     class bvc_316 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final ICCOperand _i_or_x_cc;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final ICCOperand i_or_x_cc;
         bvc_316(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _i_or_x_cc = i_or_x_cc;
+            this.a = a;
+            this.p = p;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bvc(_a, _p, _i_or_x_cc, offsetAsInt());
+            bvc(a, p, i_or_x_cc, offsetAsInt());
         }
     }
 
     class bvs_317 extends InstructionWithOffset {
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final ICCOperand _i_or_x_cc;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final ICCOperand i_or_x_cc;
         bvs_317(int startPosition, int endPosition, AnnulBit a, BranchPredictionBit p, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _a = a;
-            _p = p;
-            _i_or_x_cc = i_or_x_cc;
+            this.a = a;
+            this.p = p;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bvs(_a, _p, _i_or_x_cc, offsetAsInt());
+            bvs(a, p, i_or_x_cc, offsetAsInt());
         }
     }
 
     class ba_318 extends InstructionWithOffset {
-        private final ICCOperand _i_or_x_cc;
+        private final ICCOperand i_or_x_cc;
         ba_318(int startPosition, int endPosition, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _i_or_x_cc = i_or_x_cc;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            ba(_i_or_x_cc, offsetAsInt());
+            ba(i_or_x_cc, offsetAsInt());
         }
     }
 
     class bn_319 extends InstructionWithOffset {
-        private final ICCOperand _i_or_x_cc;
+        private final ICCOperand i_or_x_cc;
         bn_319(int startPosition, int endPosition, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _i_or_x_cc = i_or_x_cc;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bn(_i_or_x_cc, offsetAsInt());
+            bn(i_or_x_cc, offsetAsInt());
         }
     }
 
     class bne_320 extends InstructionWithOffset {
-        private final ICCOperand _i_or_x_cc;
+        private final ICCOperand i_or_x_cc;
         bne_320(int startPosition, int endPosition, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _i_or_x_cc = i_or_x_cc;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bne(_i_or_x_cc, offsetAsInt());
+            bne(i_or_x_cc, offsetAsInt());
         }
     }
 
     class be_321 extends InstructionWithOffset {
-        private final ICCOperand _i_or_x_cc;
+        private final ICCOperand i_or_x_cc;
         be_321(int startPosition, int endPosition, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _i_or_x_cc = i_or_x_cc;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            be(_i_or_x_cc, offsetAsInt());
+            be(i_or_x_cc, offsetAsInt());
         }
     }
 
     class bg_322 extends InstructionWithOffset {
-        private final ICCOperand _i_or_x_cc;
+        private final ICCOperand i_or_x_cc;
         bg_322(int startPosition, int endPosition, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _i_or_x_cc = i_or_x_cc;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bg(_i_or_x_cc, offsetAsInt());
+            bg(i_or_x_cc, offsetAsInt());
         }
     }
 
     class ble_323 extends InstructionWithOffset {
-        private final ICCOperand _i_or_x_cc;
+        private final ICCOperand i_or_x_cc;
         ble_323(int startPosition, int endPosition, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _i_or_x_cc = i_or_x_cc;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            ble(_i_or_x_cc, offsetAsInt());
+            ble(i_or_x_cc, offsetAsInt());
         }
     }
 
     class bge_324 extends InstructionWithOffset {
-        private final ICCOperand _i_or_x_cc;
+        private final ICCOperand i_or_x_cc;
         bge_324(int startPosition, int endPosition, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _i_or_x_cc = i_or_x_cc;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bge(_i_or_x_cc, offsetAsInt());
+            bge(i_or_x_cc, offsetAsInt());
         }
     }
 
     class bl_325 extends InstructionWithOffset {
-        private final ICCOperand _i_or_x_cc;
+        private final ICCOperand i_or_x_cc;
         bl_325(int startPosition, int endPosition, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _i_or_x_cc = i_or_x_cc;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bl(_i_or_x_cc, offsetAsInt());
+            bl(i_or_x_cc, offsetAsInt());
         }
     }
 
     class bgu_326 extends InstructionWithOffset {
-        private final ICCOperand _i_or_x_cc;
+        private final ICCOperand i_or_x_cc;
         bgu_326(int startPosition, int endPosition, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _i_or_x_cc = i_or_x_cc;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bgu(_i_or_x_cc, offsetAsInt());
+            bgu(i_or_x_cc, offsetAsInt());
         }
     }
 
     class bleu_327 extends InstructionWithOffset {
-        private final ICCOperand _i_or_x_cc;
+        private final ICCOperand i_or_x_cc;
         bleu_327(int startPosition, int endPosition, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _i_or_x_cc = i_or_x_cc;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bleu(_i_or_x_cc, offsetAsInt());
+            bleu(i_or_x_cc, offsetAsInt());
         }
     }
 
     class bcc_328 extends InstructionWithOffset {
-        private final ICCOperand _i_or_x_cc;
+        private final ICCOperand i_or_x_cc;
         bcc_328(int startPosition, int endPosition, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _i_or_x_cc = i_or_x_cc;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bcc(_i_or_x_cc, offsetAsInt());
+            bcc(i_or_x_cc, offsetAsInt());
         }
     }
 
     class bcs_329 extends InstructionWithOffset {
-        private final ICCOperand _i_or_x_cc;
+        private final ICCOperand i_or_x_cc;
         bcs_329(int startPosition, int endPosition, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _i_or_x_cc = i_or_x_cc;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bcs(_i_or_x_cc, offsetAsInt());
+            bcs(i_or_x_cc, offsetAsInt());
         }
     }
 
     class bpos_330 extends InstructionWithOffset {
-        private final ICCOperand _i_or_x_cc;
+        private final ICCOperand i_or_x_cc;
         bpos_330(int startPosition, int endPosition, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _i_or_x_cc = i_or_x_cc;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bpos(_i_or_x_cc, offsetAsInt());
+            bpos(i_or_x_cc, offsetAsInt());
         }
     }
 
     class bneg_331 extends InstructionWithOffset {
-        private final ICCOperand _i_or_x_cc;
+        private final ICCOperand i_or_x_cc;
         bneg_331(int startPosition, int endPosition, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _i_or_x_cc = i_or_x_cc;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bneg(_i_or_x_cc, offsetAsInt());
+            bneg(i_or_x_cc, offsetAsInt());
         }
     }
 
     class bvc_332 extends InstructionWithOffset {
-        private final ICCOperand _i_or_x_cc;
+        private final ICCOperand i_or_x_cc;
         bvc_332(int startPosition, int endPosition, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _i_or_x_cc = i_or_x_cc;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bvc(_i_or_x_cc, offsetAsInt());
+            bvc(i_or_x_cc, offsetAsInt());
         }
     }
 
     class bvs_333 extends InstructionWithOffset {
-        private final ICCOperand _i_or_x_cc;
+        private final ICCOperand i_or_x_cc;
         bvs_333(int startPosition, int endPosition, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _i_or_x_cc = i_or_x_cc;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            bvs(_i_or_x_cc, offsetAsInt());
+            bvs(i_or_x_cc, offsetAsInt());
         }
     }
 
     class b_334 extends InstructionWithOffset {
-        private final Bicc _cond;
-        private final AnnulBit _a;
-        private final BranchPredictionBit _p;
-        private final ICCOperand _i_or_x_cc;
+        private final Bicc cond;
+        private final AnnulBit a;
+        private final BranchPredictionBit p;
+        private final ICCOperand i_or_x_cc;
         b_334(int startPosition, int endPosition, Bicc cond, AnnulBit a, BranchPredictionBit p, ICCOperand i_or_x_cc, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
-            _cond = cond;
-            _a = a;
-            _p = p;
-            _i_or_x_cc = i_or_x_cc;
+            this.cond = cond;
+            this.a = a;
+            this.p = p;
+            this.i_or_x_cc = i_or_x_cc;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            b(_cond, _a, _p, _i_or_x_cc, offsetAsInt());
+            b(cond, a, p, i_or_x_cc, offsetAsInt());
         }
     }
 

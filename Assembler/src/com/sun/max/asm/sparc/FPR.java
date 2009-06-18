@@ -114,22 +114,22 @@ public class FPR extends AbstractSymbolicArgument {
     public static final       DoubleQuadruple F60 = new DoubleQuadruple(60);
     public static final       Double          F62 = new Double(62);
 
-    private static final FPR[] _singleValues = {F0, F1, F2, F3, F4, F5, F6, F7,
-                                                F8, F9, F10, F11, F12, F13, F14, F15,
-                                                F16, F17, F18, F19, F20, F21, F22, F23,
-                                                F24, F25, F26, F27, F28, F29, F30, F31};
+    private static final FPR[] singleValues = {F0, F1, F2, F3, F4, F5, F6, F7,
+                                               F8, F9, F10, F11, F12, F13, F14, F15,
+                                               F16, F17, F18, F19, F20, F21, F22, F23,
+                                               F24, F25, F26, F27, F28, F29, F30, F31};
 
-    private static final FPR[] _doubleValues = {F0, F2, F4, F6, F8, F10, F12, F14, F16, F18, F20, F22, F24, F26, F28, F30,
-                                                F32, F34, F36, F38, F40, F42, F44, F46, F48, F50, F52, F54, F56, F58, F60, F62};
+    private static final FPR[] doubleValues = {F0, F2, F4, F6, F8, F10, F12, F14, F16, F18, F20, F22, F24, F26, F28, F30,
+                                               F32, F34, F36, F38, F40, F42, F44, F46, F48, F50, F52, F54, F56, F58, F60, F62};
 
-    private static final FPR[] _quadrupleValues = {F0, F4, F8, F12, F16, F20, F24, F28, F32, F36, F40, F44, F48, F52, F56, F60};
+    private static final FPR[] quadrupleValues = {F0, F4, F8, F12, F16, F20, F24, F28, F32, F36, F40, F44, F48, F52, F56, F60};
 
     public static FPR fromValue(int value) {
         if (value <= 31) {
-            return _singleValues[value];
+            return singleValues[value];
         }
         if (value % 2 == 0) {
-            return _doubleValues[value >> 1];
+            return doubleValues[value >> 1];
         }
         throw new IllegalArgumentException();
     }

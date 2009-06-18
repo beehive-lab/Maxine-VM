@@ -32,15 +32,15 @@ import com.sun.max.program.*;
  */
 public abstract class RiscTemplate extends Template implements RiscInstructionDescriptionVisitor {
 
-    private final AppendableSequence<RiscField> _allFields = new LinkSequence<RiscField>();
-    private final AppendableSequence<OperandField> _operandFields = new LinkSequence<OperandField>();
-    private final AppendableSequence<OptionField> _optionFields = new LinkSequence<OptionField>();
-    private final AppendableIndexedSequence<OperandField> _parameters = new ArrayListSequence<OperandField>();
-    private final AppendableSequence<Option> _options = new LinkSequence<Option>();
+    private final AppendableSequence<RiscField> allFields = new LinkSequence<RiscField>();
+    private final AppendableSequence<OperandField> operandFields = new LinkSequence<OperandField>();
+    private final AppendableSequence<OptionField> optionFields = new LinkSequence<OptionField>();
+    private final AppendableIndexedSequence<OperandField> parameters = new ArrayListSequence<OperandField>();
+    private final AppendableSequence<Option> options = new LinkSequence<Option>();
 
-    private int _opcode;
-    private int _opcodeMask;
-    private RiscTemplate _canonicalRepresentative;
+    private int opcode;
+    private int opcodeMask;
+    private RiscTemplate canonicalRepresentative;
 
     protected RiscTemplate(InstructionDescription instructionDescription) {
         super(instructionDescription);
@@ -51,15 +51,15 @@ public abstract class RiscTemplate extends Template implements RiscInstructionDe
         return (RiscInstructionDescription) super.instructionDescription();
     }
 
-    private RiscTemplate _synthesizedFrom;
+    private RiscTemplate synthesizedFrom;
 
     public void setSynthesizedFrom(RiscTemplate synthesizedFrom) {
         assert instructionDescription().isSynthetic();
-        _synthesizedFrom = synthesizedFrom;
+        this.synthesizedFrom = synthesizedFrom;
     }
 
     public RiscTemplate synthesizedFrom() {
-        return _synthesizedFrom;
+        return synthesizedFrom;
     }
 
     /**
@@ -71,26 +71,26 @@ public abstract class RiscTemplate extends Template implements RiscInstructionDe
      */
     private void organizeConstant(RiscField field, int value) {
         try {
-            _opcode |= field.bitRange().assembleUnsignedInt(value);
-            _opcodeMask |= field.bitRange().instructionMask();
+            opcode |= field.bitRange().assembleUnsignedInt(value);
+            opcodeMask |= field.bitRange().instructionMask();
         } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
             ProgramError.unexpected("operand for constant field " + field.name() + " does not fit: " + value);
         }
     }
 
     public void visitField(RiscField field) {
-        _allFields.append(field);
+        allFields.append(field);
         if (field instanceof OperandField) {
             final OperandField operandField = (OperandField) field;
             if (field instanceof OffsetParameter) {
                 setLabelParameterIndex();
             }
             if (operandField.boundTo() == null) {
-                _parameters.append(operandField);
+                parameters.append(operandField);
             }
-            _operandFields.append(operandField);
+            operandFields.append(operandField);
         } else if (field instanceof OptionField) {
-            _optionFields.append((OptionField) field);
+            optionFields.append((OptionField) field);
         } else if (field instanceof ReservedField) {
             organizeConstant(field, 0);
         } else {
@@ -117,49 +117,49 @@ public abstract class RiscTemplate extends Template implements RiscInstructionDe
     }
 
     public Sequence<OperandField> operandFields() {
-        return _operandFields;
+        return operandFields;
     }
 
     public int opcode() {
-        return _opcode;
+        return opcode;
     }
 
     public int opcodeMask() {
-        return _opcodeMask;
+        return opcodeMask;
     }
 
     public Sequence<OptionField> optionFields() {
-        return _optionFields;
+        return optionFields;
     }
 
     public void addOptionField(OptionField f) {
-        _allFields.append(f);
-        _optionFields.append(f);
+        allFields.append(f);
+        optionFields.append(f);
     }
 
     public int specificity() {
-        return Integer.bitCount(_opcodeMask);
+        return Integer.bitCount(opcodeMask);
     }
 
-    public void organizeOption(Option option, RiscTemplate canonicalRepresentative) {
+    public void organizeOption(Option option, RiscTemplate canonikalRepresentative) {
         instructionDescription().setExternalName(externalName() + option.externalName());
         setInternalName(internalName() + option.name());
         try {
-            _opcode |= option.field().bitRange().assembleUnsignedInt(option.value());
-            _opcodeMask |= option.field().bitRange().instructionMask();
+            opcode |= option.field().bitRange().assembleUnsignedInt(option.value());
+            opcodeMask |= option.field().bitRange().instructionMask();
         } catch (IndexOutOfBoundsException e) {
             ProgramError.unexpected("Option: " + option.name() + " does not fit in field " + option.field().name());
         }
 
-        _options.append(option);
+        options.append(option);
         if (option.isRedundant()) {
-            _canonicalRepresentative = canonicalRepresentative;
+            this.canonicalRepresentative = canonikalRepresentative;
         }
     }
 
     @Override
     public boolean isRedundant() {
-        return _canonicalRepresentative != null;
+        return canonicalRepresentative != null;
     }
 
     @Override
@@ -171,12 +171,12 @@ public abstract class RiscTemplate extends Template implements RiscInstructionDe
             return false;
         }
         RiscTemplate a = this;
-        if (a._canonicalRepresentative != null) {
-            a = a._canonicalRepresentative;
+        if (a.canonicalRepresentative != null) {
+            a = a.canonicalRepresentative;
         }
         RiscTemplate b = (RiscTemplate) other;
-        if (b._canonicalRepresentative != null) {
-            b = b._canonicalRepresentative;
+        if (b.canonicalRepresentative != null) {
+            b = b.canonicalRepresentative;
         }
         return a == b;
     }
@@ -193,7 +193,7 @@ public abstract class RiscTemplate extends Template implements RiscInstructionDe
 
     @Override
     public IndexedSequence<OperandField> parameters() {
-        return _parameters;
+        return parameters;
     }
 
     @Override

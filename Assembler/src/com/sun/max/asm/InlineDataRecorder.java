@@ -35,19 +35,19 @@ import com.sun.max.program.*;
  */
 public class InlineDataRecorder {
 
-    private VariableSequence<InlineDataDescriptor> _descriptors;
-    private boolean _normalized;
+    private VariableSequence<InlineDataDescriptor> descriptors;
+    private boolean normalized;
 
     /**
      * Adds an inline data descriptor to this object.
      */
     public void add(InlineDataDescriptor inlineData) {
         if (inlineData.size() != 0) {
-            if (_descriptors == null) {
-                _descriptors = new ArrayListSequence<InlineDataDescriptor>();
+            if (descriptors == null) {
+                descriptors = new ArrayListSequence<InlineDataDescriptor>();
             }
-            _descriptors.append(inlineData);
-            _normalized = false;
+            descriptors.append(inlineData);
+            normalized = false;
         }
     }
 
@@ -62,10 +62,10 @@ public class InlineDataRecorder {
      * @return null if no descriptors have been added to this object
      */
     public Sequence<InlineDataDescriptor> descriptors() {
-        if (!_normalized) {
+        if (!normalized) {
             normalize();
         }
-        return _descriptors;
+        return descriptors;
     }
 
     /**
@@ -73,15 +73,15 @@ public class InlineDataRecorder {
      * {@linkplain InlineDataDescriptor here}.
      */
     public byte[] encodedDescriptors() {
-        if (_descriptors == null) {
+        if (descriptors == null) {
             return null;
         }
         try {
             normalize();
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             final DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
-            dataOutputStream.writeInt(_descriptors.length());
-            for (InlineDataDescriptor inlineDataDescriptor : _descriptors) {
+            dataOutputStream.writeInt(descriptors.length());
+            for (InlineDataDescriptor inlineDataDescriptor : descriptors) {
                 inlineDataDescriptor.writeTo(dataOutputStream);
             }
             final byte[] result = byteArrayOutputStream.toByteArray();
@@ -92,9 +92,9 @@ public class InlineDataRecorder {
     }
 
     private void normalize() {
-        if (_descriptors != null && !_normalized) {
-            final SortedSet<InlineDataDescriptor> sortedEntries = new TreeSet<InlineDataDescriptor>(Iterables.toCollection(_descriptors));
-            final VariableSequence<InlineDataDescriptor> entries = new ArrayListSequence<InlineDataDescriptor>(_descriptors.length());
+        if (descriptors != null && !normalized) {
+            final SortedSet<InlineDataDescriptor> sortedEntries = new TreeSet<InlineDataDescriptor>(Iterables.toCollection(descriptors));
+            final VariableSequence<InlineDataDescriptor> entries = new ArrayListSequence<InlineDataDescriptor>(descriptors.length());
             int lastEnd = 0;
             for (InlineDataDescriptor inlineDataDescriptor : sortedEntries) {
                 if (inlineDataDescriptor.startPosition() >= lastEnd) {
@@ -102,8 +102,8 @@ public class InlineDataRecorder {
                     lastEnd = inlineDataDescriptor.endPosition();
                 }
             }
-            _descriptors = entries;
-            _normalized = true;
+            descriptors = entries;
+            normalized = true;
         }
     }
 }

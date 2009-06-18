@@ -31,19 +31,19 @@ public abstract class MutableAssembledObject extends AssembledObject {
 
     protected abstract void assemble() throws AssemblyException;
 
-    private final Assembler _assembler;
-    private int _variablePosition;
-    protected int _variableSize;
+    private final Assembler assembler;
+    private int variablePosition;
+    protected int variableSize;
 
     protected MutableAssembledObject(Assembler assembler, int startPosition, int endPosition) {
         super(startPosition, endPosition);
-        _assembler = assembler;
-        _variablePosition = startPosition;
-        _variableSize = endPosition - startPosition;
+        this.assembler = assembler;
+        this.variablePosition = startPosition;
+        this.variableSize = endPosition - startPosition;
     }
 
     protected Assembler assembler() {
-        return _assembler;
+        return assembler;
     }
 
     public final int initialStartPosition() {
@@ -59,21 +59,21 @@ public abstract class MutableAssembledObject extends AssembledObject {
     }
 
     public void adjust(int delta) {
-        _variablePosition += delta;
+        variablePosition += delta;
     }
 
     @Override
     public int startPosition() {
-        return _variablePosition;
+        return variablePosition;
     }
 
     @Override
     public int endPosition() {
-        return _variablePosition + _variableSize;
+        return variablePosition + variableSize;
     }
 
     @Override
     public int size() {
-        return _variableSize;
+        return variableSize;
     }
 }

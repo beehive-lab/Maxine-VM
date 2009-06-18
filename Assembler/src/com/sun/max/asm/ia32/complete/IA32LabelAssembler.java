@@ -5426,7 +5426,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jb  }<i>label</i>
-     * Example disassembly syntax: {@code jb        +18}
+     * Example disassembly syntax: {@code jb        L1: +18}
      */
     // Template#: 450, Serial#: 264
     public void jb(final Label label) {
@@ -5438,7 +5438,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jbe  }<i>label</i>
-     * Example disassembly syntax: {@code jbe       +18}
+     * Example disassembly syntax: {@code jbe       L1: +18}
      */
     // Template#: 451, Serial#: 268
     public void jbe(final Label label) {
@@ -5450,7 +5450,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jecxz  }<i>label</i>
-     * Example disassembly syntax: {@code jecxz     +18}
+     * Example disassembly syntax: {@code jecxz     L1: +18}
      */
     // Template#: 452, Serial#: 1335
     public void jecxz(final Label label) {
@@ -5462,7 +5462,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jl  }<i>label</i>
-     * Example disassembly syntax: {@code jl        +18}
+     * Example disassembly syntax: {@code jl        L1: +18}
      */
     // Template#: 453, Serial#: 1812
     public void jl(final Label label) {
@@ -5474,7 +5474,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jle  }<i>label</i>
-     * Example disassembly syntax: {@code jle       +18}
+     * Example disassembly syntax: {@code jle       L1: +18}
      */
     // Template#: 454, Serial#: 1814
     public void jle(final Label label) {
@@ -5486,7 +5486,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jmp  }<i>label</i>
-     * Example disassembly syntax: {@code jmp       +18}
+     * Example disassembly syntax: {@code jmp       L1: +18}
      */
     // Template#: 455, Serial#: 2403
     public void jmp(final Label label) {
@@ -5522,7 +5522,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jnb  }<i>label</i>
-     * Example disassembly syntax: {@code jnb       +18}
+     * Example disassembly syntax: {@code jnb       L1: +18}
      */
     // Template#: 458, Serial#: 265
     public void jnb(final Label label) {
@@ -5534,7 +5534,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jnbe  }<i>label</i>
-     * Example disassembly syntax: {@code jnbe      +18}
+     * Example disassembly syntax: {@code jnbe      L1: +18}
      */
     // Template#: 459, Serial#: 269
     public void jnbe(final Label label) {
@@ -5546,7 +5546,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jnl  }<i>label</i>
-     * Example disassembly syntax: {@code jnl       +18}
+     * Example disassembly syntax: {@code jnl       L1: +18}
      */
     // Template#: 460, Serial#: 1813
     public void jnl(final Label label) {
@@ -5558,7 +5558,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jnle  }<i>label</i>
-     * Example disassembly syntax: {@code jnle      +18}
+     * Example disassembly syntax: {@code jnle      L1: +18}
      */
     // Template#: 461, Serial#: 1815
     public void jnle(final Label label) {
@@ -5570,7 +5570,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jno  }<i>label</i>
-     * Example disassembly syntax: {@code jno       +18}
+     * Example disassembly syntax: {@code jno       L1: +18}
      */
     // Template#: 462, Serial#: 263
     public void jno(final Label label) {
@@ -5582,7 +5582,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jnp  }<i>label</i>
-     * Example disassembly syntax: {@code jnp       +18}
+     * Example disassembly syntax: {@code jnp       L1: +18}
      */
     // Template#: 463, Serial#: 1811
     public void jnp(final Label label) {
@@ -5594,7 +5594,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jns  }<i>label</i>
-     * Example disassembly syntax: {@code jns       +18}
+     * Example disassembly syntax: {@code jns       L1: +18}
      */
     // Template#: 464, Serial#: 1809
     public void jns(final Label label) {
@@ -5606,7 +5606,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jnz  }<i>label</i>
-     * Example disassembly syntax: {@code jnz       +18}
+     * Example disassembly syntax: {@code jnz       L1: +18}
      */
     // Template#: 465, Serial#: 267
     public void jnz(final Label label) {
@@ -5618,7 +5618,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jo  }<i>label</i>
-     * Example disassembly syntax: {@code jo        +18}
+     * Example disassembly syntax: {@code jo        L1: +18}
      */
     // Template#: 466, Serial#: 262
     public void jo(final Label label) {
@@ -5630,7 +5630,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jp  }<i>label</i>
-     * Example disassembly syntax: {@code jp        +18}
+     * Example disassembly syntax: {@code jp        L1: +18}
      */
     // Template#: 467, Serial#: 1810
     public void jp(final Label label) {
@@ -5642,7 +5642,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code js  }<i>label</i>
-     * Example disassembly syntax: {@code js        +18}
+     * Example disassembly syntax: {@code js        L1: +18}
      */
     // Template#: 468, Serial#: 1808
     public void js(final Label label) {
@@ -5654,7 +5654,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jz  }<i>label</i>
-     * Example disassembly syntax: {@code jz        +18}
+     * Example disassembly syntax: {@code jz        L1: +18}
      */
     // Template#: 469, Serial#: 266
     public void jz(final Label label) {
@@ -6074,7 +6074,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code loop  }<i>label</i>
-     * Example disassembly syntax: {@code loop      +18}
+     * Example disassembly syntax: {@code loop      L1: +18}
      */
     // Template#: 504, Serial#: 1334
     public void loop(final Label label) {
@@ -6086,7 +6086,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code loope  }<i>label</i>
-     * Example disassembly syntax: {@code loope     +18}
+     * Example disassembly syntax: {@code loope     L1: +18}
      */
     // Template#: 505, Serial#: 1333
     public void loope(final Label label) {
@@ -6098,7 +6098,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code loopne  }<i>label</i>
-     * Example disassembly syntax: {@code loopne    +18}
+     * Example disassembly syntax: {@code loopne    L1: +18}
      */
     // Template#: 506, Serial#: 1332
     public void loopne(final Label label) {
@@ -14821,1710 +14821,1710 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_adc_103 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_adc_103(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adc(_destination, addressAsInt());
+            m_adc(destination, addressAsInt());
         }
     }
 
     class m_adc_102 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_adc_102(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adc(_destination, addressAsInt(), _index, _scale);
+            m_adc(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_adc_95 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_adc_95(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adc(_destination, addressAsInt());
+            m_adc(destination, addressAsInt());
         }
     }
 
     class m_adc_94 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_adc_94(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adc(_destination, addressAsInt(), _index, _scale);
+            m_adc(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_adc_87 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _destination;
+        private final IA32GeneralRegister8 destination;
         m_adc_87(int startPosition, int endPosition, IA32GeneralRegister8 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adc(_destination, addressAsInt());
+            m_adc(destination, addressAsInt());
         }
     }
 
     class m_adc_86 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister8 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_adc_86(int startPosition, int endPosition, IA32GeneralRegister8 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adc(_destination, addressAsInt(), _index, _scale);
+            m_adc(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_adcb_281 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_adcb_281(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adcb(addressAsInt(), _imm8);
+            m_adcb(addressAsInt(), imm8);
         }
     }
 
     class m_adcl_497 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_adcl_497(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adcl(addressAsInt(), _imm8);
+            m_adcl(addressAsInt(), imm8);
         }
     }
 
     class m_adcw_569 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_adcw_569(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adcw(addressAsInt(), _imm8);
+            m_adcw(addressAsInt(), imm8);
         }
     }
 
     class m_adc_78 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
+        private final IA32GeneralRegister16 source;
         m_adc_78(int startPosition, int endPosition, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adc(addressAsInt(), _source);
+            m_adc(addressAsInt(), source);
         }
     }
 
     class m_adc_69 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
+        private final IA32GeneralRegister32 source;
         m_adc_69(int startPosition, int endPosition, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adc(addressAsInt(), _source);
+            m_adc(addressAsInt(), source);
         }
     }
 
     class m_adc_60 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _source;
+        private final IA32GeneralRegister8 source;
         m_adc_60(int startPosition, int endPosition, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adc(addressAsInt(), _source);
+            m_adc(addressAsInt(), source);
         }
     }
 
     class m_adcb_280 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_adcb_280(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adcb(addressAsInt(), _index, _scale, _imm8);
+            m_adcb(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_adcl_496 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_adcl_496(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adcl(addressAsInt(), _index, _scale, _imm8);
+            m_adcl(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_adcw_568 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_adcw_568(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adcw(addressAsInt(), _index, _scale, _imm8);
+            m_adcw(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_adc_77 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
         m_adc_77(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adc(addressAsInt(), _index, _scale, _source);
+            m_adc(addressAsInt(), index, scale, source);
         }
     }
 
     class m_adc_68 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
         m_adc_68(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adc(addressAsInt(), _index, _scale, _source);
+            m_adc(addressAsInt(), index, scale, source);
         }
     }
 
     class m_adc_59 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister8 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister8 source;
         m_adc_59(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adc(addressAsInt(), _index, _scale, _source);
+            m_adc(addressAsInt(), index, scale, source);
         }
     }
 
     class m_adcl_352 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final int _imm32;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final int imm32;
         m_adcl_352(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm32 = imm32;
+            this.index = index;
+            this.scale = scale;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adcl(addressAsInt(), _index, _scale, _imm32);
+            m_adcl(addressAsInt(), index, scale, imm32);
         }
     }
 
     class m_adcw_424 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final short _imm16;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final short imm16;
         m_adcw_424(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm16 = imm16;
+            this.index = index;
+            this.scale = scale;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adcw(addressAsInt(), _index, _scale, _imm16);
+            m_adcw(addressAsInt(), index, scale, imm16);
         }
     }
 
     class m_adcl_353 extends InstructionWithAddress {
-        private final int _imm32;
+        private final int imm32;
         m_adcl_353(int startPosition, int endPosition, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm32 = imm32;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adcl(addressAsInt(), _imm32);
+            m_adcl(addressAsInt(), imm32);
         }
     }
 
     class m_adcw_425 extends InstructionWithAddress {
-        private final short _imm16;
+        private final short imm16;
         m_adcw_425(int startPosition, int endPosition, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm16 = imm16;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_adcw(addressAsInt(), _imm16);
+            m_adcw(addressAsInt(), imm16);
         }
     }
 
     class m_add_47 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_add_47(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_add(_destination, addressAsInt());
+            m_add(destination, addressAsInt());
         }
     }
 
     class m_add_46 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_add_46(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_add(_destination, addressAsInt(), _index, _scale);
+            m_add(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_add_39 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_add_39(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_add(_destination, addressAsInt());
+            m_add(destination, addressAsInt());
         }
     }
 
     class m_add_38 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_add_38(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_add(_destination, addressAsInt(), _index, _scale);
+            m_add(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_add_31 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _destination;
+        private final IA32GeneralRegister8 destination;
         m_add_31(int startPosition, int endPosition, IA32GeneralRegister8 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_add(_destination, addressAsInt());
+            m_add(destination, addressAsInt());
         }
     }
 
     class m_add_30 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister8 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_add_30(int startPosition, int endPosition, IA32GeneralRegister8 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_add(_destination, addressAsInt(), _index, _scale);
+            m_add(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_addb_273 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_addb_273(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_addb(addressAsInt(), _imm8);
+            m_addb(addressAsInt(), imm8);
         }
     }
 
     class m_addl_489 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_addl_489(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_addl(addressAsInt(), _imm8);
+            m_addl(addressAsInt(), imm8);
         }
     }
 
     class m_addw_561 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_addw_561(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_addw(addressAsInt(), _imm8);
+            m_addw(addressAsInt(), imm8);
         }
     }
 
     class m_add_22 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
+        private final IA32GeneralRegister16 source;
         m_add_22(int startPosition, int endPosition, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_add(addressAsInt(), _source);
+            m_add(addressAsInt(), source);
         }
     }
 
     class m_add_13 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
+        private final IA32GeneralRegister32 source;
         m_add_13(int startPosition, int endPosition, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_add(addressAsInt(), _source);
+            m_add(addressAsInt(), source);
         }
     }
 
     class m_add_4 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _source;
+        private final IA32GeneralRegister8 source;
         m_add_4(int startPosition, int endPosition, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_add(addressAsInt(), _source);
+            m_add(addressAsInt(), source);
         }
     }
 
     class m_addb_272 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_addb_272(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_addb(addressAsInt(), _index, _scale, _imm8);
+            m_addb(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_addl_488 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_addl_488(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_addl(addressAsInt(), _index, _scale, _imm8);
+            m_addl(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_addw_560 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_addw_560(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_addw(addressAsInt(), _index, _scale, _imm8);
+            m_addw(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_add_21 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
         m_add_21(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_add(addressAsInt(), _index, _scale, _source);
+            m_add(addressAsInt(), index, scale, source);
         }
     }
 
     class m_add_12 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
         m_add_12(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_add(addressAsInt(), _index, _scale, _source);
+            m_add(addressAsInt(), index, scale, source);
         }
     }
 
     class m_add_3 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister8 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister8 source;
         m_add_3(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_add(addressAsInt(), _index, _scale, _source);
+            m_add(addressAsInt(), index, scale, source);
         }
     }
 
     class m_addl_344 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final int _imm32;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final int imm32;
         m_addl_344(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm32 = imm32;
+            this.index = index;
+            this.scale = scale;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_addl(addressAsInt(), _index, _scale, _imm32);
+            m_addl(addressAsInt(), index, scale, imm32);
         }
     }
 
     class m_addw_416 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final short _imm16;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final short imm16;
         m_addw_416(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm16 = imm16;
+            this.index = index;
+            this.scale = scale;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_addw(addressAsInt(), _index, _scale, _imm16);
+            m_addw(addressAsInt(), index, scale, imm16);
         }
     }
 
     class m_addl_345 extends InstructionWithAddress {
-        private final int _imm32;
+        private final int imm32;
         m_addl_345(int startPosition, int endPosition, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm32 = imm32;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_addl(addressAsInt(), _imm32);
+            m_addl(addressAsInt(), imm32);
         }
     }
 
     class m_addw_417 extends InstructionWithAddress {
-        private final short _imm16;
+        private final short imm16;
         m_addw_417(int startPosition, int endPosition, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm16 = imm16;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_addw(addressAsInt(), _imm16);
+            m_addw(addressAsInt(), imm16);
         }
     }
 
     class m_addpd_4445 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_addpd_4445(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_addpd(_destination, addressAsInt());
+            m_addpd(destination, addressAsInt());
         }
     }
 
     class m_addpd_4444 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_addpd_4444(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_addpd(_destination, addressAsInt(), _index, _scale);
+            m_addpd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_addps_4373 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_addps_4373(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_addps(_destination, addressAsInt());
+            m_addps(destination, addressAsInt());
         }
     }
 
     class m_addps_4372 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_addps_4372(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_addps(_destination, addressAsInt(), _index, _scale);
+            m_addps(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_addsd_4517 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_addsd_4517(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_addsd(_destination, addressAsInt());
+            m_addsd(destination, addressAsInt());
         }
     }
 
     class m_addsd_4516 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_addsd_4516(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_addsd(_destination, addressAsInt(), _index, _scale);
+            m_addsd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_addss_4580 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_addss_4580(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_addss(_destination, addressAsInt());
+            m_addss(destination, addressAsInt());
         }
     }
 
     class m_addss_4579 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_addss_4579(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_addss(_destination, addressAsInt(), _index, _scale);
+            m_addss(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_addsubpd_3751 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_addsubpd_3751(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_addsubpd(_destination, addressAsInt());
+            m_addsubpd(destination, addressAsInt());
         }
     }
 
     class m_addsubpd_3750 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_addsubpd_3750(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_addsubpd(_destination, addressAsInt(), _index, _scale);
+            m_addsubpd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_and_159 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_and_159(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_and(_destination, addressAsInt());
+            m_and(destination, addressAsInt());
         }
     }
 
     class m_and_158 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_and_158(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_and(_destination, addressAsInt(), _index, _scale);
+            m_and(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_and_151 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_and_151(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_and(_destination, addressAsInt());
+            m_and(destination, addressAsInt());
         }
     }
 
     class m_and_150 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_and_150(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_and(_destination, addressAsInt(), _index, _scale);
+            m_and(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_and_143 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _destination;
+        private final IA32GeneralRegister8 destination;
         m_and_143(int startPosition, int endPosition, IA32GeneralRegister8 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_and(_destination, addressAsInt());
+            m_and(destination, addressAsInt());
         }
     }
 
     class m_and_142 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister8 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_and_142(int startPosition, int endPosition, IA32GeneralRegister8 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_and(_destination, addressAsInt(), _index, _scale);
+            m_and(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_andb_289 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_andb_289(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_andb(addressAsInt(), _imm8);
+            m_andb(addressAsInt(), imm8);
         }
     }
 
     class m_andl_505 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_andl_505(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_andl(addressAsInt(), _imm8);
+            m_andl(addressAsInt(), imm8);
         }
     }
 
     class m_andw_577 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_andw_577(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_andw(addressAsInt(), _imm8);
+            m_andw(addressAsInt(), imm8);
         }
     }
 
     class m_and_134 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
+        private final IA32GeneralRegister16 source;
         m_and_134(int startPosition, int endPosition, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_and(addressAsInt(), _source);
+            m_and(addressAsInt(), source);
         }
     }
 
     class m_and_125 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
+        private final IA32GeneralRegister32 source;
         m_and_125(int startPosition, int endPosition, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_and(addressAsInt(), _source);
+            m_and(addressAsInt(), source);
         }
     }
 
     class m_and_116 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _source;
+        private final IA32GeneralRegister8 source;
         m_and_116(int startPosition, int endPosition, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_and(addressAsInt(), _source);
+            m_and(addressAsInt(), source);
         }
     }
 
     class m_andb_288 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_andb_288(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_andb(addressAsInt(), _index, _scale, _imm8);
+            m_andb(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_andl_504 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_andl_504(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_andl(addressAsInt(), _index, _scale, _imm8);
+            m_andl(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_andw_576 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_andw_576(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_andw(addressAsInt(), _index, _scale, _imm8);
+            m_andw(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_and_133 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
         m_and_133(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_and(addressAsInt(), _index, _scale, _source);
+            m_and(addressAsInt(), index, scale, source);
         }
     }
 
     class m_and_124 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
         m_and_124(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_and(addressAsInt(), _index, _scale, _source);
+            m_and(addressAsInt(), index, scale, source);
         }
     }
 
     class m_and_115 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister8 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister8 source;
         m_and_115(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_and(addressAsInt(), _index, _scale, _source);
+            m_and(addressAsInt(), index, scale, source);
         }
     }
 
     class m_andl_360 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final int _imm32;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final int imm32;
         m_andl_360(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm32 = imm32;
+            this.index = index;
+            this.scale = scale;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_andl(addressAsInt(), _index, _scale, _imm32);
+            m_andl(addressAsInt(), index, scale, imm32);
         }
     }
 
     class m_andw_432 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final short _imm16;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final short imm16;
         m_andw_432(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm16 = imm16;
+            this.index = index;
+            this.scale = scale;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_andw(addressAsInt(), _index, _scale, _imm16);
+            m_andw(addressAsInt(), index, scale, imm16);
         }
     }
 
     class m_andl_361 extends InstructionWithAddress {
-        private final int _imm32;
+        private final int imm32;
         m_andl_361(int startPosition, int endPosition, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm32 = imm32;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_andl(addressAsInt(), _imm32);
+            m_andl(addressAsInt(), imm32);
         }
     }
 
     class m_andw_433 extends InstructionWithAddress {
-        private final short _imm16;
+        private final short imm16;
         m_andw_433(int startPosition, int endPosition, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm16 = imm16;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_andw(addressAsInt(), _imm16);
+            m_andw(addressAsInt(), imm16);
         }
     }
 
     class m_andnpd_3067 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_andnpd_3067(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_andnpd(_destination, addressAsInt());
+            m_andnpd(destination, addressAsInt());
         }
     }
 
     class m_andnpd_3066 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_andnpd_3066(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_andnpd(_destination, addressAsInt(), _index, _scale);
+            m_andnpd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_andnps_3021 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_andnps_3021(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_andnps(_destination, addressAsInt());
+            m_andnps(destination, addressAsInt());
         }
     }
 
     class m_andnps_3020 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_andnps_3020(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_andnps(_destination, addressAsInt(), _index, _scale);
+            m_andnps(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_andpd_3058 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_andpd_3058(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_andpd(_destination, addressAsInt());
+            m_andpd(destination, addressAsInt());
         }
     }
 
     class m_andpd_3057 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_andpd_3057(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_andpd(_destination, addressAsInt(), _index, _scale);
+            m_andpd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_andps_3012 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_andps_3012(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_andps(_destination, addressAsInt());
+            m_andps(destination, addressAsInt());
         }
     }
 
     class m_andps_3011 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_andps_3011(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_andps(_destination, addressAsInt(), _index, _scale);
+            m_andps(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_arpl_252 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
+        private final IA32GeneralRegister16 source;
         m_arpl_252(int startPosition, int endPosition, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_arpl(addressAsInt(), _source);
+            m_arpl(addressAsInt(), source);
         }
     }
 
     class m_arpl_251 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
         m_arpl_251(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_arpl(addressAsInt(), _index, _scale, _source);
+            m_arpl(addressAsInt(), index, scale, source);
         }
     }
 
     class m_bound_244 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_bound_244(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bound(_destination, addressAsInt());
+            m_bound(destination, addressAsInt());
         }
     }
 
     class m_bound_243 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_bound_243(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bound(_destination, addressAsInt(), _index, _scale);
+            m_bound(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_bound_236 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_bound_236(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bound(_destination, addressAsInt());
+            m_bound(destination, addressAsInt());
         }
     }
 
     class m_bound_235 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_bound_235(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bound(_destination, addressAsInt(), _index, _scale);
+            m_bound(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_bsf_5098 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_bsf_5098(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bsf(_destination, addressAsInt());
+            m_bsf(destination, addressAsInt());
         }
     }
 
     class m_bsf_5097 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_bsf_5097(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bsf(_destination, addressAsInt(), _index, _scale);
+            m_bsf(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_bsf_5089 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_bsf_5089(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bsf(_destination, addressAsInt());
+            m_bsf(destination, addressAsInt());
         }
     }
 
     class m_bsf_5088 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_bsf_5088(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bsf(_destination, addressAsInt(), _index, _scale);
+            m_bsf(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_bsr_5116 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_bsr_5116(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bsr(_destination, addressAsInt());
+            m_bsr(destination, addressAsInt());
         }
     }
 
     class m_bsr_5115 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_bsr_5115(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bsr(_destination, addressAsInt(), _index, _scale);
+            m_bsr(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_bsr_5107 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_bsr_5107(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bsr(_destination, addressAsInt());
+            m_bsr(destination, addressAsInt());
         }
     }
 
     class m_bsr_5106 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_bsr_5106(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bsr(_destination, addressAsInt(), _index, _scale);
+            m_bsr(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_bt_5031 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_bt_5031(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bt(addressAsInt(), _imm8);
+            m_bt(addressAsInt(), imm8);
         }
     }
 
     class m_bt_3424 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
+        private final IA32GeneralRegister16 source;
         m_bt_3424(int startPosition, int endPosition, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bt(addressAsInt(), _source);
+            m_bt(addressAsInt(), source);
         }
     }
 
     class m_bt_3415 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
+        private final IA32GeneralRegister32 source;
         m_bt_3415(int startPosition, int endPosition, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bt(addressAsInt(), _source);
+            m_bt(addressAsInt(), source);
         }
     }
 
     class m_bt_5030 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_bt_5030(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bt(addressAsInt(), _index, _scale, _imm8);
+            m_bt(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_bt_3423 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
         m_bt_3423(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bt(addressAsInt(), _index, _scale, _source);
+            m_bt(addressAsInt(), index, scale, source);
         }
     }
 
     class m_bt_3414 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
         m_bt_3414(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bt(addressAsInt(), _index, _scale, _source);
+            m_bt(addressAsInt(), index, scale, source);
         }
     }
 
     class m_btc_5043 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_btc_5043(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_btc(addressAsInt(), _imm8);
+            m_btc(addressAsInt(), imm8);
         }
     }
 
     class m_btc_5080 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
+        private final IA32GeneralRegister16 source;
         m_btc_5080(int startPosition, int endPosition, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_btc(addressAsInt(), _source);
+            m_btc(addressAsInt(), source);
         }
     }
 
     class m_btc_5071 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
+        private final IA32GeneralRegister32 source;
         m_btc_5071(int startPosition, int endPosition, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_btc(addressAsInt(), _source);
+            m_btc(addressAsInt(), source);
         }
     }
 
     class m_btc_5042 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_btc_5042(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_btc(addressAsInt(), _index, _scale, _imm8);
+            m_btc(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_btc_5079 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
         m_btc_5079(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_btc(addressAsInt(), _index, _scale, _source);
+            m_btc(addressAsInt(), index, scale, source);
         }
     }
 
     class m_btc_5070 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
         m_btc_5070(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_btc(addressAsInt(), _index, _scale, _source);
+            m_btc(addressAsInt(), index, scale, source);
         }
     }
 
     class m_btr_5039 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_btr_5039(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_btr(addressAsInt(), _imm8);
+            m_btr(addressAsInt(), imm8);
         }
     }
 
     class m_btr_3521 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
+        private final IA32GeneralRegister16 source;
         m_btr_3521(int startPosition, int endPosition, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_btr(addressAsInt(), _source);
+            m_btr(addressAsInt(), source);
         }
     }
 
     class m_btr_3512 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
+        private final IA32GeneralRegister32 source;
         m_btr_3512(int startPosition, int endPosition, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_btr(addressAsInt(), _source);
+            m_btr(addressAsInt(), source);
         }
     }
 
     class m_btr_5038 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_btr_5038(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_btr(addressAsInt(), _index, _scale, _imm8);
+            m_btr(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_btr_3520 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
         m_btr_3520(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_btr(addressAsInt(), _index, _scale, _source);
+            m_btr(addressAsInt(), index, scale, source);
         }
     }
 
     class m_btr_3511 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
         m_btr_3511(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_btr(addressAsInt(), _index, _scale, _source);
+            m_btr(addressAsInt(), index, scale, source);
         }
     }
 
     class m_bts_5035 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_bts_5035(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bts(addressAsInt(), _imm8);
+            m_bts(addressAsInt(), imm8);
         }
     }
 
     class m_bts_4965 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
+        private final IA32GeneralRegister16 source;
         m_bts_4965(int startPosition, int endPosition, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bts(addressAsInt(), _source);
+            m_bts(addressAsInt(), source);
         }
     }
 
     class m_bts_4956 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
+        private final IA32GeneralRegister32 source;
         m_bts_4956(int startPosition, int endPosition, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bts(addressAsInt(), _source);
+            m_bts(addressAsInt(), source);
         }
     }
 
     class m_bts_5034 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_bts_5034(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bts(addressAsInt(), _index, _scale, _imm8);
+            m_bts(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_bts_4964 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
         m_bts_4964(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bts(addressAsInt(), _index, _scale, _source);
+            m_bts(addressAsInt(), index, scale, source);
         }
     }
 
     class m_bts_4955 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
         m_bts_4955(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_bts(addressAsInt(), _index, _scale, _source);
+            m_bts(addressAsInt(), index, scale, source);
         }
     }
 
@@ -16556,1432 +16556,1432 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_call_2444 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_call_2444(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_call(addressAsInt(), _index, _scale);
+            m_call(addressAsInt(), index, scale);
         }
     }
 
     class m_cmova_2975 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_cmova_2975(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmova(_destination, addressAsInt());
+            m_cmova(destination, addressAsInt());
         }
     }
 
     class m_cmova_2974 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmova_2974(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmova(_destination, addressAsInt(), _index, _scale);
+            m_cmova(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmova_2966 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_cmova_2966(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmova(_destination, addressAsInt());
+            m_cmova(destination, addressAsInt());
         }
     }
 
     class m_cmova_2965 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmova_2965(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmova(_destination, addressAsInt(), _index, _scale);
+            m_cmova(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovae_2903 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_cmovae_2903(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovae(_destination, addressAsInt());
+            m_cmovae(destination, addressAsInt());
         }
     }
 
     class m_cmovae_2902 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovae_2902(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovae(_destination, addressAsInt(), _index, _scale);
+            m_cmovae(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovae_2894 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_cmovae_2894(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovae(_destination, addressAsInt());
+            m_cmovae(destination, addressAsInt());
         }
     }
 
     class m_cmovae_2893 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovae_2893(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovae(_destination, addressAsInt(), _index, _scale);
+            m_cmovae(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovb_2885 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_cmovb_2885(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovb(_destination, addressAsInt());
+            m_cmovb(destination, addressAsInt());
         }
     }
 
     class m_cmovb_2884 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovb_2884(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovb(_destination, addressAsInt(), _index, _scale);
+            m_cmovb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovb_2876 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_cmovb_2876(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovb(_destination, addressAsInt());
+            m_cmovb(destination, addressAsInt());
         }
     }
 
     class m_cmovb_2875 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovb_2875(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovb(_destination, addressAsInt(), _index, _scale);
+            m_cmovb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovbe_2957 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_cmovbe_2957(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovbe(_destination, addressAsInt());
+            m_cmovbe(destination, addressAsInt());
         }
     }
 
     class m_cmovbe_2956 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovbe_2956(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovbe(_destination, addressAsInt(), _index, _scale);
+            m_cmovbe(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovbe_2948 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_cmovbe_2948(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovbe(_destination, addressAsInt());
+            m_cmovbe(destination, addressAsInt());
         }
     }
 
     class m_cmovbe_2947 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovbe_2947(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovbe(_destination, addressAsInt(), _index, _scale);
+            m_cmovbe(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmove_2921 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_cmove_2921(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmove(_destination, addressAsInt());
+            m_cmove(destination, addressAsInt());
         }
     }
 
     class m_cmove_2920 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmove_2920(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmove(_destination, addressAsInt(), _index, _scale);
+            m_cmove(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmove_2912 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_cmove_2912(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmove(_destination, addressAsInt());
+            m_cmove(destination, addressAsInt());
         }
     }
 
     class m_cmove_2911 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmove_2911(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmove(_destination, addressAsInt(), _index, _scale);
+            m_cmove(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovg_4364 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_cmovg_4364(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovg(_destination, addressAsInt());
+            m_cmovg(destination, addressAsInt());
         }
     }
 
     class m_cmovg_4363 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovg_4363(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovg(_destination, addressAsInt(), _index, _scale);
+            m_cmovg(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovg_4355 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_cmovg_4355(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovg(_destination, addressAsInt());
+            m_cmovg(destination, addressAsInt());
         }
     }
 
     class m_cmovg_4354 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovg_4354(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovg(_destination, addressAsInt(), _index, _scale);
+            m_cmovg(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovge_4328 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_cmovge_4328(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovge(_destination, addressAsInt());
+            m_cmovge(destination, addressAsInt());
         }
     }
 
     class m_cmovge_4327 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovge_4327(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovge(_destination, addressAsInt(), _index, _scale);
+            m_cmovge(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovge_4319 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_cmovge_4319(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovge(_destination, addressAsInt());
+            m_cmovge(destination, addressAsInt());
         }
     }
 
     class m_cmovge_4318 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovge_4318(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovge(_destination, addressAsInt(), _index, _scale);
+            m_cmovge(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovl_4310 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_cmovl_4310(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovl(_destination, addressAsInt());
+            m_cmovl(destination, addressAsInt());
         }
     }
 
     class m_cmovl_4309 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovl_4309(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovl(_destination, addressAsInt(), _index, _scale);
+            m_cmovl(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovl_4301 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_cmovl_4301(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovl(_destination, addressAsInt());
+            m_cmovl(destination, addressAsInt());
         }
     }
 
     class m_cmovl_4300 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovl_4300(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovl(_destination, addressAsInt(), _index, _scale);
+            m_cmovl(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovle_4346 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_cmovle_4346(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovle(_destination, addressAsInt());
+            m_cmovle(destination, addressAsInt());
         }
     }
 
     class m_cmovle_4345 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovle_4345(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovle(_destination, addressAsInt(), _index, _scale);
+            m_cmovle(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovle_4337 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_cmovle_4337(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovle(_destination, addressAsInt());
+            m_cmovle(destination, addressAsInt());
         }
     }
 
     class m_cmovle_4336 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovle_4336(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovle(_destination, addressAsInt(), _index, _scale);
+            m_cmovle(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovne_2939 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_cmovne_2939(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovne(_destination, addressAsInt());
+            m_cmovne(destination, addressAsInt());
         }
     }
 
     class m_cmovne_2938 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovne_2938(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovne(_destination, addressAsInt(), _index, _scale);
+            m_cmovne(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovne_2930 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_cmovne_2930(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovne(_destination, addressAsInt());
+            m_cmovne(destination, addressAsInt());
         }
     }
 
     class m_cmovne_2929 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovne_2929(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovne(_destination, addressAsInt(), _index, _scale);
+            m_cmovne(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovno_2867 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_cmovno_2867(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovno(_destination, addressAsInt());
+            m_cmovno(destination, addressAsInt());
         }
     }
 
     class m_cmovno_2866 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovno_2866(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovno(_destination, addressAsInt(), _index, _scale);
+            m_cmovno(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovno_2858 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_cmovno_2858(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovno(_destination, addressAsInt());
+            m_cmovno(destination, addressAsInt());
         }
     }
 
     class m_cmovno_2857 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovno_2857(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovno(_destination, addressAsInt(), _index, _scale);
+            m_cmovno(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovnp_4292 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_cmovnp_4292(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovnp(_destination, addressAsInt());
+            m_cmovnp(destination, addressAsInt());
         }
     }
 
     class m_cmovnp_4291 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovnp_4291(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovnp(_destination, addressAsInt(), _index, _scale);
+            m_cmovnp(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovnp_4283 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_cmovnp_4283(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovnp(_destination, addressAsInt());
+            m_cmovnp(destination, addressAsInt());
         }
     }
 
     class m_cmovnp_4282 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovnp_4282(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovnp(_destination, addressAsInt(), _index, _scale);
+            m_cmovnp(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovns_4256 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_cmovns_4256(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovns(_destination, addressAsInt());
+            m_cmovns(destination, addressAsInt());
         }
     }
 
     class m_cmovns_4255 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovns_4255(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovns(_destination, addressAsInt(), _index, _scale);
+            m_cmovns(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovns_4247 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_cmovns_4247(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovns(_destination, addressAsInt());
+            m_cmovns(destination, addressAsInt());
         }
     }
 
     class m_cmovns_4246 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovns_4246(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovns(_destination, addressAsInt(), _index, _scale);
+            m_cmovns(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovo_2849 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_cmovo_2849(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovo(_destination, addressAsInt());
+            m_cmovo(destination, addressAsInt());
         }
     }
 
     class m_cmovo_2848 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovo_2848(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovo(_destination, addressAsInt(), _index, _scale);
+            m_cmovo(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovo_2840 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_cmovo_2840(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovo(_destination, addressAsInt());
+            m_cmovo(destination, addressAsInt());
         }
     }
 
     class m_cmovo_2839 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovo_2839(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovo(_destination, addressAsInt(), _index, _scale);
+            m_cmovo(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovp_4274 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_cmovp_4274(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovp(_destination, addressAsInt());
+            m_cmovp(destination, addressAsInt());
         }
     }
 
     class m_cmovp_4273 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovp_4273(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovp(_destination, addressAsInt(), _index, _scale);
+            m_cmovp(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovp_4265 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_cmovp_4265(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovp(_destination, addressAsInt());
+            m_cmovp(destination, addressAsInt());
         }
     }
 
     class m_cmovp_4264 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovp_4264(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovp(_destination, addressAsInt(), _index, _scale);
+            m_cmovp(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovs_4238 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_cmovs_4238(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovs(_destination, addressAsInt());
+            m_cmovs(destination, addressAsInt());
         }
     }
 
     class m_cmovs_4237 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovs_4237(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovs(_destination, addressAsInt(), _index, _scale);
+            m_cmovs(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmovs_4229 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_cmovs_4229(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovs(_destination, addressAsInt());
+            m_cmovs(destination, addressAsInt());
         }
     }
 
     class m_cmovs_4228 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmovs_4228(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmovs(_destination, addressAsInt(), _index, _scale);
+            m_cmovs(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmp_1749 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_cmp_1749(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmp(_destination, addressAsInt());
+            m_cmp(destination, addressAsInt());
         }
     }
 
     class m_cmp_1748 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmp_1748(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmp(_destination, addressAsInt(), _index, _scale);
+            m_cmp(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmp_1741 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_cmp_1741(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmp(_destination, addressAsInt());
+            m_cmp(destination, addressAsInt());
         }
     }
 
     class m_cmp_1740 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmp_1740(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmp(_destination, addressAsInt(), _index, _scale);
+            m_cmp(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmp_1733 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _destination;
+        private final IA32GeneralRegister8 destination;
         m_cmp_1733(int startPosition, int endPosition, IA32GeneralRegister8 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmp(_destination, addressAsInt());
+            m_cmp(destination, addressAsInt());
         }
     }
 
     class m_cmp_1732 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister8 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmp_1732(int startPosition, int endPosition, IA32GeneralRegister8 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmp(_destination, addressAsInt(), _index, _scale);
+            m_cmp(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cmpb_301 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_cmpb_301(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpb(addressAsInt(), _imm8);
+            m_cmpb(addressAsInt(), imm8);
         }
     }
 
     class m_cmpl_517 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_cmpl_517(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpl(addressAsInt(), _imm8);
+            m_cmpl(addressAsInt(), imm8);
         }
     }
 
     class m_cmpw_589 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_cmpw_589(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpw(addressAsInt(), _imm8);
+            m_cmpw(addressAsInt(), imm8);
         }
     }
 
     class m_cmp_1724 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
+        private final IA32GeneralRegister16 source;
         m_cmp_1724(int startPosition, int endPosition, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmp(addressAsInt(), _source);
+            m_cmp(addressAsInt(), source);
         }
     }
 
     class m_cmp_1715 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
+        private final IA32GeneralRegister32 source;
         m_cmp_1715(int startPosition, int endPosition, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmp(addressAsInt(), _source);
+            m_cmp(addressAsInt(), source);
         }
     }
 
     class m_cmp_1706 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _source;
+        private final IA32GeneralRegister8 source;
         m_cmp_1706(int startPosition, int endPosition, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmp(addressAsInt(), _source);
+            m_cmp(addressAsInt(), source);
         }
     }
 
     class m_cmpb_300 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_cmpb_300(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpb(addressAsInt(), _index, _scale, _imm8);
+            m_cmpb(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_cmpl_516 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_cmpl_516(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpl(addressAsInt(), _index, _scale, _imm8);
+            m_cmpl(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_cmpw_588 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_cmpw_588(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpw(addressAsInt(), _index, _scale, _imm8);
+            m_cmpw(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_cmp_1723 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
         m_cmp_1723(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmp(addressAsInt(), _index, _scale, _source);
+            m_cmp(addressAsInt(), index, scale, source);
         }
     }
 
     class m_cmp_1714 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
         m_cmp_1714(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmp(addressAsInt(), _index, _scale, _source);
+            m_cmp(addressAsInt(), index, scale, source);
         }
     }
 
     class m_cmp_1705 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister8 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister8 source;
         m_cmp_1705(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmp(addressAsInt(), _index, _scale, _source);
+            m_cmp(addressAsInt(), index, scale, source);
         }
     }
 
     class m_cmpl_372 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final int _imm32;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final int imm32;
         m_cmpl_372(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm32 = imm32;
+            this.index = index;
+            this.scale = scale;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpl(addressAsInt(), _index, _scale, _imm32);
+            m_cmpl(addressAsInt(), index, scale, imm32);
         }
     }
 
     class m_cmpw_444 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final short _imm16;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final short imm16;
         m_cmpw_444(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm16 = imm16;
+            this.index = index;
+            this.scale = scale;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpw(addressAsInt(), _index, _scale, _imm16);
+            m_cmpw(addressAsInt(), index, scale, imm16);
         }
     }
 
     class m_cmpl_373 extends InstructionWithAddress {
-        private final int _imm32;
+        private final int imm32;
         m_cmpl_373(int startPosition, int endPosition, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm32 = imm32;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpl(addressAsInt(), _imm32);
+            m_cmpl(addressAsInt(), imm32);
         }
     }
 
     class m_cmpw_445 extends InstructionWithAddress {
-        private final short _imm16;
+        private final short imm16;
         m_cmpw_445(int startPosition, int endPosition, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm16 = imm16;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpw(addressAsInt(), _imm16);
+            m_cmpw(addressAsInt(), imm16);
         }
     }
 
     class m_cmppd_3668 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32XMMComparison _ia32xmmcomparison;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32XMMComparison ia32xmmcomparison;
         m_cmppd_3668(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, IA32XMMComparison ia32xmmcomparison, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
-            _ia32xmmcomparison = ia32xmmcomparison;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
+            this.ia32xmmcomparison = ia32xmmcomparison;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmppd(_destination, addressAsInt(), _index, _scale, _ia32xmmcomparison);
+            m_cmppd(destination, addressAsInt(), index, scale, ia32xmmcomparison);
         }
     }
 
     class m_cmppd_3669 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32XMMComparison _ia32xmmcomparison;
+        private final IA32XMMRegister destination;
+        private final IA32XMMComparison ia32xmmcomparison;
         m_cmppd_3669(int startPosition, int endPosition, IA32XMMRegister destination, IA32XMMComparison ia32xmmcomparison, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _ia32xmmcomparison = ia32xmmcomparison;
+            this.destination = destination;
+            this.ia32xmmcomparison = ia32xmmcomparison;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmppd(_destination, addressAsInt(), _ia32xmmcomparison);
+            m_cmppd(destination, addressAsInt(), ia32xmmcomparison);
         }
     }
 
     class m_cmpps_3624 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32XMMComparison _ia32xmmcomparison;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32XMMComparison ia32xmmcomparison;
         m_cmpps_3624(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, IA32XMMComparison ia32xmmcomparison, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
-            _ia32xmmcomparison = ia32xmmcomparison;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
+            this.ia32xmmcomparison = ia32xmmcomparison;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpps(_destination, addressAsInt(), _index, _scale, _ia32xmmcomparison);
+            m_cmpps(destination, addressAsInt(), index, scale, ia32xmmcomparison);
         }
     }
 
     class m_cmpps_3625 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32XMMComparison _ia32xmmcomparison;
+        private final IA32XMMRegister destination;
+        private final IA32XMMComparison ia32xmmcomparison;
         m_cmpps_3625(int startPosition, int endPosition, IA32XMMRegister destination, IA32XMMComparison ia32xmmcomparison, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _ia32xmmcomparison = ia32xmmcomparison;
+            this.destination = destination;
+            this.ia32xmmcomparison = ia32xmmcomparison;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpps(_destination, addressAsInt(), _ia32xmmcomparison);
+            m_cmpps(destination, addressAsInt(), ia32xmmcomparison);
         }
     }
 
     class m_cmpsd_3696 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32XMMComparison _ia32xmmcomparison;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32XMMComparison ia32xmmcomparison;
         m_cmpsd_3696(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, IA32XMMComparison ia32xmmcomparison, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
-            _ia32xmmcomparison = ia32xmmcomparison;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
+            this.ia32xmmcomparison = ia32xmmcomparison;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpsd(_destination, addressAsInt(), _index, _scale, _ia32xmmcomparison);
+            m_cmpsd(destination, addressAsInt(), index, scale, ia32xmmcomparison);
         }
     }
 
     class m_cmpsd_3697 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32XMMComparison _ia32xmmcomparison;
+        private final IA32XMMRegister destination;
+        private final IA32XMMComparison ia32xmmcomparison;
         m_cmpsd_3697(int startPosition, int endPosition, IA32XMMRegister destination, IA32XMMComparison ia32xmmcomparison, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _ia32xmmcomparison = ia32xmmcomparison;
+            this.destination = destination;
+            this.ia32xmmcomparison = ia32xmmcomparison;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpsd(_destination, addressAsInt(), _ia32xmmcomparison);
+            m_cmpsd(destination, addressAsInt(), ia32xmmcomparison);
         }
     }
 
     class m_cmpss_3705 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32XMMComparison _ia32xmmcomparison;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32XMMComparison ia32xmmcomparison;
         m_cmpss_3705(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, IA32XMMComparison ia32xmmcomparison, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
-            _ia32xmmcomparison = ia32xmmcomparison;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
+            this.ia32xmmcomparison = ia32xmmcomparison;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpss(_destination, addressAsInt(), _index, _scale, _ia32xmmcomparison);
+            m_cmpss(destination, addressAsInt(), index, scale, ia32xmmcomparison);
         }
     }
 
     class m_cmpss_3706 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32XMMComparison _ia32xmmcomparison;
+        private final IA32XMMRegister destination;
+        private final IA32XMMComparison ia32xmmcomparison;
         m_cmpss_3706(int startPosition, int endPosition, IA32XMMRegister destination, IA32XMMComparison ia32xmmcomparison, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _ia32xmmcomparison = ia32xmmcomparison;
+            this.destination = destination;
+            this.ia32xmmcomparison = ia32xmmcomparison;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpss(_destination, addressAsInt(), _ia32xmmcomparison);
+            m_cmpss(destination, addressAsInt(), ia32xmmcomparison);
         }
     }
 
     class m_cmpxchg_3487 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
+        private final IA32GeneralRegister16 source;
         m_cmpxchg_3487(int startPosition, int endPosition, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpxchg(addressAsInt(), _source);
+            m_cmpxchg(addressAsInt(), source);
         }
     }
 
     class m_cmpxchg_3478 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
+        private final IA32GeneralRegister32 source;
         m_cmpxchg_3478(int startPosition, int endPosition, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpxchg(addressAsInt(), _source);
+            m_cmpxchg(addressAsInt(), source);
         }
     }
 
     class m_cmpxchg_3469 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _source;
+        private final IA32GeneralRegister8 source;
         m_cmpxchg_3469(int startPosition, int endPosition, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpxchg(addressAsInt(), _source);
+            m_cmpxchg(addressAsInt(), source);
         }
     }
 
     class m_cmpxchg_3486 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
         m_cmpxchg_3486(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpxchg(addressAsInt(), _index, _scale, _source);
+            m_cmpxchg(addressAsInt(), index, scale, source);
         }
     }
 
     class m_cmpxchg_3477 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
         m_cmpxchg_3477(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpxchg(addressAsInt(), _index, _scale, _source);
+            m_cmpxchg(addressAsInt(), index, scale, source);
         }
     }
 
     class m_cmpxchg_3468 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister8 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister8 source;
         m_cmpxchg_3468(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpxchg(addressAsInt(), _index, _scale, _source);
+            m_cmpxchg(addressAsInt(), index, scale, source);
         }
     }
 
@@ -17996,688 +17996,688 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_cmpxchg8b_3660 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cmpxchg8b_3660(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cmpxchg8b(addressAsInt(), _index, _scale);
+            m_cmpxchg8b(addressAsInt(), index, scale);
         }
     }
 
     class m_comisd_4166 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_comisd_4166(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_comisd(_destination, addressAsInt());
+            m_comisd(destination, addressAsInt());
         }
     }
 
     class m_comisd_4165 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_comisd_4165(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_comisd(_destination, addressAsInt(), _index, _scale);
+            m_comisd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_comiss_4096 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_comiss_4096(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_comiss(_destination, addressAsInt());
+            m_comiss(destination, addressAsInt());
         }
     }
 
     class m_comiss_4095 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_comiss_4095(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_comiss(_destination, addressAsInt(), _index, _scale);
+            m_comiss(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvtdq2pd_3924 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_cvtdq2pd_3924(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtdq2pd(_destination, addressAsInt());
+            m_cvtdq2pd(destination, addressAsInt());
         }
     }
 
     class m_cvtdq2pd_3923 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvtdq2pd_3923(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtdq2pd(_destination, addressAsInt(), _index, _scale);
+            m_cvtdq2pd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvtdq2ps_4400 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_cvtdq2ps_4400(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtdq2ps(_destination, addressAsInt());
+            m_cvtdq2ps(destination, addressAsInt());
         }
     }
 
     class m_cvtdq2ps_4399 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvtdq2ps_4399(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtdq2ps(_destination, addressAsInt(), _index, _scale);
+            m_cvtdq2ps(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvtpd2dq_3915 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_cvtpd2dq_3915(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtpd2dq(_destination, addressAsInt());
+            m_cvtpd2dq(destination, addressAsInt());
         }
     }
 
     class m_cvtpd2dq_3914 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvtpd2dq_3914(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtpd2dq(_destination, addressAsInt(), _index, _scale);
+            m_cvtpd2dq(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvtpd2pi_4148 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_cvtpd2pi_4148(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtpd2pi(_destination, addressAsInt());
+            m_cvtpd2pi(destination, addressAsInt());
         }
     }
 
     class m_cvtpd2pi_4147 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvtpd2pi_4147(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtpd2pi(_destination, addressAsInt(), _index, _scale);
+            m_cvtpd2pi(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvtpd2ps_4463 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_cvtpd2ps_4463(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtpd2ps(_destination, addressAsInt());
+            m_cvtpd2ps(destination, addressAsInt());
         }
     }
 
     class m_cvtpd2ps_4462 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvtpd2ps_4462(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtpd2ps(_destination, addressAsInt(), _index, _scale);
+            m_cvtpd2ps(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvtpi2pd_4122 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_cvtpi2pd_4122(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtpi2pd(_destination, addressAsInt());
+            m_cvtpi2pd(destination, addressAsInt());
         }
     }
 
     class m_cvtpi2pd_4121 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvtpi2pd_4121(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtpi2pd(_destination, addressAsInt(), _index, _scale);
+            m_cvtpi2pd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvtpi2ps_4052 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_cvtpi2ps_4052(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtpi2ps(_destination, addressAsInt());
+            m_cvtpi2ps(destination, addressAsInt());
         }
     }
 
     class m_cvtpi2ps_4051 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvtpi2ps_4051(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtpi2ps(_destination, addressAsInt(), _index, _scale);
+            m_cvtpi2ps(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvtps2dq_4472 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_cvtps2dq_4472(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtps2dq(_destination, addressAsInt());
+            m_cvtps2dq(destination, addressAsInt());
         }
     }
 
     class m_cvtps2dq_4471 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvtps2dq_4471(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtps2dq(_destination, addressAsInt(), _index, _scale);
+            m_cvtps2dq(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvtps2pd_4391 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_cvtps2pd_4391(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtps2pd(_destination, addressAsInt());
+            m_cvtps2pd(destination, addressAsInt());
         }
     }
 
     class m_cvtps2pd_4390 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvtps2pd_4390(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtps2pd(_destination, addressAsInt(), _index, _scale);
+            m_cvtps2pd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvtps2pi_4078 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_cvtps2pi_4078(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtps2pi(_destination, addressAsInt());
+            m_cvtps2pi(destination, addressAsInt());
         }
     }
 
     class m_cvtps2pi_4077 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvtps2pi_4077(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtps2pi(_destination, addressAsInt(), _index, _scale);
+            m_cvtps2pi(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvtsd2si_4193 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_cvtsd2si_4193(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtsd2si(_destination, addressAsInt());
+            m_cvtsd2si(destination, addressAsInt());
         }
     }
 
     class m_cvtsd2si_4192 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvtsd2si_4192(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtsd2si(_destination, addressAsInt(), _index, _scale);
+            m_cvtsd2si(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvtsd2ss_4535 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_cvtsd2ss_4535(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtsd2ss(_destination, addressAsInt());
+            m_cvtsd2ss(destination, addressAsInt());
         }
     }
 
     class m_cvtsd2ss_4534 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvtsd2ss_4534(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtsd2ss(_destination, addressAsInt(), _index, _scale);
+            m_cvtsd2ss(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvtsi2sd_4175 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_cvtsi2sd_4175(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtsi2sd(_destination, addressAsInt());
+            m_cvtsi2sd(destination, addressAsInt());
         }
     }
 
     class m_cvtsi2sd_4174 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvtsi2sd_4174(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtsi2sd(_destination, addressAsInt(), _index, _scale);
+            m_cvtsi2sd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvtsi2ss_4202 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_cvtsi2ss_4202(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtsi2ss(_destination, addressAsInt());
+            m_cvtsi2ss(destination, addressAsInt());
         }
     }
 
     class m_cvtsi2ss_4201 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvtsi2ss_4201(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtsi2ss(_destination, addressAsInt(), _index, _scale);
+            m_cvtsi2ss(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvtss2sd_4598 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_cvtss2sd_4598(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtss2sd(_destination, addressAsInt());
+            m_cvtss2sd(destination, addressAsInt());
         }
     }
 
     class m_cvtss2sd_4597 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvtss2sd_4597(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtss2sd(_destination, addressAsInt(), _index, _scale);
+            m_cvtss2sd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvtss2si_4220 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_cvtss2si_4220(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtss2si(_destination, addressAsInt());
+            m_cvtss2si(destination, addressAsInt());
         }
     }
 
     class m_cvtss2si_4219 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvtss2si_4219(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvtss2si(_destination, addressAsInt(), _index, _scale);
+            m_cvtss2si(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvttpd2dq_3898 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_cvttpd2dq_3898(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvttpd2dq(_destination, addressAsInt());
+            m_cvttpd2dq(destination, addressAsInt());
         }
     }
 
     class m_cvttpd2dq_3897 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvttpd2dq_3897(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvttpd2dq(_destination, addressAsInt(), _index, _scale);
+            m_cvttpd2dq(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvttpd2pi_4139 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_cvttpd2pi_4139(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvttpd2pi(_destination, addressAsInt());
+            m_cvttpd2pi(destination, addressAsInt());
         }
     }
 
     class m_cvttpd2pi_4138 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvttpd2pi_4138(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvttpd2pi(_destination, addressAsInt(), _index, _scale);
+            m_cvttpd2pi(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvttps2dq_4607 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_cvttps2dq_4607(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvttps2dq(_destination, addressAsInt());
+            m_cvttps2dq(destination, addressAsInt());
         }
     }
 
     class m_cvttps2dq_4606 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvttps2dq_4606(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvttps2dq(_destination, addressAsInt(), _index, _scale);
+            m_cvttps2dq(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvttps2pi_4069 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_cvttps2pi_4069(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvttps2pi(_destination, addressAsInt());
+            m_cvttps2pi(destination, addressAsInt());
         }
     }
 
     class m_cvttps2pi_4068 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvttps2pi_4068(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvttps2pi(_destination, addressAsInt(), _index, _scale);
+            m_cvttps2pi(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvttsd2si_4184 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_cvttsd2si_4184(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvttsd2si(_destination, addressAsInt());
+            m_cvttsd2si(destination, addressAsInt());
         }
     }
 
     class m_cvttsd2si_4183 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvttsd2si_4183(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvttsd2si(_destination, addressAsInt(), _index, _scale);
+            m_cvttsd2si(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_cvttss2si_4211 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_cvttss2si_4211(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvttss2si(_destination, addressAsInt());
+            m_cvttss2si(destination, addressAsInt());
         }
     }
 
     class m_cvttss2si_4210 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_cvttss2si_4210(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_cvttss2si(_destination, addressAsInt(), _index, _scale);
+            m_cvttss2si(destination, addressAsInt(), index, scale);
         }
     }
 
@@ -18712,44 +18712,44 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_decb_2422 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_decb_2422(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_decb(addressAsInt(), _index, _scale);
+            m_decb(addressAsInt(), index, scale);
         }
     }
 
     class m_decl_2440 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_decl_2440(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_decl(addressAsInt(), _index, _scale);
+            m_decl(addressAsInt(), index, scale);
         }
     }
 
     class m_decw_2482 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_decw_2482(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_decw(addressAsInt(), _index, _scale);
+            m_decw(addressAsInt(), index, scale);
         }
     }
 
@@ -18784,156 +18784,156 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_divb___AL_1369 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_divb___AL_1369(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_divb___AL(addressAsInt(), _index, _scale);
+            m_divb___AL(addressAsInt(), index, scale);
         }
     }
 
     class m_divl___EAX_1432 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_divl___EAX_1432(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_divl___EAX(addressAsInt(), _index, _scale);
+            m_divl___EAX(addressAsInt(), index, scale);
         }
     }
 
     class m_divw___AX_1495 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_divw___AX_1495(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_divw___AX(addressAsInt(), _index, _scale);
+            m_divw___AX(addressAsInt(), index, scale);
         }
     }
 
     class m_divpd_4499 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_divpd_4499(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_divpd(_destination, addressAsInt());
+            m_divpd(destination, addressAsInt());
         }
     }
 
     class m_divpd_4498 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_divpd_4498(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_divpd(_destination, addressAsInt(), _index, _scale);
+            m_divpd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_divps_4427 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_divps_4427(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_divps(_destination, addressAsInt());
+            m_divps(destination, addressAsInt());
         }
     }
 
     class m_divps_4426 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_divps_4426(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_divps(_destination, addressAsInt(), _index, _scale);
+            m_divps(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_divsd_4562 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_divsd_4562(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_divsd(_destination, addressAsInt());
+            m_divsd(destination, addressAsInt());
         }
     }
 
     class m_divsd_4561 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_divsd_4561(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_divsd(_destination, addressAsInt(), _index, _scale);
+            m_divsd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_divss_4634 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_divss_4634(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_divss(_destination, addressAsInt());
+            m_divss(destination, addressAsInt());
         }
     }
 
     class m_divss_4633 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_divss_4633(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_divss(_destination, addressAsInt(), _index, _scale);
+            m_divss(destination, addressAsInt(), index, scale);
         }
     }
 
@@ -18958,30 +18958,30 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fadds_1945 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fadds_1945(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fadds(addressAsInt(), _index, _scale);
+            m_fadds(addressAsInt(), index, scale);
         }
     }
 
     class m_faddl_2169 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_faddl_2169(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_faddl(addressAsInt(), _index, _scale);
+            m_faddl(addressAsInt(), index, scale);
         }
     }
 
@@ -18996,16 +18996,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fbld_2357 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fbld_2357(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fbld(addressAsInt(), _index, _scale);
+            m_fbld(addressAsInt(), index, scale);
         }
     }
 
@@ -19020,16 +19020,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fbstp_2365 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fbstp_2365(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fbstp(addressAsInt(), _index, _scale);
+            m_fbstp(addressAsInt(), index, scale);
         }
     }
 
@@ -19054,30 +19054,30 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fcoms_1953 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fcoms_1953(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fcoms(addressAsInt(), _index, _scale);
+            m_fcoms(addressAsInt(), index, scale);
         }
     }
 
     class m_fcoml_2177 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fcoml_2177(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fcoml(addressAsInt(), _index, _scale);
+            m_fcoml(addressAsInt(), index, scale);
         }
     }
 
@@ -19102,30 +19102,30 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fcomps_1957 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fcomps_1957(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fcomps(addressAsInt(), _index, _scale);
+            m_fcomps(addressAsInt(), index, scale);
         }
     }
 
     class m_fcompl_2181 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fcompl_2181(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fcompl(addressAsInt(), _index, _scale);
+            m_fcompl(addressAsInt(), index, scale);
         }
     }
 
@@ -19150,30 +19150,30 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fdivs_1969 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fdivs_1969(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fdivs(addressAsInt(), _index, _scale);
+            m_fdivs(addressAsInt(), index, scale);
         }
     }
 
     class m_fdivl_2193 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fdivl_2193(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fdivl(addressAsInt(), _index, _scale);
+            m_fdivl(addressAsInt(), index, scale);
         }
     }
 
@@ -19198,30 +19198,30 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fdivrs_1973 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fdivrs_1973(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fdivrs(addressAsInt(), _index, _scale);
+            m_fdivrs(addressAsInt(), index, scale);
         }
     }
 
     class m_fdivrl_2197 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fdivrl_2197(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fdivrl(addressAsInt(), _index, _scale);
+            m_fdivrl(addressAsInt(), index, scale);
         }
     }
 
@@ -19246,30 +19246,30 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fiaddl_2065 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fiaddl_2065(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fiaddl(addressAsInt(), _index, _scale);
+            m_fiaddl(addressAsInt(), index, scale);
         }
     }
 
     class m_fiadds_2281 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fiadds_2281(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fiadds(addressAsInt(), _index, _scale);
+            m_fiadds(addressAsInt(), index, scale);
         }
     }
 
@@ -19294,30 +19294,30 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_ficoml_2073 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_ficoml_2073(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_ficoml(addressAsInt(), _index, _scale);
+            m_ficoml(addressAsInt(), index, scale);
         }
     }
 
     class m_ficoms_2289 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_ficoms_2289(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_ficoms(addressAsInt(), _index, _scale);
+            m_ficoms(addressAsInt(), index, scale);
         }
     }
 
@@ -19342,30 +19342,30 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_ficompl_2077 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_ficompl_2077(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_ficompl(addressAsInt(), _index, _scale);
+            m_ficompl(addressAsInt(), index, scale);
         }
     }
 
     class m_ficomps_2293 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_ficomps_2293(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_ficomps(addressAsInt(), _index, _scale);
+            m_ficomps(addressAsInt(), index, scale);
         }
     }
 
@@ -19390,30 +19390,30 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fidivl_2089 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fidivl_2089(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fidivl(addressAsInt(), _index, _scale);
+            m_fidivl(addressAsInt(), index, scale);
         }
     }
 
     class m_fidivs_2305 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fidivs_2305(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fidivs(addressAsInt(), _index, _scale);
+            m_fidivs(addressAsInt(), index, scale);
         }
     }
 
@@ -19438,30 +19438,30 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fidivrl_2093 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fidivrl_2093(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fidivrl(addressAsInt(), _index, _scale);
+            m_fidivrl(addressAsInt(), index, scale);
         }
     }
 
     class m_fidivrs_2309 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fidivrs_2309(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fidivrs(addressAsInt(), _index, _scale);
+            m_fidivrs(addressAsInt(), index, scale);
         }
     }
 
@@ -19496,44 +19496,44 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fildl_2129 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fildl_2129(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fildl(addressAsInt(), _index, _scale);
+            m_fildl(addressAsInt(), index, scale);
         }
     }
 
     class m_filds_2345 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_filds_2345(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_filds(addressAsInt(), _index, _scale);
+            m_filds(addressAsInt(), index, scale);
         }
     }
 
     class m_fildq_2361 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fildq_2361(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fildq(addressAsInt(), _index, _scale);
+            m_fildq(addressAsInt(), index, scale);
         }
     }
 
@@ -19558,30 +19558,30 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fimull_2069 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fimull_2069(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fimull(addressAsInt(), _index, _scale);
+            m_fimull(addressAsInt(), index, scale);
         }
     }
 
     class m_fimuls_2285 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fimuls_2285(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fimuls(addressAsInt(), _index, _scale);
+            m_fimuls(addressAsInt(), index, scale);
         }
     }
 
@@ -19606,30 +19606,30 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fistl_2133 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fistl_2133(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fistl(addressAsInt(), _index, _scale);
+            m_fistl(addressAsInt(), index, scale);
         }
     }
 
     class m_fists_2349 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fists_2349(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fists(addressAsInt(), _index, _scale);
+            m_fists(addressAsInt(), index, scale);
         }
     }
 
@@ -19664,44 +19664,44 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fistpl_2137 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fistpl_2137(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fistpl(addressAsInt(), _index, _scale);
+            m_fistpl(addressAsInt(), index, scale);
         }
     }
 
     class m_fistps_2353 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fistps_2353(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fistps(addressAsInt(), _index, _scale);
+            m_fistps(addressAsInt(), index, scale);
         }
     }
 
     class m_fistpq_2369 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fistpq_2369(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fistpq(addressAsInt(), _index, _scale);
+            m_fistpq(addressAsInt(), index, scale);
         }
     }
 
@@ -19726,30 +19726,30 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fisubl_2081 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fisubl_2081(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fisubl(addressAsInt(), _index, _scale);
+            m_fisubl(addressAsInt(), index, scale);
         }
     }
 
     class m_fisubs_2297 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fisubs_2297(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fisubs(addressAsInt(), _index, _scale);
+            m_fisubs(addressAsInt(), index, scale);
         }
     }
 
@@ -19774,30 +19774,30 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fisubrl_2085 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fisubrl_2085(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fisubrl(addressAsInt(), _index, _scale);
+            m_fisubrl(addressAsInt(), index, scale);
         }
     }
 
     class m_fisubrs_2301 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fisubrs_2301(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fisubrs(addressAsInt(), _index, _scale);
+            m_fisubrs(addressAsInt(), index, scale);
         }
     }
 
@@ -19832,44 +19832,44 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_flds_2009 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_flds_2009(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_flds(addressAsInt(), _index, _scale);
+            m_flds(addressAsInt(), index, scale);
         }
     }
 
     class m_fldt_2141 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fldt_2141(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fldt(addressAsInt(), _index, _scale);
+            m_fldt(addressAsInt(), index, scale);
         }
     }
 
     class m_fldl_2233 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fldl_2233(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fldl(addressAsInt(), _index, _scale);
+            m_fldl(addressAsInt(), index, scale);
         }
     }
 
@@ -19884,16 +19884,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fldcw_2025 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fldcw_2025(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fldcw(addressAsInt(), _index, _scale);
+            m_fldcw(addressAsInt(), index, scale);
         }
     }
 
@@ -19908,16 +19908,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fldenv_2021 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fldenv_2021(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fldenv(addressAsInt(), _index, _scale);
+            m_fldenv(addressAsInt(), index, scale);
         }
     }
 
@@ -19942,30 +19942,30 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fmuls_1949 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fmuls_1949(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fmuls(addressAsInt(), _index, _scale);
+            m_fmuls(addressAsInt(), index, scale);
         }
     }
 
     class m_fmull_2173 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fmull_2173(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fmull(addressAsInt(), _index, _scale);
+            m_fmull(addressAsInt(), index, scale);
         }
     }
 
@@ -19980,16 +19980,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_frstor_2245 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_frstor_2245(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_frstor(addressAsInt(), _index, _scale);
+            m_frstor(addressAsInt(), index, scale);
         }
     }
 
@@ -20004,16 +20004,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fsave_2249 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fsave_2249(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fsave(addressAsInt(), _index, _scale);
+            m_fsave(addressAsInt(), index, scale);
         }
     }
 
@@ -20038,30 +20038,30 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fsts_2013 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fsts_2013(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fsts(addressAsInt(), _index, _scale);
+            m_fsts(addressAsInt(), index, scale);
         }
     }
 
     class m_fstl_2237 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fstl_2237(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fstl(addressAsInt(), _index, _scale);
+            m_fstl(addressAsInt(), index, scale);
         }
     }
 
@@ -20076,16 +20076,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fstcw_2033 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fstcw_2033(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fstcw(addressAsInt(), _index, _scale);
+            m_fstcw(addressAsInt(), index, scale);
         }
     }
 
@@ -20100,16 +20100,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fstenv_2029 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fstenv_2029(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fstenv(addressAsInt(), _index, _scale);
+            m_fstenv(addressAsInt(), index, scale);
         }
     }
 
@@ -20144,44 +20144,44 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fstps_2017 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fstps_2017(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fstps(addressAsInt(), _index, _scale);
+            m_fstps(addressAsInt(), index, scale);
         }
     }
 
     class m_fstpt_2145 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fstpt_2145(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fstpt(addressAsInt(), _index, _scale);
+            m_fstpt(addressAsInt(), index, scale);
         }
     }
 
     class m_fstpl_2241 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fstpl_2241(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fstpl(addressAsInt(), _index, _scale);
+            m_fstpl(addressAsInt(), index, scale);
         }
     }
 
@@ -20196,16 +20196,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fstsw_2253 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fstsw_2253(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fstsw(addressAsInt(), _index, _scale);
+            m_fstsw(addressAsInt(), index, scale);
         }
     }
 
@@ -20230,30 +20230,30 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fsubs_1961 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fsubs_1961(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fsubs(addressAsInt(), _index, _scale);
+            m_fsubs(addressAsInt(), index, scale);
         }
     }
 
     class m_fsubl_2185 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fsubl_2185(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fsubl(addressAsInt(), _index, _scale);
+            m_fsubl(addressAsInt(), index, scale);
         }
     }
 
@@ -20278,142 +20278,142 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_fsubrs_1965 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fsubrs_1965(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fsubrs(addressAsInt(), _index, _scale);
+            m_fsubrs(addressAsInt(), index, scale);
         }
     }
 
     class m_fsubrl_2189 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_fsubrl_2189(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_fsubrl(addressAsInt(), _index, _scale);
+            m_fsubrl(addressAsInt(), index, scale);
         }
     }
 
     class m_haddpd_4804 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_haddpd_4804(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_haddpd(_destination, addressAsInt());
+            m_haddpd(destination, addressAsInt());
         }
     }
 
     class m_haddpd_4803 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_haddpd_4803(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_haddpd(_destination, addressAsInt(), _index, _scale);
+            m_haddpd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_haddps_4839 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_haddps_4839(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_haddps(_destination, addressAsInt());
+            m_haddps(destination, addressAsInt());
         }
     }
 
     class m_haddps_4838 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_haddps_4838(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_haddps(_destination, addressAsInt(), _index, _scale);
+            m_haddps(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_hsubpd_4813 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_hsubpd_4813(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_hsubpd(_destination, addressAsInt());
+            m_hsubpd(destination, addressAsInt());
         }
     }
 
     class m_hsubpd_4812 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_hsubpd_4812(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_hsubpd(_destination, addressAsInt(), _index, _scale);
+            m_hsubpd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_hsubps_4848 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_hsubps_4848(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_hsubps(_destination, addressAsInt());
+            m_hsubps(destination, addressAsInt());
         }
     }
 
     class m_hsubps_4847 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_hsubps_4847(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_hsubps(_destination, addressAsInt(), _index, _scale);
+            m_hsubps(destination, addressAsInt(), index, scale);
         }
     }
 
@@ -20448,228 +20448,228 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_idivb___AL_1373 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_idivb___AL_1373(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_idivb___AL(addressAsInt(), _index, _scale);
+            m_idivb___AL(addressAsInt(), index, scale);
         }
     }
 
     class m_idivl___EAX_1436 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_idivl___EAX_1436(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_idivl___EAX(addressAsInt(), _index, _scale);
+            m_idivl___EAX(addressAsInt(), index, scale);
         }
     }
 
     class m_idivw___AX_1499 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_idivw___AX_1499(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_idivw___AX(addressAsInt(), _index, _scale);
+            m_idivw___AX(addressAsInt(), index, scale);
         }
     }
 
     class m_imul_5022 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_imul_5022(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_imul(_destination, addressAsInt());
+            m_imul(destination, addressAsInt());
         }
     }
 
     class m_imul_1796 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final byte _imm8;
+        private final IA32GeneralRegister16 destination;
+        private final byte imm8;
         m_imul_1796(int startPosition, int endPosition, IA32GeneralRegister16 destination, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _imm8 = imm8;
+            this.destination = destination;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_imul(_destination, addressAsInt(), _imm8);
+            m_imul(destination, addressAsInt(), imm8);
         }
     }
 
     class m_imul_5021 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_imul_5021(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_imul(_destination, addressAsInt(), _index, _scale);
+            m_imul(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_imul_1795 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_imul_1795(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_imul(_destination, addressAsInt(), _index, _scale, _imm8);
+            m_imul(destination, addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_imul_1776 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final short _imm16;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final short imm16;
         m_imul_1776(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
-            _imm16 = imm16;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_imul(_destination, addressAsInt(), _index, _scale, _imm16);
+            m_imul(destination, addressAsInt(), index, scale, imm16);
         }
     }
 
     class m_imul_1777 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final short _imm16;
+        private final IA32GeneralRegister16 destination;
+        private final short imm16;
         m_imul_1777(int startPosition, int endPosition, IA32GeneralRegister16 destination, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _imm16 = imm16;
+            this.destination = destination;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_imul(_destination, addressAsInt(), _imm16);
+            m_imul(destination, addressAsInt(), imm16);
         }
     }
 
     class m_imul_5013 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_imul_5013(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_imul(_destination, addressAsInt());
+            m_imul(destination, addressAsInt());
         }
     }
 
     class m_imul_1787 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final byte _imm8;
+        private final IA32GeneralRegister32 destination;
+        private final byte imm8;
         m_imul_1787(int startPosition, int endPosition, IA32GeneralRegister32 destination, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _imm8 = imm8;
+            this.destination = destination;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_imul(_destination, addressAsInt(), _imm8);
+            m_imul(destination, addressAsInt(), imm8);
         }
     }
 
     class m_imul_5012 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_imul_5012(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_imul(_destination, addressAsInt(), _index, _scale);
+            m_imul(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_imul_1786 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_imul_1786(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_imul(_destination, addressAsInt(), _index, _scale, _imm8);
+            m_imul(destination, addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_imul_1767 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final int _imm32;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final int imm32;
         m_imul_1767(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
-            _imm32 = imm32;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_imul(_destination, addressAsInt(), _index, _scale, _imm32);
+            m_imul(destination, addressAsInt(), index, scale, imm32);
         }
     }
 
     class m_imul_1768 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final int _imm32;
+        private final IA32GeneralRegister32 destination;
+        private final int imm32;
         m_imul_1768(int startPosition, int endPosition, IA32GeneralRegister32 destination, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _imm32 = imm32;
+            this.destination = destination;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_imul(_destination, addressAsInt(), _imm32);
+            m_imul(destination, addressAsInt(), imm32);
         }
     }
 
@@ -20704,44 +20704,44 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_imulb___AL_1365 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_imulb___AL_1365(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_imulb___AL(addressAsInt(), _index, _scale);
+            m_imulb___AL(addressAsInt(), index, scale);
         }
     }
 
     class m_imull___EAX_1428 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_imull___EAX_1428(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_imull___EAX(addressAsInt(), _index, _scale);
+            m_imull___EAX(addressAsInt(), index, scale);
         }
     }
 
     class m_imulw___AX_1491 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_imulw___AX_1491(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_imulw___AX(addressAsInt(), _index, _scale);
+            m_imulw___AX(addressAsInt(), index, scale);
         }
     }
 
@@ -20776,44 +20776,44 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_incb_2418 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_incb_2418(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_incb(addressAsInt(), _index, _scale);
+            m_incb(addressAsInt(), index, scale);
         }
     }
 
     class m_incl_2436 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_incl_2436(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_incl(addressAsInt(), _index, _scale);
+            m_incl(addressAsInt(), index, scale);
         }
     }
 
     class m_incw_2478 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_incw_2478(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_incw(addressAsInt(), _index, _scale);
+            m_incw(addressAsInt(), index, scale);
         }
     }
 
@@ -20828,16 +20828,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_invlpg_2578 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_invlpg_2578(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_invlpg(addressAsInt(), _index, _scale);
+            m_invlpg(addressAsInt(), index, scale);
         }
     }
 
@@ -20947,16 +20947,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_jmp_2447 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_jmp_2447(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_jmp(addressAsInt(), _index, _scale);
+            m_jmp(addressAsInt(), index, scale);
         }
     }
 
@@ -21165,310 +21165,310 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_lar_2623 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_lar_2623(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lar(_destination, addressAsInt());
+            m_lar(destination, addressAsInt());
         }
     }
 
     class m_lar_2622 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_lar_2622(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lar(_destination, addressAsInt(), _index, _scale);
+            m_lar(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_lar_2614 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_lar_2614(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lar(_destination, addressAsInt());
+            m_lar(destination, addressAsInt());
         }
     }
 
     class m_lar_2613 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_lar_2613(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lar(_destination, addressAsInt(), _index, _scale);
+            m_lar(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_lddqu_4024 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_lddqu_4024(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lddqu(_destination, addressAsInt());
+            m_lddqu(destination, addressAsInt());
         }
     }
 
     class m_lddqu_4023 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_lddqu_4023(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lddqu(_destination, addressAsInt(), _index, _scale);
+            m_lddqu(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_lds_918 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_lds_918(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lds(_destination, addressAsInt());
+            m_lds(destination, addressAsInt());
         }
     }
 
     class m_lds_917 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_lds_917(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lds(_destination, addressAsInt(), _index, _scale);
+            m_lds(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_lds_910 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_lds_910(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lds(_destination, addressAsInt());
+            m_lds(destination, addressAsInt());
         }
     }
 
     class m_lds_909 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_lds_909(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lds(_destination, addressAsInt(), _index, _scale);
+            m_lds(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_lea_1887 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_lea_1887(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lea(_destination, addressAsInt());
+            m_lea(destination, addressAsInt());
         }
     }
 
     class m_lea_1886 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_lea_1886(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lea(_destination, addressAsInt(), _index, _scale);
+            m_lea(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_lea_1879 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_lea_1879(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lea(_destination, addressAsInt());
+            m_lea(destination, addressAsInt());
         }
     }
 
     class m_lea_1878 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_lea_1878(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lea(_destination, addressAsInt(), _index, _scale);
+            m_lea(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_les_902 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_les_902(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_les(_destination, addressAsInt());
+            m_les(destination, addressAsInt());
         }
     }
 
     class m_les_901 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_les_901(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_les(_destination, addressAsInt(), _index, _scale);
+            m_les(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_les_894 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_les_894(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_les(_destination, addressAsInt());
+            m_les(destination, addressAsInt());
         }
     }
 
     class m_les_893 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_les_893(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_les(_destination, addressAsInt(), _index, _scale);
+            m_les(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_lfs_3538 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_lfs_3538(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lfs(_destination, addressAsInt());
+            m_lfs(destination, addressAsInt());
         }
     }
 
     class m_lfs_3537 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_lfs_3537(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lfs(_destination, addressAsInt(), _index, _scale);
+            m_lfs(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_lfs_3530 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_lfs_3530(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lfs(_destination, addressAsInt());
+            m_lfs(destination, addressAsInt());
         }
     }
 
     class m_lfs_3529 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_lfs_3529(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lfs(_destination, addressAsInt(), _index, _scale);
+            m_lfs(destination, addressAsInt(), index, scale);
         }
     }
 
@@ -21483,72 +21483,72 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_lgdt_2562 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_lgdt_2562(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lgdt(addressAsInt(), _index, _scale);
+            m_lgdt(addressAsInt(), index, scale);
         }
     }
 
     class m_lgs_3554 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_lgs_3554(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lgs(_destination, addressAsInt());
+            m_lgs(destination, addressAsInt());
         }
     }
 
     class m_lgs_3553 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_lgs_3553(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lgs(_destination, addressAsInt(), _index, _scale);
+            m_lgs(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_lgs_3546 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_lgs_3546(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lgs(_destination, addressAsInt());
+            m_lgs(destination, addressAsInt());
         }
     }
 
     class m_lgs_3545 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_lgs_3545(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lgs(_destination, addressAsInt(), _index, _scale);
+            m_lgs(destination, addressAsInt(), index, scale);
         }
     }
 
@@ -21563,16 +21563,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_lidt_2566 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_lidt_2566(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lidt(addressAsInt(), _index, _scale);
+            m_lidt(addressAsInt(), index, scale);
         }
     }
 
@@ -21587,16 +21587,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_lldt_2506 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_lldt_2506(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lldt(addressAsInt(), _index, _scale);
+            m_lldt(addressAsInt(), index, scale);
         }
     }
 
@@ -21611,16 +21611,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_lmsw_2574 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_lmsw_2574(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lmsw(addressAsInt(), _index, _scale);
+            m_lmsw(addressAsInt(), index, scale);
         }
     }
 
@@ -21655,114 +21655,114 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_lsl_2641 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_lsl_2641(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lsl(_destination, addressAsInt());
+            m_lsl(destination, addressAsInt());
         }
     }
 
     class m_lsl_2640 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_lsl_2640(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lsl(_destination, addressAsInt(), _index, _scale);
+            m_lsl(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_lsl_2632 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_lsl_2632(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lsl(_destination, addressAsInt());
+            m_lsl(destination, addressAsInt());
         }
     }
 
     class m_lsl_2631 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_lsl_2631(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lsl(_destination, addressAsInt(), _index, _scale);
+            m_lsl(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_lss_3504 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_lss_3504(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lss(_destination, addressAsInt());
+            m_lss(destination, addressAsInt());
         }
     }
 
     class m_lss_3503 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_lss_3503(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lss(_destination, addressAsInt(), _index, _scale);
+            m_lss(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_lss_3496 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_lss_3496(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lss(_destination, addressAsInt());
+            m_lss(destination, addressAsInt());
         }
     }
 
     class m_lss_3495 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_lss_3495(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_lss(_destination, addressAsInt(), _index, _scale);
+            m_lss(destination, addressAsInt(), index, scale);
         }
     }
 
@@ -21777,352 +21777,352 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_ltr_2510 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_ltr_2510(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_ltr(addressAsInt(), _index, _scale);
+            m_ltr(addressAsInt(), index, scale);
         }
     }
 
     class m_maxpd_4508 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_maxpd_4508(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_maxpd(_destination, addressAsInt());
+            m_maxpd(destination, addressAsInt());
         }
     }
 
     class m_maxpd_4507 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_maxpd_4507(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_maxpd(_destination, addressAsInt(), _index, _scale);
+            m_maxpd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_maxps_4436 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_maxps_4436(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_maxps(_destination, addressAsInt());
+            m_maxps(destination, addressAsInt());
         }
     }
 
     class m_maxps_4435 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_maxps_4435(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_maxps(_destination, addressAsInt(), _index, _scale);
+            m_maxps(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_maxsd_4571 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_maxsd_4571(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_maxsd(_destination, addressAsInt());
+            m_maxsd(destination, addressAsInt());
         }
     }
 
     class m_maxsd_4570 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_maxsd_4570(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_maxsd(_destination, addressAsInt(), _index, _scale);
+            m_maxsd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_maxss_4643 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_maxss_4643(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_maxss(_destination, addressAsInt());
+            m_maxss(destination, addressAsInt());
         }
     }
 
     class m_maxss_4642 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_maxss_4642(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_maxss(_destination, addressAsInt(), _index, _scale);
+            m_maxss(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_minpd_4490 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_minpd_4490(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_minpd(_destination, addressAsInt());
+            m_minpd(destination, addressAsInt());
         }
     }
 
     class m_minpd_4489 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_minpd_4489(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_minpd(_destination, addressAsInt(), _index, _scale);
+            m_minpd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_minps_4418 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_minps_4418(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_minps(_destination, addressAsInt());
+            m_minps(destination, addressAsInt());
         }
     }
 
     class m_minps_4417 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_minps_4417(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_minps(_destination, addressAsInt(), _index, _scale);
+            m_minps(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_minsd_4553 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_minsd_4553(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_minsd(_destination, addressAsInt());
+            m_minsd(destination, addressAsInt());
         }
     }
 
     class m_minsd_4552 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_minsd_4552(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_minsd(_destination, addressAsInt(), _index, _scale);
+            m_minsd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_minss_4625 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_minss_4625(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_minss(_destination, addressAsInt());
+            m_minss(destination, addressAsInt());
         }
     }
 
     class m_minss_4624 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_minss_4624(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_minss(_destination, addressAsInt(), _index, _scale);
+            m_minss(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_mov_1862 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_mov_1862(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mov(_destination, addressAsInt());
+            m_mov(destination, addressAsInt());
         }
     }
 
     class m_mov_1861 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_mov_1861(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mov(_destination, addressAsInt(), _index, _scale);
+            m_mov(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_mov_1854 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_mov_1854(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mov(_destination, addressAsInt());
+            m_mov(destination, addressAsInt());
         }
     }
 
     class m_mov_1853 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_mov_1853(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mov(_destination, addressAsInt(), _index, _scale);
+            m_mov(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_mov_1846 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _destination;
+        private final IA32GeneralRegister8 destination;
         m_mov_1846(int startPosition, int endPosition, IA32GeneralRegister8 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mov(_destination, addressAsInt());
+            m_mov(destination, addressAsInt());
         }
     }
 
     class m_mov_1845 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister8 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_mov_1845(int startPosition, int endPosition, IA32GeneralRegister8 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mov(_destination, addressAsInt(), _index, _scale);
+            m_mov(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_mov_1895 extends InstructionWithAddress {
-        private final SegmentRegister _destination;
+        private final SegmentRegister destination;
         m_mov_1895(int startPosition, int endPosition, SegmentRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mov(_destination, addressAsInt());
+            m_mov(destination, addressAsInt());
         }
     }
 
     class m_mov_1894 extends InstructionWithAddress {
-        private final SegmentRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final SegmentRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_mov_1894(int startPosition, int endPosition, SegmentRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mov(_destination, addressAsInt(), _index, _scale);
+            m_mov(destination, addressAsInt(), index, scale);
         }
     }
 
@@ -22187,1430 +22187,1430 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_movb_926 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_movb_926(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movb(addressAsInt(), _imm8);
+            m_movb(addressAsInt(), imm8);
         }
     }
 
     class m_mov_1837 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
+        private final IA32GeneralRegister16 source;
         m_mov_1837(int startPosition, int endPosition, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mov(addressAsInt(), _source);
+            m_mov(addressAsInt(), source);
         }
     }
 
     class m_mov_1828 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
+        private final IA32GeneralRegister32 source;
         m_mov_1828(int startPosition, int endPosition, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mov(addressAsInt(), _source);
+            m_mov(addressAsInt(), source);
         }
     }
 
     class m_mov_1819 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _source;
+        private final IA32GeneralRegister8 source;
         m_mov_1819(int startPosition, int endPosition, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mov(addressAsInt(), _source);
+            m_mov(addressAsInt(), source);
         }
     }
 
     class m_movb_925 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_movb_925(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movb(addressAsInt(), _index, _scale, _imm8);
+            m_movb(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_mov_1836 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
         m_mov_1836(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mov(addressAsInt(), _index, _scale, _source);
+            m_mov(addressAsInt(), index, scale, source);
         }
     }
 
     class m_mov_1827 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
         m_mov_1827(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mov(addressAsInt(), _index, _scale, _source);
+            m_mov(addressAsInt(), index, scale, source);
         }
     }
 
     class m_mov_1818 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister8 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister8 source;
         m_mov_1818(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mov(addressAsInt(), _index, _scale, _source);
+            m_mov(addressAsInt(), index, scale, source);
         }
     }
 
     class m_mov_1869 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final SegmentRegister _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final SegmentRegister source;
         m_mov_1869(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, SegmentRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mov(addressAsInt(), _index, _scale, _source);
+            m_mov(addressAsInt(), index, scale, source);
         }
     }
 
     class m_movl_934 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final int _imm32;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final int imm32;
         m_movl_934(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm32 = imm32;
+            this.index = index;
+            this.scale = scale;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movl(addressAsInt(), _index, _scale, _imm32);
+            m_movl(addressAsInt(), index, scale, imm32);
         }
     }
 
     class m_movw_943 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final short _imm16;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final short imm16;
         m_movw_943(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm16 = imm16;
+            this.index = index;
+            this.scale = scale;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movw(addressAsInt(), _index, _scale, _imm16);
+            m_movw(addressAsInt(), index, scale, imm16);
         }
     }
 
     class m_mov_1870 extends InstructionWithAddress {
-        private final SegmentRegister _source;
+        private final SegmentRegister source;
         m_mov_1870(int startPosition, int endPosition, SegmentRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mov(addressAsInt(), _source);
+            m_mov(addressAsInt(), source);
         }
     }
 
     class m_movl_935 extends InstructionWithAddress {
-        private final int _imm32;
+        private final int imm32;
         m_movl_935(int startPosition, int endPosition, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm32 = imm32;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movl(addressAsInt(), _imm32);
+            m_movl(addressAsInt(), imm32);
         }
     }
 
     class m_movw_944 extends InstructionWithAddress {
-        private final short _imm16;
+        private final short imm16;
         m_movw_944(int startPosition, int endPosition, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm16 = imm16;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movw(addressAsInt(), _imm16);
+            m_movw(addressAsInt(), imm16);
         }
     }
 
     class m_movapd_4105 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_movapd_4105(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movapd(_destination, addressAsInt());
+            m_movapd(destination, addressAsInt());
         }
     }
 
     class m_movapd_4104 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movapd_4104(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movapd(_destination, addressAsInt(), _index, _scale);
+            m_movapd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movapd_4113 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32XMMRegister _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32XMMRegister source;
         m_movapd_4113(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movapd(addressAsInt(), _index, _scale, _source);
+            m_movapd(addressAsInt(), index, scale, source);
         }
     }
 
     class m_movapd_4114 extends InstructionWithAddress {
-        private final IA32XMMRegister _source;
+        private final IA32XMMRegister source;
         m_movapd_4114(int startPosition, int endPosition, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movapd(addressAsInt(), _source);
+            m_movapd(addressAsInt(), source);
         }
     }
 
     class m_movaps_4035 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_movaps_4035(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movaps(_destination, addressAsInt());
+            m_movaps(destination, addressAsInt());
         }
     }
 
     class m_movaps_4034 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movaps_4034(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movaps(_destination, addressAsInt(), _index, _scale);
+            m_movaps(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movaps_4043 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32XMMRegister _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32XMMRegister source;
         m_movaps_4043(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movaps(addressAsInt(), _index, _scale, _source);
+            m_movaps(addressAsInt(), index, scale, source);
         }
     }
 
     class m_movaps_4044 extends InstructionWithAddress {
-        private final IA32XMMRegister _source;
+        private final IA32XMMRegister source;
         m_movaps_4044(int startPosition, int endPosition, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movaps(addressAsInt(), _source);
+            m_movaps(addressAsInt(), source);
         }
     }
 
     class m_movd_4760 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_movd_4760(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movd(_destination, addressAsInt());
+            m_movd(destination, addressAsInt());
         }
     }
 
     class m_movd_4759 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movd_4759(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movd(_destination, addressAsInt(), _index, _scale);
+            m_movd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movd_4688 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_movd_4688(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movd(_destination, addressAsInt());
+            m_movd(destination, addressAsInt());
         }
     }
 
     class m_movd_4687 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movd_4687(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movd(_destination, addressAsInt(), _index, _scale);
+            m_movd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movd_4821 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32XMMRegister _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32XMMRegister source;
         m_movd_4821(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movd(addressAsInt(), _index, _scale, _source);
+            m_movd(addressAsInt(), index, scale, source);
         }
     }
 
     class m_movd_4786 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final MMXRegister _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final MMXRegister source;
         m_movd_4786(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, MMXRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movd(addressAsInt(), _index, _scale, _source);
+            m_movd(addressAsInt(), index, scale, source);
         }
     }
 
     class m_movd_4822 extends InstructionWithAddress {
-        private final IA32XMMRegister _source;
+        private final IA32XMMRegister source;
         m_movd_4822(int startPosition, int endPosition, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movd(addressAsInt(), _source);
+            m_movd(addressAsInt(), source);
         }
     }
 
     class m_movd_4787 extends InstructionWithAddress {
-        private final MMXRegister _source;
+        private final MMXRegister source;
         m_movd_4787(int startPosition, int endPosition, MMXRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movd(addressAsInt(), _source);
+            m_movd(addressAsInt(), source);
         }
     }
 
     class m_movddup_2788 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_movddup_2788(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movddup(_destination, addressAsInt());
+            m_movddup(destination, addressAsInt());
         }
     }
 
     class m_movddup_2787 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movddup_2787(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movddup(_destination, addressAsInt(), _index, _scale);
+            m_movddup(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movdqa_4769 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_movdqa_4769(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movdqa(_destination, addressAsInt());
+            m_movdqa(destination, addressAsInt());
         }
     }
 
     class m_movdqa_4768 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movdqa_4768(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movdqa(_destination, addressAsInt(), _index, _scale);
+            m_movdqa(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movdqa_4830 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32XMMRegister _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32XMMRegister source;
         m_movdqa_4830(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movdqa(addressAsInt(), _index, _scale, _source);
+            m_movdqa(addressAsInt(), index, scale, source);
         }
     }
 
     class m_movdqa_4831 extends InstructionWithAddress {
-        private final IA32XMMRegister _source;
+        private final IA32XMMRegister source;
         m_movdqa_4831(int startPosition, int endPosition, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movdqa(addressAsInt(), _source);
+            m_movdqa(addressAsInt(), source);
         }
     }
 
     class m_movdqu_4778 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_movdqu_4778(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movdqu(_destination, addressAsInt());
+            m_movdqu(destination, addressAsInt());
         }
     }
 
     class m_movdqu_4777 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movdqu_4777(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movdqu(_destination, addressAsInt(), _index, _scale);
+            m_movdqu(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movdqu_4864 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32XMMRegister _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32XMMRegister source;
         m_movdqu_4864(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movdqu(addressAsInt(), _index, _scale, _source);
+            m_movdqu(addressAsInt(), index, scale, source);
         }
     }
 
     class m_movdqu_4865 extends InstructionWithAddress {
-        private final IA32XMMRegister _source;
+        private final IA32XMMRegister source;
         m_movdqu_4865(int startPosition, int endPosition, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movdqu(addressAsInt(), _source);
+            m_movdqu(addressAsInt(), source);
         }
     }
 
     class m_movhpd_2755 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_movhpd_2755(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movhpd(_destination, addressAsInt());
+            m_movhpd(destination, addressAsInt());
         }
     }
 
     class m_movhpd_2754 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movhpd_2754(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movhpd(_destination, addressAsInt(), _index, _scale);
+            m_movhpd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movhpd_2762 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32XMMRegister _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32XMMRegister source;
         m_movhpd_2762(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movhpd(addressAsInt(), _index, _scale, _source);
+            m_movhpd(addressAsInt(), index, scale, source);
         }
     }
 
     class m_movhpd_2763 extends InstructionWithAddress {
-        private final IA32XMMRegister _source;
+        private final IA32XMMRegister source;
         m_movhpd_2763(int startPosition, int endPosition, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movhpd(addressAsInt(), _source);
+            m_movhpd(addressAsInt(), source);
         }
     }
 
     class m_movhps_2695 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32XMMRegister _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32XMMRegister source;
         m_movhps_2695(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movhps(addressAsInt(), _index, _scale, _source);
+            m_movhps(addressAsInt(), index, scale, source);
         }
     }
 
     class m_movhps_2696 extends InstructionWithAddress {
-        private final IA32XMMRegister _source;
+        private final IA32XMMRegister source;
         m_movhps_2696(int startPosition, int endPosition, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movhps(addressAsInt(), _source);
+            m_movhps(addressAsInt(), source);
         }
     }
 
     class m_movlpd_2721 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_movlpd_2721(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movlpd(_destination, addressAsInt());
+            m_movlpd(destination, addressAsInt());
         }
     }
 
     class m_movlpd_2720 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movlpd_2720(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movlpd(_destination, addressAsInt(), _index, _scale);
+            m_movlpd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movlpd_2728 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32XMMRegister _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32XMMRegister source;
         m_movlpd_2728(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movlpd(addressAsInt(), _index, _scale, _source);
+            m_movlpd(addressAsInt(), index, scale, source);
         }
     }
 
     class m_movlpd_2729 extends InstructionWithAddress {
-        private final IA32XMMRegister _source;
+        private final IA32XMMRegister source;
         m_movlpd_2729(int startPosition, int endPosition, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movlpd(addressAsInt(), _source);
+            m_movlpd(addressAsInt(), source);
         }
     }
 
     class m_movlps_2668 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32XMMRegister _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32XMMRegister source;
         m_movlps_2668(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movlps(addressAsInt(), _index, _scale, _source);
+            m_movlps(addressAsInt(), index, scale, source);
         }
     }
 
     class m_movlps_2669 extends InstructionWithAddress {
-        private final IA32XMMRegister _source;
+        private final IA32XMMRegister source;
         m_movlps_2669(int startPosition, int endPosition, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movlps(addressAsInt(), _source);
+            m_movlps(addressAsInt(), source);
         }
     }
 
     class m_movnti_3634 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
+        private final IA32GeneralRegister32 source;
         m_movnti_3634(int startPosition, int endPosition, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movnti(addressAsInt(), _source);
+            m_movnti(addressAsInt(), source);
         }
     }
 
     class m_movnti_3633 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
         m_movnti_3633(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movnti(addressAsInt(), _index, _scale, _source);
+            m_movnti(addressAsInt(), index, scale, source);
         }
     }
 
     class m_movntpd_4130 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32XMMRegister _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32XMMRegister source;
         m_movntpd_4130(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movntpd(addressAsInt(), _index, _scale, _source);
+            m_movntpd(addressAsInt(), index, scale, source);
         }
     }
 
     class m_movntpd_4131 extends InstructionWithAddress {
-        private final IA32XMMRegister _source;
+        private final IA32XMMRegister source;
         m_movntpd_4131(int startPosition, int endPosition, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movntpd(addressAsInt(), _source);
+            m_movntpd(addressAsInt(), source);
         }
     }
 
     class m_movntps_4060 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32XMMRegister _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32XMMRegister source;
         m_movntps_4060(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movntps(addressAsInt(), _index, _scale, _source);
+            m_movntps(addressAsInt(), index, scale, source);
         }
     }
 
     class m_movntps_4061 extends InstructionWithAddress {
-        private final IA32XMMRegister _source;
+        private final IA32XMMRegister source;
         m_movntps_4061(int startPosition, int endPosition, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movntps(addressAsInt(), _source);
+            m_movntps(addressAsInt(), source);
         }
     }
 
     class m_movq_4857 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_movq_4857(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movq(_destination, addressAsInt());
+            m_movq(destination, addressAsInt());
         }
     }
 
     class m_movq_4856 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movq_4856(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movq(_destination, addressAsInt(), _index, _scale);
+            m_movq(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movq_4697 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_movq_4697(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movq(_destination, addressAsInt());
+            m_movq(destination, addressAsInt());
         }
     }
 
     class m_movq_4696 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movq_4696(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movq(_destination, addressAsInt(), _index, _scale);
+            m_movq(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movq_3804 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32XMMRegister _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32XMMRegister source;
         m_movq_3804(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movq(addressAsInt(), _index, _scale, _source);
+            m_movq(addressAsInt(), index, scale, source);
         }
     }
 
     class m_movq_4795 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final MMXRegister _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final MMXRegister source;
         m_movq_4795(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, MMXRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movq(addressAsInt(), _index, _scale, _source);
+            m_movq(addressAsInt(), index, scale, source);
         }
     }
 
     class m_movq_3805 extends InstructionWithAddress {
-        private final IA32XMMRegister _source;
+        private final IA32XMMRegister source;
         m_movq_3805(int startPosition, int endPosition, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movq(addressAsInt(), _source);
+            m_movq(addressAsInt(), source);
         }
     }
 
     class m_movq_4796 extends InstructionWithAddress {
-        private final MMXRegister _source;
+        private final MMXRegister source;
         m_movq_4796(int startPosition, int endPosition, MMXRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movq(addressAsInt(), _source);
+            m_movq(addressAsInt(), source);
         }
     }
 
     class m_movsd_2771 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_movsd_2771(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movsd(_destination, addressAsInt());
+            m_movsd(destination, addressAsInt());
         }
     }
 
     class m_movsd_2770 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movsd_2770(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movsd(_destination, addressAsInt(), _index, _scale);
+            m_movsd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movsd_2779 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32XMMRegister _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32XMMRegister source;
         m_movsd_2779(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movsd(addressAsInt(), _index, _scale, _source);
+            m_movsd(addressAsInt(), index, scale, source);
         }
     }
 
     class m_movsd_2780 extends InstructionWithAddress {
-        private final IA32XMMRegister _source;
+        private final IA32XMMRegister source;
         m_movsd_2780(int startPosition, int endPosition, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movsd(addressAsInt(), _source);
+            m_movsd(addressAsInt(), source);
         }
     }
 
     class m_movshdup_2823 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_movshdup_2823(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movshdup(_destination, addressAsInt());
+            m_movshdup(destination, addressAsInt());
         }
     }
 
     class m_movshdup_2822 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movshdup_2822(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movshdup(_destination, addressAsInt(), _index, _scale);
+            m_movshdup(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movsldup_2814 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_movsldup_2814(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movsldup(_destination, addressAsInt());
+            m_movsldup(destination, addressAsInt());
         }
     }
 
     class m_movsldup_2813 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movsldup_2813(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movsldup(_destination, addressAsInt(), _index, _scale);
+            m_movsldup(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movss_2797 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_movss_2797(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movss(_destination, addressAsInt());
+            m_movss(destination, addressAsInt());
         }
     }
 
     class m_movss_2796 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movss_2796(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movss(_destination, addressAsInt(), _index, _scale);
+            m_movss(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movss_2805 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32XMMRegister _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32XMMRegister source;
         m_movss_2805(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movss(addressAsInt(), _index, _scale, _source);
+            m_movss(addressAsInt(), index, scale, source);
         }
     }
 
     class m_movss_2806 extends InstructionWithAddress {
-        private final IA32XMMRegister _source;
+        private final IA32XMMRegister source;
         m_movss_2806(int startPosition, int endPosition, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movss(addressAsInt(), _source);
+            m_movss(addressAsInt(), source);
         }
     }
 
     class m_movsxb_5134 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_movsxb_5134(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movsxb(_destination, addressAsInt());
+            m_movsxb(destination, addressAsInt());
         }
     }
 
     class m_movsxb_5133 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movsxb_5133(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movsxb(_destination, addressAsInt(), _index, _scale);
+            m_movsxb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movsxb_5125 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_movsxb_5125(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movsxb(_destination, addressAsInt());
+            m_movsxb(destination, addressAsInt());
         }
     }
 
     class m_movsxb_5124 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movsxb_5124(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movsxb(_destination, addressAsInt(), _index, _scale);
+            m_movsxb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movsxw_5152 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_movsxw_5152(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movsxw(_destination, addressAsInt());
+            m_movsxw(destination, addressAsInt());
         }
     }
 
     class m_movsxw_5151 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movsxw_5151(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movsxw(_destination, addressAsInt(), _index, _scale);
+            m_movsxw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movsxw_5143 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_movsxw_5143(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movsxw(_destination, addressAsInt());
+            m_movsxw(destination, addressAsInt());
         }
     }
 
     class m_movsxw_5142 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movsxw_5142(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movsxw(_destination, addressAsInt(), _index, _scale);
+            m_movsxw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movupd_2704 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_movupd_2704(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movupd(_destination, addressAsInt());
+            m_movupd(destination, addressAsInt());
         }
     }
 
     class m_movupd_2703 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movupd_2703(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movupd(_destination, addressAsInt(), _index, _scale);
+            m_movupd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movupd_2712 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32XMMRegister _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32XMMRegister source;
         m_movupd_2712(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movupd(addressAsInt(), _index, _scale, _source);
+            m_movupd(addressAsInt(), index, scale, source);
         }
     }
 
     class m_movupd_2713 extends InstructionWithAddress {
-        private final IA32XMMRegister _source;
+        private final IA32XMMRegister source;
         m_movupd_2713(int startPosition, int endPosition, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movupd(addressAsInt(), _source);
+            m_movupd(addressAsInt(), source);
         }
     }
 
     class m_movups_2651 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_movups_2651(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movups(_destination, addressAsInt());
+            m_movups(destination, addressAsInt());
         }
     }
 
     class m_movups_2650 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movups_2650(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movups(_destination, addressAsInt(), _index, _scale);
+            m_movups(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movups_2659 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32XMMRegister _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32XMMRegister source;
         m_movups_2659(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movups(addressAsInt(), _index, _scale, _source);
+            m_movups(addressAsInt(), index, scale, source);
         }
     }
 
     class m_movups_2660 extends InstructionWithAddress {
-        private final IA32XMMRegister _source;
+        private final IA32XMMRegister source;
         m_movups_2660(int startPosition, int endPosition, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movups(addressAsInt(), _source);
+            m_movups(addressAsInt(), source);
         }
     }
 
     class m_movzxb_3571 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_movzxb_3571(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movzxb(_destination, addressAsInt());
+            m_movzxb(destination, addressAsInt());
         }
     }
 
     class m_movzxb_3570 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movzxb_3570(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movzxb(_destination, addressAsInt(), _index, _scale);
+            m_movzxb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movzxb_3562 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_movzxb_3562(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movzxb(_destination, addressAsInt());
+            m_movzxb(destination, addressAsInt());
         }
     }
 
     class m_movzxb_3561 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movzxb_3561(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movzxb(_destination, addressAsInt(), _index, _scale);
+            m_movzxb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movzxw_3589 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_movzxw_3589(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movzxw(_destination, addressAsInt());
+            m_movzxw(destination, addressAsInt());
         }
     }
 
     class m_movzxw_3588 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movzxw_3588(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movzxw(_destination, addressAsInt(), _index, _scale);
+            m_movzxw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_movzxw_3580 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_movzxw_3580(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movzxw(_destination, addressAsInt());
+            m_movzxw(destination, addressAsInt());
         }
     }
 
     class m_movzxw_3579 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_movzxw_3579(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_movzxw(_destination, addressAsInt(), _index, _scale);
+            m_movzxw(destination, addressAsInt(), index, scale);
         }
     }
 
@@ -23645,184 +23645,184 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_mulb___AL_1361 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_mulb___AL_1361(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mulb___AL(addressAsInt(), _index, _scale);
+            m_mulb___AL(addressAsInt(), index, scale);
         }
     }
 
     class m_mull___EAX_1424 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_mull___EAX_1424(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mull___EAX(addressAsInt(), _index, _scale);
+            m_mull___EAX(addressAsInt(), index, scale);
         }
     }
 
     class m_mulw___AX_1487 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_mulw___AX_1487(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mulw___AX(addressAsInt(), _index, _scale);
+            m_mulw___AX(addressAsInt(), index, scale);
         }
     }
 
     class m_mulpd_4454 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_mulpd_4454(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mulpd(_destination, addressAsInt());
+            m_mulpd(destination, addressAsInt());
         }
     }
 
     class m_mulpd_4453 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_mulpd_4453(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mulpd(_destination, addressAsInt(), _index, _scale);
+            m_mulpd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_mulps_4382 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_mulps_4382(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mulps(_destination, addressAsInt());
+            m_mulps(destination, addressAsInt());
         }
     }
 
     class m_mulps_4381 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_mulps_4381(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mulps(_destination, addressAsInt(), _index, _scale);
+            m_mulps(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_mulsd_4526 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_mulsd_4526(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mulsd(_destination, addressAsInt());
+            m_mulsd(destination, addressAsInt());
         }
     }
 
     class m_mulsd_4525 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_mulsd_4525(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mulsd(_destination, addressAsInt(), _index, _scale);
+            m_mulsd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_mulss_4589 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_mulss_4589(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mulss(_destination, addressAsInt());
+            m_mulss(destination, addressAsInt());
         }
     }
 
     class m_mulss_4588 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_mulss_4588(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mulss(_destination, addressAsInt(), _index, _scale);
+            m_mulss(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_mvntdq_3906 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32XMMRegister _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32XMMRegister source;
         m_mvntdq_3906(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mvntdq(addressAsInt(), _index, _scale, _source);
+            m_mvntdq(addressAsInt(), index, scale, source);
         }
     }
 
     class m_mvntdq_3907 extends InstructionWithAddress {
-        private final IA32XMMRegister _source;
+        private final IA32XMMRegister source;
         m_mvntdq_3907(int startPosition, int endPosition, IA32XMMRegister source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_mvntdq(addressAsInt(), _source);
+            m_mvntdq(addressAsInt(), source);
         }
     }
 
@@ -23857,44 +23857,44 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_negb_1357 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_negb_1357(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_negb(addressAsInt(), _index, _scale);
+            m_negb(addressAsInt(), index, scale);
         }
     }
 
     class m_negl_1420 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_negl_1420(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_negl(addressAsInt(), _index, _scale);
+            m_negl(addressAsInt(), index, scale);
         }
     }
 
     class m_negw_1483 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_negw_1483(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_negw(addressAsInt(), _index, _scale);
+            m_negw(addressAsInt(), index, scale);
         }
     }
 
@@ -23929,1844 +23929,1844 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_notb_1353 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_notb_1353(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_notb(addressAsInt(), _index, _scale);
+            m_notb(addressAsInt(), index, scale);
         }
     }
 
     class m_notl_1416 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_notl_1416(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_notl(addressAsInt(), _index, _scale);
+            m_notl(addressAsInt(), index, scale);
         }
     }
 
     class m_notw_1479 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_notw_1479(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_notw(addressAsInt(), _index, _scale);
+            m_notw(addressAsInt(), index, scale);
         }
     }
 
     class m_or_1582 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_or_1582(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_or(_destination, addressAsInt());
+            m_or(destination, addressAsInt());
         }
     }
 
     class m_or_1581 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_or_1581(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_or(_destination, addressAsInt(), _index, _scale);
+            m_or(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_or_1574 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_or_1574(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_or(_destination, addressAsInt());
+            m_or(destination, addressAsInt());
         }
     }
 
     class m_or_1573 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_or_1573(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_or(_destination, addressAsInt(), _index, _scale);
+            m_or(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_or_1566 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _destination;
+        private final IA32GeneralRegister8 destination;
         m_or_1566(int startPosition, int endPosition, IA32GeneralRegister8 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_or(_destination, addressAsInt());
+            m_or(destination, addressAsInt());
         }
     }
 
     class m_or_1565 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister8 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_or_1565(int startPosition, int endPosition, IA32GeneralRegister8 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_or(_destination, addressAsInt(), _index, _scale);
+            m_or(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_orb_277 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_orb_277(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_orb(addressAsInt(), _imm8);
+            m_orb(addressAsInt(), imm8);
         }
     }
 
     class m_orl_493 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_orl_493(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_orl(addressAsInt(), _imm8);
+            m_orl(addressAsInt(), imm8);
         }
     }
 
     class m_orw_565 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_orw_565(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_orw(addressAsInt(), _imm8);
+            m_orw(addressAsInt(), imm8);
         }
     }
 
     class m_or_1557 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
+        private final IA32GeneralRegister16 source;
         m_or_1557(int startPosition, int endPosition, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_or(addressAsInt(), _source);
+            m_or(addressAsInt(), source);
         }
     }
 
     class m_or_1548 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
+        private final IA32GeneralRegister32 source;
         m_or_1548(int startPosition, int endPosition, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_or(addressAsInt(), _source);
+            m_or(addressAsInt(), source);
         }
     }
 
     class m_or_1539 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _source;
+        private final IA32GeneralRegister8 source;
         m_or_1539(int startPosition, int endPosition, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_or(addressAsInt(), _source);
+            m_or(addressAsInt(), source);
         }
     }
 
     class m_orb_276 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_orb_276(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_orb(addressAsInt(), _index, _scale, _imm8);
+            m_orb(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_orl_492 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_orl_492(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_orl(addressAsInt(), _index, _scale, _imm8);
+            m_orl(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_orw_564 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_orw_564(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_orw(addressAsInt(), _index, _scale, _imm8);
+            m_orw(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_or_1556 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
         m_or_1556(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_or(addressAsInt(), _index, _scale, _source);
+            m_or(addressAsInt(), index, scale, source);
         }
     }
 
     class m_or_1547 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
         m_or_1547(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_or(addressAsInt(), _index, _scale, _source);
+            m_or(addressAsInt(), index, scale, source);
         }
     }
 
     class m_or_1538 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister8 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister8 source;
         m_or_1538(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_or(addressAsInt(), _index, _scale, _source);
+            m_or(addressAsInt(), index, scale, source);
         }
     }
 
     class m_orl_348 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final int _imm32;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final int imm32;
         m_orl_348(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm32 = imm32;
+            this.index = index;
+            this.scale = scale;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_orl(addressAsInt(), _index, _scale, _imm32);
+            m_orl(addressAsInt(), index, scale, imm32);
         }
     }
 
     class m_orw_420 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final short _imm16;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final short imm16;
         m_orw_420(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm16 = imm16;
+            this.index = index;
+            this.scale = scale;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_orw(addressAsInt(), _index, _scale, _imm16);
+            m_orw(addressAsInt(), index, scale, imm16);
         }
     }
 
     class m_orl_349 extends InstructionWithAddress {
-        private final int _imm32;
+        private final int imm32;
         m_orl_349(int startPosition, int endPosition, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm32 = imm32;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_orl(addressAsInt(), _imm32);
+            m_orl(addressAsInt(), imm32);
         }
     }
 
     class m_orw_421 extends InstructionWithAddress {
-        private final short _imm16;
+        private final short imm16;
         m_orw_421(int startPosition, int endPosition, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm16 = imm16;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_orw(addressAsInt(), _imm16);
+            m_orw(addressAsInt(), imm16);
         }
     }
 
     class m_orpd_3076 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_orpd_3076(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_orpd(_destination, addressAsInt());
+            m_orpd(destination, addressAsInt());
         }
     }
 
     class m_orpd_3075 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_orpd_3075(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_orpd(_destination, addressAsInt(), _index, _scale);
+            m_orpd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_orps_3030 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_orps_3030(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_orps(_destination, addressAsInt());
+            m_orps(destination, addressAsInt());
         }
     }
 
     class m_orps_3029 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_orps_3029(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_orps(_destination, addressAsInt(), _index, _scale);
+            m_orps(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_packssdw_4733 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_packssdw_4733(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_packssdw(_destination, addressAsInt());
+            m_packssdw(destination, addressAsInt());
         }
     }
 
     class m_packssdw_4732 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_packssdw_4732(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_packssdw(_destination, addressAsInt(), _index, _scale);
+            m_packssdw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_packssdw_4679 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_packssdw_4679(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_packssdw(_destination, addressAsInt());
+            m_packssdw(destination, addressAsInt());
         }
     }
 
     class m_packssdw_4678 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_packssdw_4678(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_packssdw(_destination, addressAsInt(), _index, _scale);
+            m_packssdw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_packsswb_3274 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_packsswb_3274(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_packsswb(_destination, addressAsInt());
+            m_packsswb(destination, addressAsInt());
         }
     }
 
     class m_packsswb_3273 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_packsswb_3273(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_packsswb(_destination, addressAsInt(), _index, _scale);
+            m_packsswb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_packsswb_3157 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_packsswb_3157(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_packsswb(_destination, addressAsInt());
+            m_packsswb(destination, addressAsInt());
         }
     }
 
     class m_packsswb_3156 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_packsswb_3156(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_packsswb(_destination, addressAsInt(), _index, _scale);
+            m_packsswb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_packuswb_3310 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_packuswb_3310(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_packuswb(_destination, addressAsInt());
+            m_packuswb(destination, addressAsInt());
         }
     }
 
     class m_packuswb_3309 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_packuswb_3309(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_packuswb(_destination, addressAsInt(), _index, _scale);
+            m_packuswb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_packuswb_3193 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_packuswb_3193(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_packuswb(_destination, addressAsInt());
+            m_packuswb(destination, addressAsInt());
         }
     }
 
     class m_packuswb_3192 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_packuswb_3192(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_packuswb(_destination, addressAsInt(), _index, _scale);
+            m_packuswb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_paddb_5504 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_paddb_5504(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddb(_destination, addressAsInt());
+            m_paddb(destination, addressAsInt());
         }
     }
 
     class m_paddb_5503 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_paddb_5503(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddb(_destination, addressAsInt(), _index, _scale);
+            m_paddb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_paddb_5441 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_paddb_5441(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddb(_destination, addressAsInt());
+            m_paddb(destination, addressAsInt());
         }
     }
 
     class m_paddb_5440 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_paddb_5440(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddb(_destination, addressAsInt(), _index, _scale);
+            m_paddb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_paddd_5522 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_paddd_5522(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddd(_destination, addressAsInt());
+            m_paddd(destination, addressAsInt());
         }
     }
 
     class m_paddd_5521 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_paddd_5521(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddd(_destination, addressAsInt(), _index, _scale);
+            m_paddd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_paddd_5459 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_paddd_5459(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddd(_destination, addressAsInt());
+            m_paddd(destination, addressAsInt());
         }
     }
 
     class m_paddd_5458 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_paddd_5458(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddd(_destination, addressAsInt(), _index, _scale);
+            m_paddd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_paddq_3787 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_paddq_3787(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddq(_destination, addressAsInt());
+            m_paddq(destination, addressAsInt());
         }
     }
 
     class m_paddq_3786 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_paddq_3786(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddq(_destination, addressAsInt(), _index, _scale);
+            m_paddq(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_paddsb_5378 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_paddsb_5378(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddsb(_destination, addressAsInt());
+            m_paddsb(destination, addressAsInt());
         }
     }
 
     class m_paddsb_5377 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_paddsb_5377(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddsb(_destination, addressAsInt(), _index, _scale);
+            m_paddsb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_paddsb_5315 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_paddsb_5315(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddsb(_destination, addressAsInt());
+            m_paddsb(destination, addressAsInt());
         }
     }
 
     class m_paddsb_5314 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_paddsb_5314(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddsb(_destination, addressAsInt(), _index, _scale);
+            m_paddsb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_paddsw_5387 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_paddsw_5387(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddsw(_destination, addressAsInt());
+            m_paddsw(destination, addressAsInt());
         }
     }
 
     class m_paddsw_5386 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_paddsw_5386(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddsw(_destination, addressAsInt(), _index, _scale);
+            m_paddsw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_paddsw_5324 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_paddsw_5324(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddsw(_destination, addressAsInt());
+            m_paddsw(destination, addressAsInt());
         }
     }
 
     class m_paddsw_5323 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_paddsw_5323(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddsw(_destination, addressAsInt(), _index, _scale);
+            m_paddsw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_paddusb_5252 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_paddusb_5252(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddusb(_destination, addressAsInt());
+            m_paddusb(destination, addressAsInt());
         }
     }
 
     class m_paddusb_5251 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_paddusb_5251(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddusb(_destination, addressAsInt(), _index, _scale);
+            m_paddusb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_paddusb_5189 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_paddusb_5189(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddusb(_destination, addressAsInt());
+            m_paddusb(destination, addressAsInt());
         }
     }
 
     class m_paddusb_5188 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_paddusb_5188(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddusb(_destination, addressAsInt(), _index, _scale);
+            m_paddusb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_paddusw_5261 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_paddusw_5261(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddusw(_destination, addressAsInt());
+            m_paddusw(destination, addressAsInt());
         }
     }
 
     class m_paddusw_5260 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_paddusw_5260(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddusw(_destination, addressAsInt(), _index, _scale);
+            m_paddusw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_paddusw_5198 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_paddusw_5198(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddusw(_destination, addressAsInt());
+            m_paddusw(destination, addressAsInt());
         }
     }
 
     class m_paddusw_5197 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_paddusw_5197(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddusw(_destination, addressAsInt(), _index, _scale);
+            m_paddusw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_paddw_5513 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_paddw_5513(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddw(_destination, addressAsInt());
+            m_paddw(destination, addressAsInt());
         }
     }
 
     class m_paddw_5512 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_paddw_5512(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddw(_destination, addressAsInt(), _index, _scale);
+            m_paddw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_paddw_5450 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_paddw_5450(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddw(_destination, addressAsInt());
+            m_paddw(destination, addressAsInt());
         }
     }
 
     class m_paddw_5449 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_paddw_5449(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_paddw(_destination, addressAsInt(), _index, _scale);
+            m_paddw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pand_5243 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_pand_5243(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pand(_destination, addressAsInt());
+            m_pand(destination, addressAsInt());
         }
     }
 
     class m_pand_5242 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pand_5242(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pand(_destination, addressAsInt(), _index, _scale);
+            m_pand(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pand_5180 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_pand_5180(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pand(_destination, addressAsInt());
+            m_pand(destination, addressAsInt());
         }
     }
 
     class m_pand_5179 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pand_5179(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pand(_destination, addressAsInt(), _index, _scale);
+            m_pand(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pandn_5279 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_pandn_5279(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pandn(_destination, addressAsInt());
+            m_pandn(destination, addressAsInt());
         }
     }
 
     class m_pandn_5278 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pandn_5278(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pandn(_destination, addressAsInt(), _index, _scale);
+            m_pandn(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pandn_5207 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_pandn_5207(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pandn(_destination, addressAsInt());
+            m_pandn(destination, addressAsInt());
         }
     }
 
     class m_pandn_5206 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pandn_5206(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pandn(_destination, addressAsInt(), _index, _scale);
+            m_pandn(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pavgb_3844 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_pavgb_3844(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pavgb(_destination, addressAsInt());
+            m_pavgb(destination, addressAsInt());
         }
     }
 
     class m_pavgb_3843 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pavgb_3843(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pavgb(_destination, addressAsInt(), _index, _scale);
+            m_pavgb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pavgw_3871 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_pavgw_3871(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pavgw(_destination, addressAsInt());
+            m_pavgw(destination, addressAsInt());
         }
     }
 
     class m_pavgw_3870 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pavgw_3870(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pavgw(_destination, addressAsInt(), _index, _scale);
+            m_pavgw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pcmpeqb_3219 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_pcmpeqb_3219(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pcmpeqb(_destination, addressAsInt());
+            m_pcmpeqb(destination, addressAsInt());
         }
     }
 
     class m_pcmpeqb_3218 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pcmpeqb_3218(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pcmpeqb(_destination, addressAsInt(), _index, _scale);
+            m_pcmpeqb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pcmpeqd_3323 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_pcmpeqd_3323(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pcmpeqd(_destination, addressAsInt());
+            m_pcmpeqd(destination, addressAsInt());
         }
     }
 
     class m_pcmpeqd_3322 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pcmpeqd_3322(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pcmpeqd(_destination, addressAsInt(), _index, _scale);
+            m_pcmpeqd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pcmpeqd_3237 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_pcmpeqd_3237(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pcmpeqd(_destination, addressAsInt());
+            m_pcmpeqd(destination, addressAsInt());
         }
     }
 
     class m_pcmpeqd_3236 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pcmpeqd_3236(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pcmpeqd(_destination, addressAsInt(), _index, _scale);
+            m_pcmpeqd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pcmpeqw_3228 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_pcmpeqw_3228(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pcmpeqw(_destination, addressAsInt());
+            m_pcmpeqw(destination, addressAsInt());
         }
     }
 
     class m_pcmpeqw_3227 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pcmpeqw_3227(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pcmpeqw(_destination, addressAsInt(), _index, _scale);
+            m_pcmpeqw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pcmpgtb_3283 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_pcmpgtb_3283(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pcmpgtb(_destination, addressAsInt());
+            m_pcmpgtb(destination, addressAsInt());
         }
     }
 
     class m_pcmpgtb_3282 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pcmpgtb_3282(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pcmpgtb(_destination, addressAsInt(), _index, _scale);
+            m_pcmpgtb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pcmpgtb_3166 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_pcmpgtb_3166(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pcmpgtb(_destination, addressAsInt());
+            m_pcmpgtb(destination, addressAsInt());
         }
     }
 
     class m_pcmpgtb_3165 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pcmpgtb_3165(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pcmpgtb(_destination, addressAsInt(), _index, _scale);
+            m_pcmpgtb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pcmpgtd_3301 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_pcmpgtd_3301(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pcmpgtd(_destination, addressAsInt());
+            m_pcmpgtd(destination, addressAsInt());
         }
     }
 
     class m_pcmpgtd_3300 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pcmpgtd_3300(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pcmpgtd(_destination, addressAsInt(), _index, _scale);
+            m_pcmpgtd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pcmpgtd_3184 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_pcmpgtd_3184(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pcmpgtd(_destination, addressAsInt());
+            m_pcmpgtd(destination, addressAsInt());
         }
     }
 
     class m_pcmpgtd_3183 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pcmpgtd_3183(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pcmpgtd(_destination, addressAsInt(), _index, _scale);
+            m_pcmpgtd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pcmpgtw_3292 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_pcmpgtw_3292(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pcmpgtw(_destination, addressAsInt());
+            m_pcmpgtw(destination, addressAsInt());
         }
     }
 
     class m_pcmpgtw_3291 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pcmpgtw_3291(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pcmpgtw(_destination, addressAsInt(), _index, _scale);
+            m_pcmpgtw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pcmpgtw_3175 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_pcmpgtw_3175(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pcmpgtw(_destination, addressAsInt());
+            m_pcmpgtw(destination, addressAsInt());
         }
     }
 
     class m_pcmpgtw_3174 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pcmpgtw_3174(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pcmpgtw(_destination, addressAsInt(), _index, _scale);
+            m_pcmpgtw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pinsrw_3678 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final byte _imm8;
+        private final IA32XMMRegister destination;
+        private final byte imm8;
         m_pinsrw_3678(int startPosition, int endPosition, IA32XMMRegister destination, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _imm8 = imm8;
+            this.destination = destination;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pinsrw(_destination, addressAsInt(), _imm8);
+            m_pinsrw(destination, addressAsInt(), imm8);
         }
     }
 
     class m_pinsrw_3677 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_pinsrw_3677(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pinsrw(_destination, addressAsInt(), _index, _scale, _imm8);
+            m_pinsrw(destination, addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_pinsrw_3642 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final byte _imm8;
+        private final MMXRegister destination;
+        private final byte imm8;
         m_pinsrw_3642(int startPosition, int endPosition, MMXRegister destination, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _imm8 = imm8;
+            this.destination = destination;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pinsrw(_destination, addressAsInt(), _imm8);
+            m_pinsrw(destination, addressAsInt(), imm8);
         }
     }
 
     class m_pinsrw_3641 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_pinsrw_3641(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pinsrw(_destination, addressAsInt(), _index, _scale, _imm8);
+            m_pinsrw(destination, addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_pmaddwd_4005 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_pmaddwd_4005(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pmaddwd(_destination, addressAsInt());
+            m_pmaddwd(destination, addressAsInt());
         }
     }
 
     class m_pmaddwd_4004 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pmaddwd_4004(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pmaddwd(_destination, addressAsInt(), _index, _scale);
+            m_pmaddwd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pmaddwd_3960 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_pmaddwd_3960(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pmaddwd(_destination, addressAsInt());
+            m_pmaddwd(destination, addressAsInt());
         }
     }
 
     class m_pmaddwd_3959 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pmaddwd_3959(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pmaddwd(_destination, addressAsInt(), _index, _scale);
+            m_pmaddwd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pmaxsw_5396 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_pmaxsw_5396(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pmaxsw(_destination, addressAsInt());
+            m_pmaxsw(destination, addressAsInt());
         }
     }
 
     class m_pmaxsw_5395 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pmaxsw_5395(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pmaxsw(_destination, addressAsInt(), _index, _scale);
+            m_pmaxsw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pmaxub_5270 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_pmaxub_5270(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pmaxub(_destination, addressAsInt());
+            m_pmaxub(destination, addressAsInt());
         }
     }
 
     class m_pmaxub_5269 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pmaxub_5269(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pmaxub(_destination, addressAsInt(), _index, _scale);
+            m_pmaxub(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pminsw_5360 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_pminsw_5360(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pminsw(_destination, addressAsInt());
+            m_pminsw(destination, addressAsInt());
         }
     }
 
     class m_pminsw_5359 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pminsw_5359(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pminsw(_destination, addressAsInt(), _index, _scale);
+            m_pminsw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pminub_5234 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_pminub_5234(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pminub(_destination, addressAsInt());
+            m_pminub(destination, addressAsInt());
         }
     }
 
     class m_pminub_5233 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pminub_5233(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pminub(_destination, addressAsInt(), _index, _scale);
+            m_pminub(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pmulhuw_3880 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_pmulhuw_3880(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pmulhuw(_destination, addressAsInt());
+            m_pmulhuw(destination, addressAsInt());
         }
     }
 
     class m_pmulhuw_3879 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pmulhuw_3879(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pmulhuw(_destination, addressAsInt(), _index, _scale);
+            m_pmulhuw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pmulhw_3889 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_pmulhw_3889(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pmulhw(_destination, addressAsInt());
+            m_pmulhw(destination, addressAsInt());
         }
     }
 
     class m_pmulhw_3888 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pmulhw_3888(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pmulhw(_destination, addressAsInt(), _index, _scale);
+            m_pmulhw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pmulhw_3835 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_pmulhw_3835(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pmulhw(_destination, addressAsInt());
+            m_pmulhw(destination, addressAsInt());
         }
     }
 
     class m_pmulhw_3834 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pmulhw_3834(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pmulhw(_destination, addressAsInt(), _index, _scale);
+            m_pmulhw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pmullw_3796 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_pmullw_3796(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pmullw(_destination, addressAsInt());
+            m_pmullw(destination, addressAsInt());
         }
     }
 
     class m_pmullw_3795 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pmullw_3795(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pmullw(_destination, addressAsInt(), _index, _scale);
+            m_pmullw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pmullw_3742 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_pmullw_3742(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pmullw(_destination, addressAsInt());
+            m_pmullw(destination, addressAsInt());
         }
     }
 
     class m_pmullw_3741 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pmullw_3741(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pmullw(_destination, addressAsInt(), _index, _scale);
+            m_pmullw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pmuludq_3996 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_pmuludq_3996(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pmuludq(_destination, addressAsInt());
+            m_pmuludq(destination, addressAsInt());
         }
     }
 
     class m_pmuludq_3995 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pmuludq_3995(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pmuludq(_destination, addressAsInt(), _index, _scale);
+            m_pmuludq(destination, addressAsInt(), index, scale);
         }
     }
 
@@ -25781,1392 +25781,1392 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_pop_1903 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pop_1903(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pop(addressAsInt(), _index, _scale);
+            m_pop(addressAsInt(), index, scale);
         }
     }
 
     class m_por_5369 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_por_5369(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_por(_destination, addressAsInt());
+            m_por(destination, addressAsInt());
         }
     }
 
     class m_por_5368 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_por_5368(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_por(_destination, addressAsInt(), _index, _scale);
+            m_por(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_por_5306 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_por_5306(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_por(_destination, addressAsInt());
+            m_por(destination, addressAsInt());
         }
     }
 
     class m_por_5305 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_por_5305(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_por(_destination, addressAsInt(), _index, _scale);
+            m_por(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psadbw_4014 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_psadbw_4014(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psadbw(_destination, addressAsInt());
+            m_psadbw(destination, addressAsInt());
         }
     }
 
     class m_psadbw_4013 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psadbw_4013(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psadbw(_destination, addressAsInt(), _index, _scale);
+            m_psadbw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pshufw_3202 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final byte _imm8;
+        private final MMXRegister destination;
+        private final byte imm8;
         m_pshufw_3202(int startPosition, int endPosition, MMXRegister destination, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _imm8 = imm8;
+            this.destination = destination;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pshufw(_destination, addressAsInt(), _imm8);
+            m_pshufw(destination, addressAsInt(), imm8);
         }
     }
 
     class m_pshufw_3201 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_pshufw_3201(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pshufw(_destination, addressAsInt(), _index, _scale, _imm8);
+            m_pshufw(destination, addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_pslld_3978 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_pslld_3978(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pslld(_destination, addressAsInt());
+            m_pslld(destination, addressAsInt());
         }
     }
 
     class m_pslld_3977 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pslld_3977(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pslld(_destination, addressAsInt(), _index, _scale);
+            m_pslld(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pslld_3942 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_pslld_3942(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pslld(_destination, addressAsInt());
+            m_pslld(destination, addressAsInt());
         }
     }
 
     class m_pslld_3941 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pslld_3941(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pslld(_destination, addressAsInt(), _index, _scale);
+            m_pslld(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psllq_3987 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_psllq_3987(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psllq(_destination, addressAsInt());
+            m_psllq(destination, addressAsInt());
         }
     }
 
     class m_psllq_3986 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psllq_3986(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psllq(_destination, addressAsInt(), _index, _scale);
+            m_psllq(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psllq_3951 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_psllq_3951(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psllq(_destination, addressAsInt());
+            m_psllq(destination, addressAsInt());
         }
     }
 
     class m_psllq_3950 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psllq_3950(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psllq(_destination, addressAsInt(), _index, _scale);
+            m_psllq(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psllw_3969 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_psllw_3969(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psllw(_destination, addressAsInt());
+            m_psllw(destination, addressAsInt());
         }
     }
 
     class m_psllw_3968 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psllw_3968(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psllw(_destination, addressAsInt(), _index, _scale);
+            m_psllw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psllw_3933 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_psllw_3933(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psllw(_destination, addressAsInt());
+            m_psllw(destination, addressAsInt());
         }
     }
 
     class m_psllw_3932 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psllw_3932(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psllw(_destination, addressAsInt(), _index, _scale);
+            m_psllw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psrad_3862 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_psrad_3862(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psrad(_destination, addressAsInt());
+            m_psrad(destination, addressAsInt());
         }
     }
 
     class m_psrad_3861 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psrad_3861(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psrad(_destination, addressAsInt(), _index, _scale);
+            m_psrad(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psrad_3826 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_psrad_3826(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psrad(_destination, addressAsInt());
+            m_psrad(destination, addressAsInt());
         }
     }
 
     class m_psrad_3825 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psrad_3825(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psrad(_destination, addressAsInt(), _index, _scale);
+            m_psrad(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psraw_3853 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_psraw_3853(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psraw(_destination, addressAsInt());
+            m_psraw(destination, addressAsInt());
         }
     }
 
     class m_psraw_3852 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psraw_3852(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psraw(_destination, addressAsInt(), _index, _scale);
+            m_psraw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psraw_3817 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_psraw_3817(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psraw(_destination, addressAsInt());
+            m_psraw(destination, addressAsInt());
         }
     }
 
     class m_psraw_3816 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psraw_3816(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psraw(_destination, addressAsInt(), _index, _scale);
+            m_psraw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psrld_3769 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_psrld_3769(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psrld(_destination, addressAsInt());
+            m_psrld(destination, addressAsInt());
         }
     }
 
     class m_psrld_3768 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psrld_3768(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psrld(_destination, addressAsInt(), _index, _scale);
+            m_psrld(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psrld_3724 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_psrld_3724(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psrld(_destination, addressAsInt());
+            m_psrld(destination, addressAsInt());
         }
     }
 
     class m_psrld_3723 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psrld_3723(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psrld(_destination, addressAsInt(), _index, _scale);
+            m_psrld(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psrlq_3778 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_psrlq_3778(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psrlq(_destination, addressAsInt());
+            m_psrlq(destination, addressAsInt());
         }
     }
 
     class m_psrlq_3777 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psrlq_3777(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psrlq(_destination, addressAsInt(), _index, _scale);
+            m_psrlq(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psrlq_3733 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_psrlq_3733(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psrlq(_destination, addressAsInt());
+            m_psrlq(destination, addressAsInt());
         }
     }
 
     class m_psrlq_3732 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psrlq_3732(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psrlq(_destination, addressAsInt(), _index, _scale);
+            m_psrlq(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psrlw_3760 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_psrlw_3760(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psrlw(_destination, addressAsInt());
+            m_psrlw(destination, addressAsInt());
         }
     }
 
     class m_psrlw_3759 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psrlw_3759(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psrlw(_destination, addressAsInt(), _index, _scale);
+            m_psrlw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psrlw_3715 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_psrlw_3715(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psrlw(_destination, addressAsInt());
+            m_psrlw(destination, addressAsInt());
         }
     }
 
     class m_psrlw_3714 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psrlw_3714(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psrlw(_destination, addressAsInt(), _index, _scale);
+            m_psrlw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psubb_5468 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_psubb_5468(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubb(_destination, addressAsInt());
+            m_psubb(destination, addressAsInt());
         }
     }
 
     class m_psubb_5467 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psubb_5467(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubb(_destination, addressAsInt(), _index, _scale);
+            m_psubb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psubb_5414 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_psubb_5414(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubb(_destination, addressAsInt());
+            m_psubb(destination, addressAsInt());
         }
     }
 
     class m_psubb_5413 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psubb_5413(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubb(_destination, addressAsInt(), _index, _scale);
+            m_psubb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psubd_5486 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_psubd_5486(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubd(_destination, addressAsInt());
+            m_psubd(destination, addressAsInt());
         }
     }
 
     class m_psubd_5485 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psubd_5485(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubd(_destination, addressAsInt(), _index, _scale);
+            m_psubd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psubd_5432 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_psubd_5432(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubd(_destination, addressAsInt());
+            m_psubd(destination, addressAsInt());
         }
     }
 
     class m_psubd_5431 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psubd_5431(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubd(_destination, addressAsInt(), _index, _scale);
+            m_psubd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psubq_5495 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_psubq_5495(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubq(_destination, addressAsInt());
+            m_psubq(destination, addressAsInt());
         }
     }
 
     class m_psubq_5494 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psubq_5494(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubq(_destination, addressAsInt(), _index, _scale);
+            m_psubq(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psubsb_5342 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_psubsb_5342(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubsb(_destination, addressAsInt());
+            m_psubsb(destination, addressAsInt());
         }
     }
 
     class m_psubsb_5341 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psubsb_5341(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubsb(_destination, addressAsInt(), _index, _scale);
+            m_psubsb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psubsb_5288 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_psubsb_5288(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubsb(_destination, addressAsInt());
+            m_psubsb(destination, addressAsInt());
         }
     }
 
     class m_psubsb_5287 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psubsb_5287(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubsb(_destination, addressAsInt(), _index, _scale);
+            m_psubsb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psubsw_5351 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_psubsw_5351(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubsw(_destination, addressAsInt());
+            m_psubsw(destination, addressAsInt());
         }
     }
 
     class m_psubsw_5350 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psubsw_5350(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubsw(_destination, addressAsInt(), _index, _scale);
+            m_psubsw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psubsw_5297 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_psubsw_5297(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubsw(_destination, addressAsInt());
+            m_psubsw(destination, addressAsInt());
         }
     }
 
     class m_psubsw_5296 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psubsw_5296(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubsw(_destination, addressAsInt(), _index, _scale);
+            m_psubsw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psubusb_5216 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_psubusb_5216(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubusb(_destination, addressAsInt());
+            m_psubusb(destination, addressAsInt());
         }
     }
 
     class m_psubusb_5215 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psubusb_5215(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubusb(_destination, addressAsInt(), _index, _scale);
+            m_psubusb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psubusb_5162 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_psubusb_5162(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubusb(_destination, addressAsInt());
+            m_psubusb(destination, addressAsInt());
         }
     }
 
     class m_psubusb_5161 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psubusb_5161(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubusb(_destination, addressAsInt(), _index, _scale);
+            m_psubusb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psubusw_5225 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_psubusw_5225(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubusw(_destination, addressAsInt());
+            m_psubusw(destination, addressAsInt());
         }
     }
 
     class m_psubusw_5224 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psubusw_5224(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubusw(_destination, addressAsInt(), _index, _scale);
+            m_psubusw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psubusw_5171 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_psubusw_5171(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubusw(_destination, addressAsInt());
+            m_psubusw(destination, addressAsInt());
         }
     }
 
     class m_psubusw_5170 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psubusw_5170(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubusw(_destination, addressAsInt(), _index, _scale);
+            m_psubusw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psubw_5477 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_psubw_5477(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubw(_destination, addressAsInt());
+            m_psubw(destination, addressAsInt());
         }
     }
 
     class m_psubw_5476 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psubw_5476(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubw(_destination, addressAsInt(), _index, _scale);
+            m_psubw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_psubw_5423 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_psubw_5423(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubw(_destination, addressAsInt());
+            m_psubw(destination, addressAsInt());
         }
     }
 
     class m_psubw_5422 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_psubw_5422(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_psubw(_destination, addressAsInt(), _index, _scale);
+            m_psubw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_punpckhbw_4706 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_punpckhbw_4706(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpckhbw(_destination, addressAsInt());
+            m_punpckhbw(destination, addressAsInt());
         }
     }
 
     class m_punpckhbw_4705 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_punpckhbw_4705(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpckhbw(_destination, addressAsInt(), _index, _scale);
+            m_punpckhbw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_punpckhbw_4652 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_punpckhbw_4652(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpckhbw(_destination, addressAsInt());
+            m_punpckhbw(destination, addressAsInt());
         }
     }
 
     class m_punpckhbw_4651 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_punpckhbw_4651(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpckhbw(_destination, addressAsInt(), _index, _scale);
+            m_punpckhbw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_punpckhdq_4724 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_punpckhdq_4724(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpckhdq(_destination, addressAsInt());
+            m_punpckhdq(destination, addressAsInt());
         }
     }
 
     class m_punpckhdq_4723 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_punpckhdq_4723(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpckhdq(_destination, addressAsInt(), _index, _scale);
+            m_punpckhdq(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_punpckhdq_4670 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_punpckhdq_4670(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpckhdq(_destination, addressAsInt());
+            m_punpckhdq(destination, addressAsInt());
         }
     }
 
     class m_punpckhdq_4669 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_punpckhdq_4669(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpckhdq(_destination, addressAsInt(), _index, _scale);
+            m_punpckhdq(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_punpckhqdq_4751 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_punpckhqdq_4751(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpckhqdq(_destination, addressAsInt());
+            m_punpckhqdq(destination, addressAsInt());
         }
     }
 
     class m_punpckhqdq_4750 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_punpckhqdq_4750(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpckhqdq(_destination, addressAsInt(), _index, _scale);
+            m_punpckhqdq(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_punpckhwd_4715 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_punpckhwd_4715(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpckhwd(_destination, addressAsInt());
+            m_punpckhwd(destination, addressAsInt());
         }
     }
 
     class m_punpckhwd_4714 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_punpckhwd_4714(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpckhwd(_destination, addressAsInt(), _index, _scale);
+            m_punpckhwd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_punpckhwd_4661 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_punpckhwd_4661(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpckhwd(_destination, addressAsInt());
+            m_punpckhwd(destination, addressAsInt());
         }
     }
 
     class m_punpckhwd_4660 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_punpckhwd_4660(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpckhwd(_destination, addressAsInt(), _index, _scale);
+            m_punpckhwd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_punpcklbw_3247 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_punpcklbw_3247(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpcklbw(_destination, addressAsInt());
+            m_punpcklbw(destination, addressAsInt());
         }
     }
 
     class m_punpcklbw_3246 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_punpcklbw_3246(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpcklbw(_destination, addressAsInt(), _index, _scale);
+            m_punpcklbw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_punpcklbw_3130 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_punpcklbw_3130(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpcklbw(_destination, addressAsInt());
+            m_punpcklbw(destination, addressAsInt());
         }
     }
 
     class m_punpcklbw_3129 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_punpcklbw_3129(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpcklbw(_destination, addressAsInt(), _index, _scale);
+            m_punpcklbw(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_punpckldq_3265 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_punpckldq_3265(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpckldq(_destination, addressAsInt());
+            m_punpckldq(destination, addressAsInt());
         }
     }
 
     class m_punpckldq_3264 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_punpckldq_3264(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpckldq(_destination, addressAsInt(), _index, _scale);
+            m_punpckldq(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_punpckldq_3148 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_punpckldq_3148(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpckldq(_destination, addressAsInt());
+            m_punpckldq(destination, addressAsInt());
         }
     }
 
     class m_punpckldq_3147 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_punpckldq_3147(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpckldq(_destination, addressAsInt(), _index, _scale);
+            m_punpckldq(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_punpcklqdq_4742 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_punpcklqdq_4742(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpcklqdq(_destination, addressAsInt());
+            m_punpcklqdq(destination, addressAsInt());
         }
     }
 
     class m_punpcklqdq_4741 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_punpcklqdq_4741(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpcklqdq(_destination, addressAsInt(), _index, _scale);
+            m_punpcklqdq(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_punpcklwd_3256 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_punpcklwd_3256(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpcklwd(_destination, addressAsInt());
+            m_punpcklwd(destination, addressAsInt());
         }
     }
 
     class m_punpcklwd_3255 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_punpcklwd_3255(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpcklwd(_destination, addressAsInt(), _index, _scale);
+            m_punpcklwd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_punpcklwd_3139 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_punpcklwd_3139(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpcklwd(_destination, addressAsInt());
+            m_punpcklwd(destination, addressAsInt());
         }
     }
 
     class m_punpcklwd_3138 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_punpcklwd_3138(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_punpcklwd(_destination, addressAsInt(), _index, _scale);
+            m_punpcklwd(destination, addressAsInt(), index, scale);
         }
     }
 
@@ -27181,72 +27181,72 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_push_2450 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_push_2450(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_push(addressAsInt(), _index, _scale);
+            m_push(addressAsInt(), index, scale);
         }
     }
 
     class m_pxor_5405 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_pxor_5405(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pxor(_destination, addressAsInt());
+            m_pxor(destination, addressAsInt());
         }
     }
 
     class m_pxor_5404 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pxor_5404(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pxor(_destination, addressAsInt(), _index, _scale);
+            m_pxor(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_pxor_5333 extends InstructionWithAddress {
-        private final MMXRegister _destination;
+        private final MMXRegister destination;
         m_pxor_5333(int startPosition, int endPosition, MMXRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pxor(_destination, addressAsInt());
+            m_pxor(destination, addressAsInt());
         }
     }
 
     class m_pxor_5332 extends InstructionWithAddress {
-        private final MMXRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final MMXRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_pxor_5332(int startPosition, int endPosition, MMXRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_pxor(_destination, addressAsInt(), _index, _scale);
+            m_pxor(destination, addressAsInt(), index, scale);
         }
     }
 
@@ -27311,226 +27311,226 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_rclb_711 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_rclb_711(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rclb(addressAsInt(), _imm8);
+            m_rclb(addressAsInt(), imm8);
         }
     }
 
     class m_rcll_774 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_rcll_774(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rcll(addressAsInt(), _imm8);
+            m_rcll(addressAsInt(), imm8);
         }
     }
 
     class m_rclw_837 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_rclw_837(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rclw(addressAsInt(), _imm8);
+            m_rclw(addressAsInt(), imm8);
         }
     }
 
     class m_rclb___1_960 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rclb___1_960(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rclb___1(addressAsInt(), _index, _scale);
+            m_rclb___1(addressAsInt(), index, scale);
         }
     }
 
     class m_rcll___1_1023 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rcll___1_1023(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rcll___1(addressAsInt(), _index, _scale);
+            m_rcll___1(addressAsInt(), index, scale);
         }
     }
 
     class m_rclw___1_1086 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rclw___1_1086(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rclw___1(addressAsInt(), _index, _scale);
+            m_rclw___1(addressAsInt(), index, scale);
         }
     }
 
     class m_rclb___CL_1149 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rclb___CL_1149(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rclb___CL(addressAsInt(), _index, _scale);
+            m_rclb___CL(addressAsInt(), index, scale);
         }
     }
 
     class m_rcll___CL_1212 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rcll___CL_1212(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rcll___CL(addressAsInt(), _index, _scale);
+            m_rcll___CL(addressAsInt(), index, scale);
         }
     }
 
     class m_rclw___CL_1275 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rclw___CL_1275(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rclw___CL(addressAsInt(), _index, _scale);
+            m_rclw___CL(addressAsInt(), index, scale);
         }
     }
 
     class m_rclb_710 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_rclb_710(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rclb(addressAsInt(), _index, _scale, _imm8);
+            m_rclb(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_rcll_773 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_rcll_773(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rcll(addressAsInt(), _index, _scale, _imm8);
+            m_rcll(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_rclw_836 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_rclw_836(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rclw(addressAsInt(), _index, _scale, _imm8);
+            m_rclw(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_rcpps_3003 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_rcpps_3003(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rcpps(_destination, addressAsInt());
+            m_rcpps(destination, addressAsInt());
         }
     }
 
     class m_rcpps_3002 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rcpps_3002(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rcpps(_destination, addressAsInt(), _index, _scale);
+            m_rcpps(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_rcpss_3121 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_rcpss_3121(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rcpss(_destination, addressAsInt());
+            m_rcpss(destination, addressAsInt());
         }
     }
 
     class m_rcpss_3120 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rcpss_3120(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rcpss(_destination, addressAsInt(), _index, _scale);
+            m_rcpss(destination, addressAsInt(), index, scale);
         }
     }
 
@@ -27595,170 +27595,170 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_rcrb_715 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_rcrb_715(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rcrb(addressAsInt(), _imm8);
+            m_rcrb(addressAsInt(), imm8);
         }
     }
 
     class m_rcrl_778 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_rcrl_778(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rcrl(addressAsInt(), _imm8);
+            m_rcrl(addressAsInt(), imm8);
         }
     }
 
     class m_rcrw_841 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_rcrw_841(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rcrw(addressAsInt(), _imm8);
+            m_rcrw(addressAsInt(), imm8);
         }
     }
 
     class m_rcrb___1_964 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rcrb___1_964(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rcrb___1(addressAsInt(), _index, _scale);
+            m_rcrb___1(addressAsInt(), index, scale);
         }
     }
 
     class m_rcrl___1_1027 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rcrl___1_1027(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rcrl___1(addressAsInt(), _index, _scale);
+            m_rcrl___1(addressAsInt(), index, scale);
         }
     }
 
     class m_rcrw___1_1090 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rcrw___1_1090(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rcrw___1(addressAsInt(), _index, _scale);
+            m_rcrw___1(addressAsInt(), index, scale);
         }
     }
 
     class m_rcrb___CL_1153 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rcrb___CL_1153(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rcrb___CL(addressAsInt(), _index, _scale);
+            m_rcrb___CL(addressAsInt(), index, scale);
         }
     }
 
     class m_rcrl___CL_1216 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rcrl___CL_1216(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rcrl___CL(addressAsInt(), _index, _scale);
+            m_rcrl___CL(addressAsInt(), index, scale);
         }
     }
 
     class m_rcrw___CL_1279 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rcrw___CL_1279(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rcrw___CL(addressAsInt(), _index, _scale);
+            m_rcrw___CL(addressAsInt(), index, scale);
         }
     }
 
     class m_rcrb_714 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_rcrb_714(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rcrb(addressAsInt(), _index, _scale, _imm8);
+            m_rcrb(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_rcrl_777 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_rcrl_777(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rcrl(addressAsInt(), _index, _scale, _imm8);
+            m_rcrl(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_rcrw_840 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_rcrw_840(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rcrw(addressAsInt(), _index, _scale, _imm8);
+            m_rcrw(addressAsInt(), index, scale, imm8);
         }
     }
 
@@ -27823,170 +27823,170 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_rolb_703 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_rolb_703(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rolb(addressAsInt(), _imm8);
+            m_rolb(addressAsInt(), imm8);
         }
     }
 
     class m_roll_766 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_roll_766(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_roll(addressAsInt(), _imm8);
+            m_roll(addressAsInt(), imm8);
         }
     }
 
     class m_rolw_829 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_rolw_829(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rolw(addressAsInt(), _imm8);
+            m_rolw(addressAsInt(), imm8);
         }
     }
 
     class m_rolb___1_952 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rolb___1_952(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rolb___1(addressAsInt(), _index, _scale);
+            m_rolb___1(addressAsInt(), index, scale);
         }
     }
 
     class m_roll___1_1015 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_roll___1_1015(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_roll___1(addressAsInt(), _index, _scale);
+            m_roll___1(addressAsInt(), index, scale);
         }
     }
 
     class m_rolw___1_1078 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rolw___1_1078(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rolw___1(addressAsInt(), _index, _scale);
+            m_rolw___1(addressAsInt(), index, scale);
         }
     }
 
     class m_rolb___CL_1141 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rolb___CL_1141(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rolb___CL(addressAsInt(), _index, _scale);
+            m_rolb___CL(addressAsInt(), index, scale);
         }
     }
 
     class m_roll___CL_1204 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_roll___CL_1204(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_roll___CL(addressAsInt(), _index, _scale);
+            m_roll___CL(addressAsInt(), index, scale);
         }
     }
 
     class m_rolw___CL_1267 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rolw___CL_1267(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rolw___CL(addressAsInt(), _index, _scale);
+            m_rolw___CL(addressAsInt(), index, scale);
         }
     }
 
     class m_rolb_702 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_rolb_702(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rolb(addressAsInt(), _index, _scale, _imm8);
+            m_rolb(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_roll_765 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_roll_765(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_roll(addressAsInt(), _index, _scale, _imm8);
+            m_roll(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_rolw_828 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_rolw_828(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rolw(addressAsInt(), _index, _scale, _imm8);
+            m_rolw(addressAsInt(), index, scale, imm8);
         }
     }
 
@@ -28051,226 +28051,226 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_rorb_707 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_rorb_707(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rorb(addressAsInt(), _imm8);
+            m_rorb(addressAsInt(), imm8);
         }
     }
 
     class m_rorl_770 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_rorl_770(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rorl(addressAsInt(), _imm8);
+            m_rorl(addressAsInt(), imm8);
         }
     }
 
     class m_rorw_833 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_rorw_833(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rorw(addressAsInt(), _imm8);
+            m_rorw(addressAsInt(), imm8);
         }
     }
 
     class m_rorb___1_956 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rorb___1_956(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rorb___1(addressAsInt(), _index, _scale);
+            m_rorb___1(addressAsInt(), index, scale);
         }
     }
 
     class m_rorl___1_1019 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rorl___1_1019(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rorl___1(addressAsInt(), _index, _scale);
+            m_rorl___1(addressAsInt(), index, scale);
         }
     }
 
     class m_rorw___1_1082 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rorw___1_1082(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rorw___1(addressAsInt(), _index, _scale);
+            m_rorw___1(addressAsInt(), index, scale);
         }
     }
 
     class m_rorb___CL_1145 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rorb___CL_1145(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rorb___CL(addressAsInt(), _index, _scale);
+            m_rorb___CL(addressAsInt(), index, scale);
         }
     }
 
     class m_rorl___CL_1208 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rorl___CL_1208(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rorl___CL(addressAsInt(), _index, _scale);
+            m_rorl___CL(addressAsInt(), index, scale);
         }
     }
 
     class m_rorw___CL_1271 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rorw___CL_1271(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rorw___CL(addressAsInt(), _index, _scale);
+            m_rorw___CL(addressAsInt(), index, scale);
         }
     }
 
     class m_rorb_706 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_rorb_706(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rorb(addressAsInt(), _index, _scale, _imm8);
+            m_rorb(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_rorl_769 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_rorl_769(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rorl(addressAsInt(), _index, _scale, _imm8);
+            m_rorl(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_rorw_832 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_rorw_832(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rorw(addressAsInt(), _index, _scale, _imm8);
+            m_rorw(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_rsqrtps_2994 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_rsqrtps_2994(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rsqrtps(_destination, addressAsInt());
+            m_rsqrtps(destination, addressAsInt());
         }
     }
 
     class m_rsqrtps_2993 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rsqrtps_2993(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rsqrtps(_destination, addressAsInt(), _index, _scale);
+            m_rsqrtps(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_rsqrtss_3112 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_rsqrtss_3112(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rsqrtss(_destination, addressAsInt());
+            m_rsqrtss(destination, addressAsInt());
         }
     }
 
     class m_rsqrtss_3111 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_rsqrtss_3111(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_rsqrtss(_destination, addressAsInt(), _index, _scale);
+            m_rsqrtss(destination, addressAsInt(), index, scale);
         }
     }
 
@@ -28335,478 +28335,478 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_sarb_727 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_sarb_727(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sarb(addressAsInt(), _imm8);
+            m_sarb(addressAsInt(), imm8);
         }
     }
 
     class m_sarl_790 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_sarl_790(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sarl(addressAsInt(), _imm8);
+            m_sarl(addressAsInt(), imm8);
         }
     }
 
     class m_sarw_853 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_sarw_853(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sarw(addressAsInt(), _imm8);
+            m_sarw(addressAsInt(), imm8);
         }
     }
 
     class m_sarb___1_976 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_sarb___1_976(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sarb___1(addressAsInt(), _index, _scale);
+            m_sarb___1(addressAsInt(), index, scale);
         }
     }
 
     class m_sarl___1_1039 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_sarl___1_1039(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sarl___1(addressAsInt(), _index, _scale);
+            m_sarl___1(addressAsInt(), index, scale);
         }
     }
 
     class m_sarw___1_1102 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_sarw___1_1102(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sarw___1(addressAsInt(), _index, _scale);
+            m_sarw___1(addressAsInt(), index, scale);
         }
     }
 
     class m_sarb___CL_1165 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_sarb___CL_1165(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sarb___CL(addressAsInt(), _index, _scale);
+            m_sarb___CL(addressAsInt(), index, scale);
         }
     }
 
     class m_sarl___CL_1228 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_sarl___CL_1228(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sarl___CL(addressAsInt(), _index, _scale);
+            m_sarl___CL(addressAsInt(), index, scale);
         }
     }
 
     class m_sarw___CL_1291 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_sarw___CL_1291(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sarw___CL(addressAsInt(), _index, _scale);
+            m_sarw___CL(addressAsInt(), index, scale);
         }
     }
 
     class m_sarb_726 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_sarb_726(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sarb(addressAsInt(), _index, _scale, _imm8);
+            m_sarb(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_sarl_789 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_sarl_789(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sarl(addressAsInt(), _index, _scale, _imm8);
+            m_sarl(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_sarw_852 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_sarw_852(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sarw(addressAsInt(), _index, _scale, _imm8);
+            m_sarw(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_sbb_1637 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_sbb_1637(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbb(_destination, addressAsInt());
+            m_sbb(destination, addressAsInt());
         }
     }
 
     class m_sbb_1636 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_sbb_1636(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbb(_destination, addressAsInt(), _index, _scale);
+            m_sbb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_sbb_1629 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_sbb_1629(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbb(_destination, addressAsInt());
+            m_sbb(destination, addressAsInt());
         }
     }
 
     class m_sbb_1628 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_sbb_1628(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbb(_destination, addressAsInt(), _index, _scale);
+            m_sbb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_sbb_1621 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _destination;
+        private final IA32GeneralRegister8 destination;
         m_sbb_1621(int startPosition, int endPosition, IA32GeneralRegister8 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbb(_destination, addressAsInt());
+            m_sbb(destination, addressAsInt());
         }
     }
 
     class m_sbb_1620 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister8 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_sbb_1620(int startPosition, int endPosition, IA32GeneralRegister8 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbb(_destination, addressAsInt(), _index, _scale);
+            m_sbb(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_sbbb_285 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_sbbb_285(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbbb(addressAsInt(), _imm8);
+            m_sbbb(addressAsInt(), imm8);
         }
     }
 
     class m_sbbl_501 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_sbbl_501(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbbl(addressAsInt(), _imm8);
+            m_sbbl(addressAsInt(), imm8);
         }
     }
 
     class m_sbbw_573 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_sbbw_573(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbbw(addressAsInt(), _imm8);
+            m_sbbw(addressAsInt(), imm8);
         }
     }
 
     class m_sbb_1612 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
+        private final IA32GeneralRegister16 source;
         m_sbb_1612(int startPosition, int endPosition, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbb(addressAsInt(), _source);
+            m_sbb(addressAsInt(), source);
         }
     }
 
     class m_sbb_1603 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
+        private final IA32GeneralRegister32 source;
         m_sbb_1603(int startPosition, int endPosition, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbb(addressAsInt(), _source);
+            m_sbb(addressAsInt(), source);
         }
     }
 
     class m_sbb_1594 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _source;
+        private final IA32GeneralRegister8 source;
         m_sbb_1594(int startPosition, int endPosition, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbb(addressAsInt(), _source);
+            m_sbb(addressAsInt(), source);
         }
     }
 
     class m_sbbb_284 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_sbbb_284(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbbb(addressAsInt(), _index, _scale, _imm8);
+            m_sbbb(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_sbbl_500 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_sbbl_500(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbbl(addressAsInt(), _index, _scale, _imm8);
+            m_sbbl(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_sbbw_572 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_sbbw_572(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbbw(addressAsInt(), _index, _scale, _imm8);
+            m_sbbw(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_sbb_1611 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
         m_sbb_1611(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbb(addressAsInt(), _index, _scale, _source);
+            m_sbb(addressAsInt(), index, scale, source);
         }
     }
 
     class m_sbb_1602 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
         m_sbb_1602(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbb(addressAsInt(), _index, _scale, _source);
+            m_sbb(addressAsInt(), index, scale, source);
         }
     }
 
     class m_sbb_1593 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister8 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister8 source;
         m_sbb_1593(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbb(addressAsInt(), _index, _scale, _source);
+            m_sbb(addressAsInt(), index, scale, source);
         }
     }
 
     class m_sbbl_356 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final int _imm32;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final int imm32;
         m_sbbl_356(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm32 = imm32;
+            this.index = index;
+            this.scale = scale;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbbl(addressAsInt(), _index, _scale, _imm32);
+            m_sbbl(addressAsInt(), index, scale, imm32);
         }
     }
 
     class m_sbbw_428 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final short _imm16;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final short imm16;
         m_sbbw_428(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm16 = imm16;
+            this.index = index;
+            this.scale = scale;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbbw(addressAsInt(), _index, _scale, _imm16);
+            m_sbbw(addressAsInt(), index, scale, imm16);
         }
     }
 
     class m_sbbl_357 extends InstructionWithAddress {
-        private final int _imm32;
+        private final int imm32;
         m_sbbl_357(int startPosition, int endPosition, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm32 = imm32;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbbl(addressAsInt(), _imm32);
+            m_sbbl(addressAsInt(), imm32);
         }
     }
 
     class m_sbbw_429 extends InstructionWithAddress {
-        private final short _imm16;
+        private final short imm16;
         m_sbbw_429(int startPosition, int endPosition, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm16 = imm16;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sbbw(addressAsInt(), _imm16);
+            m_sbbw(addressAsInt(), imm16);
         }
     }
 
@@ -28821,16 +28821,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_setb_3357 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_setb_3357(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_setb(addressAsInt(), _index, _scale);
+            m_setb(addressAsInt(), index, scale);
         }
     }
 
@@ -28845,16 +28845,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_setbe_3393 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_setbe_3393(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_setbe(addressAsInt(), _index, _scale);
+            m_setbe(addressAsInt(), index, scale);
         }
     }
 
@@ -28869,16 +28869,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_setl_4916 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_setl_4916(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_setl(addressAsInt(), _index, _scale);
+            m_setl(addressAsInt(), index, scale);
         }
     }
 
@@ -28893,16 +28893,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_setle_4934 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_setle_4934(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_setle(addressAsInt(), _index, _scale);
+            m_setle(addressAsInt(), index, scale);
         }
     }
 
@@ -28917,16 +28917,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_setnb_3366 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_setnb_3366(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_setnb(addressAsInt(), _index, _scale);
+            m_setnb(addressAsInt(), index, scale);
         }
     }
 
@@ -28941,16 +28941,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_setnbe_3402 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_setnbe_3402(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_setnbe(addressAsInt(), _index, _scale);
+            m_setnbe(addressAsInt(), index, scale);
         }
     }
 
@@ -28965,16 +28965,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_setnl_4925 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_setnl_4925(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_setnl(addressAsInt(), _index, _scale);
+            m_setnl(addressAsInt(), index, scale);
         }
     }
 
@@ -28989,16 +28989,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_setnle_4943 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_setnle_4943(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_setnle(addressAsInt(), _index, _scale);
+            m_setnle(addressAsInt(), index, scale);
         }
     }
 
@@ -29013,16 +29013,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_setno_3348 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_setno_3348(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_setno(addressAsInt(), _index, _scale);
+            m_setno(addressAsInt(), index, scale);
         }
     }
 
@@ -29037,16 +29037,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_setnp_4907 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_setnp_4907(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_setnp(addressAsInt(), _index, _scale);
+            m_setnp(addressAsInt(), index, scale);
         }
     }
 
@@ -29061,16 +29061,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_setns_4889 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_setns_4889(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_setns(addressAsInt(), _index, _scale);
+            m_setns(addressAsInt(), index, scale);
         }
     }
 
@@ -29085,16 +29085,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_setnz_3384 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_setnz_3384(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_setnz(addressAsInt(), _index, _scale);
+            m_setnz(addressAsInt(), index, scale);
         }
     }
 
@@ -29109,16 +29109,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_seto_3339 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_seto_3339(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_seto(addressAsInt(), _index, _scale);
+            m_seto(addressAsInt(), index, scale);
         }
     }
 
@@ -29133,16 +29133,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_setp_4898 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_setp_4898(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_setp(addressAsInt(), _index, _scale);
+            m_setp(addressAsInt(), index, scale);
         }
     }
 
@@ -29157,16 +29157,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_sets_4880 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_sets_4880(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sets(addressAsInt(), _index, _scale);
+            m_sets(addressAsInt(), index, scale);
         }
     }
 
@@ -29181,16 +29181,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_setz_3375 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_setz_3375(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_setz(addressAsInt(), _index, _scale);
+            m_setz(addressAsInt(), index, scale);
         }
     }
 
@@ -29205,16 +29205,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_sgdt_2554 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_sgdt_2554(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sgdt(addressAsInt(), _index, _scale);
+            m_sgdt(addressAsInt(), index, scale);
         }
     }
 
@@ -29279,290 +29279,290 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_shlb_719 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_shlb_719(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shlb(addressAsInt(), _imm8);
+            m_shlb(addressAsInt(), imm8);
         }
     }
 
     class m_shll_782 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_shll_782(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shll(addressAsInt(), _imm8);
+            m_shll(addressAsInt(), imm8);
         }
     }
 
     class m_shlw_845 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_shlw_845(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shlw(addressAsInt(), _imm8);
+            m_shlw(addressAsInt(), imm8);
         }
     }
 
     class m_shlb___1_968 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_shlb___1_968(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shlb___1(addressAsInt(), _index, _scale);
+            m_shlb___1(addressAsInt(), index, scale);
         }
     }
 
     class m_shll___1_1031 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_shll___1_1031(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shll___1(addressAsInt(), _index, _scale);
+            m_shll___1(addressAsInt(), index, scale);
         }
     }
 
     class m_shlw___1_1094 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_shlw___1_1094(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shlw___1(addressAsInt(), _index, _scale);
+            m_shlw___1(addressAsInt(), index, scale);
         }
     }
 
     class m_shlb___CL_1157 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_shlb___CL_1157(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shlb___CL(addressAsInt(), _index, _scale);
+            m_shlb___CL(addressAsInt(), index, scale);
         }
     }
 
     class m_shll___CL_1220 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_shll___CL_1220(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shll___CL(addressAsInt(), _index, _scale);
+            m_shll___CL(addressAsInt(), index, scale);
         }
     }
 
     class m_shlw___CL_1283 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_shlw___CL_1283(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shlw___CL(addressAsInt(), _index, _scale);
+            m_shlw___CL(addressAsInt(), index, scale);
         }
     }
 
     class m_shlb_718 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_shlb_718(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shlb(addressAsInt(), _index, _scale, _imm8);
+            m_shlb(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_shll_781 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_shll_781(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shll(addressAsInt(), _index, _scale, _imm8);
+            m_shll(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_shlw_844 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_shlw_844(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shlw(addressAsInt(), _index, _scale, _imm8);
+            m_shlw(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_shld_CL_3460 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
+        private final IA32GeneralRegister16 source;
         m_shld_CL_3460(int startPosition, int endPosition, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shld_CL(addressAsInt(), _source);
+            m_shld_CL(addressAsInt(), source);
         }
     }
 
     class m_shld_3442 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
-        private final byte _imm8;
+        private final IA32GeneralRegister16 source;
+        private final byte imm8;
         m_shld_3442(int startPosition, int endPosition, IA32GeneralRegister16 source, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
-            _imm8 = imm8;
+            this.source = source;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shld(addressAsInt(), _source, _imm8);
+            m_shld(addressAsInt(), source, imm8);
         }
     }
 
     class m_shld_CL_3451 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
+        private final IA32GeneralRegister32 source;
         m_shld_CL_3451(int startPosition, int endPosition, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shld_CL(addressAsInt(), _source);
+            m_shld_CL(addressAsInt(), source);
         }
     }
 
     class m_shld_3433 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
-        private final byte _imm8;
+        private final IA32GeneralRegister32 source;
+        private final byte imm8;
         m_shld_3433(int startPosition, int endPosition, IA32GeneralRegister32 source, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
-            _imm8 = imm8;
+            this.source = source;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shld(addressAsInt(), _source, _imm8);
+            m_shld(addressAsInt(), source, imm8);
         }
     }
 
     class m_shld_CL_3459 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
         m_shld_CL_3459(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shld_CL(addressAsInt(), _index, _scale, _source);
+            m_shld_CL(addressAsInt(), index, scale, source);
         }
     }
 
     class m_shld_3441 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
+        private final byte imm8;
         m_shld_3441(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shld(addressAsInt(), _index, _scale, _source, _imm8);
+            m_shld(addressAsInt(), index, scale, source, imm8);
         }
     }
 
     class m_shld_CL_3450 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
         m_shld_CL_3450(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shld_CL(addressAsInt(), _index, _scale, _source);
+            m_shld_CL(addressAsInt(), index, scale, source);
         }
     }
 
     class m_shld_3432 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
+        private final byte imm8;
         m_shld_3432(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shld(addressAsInt(), _index, _scale, _source, _imm8);
+            m_shld(addressAsInt(), index, scale, source, imm8);
         }
     }
 
@@ -29627,354 +29627,354 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_shrb_723 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_shrb_723(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shrb(addressAsInt(), _imm8);
+            m_shrb(addressAsInt(), imm8);
         }
     }
 
     class m_shrl_786 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_shrl_786(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shrl(addressAsInt(), _imm8);
+            m_shrl(addressAsInt(), imm8);
         }
     }
 
     class m_shrw_849 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_shrw_849(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shrw(addressAsInt(), _imm8);
+            m_shrw(addressAsInt(), imm8);
         }
     }
 
     class m_shrb___1_972 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_shrb___1_972(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shrb___1(addressAsInt(), _index, _scale);
+            m_shrb___1(addressAsInt(), index, scale);
         }
     }
 
     class m_shrl___1_1035 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_shrl___1_1035(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shrl___1(addressAsInt(), _index, _scale);
+            m_shrl___1(addressAsInt(), index, scale);
         }
     }
 
     class m_shrw___1_1098 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_shrw___1_1098(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shrw___1(addressAsInt(), _index, _scale);
+            m_shrw___1(addressAsInt(), index, scale);
         }
     }
 
     class m_shrb___CL_1161 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_shrb___CL_1161(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shrb___CL(addressAsInt(), _index, _scale);
+            m_shrb___CL(addressAsInt(), index, scale);
         }
     }
 
     class m_shrl___CL_1224 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_shrl___CL_1224(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shrl___CL(addressAsInt(), _index, _scale);
+            m_shrl___CL(addressAsInt(), index, scale);
         }
     }
 
     class m_shrw___CL_1287 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_shrw___CL_1287(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shrw___CL(addressAsInt(), _index, _scale);
+            m_shrw___CL(addressAsInt(), index, scale);
         }
     }
 
     class m_shrb_722 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_shrb_722(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shrb(addressAsInt(), _index, _scale, _imm8);
+            m_shrb(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_shrl_785 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_shrl_785(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shrl(addressAsInt(), _index, _scale, _imm8);
+            m_shrl(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_shrw_848 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_shrw_848(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shrw(addressAsInt(), _index, _scale, _imm8);
+            m_shrw(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_shrd_CL_5001 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
+        private final IA32GeneralRegister16 source;
         m_shrd_CL_5001(int startPosition, int endPosition, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shrd_CL(addressAsInt(), _source);
+            m_shrd_CL(addressAsInt(), source);
         }
     }
 
     class m_shrd_4983 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
-        private final byte _imm8;
+        private final IA32GeneralRegister16 source;
+        private final byte imm8;
         m_shrd_4983(int startPosition, int endPosition, IA32GeneralRegister16 source, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
-            _imm8 = imm8;
+            this.source = source;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shrd(addressAsInt(), _source, _imm8);
+            m_shrd(addressAsInt(), source, imm8);
         }
     }
 
     class m_shrd_CL_4992 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
+        private final IA32GeneralRegister32 source;
         m_shrd_CL_4992(int startPosition, int endPosition, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shrd_CL(addressAsInt(), _source);
+            m_shrd_CL(addressAsInt(), source);
         }
     }
 
     class m_shrd_4974 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
-        private final byte _imm8;
+        private final IA32GeneralRegister32 source;
+        private final byte imm8;
         m_shrd_4974(int startPosition, int endPosition, IA32GeneralRegister32 source, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
-            _imm8 = imm8;
+            this.source = source;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shrd(addressAsInt(), _source, _imm8);
+            m_shrd(addressAsInt(), source, imm8);
         }
     }
 
     class m_shrd_CL_5000 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
         m_shrd_CL_5000(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shrd_CL(addressAsInt(), _index, _scale, _source);
+            m_shrd_CL(addressAsInt(), index, scale, source);
         }
     }
 
     class m_shrd_4982 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
+        private final byte imm8;
         m_shrd_4982(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shrd(addressAsInt(), _index, _scale, _source, _imm8);
+            m_shrd(addressAsInt(), index, scale, source, imm8);
         }
     }
 
     class m_shrd_CL_4991 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
         m_shrd_CL_4991(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shrd_CL(addressAsInt(), _index, _scale, _source);
+            m_shrd_CL(addressAsInt(), index, scale, source);
         }
     }
 
     class m_shrd_4973 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
+        private final byte imm8;
         m_shrd_4973(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shrd(addressAsInt(), _index, _scale, _source, _imm8);
+            m_shrd(addressAsInt(), index, scale, source, imm8);
         }
     }
 
     class m_shufpd_3688 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final byte _imm8;
+        private final IA32XMMRegister destination;
+        private final byte imm8;
         m_shufpd_3688(int startPosition, int endPosition, IA32XMMRegister destination, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _imm8 = imm8;
+            this.destination = destination;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shufpd(_destination, addressAsInt(), _imm8);
+            m_shufpd(destination, addressAsInt(), imm8);
         }
     }
 
     class m_shufpd_3687 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_shufpd_3687(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shufpd(_destination, addressAsInt(), _index, _scale, _imm8);
+            m_shufpd(destination, addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_shufps_3652 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final byte _imm8;
+        private final IA32XMMRegister destination;
+        private final byte imm8;
         m_shufps_3652(int startPosition, int endPosition, IA32XMMRegister destination, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _imm8 = imm8;
+            this.destination = destination;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shufps(_destination, addressAsInt(), _imm8);
+            m_shufps(destination, addressAsInt(), imm8);
         }
     }
 
     class m_shufps_3651 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_shufps_3651(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_shufps(_destination, addressAsInt(), _index, _scale, _imm8);
+            m_shufps(destination, addressAsInt(), index, scale, imm8);
         }
     }
 
@@ -29989,16 +29989,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_sidt_2558 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_sidt_2558(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sidt(addressAsInt(), _index, _scale);
+            m_sidt(addressAsInt(), index, scale);
         }
     }
 
@@ -30013,16 +30013,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_sldt_2498 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_sldt_2498(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sldt(addressAsInt(), _index, _scale);
+            m_sldt(addressAsInt(), index, scale);
         }
     }
 
@@ -30037,128 +30037,128 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_smsw_2570 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_smsw_2570(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_smsw(addressAsInt(), _index, _scale);
+            m_smsw(addressAsInt(), index, scale);
         }
     }
 
     class m_sqrtpd_3049 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_sqrtpd_3049(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sqrtpd(_destination, addressAsInt());
+            m_sqrtpd(destination, addressAsInt());
         }
     }
 
     class m_sqrtpd_3048 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_sqrtpd_3048(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sqrtpd(_destination, addressAsInt(), _index, _scale);
+            m_sqrtpd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_sqrtps_2985 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_sqrtps_2985(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sqrtps(_destination, addressAsInt());
+            m_sqrtps(destination, addressAsInt());
         }
     }
 
     class m_sqrtps_2984 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_sqrtps_2984(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sqrtps(_destination, addressAsInt(), _index, _scale);
+            m_sqrtps(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_sqrtsd_3094 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_sqrtsd_3094(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sqrtsd(_destination, addressAsInt());
+            m_sqrtsd(destination, addressAsInt());
         }
     }
 
     class m_sqrtsd_3093 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_sqrtsd_3093(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sqrtsd(_destination, addressAsInt(), _index, _scale);
+            m_sqrtsd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_sqrtss_3103 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_sqrtss_3103(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sqrtss(_destination, addressAsInt());
+            m_sqrtss(destination, addressAsInt());
         }
     }
 
     class m_sqrtss_3102 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_sqrtss_3102(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sqrtss(_destination, addressAsInt(), _index, _scale);
+            m_sqrtss(destination, addressAsInt(), index, scale);
         }
     }
 
@@ -30173,772 +30173,772 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_str_2502 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_str_2502(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_str(addressAsInt(), _index, _scale);
+            m_str(addressAsInt(), index, scale);
         }
     }
 
     class m_sub_1693 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_sub_1693(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sub(_destination, addressAsInt());
+            m_sub(destination, addressAsInt());
         }
     }
 
     class m_sub_1692 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_sub_1692(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sub(_destination, addressAsInt(), _index, _scale);
+            m_sub(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_sub_1685 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_sub_1685(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sub(_destination, addressAsInt());
+            m_sub(destination, addressAsInt());
         }
     }
 
     class m_sub_1684 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_sub_1684(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sub(_destination, addressAsInt(), _index, _scale);
+            m_sub(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_sub_1677 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _destination;
+        private final IA32GeneralRegister8 destination;
         m_sub_1677(int startPosition, int endPosition, IA32GeneralRegister8 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sub(_destination, addressAsInt());
+            m_sub(destination, addressAsInt());
         }
     }
 
     class m_sub_1676 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister8 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_sub_1676(int startPosition, int endPosition, IA32GeneralRegister8 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sub(_destination, addressAsInt(), _index, _scale);
+            m_sub(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_subb_293 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_subb_293(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_subb(addressAsInt(), _imm8);
+            m_subb(addressAsInt(), imm8);
         }
     }
 
     class m_subl_509 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_subl_509(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_subl(addressAsInt(), _imm8);
+            m_subl(addressAsInt(), imm8);
         }
     }
 
     class m_subw_581 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_subw_581(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_subw(addressAsInt(), _imm8);
+            m_subw(addressAsInt(), imm8);
         }
     }
 
     class m_sub_1668 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
+        private final IA32GeneralRegister16 source;
         m_sub_1668(int startPosition, int endPosition, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sub(addressAsInt(), _source);
+            m_sub(addressAsInt(), source);
         }
     }
 
     class m_sub_1659 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
+        private final IA32GeneralRegister32 source;
         m_sub_1659(int startPosition, int endPosition, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sub(addressAsInt(), _source);
+            m_sub(addressAsInt(), source);
         }
     }
 
     class m_sub_1650 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _source;
+        private final IA32GeneralRegister8 source;
         m_sub_1650(int startPosition, int endPosition, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sub(addressAsInt(), _source);
+            m_sub(addressAsInt(), source);
         }
     }
 
     class m_subb_292 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_subb_292(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_subb(addressAsInt(), _index, _scale, _imm8);
+            m_subb(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_subl_508 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_subl_508(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_subl(addressAsInt(), _index, _scale, _imm8);
+            m_subl(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_subw_580 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_subw_580(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_subw(addressAsInt(), _index, _scale, _imm8);
+            m_subw(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_sub_1667 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
         m_sub_1667(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sub(addressAsInt(), _index, _scale, _source);
+            m_sub(addressAsInt(), index, scale, source);
         }
     }
 
     class m_sub_1658 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
         m_sub_1658(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sub(addressAsInt(), _index, _scale, _source);
+            m_sub(addressAsInt(), index, scale, source);
         }
     }
 
     class m_sub_1649 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister8 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister8 source;
         m_sub_1649(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_sub(addressAsInt(), _index, _scale, _source);
+            m_sub(addressAsInt(), index, scale, source);
         }
     }
 
     class m_subl_364 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final int _imm32;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final int imm32;
         m_subl_364(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm32 = imm32;
+            this.index = index;
+            this.scale = scale;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_subl(addressAsInt(), _index, _scale, _imm32);
+            m_subl(addressAsInt(), index, scale, imm32);
         }
     }
 
     class m_subw_436 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final short _imm16;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final short imm16;
         m_subw_436(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm16 = imm16;
+            this.index = index;
+            this.scale = scale;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_subw(addressAsInt(), _index, _scale, _imm16);
+            m_subw(addressAsInt(), index, scale, imm16);
         }
     }
 
     class m_subl_365 extends InstructionWithAddress {
-        private final int _imm32;
+        private final int imm32;
         m_subl_365(int startPosition, int endPosition, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm32 = imm32;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_subl(addressAsInt(), _imm32);
+            m_subl(addressAsInt(), imm32);
         }
     }
 
     class m_subw_437 extends InstructionWithAddress {
-        private final short _imm16;
+        private final short imm16;
         m_subw_437(int startPosition, int endPosition, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm16 = imm16;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_subw(addressAsInt(), _imm16);
+            m_subw(addressAsInt(), imm16);
         }
     }
 
     class m_subpd_4481 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_subpd_4481(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_subpd(_destination, addressAsInt());
+            m_subpd(destination, addressAsInt());
         }
     }
 
     class m_subpd_4480 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_subpd_4480(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_subpd(_destination, addressAsInt(), _index, _scale);
+            m_subpd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_subps_4409 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_subps_4409(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_subps(_destination, addressAsInt());
+            m_subps(destination, addressAsInt());
         }
     }
 
     class m_subps_4408 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_subps_4408(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_subps(_destination, addressAsInt(), _index, _scale);
+            m_subps(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_subsd_4544 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_subsd_4544(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_subsd(_destination, addressAsInt());
+            m_subsd(destination, addressAsInt());
         }
     }
 
     class m_subsd_4543 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_subsd_4543(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_subsd(_destination, addressAsInt(), _index, _scale);
+            m_subsd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_subss_4616 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_subss_4616(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_subss(_destination, addressAsInt());
+            m_subss(destination, addressAsInt());
         }
     }
 
     class m_subss_4615 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_subss_4615(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_subss(_destination, addressAsInt(), _index, _scale);
+            m_subss(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_testb_1350 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_testb_1350(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_testb(addressAsInt(), _imm8);
+            m_testb(addressAsInt(), imm8);
         }
     }
 
     class m_test_651 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
+        private final IA32GeneralRegister16 source;
         m_test_651(int startPosition, int endPosition, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_test(addressAsInt(), _source);
+            m_test(addressAsInt(), source);
         }
     }
 
     class m_test_642 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
+        private final IA32GeneralRegister32 source;
         m_test_642(int startPosition, int endPosition, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_test(addressAsInt(), _source);
+            m_test(addressAsInt(), source);
         }
     }
 
     class m_test_633 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _source;
+        private final IA32GeneralRegister8 source;
         m_test_633(int startPosition, int endPosition, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_test(addressAsInt(), _source);
+            m_test(addressAsInt(), source);
         }
     }
 
     class m_testb_1349 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_testb_1349(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_testb(addressAsInt(), _index, _scale, _imm8);
+            m_testb(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_test_650 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
         m_test_650(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_test(addressAsInt(), _index, _scale, _source);
+            m_test(addressAsInt(), index, scale, source);
         }
     }
 
     class m_test_641 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
         m_test_641(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_test(addressAsInt(), _index, _scale, _source);
+            m_test(addressAsInt(), index, scale, source);
         }
     }
 
     class m_test_632 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister8 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister8 source;
         m_test_632(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_test(addressAsInt(), _index, _scale, _source);
+            m_test(addressAsInt(), index, scale, source);
         }
     }
 
     class m_testl_1412 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final int _imm32;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final int imm32;
         m_testl_1412(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm32 = imm32;
+            this.index = index;
+            this.scale = scale;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_testl(addressAsInt(), _index, _scale, _imm32);
+            m_testl(addressAsInt(), index, scale, imm32);
         }
     }
 
     class m_testw_1475 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final short _imm16;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final short imm16;
         m_testw_1475(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm16 = imm16;
+            this.index = index;
+            this.scale = scale;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_testw(addressAsInt(), _index, _scale, _imm16);
+            m_testw(addressAsInt(), index, scale, imm16);
         }
     }
 
     class m_testl_1413 extends InstructionWithAddress {
-        private final int _imm32;
+        private final int imm32;
         m_testl_1413(int startPosition, int endPosition, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm32 = imm32;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_testl(addressAsInt(), _imm32);
+            m_testl(addressAsInt(), imm32);
         }
     }
 
     class m_testw_1476 extends InstructionWithAddress {
-        private final short _imm16;
+        private final short imm16;
         m_testw_1476(int startPosition, int endPosition, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm16 = imm16;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_testw(addressAsInt(), _imm16);
+            m_testw(addressAsInt(), imm16);
         }
     }
 
     class m_ucomisd_4157 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_ucomisd_4157(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_ucomisd(_destination, addressAsInt());
+            m_ucomisd(destination, addressAsInt());
         }
     }
 
     class m_ucomisd_4156 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_ucomisd_4156(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_ucomisd(_destination, addressAsInt(), _index, _scale);
+            m_ucomisd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_ucomiss_4087 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_ucomiss_4087(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_ucomiss(_destination, addressAsInt());
+            m_ucomiss(destination, addressAsInt());
         }
     }
 
     class m_ucomiss_4086 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_ucomiss_4086(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_ucomiss(_destination, addressAsInt(), _index, _scale);
+            m_ucomiss(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_unpckhpd_2746 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_unpckhpd_2746(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_unpckhpd(_destination, addressAsInt());
+            m_unpckhpd(destination, addressAsInt());
         }
     }
 
     class m_unpckhpd_2745 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_unpckhpd_2745(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_unpckhpd(_destination, addressAsInt(), _index, _scale);
+            m_unpckhpd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_unpckhps_2686 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_unpckhps_2686(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_unpckhps(_destination, addressAsInt());
+            m_unpckhps(destination, addressAsInt());
         }
     }
 
     class m_unpckhps_2685 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_unpckhps_2685(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_unpckhps(_destination, addressAsInt(), _index, _scale);
+            m_unpckhps(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_unpcklpd_2737 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_unpcklpd_2737(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_unpcklpd(_destination, addressAsInt());
+            m_unpcklpd(destination, addressAsInt());
         }
     }
 
     class m_unpcklpd_2736 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_unpcklpd_2736(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_unpcklpd(_destination, addressAsInt(), _index, _scale);
+            m_unpcklpd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_unpcklps_2677 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_unpcklps_2677(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_unpcklps(_destination, addressAsInt());
+            m_unpcklps(destination, addressAsInt());
         }
     }
 
     class m_unpcklps_2676 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_unpcklps_2676(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_unpcklps(_destination, addressAsInt(), _index, _scale);
+            m_unpcklps(destination, addressAsInt(), index, scale);
         }
     }
 
@@ -30953,16 +30953,16 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_verr_2514 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_verr_2514(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_verr(addressAsInt(), _index, _scale);
+            m_verr(addressAsInt(), index, scale);
         }
     }
 
@@ -30977,548 +30977,548 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
     }
 
     class m_verw_2518 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_verw_2518(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_verw(addressAsInt(), _index, _scale);
+            m_verw(addressAsInt(), index, scale);
         }
     }
 
     class m_xadd_3616 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
+        private final IA32GeneralRegister16 source;
         m_xadd_3616(int startPosition, int endPosition, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xadd(addressAsInt(), _source);
+            m_xadd(addressAsInt(), source);
         }
     }
 
     class m_xadd_3607 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
+        private final IA32GeneralRegister32 source;
         m_xadd_3607(int startPosition, int endPosition, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xadd(addressAsInt(), _source);
+            m_xadd(addressAsInt(), source);
         }
     }
 
     class m_xadd_3598 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _source;
+        private final IA32GeneralRegister8 source;
         m_xadd_3598(int startPosition, int endPosition, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xadd(addressAsInt(), _source);
+            m_xadd(addressAsInt(), source);
         }
     }
 
     class m_xadd_3615 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
         m_xadd_3615(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xadd(addressAsInt(), _index, _scale, _source);
+            m_xadd(addressAsInt(), index, scale, source);
         }
     }
 
     class m_xadd_3606 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
         m_xadd_3606(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xadd(addressAsInt(), _index, _scale, _source);
+            m_xadd(addressAsInt(), index, scale, source);
         }
     }
 
     class m_xadd_3597 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister8 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister8 source;
         m_xadd_3597(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xadd(addressAsInt(), _index, _scale, _source);
+            m_xadd(addressAsInt(), index, scale, source);
         }
     }
 
     class m_xchg_678 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
+        private final IA32GeneralRegister16 source;
         m_xchg_678(int startPosition, int endPosition, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xchg(addressAsInt(), _source);
+            m_xchg(addressAsInt(), source);
         }
     }
 
     class m_xchg_669 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
+        private final IA32GeneralRegister32 source;
         m_xchg_669(int startPosition, int endPosition, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xchg(addressAsInt(), _source);
+            m_xchg(addressAsInt(), source);
         }
     }
 
     class m_xchg_660 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _source;
+        private final IA32GeneralRegister8 source;
         m_xchg_660(int startPosition, int endPosition, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xchg(addressAsInt(), _source);
+            m_xchg(addressAsInt(), source);
         }
     }
 
     class m_xchg_677 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
         m_xchg_677(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xchg(addressAsInt(), _index, _scale, _source);
+            m_xchg(addressAsInt(), index, scale, source);
         }
     }
 
     class m_xchg_668 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
         m_xchg_668(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xchg(addressAsInt(), _index, _scale, _source);
+            m_xchg(addressAsInt(), index, scale, source);
         }
     }
 
     class m_xchg_659 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister8 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister8 source;
         m_xchg_659(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xchg(addressAsInt(), _index, _scale, _source);
+            m_xchg(addressAsInt(), index, scale, source);
         }
     }
 
     class m_xor_215 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
+        private final IA32GeneralRegister16 destination;
         m_xor_215(int startPosition, int endPosition, IA32GeneralRegister16 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xor(_destination, addressAsInt());
+            m_xor(destination, addressAsInt());
         }
     }
 
     class m_xor_214 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister16 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_xor_214(int startPosition, int endPosition, IA32GeneralRegister16 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xor(_destination, addressAsInt(), _index, _scale);
+            m_xor(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_xor_207 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
+        private final IA32GeneralRegister32 destination;
         m_xor_207(int startPosition, int endPosition, IA32GeneralRegister32 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xor(_destination, addressAsInt());
+            m_xor(destination, addressAsInt());
         }
     }
 
     class m_xor_206 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister32 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_xor_206(int startPosition, int endPosition, IA32GeneralRegister32 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xor(_destination, addressAsInt(), _index, _scale);
+            m_xor(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_xor_199 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _destination;
+        private final IA32GeneralRegister8 destination;
         m_xor_199(int startPosition, int endPosition, IA32GeneralRegister8 destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xor(_destination, addressAsInt());
+            m_xor(destination, addressAsInt());
         }
     }
 
     class m_xor_198 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32GeneralRegister8 destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_xor_198(int startPosition, int endPosition, IA32GeneralRegister8 destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xor(_destination, addressAsInt(), _index, _scale);
+            m_xor(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_xorb_297 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_xorb_297(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xorb(addressAsInt(), _imm8);
+            m_xorb(addressAsInt(), imm8);
         }
     }
 
     class m_xorl_513 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_xorl_513(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xorl(addressAsInt(), _imm8);
+            m_xorl(addressAsInt(), imm8);
         }
     }
 
     class m_xorw_585 extends InstructionWithAddress {
-        private final byte _imm8;
+        private final byte imm8;
         m_xorw_585(int startPosition, int endPosition, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm8 = imm8;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xorw(addressAsInt(), _imm8);
+            m_xorw(addressAsInt(), imm8);
         }
     }
 
     class m_xor_190 extends InstructionWithAddress {
-        private final IA32GeneralRegister16 _source;
+        private final IA32GeneralRegister16 source;
         m_xor_190(int startPosition, int endPosition, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xor(addressAsInt(), _source);
+            m_xor(addressAsInt(), source);
         }
     }
 
     class m_xor_181 extends InstructionWithAddress {
-        private final IA32GeneralRegister32 _source;
+        private final IA32GeneralRegister32 source;
         m_xor_181(int startPosition, int endPosition, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xor(addressAsInt(), _source);
+            m_xor(addressAsInt(), source);
         }
     }
 
     class m_xor_172 extends InstructionWithAddress {
-        private final IA32GeneralRegister8 _source;
+        private final IA32GeneralRegister8 source;
         m_xor_172(int startPosition, int endPosition, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _source = source;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xor(addressAsInt(), _source);
+            m_xor(addressAsInt(), source);
         }
     }
 
     class m_xorb_296 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_xorb_296(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xorb(addressAsInt(), _index, _scale, _imm8);
+            m_xorb(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_xorl_512 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_xorl_512(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xorl(addressAsInt(), _index, _scale, _imm8);
+            m_xorl(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_xorw_584 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final byte _imm8;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final byte imm8;
         m_xorw_584(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, byte imm8, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm8 = imm8;
+            this.index = index;
+            this.scale = scale;
+            this.imm8 = imm8;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xorw(addressAsInt(), _index, _scale, _imm8);
+            m_xorw(addressAsInt(), index, scale, imm8);
         }
     }
 
     class m_xor_189 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister16 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister16 source;
         m_xor_189(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister16 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xor(addressAsInt(), _index, _scale, _source);
+            m_xor(addressAsInt(), index, scale, source);
         }
     }
 
     class m_xor_180 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister32 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister32 source;
         m_xor_180(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister32 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xor(addressAsInt(), _index, _scale, _source);
+            m_xor(addressAsInt(), index, scale, source);
         }
     }
 
     class m_xor_171 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final IA32GeneralRegister8 _source;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final IA32GeneralRegister8 source;
         m_xor_171(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, IA32GeneralRegister8 source, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _source = source;
+            this.index = index;
+            this.scale = scale;
+            this.source = source;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xor(addressAsInt(), _index, _scale, _source);
+            m_xor(addressAsInt(), index, scale, source);
         }
     }
 
     class m_xorl_368 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final int _imm32;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final int imm32;
         m_xorl_368(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm32 = imm32;
+            this.index = index;
+            this.scale = scale;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xorl(addressAsInt(), _index, _scale, _imm32);
+            m_xorl(addressAsInt(), index, scale, imm32);
         }
     }
 
     class m_xorw_440 extends InstructionWithAddress {
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
-        private final short _imm16;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
+        private final short imm16;
         m_xorw_440(int startPosition, int endPosition, IA32IndexRegister32 index, Scale scale, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _index = index;
-            _scale = scale;
-            _imm16 = imm16;
+            this.index = index;
+            this.scale = scale;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xorw(addressAsInt(), _index, _scale, _imm16);
+            m_xorw(addressAsInt(), index, scale, imm16);
         }
     }
 
     class m_xorl_369 extends InstructionWithAddress {
-        private final int _imm32;
+        private final int imm32;
         m_xorl_369(int startPosition, int endPosition, int imm32, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm32 = imm32;
+            this.imm32 = imm32;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xorl(addressAsInt(), _imm32);
+            m_xorl(addressAsInt(), imm32);
         }
     }
 
     class m_xorw_441 extends InstructionWithAddress {
-        private final short _imm16;
+        private final short imm16;
         m_xorw_441(int startPosition, int endPosition, short imm16, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _imm16 = imm16;
+            this.imm16 = imm16;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xorw(addressAsInt(), _imm16);
+            m_xorw(addressAsInt(), imm16);
         }
     }
 
     class m_xorpd_3085 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_xorpd_3085(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xorpd(_destination, addressAsInt());
+            m_xorpd(destination, addressAsInt());
         }
     }
 
     class m_xorpd_3084 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_xorpd_3084(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xorpd(_destination, addressAsInt(), _index, _scale);
+            m_xorpd(destination, addressAsInt(), index, scale);
         }
     }
 
     class m_xorps_3039 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
+        private final IA32XMMRegister destination;
         m_xorps_3039(int startPosition, int endPosition, IA32XMMRegister destination, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xorps(_destination, addressAsInt());
+            m_xorps(destination, addressAsInt());
         }
     }
 
     class m_xorps_3038 extends InstructionWithAddress {
-        private final IA32XMMRegister _destination;
-        private final IA32IndexRegister32 _index;
-        private final Scale _scale;
+        private final IA32XMMRegister destination;
+        private final IA32IndexRegister32 index;
+        private final Scale scale;
         m_xorps_3038(int startPosition, int endPosition, IA32XMMRegister destination, IA32IndexRegister32 index, Scale scale, Label label) {
             super(IA32LabelAssembler.this, startPosition, currentPosition(), label);
-            _destination = destination;
-            _index = index;
-            _scale = scale;
+            this.destination = destination;
+            this.index = index;
+            this.scale = scale;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            m_xorps(_destination, addressAsInt(), _index, _scale);
+            m_xorps(destination, addressAsInt(), index, scale);
         }
     }
 

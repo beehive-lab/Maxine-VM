@@ -38,34 +38,34 @@ public class DeferrableTest extends MaxTestCase {
         junit.textui.TestRunner.run(DeferrableTest.class);
     }
 
-    private int _counter;
+    private int counter;
 
     public void test_immediate_run() {
-        _counter = 0;
+        counter = 0;
         final Deferrable.Queue queue = Deferrable.createRunning();
         new Deferrable(queue) {
             public void run() {
-                _counter = 19;
+                counter = 19;
             }
         };
-        assertTrue(_counter == 19);
+        assertTrue(counter == 19);
     }
 
     public void test_deferred_run() {
-        _counter = 0;
+        counter = 0;
         final Deferrable.Queue queue = Deferrable.createRunning();
         new Deferrable.Block(queue) {
             public void run() {
-                assertTrue(_counter == 0);
+                assertTrue(counter == 0);
                 for (int i = 0; i < 100; i++) {
                     new Deferrable(queue) {
                         public void run() {
-                            _counter++;
+                            counter++;
                         }
                     };
                 }
             }
         };
-        assertTrue(_counter == 100);
+        assertTrue(counter == 100);
     }
 }

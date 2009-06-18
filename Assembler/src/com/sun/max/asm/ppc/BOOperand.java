@@ -44,25 +44,25 @@ public final class BOOperand extends AbstractSymbolicArgument {
         assert value.length() == 5;
         assert predictionBitsMask == null || predictionBitsMask.length() == value.length();
 
-        _taken = taken;
-        _notTaken = notTaken;
+        this.taken = taken;
+        this.notTaken = notTaken;
 
         if (predictionBitsMask == null) {
-            _valueWithoutPredictionBits = Integer.MAX_VALUE;
+            valueWithoutPredictionBits = Integer.MAX_VALUE;
         } else {
-            int valueWithoutPredictionBits = 0;
+            int valWithoutPredictionBits = 0;
             int bit = 1 << (value.length() - 1);
             for (int i = 0; i != predictionBitsMask.length(); ++i) {
                 if (predictionBitsMask.charAt(i) == '0') {
                     if (value.charAt(i) == '1') {
-                        valueWithoutPredictionBits |= bit;
+                        valWithoutPredictionBits |= bit;
                     }
                 } else {
-                    valueWithoutPredictionBits >>= 1;
+                    valWithoutPredictionBits >>= 1;
                 }
                 bit >>= 1;
             }
-            _valueWithoutPredictionBits = valueWithoutPredictionBits;
+            this.valueWithoutPredictionBits = valWithoutPredictionBits;
         }
     }
 
@@ -75,45 +75,45 @@ public final class BOOperand extends AbstractSymbolicArgument {
         return Integer.toString(value());
     }
 
-    private final BOOperand _taken;
-    private final BOOperand _notTaken;
-    private final int _valueWithoutPredictionBits;
+    private final BOOperand taken;
+    private final BOOperand notTaken;
+    private final int valueWithoutPredictionBits;
 
     /**
      * @return the version of this branch condition operand that has the relevant bits set to indicate to the hardware that the branch is very likely not to be taken
-     * 
+     *
      * @throws IllegalArgumentException if prediction bits cannot be set for this operand
      */
     public BOOperand taken() {
-        if (_taken == null) {
+        if (taken == null) {
             throw new IllegalArgumentException("branch condition " + this + " does not support branch prediction");
         }
-        return _taken;
+        return taken;
     }
 
     /**
      * @return the version of this branch condition operand that has the relevant bits set to indicate to the hardware that the branch is very likely not to be taken
-     * 
+     *
      * @throws IllegalArgumentException if prediction bits cannot be set for this operand
      */
     public BOOperand notTaken() {
-        if (_notTaken == null) {
+        if (notTaken == null) {
             throw new IllegalArgumentException("branch condition " + this + " does not support branch prediction");
         }
-        return _notTaken;
+        return notTaken;
     }
 
     /**
      * @return the mask to apply to this branch condition operand to extract the branch prediction bits
-     * 
+     *
      * @throws IllegalArgumentException if this branch condition operand does not support branch prediction
      */
     public int valueWithoutPredictionBits() {
-        if (_valueWithoutPredictionBits == Integer.MAX_VALUE) {
+        if (valueWithoutPredictionBits == Integer.MAX_VALUE) {
             throw new IllegalArgumentException("branch condition " + this + " does not support branch prediction");
         }
 
-        return _valueWithoutPredictionBits;
+        return valueWithoutPredictionBits;
     }
 
     // Checkstyle: stop constant name check

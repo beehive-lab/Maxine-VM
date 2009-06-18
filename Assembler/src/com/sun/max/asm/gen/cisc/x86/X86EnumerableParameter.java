@@ -33,14 +33,14 @@ import com.sun.max.util.*;
  */
 public class X86EnumerableParameter<EnumerableArgument_Type extends Enum<EnumerableArgument_Type> & EnumerableArgument<EnumerableArgument_Type>> extends X86Parameter implements EnumerableParameter {
 
-    private final Enumerator<EnumerableArgument_Type> _enumerator;
-    private final Argument _exampleArgument;
+    private final Enumerator<EnumerableArgument_Type> enumerator;
+    private final Argument exampleArgument;
 
     public X86EnumerableParameter(X86Operand.Designation designation, ParameterPlace place, Enumerator<EnumerableArgument_Type> enumerator) {
         super(designation, place);
-        _enumerator = enumerator;
+        this.enumerator = enumerator;
         final Iterator<EnumerableArgument_Type> it = enumerator.iterator();
-        _exampleArgument = it.hasNext() ? it.next().exampleValue() : null;
+        exampleArgument = it.hasNext() ? it.next().exampleValue() : null;
         switch (place) {
             case MOD_REG:
             case MOD_REG_REXR:
@@ -76,11 +76,11 @@ public class X86EnumerableParameter<EnumerableArgument_Type extends Enum<Enumera
     }
 
     public Enumerator<EnumerableArgument_Type> enumerator() {
-        return _enumerator;
+        return enumerator;
     }
 
     public Class type() {
-        return _enumerator.type();
+        return enumerator.type();
     }
 
     public String valueString() {
@@ -88,7 +88,7 @@ public class X86EnumerableParameter<EnumerableArgument_Type extends Enum<Enumera
     }
 
     public Iterable<EnumerableArgument_Type> getLegalTestArguments() {
-        return _enumerator;
+        return enumerator;
     }
 
     public Iterable<? extends Argument> getIllegalTestArguments() {
@@ -96,7 +96,7 @@ public class X86EnumerableParameter<EnumerableArgument_Type extends Enum<Enumera
     }
 
     public Argument getExampleArgument() {
-        return _exampleArgument;
+        return exampleArgument;
     }
 
     @Override

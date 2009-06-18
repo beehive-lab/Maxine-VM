@@ -42,26 +42,26 @@ public abstract class AbstractIA32Assembler extends LittleEndianAssembler implem
         return WordWidth.BITS_32;
     }
 
-    private int _startAddress; // address of first instruction
+    private int startAddress; // address of first instruction
 
     public int startAddress() {
-        return _startAddress;
+        return startAddress;
     }
 
     public void setStartAddress(int address) {
-        _startAddress = address;
+        startAddress = address;
     }
 
     @Override
     public long baseAddress() {
-        return _startAddress;
+        return startAddress;
     }
 
     public AbstractIA32Assembler() {
     }
 
     public AbstractIA32Assembler(int startAddress) {
-        _startAddress = startAddress;
+        this.startAddress = startAddress;
     }
 
     public void fixLabel(Label label, int address) {
@@ -72,11 +72,11 @@ public abstract class AbstractIA32Assembler extends LittleEndianAssembler implem
         return address32(label);
     }
 
-    private IA32Directives _directives = new IA32Directives();
+    private IA32Directives directives = new IA32Directives();
 
     @Override
     public Directives directives() {
-        return _directives;
+        return directives;
     }
 
     public class IA32Directives extends Directives {

@@ -28,14 +28,14 @@ package com.sun.max.asm.gen;
  */
 public class ExternalOmission {
 
-    private final Object _specification;
+    private final Object specification;
 
     public ExternalOmission(Object specification) {
-        _specification = specification;
+        this.specification = specification;
     }
 
     public Object wrappedSpecification() {
-        return _specification;
+        return specification;
     }
 
 }

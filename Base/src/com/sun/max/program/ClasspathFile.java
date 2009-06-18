@@ -32,12 +32,12 @@ public final class ClasspathFile {
     /**
      * The bytes of the file represented by this object.
      */
-    public final byte[] _contents;
+    public final byte[] contents;
 
     /**
      * The classpath entry from which the file represented by this object was read.
      */
-    public final Entry _classpathEntry;
+    public final Entry classpathEntry;
 
     /**
      * Creates an object encapsulating the bytes of a file read via a classpath entry.
@@ -46,7 +46,7 @@ public final class ClasspathFile {
      * @param classpathEntry the entry from which the file was read
      */
     public ClasspathFile(byte[] contents, Entry classpathEntry) {
-        _classpathEntry = classpathEntry;
-        _contents = contents;
+        this.classpathEntry = classpathEntry;
+        this.contents = contents;
     }
 }

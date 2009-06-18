@@ -28,21 +28,21 @@ import com.sun.max.collect.*;
  */
 public final class ModRMDescription extends InstructionDescription {
 
-    private final ModRMGroup.Opcode _opcode;
-    private final String _name;
+    private final ModRMGroup.Opcode opcode;
+    private final String name;
 
     public ModRMDescription(ModRMGroup.Opcode opcode, String name, MutableSequence<Object> specifications) {
         super(specifications);
-        _opcode = opcode;
-        _name = name;
+        this.opcode = opcode;
+        this.name = name;
     }
 
     public ModRMGroup.Opcode opcode() {
-        return _opcode;
+        return opcode;
     }
 
     public String name() {
-        return _name;
+        return name;
     }
 
 }

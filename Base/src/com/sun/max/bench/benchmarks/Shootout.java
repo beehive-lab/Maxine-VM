@@ -28,15 +28,15 @@ import com.sun.max.bench.*;
 
 public class Shootout implements Runnable {
 
-    Method _m;
-    String _programName;
-    String[] _args;
+    Method m;
+    String programName;
+    String[] args;
 
     public Shootout(String programName, String... args) {
-        _args = args;
-        _programName = programName;
+        this.args = args;
+        this.programName = programName;
         try {
-            _m = Class.forName("shootout." + programName).getMethod("main", String[].class);
+            m = Class.forName("shootout." + programName).getMethod("main", String[].class);
         } catch (SecurityException e) {
             e.printStackTrace();
         } catch (NoSuchMethodException e) {
@@ -48,7 +48,7 @@ public class Shootout implements Runnable {
 
     public void run() {
         try {
-            _m.invoke(null, (Object) _args);
+            m.invoke(null, (Object) args);
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
@@ -60,7 +60,7 @@ public class Shootout implements Runnable {
 
     @Override
     public String toString() {
-        return "Shootout:" + _programName;
+        return "Shootout:" + programName;
     }
 
     // Checkstyle: stop field name check

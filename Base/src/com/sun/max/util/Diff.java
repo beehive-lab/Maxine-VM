@@ -28,7 +28,7 @@ import com.sun.max.collect.*;
  * An implementation of a Longest Common Subsequence (LCS) algorithm for computing the diff between two object arrays. This
  * implementation is based on the algorithm described on page 353 of
  * <a href="http://mitpress.mit.edu/algorithms">Introduction to Algorithms, Second Edition</a>.
- * 
+ *
  * @author Doug Simon
  */
 public class Diff {
@@ -64,9 +64,9 @@ public class Diff {
         }
     }
 
-    private final Sequence<Range> _deletions;
+    private final Sequence<Range> deletions;
 
-    private final Sequence<Range> _insertions;
+    private final Sequence<Range> insertions;
 
     /**
      * Computes the LCS of two object arrays. The LCS can be obtained by applying a sequence of
@@ -90,8 +90,8 @@ public class Diff {
             }
         }
 
-        final AppendableSequence<Range> deletions = new ArrayListSequence<Range>();
-        final AppendableSequence<Range> insertions = new ArrayListSequence<Range>();
+        final AppendableSequence<Range> dels = new ArrayListSequence<Range>();
+        final AppendableSequence<Range> adds = new ArrayListSequence<Range>();
         int i = 0;
         int j = 0;
         while (i < x.length && j < y.length) {
@@ -104,43 +104,43 @@ public class Diff {
                     ++i;
                 }
                 assert i > start;
-                deletions.append(new Range(start, i));
+                dels.append(new Range(start, i));
             } else {
                 final int start = j++;
                 while (j < y.length && (opt[i + 1][j] < opt[i][j + 1])) {
                     ++j;
                 }
                 assert j > start;
-                insertions.append(new Range(start, j));
+                adds.append(new Range(start, j));
             }
         }
 
         if (i < x.length) {
-            deletions.append(new Range(i, x.length));
+            dels.append(new Range(i, x.length));
         } else if (j < y.length) {
-            insertions.append(new Range(j, y.length));
+            adds.append(new Range(j, y.length));
         }
 
-        _deletions = deletions;
-        _insertions = insertions;
+        this.deletions = dels;
+        this.insertions = adds;
     }
 
     /**
      * Gets the indexes of the elements that when deleted from {@code x} give the LCS of {@code x} and {@code y}.
-     * 
+     *
      * @return a sequence of indexes into {@code x} (represented as a sequence of consecutive index ranges)
      */
     public Sequence<Range> deletions() {
-        return _deletions;
+        return deletions;
     }
 
     /**
      * Gets the indexes of the elements that when deleted from {@code y} give the LCS of {@code x} and {@code y}.
-     * 
+     *
      * @return a sequence of indexes into {@code y} (represented as a sequence of consecutive index ranges)
      */
     public Sequence<Range> insertions() {
-        return _insertions;
+        return insertions;
     }
 
     /**

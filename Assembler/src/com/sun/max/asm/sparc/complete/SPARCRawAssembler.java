@@ -3222,7 +3222,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brz{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brz,pn        %g0, . -131072}
+     * Example disassembly syntax: {@code brz,pn        %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -3241,7 +3241,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brlez{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brlez,pn      %g0, . -131072}
+     * Example disassembly syntax: {@code brlez,pn      %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -3260,7 +3260,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brlz{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brlz,pn       %g0, . -131072}
+     * Example disassembly syntax: {@code brlz,pn       %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -3279,7 +3279,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brnz{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brnz,pn       %g0, . -131072}
+     * Example disassembly syntax: {@code brnz,pn       %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -3298,7 +3298,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brgz{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brgz,pn       %g0, . -131072}
+     * Example disassembly syntax: {@code brgz,pn       %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -3317,7 +3317,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brgez{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brgez,pn      %g0, . -131072}
+     * Example disassembly syntax: {@code brgez,pn      %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -3336,7 +3336,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brz  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brz           %g0, . -131072}
+     * Example disassembly syntax: {@code brz           %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -3353,7 +3353,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brlez  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brlez         %g0, . -131072}
+     * Example disassembly syntax: {@code brlez         %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -3370,7 +3370,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brlz  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brlz          %g0, . -131072}
+     * Example disassembly syntax: {@code brlz          %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -3387,7 +3387,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brnz  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brnz          %g0, . -131072}
+     * Example disassembly syntax: {@code brnz          %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -3404,7 +3404,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brgz  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brgz          %g0, . -131072}
+     * Example disassembly syntax: {@code brgz          %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -3421,7 +3421,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code brgez  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brgez         %g0, . -131072}
+     * Example disassembly syntax: {@code brgez         %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -3438,7 +3438,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code br[z|lez|lz|nz|gz|gez]{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
-     * Example disassembly syntax: {@code brz,pn        %g0, . -131072}
+     * Example disassembly syntax: {@code brz,pn        %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
      *
@@ -3458,7 +3458,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fba{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fba           . -8388608}
+     * Example disassembly syntax: {@code fba           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3475,7 +3475,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbn{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbn           . -8388608}
+     * Example disassembly syntax: {@code fbn           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3492,7 +3492,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbu{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbu           . -8388608}
+     * Example disassembly syntax: {@code fbu           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3509,7 +3509,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbg{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbg           . -8388608}
+     * Example disassembly syntax: {@code fbg           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3526,7 +3526,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbug{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbug          . -8388608}
+     * Example disassembly syntax: {@code fbug          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3543,7 +3543,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbl{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbl           . -8388608}
+     * Example disassembly syntax: {@code fbl           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3560,7 +3560,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbul{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbul          . -8388608}
+     * Example disassembly syntax: {@code fbul          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3577,7 +3577,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fblg{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fblg          . -8388608}
+     * Example disassembly syntax: {@code fblg          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3594,7 +3594,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbne{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbne          . -8388608}
+     * Example disassembly syntax: {@code fbne          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3611,7 +3611,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbe{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbe           . -8388608}
+     * Example disassembly syntax: {@code fbe           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3628,7 +3628,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbue{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbue          . -8388608}
+     * Example disassembly syntax: {@code fbue          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3645,7 +3645,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbge{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbge          . -8388608}
+     * Example disassembly syntax: {@code fbge          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3662,7 +3662,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbuge{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbuge         . -8388608}
+     * Example disassembly syntax: {@code fbuge         L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3679,7 +3679,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fble{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fble          . -8388608}
+     * Example disassembly syntax: {@code fble          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3696,7 +3696,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbule{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbule         . -8388608}
+     * Example disassembly syntax: {@code fbule         L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3713,7 +3713,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbo{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fbo           . -8388608}
+     * Example disassembly syntax: {@code fbo           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3730,7 +3730,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fba  }<i>label</i>
-     * Example disassembly syntax: {@code fba           . -8388608}
+     * Example disassembly syntax: {@code fba           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3746,7 +3746,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbn  }<i>label</i>
-     * Example disassembly syntax: {@code fbn           . -8388608}
+     * Example disassembly syntax: {@code fbn           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3762,7 +3762,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbu  }<i>label</i>
-     * Example disassembly syntax: {@code fbu           . -8388608}
+     * Example disassembly syntax: {@code fbu           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3778,7 +3778,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbg  }<i>label</i>
-     * Example disassembly syntax: {@code fbg           . -8388608}
+     * Example disassembly syntax: {@code fbg           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3794,7 +3794,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbug  }<i>label</i>
-     * Example disassembly syntax: {@code fbug          . -8388608}
+     * Example disassembly syntax: {@code fbug          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3810,7 +3810,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbl  }<i>label</i>
-     * Example disassembly syntax: {@code fbl           . -8388608}
+     * Example disassembly syntax: {@code fbl           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3826,7 +3826,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbul  }<i>label</i>
-     * Example disassembly syntax: {@code fbul          . -8388608}
+     * Example disassembly syntax: {@code fbul          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3842,7 +3842,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fblg  }<i>label</i>
-     * Example disassembly syntax: {@code fblg          . -8388608}
+     * Example disassembly syntax: {@code fblg          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3858,7 +3858,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbne  }<i>label</i>
-     * Example disassembly syntax: {@code fbne          . -8388608}
+     * Example disassembly syntax: {@code fbne          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3874,7 +3874,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbe  }<i>label</i>
-     * Example disassembly syntax: {@code fbe           . -8388608}
+     * Example disassembly syntax: {@code fbe           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3890,7 +3890,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbue  }<i>label</i>
-     * Example disassembly syntax: {@code fbue          . -8388608}
+     * Example disassembly syntax: {@code fbue          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3906,7 +3906,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbge  }<i>label</i>
-     * Example disassembly syntax: {@code fbge          . -8388608}
+     * Example disassembly syntax: {@code fbge          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3922,7 +3922,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbuge  }<i>label</i>
-     * Example disassembly syntax: {@code fbuge         . -8388608}
+     * Example disassembly syntax: {@code fbuge         L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3938,7 +3938,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fble  }<i>label</i>
-     * Example disassembly syntax: {@code fble          . -8388608}
+     * Example disassembly syntax: {@code fble          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3954,7 +3954,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbule  }<i>label</i>
-     * Example disassembly syntax: {@code fbule         . -8388608}
+     * Example disassembly syntax: {@code fbule         L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3970,7 +3970,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbo  }<i>label</i>
-     * Example disassembly syntax: {@code fbo           . -8388608}
+     * Example disassembly syntax: {@code fbo           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -3986,7 +3986,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fb[a|n|u|g|ug|l|ul|lg|ne|e|ue|ge|uge|le|ule|o]{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code fba           . -8388608}
+     * Example disassembly syntax: {@code fba           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4004,7 +4004,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fba{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fba,pn        %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fba,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4023,7 +4023,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbn{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbn,pn        %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbn,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4042,7 +4042,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbu{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbu,pn        %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbu,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4061,7 +4061,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbg{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbg,pn        %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbg,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4080,7 +4080,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbug{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbug,pn       %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbug,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4099,7 +4099,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbl{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbl,pn        %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbl,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4118,7 +4118,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbul{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbul,pn       %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbul,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4137,7 +4137,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fblg{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fblg,pn       %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fblg,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4156,7 +4156,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbne{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbne,pn       %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbne,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4175,7 +4175,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbe{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbe,pn        %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbe,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4194,7 +4194,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbue{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbue,pn       %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbue,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4213,7 +4213,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbge{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbge,pn       %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbge,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4232,7 +4232,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbuge{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbuge,pn      %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbuge,pn      %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4251,7 +4251,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fble{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fble,pn       %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fble,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4270,7 +4270,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbule{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbule,pn      %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbule,pn      %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4289,7 +4289,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbo{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbo,pn        %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbo,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4308,7 +4308,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fba  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fba           %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fba           %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4325,7 +4325,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbn  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbn           %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbn           %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4342,7 +4342,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbu  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbu           %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbu           %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4359,7 +4359,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbg  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbg           %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbg           %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4376,7 +4376,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbug  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbug          %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbug          %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4393,7 +4393,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbl  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbl           %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbl           %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4410,7 +4410,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbul  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbul          %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbul          %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4427,7 +4427,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fblg  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fblg          %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fblg          %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4444,7 +4444,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbne  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbne          %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbne          %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4461,7 +4461,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbe  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbe           %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbe           %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4478,7 +4478,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbue  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbue          %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbue          %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4495,7 +4495,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbge  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbge          %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbge          %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4512,7 +4512,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbuge  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbuge         %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbuge         %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4529,7 +4529,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fble  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fble          %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fble          %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4546,7 +4546,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbule  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbule         %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbule         %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4563,7 +4563,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fbo  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fbo           %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fbo           %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4580,7 +4580,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code fb[a|n|u|g|ug|l|ul|lg|ne|e|ue|ge|uge|le|ule|o]{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
-     * Example disassembly syntax: {@code fba,pn        %fcc0, . -1048576}
+     * Example disassembly syntax: {@code fba,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -4600,7 +4600,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code ba{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code ba            . -8388608}
+     * Example disassembly syntax: {@code ba            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4617,7 +4617,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bn{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bn            . -8388608}
+     * Example disassembly syntax: {@code bn            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4634,7 +4634,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bne{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bne           . -8388608}
+     * Example disassembly syntax: {@code bne           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4651,7 +4651,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code be{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code be            . -8388608}
+     * Example disassembly syntax: {@code be            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4668,7 +4668,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bg{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bg            . -8388608}
+     * Example disassembly syntax: {@code bg            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4685,7 +4685,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code ble{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code ble           . -8388608}
+     * Example disassembly syntax: {@code ble           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4702,7 +4702,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bge{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bge           . -8388608}
+     * Example disassembly syntax: {@code bge           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4719,7 +4719,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bl{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bl            . -8388608}
+     * Example disassembly syntax: {@code bl            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4736,7 +4736,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bgu{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bgu           . -8388608}
+     * Example disassembly syntax: {@code bgu           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4753,7 +4753,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bleu{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bleu          . -8388608}
+     * Example disassembly syntax: {@code bleu          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4770,7 +4770,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bcc{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bcc           . -8388608}
+     * Example disassembly syntax: {@code bcc           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4787,7 +4787,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bcs{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bcs           . -8388608}
+     * Example disassembly syntax: {@code bcs           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4804,7 +4804,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bpos{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bpos          . -8388608}
+     * Example disassembly syntax: {@code bpos          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4821,7 +4821,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bneg{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bneg          . -8388608}
+     * Example disassembly syntax: {@code bneg          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4838,7 +4838,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bvc{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bvc           . -8388608}
+     * Example disassembly syntax: {@code bvc           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4855,7 +4855,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bvs{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code bvs           . -8388608}
+     * Example disassembly syntax: {@code bvs           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4872,7 +4872,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code ba  }<i>label</i>
-     * Example disassembly syntax: {@code ba            . -8388608}
+     * Example disassembly syntax: {@code ba            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4888,7 +4888,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bn  }<i>label</i>
-     * Example disassembly syntax: {@code bn            . -8388608}
+     * Example disassembly syntax: {@code bn            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4904,7 +4904,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bne  }<i>label</i>
-     * Example disassembly syntax: {@code bne           . -8388608}
+     * Example disassembly syntax: {@code bne           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4920,7 +4920,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code be  }<i>label</i>
-     * Example disassembly syntax: {@code be            . -8388608}
+     * Example disassembly syntax: {@code be            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4936,7 +4936,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bg  }<i>label</i>
-     * Example disassembly syntax: {@code bg            . -8388608}
+     * Example disassembly syntax: {@code bg            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4952,7 +4952,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code ble  }<i>label</i>
-     * Example disassembly syntax: {@code ble           . -8388608}
+     * Example disassembly syntax: {@code ble           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4968,7 +4968,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bge  }<i>label</i>
-     * Example disassembly syntax: {@code bge           . -8388608}
+     * Example disassembly syntax: {@code bge           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -4984,7 +4984,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bl  }<i>label</i>
-     * Example disassembly syntax: {@code bl            . -8388608}
+     * Example disassembly syntax: {@code bl            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -5000,7 +5000,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bgu  }<i>label</i>
-     * Example disassembly syntax: {@code bgu           . -8388608}
+     * Example disassembly syntax: {@code bgu           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -5016,7 +5016,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bleu  }<i>label</i>
-     * Example disassembly syntax: {@code bleu          . -8388608}
+     * Example disassembly syntax: {@code bleu          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -5032,7 +5032,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bcc  }<i>label</i>
-     * Example disassembly syntax: {@code bcc           . -8388608}
+     * Example disassembly syntax: {@code bcc           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -5048,7 +5048,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bcs  }<i>label</i>
-     * Example disassembly syntax: {@code bcs           . -8388608}
+     * Example disassembly syntax: {@code bcs           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -5064,7 +5064,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bpos  }<i>label</i>
-     * Example disassembly syntax: {@code bpos          . -8388608}
+     * Example disassembly syntax: {@code bpos          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -5080,7 +5080,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bneg  }<i>label</i>
-     * Example disassembly syntax: {@code bneg          . -8388608}
+     * Example disassembly syntax: {@code bneg          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -5096,7 +5096,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bvc  }<i>label</i>
-     * Example disassembly syntax: {@code bvc           . -8388608}
+     * Example disassembly syntax: {@code bvc           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -5112,7 +5112,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bvs  }<i>label</i>
-     * Example disassembly syntax: {@code bvs           . -8388608}
+     * Example disassembly syntax: {@code bvs           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -5128,7 +5128,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code b[a|n|ne|e|g|le|ge|l|gu|leu|cc|cs|pos|neg|vc|vs]{,a}  }<i>label</i>
-     * Example disassembly syntax: {@code ba            . -8388608}
+     * Example disassembly syntax: {@code ba            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
      *
@@ -5146,7 +5146,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code ba{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code ba,pn         %icc, . -1048576}
+     * Example disassembly syntax: {@code ba,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5165,7 +5165,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bn{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bn,pn         %icc, . -1048576}
+     * Example disassembly syntax: {@code bn,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5184,7 +5184,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bne{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bne,pn        %icc, . -1048576}
+     * Example disassembly syntax: {@code bne,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5203,7 +5203,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code be{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code be,pn         %icc, . -1048576}
+     * Example disassembly syntax: {@code be,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5222,7 +5222,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bg{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bg,pn         %icc, . -1048576}
+     * Example disassembly syntax: {@code bg,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5241,7 +5241,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code ble{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code ble,pn        %icc, . -1048576}
+     * Example disassembly syntax: {@code ble,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5260,7 +5260,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bge{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bge,pn        %icc, . -1048576}
+     * Example disassembly syntax: {@code bge,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5279,7 +5279,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bl{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bl,pn         %icc, . -1048576}
+     * Example disassembly syntax: {@code bl,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5298,7 +5298,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bgu{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bgu,pn        %icc, . -1048576}
+     * Example disassembly syntax: {@code bgu,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5317,7 +5317,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bleu{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bleu,pn       %icc, . -1048576}
+     * Example disassembly syntax: {@code bleu,pn       %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5336,7 +5336,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bcc{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bcc,pn        %icc, . -1048576}
+     * Example disassembly syntax: {@code bcc,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5355,7 +5355,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bcs{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bcs,pn        %icc, . -1048576}
+     * Example disassembly syntax: {@code bcs,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5374,7 +5374,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bpos{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bpos,pn       %icc, . -1048576}
+     * Example disassembly syntax: {@code bpos,pn       %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5393,7 +5393,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bneg{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bneg,pn       %icc, . -1048576}
+     * Example disassembly syntax: {@code bneg,pn       %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5412,7 +5412,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bvc{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bvc,pn        %icc, . -1048576}
+     * Example disassembly syntax: {@code bvc,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5431,7 +5431,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bvs{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bvs,pn        %icc, . -1048576}
+     * Example disassembly syntax: {@code bvs,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5450,7 +5450,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code ba  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code ba            %icc, . -1048576}
+     * Example disassembly syntax: {@code ba            %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5467,7 +5467,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bn  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bn            %icc, . -1048576}
+     * Example disassembly syntax: {@code bn            %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5484,7 +5484,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bne  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bne           %icc, . -1048576}
+     * Example disassembly syntax: {@code bne           %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5501,7 +5501,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code be  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code be            %icc, . -1048576}
+     * Example disassembly syntax: {@code be            %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5518,7 +5518,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bg  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bg            %icc, . -1048576}
+     * Example disassembly syntax: {@code bg            %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5535,7 +5535,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code ble  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code ble           %icc, . -1048576}
+     * Example disassembly syntax: {@code ble           %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5552,7 +5552,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bge  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bge           %icc, . -1048576}
+     * Example disassembly syntax: {@code bge           %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5569,7 +5569,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bl  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bl            %icc, . -1048576}
+     * Example disassembly syntax: {@code bl            %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5586,7 +5586,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bgu  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bgu           %icc, . -1048576}
+     * Example disassembly syntax: {@code bgu           %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5603,7 +5603,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bleu  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bleu          %icc, . -1048576}
+     * Example disassembly syntax: {@code bleu          %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5620,7 +5620,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bcc  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bcc           %icc, . -1048576}
+     * Example disassembly syntax: {@code bcc           %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5637,7 +5637,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bcs  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bcs           %icc, . -1048576}
+     * Example disassembly syntax: {@code bcs           %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5654,7 +5654,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bpos  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bpos          %icc, . -1048576}
+     * Example disassembly syntax: {@code bpos          %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5671,7 +5671,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bneg  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bneg          %icc, . -1048576}
+     * Example disassembly syntax: {@code bneg          %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5688,7 +5688,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bvc  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bvc           %icc, . -1048576}
+     * Example disassembly syntax: {@code bvc           %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5705,7 +5705,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bvs  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code bvs           %icc, . -1048576}
+     * Example disassembly syntax: {@code bvs           %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5722,7 +5722,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code b[a|n|ne|e|g|le|ge|l|gu|leu|cc|cs|pos|neg|vc|vs]{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
-     * Example disassembly syntax: {@code ba,pn         %icc, . -1048576}
+     * Example disassembly syntax: {@code ba,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
      *
@@ -5742,7 +5742,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code call  }<i>label</i>
-     * Example disassembly syntax: {@code call          . -2147483648}
+     * Example disassembly syntax: {@code call          L1: -2147483648}
      * <p>
      * Constraint: {@code (-2147483648 <= label && label <= 2147483644) && ((label % 4) == 0)}<br />
      *
@@ -10443,7 +10443,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code iprefetch  }<i>label</i>
-     * Example disassembly syntax: {@code iprefetch     . -1048576}
+     * Example disassembly syntax: {@code iprefetch     L1: -1048576}
      * <p>
      * This is a synthetic instruction equivalent to: {@code b(N, A, PT, XCC, label)}
      * <p>

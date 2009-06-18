@@ -49,9 +49,9 @@ public final class HashEquality<Object_Type> implements HashEquivalence<Object_T
         return object.hashCode();
     }
 
-    private static final HashEquality _equality = new HashEquality<Object>();
+    private static final HashEquality equality = new HashEquality<Object>();
 
     public static <Object_Type> HashEquality<Object_Type> instance(Class<HashEquality<Object_Type>> type) {
-        return StaticLoophole.cast(type, _equality);
+        return StaticLoophole.cast(type, equality);
     }
 }

@@ -38,7 +38,7 @@ public abstract class RiscAssembly<Template_Type extends RiscTemplate> extends A
         super(instructionSet, templateType);
     }
 
-    private AppendableSequence<SpecificityGroup<Template_Type>> _specificityGroups;
+    private AppendableSequence<SpecificityGroup<Template_Type>> specificityGroups;
 
     private void initialize() {
         final IntHashMap<IntHashMap<OpcodeMaskGroup<Template_Type>>> specificityTable = new IntHashMap<IntHashMap<OpcodeMaskGroup<Template_Type>>>();
@@ -58,19 +58,19 @@ public abstract class RiscAssembly<Template_Type extends RiscTemplate> extends A
                 opcodeMaskGroup.add(template);
             }
         }
-        _specificityGroups = new LinkSequence<SpecificityGroup<Template_Type>>();
+        specificityGroups = new LinkSequence<SpecificityGroup<Template_Type>>();
         for (int specificity = 33; specificity >= 0; specificity--) {
             final IntHashMap<OpcodeMaskGroup<Template_Type>> opcodeGroupTable = specificityTable.get(specificity);
             if (opcodeGroupTable != null) {
                 final Sequence<OpcodeMaskGroup<Template_Type>> opcodeMaskGroups = opcodeGroupTable.toSequence();
                 final SpecificityGroup<Template_Type> specificityGroup = new SpecificityGroup<Template_Type>(specificity, opcodeMaskGroups);
-                _specificityGroups.append(specificityGroup);
+                specificityGroups.append(specificityGroup);
             }
         }
     }
 
     public void printSpecificityGroups(PrintStream out) {
-        for (SpecificityGroup<Template_Type> specificityGroup : _specificityGroups) {
+        for (SpecificityGroup<Template_Type> specificityGroup : specificityGroups) {
             out.println("Specificity group " + specificityGroup.specificity());
             for (OpcodeMaskGroup<Template_Type> opcodeMaskGroup : specificityGroup.opcodeMaskGroups()) {
                 out.println("  Opcode mask group " + Integer.toBinaryString(opcodeMaskGroup.mask()));
@@ -82,10 +82,10 @@ public abstract class RiscAssembly<Template_Type extends RiscTemplate> extends A
     }
 
     public Sequence<SpecificityGroup<Template_Type>> specificityGroups() {
-        if (_specificityGroups == null) {
+        if (specificityGroups == null) {
             initialize();
         }
-        return _specificityGroups;
+        return specificityGroups;
     }
 
 }

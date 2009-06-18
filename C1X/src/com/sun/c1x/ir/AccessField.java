@@ -65,9 +65,9 @@ public abstract class AccessField extends Instruction {
             // or if patch testing is turned on (but not if the field is volatile)
             setFlag(Flag.NeedsPatching);
         }
-        setFlag(Flag.IsLoaded, isLoaded);
-        setFlag(Flag.IsInitialized, isInitialized);
-        setFlag(Flag.IsStatic, isStatic);
+        initFlag(Flag.IsLoaded, isLoaded);
+        initFlag(Flag.IsInitialized, isInitialized);
+        initFlag(Flag.IsStatic, isStatic);
         pin(); // pin memory access instructions
     }
 

@@ -23,26 +23,26 @@ package com.sun.max.lang;
 /**
  * Globals to inner classes must be final, so we need to box them somehow
  * if we want them to have a mutable global.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class MutableInnerClassGlobal<Object_Type> {
 
-    private Object_Type _value;
+    private Object_Type value;
 
     public Object_Type value() {
-        return _value;
+        return value;
     }
 
     public MutableInnerClassGlobal() {
     }
 
     public MutableInnerClassGlobal(Object_Type value) {
-        _value = value;
+        this.value = value;
     }
 
     public void setValue(Object_Type value) {
-        _value = value;
+        this.value = value;
     }
 
 }

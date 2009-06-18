@@ -60,7 +60,7 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
     /**
      * The table, resized as necessary. Length MUST always be a power of two.
      */
-    private Object[] _table;
+    private Object[] table;
 
     /**
      * Returns the appropriate capacity for the specified expected maximum
@@ -137,15 +137,15 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
 
         // Find a power of 2 >= initialCapacity
         final int capacity = capacity(expectedMaximumSize);
-        _threshold = (capacity * 2) / 3;
-        _table = new Object[capacity * 2];
+        threshold = (capacity * 2) / 3;
+        table = new Object[capacity * 2];
     }
 
-    private int _numberOfEntries;
-    private int _threshold;
+    private int numberOfEntries;
+    private int threshold;
 
     public int length() {
-        return _numberOfEntries;
+        return numberOfEntries;
     }
 
     /**
@@ -185,17 +185,17 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
             throw new IllegalArgumentException("Key cannot be null");
         }
 
-        final Object[] table = _table;
-        final int length = table.length;
+        final Object[] tbl = this.table;
+        final int length = tbl.length;
         final int hash = hash(hashCode(key));
-        int index = indexFor(hash, table.length);
+        int index = indexFor(hash, tbl.length);
         while (true) {
-            final Object item = table[index];
+            final Object item = tbl[index];
             final Class<Key_Type> keyType = null;
             final Key_Type entryKey = StaticLoophole.cast(keyType, item);
             if (equivalent(entryKey, key)) {
                 final Class<Value_Type> valueType = null;
-                return StaticLoophole.cast(valueType, table[index + 1]);
+                return StaticLoophole.cast(valueType, tbl[index + 1]);
             }
             if (item == null) {
                 return null;
@@ -212,28 +212,28 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
             throw new IllegalArgumentException("Value cannot be null");
         }
 
-        final Object[] table = _table;
-        final int length = table.length;
+        final Object[] tbl = this.table;
+        final int length = tbl.length;
         final int hash = hash(hashCode(key));
-        int index = indexFor(hash, table.length);
+        int index = indexFor(hash, tbl.length);
 
-        Object item = table[index];
+        Object item = tbl[index];
         while (item != null) {
             final Class<Key_Type> keyType = null;
             final Key_Type entryKey = StaticLoophole.cast(keyType, item);
             if (equivalent(entryKey, key)) {
                 final Class<Value_Type> valueType = null;
-                final Value_Type oldValue = StaticLoophole.cast(valueType, table[index + 1]);
-                table[index + 1] = value;
+                final Value_Type oldValue = StaticLoophole.cast(valueType, tbl[index + 1]);
+                tbl[index + 1] = value;
                 return oldValue;
             }
             index = nextKeyIndex(index, length);
-            item = table[index];
+            item = tbl[index];
         }
 
-        table[index] = key;
-        table[index + 1] = value;
-        if (_numberOfEntries++ >= _threshold) {
+        tbl[index] = key;
+        tbl[index + 1] = value;
+        if (numberOfEntries++ >= threshold) {
             resize(length); // length == 2 * current capacity.
         }
         return null;
@@ -245,21 +245,21 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
             throw new IllegalArgumentException("Key cannot be null");
         }
 
-        final Object[] table = _table;
-        final int length = table.length;
+        final Object[] tbl = this.table;
+        final int length = tbl.length;
         final int hash = hash(hashCode(key));
-        int index = indexFor(hash, table.length);
+        int index = indexFor(hash, tbl.length);
 
         while (true) {
-            final Object item = table[index];
+            final Object item = tbl[index];
             final Class<Key_Type> keyType = null;
             final Key_Type entryKey = StaticLoophole.cast(keyType, item);
             if (equivalent(entryKey, key)) {
-                _numberOfEntries--;
+                numberOfEntries--;
                 final Class<Value_Type> valueType = null;
-                final Value_Type oldValue =  StaticLoophole.cast(valueType, table[index + 1]);
-                table[index + 1] = null;
-                table[index] = null;
+                final Value_Type oldValue =  StaticLoophole.cast(valueType, tbl[index + 1]);
+                tbl[index + 1] = null;
+                tbl[index] = null;
                 return oldValue;
             }
             if (item == null) {
@@ -270,10 +270,10 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
     }
 
     public void clear() {
-        for (int i = 0; i != _table.length; ++i) {
-            _table[i] = null;
+        for (int i = 0; i != table.length; ++i) {
+            table[i] = null;
         }
-        _numberOfEntries = 0;
+        numberOfEntries = 0;
     }
 
     /**
@@ -285,13 +285,13 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
         assert Ints.isPowerOfTwoOrZero(newCapacity) : "newCapacity must be a power of 2";
         final int newLength = newCapacity * 2;
 
-        final Object[] oldTable = _table;
+        final Object[] oldTable = table;
         final int oldLength = oldTable.length;
         if (oldLength == 2 * MAXIMUM_CAPACITY) { // can't expand any further
-            if (_threshold == MAXIMUM_CAPACITY - 1) {
+            if (threshold == MAXIMUM_CAPACITY - 1) {
                 throw new IllegalStateException("Capacity exhausted.");
             }
-            _threshold = MAXIMUM_CAPACITY - 1;  // Gigantic map!
+            threshold = MAXIMUM_CAPACITY - 1;  // Gigantic map!
             return;
         }
         if (oldLength >= newLength) {
@@ -299,7 +299,7 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
         }
 
         final Object[] newTable = new Object[newLength];
-        _threshold = newLength / 3;
+        threshold = newLength / 3;
 
         for (int i = 0; i < oldLength; i += 2) {
             final Class<Key_Type> keyType = null;
@@ -317,7 +317,7 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
                 newTable[index + 1] = value;
             }
         }
-        _table = newTable;
+        table = newTable;
     }
 
     private abstract class HashIterator<Type> implements Iterator<Type> {
@@ -325,34 +325,34 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
         /**
          * Current slot.
          */
-        int _index = _numberOfEntries != 0 ? 0 : _table.length;
+        int index = numberOfEntries != 0 ? 0 : table.length;
 
         /**
          * To avoid unnecessary next computation.
          */
-        boolean _indexIsValid;
+        boolean indexIsValid;
 
         public boolean hasNext() {
-            for (int i = _index; i < _table.length; i += 2) {
-                final Object key = _table[i];
+            for (int i = index; i < table.length; i += 2) {
+                final Object key = table[i];
                 if (key != null) {
-                    _index = i;
-                    _indexIsValid = true;
+                    index = i;
+                    indexIsValid = true;
                     return true;
                 }
             }
-            _index = _table.length;
+            index = table.length;
             return false;
         }
 
         protected int nextIndex() {
-            if (!_indexIsValid && !hasNext()) {
+            if (!indexIsValid && !hasNext()) {
                 throw new NoSuchElementException();
             }
 
-            _indexIsValid = false;
-            final int lastReturnedIndex = _index;
-            _index += 2;
+            indexIsValid = false;
+            final int lastReturnedIndex = index;
+            index += 2;
             return lastReturnedIndex;
         }
 
@@ -364,14 +364,14 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
     private class KeyIterator extends HashIterator<Key_Type> {
         public Key_Type next() {
             final Class<Key_Type> keyType = null;
-            return StaticLoophole.cast(keyType, _table[nextIndex()]);
+            return StaticLoophole.cast(keyType, table[nextIndex()]);
         }
     }
 
     private class ValueIterator extends HashIterator<Value_Type> {
         public Value_Type next() {
             final Class<Value_Type> valueType = null;
-            return StaticLoophole.cast(valueType, _table[nextIndex() + 1]);
+            return StaticLoophole.cast(valueType, table[nextIndex() + 1]);
         }
     }
 

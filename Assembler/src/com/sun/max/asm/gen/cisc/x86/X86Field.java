@@ -26,24 +26,24 @@ package com.sun.max.asm.gen.cisc.x86;
  */
 public final class X86Field {
 
-    private final int _shift;
-    private final int _mask;
+    private final int shift;
+    private final int mask;
 
     private X86Field(int shift, int width) {
-        _shift = shift;
-        _mask = ~(0xffffffff << width);
+        this.shift = shift;
+        this.mask = ~(0xffffffff << width);
     }
 
     public int shift() {
-        return _shift;
+        return shift;
     }
 
     public int extract(byte b) {
-        return (b >> _shift) & _mask;
+        return (b >> shift) & mask;
     }
 
     public int inPlace(byte value) {
-        return value << _shift;
+        return value << shift;
     }
 
     public static final X86Field RM = new X86Field(0, 3);

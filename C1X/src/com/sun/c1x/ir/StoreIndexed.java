@@ -20,11 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.InstructionClosure;
-import com.sun.c1x.util.InstructionVisitor;
-import com.sun.c1x.value.BasicType;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>StoreIndexed</code> instruction represents a write to an array element.
@@ -103,19 +100,4 @@ public class StoreIndexed extends AccessIndexed {
     public void accept(InstructionVisitor v) {
         v.visitStoreIndexed(this);
     }
-
-    @Override
-    public int valueNumber() {
-        return hash3(125, _array, _index, _value);
-    }
-
-    @Override
-    public boolean valueEqual(Instruction i) {
-        if (i instanceof StoreIndexed) {
-            StoreIndexed o = (StoreIndexed) i;
-            return _array == o._array && _index == o._index && _value == o._value;
-        }
-        return false;
-    }
-
 }

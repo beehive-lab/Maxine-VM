@@ -24,6 +24,7 @@ import com.sun.c1x.ci.CiType;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.value.BasicType;
 import com.sun.c1x.util.InstructionVisitor;
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>LoadIndexed</code> instruction represents a read from an element of an array.
@@ -92,7 +93,7 @@ public class LoadIndexed extends AccessIndexed {
 
     @Override
     public int valueNumber() {
-        return hash2(124, _array, _index);
+        return Util.hash2(124, _array, _index);
     }
 
     @Override

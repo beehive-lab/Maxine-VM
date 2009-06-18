@@ -320,7 +320,7 @@ public final class DataPrototype extends Prototype {
                                 referenceMap.set(index);
                             } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
                                 throw ProgramError.unexpected("Error while preparing reference map for mutable array in boot heap of type " +
-                                    classInfo._class.getName() + ": cell=" + cell.toHexString() + ", index=" + i +
+                                    classInfo._clazz.getName() + ": cell=" + cell.toHexString() + ", index=" + i +
                                     " [" + origin.toHexString() + "+" + (Word.size() * i) + "], refmap index=" + index, indexOutOfBoundsException);
                             }
                         }
@@ -340,7 +340,7 @@ public final class DataPrototype extends Prototype {
                         referenceMap.set(index);
                     } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
                         throw ProgramError.unexpected("Error while preparing reference map for mutable object in boot heap of type " +
-                            classInfo._class.getName() + ": cell=" + cell.toHexString() + ", field=" + fieldActor.name() +
+                            classInfo._clazz.getName() + ": cell=" + cell.toHexString() + ", field=" + fieldActor.name() +
                             " [" + origin.toHexString() + "+" + fieldActor.offset() + "], refmap index=" + index, indexOutOfBoundsException);
                     }
                 }

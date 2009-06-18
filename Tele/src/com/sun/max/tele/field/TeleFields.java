@@ -85,7 +85,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceIntFieldAccess Actor_flags = new TeleInstanceIntFieldAccess(Actor.class, "_flags");
     public final TeleInstanceReferenceFieldAccess Actor_name = new TeleInstanceReferenceFieldAccess(Actor.class, "_name", Utf8Constant.class);
     public final TeleInstanceIntFieldAccess Builtin_serial = new TeleInstanceIntFieldAccess(Builtin.class, "_serial");
-    public final TeleInstanceReferenceFieldAccess ChainedHashMapping_table = new TeleInstanceReferenceFieldAccess(ChainedHashMapping.class, "_table", Entry[].class);
+    public final TeleInstanceReferenceFieldAccess ChainedHashMapping_table = new TeleInstanceReferenceFieldAccess(ChainedHashMapping.class, "table", Entry[].class);
     public final TeleInstanceReferenceFieldAccess ClassActor_classLoader = new TeleInstanceReferenceFieldAccess(ClassActor.class, "_classLoader", ClassLoader.class);
     public final TeleInstanceReferenceFieldAccess ClassActor_classfile = new TeleInstanceReferenceFieldAccess(ClassActor.class, "_classfile", byte[].class);
     public final TeleInstanceReferenceFieldAccess ClassActor_componentClassActor = new TeleInstanceReferenceFieldAccess(ClassActor.class, "_componentClassActor", ClassActor.class);
@@ -109,8 +109,8 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess CodeManager_runtimeCodeRegions = new TeleInstanceReferenceFieldAccess(CodeManager.class, "_runtimeCodeRegions", CodeRegion[].class);
     public final TeleInstanceReferenceFieldAccess ConstantPool_constants = new TeleInstanceReferenceFieldAccess(ConstantPool.class, "_constants", PoolConstant[].class);
     public final TeleInstanceReferenceFieldAccess ConstantPool_holder = new TeleInstanceReferenceFieldAccess(ConstantPool.class, "_holder", ClassActor.class);
-    public final TeleInstanceReferenceFieldAccess ChainedHashMapping$DefaultEntry_next = new TeleInstanceReferenceFieldAccess(ChainedHashMapping.DefaultEntry.class, "_next", Entry.class);
-    public final TeleInstanceReferenceFieldAccess ChainedHashMapping$DefaultEntry_value = new TeleInstanceReferenceFieldAccess(ChainedHashMapping.DefaultEntry.class, "_value", Object.class);
+    public final TeleInstanceReferenceFieldAccess ChainedHashMapping$DefaultEntry_next = new TeleInstanceReferenceFieldAccess(ChainedHashMapping.DefaultEntry.class, "next", Entry.class);
+    public final TeleInstanceReferenceFieldAccess ChainedHashMapping$DefaultEntry_value = new TeleInstanceReferenceFieldAccess(ChainedHashMapping.DefaultEntry.class, "value", Object.class);
     public final TeleInstanceReferenceFieldAccess Descriptor_string = new TeleInstanceReferenceFieldAccess(Descriptor.class, "_string", String.class);
     public final TeleStaticReferenceFieldAccess Heap_bootHeapRegion = new TeleStaticReferenceFieldAccess(Heap.class, "_bootHeapRegion", BootHeapRegion.class);
     public final TeleInstanceReferenceFieldAccess Hub_classActor = new TeleInstanceReferenceFieldAccess(Hub.class, "_classActor", ClassActor.class);
@@ -159,8 +159,8 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleStaticReferenceFieldAccess TeleHeapInfo_memoryRegions = new TeleStaticReferenceFieldAccess(TeleHeapInfo.class, "_memoryRegions", MemoryRegion[].class);
     public final TeleStaticLongFieldAccess TeleHeapInfo_rootEpoch = new TeleStaticLongFieldAccess(TeleHeapInfo.class, "_rootEpoch");
     public final TeleStaticReferenceFieldAccess TeleHeapInfo_roots = new TeleStaticReferenceFieldAccess(TeleHeapInfo.class, "_roots", Object[].class);
-    public final TeleStaticIntFieldAccess Trace_level = new TeleStaticIntFieldAccess(Trace.class, "_level");
-    public final TeleStaticLongFieldAccess Trace_threshold = new TeleStaticLongFieldAccess(Trace.class, "_threshold");
+    public final TeleStaticIntFieldAccess Trace_level = new TeleStaticIntFieldAccess(Trace.class, "level");
+    public final TeleStaticLongFieldAccess Trace_threshold = new TeleStaticLongFieldAccess(Trace.class, "threshold");
     public final TeleInstanceReferenceFieldAccess TupleClassActor_constantPool = new TeleInstanceReferenceFieldAccess(TupleClassActor.class, "_constantPool", ConstantPool.class);
     public final TeleInstanceReferenceFieldAccess Utf8Constant_string = new TeleInstanceReferenceFieldAccess(Utf8Constant.class, "_string", String.class);
     public final TeleInstanceReferenceFieldAccess VmThread_name = new TeleInstanceReferenceFieldAccess(VmThread.class, "_name", String.class);

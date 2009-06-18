@@ -27,16 +27,15 @@ import com.sun.max.asm.gen.cisc.*;
  * Used when pre-scanning instruction descriptions to assess variants within the respective instruction family.
  *
  * @see InstructionAssessment
- * 
+ *
  * @author Bernd Mathiske
  */
 public class OpcodeAssessor extends X86InstructionDescriptionAdapter {
 
-    private final InstructionAssessment _instructionFamily;
+    private final InstructionAssessment instructionFamily;
 
     public OpcodeAssessor(InstructionAssessment instructionFamily) {
-        super();
-        _instructionFamily = instructionFamily;
+        this.instructionFamily = instructionFamily;
     }
 
     @Override
@@ -48,7 +47,7 @@ public class OpcodeAssessor extends X86InstructionDescriptionAdapter {
             case s:
             case v:
             case z:
-                _instructionFamily.haveOperandSizeVariants();
+                instructionFamily.haveOperandSizeVariants();
                 break;
             default:
                 break;
@@ -60,7 +59,7 @@ public class OpcodeAssessor extends X86InstructionDescriptionAdapter {
             case O:
             case Q:
             case W:
-                _instructionFamily.haveAddressSizeVariants();
+                instructionFamily.haveAddressSizeVariants();
                 break;
             default:
                 break;
@@ -80,7 +79,7 @@ public class OpcodeAssessor extends X86InstructionDescriptionAdapter {
             case VR:
             case T:
             case W:
-                _instructionFamily.haveModRMByte();
+                instructionFamily.haveModRMByte();
                 break;
             default:
                 break;
@@ -89,23 +88,23 @@ public class OpcodeAssessor extends X86InstructionDescriptionAdapter {
 
     @Override
     public void visitRegisterOperandCode(RegisterOperandCode registerOperandCode, X86Operand.Designation position, ImplicitOperand.ExternalPresence externalPresence) {
-        _instructionFamily.haveOperandSizeVariants();
+        instructionFamily.haveOperandSizeVariants();
     }
 
     @Override
     public void visitModRMGroup(ModRMGroup modRMGroup) {
-        _instructionFamily.setModRMGroup(modRMGroup);
+        instructionFamily.setModRMGroup(modRMGroup);
     }
 
     @Override
     public void visitModCase(X86TemplateContext.ModCase modCase) throws TemplateNotNeededException {
-        _instructionFamily.haveModRMByte();
+        instructionFamily.haveModRMByte();
     }
 
     @Override
     public void visitString(String s) {
         if (s.startsWith("J") || s.startsWith("j")) {
-            _instructionFamily.beJump();
+            instructionFamily.beJump();
         }
     }
 }

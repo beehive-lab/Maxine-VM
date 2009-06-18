@@ -41,12 +41,12 @@ public enum SoftwareTrap {
     ST_DTRACE_PROBE(0x39),
     ST_DTRACE_RETURN(0x3a);
 
-    private final int _trapNumber;
+    private final int trapNumber;
     private SoftwareTrap(int trapNumber) {
-        _trapNumber = trapNumber;
+        this.trapNumber = trapNumber;
     }
 
     public int trapNumber() {
-        return _trapNumber;
+        return trapNumber;
     }
 }

@@ -22,6 +22,7 @@ package com.sun.c1x;
 
 import com.sun.c1x.ci.CiMethod;
 import com.sun.c1x.ci.CiType;
+import com.sun.c1x.util.Util;
 
 import java.util.HashMap;
 
@@ -260,7 +261,8 @@ public enum C1XIntrinsic {
     static {
         // iterate through all the intrinsics and add them to the map
         for (C1XIntrinsic i : C1XIntrinsic.values()) {
-            String className = i.className();
+            // note that the map uses internal names to map lookup faster
+            String className = Util.toInternalName(i.className());
             HashMap<String, C1XIntrinsic> map = _intrinsicMap.get(className);
             if (map == null) {
                 map = new HashMap<String, C1XIntrinsic>();
@@ -279,6 +281,7 @@ public enum C1XIntrinsic {
     public static C1XIntrinsic getIntrinsic(CiMethod method) {
         CiType holder = method.holder();
         if (method.isLoaded() && holder.isLoaded() && holder.isInitialized()) {
+            // note that the map uses internal names to map lookup faster
             HashMap<String, C1XIntrinsic> map = _intrinsicMap.get(holder.name());
             if (map != null) {
                 return map.get(method.name() + method.signatureType().asString());

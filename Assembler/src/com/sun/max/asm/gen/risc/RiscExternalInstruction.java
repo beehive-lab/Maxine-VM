@@ -53,48 +53,48 @@ import com.sun.max.lang.*;
  */
 public abstract class RiscExternalInstruction implements RiscInstructionDescriptionVisitor {
 
-    protected final RiscTemplate _template;
-    protected final Queue<Argument> _arguments;
-    protected final ImmediateArgument _address;
-    protected final AddressMapper _addressMapper;
+    protected final RiscTemplate template;
+    protected final Queue<Argument> arguments;
+    protected final ImmediateArgument address;
+    protected final AddressMapper addressMapper;
 
     public RiscExternalInstruction(RiscTemplate template, Sequence<Argument> arguments) {
-        _template = template;
-        _arguments = new MutableQueue<Argument>(arguments);
-        _address = null;
-        _addressMapper = null;
+        this.template = template;
+        this.arguments = new MutableQueue<Argument>(arguments);
+        this.address = null;
+        this.addressMapper = null;
     }
 
     public RiscExternalInstruction(RiscTemplate template, Sequence<Argument> arguments, ImmediateArgument address, AddressMapper addressMapper) {
-        _template = template;
-        _arguments = new MutableQueue<Argument>(arguments);
-        _address = address;
-        _addressMapper = addressMapper;
+        this.template = template;
+        this.arguments = new MutableQueue<Argument>(arguments);
+        this.address = address;
+        this.addressMapper = addressMapper;
     }
 
-    private String _nameString;
+    private String nameString;
 
     public String name() {
-        if (_nameString == null) {
-            _nameString = _template.externalName();
-            for (Argument argument : _arguments) {
+        if (nameString == null) {
+            nameString = template.externalName();
+            for (Argument argument : arguments) {
                 if (argument instanceof ExternalMnemonicSuffixArgument) {
                     final String suffix = argument.externalValue();
-                    _nameString += suffix;
+                    nameString += suffix;
                 }
             }
         }
-        return _nameString;
+        return nameString;
     }
 
-    private String _operandsString;
+    private String operandsString;
 
     public String operands() {
-        if (_operandsString == null) {
-            _operandsString = "";
-            RiscInstructionDescriptionVisitor.Static.visitInstructionDescription(this, _template.instructionDescription());
+        if (operandsString == null) {
+            operandsString = "";
+            RiscInstructionDescriptionVisitor.Static.visitInstructionDescription(this, template.instructionDescription());
         }
-        return _operandsString;
+        return operandsString;
     }
 
     @Override
@@ -103,7 +103,7 @@ public abstract class RiscExternalInstruction implements RiscInstructionDescript
     }
 
     private void print(String s) {
-        _operandsString += s;
+        operandsString += s;
     }
 
     protected abstract boolean isAbsoluteBranch();
@@ -117,9 +117,9 @@ public abstract class RiscExternalInstruction implements RiscInstructionDescript
 
     private void printBranchDisplacement(ImmediateArgument immediateArgument) {
         final int delta = (int) immediateArgument.asLong();
-        if (_address != null) {
-            final ImmediateArgument targetAddress = _address.plus(delta);
-            final DisassembledLabel label = _addressMapper.labelAt(targetAddress);
+        if (address != null) {
+            final ImmediateArgument targetAddress = address.plus(delta);
+            final DisassembledLabel label = addressMapper.labelAt(targetAddress);
             if (label != null) {
                 print(label.name() + ": ");
             }
@@ -134,7 +134,7 @@ public abstract class RiscExternalInstruction implements RiscInstructionDescript
         print(Integer.toString(delta));
     }
 
-    private Object _previousSpecification;
+    private Object previousSpecification;
 
     public void visitField(RiscField field) {
         if (field instanceof OperandField) {
@@ -142,11 +142,11 @@ public abstract class RiscExternalInstruction implements RiscInstructionDescript
             if (operandField.boundTo() != null) {
                 return;
             }
-            final Argument argument = _arguments.remove();
+            final Argument argument = arguments.remove();
             if (argument instanceof ExternalMnemonicSuffixArgument) {
                 return;
             }
-            if (_previousSpecification != null && !(_previousSpecification instanceof String)) {
+            if (previousSpecification != null && !(previousSpecification instanceof String)) {
                 print(", ");
             }
             if (argument instanceof ImmediateArgument) {
@@ -163,21 +163,21 @@ public abstract class RiscExternalInstruction implements RiscInstructionDescript
             } else {
                 print(argument.externalValue());
             }
-            _previousSpecification = field;
+            previousSpecification = field;
         }
     }
 
     public void visitConstant(RiscConstant constant) {
     }
 
-    private boolean _writingStrings;
+    private boolean writingStrings;
 
     public void visitString(String string) {
-        if (_writingStrings) {
+        if (writingStrings) {
             print(string);
-            _previousSpecification = string;
+            previousSpecification = string;
         }
-        _writingStrings = true;
+        writingStrings = true;
     }
 
     public void visitConstraint(InstructionConstraint constraint) {

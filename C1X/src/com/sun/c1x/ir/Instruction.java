@@ -96,7 +96,6 @@ public abstract class Instruction {
     private Instruction _next;
     private Instruction _subst;
 
-
     private List<ExceptionHandler> _exceptionHandlers = ExceptionHandler.ZERO_HANDLERS;
 
     private LIROperand _lirOperand;
@@ -315,11 +314,21 @@ public abstract class Instruction {
      * @param val if <code>true</code>, set the flag, otherwise clear it
      */
     public final void setFlag(Flag flag, boolean val) {
-        // PERF: this is often called to initialize a flag, so clearing is often unnecessary
         if (val) {
             setFlag(flag);
         } else {
             clearFlag(flag);
+        }
+    }
+
+    /**
+     * Initialize a flag on this instruction.
+     * @param flag the flag to set
+     * @param val if <code>true</code>, set the flag, otherwise do nothing
+     */
+    public final void initFlag(Flag flag, boolean val) {
+        if (val) {
+            setFlag(flag);
         }
     }
 
@@ -352,7 +361,6 @@ public abstract class Instruction {
      * to an illegal operand.
      */
     public void clearLirOperand() {
-        // TODO: set the _lirOperand to an illegal operand
         _lirOperand = null;
     }
 
@@ -471,28 +479,14 @@ public abstract class Instruction {
         otherValuesDo(closure);
     }
 
+    /**
+     * Utility method to check that two instructions have the same basic type.
+     * @param i the first instruction
+     * @param other the second instruction
+     * @return {@code true} if the instructions have the same basic type
+     */
     public static boolean sameBasicType(Instruction i, Instruction other) {
         return i.type().basicType() == other.type().basicType();
-    }
-
-    public static int hash1(int hash, Instruction x) {
-        // always set at least one bit in case the hash wraps to zero
-        return 0x10000000 | (hash + 7 * System.identityHashCode(x));
-    }
-
-    public static int hash2(int hash, Instruction x, Instruction y) {
-        // always set at least one bit in case the hash wraps to zero
-        return 0x20000000 | (hash + 7 * System.identityHashCode(x) + 11 * System.identityHashCode(y));
-    }
-
-    public static int hash3(int hash, Instruction x, Instruction y, Instruction z) {
-        // always set at least one bit in case the hash wraps to zero
-        return 0x30000000 | (hash + 7 * System.identityHashCode(x) + 11 * System.identityHashCode(y) + 13 * System.identityHashCode(z));
-    }
-
-    public static int hash4(int hash, Instruction x, Instruction y, Instruction z, Instruction w) {
-        // always set at least one bit in case the hash wraps to zero
-        return 0x40000000 | (hash + 7 * System.identityHashCode(x) + 11 * System.identityHashCode(y) + 13 * System.identityHashCode(z) + 17 * System.identityHashCode(w));
     }
 
     @Override
@@ -543,6 +537,7 @@ public abstract class Instruction {
      * "i13".
      *
      * @param value the instruction to convert to a value string. If {@code value == null}, then "null" is returned.
+     * @return the instruction representation as a string
      */
     public static String valueString(Instruction value) {
         return value == null ? "null" : "" + value.type().tchar() + value.id();

@@ -39,71 +39,71 @@ import com.sun.max.program.*;
  * The types for these two instruction categories are enumerated by
  * the {@code visit...} methods in the {@link RiscInstructionDescriptionVisitor}
  * and {@link X86InstructionDescriptionVisitor} classes.
- * 
+ *
  * @author Bernd Mathiske
  */
 public abstract class InstructionDescription implements Iterable<Object>, Cloneable {
 
-    private static int _nextSerial;
+    private static int nextSerial;
 
-    private int _serial;
+    private int serial;
 
     /**
      * The components of the description.
      */
-    private final MutableSequence<Object> _specifications;
+    private final MutableSequence<Object> specifications;
 
     public InstructionDescription(MutableSequence<Object> specifications) {
-        _specifications = specifications;
-        _serial = _nextSerial++;
+        this.specifications = specifications;
+        this.serial = nextSerial++;
     }
 
     public int serial() {
-        return _serial;
+        return serial;
     }
 
     /**
      * @return the objects from which this description is composed
      */
     public MutableSequence<Object> specifications() {
-        return _specifications;
+        return specifications;
     }
 
-    private Sequence<InstructionConstraint> _constraints;
+    private Sequence<InstructionConstraint> constraints;
 
     /**
      * @return the {@link InstructionConstraint} instances (if any) within this description
      */
     public Sequence<InstructionConstraint> constraints() {
-        if (_constraints == null) {
-            _constraints = Sequence.Static.filter(_specifications, InstructionConstraint.class);
+        if (constraints == null) {
+            constraints = Sequence.Static.filter(specifications, InstructionConstraint.class);
         }
-        return _constraints;
+        return constraints;
     }
 
-    private String _architectureManualSection;
+    private String architectureManualSection;
 
     public InstructionDescription setArchitectureManualSection(String section) {
-        _architectureManualSection = section;
+        architectureManualSection = section;
         return this;
     }
 
     public String architectureManualSection() {
-        return _architectureManualSection;
+        return architectureManualSection;
     }
 
-    private String _externalName;
+    private String externalName;
 
     public String externalName() {
-        return _externalName;
+        return externalName;
     }
 
-    public InstructionDescription setExternalName(String externalName) {
-        _externalName = externalName;
+    public InstructionDescription setExternalName(String name) {
+        this.externalName = name;
         return this;
     }
 
-    private boolean _isDisassemblable = true;
+    private boolean isDisassemblable = true;
 
     /**
      * Determines if the templates created from the description can be recovered from an assembled instruction.
@@ -113,11 +113,11 @@ public abstract class InstructionDescription implements Iterable<Object>, Clonea
      * parameter.
      */
     public boolean isDisassemblable() {
-        return _isDisassemblable;
+        return isDisassemblable;
     }
 
     public InstructionDescription beNotDisassemblable() {
-        _isDisassemblable = false;
+        isDisassemblable = false;
         return this;
     }
 
@@ -125,48 +125,48 @@ public abstract class InstructionDescription implements Iterable<Object>, Clonea
         return false;
     }
 
-    private boolean _isExternallyTestable = true;
+    private boolean isExternallyTestable = true;
 
     public boolean isExternallyTestable() {
-        return _isExternallyTestable;
+        return isExternallyTestable;
     }
 
     public InstructionDescription beNotExternallyTestable() {
-        _isExternallyTestable = false;
+        isExternallyTestable = false;
         return this;
     }
 
-    private WordWidth _requiredAddressSize;
+    private WordWidth requiredAddressSize;
 
     public WordWidth requiredAddressSize() {
-        return _requiredAddressSize;
+        return requiredAddressSize;
     }
 
-    public InstructionDescription requireAddressSize(WordWidth requiredAddressSize) {
-        _requiredAddressSize = requiredAddressSize;
+    public InstructionDescription requireAddressSize(WordWidth addressSize) {
+        this.requiredAddressSize = addressSize;
         return this;
     }
 
-    private WordWidth _requiredOperandSize;
+    private WordWidth requiredOperandSize;
 
     public WordWidth requiredOperandSize() {
-        return _requiredOperandSize;
+        return requiredOperandSize;
     }
 
-    public InstructionDescription requireOperandSize(WordWidth requiredOperandSize) {
-        _requiredOperandSize = requiredOperandSize;
+    public InstructionDescription requireOperandSize(WordWidth operandSize) {
+        this.requiredOperandSize = operandSize;
         return this;
     }
 
     public Iterator<Object> iterator() {
-        return _specifications.iterator();
+        return specifications.iterator();
     }
 
     @Override
     public InstructionDescription clone() {
         try {
             final InstructionDescription clone = (InstructionDescription) super.clone();
-            clone._serial = ++_nextSerial;
+            clone.serial = ++nextSerial;
             return clone;
         } catch (CloneNotSupportedException cloneNotSupportedException) {
             throw ProgramError.unexpected(cloneNotSupportedException);
@@ -175,13 +175,13 @@ public abstract class InstructionDescription implements Iterable<Object>, Clonea
 
     @Override
     public final int hashCode() {
-        return _serial;
+        return serial;
     }
 
     @Override
     public final boolean equals(Object object) {
         if (object instanceof InstructionDescription) {
-            return _serial == ((InstructionDescription) object)._serial;
+            return serial == ((InstructionDescription) object).serial;
         }
         return false;
     }

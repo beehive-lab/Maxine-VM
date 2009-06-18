@@ -25,7 +25,7 @@ import com.sun.max.ide.*;
 
 /**
  * Tests for {@link IdentityHashMapping}.
- * 
+ *
  * @author Hiroshi Yamauchi
  */
 public class IdentityHashMappingTest extends MaxTestCase {
@@ -40,19 +40,19 @@ public class IdentityHashMappingTest extends MaxTestCase {
 
     private static final class Key {
 
-        private final int _id;
+        private final int id;
 
         private Key(int id) {
-            _id = id;
+            this.id = id;
         }
 
         public int id() {
-            return _id;
+            return id;
         }
 
         @Override
         public int hashCode() {
-            return _id;
+            return id;
         }
 
         @Override
@@ -61,20 +61,20 @@ public class IdentityHashMappingTest extends MaxTestCase {
                 return false;
             }
             final Key key = (Key) other;
-            return _id == key._id;
+            return id == key.id;
         }
     }
 
     private static final class Value {
 
-        private final int _id;
+        private final int id;
 
         private Value(int id) {
-            _id = id;
+            this.id = id;
         }
 
         public int id() {
-            return _id;
+            return id;
         }
     }
 

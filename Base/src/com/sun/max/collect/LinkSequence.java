@@ -30,13 +30,13 @@ import java.util.*;
 public class LinkSequence<Element_Type> implements PrependableSequence<Element_Type>, AppendableSequence<Element_Type> {
 
     private class Cell {
-        private Element_Type _head;
-        private Cell _tail;
+        private Element_Type head;
+        private Cell tail;
     }
 
-    private Cell _first;
-    private Cell _last;
-    private int _length;
+    private Cell first;
+    private Cell last;
+    private int length;
 
     public LinkSequence() {
     }
@@ -52,33 +52,33 @@ public class LinkSequence<Element_Type> implements PrependableSequence<Element_T
     }
 
     public void clear() {
-        _first = null;
-        _last = null;
-        _length = 0;
+        first = null;
+        last = null;
+        length = 0;
     }
 
     public int length() {
-        return _length;
+        return length;
     }
 
     public boolean isEmpty() {
-        return _length <= 0;
+        return length <= 0;
     }
 
     public Element_Type first() {
-        final Cell result = _first;
+        final Cell result = first;
         if (result == null) {
             throw new IndexOutOfBoundsException();
         }
-        return result._head;
+        return result.head;
     }
 
     public Element_Type last() {
-        final Cell result = _last;
+        final Cell result = last;
         if (result == null) {
             throw new IndexOutOfBoundsException();
         }
-        return result._head;
+        return result.head;
     }
 
     /**
@@ -86,10 +86,10 @@ public class LinkSequence<Element_Type> implements PrependableSequence<Element_T
      */
     public Iterable<Element_Type> tail() {
         final LinkSequence<Element_Type> result = new LinkSequence<Element_Type>();
-        if (_length > 1) {
-            result._first = _first._tail;
-            result._last = _last;
-            result._length = _length - 1;
+        if (length > 1) {
+            result.first = first.tail;
+            result.last = last;
+            result.length = length - 1;
         }
         return result;
     }
@@ -106,10 +106,10 @@ public class LinkSequence<Element_Type> implements PrependableSequence<Element_T
     @Override
     public int hashCode() {
         int result = 0;
-        if (_first != null && _first._head != null) {
-            result ^= _first._head.hashCode();
-            if (_last != _first && _last._head != null) {
-                result ^= _last._head.hashCode();
+        if (first != null && first.head != null) {
+            result ^= first.head.hashCode();
+            if (last != first && last.head != null) {
+                result ^= last.head.hashCode();
             }
         }
         return result;
@@ -117,30 +117,30 @@ public class LinkSequence<Element_Type> implements PrependableSequence<Element_T
 
     public void prepend(Element_Type element) {
         final Cell cell = new Cell();
-        cell._head = element;
-        if (_first == null) {
-            assert _last == null;
-            _last = cell;
+        cell.head = element;
+        if (first == null) {
+            assert last == null;
+            last = cell;
         } else {
-            assert _last != null;
-            cell._tail = _first;
+            assert last != null;
+            cell.tail = first;
         }
-        _first = cell;
-        _length++;
+        first = cell;
+        length++;
     }
 
     public void append(Element_Type element) {
         final Cell cell = new Cell();
-        cell._head = element;
-        if (_last == null) {
-            assert _first == null;
-            _first = cell;
+        cell.head = element;
+        if (last == null) {
+            assert first == null;
+            first = cell;
         } else {
-            assert _first != null;
-            _last._tail = cell;
+            assert first != null;
+            last.tail = cell;
         }
-        _last = cell;
-        _length++;
+        last = cell;
+        length++;
     }
 
     @Override
@@ -167,23 +167,23 @@ public class LinkSequence<Element_Type> implements PrependableSequence<Element_T
 
     public Iterator<Element_Type> iterator() {
         return new Iterator<Element_Type>() {
-            private Cell _cell = _first;
+            private Cell cell = first;
 
             public void remove() {
                 throw new UnsupportedOperationException();
             }
 
             public boolean hasNext() {
-                return _cell != null;
+                return cell != null;
             }
 
 
             public Element_Type next() {
-                if (_cell == null) {
+                if (cell == null) {
                     throw new NoSuchElementException();
                 }
-                final Element_Type element = _cell._head;
-                _cell = _cell._tail;
+                final Element_Type element = cell.head;
+                cell = cell.tail;
                 return element;
             }
         };

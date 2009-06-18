@@ -30,14 +30,14 @@ import java.util.*;
  */
 public class XMLWriter {
 
-    private Writer _out;
+    private Writer out;
 
     public XMLWriter(Writer out) {
-        this._out = out;
+        this.out = out;
     }
 
     public void close() throws IOException {
-        _out.close();
+        out.close();
     }
 
     public void begin(String name, Properties properties) throws IOException {
@@ -53,20 +53,20 @@ public class XMLWriter {
     }
 
     public void end(String name) throws IOException {
-        _out.write("</" + name + ">");
+        out.write("</" + name + ">");
     }
 
     public void write(String text) throws IOException {
         String s = text.replace("&", "&amp;");
         s = s.replace("<", "&lt;");
         s = s.replace(">", "&gt;");
-        _out.write(s);
+        out.write(s);
     }
 
     public void writeData(String text) throws IOException {
-        _out.write("<![CDATA[");
-        _out.write(text);
-        _out.write("]]>");
+        out.write("<![CDATA[");
+        out.write(text);
+        out.write("]]>");
     }
 
     public void simple(String name) throws IOException {
@@ -87,15 +87,15 @@ public class XMLWriter {
     }
 
     private void startBegin(String name) throws IOException {
-        _out.write("<" + name);
+        out.write("<" + name);
     }
 
     private void endBegin() throws IOException {
-        _out.write(">");
+        out.write(">");
     }
 
     private void endSimple() throws IOException {
-        _out.write("/>");
+        out.write("/>");
     }
 
     public void begin(String name) throws IOException {
@@ -104,7 +104,7 @@ public class XMLWriter {
     }
 
     private void writeAttribute(String name, String value) throws IOException {
-        _out.write(" " + name + "=\"" + value + "\"");
+        out.write(" " + name + "=\"" + value + "\"");
     }
 
     private void writeAttributes(Properties properties) throws IOException {

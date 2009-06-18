@@ -28,10 +28,45 @@ package com.sun.c1x.ci;
  * @author Ben L. Titzer
  */
 public interface CiOsrFrame {
+    /**
+     * Get the offset of a local variable within the OSR frame.
+     * @param local the local index
+     * @return the offset in bytes of the local variable's location
+     */
     int getLocalOffset(int local);
+
+    /**
+     * Checks whether the local variable is live at the OSR location.
+     * @param local the local index
+     * @return {@code true} if the local variable is live
+     */
     boolean isLive(int local);
+
+    /**
+     * Checks whether the local variable is live at the OSR location, and is
+     * also an object.
+     * @param local the local index
+     * @return {@code true} if the local variable is live and is an object
+     */
     boolean isLiveObject(int local);
+
+    /**
+     * Gets the offset of a stack slot within the OSR frame.
+     * @param index the index of the stack slot
+     * @return the offset in bytes of the stack slot's location
+     */
     int getStackOffset(int index);
+
+    /**
+     * Gets the offset of a lock within the OSR frame.
+     * @param lock the index of the lock
+     * @return the offset in bytes of the lock's location
+     */
     int getLockOffset(int lock);
+
+    /**
+     * Gets the total size of the frame in bytes.
+     * @return the size of the frame
+     */
     int frameSize();
 }

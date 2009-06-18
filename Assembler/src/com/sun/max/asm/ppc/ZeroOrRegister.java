@@ -52,13 +52,13 @@ public abstract class ZeroOrRegister extends AbstractSymbolicArgument {
     }
 
     public static Symbolizer<ZeroOrRegister> symbolizer() {
-        if (_symbolizer == null) {
-            _symbolizer = Symbolizer.Static.fromSequence(ZeroOrRegister.class, GPR.GPR_SYMBOLIZER, Zero.ZERO);
+        if (symbolizer == null) {
+            symbolizer = Symbolizer.Static.fromSequence(ZeroOrRegister.class, GPR.GPR_SYMBOLIZER, Zero.ZERO);
         }
-        return _symbolizer;
+        return symbolizer;
     }
 
     // This must be lazily constructed to avoid dependency on the GPR class initializer
-    private static Symbolizer<ZeroOrRegister> _symbolizer;
+    private static Symbolizer<ZeroOrRegister> symbolizer;
 
 }

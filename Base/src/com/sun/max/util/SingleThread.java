@@ -37,26 +37,26 @@ import com.sun.max.program.*;
  */
 public class SingleThread extends Thread {
 
-    private static Thread _worker;
-    private static final ExecutorService _executorService = Executors.newSingleThreadExecutor(new ThreadFactory() {
+    private static Thread worker;
+    private static final ExecutorService executorService = Executors.newSingleThreadExecutor(new ThreadFactory() {
         public Thread newThread(Runnable runnable) {
-            ProgramError.check(_worker == null, "Single worker thread died unexpectedly");
-            _worker = new Thread(runnable);
-            return _worker;
+            ProgramError.check(worker == null, "Single worker thread died unexpectedly");
+            worker = new Thread(runnable);
+            return worker;
         }
     });
 
-    private static final boolean _disabled = false;
+    private static final boolean disabled = false;
 
     public static synchronized <Result_Type> Result_Type execute(Function<Result_Type> function) {
-        if (_disabled || Thread.currentThread() == _worker) {
+        if (disabled || Thread.currentThread() == worker) {
             try {
                 return function.call();
             } catch (Exception exception) {
                 ProgramError.unexpected(exception);
             }
         }
-        final Future<Result_Type> future = _executorService.submit(function);
+        final Future<Result_Type> future = executorService.submit(function);
         while (true) {
             try {
                 return future.get();
@@ -69,11 +69,11 @@ public class SingleThread extends Thread {
     }
 
     public static <Result_Type> Result_Type executeWithException(Function<Result_Type> function) throws Exception {
-        if (_disabled || Thread.currentThread() == _worker) {
+        if (disabled || Thread.currentThread() == worker) {
             return function.call();
         }
-        synchronized (_executorService) {
-            final Future<Result_Type> future = _executorService.submit(function);
+        synchronized (executorService) {
+            final Future<Result_Type> future = executorService.submit(function);
             while (true) {
                 try {
                     return future.get();
@@ -91,11 +91,11 @@ public class SingleThread extends Thread {
     }
 
     public static void execute(final Runnable runnable) {
-        if (_disabled || Thread.currentThread() == _worker) {
+        if (disabled || Thread.currentThread() == worker) {
             runnable.run();
         }
-        synchronized (_executorService) {
-            final Future<?> future = _executorService.submit(runnable);
+        synchronized (executorService) {
+            final Future<?> future = executorService.submit(runnable);
             while (true) {
                 try {
                     future.get();

@@ -35,15 +35,15 @@ import com.sun.max.program.*;
  */
 public class InputOperandField extends OperandField<ImmediateArgument> {
 
-    private final Iterable< ? extends Argument> _testArguments;
-    private final ArgumentRange _argumentRange;
-    private final Iterable< ? extends Argument> _illegalTestArguments;
+    private final Iterable< ? extends Argument> testArguments;
+    private final ArgumentRange argumentRange;
+    private final Iterable< ? extends Argument> illegalTestArguments;
 
     public InputOperandField(Iterable< ? extends Argument> testArguments, Iterable< ? extends Argument> illegalTestArguments, ArgumentRange argumentRange) {
         super(BitRange.create(new int[]{-1}, BitRangeOrder.DESCENDING));
-        _testArguments = testArguments;
-        _argumentRange = argumentRange;
-        _illegalTestArguments = illegalTestArguments;
+        this.testArguments = testArguments;
+        this.argumentRange = argumentRange;
+        this.illegalTestArguments = illegalTestArguments;
     }
 
     public static InputOperandField create(OperandField valueRangeProvider) {
@@ -71,16 +71,16 @@ public class InputOperandField extends OperandField<ImmediateArgument> {
     }
 
     public Iterable< ? extends Argument> getLegalTestArguments() {
-        return _testArguments;
+        return testArguments;
     }
 
     public Iterable<? extends Argument> getIllegalTestArguments() {
         //return Iterables.empty();
-        return _illegalTestArguments;
+        return illegalTestArguments;
     }
 
     public ArgumentRange argumentRange() {
-        return _argumentRange;
+        return argumentRange;
     }
 
 }

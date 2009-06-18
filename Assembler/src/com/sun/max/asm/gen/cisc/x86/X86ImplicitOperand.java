@@ -26,44 +26,44 @@ import com.sun.max.asm.gen.*;
 /**
  * An operand that is already implicit in the machine instruction,
  * without requiring an assembler method parameter.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class X86ImplicitOperand extends X86Operand implements ImplicitOperand {
 
-    private final ImplicitOperand.ExternalPresence _externalPresence;
-    private final Argument _argument;
+    private final ImplicitOperand.ExternalPresence externalPresence;
+    private final Argument argument;
 
     public X86ImplicitOperand(X86Operand.Designation designation, ImplicitOperand.ExternalPresence externalPresence, Argument argument) {
         super(designation);
-        _externalPresence = externalPresence;
-        _argument = argument;
+        this.externalPresence = externalPresence;
+        this.argument = argument;
     }
 
     public ImplicitOperand.ExternalPresence externalPresence() {
-        return _externalPresence;
+        return externalPresence;
     }
 
     public Class type() {
-        return _argument.getClass();
+        return argument.getClass();
     }
 
     public Argument argument() {
-        return _argument;
+        return argument;
     }
 
     public String name() {
-        if (_argument instanceof Enum) {
-            final Enum enumerable = (Enum) _argument;
+        if (argument instanceof Enum) {
+            final Enum enumerable = (Enum) argument;
             return enumerable.name();
         }
-        final Immediate8Argument immediate8Argument = (Immediate8Argument) _argument;
+        final Immediate8Argument immediate8Argument = (Immediate8Argument) argument;
         assert immediate8Argument.value() > 0;
         return immediate8Argument.signedExternalValue();
     }
 
     @Override
     public String toString() {
-        return "<ImplicitOperand: " + _argument.externalValue() + ">";
+        return "<ImplicitOperand: " + argument.externalValue() + ">";
     }
 }

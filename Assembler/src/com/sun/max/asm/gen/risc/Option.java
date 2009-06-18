@@ -26,10 +26,10 @@ import com.sun.max.asm.gen.risc.field.*;
  * An Option is one of the values that an {@link OptionField optional field} can take.
  * An example is the value of the <i>predict bit</i> for the SPARC Branch on Equal with
  * Prediction instruction that specifies the bit is set. The format of this instruction is:
- * 
+ *
  *    bge_pt(...)  // assembler method
  *    bge,pt ...   // external assembler syntax
- * 
+ *
  * @author Dave Ungar
  * @author Adam Spitz
  * @author Bernd Mathiske
@@ -40,33 +40,33 @@ public class Option {
     /**
      * The addition to the assembler method's name used to specify this option value.
      */
-    protected final String _name;
+    protected final String name;
 
     /**
      * The addition to the external assembler syntax used to specify this option value.
      */
-    protected final String _externalName;
+    protected final String externalName;
 
     /**
      * The value of the option.
      */
-    protected final int _value;
+    protected final int value;
 
     /**
      * The field to which this option applies.
      */
-    private final OptionField _field;
+    private final OptionField field;
 
     public String name() {
-        return _name;
+        return name;
     }
 
     public String externalName() {
-        return _externalName;
+        return externalName;
     }
 
     public int value() {
-        return _value;
+        return value;
     }
 
     public Option() {
@@ -86,27 +86,27 @@ public class Option {
     }
 
     public Option(String name, int value, String externalName, OptionField field) {
-        _name = name;
-        _value = value;
-        _externalName = externalName;
-        _field = field;
+        this.name = name;
+        this.value = value;
+        this.externalName = externalName;
+        this.field = field;
     }
 
     public OptionField field() {
-        return _field;
+        return field;
     }
 
     public boolean isRedundant() {
-        return (_field.defaultOption() != null) && (_value == _field.defaultOption()._value) && (!(equals(_field.defaultOption())));
+        return (field.defaultOption() != null) && (value == field.defaultOption().value) && (!(equals(field.defaultOption())));
     }
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof Option && _name.equals(((Option) other)._name);
+        return other instanceof Option && name.equals(((Option) other).name);
     }
 
     @Override
     public int hashCode() {
-        return _name.hashCode();
+        return name.hashCode();
     }
 }

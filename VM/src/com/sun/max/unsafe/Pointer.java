@@ -80,6 +80,12 @@ public abstract class Pointer extends Address implements Accessor {
 
     @Override
     @INLINE
+    public final Pointer plus(long addend) {
+        return asAddress().plus(addend).asPointer();
+    }
+
+    @Override
+    @INLINE
     public final Pointer plus(Address addend) {
         return asAddress().plus(addend).asPointer();
     }
@@ -104,6 +110,12 @@ public abstract class Pointer extends Address implements Accessor {
     @Override
     @INLINE
     public final Pointer minus(int subtrahend) {
+        return asAddress().minus(subtrahend).asPointer();
+    }
+
+    @Override
+    @INLINE
+    public final Pointer minus(long subtrahend) {
         return asAddress().minus(subtrahend).asPointer();
     }
 
@@ -187,8 +199,8 @@ public abstract class Pointer extends Address implements Accessor {
 
     @Override
     @INLINE
-    public final Pointer bitCleared(int index) {
-        return asAddress().bitCleared(index).asPointer();
+    public final Pointer bitClear(int index) {
+        return asAddress().bitClear(index).asPointer();
     }
 
     @Override
@@ -205,6 +217,12 @@ public abstract class Pointer extends Address implements Accessor {
 
     @Override
     @INLINE
+    public final Pointer and(long operand) {
+        return asAddress().and(operand).asPointer();
+    }
+
+    @Override
+    @INLINE
     public final Pointer or(Address operand) {
         return asAddress().or(operand).asPointer();
     }
@@ -212,6 +230,12 @@ public abstract class Pointer extends Address implements Accessor {
     @Override
     @INLINE
     public final Pointer or(int operand) {
+        return asAddress().or(operand).asPointer();
+    }
+
+    @Override
+    @INLINE
+    public final Pointer or(long operand) {
         return asAddress().or(operand).asPointer();
     }
 

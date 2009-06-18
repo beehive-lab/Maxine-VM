@@ -31,15 +31,15 @@ import com.sun.max.util.*;
  * @author Doug Simon
  */
 public final class FBfcc extends NameSuffixSymbolicArgument implements Predicate<FCCOperand, FBfcc> {
-    private FBfcc _negation;
+    private FBfcc negation;
 
     private FBfcc(int value) {
         super(value);
     }
     private FBfcc(int value, FBfcc negation) {
         this(value);
-        _negation = negation;
-        negation._negation = this;
+        this.negation = negation;
+        negation.negation = this;
     }
 
     public static final FBfcc A = new FBfcc(8);
@@ -60,5 +60,5 @@ public final class FBfcc extends NameSuffixSymbolicArgument implements Predicate
     public static final FBfcc O = new FBfcc(15, U);
 
     public static final Symbolizer<FBfcc> SYMBOLIZER = Symbolizer.Static.initialize(FBfcc.class);
-    public FBfcc negate() { return _negation; }
+    public FBfcc negate() { return negation; }
 }

@@ -29,51 +29,97 @@ import com.sun.c1x.ir.*;
  *
  * @author Ben L. Titzer
  */
-public interface InstructionVisitor {
-    void visitPhi(Phi i);
-    void visitLocal(Local i);
-    void visitConstant(Constant i);
-    void visitLoadField(LoadField i);
-    void visitStoreField(StoreField i);
-    void visitArrayLength(ArrayLength i);
-    void visitLoadIndexed(LoadIndexed i);
-    void visitStoreIndexed(StoreIndexed i);
-    void visitNegateOp(NegateOp i);
-    void visitArithmeticOp(ArithmeticOp i);
-    void visitShiftOp(ShiftOp i);
-    void visitLogicOp(LogicOp i);
-    void visitCompareOp(CompareOp i);
-    void visitIfOp(IfOp i);
-    void visitConvert(Convert i);
-    void visitNullCheck(NullCheck i);
-    void visitInvoke(Invoke i);
-    void visitNewInstance(NewInstance i);
-    void visitNewTypeArray(NewTypeArray i);
-    void visitNewObjectArray(NewObjectArray i);
-    void visitNewMultiArray(NewMultiArray i);
-    void visitCheckCast(CheckCast i);
-    void visitInstanceOf(InstanceOf i);
-    void visitMonitorEnter(MonitorEnter i);
-    void visitMonitorExit(MonitorExit i);
-    void visitIntrinsic(Intrinsic i);
-    void visitBlockBegin(BlockBegin i);
-    void visitGoto(Goto i);
-    void visitIf(If i);
-    void visitIfInstanceOf(IfInstanceOf i);
-    void visitTableSwitch(TableSwitch i);
-    void visitLookupSwitch(LookupSwitch i);
-    void visitReturn(Return i);
-    void visitThrow(Throw i);
-    void visitBase(Base i);
-    void visitOsrEntry(OsrEntry i);
-    void visitExceptionObject(ExceptionObject i);
-    void visitRoundFP(RoundFP i);
-    void visitUnsafeGetRaw(UnsafeGetRaw i);
-    void visitUnsafePutRaw(UnsafePutRaw i);
-    void visitUnsafeGetObject(UnsafeGetObject i);
-    void visitUnsafePutObject(UnsafePutObject i);
-    void visitUnsafePrefetchRead(UnsafePrefetchRead i);
-    void visitUnsafePrefetchWrite(UnsafePrefetchWrite i);
-    void visitProfileCall(ProfileCall i);
-    void visitProfileCounter(ProfileCounter i);
+public abstract class InstructionVisitor {
+    public void visitPhi(Phi i) {
+    }
+    public void visitLocal(Local i) {
+    }
+    public void visitConstant(Constant i) {
+    }
+    public void visitLoadField(LoadField i) {
+    }
+    public void visitStoreField(StoreField i) {
+    }
+    public void visitArrayLength(ArrayLength i) {
+    }
+    public void visitLoadIndexed(LoadIndexed i) {
+    }
+    public void visitStoreIndexed(StoreIndexed i) {
+    }
+    public void visitNegateOp(NegateOp i) {
+    }
+    public void visitArithmeticOp(ArithmeticOp i) {
+    }
+    public void visitShiftOp(ShiftOp i) {
+    }
+    public void visitLogicOp(LogicOp i) {
+    }
+    public void visitCompareOp(CompareOp i) {
+    }
+    public void visitIfOp(IfOp i) {
+    }
+    public void visitConvert(Convert i) {
+    }
+    public void visitNullCheck(NullCheck i) {
+    }
+    public void visitInvoke(Invoke i) {
+    }
+    public void visitNewInstance(NewInstance i) {
+    }
+    public void visitNewTypeArray(NewTypeArray i) {
+    }
+    public void visitNewObjectArray(NewObjectArray i) {
+    }
+    public void visitNewMultiArray(NewMultiArray i) {
+    }
+    public void visitCheckCast(CheckCast i) {
+    }
+    public void visitInstanceOf(InstanceOf i) {
+    }
+    public void visitMonitorEnter(MonitorEnter i) {
+    }
+    public void visitMonitorExit(MonitorExit i) {
+    }
+    public void visitIntrinsic(Intrinsic i) {
+    }
+    public void visitBlockBegin(BlockBegin i) {
+    }
+    public void visitGoto(Goto i) {
+    }
+    public void visitIf(If i) {
+    }
+    public void visitIfInstanceOf(IfInstanceOf i) {
+    }
+    public void visitTableSwitch(TableSwitch i) {
+    }
+    public void visitLookupSwitch(LookupSwitch i) {
+    }
+    public void visitReturn(Return i) {
+    }
+    public void visitThrow(Throw i) {
+    }
+    public void visitBase(Base i) {
+    }
+    public void visitOsrEntry(OsrEntry i) {
+    }
+    public void visitExceptionObject(ExceptionObject i) {
+    }
+    public void visitRoundFP(RoundFP i) {
+    }
+    public void visitUnsafeGetRaw(UnsafeGetRaw i) {
+    }
+    public void visitUnsafePutRaw(UnsafePutRaw i) {
+    }
+    public void visitUnsafeGetObject(UnsafeGetObject i) {
+    }
+    public void visitUnsafePutObject(UnsafePutObject i) {
+    }
+    public void visitUnsafePrefetchRead(UnsafePrefetchRead i) {
+    }
+    public void visitUnsafePrefetchWrite(UnsafePrefetchWrite i) {
+    }
+    public void visitProfileCall(ProfileCall i) {
+    }
+    public void visitProfileCounter(ProfileCounter i) {
+    }
 }

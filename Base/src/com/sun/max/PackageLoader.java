@@ -35,17 +35,17 @@ import com.sun.max.program.*;
  */
 public class PackageLoader {
 
-    private final Classpath _classpath;
-    private final ClassLoader _classLoader;
-    private int _traceLevel = 1;
+    private final Classpath classpath;
+    private final ClassLoader classLoader;
+    private int traceLevel = 1;
 
     public PackageLoader(ClassLoader classLoader, Classpath classpath) {
-        _classpath = classpath;
-        _classLoader = classLoader;
+        this.classpath = classpath;
+        this.classLoader = classLoader;
     }
 
     public void setTraceLevel(int level) {
-        _traceLevel = level;
+        traceLevel = level;
     }
 
     /**
@@ -57,7 +57,7 @@ public class PackageLoader {
      * @return the loaded classes
      */
     public Sequence<Class> load(final String packageName, final boolean recursive) {
-        Trace.line(_traceLevel, "loading: " + packageName);
+        Trace.line(traceLevel, "loading: " + packageName);
         final AppendableSequence<Class> classes = new ArrayListSequence<Class>();
         final Set<String> classNames = new HashSet<String>();
         final ClassSearch classSearch = new ClassSearch() {
@@ -67,7 +67,7 @@ public class PackageLoader {
                 if (!className.endsWith("package-info")) {
                     if (!classNames.contains(className)) {
                         if (recursive || Classes.getPackageName(className).equals(packageName)) {
-                            final Class javaClass = Classes.load(_classLoader, className);
+                            final Class javaClass = Classes.load(classLoader, className);
                             if (javaClass != null) {
                                 Classes.link(javaClass);
                                 classNames.add(className);
@@ -79,7 +79,7 @@ public class PackageLoader {
                 return true;
             }
         };
-        classSearch.run(_classpath, packageName.replace('.', '/'));
+        classSearch.run(classpath, packageName.replace('.', '/'));
         ProgramWarning.check(!classNames.isEmpty(), "no classes found in package: " + packageName);
         return classes;
     }

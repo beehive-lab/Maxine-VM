@@ -30,12 +30,12 @@ import static com.sun.max.asm.gen.risc.sparc.SPARCFields.*;
 class MemorySynchronization extends SPARCInstructionDescriptionCreator {
 
     private void create_A32() {
-        define("membar", op(0x2), _res_29_25, op3(0x28), bits_18_14(0xf), i(1), _res_12_7, _membarMask);
+        define("membar", op(0x2), res_29_25, op3(0x28), bits_18_14(0xf), i(1), res_12_7, membarMask);
     }
 
     private void create_A51() {
         if (assembly().generatingDeprecatedInstructions()) {
-            define("stbar", op(0x2), _res_29_25, op3(0x28), bits_18_14(0xf), i(0), _res_12_0);
+            define("stbar", op(0x2), res_29_25, op3(0x28), bits_18_14(0xf), i(0), res_12_0);
         }
     }
 

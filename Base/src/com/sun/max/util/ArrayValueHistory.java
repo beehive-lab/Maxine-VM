@@ -33,13 +33,13 @@ import com.sun.max.program.*;
  */
 public class ArrayValueHistory<Value_Type> implements ValueHistory<Value_Type> {
 
-    private final ArrayDeque<Value_Type> _generations;
-    private final int _limit;
-    private int _age = -1;
+    private final ArrayDeque<Value_Type> generations;
+    private final int limit;
+    private int age = -1;
 
     public ArrayValueHistory(int limit) {
-        _generations = new ArrayDeque<Value_Type>();
-        _limit = limit;
+        this.generations = new ArrayDeque<Value_Type>();
+        this.limit = limit;
     }
 
     public ArrayValueHistory() {
@@ -47,31 +47,31 @@ public class ArrayValueHistory<Value_Type> implements ValueHistory<Value_Type> {
     }
 
     public void add(Value_Type newValue) {
-        if (_generations.size() > 0) {
-            if (newValue.equals(_generations.getFirst())) {
-                if (_age >= 0) {
-                    _age++;
+        if (generations.size() > 0) {
+            if (newValue.equals(generations.getFirst())) {
+                if (age >= 0) {
+                    age++;
                 }
             } else {
-                _age = 0;
+                age = 0;
             }
         }
-        _generations.addFirst(newValue);
-        if (_generations.size() > _limit) {
-            _generations.removeLast();
+        generations.addFirst(newValue);
+        if (generations.size() > limit) {
+            generations.removeLast();
         }
     }
 
     public Value_Type get() {
-        if (_generations.size() > 0) {
-            return _generations.getFirst();
+        if (generations.size() > 0) {
+            return generations.getFirst();
         }
         ProgramError.unexpected("empty history");
         return null;
     }
 
     public Value_Type get(int generation) {
-        final Iterator<Value_Type> iterator = _generations.iterator();
+        final Iterator<Value_Type> iterator = generations.iterator();
         int index = 0;
         while (iterator.hasNext()) {
             if (index == generation) {
@@ -84,19 +84,19 @@ public class ArrayValueHistory<Value_Type> implements ValueHistory<Value_Type> {
     }
 
     public int getAge() {
-        return _age;
+        return age;
     }
 
     public int getLimit() {
-        return _limit;
+        return limit;
     }
 
     public int getSize() {
-        return _generations.size();
+        return generations.size();
     }
 
     public Iterator<Value_Type> values() {
-        return _generations.iterator();
+        return generations.iterator();
     }
 
 }

@@ -98,12 +98,12 @@ public class SetsTest extends MaxTestCase {
         assertTrue(set.equals(Sets.union(setEvens, setOdds)));
     }
 
-    private final Predicate<Integer> _nonNegPred = new Predicate<Integer>() {
+    private final Predicate<Integer> nonNegPred = new Predicate<Integer>() {
         public boolean evaluate(Integer i) {
             return i >= 0;
         }
     };
-    private final Predicate<Integer> _posPred = new Predicate<Integer>() {
+    private final Predicate<Integer> posPred = new Predicate<Integer>() {
         public boolean evaluate(Integer i) {
             return i > 0;
         }
@@ -114,7 +114,7 @@ public class SetsTest extends MaxTestCase {
         final java.util.Set<Integer> set1 = Sets.from(ints);
         final java.util.Set<Integer> set2 = Sets.from(ints);
         assertTrue(set1.equals(set2));
-        final java.util.Set<Integer> filtered = Sets.filter(set1, _posPred);
+        final java.util.Set<Integer> filtered = Sets.filter(set1, posPred);
         assertFalse(filtered.equals(set2));
         assertTrue(set2.remove(ints[0]));
         assertTrue(filtered.equals(set2));
