@@ -35,9 +35,9 @@ import com.sun.max.lang.Arrays;
  */
 public class ArrayBag<Key_Type, Value_Type> {
 
-    private final Class<Value_Type> _valueType;
+    private final Class<Value_Type> valueType;
 
-    private final Map<Key_Type, Value_Type[]> _map;
+    private final Map<Key_Type, Value_Type[]> map;
 
     public enum MapType {
         SORTED,
@@ -45,70 +45,70 @@ public class ArrayBag<Key_Type, Value_Type> {
         IDENTITY;
     }
 
-    private final Value_Type[] _empty;
+    private final Value_Type[] empty;
 
     public ArrayBag(Class<Value_Type> valueType, MapType mapType) {
-        _valueType = valueType;
-        final Map<Key_Type, Value_Type[]> map;
+        this.valueType = valueType;
+        final Map<Key_Type, Value_Type[]> m;
         if (mapType == MapType.SORTED) {
-            map = new TreeMap<Key_Type, Value_Type[]>();
+            m = new TreeMap<Key_Type, Value_Type[]>();
         } else if (mapType == MapType.HASHED) {
-            map = new HashMap<Key_Type, Value_Type[]>();
+            m = new HashMap<Key_Type, Value_Type[]>();
         } else {
-            map = new IdentityHashMap<Key_Type, Value_Type[]>();
+            m = new IdentityHashMap<Key_Type, Value_Type[]>();
         }
-        _map = map;
+        this.map = m;
         final Class<Value_Type[]> arrayType = null;
-        _empty = StaticLoophole.cast(arrayType, Arrays.newInstance(_valueType, 0));
+        empty = StaticLoophole.cast(arrayType, Arrays.newInstance(valueType, 0));
     }
 
     public Value_Type[] get(Key_Type key) {
-        final Value_Type[] result = _map.get(key);
+        final Value_Type[] result = map.get(key);
         if (result == null) {
-            return _empty;
+            return empty;
         }
-        return _map.get(key);
+        return map.get(key);
     }
 
     public boolean containsKey(Key_Type key) {
-        return _map.containsKey(key);
+        return map.containsKey(key);
     }
 
     public void add(Key_Type key, Value_Type value) {
-        final Value_Type[] oldValues = _map.get(key);
+        final Value_Type[] oldValues = map.get(key);
         if (oldValues == null) {
-            final Value_Type[] newValues = Arrays.newInstance(_valueType, 1);
+            final Value_Type[] newValues = Arrays.newInstance(valueType, 1);
             newValues[0] = value;
-            _map.put(key, newValues);
+            map.put(key, newValues);
         } else if (!Arrays.contains(oldValues, value)) {
-            final Value_Type[] newValues = Arrays.newInstance(_valueType, oldValues.length + 1);
+            final Value_Type[] newValues = Arrays.newInstance(valueType, oldValues.length + 1);
             Arrays.copy(oldValues, newValues);
             newValues[oldValues.length] = value;
-            _map.put(key, newValues);
+            map.put(key, newValues);
         }
     }
 
     public void remove(Key_Type key, Value_Type value) {
-        final Value_Type[] oldValues = _map.get(key);
+        final Value_Type[] oldValues = map.get(key);
         if (oldValues == null || !Arrays.contains(oldValues, value)) {
             return;
         }
         if (oldValues.length == 1) {
-            _map.remove(key);
+            map.remove(key);
         } else {
-            final Value_Type[] newValues = Arrays.newInstance(_valueType, oldValues.length - 1);
+            final Value_Type[] newValues = Arrays.newInstance(valueType, oldValues.length - 1);
             int i = 0;
             for (Value_Type v : oldValues) {
                 if (v != value) {
                     newValues[i++] = v;
                 }
             }
-            _map.put(key, newValues);
+            map.put(key, newValues);
         }
     }
 
     public Set<Key_Type> keys() {
-        return _map.keySet();
+        return map.keySet();
     }
 
 }

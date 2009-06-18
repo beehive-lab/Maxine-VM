@@ -33,7 +33,7 @@ public final class Class_isInstance06 implements Cloneable {
     static final String _string = "";
     static final Object _object = new Object();
     static final String[] _sarray = {};
-    static final Object _this = new Class_isInstance06();
+    static final Object _thisObject = new Class_isInstance06();
 
     public static boolean test(int i) {
         Object object = null;
@@ -47,7 +47,7 @@ public final class Class_isInstance06 implements Cloneable {
             object = _sarray;
         }
         if (i == 3) {
-            object = _this;
+            object = _thisObject;
         }
         return Cloneable.class.isInstance(object);
     }

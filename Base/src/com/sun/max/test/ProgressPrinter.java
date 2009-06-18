@@ -37,24 +37,24 @@ public class ProgressPrinter {
     private static final String CTRL_GREEN = "\u001b[0;32m";
     private static final String CTRL_NORM = "\u001b[0;00m";
 
-    public final int _total;
-    private String _current;
-    private boolean _color;
-    private int _passed;
-    private int _finished;
-    private int _verbose;
+    public final int total;
+    private String current;
+    private boolean color;
+    private int passed;
+    private int finished;
+    private int verbose;
 
-    private final PrintStream _output;
-    private final String[] _failedTests;
-    private final String[] _failedMessages;
+    private final PrintStream output;
+    private final String[] failedTests;
+    private final String[] failedMessages;
 
     public ProgressPrinter(PrintStream out, int total, int verbose, boolean color) {
-        this._output = out;
-        this._total = total;
-        this._verbose = verbose;
-        this._color = color;
-        this._failedTests = new String[total];
-        this._failedMessages = new String[total];
+        this.output = out;
+        this.total = total;
+        this.verbose = verbose;
+        this.color = color;
+        this.failedTests = new String[total];
+        this.failedMessages = new String[total];
     }
 
     /**
@@ -62,10 +62,10 @@ public class ProgressPrinter {
      * @param test the name of the item to begin running, which is remembered in case the test fails
      */
     public void begin(String test) {
-        _current = test;
-        if (_verbose == 2) {
-            printTest(test, _finished);
-            _output.print("...");
+        current = test;
+        if (verbose == 2) {
+            printTest(test, finished);
+            output.print("...");
         }
     }
 
@@ -73,8 +73,8 @@ public class ProgressPrinter {
      * Finish the current test, indicating success.
      */
     public void pass() {
-        _passed++;
-        if (_verbose > 0) {
+        passed++;
+        if (verbose > 0) {
             output(CTRL_GREEN, '.', "ok");
         }
     }
@@ -84,14 +84,14 @@ public class ProgressPrinter {
      * @param message the message to associate with the specified test failure
      */
     public void fail(String message) {
-        _failedTests[_finished] = _current;
-        _failedMessages[_finished] = message;
-        if (_verbose > 0) {
+        failedTests[finished] = current;
+        failedMessages[finished] = message;
+        if (verbose > 0) {
             output(CTRL_RED, 'X', "failed");
         }
-        if (_verbose == 2) {
-            this._output.print("\t-> ");
-            this._output.println(message);
+        if (verbose == 2) {
+            this.output.print("\t-> ");
+            this.output.println(message);
         }
     }
 
@@ -100,59 +100,59 @@ public class ProgressPrinter {
      * @param verbose the new verbosity level of this printer
      */
     public void setVerbose(int verbose) {
-        this._verbose = verbose;
+        this.verbose = verbose;
     }
 
     /**
      * Sets the color output behavior of this progress printer.
      * @param color the color output of this printer
      */
-    public void setColors(boolean color) {
-        this._color = color;
+    public void setColor(boolean color) {
+        this.color = color;
     }
 
     private void printTest(String test, int i) {
-        _output.print(i);
-        _output.print(':');
+        output.print(i);
+        output.print(':');
         if (i < 100) {
-            _output.print(' ');
+            output.print(' ');
         }
         if (i < 100) {
-            _output.print(' ');
+            output.print(' ');
         }
-        _output.print(' ');
-        _output.print(test);
+        output.print(' ');
+        output.print(test);
     }
 
     private void output(String ctrl, char ch, String str) {
-        _finished++;
-        if (_verbose == 1) {
+        finished++;
+        if (verbose == 1) {
             control(ctrl);
-            _output.print(ch);
+            output.print(ch);
             control(CTRL_NORM);
-            if (_finished == _total) {
+            if (finished == total) {
                 // just go to next line
-                _output.println();
-            } else if (_finished % 50 == 0) {
-                _output.print(" ");
-                _output.print(_finished);
-                _output.print(" of ");
-                _output.print(_total);
-                _output.println();
-            } else if (_finished % 10 == 0) {
-                _output.print(' ');
+                output.println();
+            } else if (finished % 50 == 0) {
+                output.print(" ");
+                output.print(finished);
+                output.print(" of ");
+                output.print(total);
+                output.println();
+            } else if (finished % 10 == 0) {
+                output.print(' ');
             }
-        } else if (_verbose == 2) {
+        } else if (verbose == 2) {
             control(ctrl);
-            _output.print(str);
+            output.print(str);
             control(CTRL_NORM);
-            _output.println();
+            output.println();
         }
     }
 
     private void control(String ctrl) {
-        if (_color) {
-            _output.print(ctrl);
+        if (color) {
+            output.print(ctrl);
         }
     }
 
@@ -161,18 +161,18 @@ public class ProgressPrinter {
      * in the <i>quiet</i> mode.
      */
     public void report() {
-        _output.print(_passed);
-        _output.print(" of ");
-        _output.print(_total);
-        _output.println(" passed");
-        if (_verbose < 2) {
-            for (int i = 0; i < _total; i++) {
-                if (_failedTests[i] != null) {
+        output.print(passed);
+        output.print(" of ");
+        output.print(total);
+        output.println(" passed");
+        if (verbose < 2) {
+            for (int i = 0; i < total; i++) {
+                if (failedTests[i] != null) {
                     control(CTRL_RED);
-                    printTest(_failedTests[i], i);
+                    printTest(failedTests[i], i);
                     control(CTRL_NORM);
-                    _output.print(": ");
-                    _output.println(_failedMessages[i]);
+                    output.print(": ");
+                    output.println(failedMessages[i]);
                 }
             }
         }

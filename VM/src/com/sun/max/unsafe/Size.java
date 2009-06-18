@@ -77,6 +77,12 @@ public abstract class Size extends Address {
 
     @INLINE
     @Override
+    public final Size plus(long addend) {
+        return asAddress().plus(addend).asSize();
+    }
+
+    @INLINE
+    @Override
     public final Size plus(Address addend) {
         return asAddress().plus(addend).asSize();
     }
@@ -96,6 +102,12 @@ public abstract class Size extends Address {
     @INLINE
     @Override
     public final Size minus(int subtrahend) {
+        return asAddress().minus(subtrahend).asSize();
+    }
+
+    @INLINE
+    @Override
+    public final Size minus(long subtrahend) {
         return asAddress().minus(subtrahend).asSize();
     }
 
@@ -173,8 +185,8 @@ public abstract class Size extends Address {
 
     @INLINE
     @Override
-    public final Size bitCleared(int index) {
-        return asAddress().bitCleared(index).asSize();
+    public final Size bitClear(int index) {
+        return asAddress().bitClear(index).asSize();
     }
 
     @INLINE
@@ -191,6 +203,12 @@ public abstract class Size extends Address {
 
     @INLINE
     @Override
+    public final Size and(long operand) {
+        return asAddress().and(operand).asSize();
+    }
+
+    @INLINE
+    @Override
     public final Size or(Address operand) {
         return asAddress().or(operand).asSize();
     }
@@ -198,6 +216,12 @@ public abstract class Size extends Address {
     @INLINE
     @Override
     public final Size or(int operand) {
+        return asAddress().or(operand).asSize();
+    }
+
+    @INLINE
+    @Override
+    public final Size or(long operand) {
         return asAddress().or(operand).asSize();
     }
 

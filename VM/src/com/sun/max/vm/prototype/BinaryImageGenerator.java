@@ -373,7 +373,7 @@ public final class BinaryImageGenerator {
                     final JarEntry jarEntry = new JarEntry(classfilePath);
                     jarEntry.setTime(System.currentTimeMillis());
                     jarOutputStream.putNextEntry(jarEntry);
-                    jarOutputStream.write(classpathFile._contents);
+                    jarOutputStream.write(classpathFile.contents);
                     jarOutputStream.closeEntry();
                 } catch (ClassNotFoundException classNotFoundException) {
                     ProgramError.unexpected("could not find class file for " + classActor, classNotFoundException);

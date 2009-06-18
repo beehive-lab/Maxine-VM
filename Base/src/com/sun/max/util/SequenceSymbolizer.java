@@ -30,8 +30,8 @@ import com.sun.max.program.*;
  */
 final class SequenceSymbolizer<Symbol_Type extends Symbol> implements Symbolizer<Symbol_Type> {
 
-    private final Class<Symbol_Type> _symbolType;
-    private final Sequence<Symbol_Type> _symbols;
+    private final Class<Symbol_Type> symbolType;
+    private final Sequence<Symbol_Type> symbols;
 
     SequenceSymbolizer(Class<Symbol_Type> symbolType, Sequence<Symbol_Type> symbols) {
         if (symbolType.getName().startsWith("com.sun.max.asm") && Symbolizer.Static.hasPackageExternalAccessibleConstructors(symbolType)) {
@@ -40,21 +40,21 @@ final class SequenceSymbolizer<Symbol_Type extends Symbol> implements Symbolizer
             // inject its own classes into the package where the symbol classes are defined).
             ProgramError.unexpected("type of assembler symbol can have values constructed outside of defining package: " + symbolType);
         }
-        _symbolType = symbolType;
-        _symbols = symbols;
-        ProgramError.check(!_symbols.isEmpty());
+        this.symbolType = symbolType;
+        this.symbols = symbols;
+        ProgramError.check(!symbols.isEmpty());
     }
 
     public Class<Symbol_Type> type() {
-        return _symbolType;
+        return symbolType;
     }
 
     public int numberOfValues() {
-        return _symbols.length();
+        return symbols.length();
     }
 
     public Symbol_Type fromValue(int value) {
-        for (Symbol_Type symbol : _symbols) {
+        for (Symbol_Type symbol : symbols) {
             if (symbol.value() == value) {
                 return symbol;
             }
@@ -63,6 +63,6 @@ final class SequenceSymbolizer<Symbol_Type extends Symbol> implements Symbolizer
     }
 
     public Iterator<Symbol_Type> iterator() {
-        return _symbols.iterator();
+        return symbols.iterator();
     }
 }

@@ -34,8 +34,8 @@ public class PoolTest extends MaxTestCase {
 
     public PoolTest(String name) {
         super(name);
-        for (int i = 0; i < _nElems; i++) {
-            _elems[i] = new TestElement(i);
+        for (int i = 0; i < nElems; i++) {
+            elems[i] = new TestElement(i);
         }
     }
 
@@ -44,12 +44,12 @@ public class PoolTest extends MaxTestCase {
     }
 
     private static class TestElement implements PoolObject {
-        private int _serial;
+        private int serial;
         public TestElement(int n) {
-            _serial = n;
+            serial = n;
         }
         public int serial() {
-            return _serial;
+            return serial;
         }
     }
 
@@ -71,8 +71,8 @@ public class PoolTest extends MaxTestCase {
         }
     }
 
-    private final int _nElems = 100;
-    TestElement[] _elems = new TestElement[_nElems];
+    private final int nElems = 100;
+    TestElement[] elems = new TestElement[nElems];
 
     private void check_pool(Pool<TestElement> pool, int n) {
         assertEquals(pool.length(), n);
@@ -81,16 +81,16 @@ public class PoolTest extends MaxTestCase {
             assertTrue(iterator.hasNext());
             final TestElement element = pool.get(i);
             assertEquals(element.serial(), i);
-            assertSame(element, _elems[i]);
+            assertSame(element, elems[i]);
             assertSame(element, iterator.next());
         }
         assertFalse(iterator.hasNext());
     }
 
     public void test_pool() {
-        Pool<TestElement> pool = new IndexedSequencePool<TestElement>(new ArraySequence<TestElement>(_elems));
-        check_pool(pool, _nElems);
-        pool = new ArrayPool<TestElement>(_elems);
-        check_pool(pool, _nElems);
+        Pool<TestElement> pool = new IndexedSequencePool<TestElement>(new ArraySequence<TestElement>(elems));
+        check_pool(pool, nElems);
+        pool = new ArrayPool<TestElement>(elems);
+        check_pool(pool, nElems);
     }
 }

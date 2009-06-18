@@ -34,7 +34,7 @@ import com.sun.max.lang.*;
  */
 public class SequenceBag<Key_Type, Value_Type> implements Bag<Key_Type, Value_Type, Sequence<Value_Type>> {
 
-    private final Map<Key_Type, VariableSequence<Value_Type>> _map;
+    private final Map<Key_Type, VariableSequence<Value_Type>> map;
 
     public enum MapType {
         SORTED,
@@ -43,35 +43,33 @@ public class SequenceBag<Key_Type, Value_Type> implements Bag<Key_Type, Value_Ty
     }
 
     public SequenceBag(MapType mapType) {
-        final Map<Key_Type, VariableSequence<Value_Type>> map;
         if (mapType == MapType.SORTED) {
-            map = new TreeMap<Key_Type, VariableSequence<Value_Type>>();
+            this.map = new TreeMap<Key_Type, VariableSequence<Value_Type>>();
         } else if (mapType == MapType.HASHED) {
-            map = new HashMap<Key_Type, VariableSequence<Value_Type>>();
+            this.map = new HashMap<Key_Type, VariableSequence<Value_Type>>();
         } else {
-            map = new IdentityHashMap<Key_Type, VariableSequence<Value_Type>>();
+            this.map = new IdentityHashMap<Key_Type, VariableSequence<Value_Type>>();
         }
-        _map = map;
     }
 
     public Sequence<Value_Type> get(Key_Type key) {
-        final Sequence<Value_Type> result = _map.get(key);
+        final Sequence<Value_Type> result = map.get(key);
         if (result == null) {
             final Class<Value_Type> type = null;
             return Sequence.Static.empty(type);
         }
-        return _map.get(key);
+        return map.get(key);
     }
 
     public boolean containsKey(Key_Type key) {
-        return _map.containsKey(key);
+        return map.containsKey(key);
     }
 
     private VariableSequence<Value_Type> makeSequence(Key_Type key) {
-        VariableSequence<Value_Type> sequence = _map.get(key);
+        VariableSequence<Value_Type> sequence = map.get(key);
         if (sequence == null) {
             sequence = new ArrayListSequence<Value_Type>();
-            _map.put(key, sequence);
+            map.put(key, sequence);
         }
         return sequence;
     }
@@ -85,26 +83,26 @@ public class SequenceBag<Key_Type, Value_Type> implements Bag<Key_Type, Value_Ty
     }
 
     public void remove(Key_Type key, Value_Type value) {
-        final VariableSequence<Value_Type> sequence = _map.get(key);
+        final VariableSequence<Value_Type> sequence = map.get(key);
         if (sequence != null) {
             ShrinkableSequence.Static.removeAllEqual(sequence, value);
             if (sequence.isEmpty()) {
-                _map.remove(key);
+                map.remove(key);
             }
         }
     }
 
     public Set<Key_Type> keys() {
-        return _map.keySet();
+        return map.keySet();
     }
 
     public Iterable<Sequence<Value_Type>> collections() {
         final Class<Collection<Sequence<Value_Type>>> type = null;
-        return StaticLoophole.cast(type, _map.values());
+        return StaticLoophole.cast(type, map.values());
     }
 
     public Iterator<Value_Type> iterator() {
-        final Collection<VariableSequence<Value_Type>> sequences = _map.values();
+        final Collection<VariableSequence<Value_Type>> sequences = map.values();
         assert Iterable.class.isAssignableFrom(Collection.class);
         assert Iterable.class.isAssignableFrom(ArrayListSequence.class);
         final Class<Iterable<Iterable<Value_Type>>> type = null;

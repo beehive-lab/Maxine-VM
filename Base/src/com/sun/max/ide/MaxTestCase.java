@@ -53,25 +53,25 @@ public class MaxTestCase extends TestCase {
 
     public static final String PROGRAM_ARGUMENTS_SYSTEM_PROPERTY = "max.test.arguments";
 
-    private static String[] _programArguments;
+    private static String[] programArguments;
 
     public static String[] getProgramArguments() {
-        if (_programArguments == null) {
+        if (programArguments == null) {
             String args = System.getProperty(PROGRAM_ARGUMENTS_SYSTEM_PROPERTY);
             if (args != null) {
                 args = args.replace("\\:", "\u0000");
-                _programArguments = args.split("[\\s:]+");
-                for (int i = 0; i != _programArguments.length; ++i) {
-                    _programArguments[i] = _programArguments[i].replace("\u0000", ":");
+                programArguments = args.split("[\\s:]+");
+                for (int i = 0; i != programArguments.length; ++i) {
+                    programArguments[i] = programArguments[i].replace("\u0000", ":");
                 }
             } else {
-                _programArguments = new String[0];
+                programArguments = new String[0];
             }
         }
-        return _programArguments;
+        return programArguments;
     }
 
     public static void setProgramArguments(String[] args) {
-        _programArguments = args.clone();
+        programArguments = args.clone();
     }
 }

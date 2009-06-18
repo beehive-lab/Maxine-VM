@@ -29,7 +29,7 @@ import java.io.*;
  */
 public class SeekableByteArrayOutputStream extends ByteArrayOutputStream {
 
-    private int _highestCount;
+    private int highestCount;
 
     /**
      * @see ByteArrayOutputStream#ByteArrayOutputStream()
@@ -64,16 +64,16 @@ public class SeekableByteArrayOutputStream extends ByteArrayOutputStream {
      * Gets the index one past the highest index that has been written to in this stream.
      */
     public int endOfStream() {
-        if (_highestCount < count) {
-            _highestCount = count;
+        if (highestCount < count) {
+            highestCount = count;
         }
-        return _highestCount;
+        return highestCount;
     }
 
     @Override
     public void reset() {
         super.reset();
-        _highestCount = 0;
+        highestCount = 0;
     }
 
     /**

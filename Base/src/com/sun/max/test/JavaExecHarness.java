@@ -35,7 +35,7 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
     private static final char QUOTE = '"';
     private static final String ESCAPED_QUOTE = "\\\"";
 
-    private final Executor _executor;
+    private final Executor executor;
 
     public interface Executor {
         void initialize(JavaTestCase testCase, boolean loadingPackages);
@@ -44,94 +44,94 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
     }
 
     public JavaExecHarness(Executor exec) {
-        _executor = exec;
+        executor = exec;
     }
 
     public static class Run {
-        public final Object[] _input;
-        public final Object _expectedValue;
-        public final Class<? extends Throwable> _expectedException;
+        public final Object[] input;
+        public final Object expectedValue;
+        public final Class<? extends Throwable> expectedException;
 
-        Object _returnVal;
-        Throwable _returnExc;
-        Throwable _thrown;
+        Object returnVal;
+        Throwable returnExc;
+        Throwable thrown;
 
         Run(Object[] input, Object expected, Class<? extends Throwable> expectedException) {
-            _input = input;
-            _expectedValue = expected;
-            _expectedException = expectedException;
+            this.input = input;
+            expectedValue = expected;
+            this.expectedException = expectedException;
         }
     }
 
     public class JavaTestCase extends TestCase {
-        public final Class _class;
-        public final List<Run> _runs;
-        public final Executor _exec;
-        public final String _execName;
+        public final Class clazz;
+        public final List<Run> runs;
+        public final Executor exec;
+        public final String execName;
 
-        public Object _slot1;
-        public Object _slot2;
+        public Object slot1;
+        public Object slot2;
 
         protected JavaTestCase(String execName, Executor executor, File file, Class testClass, List<Run> runs, boolean loadingPackages) {
             super(JavaExecHarness.this, file, null);
-            _execName = execName;
-            _exec = executor;
-            _runs = runs;
-            _class = testClass;
+            this.execName = execName;
+            exec = executor;
+            this.runs = runs;
+            clazz = testClass;
             executor.initialize(this, loadingPackages);
         }
 
         @Override
         public void run() throws Throwable {
-            for (Run run : _runs) {
+            for (Run run : runs) {
                 try {
-                    run._returnVal = _exec.execute(this, run._input);
+                    run.returnVal = exec.execute(this, run.input);
                 } catch (InvocationTargetException t) {
-                    run._returnExc = t.getTargetException();
+                    run.returnExc = t.getTargetException();
                 } catch (Throwable t) {
-                    run._thrown = t;
+                    run.thrown = t;
                 }
             }
         }
     }
 
     public static class ExecFailure extends TestResult.Failure {
-        protected final Run _run;
-        protected final String _result;
-        protected final String _expect;
+        protected final Run run;
+        protected final String result;
+        protected final String expect;
         protected ExecFailure(Run run, String result) {
-            _run = run;
-            this._expect = resultToString(_run._expectedValue, _run._expectedException);
-            this._result = result;
+            this.run = run;
+            this.expect = resultToString(run.expectedValue, run.expectedException);
+            this.result = result;
         }
         @Override
         public String failureMessage(TestCase testCase) {
             final JavaTestCase javaTestCase = (JavaTestCase) testCase;
-            return inputToString(javaTestCase._class, _run, false) + " failed with " + _result + " (expected " + _expect + ")";
+            return inputToString(javaTestCase.clazz, run, false) + " failed with " + result + " (expected " + expect + ")";
         }
 
     }
 
     public TestResult evaluateTest(TestEngine engine, JavaTestCase testCase) {
-        if (testCase._thrown != null) {
-            return new TestResult.UnexpectedException(testCase._thrown);
+        if (testCase.thrown != null) {
+            return new TestResult.UnexpectedException(testCase.thrown);
         }
-        for (Run run : testCase._runs) {
-            if (run._thrown != null) {
-                return new ExecFailure(run, "unexpected " + run._thrown.getClass().getName());
+        for (Run run : testCase.runs) {
+            if (run.thrown != null) {
+                return new ExecFailure(run, "unexpected " + run.thrown.getClass().getName());
             }
-            final String result = valueToString(run._returnVal, run._returnExc);
-            if (run._expectedException != null) {
-                if (run._returnExc == null || run._returnExc.getClass() != run._expectedException) {
+            final String result = valueToString(run.returnVal, run.returnExc);
+            if (run.expectedException != null) {
+                if (run.returnExc == null || run.returnExc.getClass() != run.expectedException) {
                     return new ExecFailure(run, result);
                 }
-            } else if (run._returnExc != null) {
+            } else if (run.returnExc != null) {
                 return new ExecFailure(run, result);
-            } else if (run._expectedValue == null) {
-                if (run._returnVal != null) {
+            } else if (run.expectedValue == null) {
+                if (run.returnVal != null) {
                     return new ExecFailure(run, result);
                 }
-            } else if (!run._expectedValue.equals(run._returnVal)) {
+            } else if (!run.expectedValue.equals(run.returnVal)) {
                 return new ExecFailure(run, result);
             }
         }
@@ -146,7 +146,7 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
             final List<Run> runs = parseRuns(testClass, file, props);
             if (runs != null) {
                 // 3. add a test case to the engine
-                engine.addTest(new JavaTestCase("exec", _executor, file, testClass, runs, engine.loadingPackages()));
+                engine.addTest(new JavaTestCase("exec", executor, file, testClass, runs, engine.loadingPackages()));
             } else {
                 engine.skipFile(file);
             }
@@ -513,11 +513,11 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
             buffer.append(QUOTE);
         }
         buffer.append("test(");
-        for (int i = 0; i < run._input.length; i++) {
+        for (int i = 0; i < run.input.length; i++) {
             if (i > 0) {
                 buffer.append(',');
             }
-            final Object val = run._input[i];
+            final Object val = run.input[i];
             if (val instanceof Character) {
                 buffer.append(Chars.toJavaLiteral(((Character) val).charValue()));
             } else if (val instanceof String) {

@@ -29,17 +29,17 @@ import com.sun.max.profile.*;
  */
 public class MultiThreadTimer implements Timer {
 
-    private final Clock _clock;
+    private final Clock clock;
 
-    private ThreadLocal<SingleThreadTimer> _threadLocal = new ThreadLocal<SingleThreadTimer>() {
+    private ThreadLocal<SingleThreadTimer> threadLocal = new ThreadLocal<SingleThreadTimer>() {
         @Override
         public SingleThreadTimer initialValue() {
-            return new SingleThreadTimer(_clock);
+            return new SingleThreadTimer(clock);
         }
     };
 
     public MultiThreadTimer(Clock clock) {
-        this._clock = clock;
+        this.clock = clock;
     }
 
     public void start() {
@@ -51,7 +51,7 @@ public class MultiThreadTimer implements Timer {
     }
 
     public Clock getClock() {
-        return _clock;
+        return clock;
     }
 
     public long getLastElapsedTime() {
@@ -63,6 +63,6 @@ public class MultiThreadTimer implements Timer {
     }
 
     private SingleThreadTimer getTimer() {
-        return _threadLocal.get();
+        return threadLocal.get();
     }
 }

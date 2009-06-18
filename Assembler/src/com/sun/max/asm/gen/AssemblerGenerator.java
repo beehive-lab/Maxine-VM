@@ -304,6 +304,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
         final boolean printExampleInstruction = true;
         if (printExampleInstruction) {
+
             final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
             final AddressMapper addressMapper = new AddressMapper();
             int parameterIndex = 0;
@@ -530,7 +531,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
                 if (index == labelParameterIndex) {
                     writer.print(labelArgument);
                 } else {
-                    writer.print("_" + parameter.variableName());
+                    writer.print(parameter.variableName());
                 }
                 separator = ", ";
                 index++;
@@ -650,7 +651,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
                 final Class parameterType = parameter.type();
                 final String typeName = Classes.getSimpleName(parameterType, true);
                 final String variableName = parameter.variableName();
-                writer.println("private final " + typeName + " _" + variableName + ";");
+                writer.println("private final " + typeName + " " + variableName + ";");
                 parametersDecl = parametersDecl + typeName + " " + variableName + ", ";
             }
         }
@@ -661,7 +662,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
         for (Parameter parameter : parameters) {
             if (!(parameter instanceof LabelParameter)) {
                 final String variableName = parameter.variableName();
-                writer.println("_" + variableName + " = " + variableName + ";");
+                writer.println("this." + variableName + " = " + variableName + ";");
             }
         }
         writer.outdent();

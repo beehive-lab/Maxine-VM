@@ -199,7 +199,7 @@ public final class Ints {
         return buf.toString();
     }
 
-    private static final int [] _sizeBase10Table = {
+    private static final int [] sizeBase10Table = {
         9,
         99,
         999,
@@ -226,7 +226,7 @@ public final class Ints {
         }
         final int posX = x < 0 ? -x : x;
         for (int i = 0;; i++) {
-            if (posX <= _sizeBase10Table[i]) {
+            if (posX <= sizeBase10Table[i]) {
                 if (x < 0) {
                     return i + 2;
                 }

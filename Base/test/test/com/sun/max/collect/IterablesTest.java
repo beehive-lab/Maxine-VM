@@ -50,23 +50,23 @@ public class IterablesTest extends MaxTestCase {
     }
 
     private static final class StringEnumeration implements Enumeration<String> {
-        private String[] _strings;
-        private int _index;
+        private String[] strings;
+        private int index;
 
         private StringEnumeration(String... strings) {
-            _strings = strings;
-            _index = 0;
+            this.strings = strings;
+            this.index = 0;
         }
 
         public boolean hasMoreElements() {
-            if (_index < _strings.length) {
+            if (index < strings.length) {
                 return true;
             }
             return false;
         }
 
         public String nextElement() {
-            return _strings[_index++];
+            return strings[index++];
         }
     }
 

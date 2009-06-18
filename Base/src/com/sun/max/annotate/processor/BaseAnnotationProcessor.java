@@ -36,11 +36,11 @@ import javax.lang.model.util.*;
  */
 public class BaseAnnotationProcessor extends AbstractProcessor {
 
-    private Messager _messager;
-    private boolean _reportAsWarning;
+    private Messager messager;
+    private boolean reportAsWarning;
 
-    protected Types _typeUtils;
-    protected Elements _elementUtils;
+    protected Types typeUtils;
+    protected Elements elementUtils;
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
@@ -61,29 +61,29 @@ public class BaseAnnotationProcessor extends AbstractProcessor {
     public synchronized void init(ProcessingEnvironment environment) {
         for (Map.Entry<String, String> option : environment.getOptions().entrySet()) {
             if (option.getKey().equals("reportAsWarning")) {
-                _reportAsWarning = !"false".equals(option.getValue());
+                reportAsWarning = !"false".equals(option.getValue());
             } else {
                 System.err.println("Ignored unknown option: " + option);
             }
         }
 
-        _typeUtils = environment.getTypeUtils();
-        _elementUtils = environment.getElementUtils();
-        _messager = environment.getMessager();
+        typeUtils = environment.getTypeUtils();
+        elementUtils = environment.getElementUtils();
+        messager = environment.getMessager();
 
         super.init(environment);
     }
 
     protected void warning(Element element, String message) {
-        _messager.printMessage(WARNING, message, element);
+        messager.printMessage(WARNING, message, element);
     }
 
     protected void error(Element element, String message) {
-        _messager.printMessage(ERROR, message, element);
+        messager.printMessage(ERROR, message, element);
     }
 
     protected void problem(Element element, String message) {
-        if (_reportAsWarning) {
+        if (reportAsWarning) {
             warning(element, message);
         } else {
             error(element, message);
