@@ -177,8 +177,8 @@ public class ValueMap {
         table = ntable;
     }
 
-    private int indexOf(int valueNumber, Link[] table) {
-        return (valueNumber & 0x7fffffff) % table.length;
+    private int indexOf(int valueNumber, Link[] t) {
+        return (valueNumber & 0x7fffffff) % t.length;
     }
 
     private void killMemory(boolean all, CiField field, BasicType basicType) {

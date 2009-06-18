@@ -300,9 +300,9 @@ build_help="compile the Maxine Java and C sources, linking the latter
    produced by Checkstyle cause the build to fail.
    
 options:
- -clean     removes existing binaries and class files before building projects
- -javac     path to a Java source compiler (default: ${JAVA_HOME}/bin/javac)
- -cs        run Checkstyle over source if path to a Checkstyle 4 jar (default: value of CHECKSTYLE4_CP environment variable
+ -clean   removes existing binaries and class files before building projects
+ -javac   path to a Java source compiler (default: ${JAVA_HOME}/bin/javac)
+ -csonly  only run checkstyle over Java sources
 
 If no projects are given, then all projects are built."
 
@@ -311,6 +311,8 @@ function run_build() {
     native_only=false
     exit_after_help=false
     clean=false
+    dojavac=true
+    docc=true
     projects_to_build=""
     while [ "$1" != "" ]; do
         case $1 in
@@ -320,6 +322,10 @@ function run_build() {
                 ;;
             -clean )
                 clean=true
+                ;;
+            -csonly )
+                dojavac=false
+		docc=false
                 ;;
             -* )
                 echo "unknown build option '$1'"
@@ -342,7 +348,7 @@ function run_build() {
     fi
     
     # Compile C sources
-    if [[ "$projects_to_build" == *Native* ]]; then
+    if $docc && [[ "$projects_to_build" == *Native* ]]; then
         echo "Compiling C sources in ${maxine_dir}/Native..."
   
         check_gnu_make      
@@ -383,16 +389,20 @@ function run_build() {
         for source_dir in ${source_dirs} ; do
             pushd . >/dev/null
             cd ${project_dir_parent}/${project_dir}/${source_dir}
-            echo "Compiling Java sources in ${project_dir_parent}/${project_dir}/${source_dir}..."
             javac_input=/tmp/javacfiles.txt.$$
             find . -name *.java | grep -v 'package-info.java' >$javac_input
-            run ${javac} -source 1.6 -g -J-Xmx1g -classpath ${project_cp} -d ../bin @$javac_input 2>&1 | \
-               awk ' BEGIN                    { s=0; c=-1}
-                     /is Sun proprietary API/ { s++; c=2; }
-                                              { if (c-- >= 0) next; print; }
-                     END                      { if (s > 0) print "Suppressed " s " warnings about use of Sun implementation classes" }'
+	    if $dojavac ; then
+	        echo "Compiling Java sources in ${project_dir_parent}/${project_dir}/${source_dir}..."
+                run ${javac} -source 1.6 -g -J-Xmx1g -classpath ${project_cp} -d ../bin @$javac_input 2>&1 | \
+                   awk ' BEGIN                    { s=0; c=-1}
+                         /is Sun proprietary API/ { s++; c=2; }
+                                                  { if (c-- >= 0) next; print; }
+                         END                      { if (s > 0) print "Suppressed " s " warnings about use of Sun implementation classes" }'
             
-            result=${PIPESTATUS[0]}
+                result=${PIPESTATUS[0]}
+	    else
+	        result=0
+	    fi
             if [ $result -eq 0 ]; then
                 # Copying non Java source files from 'src' to 'bin'
                 for file in `find . -type f | grep -v '.java$'`; do
