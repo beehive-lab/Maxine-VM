@@ -386,7 +386,7 @@ public class ObjectHeaderTable extends InspectorTable {
         public ValueRenderer() {
 
             // Hub
-            _labels[HEADER_HUB_ROW] = new WordValueLabel(_inspection, WordValueLabel.ValueMode.REFERENCE) {
+            _labels[HEADER_HUB_ROW] = new WordValueLabel(_inspection, WordValueLabel.ValueMode.REFERENCE, ObjectHeaderTable.this) {
 
                 @Override
                 public Value fetchValue() {

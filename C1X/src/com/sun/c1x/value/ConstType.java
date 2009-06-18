@@ -77,7 +77,7 @@ public class ConstType extends ValueType {
     @Override
     public String toString() {
         final String val = _isObject ? "object@" + System.identityHashCode(_value) : _value.toString();
-        return basicType()._name + " = " + val;
+        return basicType().javaName + " = " + val;
     }
 
     /**

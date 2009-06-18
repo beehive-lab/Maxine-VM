@@ -159,7 +159,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
         setRowSelectionAllowed(false);
         setColumnSelectionAllowed(false);
         //setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        //addMouseListener(new FocusInspectorMouseClickAdapter(inspection()));
+        addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
 
         refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
@@ -320,7 +320,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
                     }
                 }
             };
-            _labels[FocusRowKind.ADDRESS.ordinal()] = new WordValueLabel(inspection, WordValueLabel.ValueMode.WORD) {
+            _labels[FocusRowKind.ADDRESS.ordinal()] = new WordValueLabel(inspection, WordValueLabel.ValueMode.WORD, FocusTable.this) {
                 @Override
                 public Value fetchValue() {
                     Address address = inspection().focus().address();
@@ -330,7 +330,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
                     return new WordValue(address);
                 }
             };
-            _labels[FocusRowKind.OBJECT.ordinal()] = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE) {
+            _labels[FocusRowKind.OBJECT.ordinal()] = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, FocusTable.this) {
                 @Override
                 public Value fetchValue() {
                     final TeleObject teleObject = inspection().focus().heapObject();

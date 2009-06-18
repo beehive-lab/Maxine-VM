@@ -325,14 +325,14 @@ public final class ThreadLocalsTable extends InspectorTable {
             }
         }
 
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, final int column) {
 
             InspectorLabel label = _labels[row];
             if (label == null) {
                 final String name = VmThreadLocal.NAMES.get(row);
                 final VmThreadLocal local = row < VmThreadLocal.VALUES.length() ? VmThreadLocal.VALUES.get(row) : null;
                 final ValueMode valueMode = local != null && local.kind() == Kind.REFERENCE ? ValueMode.REFERENCE : ValueMode.WORD;
-                label = new WordValueLabel(inspection(), valueMode) {
+                label = new WordValueLabel(inspection(), valueMode, ThreadLocalsTable.this) {
                     @Override
                     public Value fetchValue() {
                         if (_values.isValid(name)) {
@@ -340,7 +340,13 @@ public final class ThreadLocalsTable extends InspectorTable {
                         }
                         return VoidValue.VOID;
                     }
+                    @Override
+                    public void updateText() {
+                        super.updateText();
+                        ThreadLocalsTable.this.repaint();
+                    }
                 };
+                _labels[row] = label;
             }
             return label;
         }

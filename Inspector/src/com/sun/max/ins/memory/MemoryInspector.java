@@ -220,7 +220,7 @@ public final class MemoryInspector extends Inspector {
         final int numberOfBytesPerLine = _numberOfGroupsPerLine * _numberOfBytesPerGroup;
 
         for (int line = 0; line < numberOfLines; line++) {
-            final ValueLabel lineAddressLabel = new WordValueLabel(inspection(), ValueMode.WORD, lineAddress);
+            final ValueLabel lineAddressLabel = new WordValueLabel(inspection(), ValueMode.WORD, lineAddress, null);
             view.add(lineAddressLabel);
             lineAddress = lineAddress.plus(numberOfBytesPerLine);
             for (int group = 0; group < _numberOfGroupsPerLine; group++) {
