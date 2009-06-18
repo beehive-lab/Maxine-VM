@@ -337,6 +337,14 @@ JVM_SetThreadPriority(JNIEnv *env, jobject thread, jint prio) {
     (*env)->CallVoidMethod(env, thread, result.jMethod, prio);
 }
 
+#if os_DARWIN
+/* This function is expected by libjava.jnilib on Mac OS X. The current signature is just a guess. [Doug].*/
+void
+JVM_SetNativeThreadName(JNIEnv *env, jobject thread, jobject name) {
+    c_UNIMPLEMENTED();
+}
+#endif
+
 void
 JVM_Yield(JNIEnv *env, jclass threadClass) {
     JNIMethod result = resolveCriticalStaticMethod(env, "java/lang/Thread", "yield", "()V");
