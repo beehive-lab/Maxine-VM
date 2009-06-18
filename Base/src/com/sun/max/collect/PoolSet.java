@@ -34,10 +34,10 @@ import com.sun.max.lang.Arrays;
  */
 public abstract class PoolSet<PoolObject_Type extends PoolObject> implements Cloneable, IterableWithLength<PoolObject_Type> {
 
-    protected final Pool<PoolObject_Type> _pool;
+    protected final Pool<PoolObject_Type> pool;
 
     protected PoolSet(Pool<PoolObject_Type> pool) {
-        _pool = pool;
+        this.pool = pool;
     }
 
     /**
@@ -85,7 +85,7 @@ public abstract class PoolSet<PoolObject_Type extends PoolObject> implements Clo
      * Gets the pool containing the values that are in or may be added to this set.
      */
     public Pool<PoolObject_Type> pool() {
-        return _pool;
+        return pool;
     }
 
     /**

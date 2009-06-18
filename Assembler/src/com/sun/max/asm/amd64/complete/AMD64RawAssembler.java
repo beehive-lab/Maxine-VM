@@ -26675,7 +26675,7 @@ public class AMD64RawAssembler extends AbstractAMD64Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code mov  }<i>m64</i>
-     * Example disassembly syntax: {@code mov       al, [0x123456789ABCDE]}
+     * Example disassembly syntax: {@code mov       al, [L1: 0x123456789ABCDE]}
      */
     // Template#: 2960, Serial#: 901
     public void m_mov_AL(long m64) {
@@ -26684,7 +26684,7 @@ public class AMD64RawAssembler extends AbstractAMD64Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code mov  }<i>m64</i>
-     * Example disassembly syntax: {@code mov       eax, [0x123456789ABCDE]}
+     * Example disassembly syntax: {@code mov       eax, [L1: 0x123456789ABCDE]}
      */
     // Template#: 2961, Serial#: 902
     public void m_mov_EAX(long m64) {
@@ -26693,7 +26693,7 @@ public class AMD64RawAssembler extends AbstractAMD64Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code mov  }<i>m64</i>
-     * Example disassembly syntax: {@code mov       rax, [0x123456789ABCDE]}
+     * Example disassembly syntax: {@code mov       rax, [L1: 0x123456789ABCDE]}
      */
     // Template#: 2962, Serial#: 903
     public void m_mov_RAX(long m64) {
@@ -26702,7 +26702,7 @@ public class AMD64RawAssembler extends AbstractAMD64Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code mov  }<i>m64</i>
-     * Example disassembly syntax: {@code mov       ax, [0x123456789ABCDE]}
+     * Example disassembly syntax: {@code mov       ax, [L1: 0x123456789ABCDE]}
      */
     // Template#: 2963, Serial#: 904
     public void m_mov_AX(long m64) {
@@ -26711,7 +26711,7 @@ public class AMD64RawAssembler extends AbstractAMD64Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code mov  }<i>m64</i>
-     * Example disassembly syntax: {@code mov       [0x123456789ABCDE], al}
+     * Example disassembly syntax: {@code mov       [L1: 0x123456789ABCDE], al}
      */
     // Template#: 2964, Serial#: 905
     public void m_mov___AL(long m64) {
@@ -26720,7 +26720,7 @@ public class AMD64RawAssembler extends AbstractAMD64Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code mov  }<i>m64</i>
-     * Example disassembly syntax: {@code mov       [0x123456789ABCDE], eax}
+     * Example disassembly syntax: {@code mov       [L1: 0x123456789ABCDE], eax}
      */
     // Template#: 2965, Serial#: 906
     public void m_mov___EAX(long m64) {
@@ -26729,7 +26729,7 @@ public class AMD64RawAssembler extends AbstractAMD64Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code mov  }<i>m64</i>
-     * Example disassembly syntax: {@code mov       [0x123456789ABCDE], rax}
+     * Example disassembly syntax: {@code mov       [L1: 0x123456789ABCDE], rax}
      */
     // Template#: 2966, Serial#: 907
     public void m_mov___RAX(long m64) {
@@ -26738,7 +26738,7 @@ public class AMD64RawAssembler extends AbstractAMD64Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code mov  }<i>m64</i>
-     * Example disassembly syntax: {@code mov       [0x123456789ABCDE], ax}
+     * Example disassembly syntax: {@code mov       [L1: 0x123456789ABCDE], ax}
      */
     // Template#: 2967, Serial#: 908
     public void m_mov___AX(long m64) {

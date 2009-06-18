@@ -51,7 +51,7 @@ public abstract class TestResult {
         }
         @Override
         public String failureMessage(TestCase testCase) {
-            return testCase._file + " failed";
+            return testCase.file + " failed";
         }
     }
 
@@ -60,20 +60,20 @@ public abstract class TestResult {
     }
 
     public static class UnexpectedException extends Failure {
-        public final String _message;
-        public final Throwable _thrown;
+        public final String message;
+        public final Throwable thrown;
         public UnexpectedException(Throwable thrown) {
-            _message = "Unexpected exception";
-            _thrown = thrown;
+            this.message = "Unexpected exception";
+            this.thrown = thrown;
         }
         public UnexpectedException(String message, Throwable thrown) {
-            _message = message;
-            _thrown = thrown;
+            this.message = message;
+            this.thrown = thrown;
         }
 
         @Override
         public String failureMessage(TestCase testCase) {
-            return "unexpected exception: " + _thrown.toString();
+            return "unexpected exception: " + thrown.toString();
         }
     }
 }

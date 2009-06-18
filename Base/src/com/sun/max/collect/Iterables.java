@@ -96,7 +96,7 @@ public final class Iterables {
 
     private static final class EnumerationIterable<Element_Type> implements Iterable<Element_Type> {
 
-        private final Enumeration<Element_Type> _enumeration;
+        private final Enumeration<Element_Type> enumeration;
 
         private class EnumerationIterator implements Iterator<Element_Type> {
 
@@ -104,11 +104,11 @@ public final class Iterables {
             }
 
             public boolean hasNext() {
-                return _enumeration.hasMoreElements();
+                return enumeration.hasMoreElements();
             }
 
             public Element_Type next() {
-                return _enumeration.nextElement();
+                return enumeration.nextElement();
             }
 
             public void remove() {
@@ -118,7 +118,7 @@ public final class Iterables {
         }
 
         EnumerationIterable(Enumeration<Element_Type> enumeration) {
-            _enumeration = enumeration;
+            this.enumeration = enumeration;
         }
 
         public Iterator<Element_Type> iterator() {
@@ -147,19 +147,19 @@ public final class Iterables {
 
     private static final class Flatten1Iterator<Element_Type> implements Iterator<Element_Type> {
 
-        private Iterator<Iterable<Element_Type>> _outerIterator;
-        private Iterator<Element_Type> _innerIterator;
+        private Iterator<Iterable<Element_Type>> outerIterator;
+        private Iterator<Element_Type> innerIterator;
 
         private Flatten1Iterator(Iterable<Iterable<Element_Type>> iterable) {
-            _outerIterator = iterable.iterator();
+            outerIterator = iterable.iterator();
         }
 
         public boolean hasNext() {
-            while (_innerIterator == null || !_innerIterator.hasNext()) {
-                if (!_outerIterator.hasNext()) {
+            while (innerIterator == null || !innerIterator.hasNext()) {
+                if (!outerIterator.hasNext()) {
                     return false;
                 }
-                _innerIterator = _outerIterator.next().iterator();
+                innerIterator = outerIterator.next().iterator();
             }
             return true;
         }
@@ -168,7 +168,7 @@ public final class Iterables {
             if (!hasNext()) {
                 return null;
             }
-            return _innerIterator.next();
+            return innerIterator.next();
         }
 
         public void remove() {

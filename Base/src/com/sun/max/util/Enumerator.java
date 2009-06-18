@@ -35,54 +35,54 @@ import com.sun.max.program.*;
 public class Enumerator<Enumerable_Type extends Enum<Enumerable_Type> & Enumerable<Enumerable_Type>>
     implements Symbolizer<Enumerable_Type>, IndexedSequence<Enumerable_Type> {
 
-    private final Class<Enumerable_Type> _type;
-    private final Enumerable_Type[] _ordinalMap;
-    private final Enumerable_Type[] _valueMap;
-    private final int _lowestValue;
+    private final Class<Enumerable_Type> type;
+    private final Enumerable_Type[] ordinalMap;
+    private final Enumerable_Type[] valueMap;
+    private final int lowestValue;
 
     public Enumerator(Class<Enumerable_Type> type) {
-        _type = type;
-        _ordinalMap = type.getEnumConstants();
+        this.type = type;
+        ordinalMap = type.getEnumConstants();
 
-        int lowestValue = 0;
-        int highestValue = _ordinalMap.length - 1;
+        int lowValue = 0;
+        int highestValue = ordinalMap.length - 1;
         boolean valuesAreSameAsOrdinals = true;
-        for (Enumerable_Type e : _ordinalMap) {
+        for (Enumerable_Type e : ordinalMap) {
             final int value = e.value();
             if (value != e.ordinal()) {
                 valuesAreSameAsOrdinals = false;
             }
-            if (value < lowestValue) {
-                lowestValue = value;
+            if (value < lowValue) {
+                lowValue = value;
             } else if (value > highestValue) {
                 highestValue = value;
             }
         }
 
         if (valuesAreSameAsOrdinals) {
-            _lowestValue = 0;
-            _valueMap = _ordinalMap;
+            this.lowestValue = 0;
+            valueMap = ordinalMap;
         } else {
-            final int valueMapLength = (highestValue - lowestValue) + 1;
+            final int valueMapLength = (highestValue - lowValue) + 1;
             final Class<Enumerable_Type[]> arrayType = null;
-            _lowestValue = lowestValue;
-            _valueMap = StaticLoophole.cast(arrayType, new Enum[valueMapLength]);
-            for (Enumerable_Type e : _ordinalMap) {
+            this.lowestValue = lowValue;
+            valueMap = StaticLoophole.cast(arrayType, new Enum[valueMapLength]);
+            for (Enumerable_Type e : ordinalMap) {
                 final int value = e.value();
                 // The enumerable with the lowest ordinal is stored in the value map:
-                if (_valueMap[value] == null) {
-                    _valueMap[value] = e;
+                if (valueMap[value] == null) {
+                    valueMap[value] = e;
                 }
             }
         }
     }
 
     public Class<Enumerable_Type> type() {
-        return _type;
+        return type;
     }
 
     public int numberOfValues() {
-        return _ordinalMap.length;
+        return ordinalMap.length;
     }
 
     /**
@@ -98,23 +98,23 @@ public class Enumerator<Enumerable_Type extends Enum<Enumerable_Type> & Enumerab
     }
 
     public Enumerable_Type first() {
-        return _ordinalMap[0];
+        return ordinalMap[0];
     }
 
     public boolean isEmpty() {
-        return _ordinalMap.length == 0;
+        return ordinalMap.length == 0;
     }
 
     public Enumerable_Type last() {
-        return _ordinalMap[length() - 1];
+        return ordinalMap[length() - 1];
     }
 
     public int length() {
-        return _ordinalMap.length;
+        return ordinalMap.length;
     }
 
     public Iterator<Enumerable_Type> iterator() {
-        return Arrays.iterator(_ordinalMap);
+        return Arrays.iterator(ordinalMap);
     }
 
     @Override
@@ -128,7 +128,7 @@ public class Enumerator<Enumerable_Type extends Enum<Enumerable_Type> & Enumerab
     }
 
     public Collection<Enumerable_Type> toCollection() {
-        return java.util.Arrays.asList(_ordinalMap);
+        return java.util.Arrays.asList(ordinalMap);
     }
 
     /**
@@ -140,7 +140,7 @@ public class Enumerator<Enumerable_Type extends Enum<Enumerable_Type> & Enumerab
      *                 if {@code 0 < ordinal || ordinal >= length()}
      */
     public Enumerable_Type get(int ordinal) throws IndexOutOfBoundsException {
-        return _ordinalMap[ordinal];
+        return ordinalMap[ordinal];
     }
 
     /**
@@ -151,9 +151,9 @@ public class Enumerator<Enumerable_Type extends Enum<Enumerable_Type> & Enumerab
      * {@linkplain Enum#ordinal() ordinal} is returned.
      */
     public Enumerable_Type fromValue(int value) {
-        final int index = value - _lowestValue;
-        if (index >= 0 && index < _valueMap.length) {
-            return _valueMap[index];
+        final int index = value - lowestValue;
+        if (index >= 0 && index < valueMap.length) {
+            return valueMap[index];
         }
         return null;
     }

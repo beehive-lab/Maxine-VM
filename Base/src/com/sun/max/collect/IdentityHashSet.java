@@ -31,14 +31,14 @@ import java.util.*;
  */
 public class IdentityHashSet<Element_Type> implements Iterable<Element_Type>, Cloneable {
 
-    private final Map<Element_Type, Element_Type> _internalMap;
+    private final Map<Element_Type, Element_Type> internalMap;
 
     public IdentityHashSet() {
-        _internalMap = new IdentityHashMap<Element_Type, Element_Type>();
+        internalMap = new IdentityHashMap<Element_Type, Element_Type>();
     }
 
     public IdentityHashSet(int initialCapacity) {
-        _internalMap = new IdentityHashMap<Element_Type, Element_Type>(initialCapacity);
+        internalMap = new IdentityHashMap<Element_Type, Element_Type>(initialCapacity);
     }
 
     public IdentityHashSet(Element_Type[] elements) {
@@ -58,7 +58,7 @@ public class IdentityHashSet<Element_Type> implements Iterable<Element_Type>, Cl
      * @return true if {@code element} was already in this set
      */
     public boolean add(Element_Type element) {
-        return _internalMap.put(element, element) != null;
+        return internalMap.put(element, element) != null;
     }
 
     /**
@@ -86,11 +86,11 @@ public class IdentityHashSet<Element_Type> implements Iterable<Element_Type>, Cl
     }
 
     public boolean isEmpty() {
-        return _internalMap.isEmpty();
+        return internalMap.isEmpty();
     }
 
     public void clear() {
-        _internalMap.clear();
+        internalMap.clear();
     }
 
     /**
@@ -99,7 +99,7 @@ public class IdentityHashSet<Element_Type> implements Iterable<Element_Type>, Cl
      * @param element the element to remove.
      */
     public void remove(Element_Type element) {
-        _internalMap.remove(element);
+        internalMap.remove(element);
     }
 
     /**
@@ -131,12 +131,12 @@ public class IdentityHashSet<Element_Type> implements Iterable<Element_Type>, Cl
      * @throws NoSuchElementException if the set is empty
      */
     public Element_Type first() {
-        final Iterator<Element_Type> iterator = _internalMap.keySet().iterator();
+        final Iterator<Element_Type> iterator = internalMap.keySet().iterator();
         return iterator.next();
     }
 
     public Iterator<Element_Type> iterator() {
-        return _internalMap.keySet().iterator();
+        return internalMap.keySet().iterator();
     }
 
     @Override
@@ -147,11 +147,11 @@ public class IdentityHashSet<Element_Type> implements Iterable<Element_Type>, Cl
     }
 
     public boolean contains(Element_Type element) {
-        return _internalMap.containsKey(element);
+        return internalMap.containsKey(element);
     }
 
     public int length() {
-        return _internalMap.size();
+        return internalMap.size();
     }
 
     public final IdentityHashSet<Element_Type> union(IdentityHashSet<Element_Type> other) {
@@ -210,13 +210,13 @@ public class IdentityHashSet<Element_Type> implements Iterable<Element_Type>, Cl
     }
 
     public Element_Type[] toArray(Element_Type[] a) {
-        return _internalMap.keySet().toArray(a);
+        return internalMap.keySet().toArray(a);
     }
 
     @Override
     public String toString() {
         String string = "[ ";
-        for (Element_Type element : _internalMap.keySet()) {
+        for (Element_Type element : internalMap.keySet()) {
             string += element.toString() + " ";
         }
         string += "]";

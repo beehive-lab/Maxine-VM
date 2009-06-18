@@ -40,20 +40,20 @@ public class MaxHeapTest extends MaxTestCase {
         junit.textui.TestRunner.run(MaxHeapTest.class);
     }
 
-    private final int _numberOfArrays = 128;
-    private final int _leafLength = 1024 * 1024;
+    private final int numberOfArrays = 128;
+    private final int leafLength = 1024 * 1024;
 
 
     public void test_max() {
-        final int[][] objects = new int[_numberOfArrays][];
+        final int[][] objects = new int[numberOfArrays][];
         int i = 0;
         try {
-            while (i < _numberOfArrays) {
-                objects[i] = new int[_leafLength];
+            while (i < numberOfArrays) {
+                objects[i] = new int[leafLength];
                 i++;
             }
         } catch (OutOfMemoryError e) {
-            ProgramWarning.message("allocated " + i + " int[" + _leafLength + "] arrays");
+            ProgramWarning.message("allocated " + i + " int[" + leafLength + "] arrays");
         }
     }
 }

@@ -37,30 +37,30 @@ import com.sun.max.program.*;
  */
 public class Registry<Class_Type> {
 
-    protected final boolean _loadClass;
-    protected final Class<Class_Type> _classClass;
-    protected final Map<String, Class<? extends Class_Type>> _classMap;
-    protected final Map<String, Class_Type> _objectMap;
-    protected final Map<String, String> _stringMap;
+    protected final boolean loadClass;
+    protected final Class<Class_Type> classClass;
+    protected final Map<String, Class<? extends Class_Type>> classMap;
+    protected final Map<String, Class_Type> objectMap;
+    protected final Map<String, String> stringMap;
 
     public Registry(Class<Class_Type> classType, boolean loadClass) {
-        _loadClass = loadClass;
-        _classClass = classType;
-        _classMap = new HashMap<String, Class<? extends Class_Type>>();
-        _objectMap = new HashMap<String, Class_Type>();
-        _stringMap = new HashMap<String, String>();
+        this.loadClass = loadClass;
+        this.classClass = classType;
+        this.classMap = new HashMap<String, Class<? extends Class_Type>>();
+        this.objectMap = new HashMap<String, Class_Type>();
+        this.stringMap = new HashMap<String, String>();
     }
 
     public void registerObject(String alias, Class_Type object) {
-        _objectMap.put(alias, object);
+        objectMap.put(alias, object);
     }
 
     public void registerClass(String alias, Class<? extends Class_Type> classType) {
-        _classMap.put(alias, classType);
+        classMap.put(alias, classType);
     }
 
     public void registerClass(String alias, String className) {
-        _stringMap.put(alias, className);
+        stringMap.put(alias, className);
     }
 
     public Class_Type getInstance(String alias) {
@@ -68,19 +68,19 @@ public class Registry<Class_Type> {
     }
 
     public Class_Type getInstance(String alias, boolean fatal) {
-        final Class_Type object = _objectMap.get(alias);
+        final Class_Type object = objectMap.get(alias);
         if (object != null) {
             return object;
         }
-        Class<? extends Class_Type> classRef = _classMap.get(alias);
+        Class<? extends Class_Type> classRef = classMap.get(alias);
         String className = alias;
         try {
             if (classRef == null) {
-                className = _stringMap.get(alias);
+                className = stringMap.get(alias);
                 if (className != null) {
-                    classRef = Class.forName(className).asSubclass(_classClass);
-                } else if (_loadClass) {
-                    classRef = Class.forName(alias).asSubclass(_classClass);
+                    classRef = Class.forName(className).asSubclass(classClass);
+                } else if (loadClass) {
+                    classRef = Class.forName(alias).asSubclass(classClass);
                 } else {
                     return genError(fatal, "cannot find alias", alias, className);
                 }
@@ -94,15 +94,15 @@ public class Registry<Class_Type> {
         } catch (IllegalAccessException e) {
             return genError(fatal, "cannot instantiate class", alias, className);
         } catch (ClassCastException e) {
-            return genError(fatal, "not a subclass of " + _classClass.getName(), alias, className);
+            return genError(fatal, "not a subclass of " + classClass.getName(), alias, className);
         }
     }
 
     public Iterable<String> getAliases() {
         final LinkedList<String> lista = new LinkedList<String>();
-        lista.addAll(_objectMap.keySet());
-        lista.addAll(_classMap.keySet());
-        lista.addAll(_stringMap.keySet());
+        lista.addAll(objectMap.keySet());
+        lista.addAll(classMap.keySet());
+        lista.addAll(stringMap.keySet());
         return lista;
     }
 

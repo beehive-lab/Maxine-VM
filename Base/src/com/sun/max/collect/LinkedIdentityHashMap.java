@@ -29,7 +29,7 @@ import com.sun.max.lang.*;
  */
 public class LinkedIdentityHashMap<Key_Type, Value_Type> extends IdentityHashMap<Key_Type, Value_Type> implements DeterministicMap<Key_Type, Value_Type> {
 
-    private final LinkedList<Key_Type> _order = new LinkedList<Key_Type>();
+    private final LinkedList<Key_Type> order = new LinkedList<Key_Type>();
 
     public LinkedIdentityHashMap() {
     }
@@ -43,41 +43,41 @@ public class LinkedIdentityHashMap<Key_Type, Value_Type> extends IdentityHashMap
         final Value_Type oldValue = super.put(key, value);
         if (oldValue == null) {
             if (value != null) {
-                _order.add(key);
+                order.add(key);
             }
         } else {
             if (value == null) {
-                _order.remove(key);
+                order.remove(key);
             }
         }
         return oldValue;
     }
 
     public Iterator<Key_Type> iterator() {
-        return _order.iterator();
+        return order.iterator();
     }
 
     public int length() {
-        return _order.size();
+        return order.size();
     }
 
     public Key_Type first() {
-        return _order.getFirst();
+        return order.getFirst();
     }
 
     public Key_Type last() {
-        return _order.getLast();
+        return order.getLast();
     }
 
     @Override
     public boolean equals(Object other) {
         if (other instanceof LinkedIdentityHashMap) {
             final LinkedIdentityHashMap map = (LinkedIdentityHashMap) other;
-            if (_order.size() != map._order.size()) {
+            if (order.size() != map.order.size()) {
                 return false;
             }
-            final Iterator iterator = map._order.iterator();
-            for (Key_Type key : _order) {
+            final Iterator iterator = map.order.iterator();
+            for (Key_Type key : order) {
                 if (key != iterator.next() || !get(key).equals(map.get(key))) {
                     return false;
                 }
@@ -89,7 +89,7 @@ public class LinkedIdentityHashMap<Key_Type, Value_Type> extends IdentityHashMap
 
     @Override
     public int hashCode() {
-        return _order.hashCode();
+        return order.hashCode();
     }
 
     @Override

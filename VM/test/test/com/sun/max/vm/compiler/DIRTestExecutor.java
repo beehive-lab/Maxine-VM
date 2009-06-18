@@ -67,9 +67,9 @@ public class DIRTestExecutor implements JavaExecHarness.Executor {
             initialize(loadingPackages);
         }
 
-        final ClassActor classActor = ClassActor.fromJava(c._clazz);
-        c._slot1 = classActor;
-        c._slot2 = classActor.findLocalStaticMethodActor(_testMethod);
+        final ClassActor classActor = ClassActor.fromJava(c.clazz);
+        c.slot1 = classActor;
+        c.slot2 = classActor.findLocalStaticMethodActor(_testMethod);
     }
 
     public Object execute(JavaExecHarness.JavaTestCase c, Object[] vals) throws InvocationTargetException {
@@ -77,7 +77,7 @@ public class DIRTestExecutor implements JavaExecHarness.Executor {
         for (int i = 0; i < args.length; i++) {
             args[i] = Value.fromBoxedJavaValue(vals[i]);
         }
-        final ClassMethodActor classMethodActor = (ClassMethodActor) c._slot2;
+        final ClassMethodActor classMethodActor = (ClassMethodActor) c.slot2;
         final DirMethod method = _generator.makeIrMethod(classMethodActor);
         final DirInterpreter interpreter = new DirInterpreter();
         final Value result = interpreter.execute(method, args);

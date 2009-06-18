@@ -57,7 +57,7 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
     }
 
     public Object execute(JavaTestCase testCase, Object[] arguments) throws InvocationTargetException {
-        final StaticMethodActor staticMethodActor = (StaticMethodActor) testCase._slot2;
+        final StaticMethodActor staticMethodActor = (StaticMethodActor) testCase.slot2;
         Console.print(Color.LIGHTYELLOW, "Executing Testcase: " + staticMethodActor.toString() + ", Arguments: ");
         printValues(arguments);
         Console.println();
@@ -107,11 +107,11 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
     }
 
     public void initialize(JavaTestCase testCase, boolean loadingPackages) {
-        final ClassActor classActor = ClassActor.fromJava(testCase._clazz);
+        final ClassActor classActor = ClassActor.fromJava(testCase.clazz);
         final StaticMethodActor staticMethodActor = classActor.findLocalStaticMethodActor("test");
         if (staticMethodActor != null) {
-            testCase._slot1 = classActor;
-            testCase._slot2 = staticMethodActor;
+            testCase.slot1 = classActor;
+            testCase.slot2 = staticMethodActor;
         } else {
             ProgramError.unexpected("Could not find static test() method.");
         }

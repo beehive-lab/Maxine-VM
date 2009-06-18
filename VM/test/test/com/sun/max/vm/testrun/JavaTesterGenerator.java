@@ -233,11 +233,11 @@ public class JavaTesterGenerator {
         _writer.println(getTestCaseName(testCase) + "() {");
         _writer.indent();
         if (_verboseOption.getValue() > 2) {
-            _writer.println("JavaTesterRunScheme.begin(\"" + testCase._clazz.getName() + "\");");
+            _writer.println("JavaTesterRunScheme.begin(\"" + testCase.clazz.getName() + "\");");
         }
         _writer.println("String runString = null;");
         _writer.println("try {");
-        for (JavaExecHarness.Run run : testCase._runs) {
+        for (JavaExecHarness.Run run : testCase.runs) {
             genRun(testCase, run, testExceptions);
         }
         _writer.println("} catch (Throwable t) {");
@@ -250,7 +250,7 @@ public class JavaTesterGenerator {
     }
 
     private String getTestCaseName(JavaExecHarness.JavaTestCase testCase) {
-        return testCase._clazz.getName().replaceAll("\\.", "_");
+        return testCase.clazz.getName().replaceAll("\\.", "_");
     }
 
     public void genRun(JavaExecHarness.JavaTestCase testCase, JavaExecHarness.Run run, boolean testExceptions) {
@@ -263,9 +263,9 @@ public class JavaTesterGenerator {
 
     private void genRunComment(JavaExecHarness.JavaTestCase testCase, JavaExecHarness.Run run) {
         _writer.print("// ");
-        _writer.print(JavaExecHarness.inputToString(testCase._clazz, run, false));
+        _writer.print(JavaExecHarness.inputToString(testCase.clazz, run, false));
         _writer.print(" == ");
-        _writer.print(JavaExecHarness.resultToString(run._expectedValue, run._expectedException));
+        _writer.print(JavaExecHarness.resultToString(run.expectedValue, run.expectedException));
         _writer.println();
     }
 
@@ -273,9 +273,9 @@ public class JavaTesterGenerator {
         _writer.indent();
         String runString = "null";
         if (_runStringsOption.getValue()) {
-            runString = JavaExecHarness.inputToString(testCase._clazz, run, true);
+            runString = JavaExecHarness.inputToString(testCase.clazz, run, true);
         }
-        if (run._expectedException != null) {
+        if (run.expectedException != null) {
             // an exception is expected, a value is NOT expected
             _writer.println("try {");
             _writer.indent();
@@ -295,17 +295,17 @@ public class JavaTesterGenerator {
             _writer.println("}");
         } else {
             // check the return value against the expected return value
-            if (useEquals(run._expectedValue)) {
+            if (useEquals(run.expectedValue)) {
                 _writer.println("runString = " + runString + ";");
                 _writer.print("if (");
-                genValue(run._expectedValue);
+                genValue(run.expectedValue);
                 _writer.print(" != ");
                 genTestCall(testCase, run);
                 _writer.println(") {");
             } else {
                 _writer.println("runString = " + runString + ";");
                 _writer.print("if (!");
-                genValue(run._expectedValue);
+                genValue(run.expectedValue);
                 _writer.print(".equals(");
                 genTestCall(testCase, run);
                 _writer.println(")) {");
@@ -320,12 +320,12 @@ public class JavaTesterGenerator {
     }
 
     private void genTestCall(JavaExecHarness.JavaTestCase testCase, JavaExecHarness.Run run) {
-        _writer.print(testCase._clazz.getName() + ".test(");
-        for (int i = 0; i < run._input.length; i++) {
+        _writer.print(testCase.clazz.getName() + ".test(");
+        for (int i = 0; i < run.input.length; i++) {
             if (i > 0) {
                 _writer.print(", ");
             }
-            genValue(run._input[i]);
+            genValue(run.input[i]);
         }
         _writer.print(")");
     }
@@ -373,10 +373,10 @@ public class JavaTesterGenerator {
     }
 
     private String getClassLiteral(JavaExecHarness.JavaTestCase testCase) {
-        return testCase._clazz.getName() + ".class";
+        return testCase.clazz.getName() + ".class";
     }
 
     private String getExceptionName(Run run) {
-        return run._expectedException.getName() + ".class";
+        return run.expectedException.getName() + ".class";
     }
 }

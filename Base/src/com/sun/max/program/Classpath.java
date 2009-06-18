@@ -36,9 +36,9 @@ public class Classpath {
 
     public static final Classpath EMPTY = new Classpath(Sequence.Static.empty(Entry.class));
 
-    private final Sequence<Entry> _entries;
+    private final Sequence<Entry> entries;
 
-    private final Map<String, ClasspathFile> _classpathFileMap = new HashMap<String, ClasspathFile>();
+    private final Map<String, ClasspathFile> classpathFileMap = new HashMap<String, ClasspathFile>();
 
     /**
      * An entry in a classpath is a file system path that denotes an existing {@linkplain Directory directory},
@@ -95,10 +95,10 @@ public class Classpath {
      */
     static final class PlainFile extends Entry {
 
-        private final File _file;
+        private final File file;
 
         public PlainFile(File file) {
-            _file = file;
+            this.file = file;
         }
 
         @Override
@@ -108,7 +108,7 @@ public class Classpath {
 
         @Override
         public File file() {
-            return _file;
+            return file;
         }
 
         @Override
@@ -121,15 +121,15 @@ public class Classpath {
      * Represents a classpath entry that is a path to an existing directory.
      */
     static final class Directory extends Entry {
-        private final File _directory;
+        private final File directory;
 
         public Directory(File directory) {
-            _directory = directory;
+            this.directory = directory;
         }
 
         @Override
         ClasspathFile readFile(String path) {
-            final File file = new File(_directory, File.separatorChar == '/' ? path : path.replace('/', File.separatorChar));
+            final File file = new File(directory, File.separatorChar == '/' ? path : path.replace('/', File.separatorChar));
             if (file.exists()) {
                 try {
                     return new ClasspathFile(Files.toBytes(file), this);
@@ -143,7 +143,7 @@ public class Classpath {
 
         @Override
         public File file() {
-            return _directory;
+            return directory;
         }
 
         @Override
@@ -157,36 +157,36 @@ public class Classpath {
      */
     static final class Archive extends Entry {
 
-        private final File _file;
-        private ZipFile _zipFile;
+        private final File file;
+        private ZipFile zipFile;
 
         public Archive(File file) {
-            _file = file;
+            this.file = file;
         }
 
         @Override
         public ZipFile zipFile() {
-            if (_zipFile == null && _file != null) {
+            if (zipFile == null && file != null) {
                 try {
-                    _zipFile = new ZipFile(_file);
+                    zipFile = new ZipFile(file);
                 } catch (IOException e) {
-                    ProgramWarning.message("Error opening ZIP file: " + _file.getPath());
+                    ProgramWarning.message("Error opening ZIP file: " + file.getPath());
                     e.printStackTrace();
                 }
             }
-            return _zipFile;
+            return zipFile;
         }
 
         @Override
         ClasspathFile readFile(String path) {
-            final ZipFile zipFile = zipFile();
-            if (zipFile == null) {
+            final ZipFile zf = zipFile();
+            if (zf == null) {
                 return null;
             }
             try {
-                final ZipEntry zipEntry = zipFile.getEntry(path);
+                final ZipEntry zipEntry = zf.getEntry(path);
                 if (zipEntry != null) {
-                    return new ClasspathFile(readZipEntry(zipFile, zipEntry), this);
+                    return new ClasspathFile(readZipEntry(zf, zipEntry), this);
                 }
             } catch (IOException ioException) {
                 //ProgramWarning.message("could not read ZIP file: " + file);
@@ -196,7 +196,7 @@ public class Classpath {
 
         @Override
         public File file() {
-            return _file;
+            return file;
         }
 
         @Override
@@ -211,7 +211,7 @@ public class Classpath {
      * @return a sequence of {@code Entry} objects
      */
     public Sequence<Entry> entries() {
-        return _entries;
+        return entries;
     }
 
     /**
@@ -238,12 +238,12 @@ public class Classpath {
      * @param paths an array of classpath entries
      */
     public Classpath(String[] paths) {
-        final Entry[] entries = new Entry[paths.length];
+        final Entry[] entryArray = new Entry[paths.length];
         for (int i = 0; i < paths.length; ++i) {
             final String path = paths[i];
-            entries[i] = createEntry(path);
+            entryArray[i] = createEntry(path);
         }
-        _entries = new ArraySequence<Entry>(entries);
+        this.entries = new ArraySequence<Entry>(entryArray);
     }
 
     /**
@@ -252,7 +252,7 @@ public class Classpath {
      * @param paths a sequence of classpath entries
      */
     public Classpath(Sequence<Entry> entries) {
-        _entries = entries;
+        this.entries = entries;
     }
 
     /**
@@ -321,7 +321,7 @@ public class Classpath {
      * @return the result of prepending {@code classpath} to this classpath
      */
     public Classpath prepend(Classpath classpath) {
-        return new Classpath(Sequence.Static.concatenated(classpath._entries, _entries));
+        return new Classpath(Sequence.Static.concatenated(classpath.entries, entries));
     }
 
     /**
@@ -331,7 +331,7 @@ public class Classpath {
      * @return the result of prepending {@code classpath} to this classpath
      */
     public Classpath prepend(String path) {
-        return new Classpath(Sequence.Static.prepended(createEntry(path), _entries));
+        return new Classpath(Sequence.Static.prepended(createEntry(path), entries));
     }
 
     /**
@@ -373,8 +373,8 @@ public class Classpath {
     private void recordPackage(String className, ClasspathFile classpathFile) {
         final int ix = className.lastIndexOf('.');
         final String packageName = ix < 0 ? "/" : className.substring(0, ix + 1).replace('.', '/');
-        if (!_classpathFileMap.containsKey(packageName)) {
-            _classpathFileMap.put(packageName, classpathFile);
+        if (!classpathFileMap.containsKey(packageName)) {
+            classpathFileMap.put(packageName, classpathFile);
         }
     }
 
@@ -389,7 +389,7 @@ public class Classpath {
     public File findFile(String suffix) {
         for (Entry entry : entries()) {
             if (entry instanceof Directory) {
-                final File file = new File(((Directory) entry)._directory, suffix);
+                final File file = new File(((Directory) entry).directory, suffix);
                 if (file.exists()) {
                     return file;
                 }
@@ -418,11 +418,11 @@ public class Classpath {
 
     @Override
     public String toString() {
-        return Sequence.Static.toString(_entries, null, File.pathSeparator);
+        return Sequence.Static.toString(entries, null, File.pathSeparator);
     }
 
     public ClasspathFile classpathFileForPackage(String name) {
-        return _classpathFileMap.get(name);
+        return classpathFileMap.get(name);
     }
 
     /**

@@ -32,44 +32,44 @@ import com.sun.max.profile.*;
 public class SingleThreadTimer implements Timer {
     private static final int MAXIMUM_NESTING_DEPTH = 20;
 
-    private final Clock _clock;
-    private final long[] _start = new long[MAXIMUM_NESTING_DEPTH];
-    private final long[] _nested = new long[MAXIMUM_NESTING_DEPTH];
+    private final Clock clock;
+    private final long[] start = new long[MAXIMUM_NESTING_DEPTH];
+    private final long[] nested = new long[MAXIMUM_NESTING_DEPTH];
     @RESET
-    private int _depth;
+    private int depth;
     @RESET
-    private long _last;
+    private long last;
 
     public SingleThreadTimer(Clock clock) {
-        this._clock = clock;
+        this.clock = clock;
     }
 
     public void start() {
-        final int depth = _depth;
-        _nested[depth] = 0;
-        _depth = depth + 1;
-        _start[depth] = _clock.getTicks();
+        final int d = this.depth;
+        nested[d] = 0;
+        this.depth = d + 1;
+        start[d] = clock.getTicks();
     }
 
     public void stop() {
-        final long time = _clock.getTicks();
-        final int depth = _depth - 1;
-        _last = time - _start[depth];
-        if (depth > 0) {
-            _nested[depth - 1] += _last;
+        final long time = clock.getTicks();
+        final int d = this.depth - 1;
+        last = time - start[d];
+        if (d > 0) {
+            nested[d - 1] += last;
         }
-        _depth = depth;
+        this.depth = d;
     }
 
     public Clock getClock() {
-        return _clock;
+        return clock;
     }
 
     public long getLastElapsedTime() {
-        return _last;
+        return last;
     }
 
     public long getLastNestedTime() {
-        return _nested[_depth];
+        return nested[depth];
     }
 }

@@ -29,17 +29,17 @@ import com.sun.max.*;
  * @author Ben L. Titzer
  */
 public class MaxPackageOptionType extends Option.Type<MaxPackage> {
-    public final MaxPackage _superPackage;
-    public final Class _classType;
+    public final MaxPackage superPackage;
+    public final Class classType;
 
     public MaxPackageOptionType(MaxPackage superPackage, Class classType) {
         super(MaxPackage.class, "vm-package");
-        _superPackage = superPackage;
-        _classType = classType;
+        this.superPackage = superPackage;
+        this.classType = classType;
     }
     @Override
     public MaxPackage parseValue(String string) {
-        final String fullName = _superPackage.name() + "." + string;
+        final String fullName = superPackage.name() + "." + string;
         if (string != null && string.length() > 0) {
             MaxPackage result = MaxPackage.fromName(fullName);
             if (result == null) {

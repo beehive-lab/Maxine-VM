@@ -46,9 +46,9 @@ public final class HashIdentity<Object_Type> implements HashEquivalence<Object_T
         return System.identityHashCode(object);
     }
 
-    private static final HashIdentity _identity = new HashIdentity<Object>();
+    private static final HashIdentity identity = new HashIdentity<Object>();
 
     public static <Object_Type> HashIdentity<Object_Type> instance(Class<HashIdentity<Object_Type>> type) {
-        return StaticLoophole.cast(type, _identity);
+        return StaticLoophole.cast(type, identity);
     }
 }

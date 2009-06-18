@@ -35,16 +35,16 @@ public class Option<Value_Type> implements Cloneable {
      * implements method for parsing and unparsing values from strings.
      */
     public abstract static class Type<Value_Type> {
-        protected final String _typeName;
-        public final Class<Value_Type> _type;
+        protected final String typeName;
+        public final Class<Value_Type> type;
 
         protected Type(Class<Value_Type> type, String typeName) {
-            _typeName = typeName;
-            _type = type;
+            this.typeName = typeName;
+            this.type = type;
         }
 
         public String getTypeName() {
-            return _typeName;
+            return typeName;
         }
 
         public String unparseValue(Value_Type value) {
@@ -67,11 +67,11 @@ public class Option<Value_Type> implements Cloneable {
         }
     }
 
-    protected final String _name;
-    protected Value_Type _defaultValue;
-    protected final Type<Value_Type> _type;
-    protected final String _help;
-    protected Value_Type _value;
+    protected final String name;
+    protected Value_Type defaultValue;
+    protected final Type<Value_Type> type;
+    protected final String help;
+    protected Value_Type value;
 
     /**
      * The constructor for the {@code Option} class creates constructs a new
@@ -84,11 +84,11 @@ public class Option<Value_Type> implements Cloneable {
      *                 help output
      */
     public Option(String name, Value_Type defaultValue, Type<Value_Type> type, String help) {
-        _defaultValue = defaultValue;
-        _name = name;
-        _type = type;
-        _help = help;
-        _value = null;
+        this.defaultValue = defaultValue;
+        this.name = name;
+        this.type = type;
+        this.help = help;
+        value = null;
     }
 
     /**
@@ -97,17 +97,17 @@ public class Option<Value_Type> implements Cloneable {
      * @return the name of this option
      */
     public String getName() {
-        return _name;
+        return name;
     }
 
     /**
      * Sets the default value for this option,
      * which is the value that the option retains if no assignment is made.
      *
-     * @param value the default value of the option
+     * @param val the default value of the option
      */
-    public void setDefaultValue(Value_Type value) {
-        _defaultValue = value;
+    public void setDefaultValue(Value_Type val) {
+        defaultValue = val;
     }
 
     /**
@@ -117,7 +117,7 @@ public class Option<Value_Type> implements Cloneable {
      * @return the default value of the option
      */
     public Value_Type getDefaultValue() {
-        return _defaultValue;
+        return defaultValue;
     }
 
     /**
@@ -126,7 +126,7 @@ public class Option<Value_Type> implements Cloneable {
      * @return the current value of this option
      */
     public Value_Type getValue() {
-        return _value == null ? _defaultValue : _value;
+        return value == null ? defaultValue : value;
     }
 
     /**
@@ -135,7 +135,7 @@ public class Option<Value_Type> implements Cloneable {
      * @param value the new value to this option
      */
     public void setValue(Value_Type value) {
-        _value = value;
+        this.value = value;
     }
 
     /**
@@ -147,7 +147,7 @@ public class Option<Value_Type> implements Cloneable {
      * @param string the new value of this option as a string
      */
     public void setString(String string) {
-        setValue(_type.parseValue(string));
+        setValue(type.parseValue(string));
     }
 
     /**
@@ -155,7 +155,7 @@ public class Option<Value_Type> implements Cloneable {
      * @return the type of this option.
      */
     public Type<Value_Type> getType() {
-        return _type;
+        return type;
     }
 
     /**
@@ -165,11 +165,11 @@ public class Option<Value_Type> implements Cloneable {
      * @return the value of this option as a string
      */
     public String getString() {
-        return _type.unparseValue(getValue());
+        return type.unparseValue(getValue());
     }
 
     public String getHelp() {
-        return _help;
+        return help;
     }
 
     @Override

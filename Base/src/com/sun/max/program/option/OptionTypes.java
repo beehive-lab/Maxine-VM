@@ -86,11 +86,11 @@ public class OptionTypes {
     }
 
     public static class ConfigFile extends Option.Type<File> {
-        protected final OptionSet _optionSet;
+        protected final OptionSet optionSet;
 
         public ConfigFile(OptionSet set) {
             super(File.class, "file");
-            _optionSet = set;
+            optionSet = set;
         }
         @Override
         public File parseValue(String string) {
@@ -100,7 +100,7 @@ public class OptionTypes {
                     throw new Option.Error("configuration file does not exist: " + string);
                 }
                 try {
-                    _optionSet.loadFile(string, true);
+                    optionSet.loadFile(string, true);
                 } catch (IOException e) {
                     throw new Option.Error("error loading config from " + string + ": " + e.getMessage());
                 }
@@ -115,8 +115,8 @@ public class OptionTypes {
     }
 
     public static class ListType<Value_Type> extends Option.Type<List<Value_Type>> {
-        protected final char _separator;
-        public final Option.Type<Value_Type> _elementOptionType;
+        protected final char separator;
+        public final Option.Type<Value_Type> elementOptionType;
 
         private static <Value_Type> Class<List<Value_Type>> listClass(Class<Value_Type> valueClass) {
             final Class<Class<List<Value_Type>>> type = null;
@@ -124,9 +124,9 @@ public class OptionTypes {
         }
 
         public ListType(char separator, Option.Type<Value_Type> elementOptionType) {
-            super(listClass(elementOptionType._type), "list");
-            _separator = separator;
-            _elementOptionType = elementOptionType;
+            super(listClass(elementOptionType.type), "list");
+            this.separator = separator;
+            this.elementOptionType = elementOptionType;
         }
 
         @Override
@@ -135,7 +135,7 @@ public class OptionTypes {
             boolean previous = false;
             for (Object object : value) {
                 if (previous) {
-                    buffer.append(_separator);
+                    buffer.append(separator);
                 }
                 previous = true;
                 buffer.append(object.toString());
@@ -153,30 +153,30 @@ public class OptionTypes {
             final CharacterIterator i = new StringCharacterIterator(val);
             StringBuilder buffer = new StringBuilder(32);
             while (i.current() != CharacterIterator.DONE) {
-                if (i.current() == _separator) {
-                    list.add(_elementOptionType.parseValue(buffer.toString().trim()));
+                if (i.current() == separator) {
+                    list.add(elementOptionType.parseValue(buffer.toString().trim()));
                     buffer = new StringBuilder(32);
                 } else {
                     buffer.append(i.current());
                 }
                 i.next();
             }
-            list.add(_elementOptionType.parseValue(buffer.toString().trim()));
+            list.add(elementOptionType.parseValue(buffer.toString().trim()));
             return list;
         }
 
         @Override
         public String getValueFormat() {
-            return "[<arg>{" + _separator + "<arg>}*]";
+            return "[<arg>{" + separator + "<arg>}*]";
         }
     }
 
     public static class EnumType<Enum_Type extends Enum<Enum_Type>> extends Option.Type<Enum_Type> {
-        public final Enum_Type[] _values;
+        public final Enum_Type[] values;
 
         public EnumType(Class<Enum_Type> enumClass) {
             super(enumClass, enumClass.getName());
-            _values = enumClass.getEnumConstants();
+            values = enumClass.getEnumConstants();
         }
 
         @Override
@@ -184,17 +184,17 @@ public class OptionTypes {
             if (string == null) {
                 return null;
             }
-            for (Enum_Type value : _values) {
+            for (Enum_Type value : values) {
                 if (value.toString().equalsIgnoreCase(string)) {
                     return value;
                 }
             }
-            throw new Option.Error("invalid " + _typeName);
+            throw new Option.Error("invalid " + typeName);
         }
 
         @Override
         public String getValueFormat() {
-            return Arrays.toString(_values, "|");
+            return Arrays.toString(values, "|");
         }
     }
 
