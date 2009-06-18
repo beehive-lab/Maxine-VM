@@ -68,12 +68,12 @@ public class GraphBuilder {
         this.valueMap = new ValueMap();
         int osrBCI = compilation.osrBCI();
         BlockMap blockMap = compilation.getBlockMap(scope.method, osrBCI);
-        BlockBegin startBlock = blockMap.get(0);
+        BlockBegin start = blockMap.get(0);
 
-        pushRootScope(scope, blockMap, startBlock);
+        pushRootScope(scope, blockMap, start);
 
         this.initialState = stateAtEntry();
-        startBlock.merge(initialState);
+        start.merge(initialState);
 
         BlockBegin syncHandler = null;
         CiMethod method = method();
@@ -110,12 +110,12 @@ public class GraphBuilder {
                 end.setState(curState);
             } else {
                 // do the normal parsing
-                scopeData.addToWorkList(startBlock);
+                scopeData.addToWorkList(start);
                 iterateAllBlocks();
             }
         } else {
             // do the normal parsing
-            scopeData.addToWorkList(startBlock);
+            scopeData.addToWorkList(start);
             iterateAllBlocks();
         }
 
@@ -129,7 +129,7 @@ public class GraphBuilder {
             fillSyncHandler(lock, syncHandler, true);
         }
 
-        this.startBlock = setupStartBlock(osrBCI, startBlock, osrEntryBlock, initialState);
+        this.startBlock = setupStartBlock(osrBCI, start, osrEntryBlock, initialState);
         // eliminate redundant phis
         new PhiSimplifier(this.startBlock);
 
