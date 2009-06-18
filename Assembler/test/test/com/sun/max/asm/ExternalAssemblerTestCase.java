@@ -33,9 +33,9 @@ import com.sun.max.program.option.*;
  */
 public abstract class ExternalAssemblerTestCase extends AssemblerTestCase {
 
-    private final Option<String> _removeUserOption = _options.newStringOption("remote", null,
+    private final Option<String> removeUserOption = options.newStringOption("remote", null,
             "execute commands via an ssh connection with supplied user@hostname");
-    private final Option<String> _removePathOption = _options.newStringOption("remote-asm-path", null,
+    private final Option<String> removePathOption = options.newStringOption("remote-asm-path", null,
             "specifies an absolute path to the directory containing an assembler executable");
 
     public ExternalAssemblerTestCase() {
@@ -48,9 +48,9 @@ public abstract class ExternalAssemblerTestCase extends AssemblerTestCase {
 
     @Override
     protected void configure(AssemblyTester tester) {
-        tester.setRemoteUserAndHost(_removeUserOption.getValue());
-        if (_removePathOption.getValue() != null) {
-            tester.setRemoteAssemblerPath(_removePathOption.getValue());
+        tester.setRemoteUserAndHost(removeUserOption.getValue());
+        if (removePathOption.getValue() != null) {
+            tester.setRemoteAssemblerPath(removePathOption.getValue());
         }
     }
 }

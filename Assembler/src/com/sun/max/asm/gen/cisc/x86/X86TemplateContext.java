@@ -31,7 +31,7 @@ import com.sun.max.program.*;
  */
 public class X86TemplateContext implements Cloneable {
 
-    /** 
+    /**
      * ModRM  mod Field. See mod field in "A.3.1 ModRM Operand References"
      */
     public enum ModCase {
@@ -58,14 +58,14 @@ public class X86TemplateContext implements Cloneable {
 
         public static final IndexedSequence<RMCase> VALUES = new ArraySequence<RMCase>(values());
 
-        private final int _rmFieldValue;
+        private final int rmFieldValue;
 
         private RMCase(int rmFieldValue) {
-            _rmFieldValue = rmFieldValue;
+            this.rmFieldValue = rmFieldValue;
         }
 
         public int value() {
-            return _rmFieldValue;
+            return rmFieldValue;
         }
     }
 
@@ -92,74 +92,74 @@ public class X86TemplateContext implements Cloneable {
     public X86TemplateContext() {
     }
 
-    private WordWidth _addressSizeAttribute;
+    private WordWidth addressSizeAttribute;
 
     public WordWidth addressSizeAttribute() {
-        return _addressSizeAttribute;
+        return addressSizeAttribute;
     }
 
     public void setAddressSizeAttribute(WordWidth addressSizeAttribute) {
-        _addressSizeAttribute = addressSizeAttribute;
+        this.addressSizeAttribute = addressSizeAttribute;
     }
 
-    private WordWidth _operandSizeAttribute;
+    private WordWidth operandSizeAttribute;
 
     public WordWidth operandSizeAttribute() {
-        return _operandSizeAttribute;
+        return operandSizeAttribute;
     }
 
     public void setOperandSizeAttribute(WordWidth operandSizeAttribute) {
-        _operandSizeAttribute = operandSizeAttribute;
+        this.operandSizeAttribute = operandSizeAttribute;
     }
 
-    private ModRMGroup.Opcode _modRMGroupOpcode;
+    private ModRMGroup.Opcode modRMGroupOpcode;
 
     public ModRMGroup.Opcode modRMGroupOpcode() {
-        return _modRMGroupOpcode;
+        return modRMGroupOpcode;
     }
 
     public void setModRMGroupOpcode(ModRMGroup.Opcode modRMGroupOpcode) {
-        _modRMGroupOpcode = modRMGroupOpcode;
+        this.modRMGroupOpcode = modRMGroupOpcode;
     }
 
-    private ModCase _modCase;
+    private ModCase modCase;
 
     public ModCase modCase() {
-        return _modCase;
+        return modCase;
     }
 
     public void setModCase(ModCase modCase) {
-        _modCase = modCase;
+        this.modCase = modCase;
     }
 
-    private RMCase _rmCase;
+    private RMCase rmCase;
 
     public RMCase rmCase() {
-        return _rmCase;
+        return rmCase;
     }
 
-    public void setRMCase(RMCase rmCase) {
-        _rmCase = rmCase;
+    public void setRMCase(RMCase value) {
+        this.rmCase = value;
     }
 
-    private SibIndexCase _sibIndexCase;
+    private SibIndexCase sibIndexCase;
 
     public SibIndexCase sibIndexCase() {
-        return _sibIndexCase;
+        return sibIndexCase;
     }
 
     public void setSibIndexCase(SibIndexCase sibIndexCase) {
-        _sibIndexCase = sibIndexCase;
+        this.sibIndexCase = sibIndexCase;
     }
 
-    protected SibBaseCase _sibBaseCase;
+    protected SibBaseCase sibBaseCase;
 
     public SibBaseCase sibBaseCase() {
-        return _sibBaseCase;
+        return sibBaseCase;
     }
 
     public void setSibBaseCase(SibBaseCase sibBaseCase) {
-        _sibBaseCase = sibBaseCase;
+        this.sibBaseCase = sibBaseCase;
     }
 
     @Override
@@ -173,6 +173,6 @@ public class X86TemplateContext implements Cloneable {
 
     @Override
     public String toString() {
-        return "<Context: " + _addressSizeAttribute + ", " + _operandSizeAttribute + ", " + _modRMGroupOpcode + ", " + _modCase + ", " + _rmCase + ", " + _sibIndexCase + ", " + _sibBaseCase + ">";
+        return "<Context: " + addressSizeAttribute + ", " + operandSizeAttribute + ", " + modRMGroupOpcode + ", " + modCase + ", " + rmCase + ", " + sibIndexCase + ", " + sibBaseCase + ">";
     }
 }

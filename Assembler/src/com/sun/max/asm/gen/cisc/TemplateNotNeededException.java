@@ -41,17 +41,17 @@ public class TemplateNotNeededException extends Exception {
     }
 
     public static synchronized void enableSharedInstance() {
-        if (_sharedInstance == null) {
-            _sharedInstance = new TemplateNotNeededException();
+        if (sharedInstance == null) {
+            sharedInstance = new TemplateNotNeededException();
         }
     }
 
     public static synchronized void disableSharedInstance() {
-        _sharedInstance = null;
+        sharedInstance = null;
     }
 
     public static TemplateNotNeededException raise() throws TemplateNotNeededException {
-        final TemplateNotNeededException instance = _sharedInstance;
+        final TemplateNotNeededException instance = sharedInstance;
         if (instance != null) {
             throw instance;
         }
@@ -59,5 +59,5 @@ public class TemplateNotNeededException extends Exception {
     }
 
     // Checkstyle: stop
-    private static TemplateNotNeededException _sharedInstance;
+    private static TemplateNotNeededException sharedInstance;
 }

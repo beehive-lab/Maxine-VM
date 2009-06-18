@@ -40,19 +40,19 @@ public enum IA32IndirectRegister16 implements GeneralRegister<IA32IndirectRegist
 
     public static final Enumerator<IA32IndirectRegister16> ENUMERATOR = new Enumerator<IA32IndirectRegister16>(IA32IndirectRegister16.class);
 
-    private final int _id;
-    private final String _externalValue;
-    private final String _disassembledValue;
+    private final int id;
+    private final String externalValue;
+    private final String disassembledValue;
 
     private IA32IndirectRegister16(int id, String externalValue, String disassembledValue) {
-        _id = id;
-        _externalValue = externalValue;
-        _disassembledValue = disassembledValue;
+        this.id = id;
+        this.externalValue = externalValue;
+        this.disassembledValue = disassembledValue;
     }
 
     public static IA32IndirectRegister16 from(GeneralRegister generalRegister) {
         for (IA32IndirectRegister16 r : ENUMERATOR) {
-            if (r._id == generalRegister.id()) {
+            if (r.id == generalRegister.id()) {
                 return r;
             }
         }
@@ -68,7 +68,7 @@ public enum IA32IndirectRegister16 implements GeneralRegister<IA32IndirectRegist
     }
 
     public int id() {
-        return _id;
+        return id;
     }
 
     public long asLong() {
@@ -76,11 +76,11 @@ public enum IA32IndirectRegister16 implements GeneralRegister<IA32IndirectRegist
     }
 
     public String externalValue() {
-        return _externalValue;
+        return externalValue;
     }
 
     public String disassembledValue() {
-        return _disassembledValue;
+        return disassembledValue;
     }
 
     public Enumerator<IA32IndirectRegister16> enumerator() {

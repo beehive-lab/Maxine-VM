@@ -36,12 +36,12 @@ import com.sun.max.util.*;
  */
 public class SymbolicOperandField<Argument_Type extends SymbolicArgument> extends OperandField<Argument_Type> implements WrappableSpecification {
 
-    private final Symbolizer<Argument_Type> _symbolizer;
+    private final Symbolizer<Argument_Type> symbolizer;
 
     public SymbolicOperandField(BitRange bitRange, Symbolizer<Argument_Type> symbolizer) {
         super(bitRange);
         assert symbolizer != null;
-        _symbolizer = symbolizer;
+        this.symbolizer = symbolizer;
     }
 
     public static <Argument_Type extends SymbolicArgument> SymbolicOperandField<Argument_Type> createAscending(Symbolizer<Argument_Type> symbolizer, int... bits) {
@@ -69,7 +69,7 @@ public class SymbolicOperandField<Argument_Type extends SymbolicArgument> extend
 
     @Override
     public Class type() {
-        return _symbolizer.type();
+        return symbolizer.type();
     }
 
     public String valueString() {
@@ -85,7 +85,7 @@ public class SymbolicOperandField<Argument_Type extends SymbolicArgument> extend
 
     @Override
     public Argument_Type disassemble(int instruction) {
-        return _symbolizer.fromValue(extract(instruction));
+        return symbolizer.fromValue(extract(instruction));
     }
 
     @Override
@@ -99,7 +99,7 @@ public class SymbolicOperandField<Argument_Type extends SymbolicArgument> extend
     }
 
     public Iterable<? extends Argument> getLegalTestArguments() {
-        return _symbolizer;
+        return symbolizer;
     }
 
     public Iterable<? extends Argument> getIllegalTestArguments() {

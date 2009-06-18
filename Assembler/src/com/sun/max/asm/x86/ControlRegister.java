@@ -30,14 +30,14 @@ public enum ControlRegister implements EnumerableArgument<ControlRegister> {
 
     CR0(0), CR2(2), CR3(3);
 
-    private final int _number;
+    private final int number;
 
     private ControlRegister(int number) {
-        _number = number;
+        this.number = number;
     }
 
     public int value() {
-        return _number;
+        return number;
     }
 
     public long asLong() {

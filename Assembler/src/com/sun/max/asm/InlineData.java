@@ -30,8 +30,8 @@ import com.sun.max.asm.InlineDataDescriptor.*;
  */
 public class InlineData {
 
-    private final InlineDataDescriptor _descriptor;
-    private final byte[] _data;
+    private final InlineDataDescriptor descriptor;
+    private final byte[] data;
 
     /**
      * Creates an object to represent some otherwise unstructured.
@@ -44,19 +44,19 @@ public class InlineData {
 
     public InlineData(InlineDataDescriptor descriptor, byte[] data) {
         assert descriptor.size() == data.length;
-        _descriptor = descriptor;
-        _data = data;
+        this.descriptor = descriptor;
+        this.data = data;
     }
 
     public InlineDataDescriptor descriptor() {
-        return _descriptor;
+        return descriptor;
     }
 
     public byte[] data() {
-        return _data;
+        return data;
     }
 
     public int size() {
-        return _data.length;
+        return data.length;
     }
 }

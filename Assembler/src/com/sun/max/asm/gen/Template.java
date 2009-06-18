@@ -33,83 +33,83 @@ import com.sun.max.program.*;
  */
 public abstract class Template implements Cloneable, Comparable<Template> {
 
-    private int _serial = -1;
-    private InstructionDescription _instructionDescription;
-    private int _labelParameterIndex = -1;
+    private int serial = -1;
+    private InstructionDescription instructionDescription;
+    private int labelParameterIndex = -1;
 
     protected Template(InstructionDescription instructionDescription) {
-        _instructionDescription = instructionDescription;
+        this.instructionDescription = instructionDescription;
     }
 
     protected Template(InstructionDescription instructionDescription, int serial) {
-        _instructionDescription = instructionDescription;
-        _serial = serial;
+        this.instructionDescription = instructionDescription;
+        this.serial = serial;
     }
 
     public int serial() {
-        return _serial;
+        return serial;
     }
 
     public void setSerial(int serial) {
-        _serial = serial;
+        this.serial = serial;
     }
 
     public InstructionDescription instructionDescription() {
-        return _instructionDescription;
+        return instructionDescription;
     }
 
     /**
      * Gets the index of this template's parameter that can be represented as a {@linkplain Label label}.
      * A template is guaranteed to at most one such parameter.
-     * 
+     *
      * @return the index of this template's label parameter or -1 if it does not have one
      */
     public int labelParameterIndex() {
-        return _labelParameterIndex;
+        return labelParameterIndex;
     }
 
     /**
      * Call this right before adding a parameter that may be represented by a label.
      */
     protected void setLabelParameterIndex() {
-        if (_labelParameterIndex != -1) {
+        if (labelParameterIndex != -1) {
             ProgramError.unexpected("a template can have at most one label parameter");
         }
-        _labelParameterIndex = parameters().length();
+        labelParameterIndex = parameters().length();
     }
 
     public abstract String assemblerMethodName();
 
-    protected Method _assemblerMethod;
+    protected Method assemblerMethod;
 
     public abstract boolean isRedundant();
 
     /**
      * The name of the Java method that will be created from this template.
      */
-    private String _internalName;
+    private String internalName;
 
     public String internalName() {
-        return _internalName;
+        return internalName;
     }
 
-    protected void setInternalName(String internalName) {
-        _internalName = internalName;
+    protected void setInternalName(String name) {
+        this.internalName = name;
     }
 
     public String externalName() {
-        if (_instructionDescription.externalName() != null) {
-            return _instructionDescription.externalName();
+        if (instructionDescription.externalName() != null) {
+            return instructionDescription.externalName();
         }
         return internalName();
     }
 
     public boolean isDisassemblable() {
-        return _instructionDescription.isDisassemblable();
+        return instructionDescription.isDisassemblable();
     }
 
     public boolean isExternallyTestable() {
-        return _instructionDescription.isExternallyTestable();
+        return instructionDescription.isExternallyTestable();
     }
 
     public abstract Sequence<? extends Operand> operands();
@@ -141,7 +141,7 @@ public abstract class Template implements Cloneable, Comparable<Template> {
     public Template clone() {
         try {
             final Template result = (Template) super.clone();
-            result._instructionDescription = _instructionDescription.clone();
+            result.instructionDescription = instructionDescription.clone();
             return result;
         } catch (CloneNotSupportedException cloneNotSupportedException) {
             throw ProgramError.unexpected(cloneNotSupportedException);
@@ -149,7 +149,7 @@ public abstract class Template implements Cloneable, Comparable<Template> {
     }
 
     public int compareTo(Template other) {
-        int result = _internalName.compareTo(other._internalName);
+        int result = internalName.compareTo(other.internalName);
         if (result != 0) {
             return result;
         }

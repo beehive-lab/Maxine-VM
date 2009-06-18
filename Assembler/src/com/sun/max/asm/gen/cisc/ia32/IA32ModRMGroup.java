@@ -23,6 +23,7 @@ package com.sun.max.asm.gen.cisc.ia32;
 import static com.sun.max.asm.gen.cisc.x86.AddressingMethodCode.*;
 import static com.sun.max.asm.gen.cisc.x86.FloatingPointOperandCode.*;
 import static com.sun.max.asm.gen.cisc.x86.OperandCode.*;
+import static com.sun.max.asm.gen.cisc.x86.ModRMGroup.Opcode.*;
 import static com.sun.max.asm.gen.cisc.x86.OperandTypeCode.*;
 import static com.sun.max.asm.gen.cisc.x86.RegisterOperandCode.*;
 import static com.sun.max.asm.ia32.IA32GeneralRegister16.*;
@@ -35,219 +36,219 @@ import com.sun.max.collect.*;
 
 /**
  * See A-7 in the book.
- * 
+ *
  * @see com.sun.max.asm.x86
- * 
+ *
  * @author Bernd Mathiske
  */
 public enum IA32ModRMGroup implements ModRMGroup {
 
     GROUP_1(
-        modRM(ModRMGroup.Opcode._0, "ADD"),
-        modRM(ModRMGroup.Opcode._1, "OR"),
-        modRM(ModRMGroup.Opcode._2, "ADC"),
-        modRM(ModRMGroup.Opcode._3, "SBB"),
-        modRM(ModRMGroup.Opcode._4, "AND"),
-        modRM(ModRMGroup.Opcode._5, "SUB"),
-        modRM(ModRMGroup.Opcode._6, "XOR"),
-        modRM(ModRMGroup.Opcode._7, "CMP")
+        modRM(OPCODE_0, "ADD"),
+        modRM(OPCODE_1, "OR"),
+        modRM(OPCODE_2, "ADC"),
+        modRM(OPCODE_3, "SBB"),
+        modRM(OPCODE_4, "AND"),
+        modRM(OPCODE_5, "SUB"),
+        modRM(OPCODE_6, "XOR"),
+        modRM(OPCODE_7, "CMP")
     ),
     GROUP_2(
-        modRM(ModRMGroup.Opcode._0, "ROL"),
-        modRM(ModRMGroup.Opcode._1, "ROR"),
-        modRM(ModRMGroup.Opcode._2, "RCL"),
-        modRM(ModRMGroup.Opcode._3, "RCR"),
-        modRM(ModRMGroup.Opcode._4, "SHL"),
-        modRM(ModRMGroup.Opcode._5, "SHR"),
-        modRM(ModRMGroup.Opcode._7, "SAR")
+        modRM(OPCODE_0, "ROL"),
+        modRM(OPCODE_1, "ROR"),
+        modRM(OPCODE_2, "RCL"),
+        modRM(OPCODE_3, "RCR"),
+        modRM(OPCODE_4, "SHL"),
+        modRM(OPCODE_5, "SHR"),
+        modRM(OPCODE_7, "SAR")
     ),
     GROUP_3b(
-        modRM(ModRMGroup.Opcode._0, "TEST", Eb.excludeExternalTestArguments(AL), Ib),
-        modRM(ModRMGroup.Opcode._1, "TEST", Eb.excludeExternalTestArguments(AL), Ib),
-        modRM(ModRMGroup.Opcode._2, "NOT", Eb),
-        modRM(ModRMGroup.Opcode._3, "NEG", Eb),
-        modRM(ModRMGroup.Opcode._4, "MUL", Eb, new ExternalOmission(AL)),
-        modRM(ModRMGroup.Opcode._5, "IMUL", Eb, new ExternalOmission(AL)),
-        modRM(ModRMGroup.Opcode._6, "DIV", Eb, new ExternalOmission(AL)),
-        modRM(ModRMGroup.Opcode._7, "IDIV", Eb, new ExternalOmission(AL))
+        modRM(OPCODE_0, "TEST", Eb.excludeExternalTestArguments(AL), Ib),
+        modRM(OPCODE_1, "TEST", Eb.excludeExternalTestArguments(AL), Ib),
+        modRM(OPCODE_2, "NOT", Eb),
+        modRM(OPCODE_3, "NEG", Eb),
+        modRM(OPCODE_4, "MUL", Eb, new ExternalOmission(AL)),
+        modRM(OPCODE_5, "IMUL", Eb, new ExternalOmission(AL)),
+        modRM(OPCODE_6, "DIV", Eb, new ExternalOmission(AL)),
+        modRM(OPCODE_7, "IDIV", Eb, new ExternalOmission(AL))
     ),
     GROUP_3v(
-        modRM(ModRMGroup.Opcode._0, "TEST", Ev.excludeExternalTestArguments(AX, EAX), Iv),
-        modRM(ModRMGroup.Opcode._1, "TEST", Ev.excludeExternalTestArguments(AX, EAX), Iv),
-        modRM(ModRMGroup.Opcode._2, "NOT", Ev),
-        modRM(ModRMGroup.Opcode._3, "NEG", Ev),
-        modRM(ModRMGroup.Opcode._4, "MUL", Ev, eAX.omitExternally()),
-        modRM(ModRMGroup.Opcode._5, "IMUL", Ev, eAX.omitExternally()),
-        modRM(ModRMGroup.Opcode._6, "DIV", Ev, eAX.omitExternally()),
-        modRM(ModRMGroup.Opcode._7, "IDIV", Ev, eAX.omitExternally())
+        modRM(OPCODE_0, "TEST", Ev.excludeExternalTestArguments(AX, EAX), Iv),
+        modRM(OPCODE_1, "TEST", Ev.excludeExternalTestArguments(AX, EAX), Iv),
+        modRM(OPCODE_2, "NOT", Ev),
+        modRM(OPCODE_3, "NEG", Ev),
+        modRM(OPCODE_4, "MUL", Ev, eAX.omitExternally()),
+        modRM(OPCODE_5, "IMUL", Ev, eAX.omitExternally()),
+        modRM(OPCODE_6, "DIV", Ev, eAX.omitExternally()),
+        modRM(OPCODE_7, "IDIV", Ev, eAX.omitExternally())
     ),
     GROUP_4(
-        modRM(ModRMGroup.Opcode._0, "INC"),
-        modRM(ModRMGroup.Opcode._1, "DEC")
+        modRM(OPCODE_0, "INC"),
+        modRM(OPCODE_1, "DEC")
     ),
     GROUP_5(
-        modRM(ModRMGroup.Opcode._0, "INC", v, Ev.excludeExternalTestArguments(AX, CX, DX, BX, SP, BP, SI, DI, EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI)),
-        modRM(ModRMGroup.Opcode._1, "DEC", v, Ev.excludeExternalTestArguments(AX, CX, DX, BX, SP, BP, SI, DI, EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI)),
-        modRM(ModRMGroup.Opcode._2, "CALL", Ev),
-        modRM(ModRMGroup.Opcode._3, "CALL", Mp),
-        modRM(ModRMGroup.Opcode._4, "JMP", Ev),
-        modRM(ModRMGroup.Opcode._5, "JMP", Mp),
-        modRM(ModRMGroup.Opcode._6, "PUSH", Ev)
+        modRM(OPCODE_0, "INC", v, Ev.excludeExternalTestArguments(AX, CX, DX, BX, SP, BP, SI, DI, EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI)),
+        modRM(OPCODE_1, "DEC", v, Ev.excludeExternalTestArguments(AX, CX, DX, BX, SP, BP, SI, DI, EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI)),
+        modRM(OPCODE_2, "CALL", Ev),
+        modRM(OPCODE_3, "CALL", Mp),
+        modRM(OPCODE_4, "JMP", Ev),
+        modRM(OPCODE_5, "JMP", Mp),
+        modRM(OPCODE_6, "PUSH", Ev)
     ),
     GROUP_6a(
-        modRM(ModRMGroup.Opcode._0, "SLDT", Mw),
-        modRM(ModRMGroup.Opcode._1, "STR", Mw),
-        modRM(ModRMGroup.Opcode._2, "LLDT", Ew),
-        modRM(ModRMGroup.Opcode._3, "LTR", Ew),
-        modRM(ModRMGroup.Opcode._4, "VERR", Ew),
-        modRM(ModRMGroup.Opcode._5, "VERW", Ew)
+        modRM(OPCODE_0, "SLDT", Mw),
+        modRM(OPCODE_1, "STR", Mw),
+        modRM(OPCODE_2, "LLDT", Ew),
+        modRM(OPCODE_3, "LTR", Ew),
+        modRM(OPCODE_4, "VERR", Ew),
+        modRM(OPCODE_5, "VERW", Ew)
     ),
     GROUP_6b(
-        modRM(ModRMGroup.Opcode._0, "SLDT", Rv),
-        modRM(ModRMGroup.Opcode._1, "STR", Rv)
+        modRM(OPCODE_0, "SLDT", Rv),
+        modRM(OPCODE_1, "STR", Rv)
     ),
     GROUP_7a(
-        modRM(ModRMGroup.Opcode._0, "SGDT", Ms),
-        modRM(ModRMGroup.Opcode._1, "SIDT", Ms),
-        modRM(ModRMGroup.Opcode._2, "LGDT", Ms),
-        modRM(ModRMGroup.Opcode._3, "LIDT", Ms),
-        modRM(ModRMGroup.Opcode._4, "SMSW", Mw),
-        modRM(ModRMGroup.Opcode._6, "LMSW", Ew),
-        modRM(ModRMGroup.Opcode._7, "INVLPG", M)
+        modRM(OPCODE_0, "SGDT", Ms),
+        modRM(OPCODE_1, "SIDT", Ms),
+        modRM(OPCODE_2, "LGDT", Ms),
+        modRM(OPCODE_3, "LIDT", Ms),
+        modRM(OPCODE_4, "SMSW", Mw),
+        modRM(OPCODE_6, "LMSW", Ew),
+        modRM(OPCODE_7, "INVLPG", M)
     ),
     GROUP_7b(
-        modRM(ModRMGroup.Opcode._4, "SMSW", Rv)
+        modRM(OPCODE_4, "SMSW", Rv)
     ),
     GROUP_8(
-        modRM(ModRMGroup.Opcode._4, "BT"),
-        modRM(ModRMGroup.Opcode._5, "BTS"),
-        modRM(ModRMGroup.Opcode._6, "BTR"),
-        modRM(ModRMGroup.Opcode._7, "BTC")
+        modRM(OPCODE_4, "BT"),
+        modRM(OPCODE_5, "BTS"),
+        modRM(OPCODE_6, "BTR"),
+        modRM(OPCODE_7, "BTC")
     ),
     GROUP_9(
-        modRM(ModRMGroup.Opcode._1, "CMPXCHG8B", Mq)
+        modRM(OPCODE_1, "CMPXCHG8B", Mq)
     ),
     GROUP_10(
-        modRM(ModRMGroup.Opcode._0, "UD2"),
-        modRM(ModRMGroup.Opcode._1, "UD2"),
-        modRM(ModRMGroup.Opcode._2, "UD2"),
-        modRM(ModRMGroup.Opcode._3, "UD2"),
-        modRM(ModRMGroup.Opcode._4, "UD2"),
-        modRM(ModRMGroup.Opcode._5, "UD2"),
-        modRM(ModRMGroup.Opcode._6, "UD2"),
-        modRM(ModRMGroup.Opcode._7, "UD2")
+        modRM(OPCODE_0, "UD2"),
+        modRM(OPCODE_1, "UD2"),
+        modRM(OPCODE_2, "UD2"),
+        modRM(OPCODE_3, "UD2"),
+        modRM(OPCODE_4, "UD2"),
+        modRM(OPCODE_5, "UD2"),
+        modRM(OPCODE_6, "UD2"),
+        modRM(OPCODE_7, "UD2")
     ),
     GROUP_11(
-        modRM(ModRMGroup.Opcode._2, "PSRLW", PRq, Ib),
-        modRM(ModRMGroup.Opcode._4, "PSRAW", PRq, Ib),
-        modRM(ModRMGroup.Opcode._6, "PSLLW", PRq, Ib)
+        modRM(OPCODE_2, "PSRLW", PRq, Ib),
+        modRM(OPCODE_4, "PSRAW", PRq, Ib),
+        modRM(OPCODE_6, "PSLLW", PRq, Ib)
     ),
     GROUP_12(
-        modRM(ModRMGroup.Opcode._2, "PSRLD", PRq, Ib),
-        modRM(ModRMGroup.Opcode._4, "PSRAD", PRq, Ib),
-        modRM(ModRMGroup.Opcode._6, "PSLLD", PRq, Ib)
+        modRM(OPCODE_2, "PSRLD", PRq, Ib),
+        modRM(OPCODE_4, "PSRAD", PRq, Ib),
+        modRM(OPCODE_6, "PSLLD", PRq, Ib)
     ),
     GROUP_13a(
-        modRM(ModRMGroup.Opcode._2, "PSRLQ", PRq, Ib),
-        modRM(ModRMGroup.Opcode._6, "PSLLQ", PRq, Ib)
+        modRM(OPCODE_2, "PSRLQ", PRq, Ib),
+        modRM(OPCODE_6, "PSLLQ", PRq, Ib)
     ),
     GROUP_13b(
-        modRM(ModRMGroup.Opcode._2, "PSRLQ", VRq, Ib),
-        modRM(ModRMGroup.Opcode._3, "PSRLDQ", VRdq, Ib),
-        modRM(ModRMGroup.Opcode._6, "PSLLQ", VRq, Ib),
-        modRM(ModRMGroup.Opcode._7, "PSLLDQ", VRdq, Ib)
+        modRM(OPCODE_2, "PSRLQ", VRq, Ib),
+        modRM(OPCODE_3, "PSRLDQ", VRdq, Ib),
+        modRM(OPCODE_6, "PSLLQ", VRq, Ib),
+        modRM(OPCODE_7, "PSLLDQ", VRdq, Ib)
     ),
     GROUP_15b(
-        modRM(ModRMGroup.Opcode._5, "LFENCE"),
-        modRM(ModRMGroup.Opcode._6, "MFENCE"),
-        modRM(ModRMGroup.Opcode._7, "SFENCE")
+        modRM(OPCODE_5, "LFENCE"),
+        modRM(OPCODE_6, "MFENCE"),
+        modRM(OPCODE_7, "SFENCE")
     ),
     FP_D8(
-        modRM(ModRMGroup.Opcode._0, "FADD", single_real),
-        modRM(ModRMGroup.Opcode._1, "FMUL", single_real),
-        modRM(ModRMGroup.Opcode._2, "FCOM", single_real),
-        modRM(ModRMGroup.Opcode._3, "FCOMP", single_real),
-        modRM(ModRMGroup.Opcode._4, "FSUB", single_real),
-        modRM(ModRMGroup.Opcode._5, "FSUBR", single_real),
-        modRM(ModRMGroup.Opcode._6, "FDIV", single_real),
-        modRM(ModRMGroup.Opcode._7, "FDIVR", single_real)
+        modRM(OPCODE_0, "FADD", single_real),
+        modRM(OPCODE_1, "FMUL", single_real),
+        modRM(OPCODE_2, "FCOM", single_real),
+        modRM(OPCODE_3, "FCOMP", single_real),
+        modRM(OPCODE_4, "FSUB", single_real),
+        modRM(OPCODE_5, "FSUBR", single_real),
+        modRM(OPCODE_6, "FDIV", single_real),
+        modRM(OPCODE_7, "FDIVR", single_real)
     ),
     FP_D9(
-        modRM(ModRMGroup.Opcode._0, "FLD", single_real),
-        modRM(ModRMGroup.Opcode._2, "FST", single_real),
-        modRM(ModRMGroup.Opcode._3, "FSTP", single_real),
-        modRM(ModRMGroup.Opcode._4, "FLDENV", bytes_14_28),
-        modRM(ModRMGroup.Opcode._5, "FLDCW", bytes_2),
-        modRM(ModRMGroup.Opcode._6, "FSTENV", bytes_14_28),
-        modRM(ModRMGroup.Opcode._7, "FSTCW", bytes_2)
+        modRM(OPCODE_0, "FLD", single_real),
+        modRM(OPCODE_2, "FST", single_real),
+        modRM(OPCODE_3, "FSTP", single_real),
+        modRM(OPCODE_4, "FLDENV", bytes_14_28),
+        modRM(OPCODE_5, "FLDCW", bytes_2),
+        modRM(OPCODE_6, "FSTENV", bytes_14_28),
+        modRM(OPCODE_7, "FSTCW", bytes_2)
     ),
     FP_DA(
-        modRM(ModRMGroup.Opcode._0, "FIADD", short_integer),
-        modRM(ModRMGroup.Opcode._1, "FIMUL", short_integer),
-        modRM(ModRMGroup.Opcode._2, "FICOM", short_integer),
-        modRM(ModRMGroup.Opcode._3, "FICOMP", short_integer),
-        modRM(ModRMGroup.Opcode._4, "FISUB", short_integer),
-        modRM(ModRMGroup.Opcode._5, "FISUBR", short_integer),
-        modRM(ModRMGroup.Opcode._6, "FIDIV", short_integer),
-        modRM(ModRMGroup.Opcode._7, "FIDIVR", short_integer)
+        modRM(OPCODE_0, "FIADD", short_integer),
+        modRM(OPCODE_1, "FIMUL", short_integer),
+        modRM(OPCODE_2, "FICOM", short_integer),
+        modRM(OPCODE_3, "FICOMP", short_integer),
+        modRM(OPCODE_4, "FISUB", short_integer),
+        modRM(OPCODE_5, "FISUBR", short_integer),
+        modRM(OPCODE_6, "FIDIV", short_integer),
+        modRM(OPCODE_7, "FIDIVR", short_integer)
     ),
     FP_DB(
-        modRM(ModRMGroup.Opcode._0, "FILD", short_integer),
-        modRM(ModRMGroup.Opcode._2, "FIST", short_integer),
-        modRM(ModRMGroup.Opcode._3, "FISTP", short_integer),
-        modRM(ModRMGroup.Opcode._5, "FLD", extended_real),
-        modRM(ModRMGroup.Opcode._7, "FSTP", extended_real)
+        modRM(OPCODE_0, "FILD", short_integer),
+        modRM(OPCODE_2, "FIST", short_integer),
+        modRM(OPCODE_3, "FISTP", short_integer),
+        modRM(OPCODE_5, "FLD", extended_real),
+        modRM(OPCODE_7, "FSTP", extended_real)
     ),
     FP_DC(
-        modRM(ModRMGroup.Opcode._0, "FADD", double_real),
-        modRM(ModRMGroup.Opcode._1, "FMUL", double_real),
-        modRM(ModRMGroup.Opcode._2, "FCOM", double_real),
-        modRM(ModRMGroup.Opcode._3, "FCOMP", double_real),
-        modRM(ModRMGroup.Opcode._4, "FSUB", double_real),
-        modRM(ModRMGroup.Opcode._5, "FSUBR", double_real),
-        modRM(ModRMGroup.Opcode._6, "FDIV", double_real),
-        modRM(ModRMGroup.Opcode._7, "FDIVR", double_real)
+        modRM(OPCODE_0, "FADD", double_real),
+        modRM(OPCODE_1, "FMUL", double_real),
+        modRM(OPCODE_2, "FCOM", double_real),
+        modRM(OPCODE_3, "FCOMP", double_real),
+        modRM(OPCODE_4, "FSUB", double_real),
+        modRM(OPCODE_5, "FSUBR", double_real),
+        modRM(OPCODE_6, "FDIV", double_real),
+        modRM(OPCODE_7, "FDIVR", double_real)
     ),
     FP_DD(
-        modRM(ModRMGroup.Opcode._0, "FLD", double_real),
-        modRM(ModRMGroup.Opcode._2, "FST", double_real),
-        modRM(ModRMGroup.Opcode._3, "FSTP", double_real),
-        modRM(ModRMGroup.Opcode._4, "FRSTOR", bytes_98_108),
-        modRM(ModRMGroup.Opcode._6, "FSAVE", bytes_98_108),
-        modRM(ModRMGroup.Opcode._7, "FSTSW", bytes_2)
+        modRM(OPCODE_0, "FLD", double_real),
+        modRM(OPCODE_2, "FST", double_real),
+        modRM(OPCODE_3, "FSTP", double_real),
+        modRM(OPCODE_4, "FRSTOR", bytes_98_108),
+        modRM(OPCODE_6, "FSAVE", bytes_98_108),
+        modRM(OPCODE_7, "FSTSW", bytes_2)
     ),
     FP_DE(
-        modRM(ModRMGroup.Opcode._0, "FIADD", word_integer),
-        modRM(ModRMGroup.Opcode._1, "FIMUL", word_integer),
-        modRM(ModRMGroup.Opcode._2, "FICOM", word_integer),
-        modRM(ModRMGroup.Opcode._3, "FICOMP", word_integer),
-        modRM(ModRMGroup.Opcode._4, "FISUB", word_integer),
-        modRM(ModRMGroup.Opcode._5, "FISUBR", word_integer),
-        modRM(ModRMGroup.Opcode._6, "FIDIV", word_integer),
-        modRM(ModRMGroup.Opcode._7, "FIDIVR", word_integer)
+        modRM(OPCODE_0, "FIADD", word_integer),
+        modRM(OPCODE_1, "FIMUL", word_integer),
+        modRM(OPCODE_2, "FICOM", word_integer),
+        modRM(OPCODE_3, "FICOMP", word_integer),
+        modRM(OPCODE_4, "FISUB", word_integer),
+        modRM(OPCODE_5, "FISUBR", word_integer),
+        modRM(OPCODE_6, "FIDIV", word_integer),
+        modRM(OPCODE_7, "FIDIVR", word_integer)
     ),
     FP_DF(
-        modRM(ModRMGroup.Opcode._0, "FILD", word_integer),
-        modRM(ModRMGroup.Opcode._2, "FIST", word_integer),
-        modRM(ModRMGroup.Opcode._3, "FISTP", word_integer),
-        modRM(ModRMGroup.Opcode._4, "FBLD", packed_bcd),
-        modRM(ModRMGroup.Opcode._5, "FILD", long_integer),
-        modRM(ModRMGroup.Opcode._6, "FBSTP", packed_bcd),
-        modRM(ModRMGroup.Opcode._7, "FISTP", long_integer)
+        modRM(OPCODE_0, "FILD", word_integer),
+        modRM(OPCODE_2, "FIST", word_integer),
+        modRM(OPCODE_3, "FISTP", word_integer),
+        modRM(OPCODE_4, "FBLD", packed_bcd),
+        modRM(OPCODE_5, "FILD", long_integer),
+        modRM(OPCODE_6, "FBSTP", packed_bcd),
+        modRM(OPCODE_7, "FISTP", long_integer)
     );
 
     private static ModRMDescription modRM(ModRMGroup.Opcode opcode, String name, Object... specifications) {
         return new ModRMDescription(opcode, name, new ArrayListSequence<Object>(specifications));
     }
 
-    private final ModRMDescription[] _instructionDescriptions;
+    private final ModRMDescription[] instructionDescriptions;
 
     private IA32ModRMGroup(ModRMDescription... instructionDescriptions) {
-        _instructionDescriptions = instructionDescriptions;
+        this.instructionDescriptions = instructionDescriptions;
     }
 
     public ModRMDescription getInstructionDescription(ModRMGroup.Opcode opcode) {
-        for (ModRMDescription instructionDescription : _instructionDescriptions) {
+        for (ModRMDescription instructionDescription : instructionDescriptions) {
             if (instructionDescription.opcode() == opcode) {
                 return instructionDescription;
             }

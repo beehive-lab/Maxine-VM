@@ -35,11 +35,11 @@ import com.sun.max.program.*;
  */
 public abstract class RiscInstructionDescriptionCreator extends InstructionDescriptionCreator<RiscInstructionDescription> {
 
-    protected final RiscTemplateCreator<? extends RiscTemplate> _templateCreator;
+    protected final RiscTemplateCreator<? extends RiscTemplate> templateCreator;
 
     protected RiscInstructionDescriptionCreator(Assembly assembly, RiscTemplateCreator<? extends RiscTemplate> templateCreator) {
         super(assembly);
-        _templateCreator = templateCreator;
+        this.templateCreator = templateCreator;
     }
 
     @Override
@@ -119,7 +119,7 @@ public abstract class RiscInstructionDescriptionCreator extends InstructionDescr
     /**
      * Creates a synthetic instruction from a previously defined (raw or synthetic) instruction
      * by replacing one or more parameters of the instruction with a constant or alternative parameter.
-     * 
+     *
      * @param name          the internal (base) name of the new synthetic instruction
      * @param templateName  the internal name of the original instruction on which the synthetic instruction is based
      * @param patterns      the replacements for one or more parameters of the original instruction
@@ -128,7 +128,7 @@ public abstract class RiscInstructionDescriptionCreator extends InstructionDescr
     protected RiscInstructionDescriptionModifier synthesize(String name, String templateName, Object... patterns) {
         final AppendableSequence<RiscInstructionDescription> instructionDescriptions = new ArrayListSequence<RiscInstructionDescription>();
         // Creating a new VariableSequence here prevents iterator comodification below:
-        final Sequence<? extends RiscTemplate> nameTemplates = _templateCreator.nameToTemplates(templateName);
+        final Sequence<? extends RiscTemplate> nameTemplates = templateCreator.nameToTemplates(templateName);
         if (!nameTemplates.isEmpty()) {
             final Sequence<RiscTemplate> templates = new ArrayListSequence<RiscTemplate>(nameTemplates);
             assert !templates.isEmpty();

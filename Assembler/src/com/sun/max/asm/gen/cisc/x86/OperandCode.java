@@ -110,20 +110,20 @@ public enum OperandCode implements WrappableSpecification {
     Yv(Y, v),
     Yz(Y, z);
 
-    private final AddressingMethodCode _addressingMethodCode;
-    private final OperandTypeCode _operandTypeCode;
+    private final AddressingMethodCode addressingMethodCode;
+    private final OperandTypeCode operandTypeCode;
 
     private OperandCode(AddressingMethodCode addressingMethodCode, OperandTypeCode operandTypeCode) {
-        _addressingMethodCode = addressingMethodCode;
-        _operandTypeCode = operandTypeCode;
+        this.addressingMethodCode = addressingMethodCode;
+        this.operandTypeCode = operandTypeCode;
     }
 
     public AddressingMethodCode addressingMethodCode() {
-        return _addressingMethodCode;
+        return addressingMethodCode;
     }
 
     public OperandTypeCode operandTypeCode() {
-        return _operandTypeCode;
+        return operandTypeCode;
     }
 
     public TestArgumentExclusion excludeDisassemblerTestArguments(Argument... arguments) {

@@ -32,10 +32,10 @@ import com.sun.max.lang.*;
  */
 public class PPC32Assembler extends PPCAssembler implements Assembler32 {
 
-    private int _startAddress; // address of first instruction
+    private int startAddress; // address of first instruction
 
     public PPC32Assembler(int startAddress) {
-        _startAddress = startAddress;
+        this.startAddress = startAddress;
     }
 
     @Override
@@ -44,16 +44,16 @@ public class PPC32Assembler extends PPCAssembler implements Assembler32 {
     }
 
     public int startAddress() {
-        return _startAddress;
+        return startAddress;
     }
 
     public void setStartAddress(int address) {
-        _startAddress = address;
+        startAddress = address;
     }
 
     @Override
     public long baseAddress() {
-        return _startAddress;
+        return startAddress;
     }
 
     public void fixLabel(Label label, int address) {
@@ -64,11 +64,11 @@ public class PPC32Assembler extends PPCAssembler implements Assembler32 {
         return address32(label);
     }
 
-    private PPC32Directives _directives = new PPC32Directives();
+    private PPC32Directives directives = new PPC32Directives();
 
     @Override
     public Directives directives() {
-        return _directives;
+        return directives;
     }
 
     public class PPC32Directives extends Directives {

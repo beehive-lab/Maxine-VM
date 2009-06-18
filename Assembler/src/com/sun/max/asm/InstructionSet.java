@@ -37,25 +37,25 @@ public enum InstructionSet {
         CISC, RISC;
     }
 
-    private final Category _category;
+    private final Category category;
 
     public Category category() {
-        return _category;
+        return category;
     }
 
     public enum RelativeAddressing {
         FROM_INSTRUCTION_START, FROM_INSTRUCTION_END;
     }
 
-    private final RelativeAddressing _relativeAddressing;
+    private final RelativeAddressing relativeAddressing;
 
     public RelativeAddressing relativeAddressing() {
-        return _relativeAddressing;
+        return relativeAddressing;
     }
 
     private InstructionSet(Category category, RelativeAddressing relativeAddressing) {
-        _category = category;
-        _relativeAddressing = relativeAddressing;
+        this.category = category;
+        this.relativeAddressing = relativeAddressing;
     }
 
     @Override
@@ -67,6 +67,6 @@ public enum InstructionSet {
      * Determines if call instructions in this instruction set push the return address on the stack.
      */
     public boolean callsPushReturnAddressOnStack() {
-        return _category == Category.CISC;
+        return category == Category.CISC;
     }
 }

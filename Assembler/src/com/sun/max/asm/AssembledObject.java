@@ -29,23 +29,23 @@ package com.sun.max.asm;
  */
 public abstract class AssembledObject implements AssemblyObject {
 
-    private final int _position;
-    private final int _size;
+    private final int position;
+    private final int size;
 
     protected AssembledObject(int startPosition, int endPosition) {
-        _position = startPosition;
-        _size = endPosition - startPosition;
+        position = startPosition;
+        size = endPosition - startPosition;
     }
 
     public int startPosition() {
-        return _position;
+        return position;
     }
 
     public int endPosition() {
-        return _position + _size;
+        return position + size;
     }
 
     public int size() {
-        return _size;
+        return size;
     }
 }

@@ -36,52 +36,52 @@ import com.sun.max.util.*;
  */
 public class X86InstructionHeader {
 
-    protected boolean _hasAddressSizePrefix;
-    protected HexByte _rexPrefix;
-    protected HexByte _instructionSelectionPrefix;
-    protected HexByte _opcode1;
-    protected HexByte _opcode2;
+    protected boolean hasAddressSizePrefix;
+    protected HexByte rexPrefix;
+    protected HexByte instructionSelectionPrefix;
+    protected HexByte opcode1;
+    protected HexByte opcode2;
 
     X86InstructionHeader() {
     }
 
     private X86InstructionHeader(WordWidth addressWidth, X86Template template) {
-        _hasAddressSizePrefix = template.addressSizeAttribute() != addressWidth;
-        _instructionSelectionPrefix = template.instructionSelectionPrefix();
-        _opcode1 = template.opcode1();
-        _opcode2 = template.opcode2();
+        hasAddressSizePrefix = template.addressSizeAttribute() != addressWidth;
+        instructionSelectionPrefix = template.instructionSelectionPrefix();
+        opcode1 = template.opcode1();
+        opcode2 = template.opcode2();
     }
 
     @Override
     public boolean equals(Object other) {
         if (other instanceof X86InstructionHeader) {
             final X86InstructionHeader header = (X86InstructionHeader) other;
-            return _hasAddressSizePrefix == header._hasAddressSizePrefix &&
-                _instructionSelectionPrefix == header._instructionSelectionPrefix && _opcode1 == header._opcode1 && _opcode2 == header._opcode2;
+            return hasAddressSizePrefix == header.hasAddressSizePrefix &&
+                instructionSelectionPrefix == header.instructionSelectionPrefix && opcode1 == header.opcode1 && opcode2 == header.opcode2;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        int result = _hasAddressSizePrefix ? -1 : 1;
-        if (_instructionSelectionPrefix != null) {
-            result *= _instructionSelectionPrefix.ordinal();
+        int result = hasAddressSizePrefix ? -1 : 1;
+        if (instructionSelectionPrefix != null) {
+            result *= instructionSelectionPrefix.ordinal();
         }
-        if (_opcode1 != null) {
-            result *= _opcode1.ordinal();
+        if (opcode1 != null) {
+            result *= opcode1.ordinal();
         }
-        if (_opcode2 != null) {
-            result ^= _opcode2.ordinal();
+        if (opcode2 != null) {
+            result ^= opcode2.ordinal();
         }
-        if (_instructionSelectionPrefix != null) {
-            result += _instructionSelectionPrefix.ordinal() * 1024;
+        if (instructionSelectionPrefix != null) {
+            result += instructionSelectionPrefix.ordinal() * 1024;
         }
-        if (_opcode2 != null) {
-            result += _opcode2.ordinal() * 256;
+        if (opcode2 != null) {
+            result += opcode2.ordinal() * 256;
         }
-        if (_opcode1 != null) {
-            result += _opcode1.ordinal();
+        if (opcode1 != null) {
+            result += opcode1.ordinal();
         }
         return result;
     }
@@ -102,7 +102,7 @@ public class X86InstructionHeader {
                     case OPCODE1:
                         for (int i = 0; i < 8; i++) {
                             header = new X86InstructionHeader(addressWidth, template);
-                            header._opcode1 = HexByte.VALUES.get(header._opcode1.ordinal() + i);
+                            header.opcode1 = HexByte.VALUES.get(header.opcode1.ordinal() + i);
                             result.put(header, matchingTemplates);
                         }
                         break;
@@ -110,7 +110,7 @@ public class X86InstructionHeader {
                     case OPCODE2:
                         for (int i = 0; i < 8; i++) {
                             header = new X86InstructionHeader(addressWidth, template);
-                            header._opcode2 = HexByte.VALUES.get(header._opcode2.ordinal() + i);
+                            header.opcode2 = HexByte.VALUES.get(header.opcode2.ordinal() + i);
                             result.put(header, matchingTemplates);
                         }
                         break;

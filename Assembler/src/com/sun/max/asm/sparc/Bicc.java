@@ -31,7 +31,7 @@ import com.sun.max.util.*;
  * @author Doug Simon
  */
 public final class Bicc extends NameSuffixSymbolicArgument implements Predicate<ICCOperand, Bicc> {
-    private Bicc _negation;
+    private Bicc negation;
 
     private Bicc(int value) {
         super(value);
@@ -39,8 +39,8 @@ public final class Bicc extends NameSuffixSymbolicArgument implements Predicate<
 
     private Bicc(int value, Bicc negation) {
         this(value);
-        _negation = negation;
-        negation._negation = this;
+        this.negation = negation;
+        negation.negation = this;
     }
 
     public static final Bicc A = new Bicc(8);
@@ -63,7 +63,7 @@ public final class Bicc extends NameSuffixSymbolicArgument implements Predicate<
     public static final Symbolizer<Bicc> SYMBOLIZER = Symbolizer.Static.initialize(Bicc.class);
 
     public Bicc negate() {
-        return _negation;
+        return negation;
     }
 
 }

@@ -42,13 +42,13 @@ public enum ParameterPlace {
     OPCODE2("added to the second opcode"),
     OPCODE2_REXB("opcode2 extension by REX.B bit");
 
-    private final String _comment;
+    private final String comment;
 
     private ParameterPlace(String comment) {
-        _comment = comment;
+        this.comment = comment;
     }
 
     public String comment() {
-        return _comment;
+        return comment;
     }
 }

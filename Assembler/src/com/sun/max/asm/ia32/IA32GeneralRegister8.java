@@ -35,16 +35,16 @@ public enum IA32GeneralRegister8 implements GeneralRegister<IA32GeneralRegister8
 
     public static final Enumerator<IA32GeneralRegister8> ENUMERATOR = new Enumerator<IA32GeneralRegister8>(IA32GeneralRegister8.class);
 
-    private static final IA32GeneralRegister8[] _lowRegisters = {AL, CL, DL, BL};
+    private static final IA32GeneralRegister8[] lowRegisters = {AL, CL, DL, BL};
 
     public static IA32GeneralRegister8 lowFrom(GeneralRegister generalRegister) {
-        return _lowRegisters[generalRegister.id()];
+        return lowRegisters[generalRegister.id()];
     }
 
-    private static final IA32GeneralRegister8[] _highRegisters = {AH, CH, DH, BH};
+    private static final IA32GeneralRegister8[] highRegisters = {AH, CH, DH, BH};
 
     public static IA32GeneralRegister8 highFrom(GeneralRegister generalRegister) {
-        return _highRegisters[generalRegister.id()];
+        return highRegisters[generalRegister.id()];
     }
 
     public WordWidth width() {

@@ -64,10 +64,10 @@ public class IA32Disassembler extends X86Disassembler<IA32Template, IA32Disassem
         return new IA32Assembler((int) startAddress().asLong() + position);
     }
 
-    private static Map<X86InstructionHeader, AppendableSequence<IA32Template>> _headerToTemplates = X86InstructionHeader.createMapping(IA32Assembly.ASSEMBLY, WordWidth.BITS_32);
+    private static Map<X86InstructionHeader, AppendableSequence<IA32Template>> headerToTemplates = X86InstructionHeader.createMapping(IA32Assembly.ASSEMBLY, WordWidth.BITS_32);
 
     @Override
     protected Map<X86InstructionHeader, AppendableSequence<IA32Template>> headerToTemplates() {
-        return _headerToTemplates;
+        return headerToTemplates;
     }
 }
