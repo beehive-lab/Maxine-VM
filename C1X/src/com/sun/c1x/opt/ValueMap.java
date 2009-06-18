@@ -26,6 +26,7 @@ import com.sun.c1x.util.BitMap;
 import com.sun.c1x.ci.CiField;
 import com.sun.c1x.value.ValueType;
 import com.sun.c1x.value.BasicType;
+import com.sun.c1x.C1XMetrics;
 
 /**
  * The <code>ValueMap</code> class implements a nested hashtable data structure
@@ -107,7 +108,7 @@ public class ValueMap {
         int valueNumber = x.valueNumber();
         if (valueNumber != 0) {
             // value number != 0 means the instruction can be value numbered
-            int index = (valueNumber & 0x7fffffff) % table.length;
+            int index = indexOf(valueNumber, table);
             Link l = table[index];
             // hash and linear search
             while (l != null) {
@@ -146,6 +147,7 @@ public class ValueMap {
     }
 
     private void resize() {
+        C1XMetrics.ValueMapResizes++;
         Link[] ntable = new Link[table.length * 3 + 4];
         if (parentKill != null) {
             // first add all the (live) parent's entries by cloning them
@@ -156,7 +158,7 @@ public class ValueMap {
                 }
                 while (l != null && !l.isKilled(this)) {
                     // add live entries from parent
-                    int index = l.valueNumber % ntable.length;
+                    int index = indexOf(l.valueNumber, ntable);
                     ntable[index] = new Link(l.map, l.valueNumber, l.id, l.value, ntable[index]);
                     l = l.next;
                 }
@@ -167,7 +169,7 @@ public class ValueMap {
             Link l = table[i];
             // now add all the new entries
             while (l != null && l.map == this) {
-                int index = l.valueNumber % ntable.length;
+                int index = indexOf(l.valueNumber, ntable);
                 ntable[index] = new Link(l.map, l.valueNumber, l.id, l.value, ntable[index]);
                 l = l.next;
             }
@@ -175,7 +177,11 @@ public class ValueMap {
         table = ntable;
     }
 
-    private void killValues(boolean all, CiField field, BasicType basicType) {
+    private int indexOf(int valueNumber, Link[] table) {
+        return (valueNumber & 0x7fffffff) % table.length;
+    }
+
+    private void killMemory(boolean all, CiField field, BasicType basicType) {
         // loop through all the chains
         for (int i = 0; i < table.length; i++) {
             Link l = table[i];
@@ -207,11 +213,13 @@ public class ValueMap {
     private boolean mustKill(Instruction instr, boolean all, CiField field, BasicType basicType) {
         if (instr instanceof LoadField) {
             if (all || ((LoadField) instr).field() == field) {
+                C1XMetrics.ValueMapKills++;
                 return true;
             }
         }
         if (instr instanceof LoadIndexed) {
             if (all || instr.type().basicType() == basicType) {
+                C1XMetrics.ValueMapKills++;
                 return true;
             }
         }
@@ -219,15 +227,15 @@ public class ValueMap {
     }
 
     private void killMemory() {
-        killValues(true, null, null);
+        killMemory(true, null, null);
     }
 
     private void killField(CiField field) {
-        killValues(false, field, null);
+        killMemory(false, field, null);
     }
 
     private void killArray(ValueType elementType) {
-        killValues(false, null, elementType.basicType());
+        killMemory(false, null, elementType.basicType());
     }
 
     private CiField checkField(CiField field) {

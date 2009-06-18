@@ -21,10 +21,12 @@
 package com.sun.c1x;
 
 /**
- * The <code>C1XTunables</code> class definition.
+ * The <code>C1XMetrics</code> class collects metrics about the compilation.
  *
  * @author Ben L. Titzer
  */
-public class C1XTunables {
-    // Nothing yet
+public class C1XMetrics {
+    public static int LocalValueNumberHits;
+    public static int ValueMapResizes;
+    public static int ValueMapKills;
 }
