@@ -23,18 +23,20 @@ package com.sun.max.vm.compiler.target.amd64;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * @author Bernd Mathiske
+ * @author Paul Caprioli
  */
 public interface AMD64TargetMethod {
 
     public static final class Static {
-        private static final byte RCALL = (byte) 0xe8;
-        private static final byte RJMP = (byte) 0xe9;
+        private static final int RCALL = 0xe8;
+        private static final int RJMP = 0xe9;
 
         private Static() {
         }
@@ -44,7 +46,7 @@ public interface AMD64TargetMethod {
         }
 
         public static void patchCallSite(TargetMethod targetMethod, int callOffset, Word callEntryPoint) {
-            patchRipCode(targetMethod, callOffset, callEntryPoint.asAddress().toLong(), RCALL);
+            patchCode(targetMethod, callOffset, callEntryPoint.asAddress().toLong(), RCALL);
         }
 
         public static void forwardTo(TargetMethod oldTargetMethod, TargetMethod newTargetMethod) {
@@ -55,20 +57,28 @@ public interface AMD64TargetMethod {
             final long newOptEntry = CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
             final long newJitEntry = CallEntryPoint.JIT_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
 
-            patchRipCode(oldTargetMethod, CallEntryPoint.OPTIMIZED_ENTRY_POINT.offsetFromCodeStart(), newOptEntry, RJMP);
-            patchRipCode(oldTargetMethod, CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart(), newJitEntry, RJMP);
+            patchCode(oldTargetMethod, CallEntryPoint.OPTIMIZED_ENTRY_POINT.offsetFromCodeStart(), newOptEntry, RJMP);
+            patchCode(oldTargetMethod, CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart(), newJitEntry, RJMP);
         }
 
-        private static void patchRipCode(TargetMethod targetMethod, int offset, long target, byte controlTransferOpcode) {
-            // TODO: patching RIP code is probably not thread safe!
+        private static void patchCode(TargetMethod targetMethod, int offset, long target, int controlTransferOpcode) {
             final Pointer callSite = targetMethod.codeStart().plus(offset);
-            final byte[] code = targetMethod.code();
-            final int displacement = (int) (target - (callSite.toLong() + 5));
-            ArraySetSnippet.SetByte.setByte(code, offset, controlTransferOpcode);
-            ArraySetSnippet.SetByte.setByte(code, offset + 1, (byte) displacement);
-            ArraySetSnippet.SetByte.setByte(code, offset + 2, (byte) (displacement >> 8));
-            ArraySetSnippet.SetByte.setByte(code, offset + 3, (byte) (displacement >> 16));
-            ArraySetSnippet.SetByte.setByte(code, offset + 4, (byte) (displacement >> 24));
+            final long displacement = (target - (callSite.toLong() + 5L)) & 0xFFFFFFFFL;
+            if (MaxineVM.isPrototyping()) {
+                final byte[] code = targetMethod.code();
+                code[offset] = (byte) controlTransferOpcode;
+                code[offset + 1] = (byte) displacement;
+                code[offset + 2] = (byte) (displacement >> 8);
+                code[offset + 3] = (byte) (displacement >> 16);
+                code[offset + 4] = (byte) (displacement >> 24);
+            } else {
+                // TODO: Patching code is probably not thread safe!
+                //       Patch location must not straddle a cache-line (32-byte) boundary.
+                FatalError.check(true | callSite.isAligned(), "Method " + targetMethod.classMethodActor().format("%H.%n(%p)") + " entry point is not word aligned.");
+                // The read, modify, write below should be changed to simply a write once we have the method entry point alignment fixed.
+                final Word patch = callSite.readWord(0).asAddress().and(0xFFFFFF0000000000L).or((displacement << 8) | controlTransferOpcode);
+                callSite.writeWord(0, patch);
+            }
         }
     }
 
