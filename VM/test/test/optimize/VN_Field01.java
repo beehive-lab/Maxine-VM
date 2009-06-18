@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,22 +18,46 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*
- * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
- */
-package test.bytecode;
+package test.optimize;
 
 /*
+ * Tests constant folding of integer operations.
  * @Harness: java
- * @Runs: 0 = "test.bytecode.BC_ldc_06"
+ * @Runs: 0=18; 1=18; 2=!java.lang.NullPointerException
  */
-public class BC_ldc_06 {
+public class VN_Field01 {
+    static final VN_Field01 _object = new VN_Field01();
 
-    public static String test(int arg) {
-        return test2().getName();
+    int _field = 9;
+
+    public static int test(int arg) {
+        if (arg == 0) {
+            return test1();
+        }
+        if (arg == 1) {
+            return test2();
+        }
+        if (arg == 2) {
+            return test3();
+        }
+        return 0;
     }
 
-    static Class<BC_ldc_06> test2() {
-        return BC_ldc_06.class;
+    private static int test1() {
+        VN_Field01 a = _object;
+        return a._field + a._field;
     }
+
+    private static int test2() {
+        VN_Field01 a = _object;
+        VN_Field01 b = _object;
+        return a._field + b._field;
+    }
+
+    private static int test3() {
+        VN_Field01 a = null;
+        VN_Field01 b = null;
+        return a._field + b._field;
+    }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,22 +18,15 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*
- * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
+package com.sun.c1x;
+
+/**
+ * The <code>C1XMetrics</code> class collects metrics about the compilation.
+ *
+ * @author Ben L. Titzer
  */
-package test.bytecode;
-
-/*
- * @Harness: java
- * @Runs: 0 = "test.bytecode.BC_ldc_06"
- */
-public class BC_ldc_06 {
-
-    public static String test(int arg) {
-        return test2().getName();
-    }
-
-    static Class<BC_ldc_06> test2() {
-        return BC_ldc_06.class;
-    }
+public class C1XMetrics {
+    public static int LocalValueNumberHits;
+    public static int ValueMapResizes;
+    public static int ValueMapKills;
 }

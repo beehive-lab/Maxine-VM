@@ -44,7 +44,7 @@ public class GraphBuilder {
 
     // for each instance of GraphBuilder
     ScopeData scopeData;                   // Per-scope data; used for inlining
-    ValueMap valueMap;                     // the map of values encountered (for CSE)
+    ValueMap localValueMap;                // map of values for local value numbering
     MemoryBuffer memoryMap;
     int instrCount;                        // for bailing out in pathological jsr/ret cases
     BlockBegin startBlock;                 // the start block
@@ -64,8 +64,12 @@ public class GraphBuilder {
      */
     public GraphBuilder(C1XCompilation compilation, IRScope scope) {
         this.compilation = compilation;
-        this.memoryMap = new MemoryBuffer();
-        this.valueMap = new ValueMap();
+        if (C1XOptions.EliminateFieldAccess) {
+            this.memoryMap = new MemoryBuffer();
+        }
+        if (C1XOptions.UseLocalValueNumbering) {
+            this.localValueMap = new ValueMap();
+        }
         int osrBCI = compilation.osrBCI();
         BlockMap blockMap = compilation.getBlockMap(scope.method, osrBCI);
         BlockBegin start = blockMap.get(0);
@@ -525,7 +529,9 @@ public class GraphBuilder {
         }
         StoreIndexed result = new StoreIndexed(array, index, length, type, value, lockStack());
         append(result);
-        memoryMap.storeValue(value);
+        if (memoryMap != null) {
+            memoryMap.storeValue(value);
+        }
     }
 
     void stackOp(int opcode) {
@@ -731,7 +737,9 @@ public class GraphBuilder {
         CiType type = constantPool().lookupType(stream().readCPI());
         assert !type.isLoaded() || type.isInstanceClass();
         NewInstance n = new NewInstance(type);
-        memoryMap.newInstance(n);
+        if (memoryMap != null) {
+            memoryMap.newInstance(n);
+        }
         apush(append(n));
     }
 
@@ -802,17 +810,14 @@ public class GraphBuilder {
     }
 
     private void storeField(StoreField store) {
-        if (C1XOptions.EliminateFieldAccess) {
-            store = memoryMap.store(store);
-        }
-        if (store != null) {
-            // the memory buffer did not find the store to be redundant
-            append(store);
+        StoreField s;
+        if (memoryMap != null && (s = memoryMap.store(store)) != null) {
+            append(s);
         }
     }
 
     private void loadField(ValueType type, LoadField load) {
-        Instruction replacement = C1XOptions.EliminateFieldAccess ? memoryMap.load(load) : load;
+        Instruction replacement = memoryMap != null ? memoryMap.load(load) : load;
         if (replacement != load) {
             // the memory buffer found a replacement for this load
             assert replacement.isAppended() || replacement instanceof Phi || replacement instanceof Local;
@@ -1245,13 +1250,14 @@ public class GraphBuilder {
         }
         if (C1XOptions.UseLocalValueNumbering) {
             // look in the local value map
-            Instruction r = valueMap.findInsert(x);
+            Instruction r = localValueMap.findInsert(x);
             if (r != x) {
+                C1XMetrics.LocalValueNumberHits++;
                 assert r.isAppended() : "lvn result should already be appended";
                 return r;
             }
             // process the effects of adding this instruction
-            valueMap.processEffects(x);
+            localValueMap.processEffects(x);
         }
 
         if (!(x instanceof Phi || x instanceof Local)) {
@@ -1266,7 +1272,9 @@ public class GraphBuilder {
             if (x instanceof StateSplit) {
                 if (x instanceof Invoke || (x instanceof Intrinsic && !((Intrinsic) x).preservesState())) {
                     // conservatively kill all memory across calls
-                    memoryMap.kill();
+                    if (memoryMap != null) {
+                        memoryMap.kill();
+                    }
                 }
                 // split the state for any state split operations
                 ((StateSplit) x).setState(curState.copy());
@@ -2059,10 +2067,12 @@ public class GraphBuilder {
     }
 
     void killValueAndMemoryMaps() {
-        if (C1XOptions.UseLocalValueNumbering) {
-            valueMap.killAll();
+        if (localValueMap != null) {
+            localValueMap.killAll();
         }
-        memoryMap.kill();
+        if (memoryMap != null) {
+            memoryMap.kill();
+        }
     }
 
     boolean assumeLeafClass(CiType type) {

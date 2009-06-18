@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,22 +18,46 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*
- * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
- */
-package test.bytecode;
+package test.optimize;
 
 /*
+ * Tests value numbering of instanceof operations.
  * @Harness: java
- * @Runs: 0 = "test.bytecode.BC_ldc_06"
+ * @Runs: 0=true; 1=true; 2=false
  */
-public class BC_ldc_06 {
+public class VN_InstanceOf01 {
+    static final Object _object = new VN_InstanceOf01();
 
-    public static String test(int arg) {
-        return test2().getName();
+    public static boolean test(int arg) {
+        if (arg == 0) {
+            return test1();
+        }
+        if (arg == 1) {
+            return test2();
+        }
+        if (arg == 2) {
+            return test3();
+        }
+        // do nothing
+        return false;
     }
 
-    static Class<BC_ldc_06> test2() {
-        return BC_ldc_06.class;
+    private static boolean test1() {
+        boolean a = _object instanceof VN_InstanceOf01;
+        boolean b = _object instanceof VN_InstanceOf01;
+        return a | b;
+    }
+
+    private static boolean test2() {
+        Object obj = new VN_InstanceOf01();
+        boolean a = obj instanceof VN_InstanceOf01;
+        boolean b = obj instanceof VN_InstanceOf01;
+        return a | b;
+    }
+
+    private static boolean test3() {
+        boolean a = null instanceof VN_InstanceOf01;
+        boolean b = null instanceof VN_InstanceOf01;
+        return a | b;
     }
 }

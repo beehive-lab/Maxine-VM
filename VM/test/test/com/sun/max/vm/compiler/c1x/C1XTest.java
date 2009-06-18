@@ -186,6 +186,7 @@ public class C1XTest {
 
         progress.report();
         reportTiming();
+        reportMetrics();
     }
 
     private static C1XCompilation compile(MaxCiRuntime runtime, MethodActor method, boolean printBailout, boolean warmup) {
@@ -418,6 +419,22 @@ public class C1XTest {
             _out.print(Strings.fixedDouble(totalBcps / count, 2) + " bytes/s   ");
             _out.print(Strings.fixedDouble(totalIps / count, 2) + " insts/s");
             _out.println();
+        }
+    }
+
+    private static void reportMetrics() {
+        if (C1XOptions.PrintMetrics && _verbose.getValue() > 0) {
+            for (final Field field : C1XMetrics.class.getFields()) {
+                if (field.getType() == int.class) {
+                    try {
+                        final int value = field.getInt(null);
+                        final String name = field.getName();
+                        _out.print(name + ": " + value + "\n");
+                    } catch (IllegalAccessException e) {
+                        // do nothing.
+                    }
+                }
+            }
         }
     }
 

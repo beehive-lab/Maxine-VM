@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,22 +18,42 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*
- * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
- */
-package test.bytecode;
+package test.optimize;
 
 /*
+ * Tests optimization of integer operations.
  * @Harness: java
- * @Runs: 0 = "test.bytecode.BC_ldc_06"
+ * @Runs: 0=10L; 1=10L; 2=48L
  */
-public class BC_ldc_06 {
-
-    public static String test(int arg) {
-        return test2().getName();
+public class VN_Long02 {
+    public static long test(int arg) {
+        if (arg == 0) {
+            return shift0(arg + 10);
+        }
+        if (arg == 1) {
+            return shift1(arg + 10);
+        }
+        if (arg == 2) {
+            return shift2(arg + 10);
+        }
+        return 0;
     }
-
-    static Class<BC_ldc_06> test2() {
-        return BC_ldc_06.class;
+    public static long shift0(long x) {
+        long c = 1;
+        long t = x >> c;
+        long u = x >> c;
+        return t + u;
+    }
+    public static long shift1(long x) {
+        long c = 1;
+        long t = x >>> c;
+        long u = x >>> c;
+        return t + u;
+    }
+    public static long shift2(long x) {
+        long c = 1;
+        long t = x << c;
+        long u = x << c;
+        return t + u;
     }
 }

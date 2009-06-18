@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,22 +18,51 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*
- * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
- */
-package test.bytecode;
+package test.optimize;
 
 /*
+ * Tests optimization of float operations.
  * @Harness: java
- * @Runs: 0 = "test.bytecode.BC_ldc_06"
+ * @Runs: 0f=22f; 1f=0f; 2f=144f; 3f=1f
  */
-public class BC_ldc_06 {
-
-    public static String test(int arg) {
-        return test2().getName();
+public class VN_Float01 {
+    public static float test(float arg) {
+        if (arg == 0) {
+            return add(arg + 10);
+        }
+        if (arg == 1) {
+            return sub(arg + 10);
+        }
+        if (arg == 2) {
+            return mul(arg + 10);
+        }
+        if (arg == 3) {
+            return div(arg + 10);
+        }
+        return 0;
     }
-
-    static Class<BC_ldc_06> test2() {
-        return BC_ldc_06.class;
+    public static float add(float x) {
+        float c = 1;
+        float t = x + c;
+        float u = x + c;
+        return t + u;
+    }
+    public static float sub(float x) {
+        float c = 1;
+        float t = x - c;
+        float u = x - c;
+        return t - u;
+    }
+    public static float mul(float x) {
+        float c = 1;
+        float t = x * c;
+        float u = x * c;
+        return t * u;
+    }
+    public static float div(float x) {
+        float c = 1;
+        float t = x / c;
+        float u = x / c;
+        return t / u;
     }
 }
