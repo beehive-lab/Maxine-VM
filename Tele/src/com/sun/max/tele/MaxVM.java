@@ -696,7 +696,7 @@ public interface MaxVM {
      * Interprets a method invocation in the context of the VM.
      *
      * @param classMethodActor method to interpret
-     * @param arguments method arguments encapsulated as values
+     * @param arguments method arguments encapsulated as values, values that are understood as VM classes.
      * @return result of method invocation wrapped as a Value
      * @throws TeleInterpreterException  if an uncaught exception occurs during execution of the method
      */
