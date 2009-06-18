@@ -427,8 +427,8 @@ public class C1XTest {
             for (final Field field : C1XMetrics.class.getFields()) {
                 if (field.getType() == int.class) {
                     try {
-                        int value = field.getInt(null);
-                        String name = field.getName();
+                        final int value = field.getInt(null);
+                        final String name = field.getName();
                         _out.print(name + ": " + value + "\n");
                     } catch (IllegalAccessException e) {
                         // do nothing.
