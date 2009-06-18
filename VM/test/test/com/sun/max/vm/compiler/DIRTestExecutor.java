@@ -67,7 +67,7 @@ public class DIRTestExecutor implements JavaExecHarness.Executor {
             initialize(loadingPackages);
         }
 
-        final ClassActor classActor = ClassActor.fromJava(c._class);
+        final ClassActor classActor = ClassActor.fromJava(c._clazz);
         c._slot1 = classActor;
         c._slot2 = classActor.findLocalStaticMethodActor(_testMethod);
     }

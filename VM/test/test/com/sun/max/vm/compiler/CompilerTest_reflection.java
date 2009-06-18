@@ -44,9 +44,9 @@ public abstract class CompilerTest_reflection<Method_Type extends IrMethod> exte
 
     public static class Instance {
         Word _word;
-        int _int;
+        int _i;
         String _string;
-        byte _byte;
+        byte _b;
         Object[] _array;
 
         public Instance() {
@@ -59,22 +59,22 @@ public abstract class CompilerTest_reflection<Method_Type extends IrMethod> exte
 
         public Instance(Word w, int i, String s, byte b, Object[] array) {
             _word = w;
-            _int = i;
+            _i = i;
             _string = s;
-            _byte = b;
+            _b = b;
             _array = array;
         }
 
         @Override
         public String toString() {
-            return "_word=" + _word + ", _int=" + _int + ", _string=" + _string + ", _byte=" + _byte + ", _array=[" + Arrays.toString(_array, ",") + "]";
+            return "_word=" + _word + ", _int=" + _i + ", _string=" + _string + ", _byte=" + _b + ", _array=[" + Arrays.toString(_array, ",") + "]";
         }
 
         @Override
         public boolean equals(Object o) {
             if (o instanceof Instance) {
                 final Instance instance = (Instance) o;
-                return instance._byte == _byte && instance._word.equals(_word) && instance._string.equals(_string) && Arrays.equals(instance._array, _array);
+                return instance._b == _b && instance._word.equals(_word) && instance._string.equals(_string) && Arrays.equals(instance._array, _array);
             }
             return false;
         }

@@ -64,7 +64,7 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
     }
 
     public class JavaTestCase extends TestCase {
-        public final Class _class;
+        public final Class _clazz;
         public final List<Run> _runs;
         public final Executor _exec;
         public final String _execName;
@@ -77,7 +77,7 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
             _execName = execName;
             _exec = executor;
             _runs = runs;
-            _class = testClass;
+            _clazz = testClass;
             executor.initialize(this, loadingPackages);
         }
 
@@ -107,7 +107,7 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
         @Override
         public String failureMessage(TestCase testCase) {
             final JavaTestCase javaTestCase = (JavaTestCase) testCase;
-            return inputToString(javaTestCase._class, _run, false) + " failed with " + _result + " (expected " + _expect + ")";
+            return inputToString(javaTestCase._clazz, _run, false) + " failed with " + _result + " (expected " + _expect + ")";
         }
 
     }

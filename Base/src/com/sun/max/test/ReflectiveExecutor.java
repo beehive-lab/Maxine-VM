@@ -31,7 +31,7 @@ import com.sun.max.util.*;
 
 public class ReflectiveExecutor implements Executor {
     public void initialize(JavaTestCase c, boolean loadingPackages) {
-        for (Method m : c._class.getDeclaredMethods()) {
+        for (Method m : c._clazz.getDeclaredMethods()) {
             if (m.getName().equals("test") && (m.getModifiers() & Modifier.STATIC) != 0) {
                 c._slot1 = m;
                 return;
@@ -43,7 +43,7 @@ public class ReflectiveExecutor implements Executor {
     public Object execute(JavaExecHarness.JavaTestCase c, Object[] vals) throws InvocationTargetException {
         try {
             final Method m = (Method) c._slot1;
-            return m.invoke(c._class, vals);
+            return m.invoke(c._clazz, vals);
         } catch (IllegalArgumentException e) {
             throw ProgramError.unexpected(e);
         } catch (IllegalAccessException e) {

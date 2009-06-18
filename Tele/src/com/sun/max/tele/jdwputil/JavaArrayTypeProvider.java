@@ -29,14 +29,14 @@ import com.sun.max.jdwp.vm.proxy.*;
 public class JavaArrayTypeProvider extends JavaClassProvider implements ArrayTypeProvider {
 
     private ReferenceTypeProvider _elementType;
-    private Class _class;
+    private Class _clazz;
     private VMAccess _vm;
 
 
     JavaArrayTypeProvider(Class c, VMAccess vm, ClassLoaderProvider classLoader) {
         super(c, vm, classLoader);
         _elementType = vm.getReferenceType(c.getComponentType());
-        _class = c;
+        _clazz = c;
         _vm = vm;
     }
 
@@ -45,8 +45,8 @@ public class JavaArrayTypeProvider extends JavaClassProvider implements ArrayTyp
     }
 
     public ArrayProvider newInstance(int length) {
-        final Object array = Array.newInstance(_class.getComponentType(), length);
-        final Provider result = _vm.createJavaObjectValue(array, _class).asProvider();
+        final Object array = Array.newInstance(_clazz.getComponentType(), length);
+        final Provider result = _vm.createJavaObjectValue(array, _clazz).asProvider();
         assert result instanceof ArrayProvider;
         return (ArrayProvider) result;
     }
