@@ -295,15 +295,10 @@ build_help="compile the Maxine Java and C sources, linking the latter
    Compile all or some of the Maxine source code using the appropriate compilers
    and linkers for the various source code types.
    
-   If the CHECKSTYLE_JAR environment variable denotes the path to a Checkstyle
-   jar file, then Checkstyle is also run over the sources. Any errors or warnings
-   produced by Checkstyle cause the build to fail.
-   
 options:
- -clean     removes existing binaries and class files before building projects
- -javac     path to a Java source compiler (default: ${JAVA_HOME}/bin/javac)
- -cs        run Checkstyle over source if path to a Checkstyle 4 jar (default: value of CHECKSTYLE4_CP environment variable
-
+ -clean         removes existing binaries and class files before building projects
+ -javac <path>  path to a Java source compiler (default: ${JAVA_HOME}/bin/javac)
+ 
 If no projects are given, then all projects are built."
 
 function run_build() {
@@ -400,44 +395,121 @@ function run_build() {
                        run cp $file ../bin/$file
                     fi
                 done
-                
-                # Run Checkstyle
-                if [ -n "$CHECKSTYLE_JAR" -a -f $maxine_dir/$project_dir/.checkstyle ]; then
-                    checks_file=$(grep 'location=' < $maxine_dir/$project_dir/.checkstyle | sed 's:.*location="\([^"]*\)".*:\1:g')
-                    if [[ "$checks_file" = /* ]]; then
-                        checks_file=${checks_file/#\//$maxine_dir/}
-                    else
-                        checks_file="$maxine_dir/$project_dir/$checks_file"
-                    fi
-                
-                    echo "Running Checkstyle using $checks_file..."
-                    checkstyle_out=/tmp/audit.$$
-                    checkstyle_input=/tmp/checkfiles.txt.$$
+            fi
+            rm $javac_input
+            popd >/dev/null
+            if [ $result -ne 0 ]; then
+                exit $result
+            fi
+        done
+    done
+}
 
-                    cat $javac_input | \
-                        grep -v 'test/bytecode/' |\
-                        grep -v 'test/except/' |\
-                        grep -v 'test/interactive/' |\
-                        grep -v 'test/jdk/' |\
-                        grep -v 'test/lang/' |\
-                        grep -v 'test/micro/' |\
-                        grep -v 'test/optimize/' |\
-                        grep -v 'test/reflect/' |\
-                        grep -v 'test/threads/' >$checkstyle_input
-                    
-                    run $jvm -Xmx1g -jar $CHECKSTYLE_JAR -c $checks_file $(cat $checkstyle_input) -o $checkstyle_out
-                    result=$?
-                    rm $checkstyle_input
-                    if [ $result -eq 0 ]; then
-	                    if [ "X$(grep 'warning:' <$checkstyle_out)" != "X" ]; then
-                            cat $checkstyle_out
-	                        result=1
-	                    fi
-	                else
+#=======================================
+# 'check' command
+#=======================================
+
+check_usage="[options] projects..."
+check_help="run Checkstyle on the Maxine Java sources
+
+   Run Checkstyle over the Java sources. Any errors or warnings
+   produced by Checkstyle result in a non-zero exit code.
+   
+options:
+ -cs <path>   path to a Checkstyle jar file. (default: value of CHECKSTYLE_JAR environment variable)
+ 
+If no projects are given, then all Java projects are checked."
+
+function run_check() {
+    projects_to_check=""
+    while [ "$1" != "" ]; do
+        case $1 in
+            -cs )
+                shift
+                CHECKSTYLE_JAR=$1
+                ;;
+            -* )
+                echo "unknown build option '$1'"
+                run_help check
+                exit 1
+                ;;
+            * )
+                projects_to_check="$projects_to_check $1"
+                ;;
+        esac
+        shift
+    done
+    
+    test -n "${CHECKSTYLE_JAR}" || { echo "Need to use '-cs' option or CHECKSTYLE_JAR environment variable to specify location of Checkstyle jar file"; exit 1; }
+
+    if [ ! -f "$CHECKSTYLE_JAR" ]; then
+        echo "No such file: $CHECKSTYLE_JAR"
+        exit 1
+    fi
+    
+    if [ -z "$projects_to_check" ]; then
+        for project in ${projects[@]}; do
+            project_dir=${project/:*/}
+            projects_to_check="$projects_to_check $project_dir"
+        done
+    fi
+
+    for project in ${projects[@]}; do
+        project_dir=${project/:*/}
+        project_found=0
+        for project_to_build in ${projects_to_check[@]}; do
+            if [[ "$project_to_build" == ${project_dir} ]]; then
+                project_found=1
+            fi
+        done
+        if [ $project_found -eq 0 ] ; then
+            continue
+        fi
+        set_project_dir_parent ${project}
+
+        source_dirs_spec=${project/*:/}
+        source_dirs=${source_dirs_spec//,/ }        
+        for source_dir in ${source_dirs} ; do
+            pushd . >/dev/null
+            cd ${project_dir_parent}/${project_dir}/${source_dir}
+            javac_input=/tmp/javacfiles.txt.$$
+            find . -name *.java | grep -v 'package-info.java' >$javac_input
+
+            if [ -f $maxine_dir/$project_dir/.checkstyle ]; then
+                checks_file=$(grep 'location=' < $maxine_dir/$project_dir/.checkstyle | sed 's:.*location="\([^"]*\)".*:\1:g')
+                if [[ "$checks_file" = /* ]]; then
+                    checks_file=${checks_file/#\//$maxine_dir/}
+                else
+                    checks_file="$maxine_dir/$project_dir/$checks_file"
+                fi
+            
+                echo "Running Checkstyle on $project_dir/$source_dir using $checks_file..."
+                checkstyle_out=/tmp/audit.$$
+                checkstyle_input=/tmp/checkfiles.txt.$$
+
+                cat $javac_input | \
+                    grep -v 'test/bytecode/' |\
+                    grep -v 'test/except/' |\
+                    grep -v 'test/interactive/' |\
+                    grep -v 'test/jdk/' |\
+                    grep -v 'test/lang/' |\
+                    grep -v 'test/micro/' |\
+                    grep -v 'test/optimize/' |\
+                    grep -v 'test/reflect/' |\
+                    grep -v 'test/threads/' >$checkstyle_input
+                
+                run $jvm -Xmx1g -jar $CHECKSTYLE_JAR -c $checks_file $(cat $checkstyle_input) -o $checkstyle_out
+                result=$?
+                rm $checkstyle_input
+                if [ $result -eq 0 ]; then
+                    if [ "X$(grep 'warning:' <$checkstyle_out)" != "X" ]; then
                         cat $checkstyle_out
-	                fi
-	                rm $checkstyle_out
-	             fi
+                        result=1
+                    fi
+                else
+                    cat $checkstyle_out
+                fi
+                rm $checkstyle_out
             fi
             rm $javac_input
             popd >/dev/null
