@@ -28,12 +28,12 @@ import static com.sun.max.asm.gen.risc.sparc.SPARCFields.*;
 public class StateRegisterAccess extends SPARCInstructionDescriptionCreator {
 
     private void create_A43() {
-        define("rd", op(0x2), op3(0x28), _rs1_state, i(0), _res_12_0, _rd);
+        define("rd", op(0x2), op3(0x28), rs1_state, i(0), res_12_0, rd);
     }
 
     private void create_A62() {
-        define("wr", op(0x2), op3(0x30), _rs1, i(0), _res_12_5, _rs2, _rd_state);
-        define("wr", op(0x2), op3(0x30), _rs1, i(1), _simm13, _rd_state);
+        define("wr", op(0x2), op3(0x30), rs1, i(0), res_12_5, rs2, rd_state);
+        define("wr", op(0x2), op3(0x30), rs1, i(1), simm13, rd_state);
     }
 
     StateRegisterAccess(SPARCTemplateCreator templateCreator) {

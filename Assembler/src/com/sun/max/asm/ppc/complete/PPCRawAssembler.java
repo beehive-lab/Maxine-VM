@@ -30,7 +30,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 // START GENERATED RAW ASSEMBLER METHODS
     /**
      * Pseudo-external assembler syntax: {@code b  }<i>li</i>
-     * Example disassembly syntax: {@code b             . -33554432}
+     * Example disassembly syntax: {@code b             L1: -33554432}
      * <p>
      * Constraint: {@code (-33554432 <= li && li <= 33554428) && ((li % 4) == 0)}<br />
      *
@@ -46,7 +46,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code ba  }<i>li</i>
-     * Example disassembly syntax: {@code ba            -33554432}
+     * Example disassembly syntax: {@code ba            L1: -33554432}
      * <p>
      * Constraint: {@code (-33554432 <= li && li <= 33554428) && ((li % 4) == 0)}<br />
      *
@@ -62,7 +62,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bl  }<i>li</i>
-     * Example disassembly syntax: {@code bl            . -33554432}
+     * Example disassembly syntax: {@code bl            L1: -33554432}
      * <p>
      * Constraint: {@code (-33554432 <= li && li <= 33554428) && ((li % 4) == 0)}<br />
      *
@@ -78,7 +78,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bla  }<i>li</i>
-     * Example disassembly syntax: {@code bla           -33554432}
+     * Example disassembly syntax: {@code bla           L1: -33554432}
      * <p>
      * Constraint: {@code (-33554432 <= li && li <= 33554428) && ((li % 4) == 0)}<br />
      *
@@ -94,7 +94,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bc  }<i>bo</i>, <i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bc            0, 0x0, . -32768}
+     * Example disassembly syntax: {@code bc            0, 0x0, L1: -32768}
      * <p>
      * Constraint: {@code 0 <= bi && bi <= 31}<br />
      * Constraint: {@code (-32768 <= bd && bd <= 32764) && ((bd % 4) == 0)}<br />
@@ -114,7 +114,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bca  }<i>bo</i>, <i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bca           0, 0x0, -32768}
+     * Example disassembly syntax: {@code bca           0, 0x0, L1: -32768}
      * <p>
      * Constraint: {@code 0 <= bi && bi <= 31}<br />
      * Constraint: {@code (-32768 <= bd && bd <= 32764) && ((bd % 4) == 0)}<br />
@@ -134,7 +134,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bcl  }<i>bo</i>, <i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bcl           0, 0x0, . -32768}
+     * Example disassembly syntax: {@code bcl           0, 0x0, L1: -32768}
      * <p>
      * Constraint: {@code 0 <= bi && bi <= 31}<br />
      * Constraint: {@code (-32768 <= bd && bd <= 32764) && ((bd % 4) == 0)}<br />
@@ -154,7 +154,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bcla  }<i>bo</i>, <i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bcla          0, 0x0, -32768}
+     * Example disassembly syntax: {@code bcla          0, 0x0, L1: -32768}
      * <p>
      * Constraint: {@code 0 <= bi && bi <= 31}<br />
      * Constraint: {@code (-32768 <= bd && bd <= 32764) && ((bd % 4) == 0)}<br />
@@ -5731,7 +5731,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bt{++|--}  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bt            0x0, . -32768}
+     * Example disassembly syntax: {@code bt            0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRTrue | prediction, bi, bd)}
      * <p>
@@ -5755,7 +5755,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bta{++|--}  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bta           0x0, -32768}
+     * Example disassembly syntax: {@code bta           0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRTrue | prediction, bi, bd)}
      * <p>
@@ -5779,7 +5779,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code btl{++|--}  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code btl           0x0, . -32768}
+     * Example disassembly syntax: {@code btl           0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRTrue | prediction, bi, bd)}
      * <p>
@@ -5803,7 +5803,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code btla{++|--}  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code btla          0x0, -32768}
+     * Example disassembly syntax: {@code btla          0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRTrue | prediction, bi, bd)}
      * <p>
@@ -5827,7 +5827,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bf{++|--}  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bf            0x0, . -32768}
+     * Example disassembly syntax: {@code bf            0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRFalse | prediction, bi, bd)}
      * <p>
@@ -5851,7 +5851,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bfa{++|--}  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bfa           0x0, -32768}
+     * Example disassembly syntax: {@code bfa           0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRFalse | prediction, bi, bd)}
      * <p>
@@ -5875,7 +5875,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bfl{++|--}  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bfl           0x0, . -32768}
+     * Example disassembly syntax: {@code bfl           0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRFalse | prediction, bi, bd)}
      * <p>
@@ -5899,7 +5899,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bfla{++|--}  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bfla          0x0, -32768}
+     * Example disassembly syntax: {@code bfla          0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRFalse | prediction, bi, bd)}
      * <p>
@@ -5923,7 +5923,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdnz{++|--}  }<i>bd</i>
-     * Example disassembly syntax: {@code bdnz          . -32768}
+     * Example disassembly syntax: {@code bdnz          L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CTRNonZero | (prediction & 0x1) | (((prediction >>> 1) & 0x1) << 3), 0, bd)}
      * <p>
@@ -5944,7 +5944,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdnza{++|--}  }<i>bd</i>
-     * Example disassembly syntax: {@code bdnza         -32768}
+     * Example disassembly syntax: {@code bdnza         L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CTRNonZero | (prediction & 0x1) | (((prediction >>> 1) & 0x1) << 3), 0, bd)}
      * <p>
@@ -5965,7 +5965,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdnzl{++|--}  }<i>bd</i>
-     * Example disassembly syntax: {@code bdnzl         . -32768}
+     * Example disassembly syntax: {@code bdnzl         L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CTRNonZero | (prediction & 0x1) | (((prediction >>> 1) & 0x1) << 3), 0, bd)}
      * <p>
@@ -5986,7 +5986,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdnzla{++|--}  }<i>bd</i>
-     * Example disassembly syntax: {@code bdnzla        -32768}
+     * Example disassembly syntax: {@code bdnzla        L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CTRNonZero | (prediction & 0x1) | (((prediction >>> 1) & 0x1) << 3), 0, bd)}
      * <p>
@@ -6007,7 +6007,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdz{++|--}  }<i>bd</i>
-     * Example disassembly syntax: {@code bdz           . -32768}
+     * Example disassembly syntax: {@code bdz           L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CTRZero | (prediction & 0x1) | (((prediction >>> 1) & 0x1) << 3), 0, bd)}
      * <p>
@@ -6028,7 +6028,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdza{++|--}  }<i>bd</i>
-     * Example disassembly syntax: {@code bdza          -32768}
+     * Example disassembly syntax: {@code bdza          L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CTRZero | (prediction & 0x1) | (((prediction >>> 1) & 0x1) << 3), 0, bd)}
      * <p>
@@ -6049,7 +6049,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdzl{++|--}  }<i>bd</i>
-     * Example disassembly syntax: {@code bdzl          . -32768}
+     * Example disassembly syntax: {@code bdzl          L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CTRZero | (prediction & 0x1) | (((prediction >>> 1) & 0x1) << 3), 0, bd)}
      * <p>
@@ -6070,7 +6070,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdzla{++|--}  }<i>bd</i>
-     * Example disassembly syntax: {@code bdzla         -32768}
+     * Example disassembly syntax: {@code bdzla         L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CTRZero | (prediction & 0x1) | (((prediction >>> 1) & 0x1) << 3), 0, bd)}
      * <p>
@@ -6091,7 +6091,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdnzt  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bdnzt         0x0, . -32768}
+     * Example disassembly syntax: {@code bdnzt         0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CTRNonZero_CRTrue, bi, bd)}
      * <p>
@@ -6114,7 +6114,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdnzta  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bdnzta        0x0, -32768}
+     * Example disassembly syntax: {@code bdnzta        0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CTRNonZero_CRTrue, bi, bd)}
      * <p>
@@ -6137,7 +6137,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdnztl  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bdnztl        0x0, . -32768}
+     * Example disassembly syntax: {@code bdnztl        0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CTRNonZero_CRTrue, bi, bd)}
      * <p>
@@ -6160,7 +6160,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdnztla  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bdnztla       0x0, -32768}
+     * Example disassembly syntax: {@code bdnztla       0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CTRNonZero_CRTrue, bi, bd)}
      * <p>
@@ -6183,7 +6183,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdnzf  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bdnzf         0x0, . -32768}
+     * Example disassembly syntax: {@code bdnzf         0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CTRNonZero_CRFalse, bi, bd)}
      * <p>
@@ -6206,7 +6206,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdnzfa  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bdnzfa        0x0, -32768}
+     * Example disassembly syntax: {@code bdnzfa        0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CTRNonZero_CRFalse, bi, bd)}
      * <p>
@@ -6229,7 +6229,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdnzfl  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bdnzfl        0x0, . -32768}
+     * Example disassembly syntax: {@code bdnzfl        0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CTRNonZero_CRFalse, bi, bd)}
      * <p>
@@ -6252,7 +6252,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdnzfla  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bdnzfla       0x0, -32768}
+     * Example disassembly syntax: {@code bdnzfla       0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CTRNonZero_CRFalse, bi, bd)}
      * <p>
@@ -6275,7 +6275,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdzt  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bdzt          0x0, . -32768}
+     * Example disassembly syntax: {@code bdzt          0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CTRZero_CRTrue, bi, bd)}
      * <p>
@@ -6298,7 +6298,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdzta  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bdzta         0x0, -32768}
+     * Example disassembly syntax: {@code bdzta         0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CTRZero_CRTrue, bi, bd)}
      * <p>
@@ -6321,7 +6321,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdztl  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bdztl         0x0, . -32768}
+     * Example disassembly syntax: {@code bdztl         0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CTRZero_CRTrue, bi, bd)}
      * <p>
@@ -6344,7 +6344,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdztla  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bdztla        0x0, -32768}
+     * Example disassembly syntax: {@code bdztla        0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CTRZero_CRTrue, bi, bd)}
      * <p>
@@ -6367,7 +6367,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdzf  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bdzf          0x0, . -32768}
+     * Example disassembly syntax: {@code bdzf          0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CTRZero_CRFalse, bi, bd)}
      * <p>
@@ -6390,7 +6390,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdzfa  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bdzfa         0x0, -32768}
+     * Example disassembly syntax: {@code bdzfa         0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CTRZero_CRFalse, bi, bd)}
      * <p>
@@ -6413,7 +6413,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdzfl  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bdzfl         0x0, . -32768}
+     * Example disassembly syntax: {@code bdzfl         0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CTRZero_CRFalse, bi, bd)}
      * <p>
@@ -6436,7 +6436,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bdzfla  }<i>bi</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bdzfla        0x0, -32768}
+     * Example disassembly syntax: {@code bdzfla        0x0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CTRZero_CRFalse, bi, bd)}
      * <p>
@@ -6919,7 +6919,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code blt{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code blt           cr0, . -32768}
+     * Example disassembly syntax: {@code blt           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRTrue | prediction, (crf * 4), bd)}
      * <p>
@@ -6941,7 +6941,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code blta{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code blta          cr0, -32768}
+     * Example disassembly syntax: {@code blta          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRTrue | prediction, (crf * 4), bd)}
      * <p>
@@ -6963,7 +6963,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bltl{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bltl          cr0, . -32768}
+     * Example disassembly syntax: {@code bltl          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRTrue | prediction, (crf * 4), bd)}
      * <p>
@@ -6985,7 +6985,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bltla{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bltla         cr0, -32768}
+     * Example disassembly syntax: {@code bltla         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRTrue | prediction, (crf * 4), bd)}
      * <p>
@@ -7007,7 +7007,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code ble{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code ble           cr0, . -32768}
+     * Example disassembly syntax: {@code ble           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRFalse | prediction, 1 | (crf * 4), bd)}
      * <p>
@@ -7029,7 +7029,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code blea{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code blea          cr0, -32768}
+     * Example disassembly syntax: {@code blea          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRFalse | prediction, 1 | (crf * 4), bd)}
      * <p>
@@ -7051,7 +7051,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code blel{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code blel          cr0, . -32768}
+     * Example disassembly syntax: {@code blel          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRFalse | prediction, 1 | (crf * 4), bd)}
      * <p>
@@ -7073,7 +7073,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code blela{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code blela         cr0, -32768}
+     * Example disassembly syntax: {@code blela         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRFalse | prediction, 1 | (crf * 4), bd)}
      * <p>
@@ -7095,7 +7095,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code beq{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code beq           cr0, . -32768}
+     * Example disassembly syntax: {@code beq           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRTrue | prediction, 2 | (crf * 4), bd)}
      * <p>
@@ -7117,7 +7117,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code beqa{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code beqa          cr0, -32768}
+     * Example disassembly syntax: {@code beqa          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRTrue | prediction, 2 | (crf * 4), bd)}
      * <p>
@@ -7139,7 +7139,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code beql{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code beql          cr0, . -32768}
+     * Example disassembly syntax: {@code beql          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRTrue | prediction, 2 | (crf * 4), bd)}
      * <p>
@@ -7161,7 +7161,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code beqla{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code beqla         cr0, -32768}
+     * Example disassembly syntax: {@code beqla         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRTrue | prediction, 2 | (crf * 4), bd)}
      * <p>
@@ -7183,7 +7183,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bge{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bge           cr0, . -32768}
+     * Example disassembly syntax: {@code bge           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRFalse | prediction, (crf * 4), bd)}
      * <p>
@@ -7205,7 +7205,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bgea{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bgea          cr0, -32768}
+     * Example disassembly syntax: {@code bgea          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRFalse | prediction, (crf * 4), bd)}
      * <p>
@@ -7227,7 +7227,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bgel{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bgel          cr0, . -32768}
+     * Example disassembly syntax: {@code bgel          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRFalse | prediction, (crf * 4), bd)}
      * <p>
@@ -7249,7 +7249,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bgela{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bgela         cr0, -32768}
+     * Example disassembly syntax: {@code bgela         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRFalse | prediction, (crf * 4), bd)}
      * <p>
@@ -7271,7 +7271,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bgt{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bgt           cr0, . -32768}
+     * Example disassembly syntax: {@code bgt           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRTrue | prediction, 1 | (crf * 4), bd)}
      * <p>
@@ -7293,7 +7293,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bgta{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bgta          cr0, -32768}
+     * Example disassembly syntax: {@code bgta          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRTrue | prediction, 1 | (crf * 4), bd)}
      * <p>
@@ -7315,7 +7315,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bgtl{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bgtl          cr0, . -32768}
+     * Example disassembly syntax: {@code bgtl          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRTrue | prediction, 1 | (crf * 4), bd)}
      * <p>
@@ -7337,7 +7337,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bgtla{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bgtla         cr0, -32768}
+     * Example disassembly syntax: {@code bgtla         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRTrue | prediction, 1 | (crf * 4), bd)}
      * <p>
@@ -7359,7 +7359,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bnl{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bnl           cr0, . -32768}
+     * Example disassembly syntax: {@code bnl           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRFalse | prediction, (crf * 4), bd)}
      * <p>
@@ -7381,7 +7381,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bnla{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bnla          cr0, -32768}
+     * Example disassembly syntax: {@code bnla          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRFalse | prediction, (crf * 4), bd)}
      * <p>
@@ -7403,7 +7403,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bnll{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bnll          cr0, . -32768}
+     * Example disassembly syntax: {@code bnll          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRFalse | prediction, (crf * 4), bd)}
      * <p>
@@ -7425,7 +7425,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bnlla{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bnlla         cr0, -32768}
+     * Example disassembly syntax: {@code bnlla         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRFalse | prediction, (crf * 4), bd)}
      * <p>
@@ -7447,7 +7447,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bne{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bne           cr0, . -32768}
+     * Example disassembly syntax: {@code bne           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRFalse | prediction, 2 | (crf * 4), bd)}
      * <p>
@@ -7469,7 +7469,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bnea{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bnea          cr0, -32768}
+     * Example disassembly syntax: {@code bnea          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRFalse | prediction, 2 | (crf * 4), bd)}
      * <p>
@@ -7491,7 +7491,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bnel{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bnel          cr0, . -32768}
+     * Example disassembly syntax: {@code bnel          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRFalse | prediction, 2 | (crf * 4), bd)}
      * <p>
@@ -7513,7 +7513,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bnela{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bnela         cr0, -32768}
+     * Example disassembly syntax: {@code bnela         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRFalse | prediction, 2 | (crf * 4), bd)}
      * <p>
@@ -7535,7 +7535,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bng{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bng           cr0, . -32768}
+     * Example disassembly syntax: {@code bng           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRFalse | prediction, 1 | (crf * 4), bd)}
      * <p>
@@ -7557,7 +7557,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bnga{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bnga          cr0, -32768}
+     * Example disassembly syntax: {@code bnga          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRFalse | prediction, 1 | (crf * 4), bd)}
      * <p>
@@ -7579,7 +7579,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bngl{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bngl          cr0, . -32768}
+     * Example disassembly syntax: {@code bngl          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRFalse | prediction, 1 | (crf * 4), bd)}
      * <p>
@@ -7601,7 +7601,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bngla{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bngla         cr0, -32768}
+     * Example disassembly syntax: {@code bngla         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRFalse | prediction, 1 | (crf * 4), bd)}
      * <p>
@@ -7623,7 +7623,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bso{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bso           cr0, . -32768}
+     * Example disassembly syntax: {@code bso           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRTrue | prediction, 3 | (crf * 4), bd)}
      * <p>
@@ -7645,7 +7645,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bsoa{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bsoa          cr0, -32768}
+     * Example disassembly syntax: {@code bsoa          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRTrue | prediction, 3 | (crf * 4), bd)}
      * <p>
@@ -7667,7 +7667,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bsol{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bsol          cr0, . -32768}
+     * Example disassembly syntax: {@code bsol          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRTrue | prediction, 3 | (crf * 4), bd)}
      * <p>
@@ -7689,7 +7689,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bsola{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bsola         cr0, -32768}
+     * Example disassembly syntax: {@code bsola         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRTrue | prediction, 3 | (crf * 4), bd)}
      * <p>
@@ -7711,7 +7711,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bns{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bns           cr0, . -32768}
+     * Example disassembly syntax: {@code bns           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRFalse | prediction, 3 | (crf * 4), bd)}
      * <p>
@@ -7733,7 +7733,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bnsa{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bnsa          cr0, -32768}
+     * Example disassembly syntax: {@code bnsa          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRFalse | prediction, 3 | (crf * 4), bd)}
      * <p>
@@ -7755,7 +7755,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bnsl{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bnsl          cr0, . -32768}
+     * Example disassembly syntax: {@code bnsl          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRFalse | prediction, 3 | (crf * 4), bd)}
      * <p>
@@ -7777,7 +7777,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bnsla{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bnsla         cr0, -32768}
+     * Example disassembly syntax: {@code bnsla         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRFalse | prediction, 3 | (crf * 4), bd)}
      * <p>
@@ -7799,7 +7799,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bun{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bun           cr0, . -32768}
+     * Example disassembly syntax: {@code bun           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRTrue | prediction, 3 | (crf * 4), bd)}
      * <p>
@@ -7821,7 +7821,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code buna{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code buna          cr0, -32768}
+     * Example disassembly syntax: {@code buna          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRTrue | prediction, 3 | (crf * 4), bd)}
      * <p>
@@ -7843,7 +7843,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bunl{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bunl          cr0, . -32768}
+     * Example disassembly syntax: {@code bunl          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRTrue | prediction, 3 | (crf * 4), bd)}
      * <p>
@@ -7865,7 +7865,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bunla{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bunla         cr0, -32768}
+     * Example disassembly syntax: {@code bunla         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRTrue | prediction, 3 | (crf * 4), bd)}
      * <p>
@@ -7887,7 +7887,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bnu{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bnu           cr0, . -32768}
+     * Example disassembly syntax: {@code bnu           cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bc(CRFalse | prediction, 3 | (crf * 4), bd)}
      * <p>
@@ -7909,7 +7909,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bnua{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bnua          cr0, -32768}
+     * Example disassembly syntax: {@code bnua          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bca(CRFalse | prediction, 3 | (crf * 4), bd)}
      * <p>
@@ -7931,7 +7931,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bnul{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bnul          cr0, . -32768}
+     * Example disassembly syntax: {@code bnul          cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcl(CRFalse | prediction, 3 | (crf * 4), bd)}
      * <p>
@@ -7953,7 +7953,7 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code bnula{++|--}  }<i>crf</i>, <i>bd</i>
-     * Example disassembly syntax: {@code bnula         cr0, -32768}
+     * Example disassembly syntax: {@code bnula         cr0, L1: -32768}
      * <p>
      * This is a synthetic instruction equivalent to: {@code bcla(CRFalse | prediction, 3 | (crf * 4), bd)}
      * <p>
@@ -8942,94 +8942,94 @@ public abstract class PPCRawAssembler extends AbstractPPCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code subi  }<i>rt</i>, <i>ra</i>, <i>value</i>
+     * Pseudo-external assembler syntax: {@code subi  }<i>rt</i>, <i>ra</i>, <i>val</i>
      * Example disassembly syntax: {@code subi          r0, 0, 0xffff8000}
      * <p>
-     * This is a synthetic instruction equivalent to: {@code addi(rt, ra, -value)}
+     * This is a synthetic instruction equivalent to: {@code addi(rt, ra, -val)}
      * <p>
      * Constraint: {@code ra != R0}<br />
-     * Constraint: {@code -32768 <= -value && -value <= 32767}<br />
+     * Constraint: {@code -32768 <= -val && -val <= 32767}<br />
      *
      * @see #addi(GPR, ZeroOrRegister, int)
      *
      * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.4.1 [Book 1]"
      */
     // Template#: 498, Serial#: 498
-    public void subi(final GPR rt, final ZeroOrRegister ra, final int value) {
+    public void subi(final GPR rt, final ZeroOrRegister ra, final int val) {
         int instruction = 0x38000000;
         checkConstraint(ra != R0, "ra != R0");
-        checkConstraint(-32768 <= -value && -value <= 32767, "-32768 <= -value && -value <= 32767");
+        checkConstraint(-32768 <= -val && -val <= 32767, "-32768 <= -val && -val <= 32767");
         instruction |= ((rt.value() & 0x1f) << 21);
         instruction |= ((ra.value() & 0x1f) << 16);
-        instruction |= (-value & 0xffff);
+        instruction |= (-val & 0xffff);
         emitInt(instruction);
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code subis  }<i>rt</i>, <i>ra</i>, <i>value</i>
+     * Pseudo-external assembler syntax: {@code subis  }<i>rt</i>, <i>ra</i>, <i>val</i>
      * Example disassembly syntax: {@code subis         r0, 0, 0xffff8000}
      * <p>
-     * This is a synthetic instruction equivalent to: {@code addis(rt, ra, -value)}
+     * This is a synthetic instruction equivalent to: {@code addis(rt, ra, -val)}
      * <p>
      * Constraint: {@code ra != R0}<br />
-     * Constraint: {@code -32768 <= -value && -value <= 32767}<br />
+     * Constraint: {@code -32768 <= -val && -val <= 32767}<br />
      *
      * @see #addis(GPR, ZeroOrRegister, int)
      *
      * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.4.1 [Book 1]"
      */
     // Template#: 499, Serial#: 499
-    public void subis(final GPR rt, final ZeroOrRegister ra, final int value) {
+    public void subis(final GPR rt, final ZeroOrRegister ra, final int val) {
         int instruction = 0x3C000000;
         checkConstraint(ra != R0, "ra != R0");
-        checkConstraint(-32768 <= -value && -value <= 32767, "-32768 <= -value && -value <= 32767");
+        checkConstraint(-32768 <= -val && -val <= 32767, "-32768 <= -val && -val <= 32767");
         instruction |= ((rt.value() & 0x1f) << 21);
         instruction |= ((ra.value() & 0x1f) << 16);
-        instruction |= (-value & 0xffff);
+        instruction |= (-val & 0xffff);
         emitInt(instruction);
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code subic  }<i>rt</i>, <i>ra</i>, <i>value</i>
+     * Pseudo-external assembler syntax: {@code subic  }<i>rt</i>, <i>ra</i>, <i>val</i>
      * Example disassembly syntax: {@code subic         r0, r0, 0xffff8000}
      * <p>
-     * This is a synthetic instruction equivalent to: {@code addic(rt, ra, -value)}
+     * This is a synthetic instruction equivalent to: {@code addic(rt, ra, -val)}
      * <p>
-     * Constraint: {@code -32768 <= -value && -value <= 32767}<br />
+     * Constraint: {@code -32768 <= -val && -val <= 32767}<br />
      *
      * @see #addic(GPR, GPR, int)
      *
      * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.4.1 [Book 1]"
      */
     // Template#: 500, Serial#: 500
-    public void subic(final GPR rt, final GPR ra, final int value) {
+    public void subic(final GPR rt, final GPR ra, final int val) {
         int instruction = 0x30000000;
-        checkConstraint(-32768 <= -value && -value <= 32767, "-32768 <= -value && -value <= 32767");
+        checkConstraint(-32768 <= -val && -val <= 32767, "-32768 <= -val && -val <= 32767");
         instruction |= ((rt.value() & 0x1f) << 21);
         instruction |= ((ra.value() & 0x1f) << 16);
-        instruction |= (-value & 0xffff);
+        instruction |= (-val & 0xffff);
         emitInt(instruction);
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code subic.  }<i>rt</i>, <i>ra</i>, <i>value</i>
+     * Pseudo-external assembler syntax: {@code subic.  }<i>rt</i>, <i>ra</i>, <i>val</i>
      * Example disassembly syntax: {@code subic.        r0, r0, 0xffff8000}
      * <p>
-     * This is a synthetic instruction equivalent to: {@code addic_(rt, ra, -value)}
+     * This is a synthetic instruction equivalent to: {@code addic_(rt, ra, -val)}
      * <p>
-     * Constraint: {@code -32768 <= -value && -value <= 32767}<br />
+     * Constraint: {@code -32768 <= -val && -val <= 32767}<br />
      *
      * @see #addic_(GPR, GPR, int)
      *
      * @see "<a href="http://www.ibm.com/developerworks/eserver/library/es-archguide-v2.html">PowerPC Architecture Book, Version 2.02</a> - Section B.4.1 [Book 1]"
      */
     // Template#: 501, Serial#: 501
-    public void subic_(final GPR rt, final GPR ra, final int value) {
+    public void subic_(final GPR rt, final GPR ra, final int val) {
         int instruction = 0x34000000;
-        checkConstraint(-32768 <= -value && -value <= 32767, "-32768 <= -value && -value <= 32767");
+        checkConstraint(-32768 <= -val && -val <= 32767, "-32768 <= -val && -val <= 32767");
         instruction |= ((rt.value() & 0x1f) << 21);
         instruction |= ((ra.value() & 0x1f) << 16);
-        instruction |= (-value & 0xffff);
+        instruction |= (-val & 0xffff);
         emitInt(instruction);
     }
 

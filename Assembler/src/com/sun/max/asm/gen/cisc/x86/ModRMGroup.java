@@ -28,7 +28,7 @@ import com.sun.max.collect.*;
 public interface ModRMGroup {
 
     public enum Opcode {
-        _0, _1, _2, _3, _4, _5, _6, _7;
+        OPCODE_0, OPCODE_1, OPCODE_2, OPCODE_3, OPCODE_4, OPCODE_5, OPCODE_6, OPCODE_7;
 
         public byte byteValue() {
             return (byte) ordinal();

@@ -30,7 +30,7 @@ import com.sun.max.collect.*;
  * the low-order 0 bits of the aligned values that the field represents.
  * This class can convert between the field's <i>argument</i> (i.e.
  * the represented value) and it's <i>operand</i> (i.e. the encoded value).
- * 
+ *
  * @author Dave Ungar
  * @author Bernd Mathiske
  * @author Adam Spitz
@@ -38,11 +38,11 @@ import com.sun.max.collect.*;
  */
 public class AlignedImmediateOperandField extends ImmediateOperandField {
 
-    protected int _zeroes;
+    protected int zeroes;
 
     public AlignedImmediateOperandField(BitRange bitRange, int zeroes) {
         super(bitRange);
-        _zeroes = zeroes;
+        this.zeroes = zeroes;
     }
 
     @Override
@@ -72,7 +72,7 @@ public class AlignedImmediateOperandField extends ImmediateOperandField {
 
     @Override
     public int zeroes() {
-        return _zeroes;
+        return zeroes;
     }
 
     /**

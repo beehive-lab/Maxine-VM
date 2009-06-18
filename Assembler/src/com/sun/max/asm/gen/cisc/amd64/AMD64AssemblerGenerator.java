@@ -44,7 +44,7 @@ public class AMD64AssemblerGenerator extends X86AssemblerGenerator<AMD64Template
 
     public static void main(String[] programArguments) {
         final AMD64AssemblerGenerator generator = new AMD64AssemblerGenerator();
-        generator._options.parseArguments(programArguments);
+        generator.options.parseArguments(programArguments);
         generator.generate();
     }
 

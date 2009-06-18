@@ -36,12 +36,12 @@ public class OffsetLiteral extends MutableAssembledObject {
     protected OffsetLiteral(Assembler assembler, int startPosition, int endPosition, Label target, Label base) {
         super(assembler, startPosition, endPosition);
         assembler.addFixedSizeAssembledObject(this);
-        _target = target;
-        _base = base;
+        this.target = target;
+        this.base = base;
     }
 
-    private final Label _target;
-    private final Label _base;
+    private final Label target;
+    private final Label base;
 
     @Override
     protected final void assemble() throws AssemblyException {
@@ -68,7 +68,7 @@ public class OffsetLiteral extends MutableAssembledObject {
     }
 
     public final long offset() throws AssemblyException {
-        return _target.position() - _base.position();
+        return target.position() - base.position();
     }
 
     public final Type type() {

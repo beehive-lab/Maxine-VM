@@ -27,10 +27,10 @@ import com.sun.max.lang.*;
  */
 public class Immediate8Argument extends ImmediateArgument {
 
-    private byte _value;
+    private final byte value;
 
     public Immediate8Argument(byte value) {
-        _value = value;
+        this.value = value;
     }
 
     @Override
@@ -39,7 +39,7 @@ public class Immediate8Argument extends ImmediateArgument {
     }
 
     public byte value() {
-        return _value;
+        return value;
     }
 
     public long asLong() {
@@ -47,35 +47,35 @@ public class Immediate8Argument extends ImmediateArgument {
     }
 
     public String externalValue() {
-        return "0x" + Integer.toHexString(_value & 0xff);
+        return "0x" + Integer.toHexString(value & 0xff);
     }
 
     public String disassembledValue() {
-        return "0x" + String.format("%X", _value);
+        return "0x" + String.format("%X", value);
     }
 
     @Override
     public String signedExternalValue() {
-        return Integer.toString(_value);
+        return Integer.toString(value);
     }
 
     @Override
     public Object boxedJavaValue() {
-        return new Byte(_value);
+        return new Byte(value);
     }
 
     @Override
     public boolean equals(Object other) {
         if (other instanceof Immediate8Argument) {
             final Immediate8Argument argument = (Immediate8Argument) other;
-            return _value == argument._value;
+            return value == argument.value;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return _value;
+        return value;
     }
 
 }

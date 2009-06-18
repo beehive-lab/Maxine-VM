@@ -36,14 +36,14 @@ import com.sun.max.program.option.*;
  */
 public abstract class X86AssemblerGenerator<Template_Type extends X86Template> extends AssemblerGenerator<Template_Type> {
 
-    private final Option<Boolean> _support16BitAddressesOption = _options.newBooleanOption("a16", false, "Enables 16 bit addressing.");
-    private final Option<Boolean> _support16BitOffsetOption = _options.newBooleanOption("d16", false, "Enables 16 bit offsets.");
+    private final Option<Boolean> support16BitAddressesOption = options.newBooleanOption("a16", false, "Enables 16 bit addressing.");
+    private final Option<Boolean> support16BitOffsetOption = options.newBooleanOption("d16", false, "Enables 16 bit offsets.");
 
-    private final WordWidth _addressWidth;
+    private final WordWidth addressWidth;
 
     protected X86AssemblerGenerator(Assembly<Template_Type> assembly, WordWidth addressWidth) {
         super(assembly, true);
-        _addressWidth = addressWidth;
+        this.addressWidth = addressWidth;
     }
 
     @Override
@@ -53,15 +53,15 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
     }
 
     public WordWidth addressWidth() {
-        return _addressWidth;
+        return addressWidth;
     }
 
     @Override
     protected void generate() {
-        if (_support16BitAddressesOption.getValue() != null && _support16BitAddressesOption.getValue()) {
+        if (support16BitAddressesOption.getValue() != null && support16BitAddressesOption.getValue()) {
             X86Assembly.support16BitAddresses();
         }
-        if (_support16BitOffsetOption.getValue() != null && _support16BitOffsetOption.getValue()) {
+        if (support16BitOffsetOption.getValue() != null && support16BitOffsetOption.getValue()) {
             X86Assembly.support16BitOffsets();
         }
         super.generate();
@@ -282,18 +282,18 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
         }
     }
 
-    private int _subroutineSerial;
+    private int subroutineSerial;
 
     private String createSubroutineName() {
-        ++_subroutineSerial;
-        String number = Integer.toString(_subroutineSerial);
+        ++subroutineSerial;
+        String number = Integer.toString(subroutineSerial);
         while (number.length() < 4) {
             number = "0" + number;
         }
         return "assemble" + number;
     }
 
-    private Map<String, String> _subroutineToName = new HashMap<String, String>();
+    private Map<String, String> subroutineToName = new HashMap<String, String>();
 
     private static final String OPCODE1_VARIABLE_NAME = "opcode1";
     private static final String OPCODE2_VARIABLE_NAME = "opcode2";
@@ -340,10 +340,10 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
         final StringWriter stringWriter = new StringWriter();
         printSubroutine(new IndentWriter(new PrintWriter(stringWriter)), template);
         final String subroutine = stringWriter.toString();
-        String name = _subroutineToName.get(subroutine);
+        String name = subroutineToName.get(subroutine);
         if (name == null) {
             name = createSubroutineName();
-            _subroutineToName.put(subroutine, name);
+            subroutineToName.put(subroutine, name);
         }
         return name;
     }
@@ -377,10 +377,10 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
 
     @Override
     protected int printSubroutines(IndentWriter writer) {
-        final Set<String> subroutineSet = _subroutineToName.keySet();
+        final Set<String> subroutineSet = subroutineToName.keySet();
         final String[] subroutines = subroutineSet.toArray(new String[subroutineSet.size()]);
         for (int i = 0; i < subroutines.length; i++) {
-            subroutines[i] = _subroutineToName.get(subroutines[i]) + subroutines[i];
+            subroutines[i] = subroutineToName.get(subroutines[i]) + subroutines[i];
         }
         java.util.Arrays.sort(subroutines);
         for (String subroutine : subroutines) {
@@ -406,20 +406,20 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
     }
 
     private final class LabelWidthCase {
-        final WordWidth _width;
-        final Template_Type _template;
+        final WordWidth width;
+        final Template_Type template;
 
         private LabelWidthCase(WordWidth width, Template_Type template) {
-            _width = width;
-            _template = template;
+            this.width = width;
+            this.template = template;
         }
     }
 
     private String getValidSizesMaskExpression(Sequence<LabelWidthCase> labelWidthCases) {
         final Iterator<LabelWidthCase> iterator = labelWidthCases.iterator();
-        String mask = String.valueOf(iterator.next()._width.numberOfBytes());
+        String mask = String.valueOf(iterator.next().width.numberOfBytes());
         while (iterator.hasNext()) {
-            mask += " | " + iterator.next()._width.numberOfBytes();
+            mask += " | " + iterator.next().width.numberOfBytes();
         }
         return mask;
     }
@@ -431,7 +431,7 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
                 final X86NumericalParameter numericalParameter = (X86NumericalParameter) t.parameters().get(template.labelParameterIndex());
                 final WordWidth width = numericalParameter.width();
                 array.set(width.ordinal(), new LabelWidthCase(width, t));
-                t._isLabelMethodWritten = true;
+                t.isLabelMethodWritten = true;
             }
         }
 
@@ -440,7 +440,7 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
         for (int i = 0; i < array.length(); i++) {
             final LabelWidthCase labelWidthCase = array.get(i);
             if (labelWidthCase != null) {
-                assert result.isEmpty() || labelWidthCase._width.greaterThan(result.last()._width);
+                assert result.isEmpty() || labelWidthCase.width.greaterThan(result.last().width);
                 result.append(labelWidthCase);
             }
         }
@@ -458,14 +458,14 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
             public void printAssembleMethodBody(IndentWriter writer, Template t) {
                 if (labelWidthCases.length() == 1) {
                     final LabelWidthCase labelWidthCase = labelWidthCases.first();
-                    super.printAssembleMethodBody(writer, labelWidthCase._template);
+                    super.printAssembleMethodBody(writer, labelWidthCase.template);
                 } else {
                     writer.println("final int labelSize = labelSize();");
                     String prefix = "";
                     for (LabelWidthCase labelWidthCase : labelWidthCases) {
-                        writer.println(prefix + "if (labelSize == " + labelWidthCase._width.numberOfBytes() + ") {");
+                        writer.println(prefix + "if (labelSize == " + labelWidthCase.width.numberOfBytes() + ") {");
                         writer.indent();
-                        super.printAssembleMethodBody(writer, labelWidthCase._template);
+                        super.printAssembleMethodBody(writer, labelWidthCase.template);
                         writer.outdent();
                         prefix = "} else ";
                     }
@@ -500,14 +500,14 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
 
     @Override
     protected boolean omitLabelTemplate(Template_Type labelTemplate) {
-        return labelTemplate._isLabelMethodWritten;
+        return labelTemplate.isLabelMethodWritten;
     }
 
     @Override
     protected void printLabelMethod(IndentWriter writer, Template_Type labelTemplate, String assemblerClassName) {
         if (labelTemplate.addressSizeAttribute() == addressWidth()) {
-            if (!labelTemplate._isLabelMethodWritten) {
-                labelTemplate._isLabelMethodWritten = true;
+            if (!labelTemplate.isLabelMethodWritten) {
+                labelTemplate.isLabelMethodWritten = true;
                 final Sequence<Parameter> parameters = getParameters(labelTemplate, true);
                 final X86Parameter parameter = labelTemplate.parameters().get(labelTemplate.labelParameterIndex());
                 if (parameter instanceof X86OffsetParameter) {

@@ -47,7 +47,7 @@ public final class SPARCAssemblerGenerator extends RiscAssemblerGenerator<SPARCT
 
     public static void main(String[] programArguments) {
         final SPARCAssemblerGenerator generator = new SPARCAssemblerGenerator();
-        generator._options.parseArguments(programArguments);
+        generator.options.parseArguments(programArguments);
         generator.generate();
     }
 

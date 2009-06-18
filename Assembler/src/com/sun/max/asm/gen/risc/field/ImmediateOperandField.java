@@ -109,17 +109,17 @@ public class ImmediateOperandField extends OperandField<ImmediateArgument> imple
         return this;
     }
 
-    private ArgumentRange _argumentRange;
+    private ArgumentRange argumentRange;
 
     public ArgumentRange argumentRange() {
-        if (_argumentRange == null) {
-            _argumentRange = new ArgumentRange(this, minArgumentValue(), maxArgumentValue());
+        if (argumentRange == null) {
+            argumentRange = new ArgumentRange(this, minArgumentValue(), maxArgumentValue());
         }
-        return _argumentRange;
+        return argumentRange;
     }
 
-    private Iterable<? extends Argument> _testArguments;
-    private Iterable<? extends Argument> _illegalTestArguments;
+    private Iterable<? extends Argument> testArguments;
+    private Iterable<? extends Argument> illegalTestArguments;
 
     private static final MapFunction<Integer, Immediate32Argument> ARGUMENT_WRAPPER = new MapFunction<Integer, Immediate32Argument>() {
         public Immediate32Argument map(Integer integer) {
@@ -128,29 +128,29 @@ public class ImmediateOperandField extends OperandField<ImmediateArgument> imple
     };
 
     public Iterable<? extends Argument> getLegalTestArguments() {
-        if (_testArguments == null) {
+        if (testArguments == null) {
             final Sequence<Integer> integers = signDependentOperations().legalTestArgumentValues(minArgumentValue(), maxArgumentValue(), grain());
-            _testArguments = LinkSequence.map(integers, Immediate32Argument.class, ARGUMENT_WRAPPER);
+            testArguments = LinkSequence.map(integers, Immediate32Argument.class, ARGUMENT_WRAPPER);
         }
-        return _testArguments;
+        return testArguments;
     }
 
     public Iterable<? extends Argument> getIllegalTestArguments() {
-        if (_illegalTestArguments == null) {
-            final AppendableSequence<Immediate32Argument> illegalTestArguments = new LinkSequence<Immediate32Argument>();
+        if (this.illegalTestArguments == null) {
+            final AppendableSequence<Immediate32Argument> illegalArguments = new LinkSequence<Immediate32Argument>();
             final int min = minArgumentValue();
             if (min != Integer.MIN_VALUE) {
-                illegalTestArguments.append(new Immediate32Argument(min - 1));
-                illegalTestArguments.append(new Immediate32Argument(Integer.MIN_VALUE));
+                illegalArguments.append(new Immediate32Argument(min - 1));
+                illegalArguments.append(new Immediate32Argument(Integer.MIN_VALUE));
             }
             final int max = maxArgumentValue();
             if (max != Integer.MAX_VALUE) {
-                illegalTestArguments.append(new Immediate32Argument(max + 1));
-                illegalTestArguments.append(new Immediate32Argument(Integer.MAX_VALUE));
+                illegalArguments.append(new Immediate32Argument(max + 1));
+                illegalArguments.append(new Immediate32Argument(Integer.MAX_VALUE));
             }
-            _illegalTestArguments = illegalTestArguments;
+            this.illegalTestArguments = illegalArguments;
         }
-        return _illegalTestArguments;
+        return illegalTestArguments;
     }
 
     public TestArgumentExclusion excludeExternalTestArguments(Argument... arguments) {

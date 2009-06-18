@@ -37,23 +37,23 @@ import com.sun.max.program.option.*;
  */
 public abstract class AssemblerTestCase extends MaxTestCase {
 
-    protected final OptionSet _options = new OptionSet();
+    protected final OptionSet options = new OptionSet();
 
-    private final Option<String> _templateOption = _options.newStringOption("pattern", "",
+    private final Option<String> templateOption = options.newStringOption("pattern", "",
             "specifies a pattern so that only templates with the matching patterns are tested");
-    private final Option<Boolean> _serialized = _options.newBooleanOption("serial", false,
+    private final Option<Boolean> serialized = options.newBooleanOption("serial", false,
             "forces testing to be single threaded");
-    private final Option<Integer> _startSerialOption = _options.newIntegerOption("start", 0,
+    private final Option<Integer> startSerialOption = options.newIntegerOption("start", 0,
             "specifies the first serial number to begin testing");
-    private final Option<Integer> _endSerialOption = _options.newIntegerOption("end", Integer.MAX_VALUE,
+    private final Option<Integer> endSerialOption = options.newIntegerOption("end", Integer.MAX_VALUE,
             "specifies the last serial number to test");
-    private final Option<Boolean> _sourceOption = _options.newBooleanOption("only-make-asm-source", false,
+    private final Option<Boolean> sourceOption = options.newBooleanOption("only-make-asm-source", false,
             "specifies that the testing framework should only create the assembler source files and should not run " +
             "any tests.");
 
     /**
      * Subclasses override this to modify a tester that is about to be {@linkplain #run() run}.
-     * Typically, the modification is based on the values of any subclasses specific addition to {@link #_options}.
+     * Typically, the modification is based on the values of any subclasses specific addition to {@link #options}.
      */
     protected void configure(AssemblyTester tester) {
     }
@@ -66,20 +66,20 @@ public abstract class AssemblerTestCase extends MaxTestCase {
     }
 
     public final void run(AssemblyTester tester) {
-        _options.parseArguments(getProgramArguments());
+        options.parseArguments(getProgramArguments());
         configure(tester);
-        tester.setTemplatePattern(_templateOption.getValue());
-        if (_sourceOption.getValue()) {
+        tester.setTemplatePattern(templateOption.getValue());
+        if (sourceOption.getValue()) {
             final File sourceFile = new File(tester.assembly().instructionSet().name().toLowerCase() + "-asmTest.s");
             try {
                 final IndentWriter indentWriter = new IndentWriter(new PrintWriter(new BufferedWriter(new FileWriter(sourceFile))));
-                tester.createExternalSource(_startSerialOption.getValue(), _endSerialOption.getValue(), indentWriter);
+                tester.createExternalSource(startSerialOption.getValue(), endSerialOption.getValue(), indentWriter);
                 indentWriter.close();
             } catch (IOException e) {
                 ProgramError.unexpected("Could not open " + sourceFile + " for writing", e);
             }
         } else {
-            tester.run(_startSerialOption.getValue(), _endSerialOption.getValue(), !_serialized.getValue());
+            tester.run(startSerialOption.getValue(), endSerialOption.getValue(), !serialized.getValue());
         }
     }
 }
