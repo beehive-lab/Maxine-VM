@@ -30,6 +30,7 @@ import com.sun.max.collect.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.memory.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -104,6 +105,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
         FRAME("Stack Frame", "Current stack frame of interest in the Inspector"),
         CODE("Code Location", "Current code location of interest in the Inspector"),
         BREAKPOINT("Breakpoint", "Current breakpoint of interest in the Inspector"),
+        WATCHPOINT("Watchpoint", "Current watchpoint of interest in the Inspector"),
         ADDRESS("Memory Address", "Current memory address of interest in the Inspector"),
         OBJECT("Heap Object", "Current heap object of interest in the Inspector"),
         REGION("Memory Region", "Current memory region of interest in the Inspector");
@@ -157,10 +159,23 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
         setRowSelectionAllowed(false);
         setColumnSelectionAllowed(false);
         //setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        //addMouseListener(new FocusInspectorMouseClickAdapter(inspection()));
+        addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
 
         refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
+    }
+
+    public void refresh(boolean force) {
+        if (force) {
+            for (TableColumn column : _columns) {
+                final Prober prober = (Prober) column.getCellRenderer();
+                prober.refresh(force);
+            }
+            _model.refresh();
+        }
+    }
+
+    public void redisplay() {
     }
 
     @Override
@@ -202,17 +217,14 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
             fireTableDataChanged();
         }
 
-        @Override
         public int getColumnCount() {
             return FocusColumnKind.VALUES.length();
         }
 
-        @Override
         public int getRowCount() {
             return FocusRowKind.VALUES.length();
         }
 
-        @Override
         public Object getValueAt(int row, int col) {
             // Don't use cell values; all interaction is driven by row number.
             return null;
@@ -229,7 +241,6 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
             super(inspection, null);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final FocusRowKind focusRowKind = FocusRowKind.VALUES.get(row);
             setText(focusRowKind.label());
@@ -251,11 +262,11 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
             _labels[FocusRowKind.THREAD.ordinal()] = new JavaNameLabel(inspection, "") {
                 @Override
                 public void refresh(boolean force) {
-                    final TeleNativeThread teleNativeThread = inspection().focus().thread();
-                    if (teleNativeThread == null) {
+                    final MaxThread thread = inspection().focus().thread();
+                    if (thread == null) {
                         setValue("null", "No thread focus");
                     } else {
-                        final String longName = inspection().nameDisplay().longNameWithState(teleNativeThread);
+                        final String longName = inspection().nameDisplay().longNameWithState(thread);
                         setValue(longName, "Thread focus = " + longName);
                     }
                 }
@@ -290,14 +301,26 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
                 public void refresh(boolean force) {
                     final TeleBreakpoint teleBreakpoint = inspection().focus().breakpoint();
                     if (teleBreakpoint == null) {
-                        setValue(null, "No code location focus");
+                        setValue(null, "No breakpoint focus");
                     } else {
                         final String longName = inspection().nameDisplay().longName(teleBreakpoint.teleCodeLocation());
                         setValue(longName, "Breakpoint focus = " + longName);
                     }
                 }
             };
-            _labels[FocusRowKind.ADDRESS.ordinal()] = new WordValueLabel(inspection, WordValueLabel.ValueMode.WORD) {
+            _labels[FocusRowKind.WATCHPOINT.ordinal()] = new PlainLabel(inspection, "") {
+                @Override
+                public void refresh(boolean force) {
+                    final MaxWatchpoint watchpoint = inspection().focus().watchpoint();
+                    if (watchpoint == null) {
+                        setValue("null", "No watchpoint focus");
+                    } else {
+                        final String longName = watchpoint.toString();
+                        setValue(longName, "Watchpoint focus = " + longName);
+                    }
+                }
+            };
+            _labels[FocusRowKind.ADDRESS.ordinal()] = new WordValueLabel(inspection, WordValueLabel.ValueMode.WORD, FocusTable.this) {
                 @Override
                 public Value fetchValue() {
                     Address address = inspection().focus().address();
@@ -307,7 +330,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
                     return new WordValue(address);
                 }
             };
-            _labels[FocusRowKind.OBJECT.ordinal()] = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE) {
+            _labels[FocusRowKind.OBJECT.ordinal()] = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, FocusTable.this) {
                 @Override
                 public Value fetchValue() {
                     final TeleObject teleObject = inspection().focus().heapObject();
@@ -347,7 +370,6 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
             }
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             if (_labels[row] != null) {
                 return _labels[row];
@@ -360,11 +382,11 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
         refresh(true);
     }
 
-    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
+    public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
         refresh(true);
     }
 
-    public void stackFrameFocusChanged(StackFrame oldStackFrame, TeleNativeThread threadForStackFrame, StackFrame stackFrame) {
+    public void stackFrameFocusChanged(StackFrame oldStackFrame, MaxThread threadForStackFrame, StackFrame stackFrame) {
         refresh(true);
     }
 
@@ -380,21 +402,12 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
         refresh(true);
     }
 
-    public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
+    public  void watchpointFocusSet(MaxWatchpoint oldWatchpoint, MaxWatchpoint watchpoint) {
         refresh(true);
     }
 
-    public void redisplay() {
-    }
-
-    public void refresh(boolean force) {
-        if (force) {
-            for (TableColumn column : _columns) {
-                final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(force);
-            }
-            _model.refresh();
-        }
+    public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
+        refresh(true);
     }
 
 }

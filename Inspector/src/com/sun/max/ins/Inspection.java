@@ -93,10 +93,10 @@ public final class Inspection {
 
         BreakpointPersistenceManager.initialize(this);
         _inspectionActions.refresh(true);
-        // Listen for VM state changes
+
         maxVM().addVMStateObserver(new VMStateObserver());
-        // Listen for changes in breakpoints
         maxVM().addBreakpointObserver(new BreakpointObserver());
+        maxVM().addWatchpointObserver(new WatchpointObserver());
 
         _inspectorMainFrame = new InspectorMainFrame(this, INSPECTOR_NAME, _settings, _inspectionActions);
 
@@ -116,9 +116,9 @@ public final class Inspection {
                 // Choose an arbitrary thread as the "current" thread. If the inspector is
                 // creating the process to be debugged (as opposed to attaching to it), then there
                 // should only be one thread.
-                final IterableWithLength<TeleNativeThread> threads = maxVM().threads();
-                TeleNativeThread nonJavaThread = null;
-                for (TeleNativeThread thread : threads) {
+                final IterableWithLength<MaxThread> threads = maxVMState().threads();
+                MaxThread nonJavaThread = null;
+                for (MaxThread thread : threads) {
                     if (thread.isJava()) {
                         _focus.setThread(thread);
                         nonJavaThread = null;
@@ -295,6 +295,8 @@ public final class Inspection {
                 break;
             case TERMINATED:
                 Trace.line(1, tracePrefix() + " - VM process terminated");
+                // Clear any possibly misleading view state.
+                focus().clearAll();
                 // Give all process-sensitive views a chance to shut down
                 for (InspectionListener listener : _inspectionListeners.clone()) {
                     listener.vmProcessTerminated();
@@ -320,7 +322,12 @@ public final class Inspection {
 
         public void upate(final MaxVMState maxVMState) {
             System.out.println("MaxVMState=" + maxVMState);
-
+            for (MaxThread thread : maxVMState.threadsStarted()) {
+                Trace.line(TRACE_VALUE, tracePrefix() + "started: " + thread);
+            }
+            for (MaxThread thread : maxVMState.threadsDied()) {
+                Trace.line(TRACE_VALUE, tracePrefix() + "died: " + thread);
+            }
             if (java.awt.EventQueue.isDispatchThread()) {
                 processVMStateChange();
             } else {
@@ -341,29 +348,53 @@ public final class Inspection {
     }
 
     /**
-     * Handles reported breakpoint changes in the VM.
-     */
-    private void processBreakpointChange() {
-        Trace.line(TRACE_VALUE, tracePrefix() + "breakpoint state notification");
-        for (InspectionListener listener : _inspectionListeners.clone()) {
-            listener.breakpointSetChanged();
-        }
-    }
-
-    /**
-     * Handles reported breakpoint changes in the VM. Ensures that the event is handled only on the
+     * Propagates reported breakpoint changes in the VM.
+     * Ensures that notification is handled only on the
      * AWT event thread.
      */
     private final class BreakpointObserver implements Observer {
 
         public void update(Observable o, Object arg) {
             if (java.awt.EventQueue.isDispatchThread()) {
-                processBreakpointChange();
+                Trace.line(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
+                for (InspectionListener listener : _inspectionListeners.clone()) {
+                    listener.breakpointSetChanged();
+                }
             } else {
                 SwingUtilities.invokeLater(new Runnable() {
 
                     public void run() {
-                        processBreakpointChange();
+                        Trace.line(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
+                        for (InspectionListener listener : _inspectionListeners.clone()) {
+                            listener.breakpointSetChanged();
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    /**
+     * Propagates reported watchpoint changes in the VM.
+     * Ensures that notification is handled only on the
+     * AWT event thread.
+     */
+    private final class WatchpointObserver implements Observer {
+
+        public void update(Observable o, Object arg) {
+            if (java.awt.EventQueue.isDispatchThread()) {
+                Trace.line(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
+                for (InspectionListener listener : _inspectionListeners.clone()) {
+                    listener.watchpointSetChanged();
+                }
+            } else {
+                SwingUtilities.invokeLater(new Runnable() {
+
+                    public void run() {
+                        Trace.line(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
+                        for (InspectionListener listener : _inspectionListeners.clone()) {
+                            listener.watchpointSetChanged();
+                        }
                     }
                 });
             }
@@ -455,20 +486,15 @@ public final class Inspection {
 
         Trace.begin(TRACE_VALUE, _threadTracer);
         final long startTimeMillis = System.currentTimeMillis();
-        final IterableWithLength<TeleNativeThread> deadThreads = maxVM().recentlyDiedThreads();
-        final IterableWithLength<TeleNativeThread> startedThreads = maxVM().recentlyCreatedThreads();
-        if (deadThreads.length() != 0 || startedThreads.length() != 0) {
-            for (InspectionListener listener : listeners) {
-                listener.threadSetChanged();
-            }
-            for (TeleNativeThread teleNativeThread : maxVM().threads()) {
+        if (!maxVMState().threadsStarted().isEmpty() || !maxVMState().threadsDied().isEmpty()) {
+            for (MaxThread thread : maxVMState().threads()) {
                 for (InspectionListener listener : listeners) {
-                    listener.threadStateChanged(teleNativeThread);
+                    listener.threadStateChanged(thread);
                 }
             }
         } else {
             // A kind of optimization that keeps the StackInspector from walking every stack every time; is it needed?
-            final TeleNativeThread currentThread = focus().thread();
+            final MaxThread currentThread = focus().thread();
             for (InspectionListener listener : listeners) {
                 listener.threadStateChanged(currentThread);
             }
@@ -478,9 +504,9 @@ public final class Inspection {
             refreshAll(false);
             // Make visible the code at the IP of the thread that triggered the breakpoint.
             boolean atBreakpoint = false;
-            for (TeleNativeThread teleNativeThread : maxVM().threads()) {
-                if (teleNativeThread.breakpoint() != null) {
-                    focus().setThread(teleNativeThread);
+            for (MaxThread thread : maxVMState().threads()) {
+                if (thread.breakpoint() != null) {
+                    focus().setThread(thread);
                     atBreakpoint = true;
                     break;
                 }
@@ -488,10 +514,10 @@ public final class Inspection {
             if (!atBreakpoint) {
                 // If there was no selection based on breakpoint, then check the thread that was selected before the
                 // change.
-                InspectorError.check(!focus().thread().isDead(), "Selected thread no longer valid");
+                InspectorError.check(focus().thread().isLive(), "Selected thread no longer valid");
             }
             // Reset focus to new IP.
-            final TeleNativeThread focusThread = focus().thread();
+            final MaxThread focusThread = focus().thread();
             focus().setStackFrame(focusThread, focusThread.frames().first(), true);
         } catch (Throwable throwable) {
             new InspectorError("could not update view", throwable).display(this);

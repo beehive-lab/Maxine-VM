@@ -29,7 +29,6 @@ public class TirInstructionFilter extends TirInstructionAdapter implements TirMe
         _receiver = TirPipeline.connect(this, receiver);
     }
 
-    @Override
     public void receive(TirMessage message) {
         if (message instanceof TirInstruction) {
             final TirInstruction instruction = (TirInstruction) message;

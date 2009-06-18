@@ -22,6 +22,8 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.util.InstructionClosure;
 import com.sun.c1x.util.InstructionVisitor;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.bytecode.Bytecodes;
 
 /**
  * The <code>NegateOp</code> instruction negates its operand.
@@ -38,6 +40,7 @@ public class NegateOp extends Instruction {
      */
     public NegateOp(Instruction x) {
         super(x.type().base());
+        _x = x;
     }
 
     /**
@@ -52,6 +55,7 @@ public class NegateOp extends Instruction {
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply to each value
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         _x = closure.apply(_x);
     }
@@ -60,7 +64,22 @@ public class NegateOp extends Instruction {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitNegateOp(this);
+    }
+
+    @Override
+    public int valueNumber() {
+        return Util.hash1(Bytecodes.INEG, _x);
+    }
+
+    @Override
+    public boolean valueEqual(Instruction i) {
+        if (i instanceof NegateOp) {
+            NegateOp o = (NegateOp) i;
+            return _x == o._x;
+        }
+        return false;
     }
 }

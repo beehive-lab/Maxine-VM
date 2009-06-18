@@ -23,6 +23,8 @@ package com.sun.c1x.ir;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.value.ValueType;
 import com.sun.c1x.util.InstructionVisitor;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.bytecode.Bytecodes;
 
 /**
  * The <code>ArrayLength</code> instruction gets the length of an array.
@@ -62,7 +64,23 @@ public class ArrayLength extends AccessArray {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitArrayLength(this);
     }
+
+    @Override
+    public int valueNumber() {
+        return Util.hash1(Bytecodes.ARRAYLENGTH, _array);
+    }
+
+    @Override
+    public boolean valueEqual(Instruction i) {
+        if (i instanceof ArrayLength) {
+            ArrayLength o = (ArrayLength) i;
+            return _array == o._array;
+        }
+        return false;
+    }
+
 }

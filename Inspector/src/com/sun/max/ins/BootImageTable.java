@@ -48,6 +48,8 @@ public class BootImageTable extends InspectorTable {
     private BootImageColumnModel _columnModel;
     private final TableColumn[] _columns;
 
+    private MaxVMState _lastRefreshedState = null;
+
     public BootImageTable(Inspection inspection, TableColumnVisibilityPreferences<BootImageColumnKind> viewPreferences) {
         super(inspection);
         _model = new BootImageTableModel(inspection);
@@ -66,8 +68,6 @@ public class BootImageTable extends InspectorTable {
         refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
-
-    private MaxVMState _lastRefreshedState = null;
 
     public void refresh(boolean force) {
         if (maxVMState().newerThan(_lastRefreshedState) || force) {
@@ -185,38 +185,38 @@ public class BootImageTable extends InspectorTable {
             final Pointer bootHeapStart = bootImageStart;
             final Pointer bootHeapEnd = bootHeapStart.plus(header._bootHeapSize);
 
-            addRow("boot heap start:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapStart), new MemoryRegionValueLabel(inspection(), bootHeapStart));
+            addRow("boot heap start:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapStart, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootHeapStart));
             addRow("boot heap size:", new DataLabel.IntAsHex(inspection(), header._bootHeapSize), null);
-            addRow("boot heap end:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapEnd), new MemoryRegionValueLabel(inspection(), bootHeapEnd));
+            addRow("boot heap end:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapEnd, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootHeapEnd));
 
             final Pointer bootCodeStart = bootHeapEnd;
             final Pointer bootCodeEnd = bootCodeStart.plus(header._bootCodeSize);
 
-            addRow("boot code start:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeStart), new MemoryRegionValueLabel(inspection(), bootCodeStart));
+            addRow("boot code start:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeStart, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootCodeStart));
             addRow("boot code size:", new DataLabel.IntAsHex(inspection(), header._bootCodeSize), null);
-            addRow("boot code end:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeEnd), new MemoryRegionValueLabel(inspection(), bootCodeEnd));
+            addRow("boot code end:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeEnd, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootCodeEnd));
 
             addRow("code cache size:", new DataLabel.IntAsHex(inspection(), header._codeCacheSize), null);
             addRow("thread local space size:", new DataLabel.IntAsHex(inspection(), header._vmThreadLocalsSize), null);
 
             final Pointer runMethodPointer = bootImageStart.plus(header._vmRunMethodOffset);
-            addRow("vmStartupMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT,  runMethodPointer), new MemoryRegionValueLabel(inspection(), runMethodPointer));
+            addRow("vmStartupMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT,  runMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), runMethodPointer));
             final Pointer threadRunMethodPointer = bootImageStart.plus(header._vmThreadRunMethodOffset);
-            addRow("vmThreadRunMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, threadRunMethodPointer), new MemoryRegionValueLabel(inspection(), threadRunMethodPointer));
+            addRow("vmThreadRunMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, threadRunMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), threadRunMethodPointer));
             final Pointer runSchemeRunMethodPointer = bootImageStart.plus(header._runSchemeRunMethodOffset);
-            addRow("runSchemeRunMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, runSchemeRunMethodPointer), new MemoryRegionValueLabel(inspection(), runSchemeRunMethodPointer));
+            addRow("runSchemeRunMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, runSchemeRunMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), runSchemeRunMethodPointer));
 
             final Pointer classRegistryPointer = bootHeapStart.plus(header._classRegistryOffset);
-            addRow("class registry:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, classRegistryPointer), new MemoryRegionValueLabel(inspection(), classRegistryPointer));
+            addRow("class registry:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, classRegistryPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), classRegistryPointer));
             final Pointer bootHeapPointer = bootHeapStart.plus(header._heapRegionsPointerOffset);
-            addRow("heap regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapPointer), new MemoryRegionValueLabel(inspection(), bootHeapPointer));
+            addRow("heap regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootHeapPointer));
             final Pointer bootCodePointer = bootCodeStart.plus(header._codeRegionsPointerOffset);
-            addRow("code regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodePointer), new MemoryRegionValueLabel(inspection(), bootCodePointer));
+            addRow("code regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodePointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootCodePointer));
 
             final Pointer messengerInfoPointer = bootImageStart.plus(header._messengerInfoOffset);
-            addRow("messenger info pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, messengerInfoPointer), new MemoryRegionValueLabel(inspection(), messengerInfoPointer));
+            addRow("messenger info pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, messengerInfoPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), messengerInfoPointer));
             final Pointer threadSpecificsListPointer = bootImageStart.plus(header._threadSpecificsListOffset);
-            addRow("thread specifics list pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, threadSpecificsListPointer), new MemoryRegionValueLabel(inspection(), threadSpecificsListPointer));
+            addRow("thread specifics list pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, threadSpecificsListPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), threadSpecificsListPointer));
 
 
         }
@@ -230,17 +230,14 @@ public class BootImageTable extends InspectorTable {
             }
         }
 
-        @Override
         public int getColumnCount() {
             return BootImageColumnKind.VALUES.length();
         }
 
-        @Override
         public int getRowCount() {
             return _names.length();
         }
 
-        @Override
         public Object getValueAt(int row, int col) {
             switch (BootImageColumnKind.VALUES.get(col)) {
                 case NAME:
@@ -273,7 +270,6 @@ public class BootImageTable extends InspectorTable {
             super(inspection, null);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final String name = (String) value;
             setText(name);
@@ -284,7 +280,6 @@ public class BootImageTable extends InspectorTable {
 
     private final class ValueCellRenderer implements TableCellRenderer {
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             return (InspectorLabel) value;
         }
@@ -292,7 +287,6 @@ public class BootImageTable extends InspectorTable {
 
     private final class RegionCellRenderer implements TableCellRenderer {
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             return (InspectorLabel) value;
         }

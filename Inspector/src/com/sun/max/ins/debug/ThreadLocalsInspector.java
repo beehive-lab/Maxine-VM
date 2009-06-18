@@ -33,6 +33,7 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.vm.runtime.*;
 
@@ -61,7 +62,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     // This is a singleton viewer, so only use a single level of view preferences.
     private final ThreadLocalsViewPreferences _viewPreferences;
 
-    private TeleNativeThread _teleNativeThread;
+    private MaxThread _thread;
     private JTabbedPane _tabbedPane;
 
     private ThreadLocalsInspector(Inspection inspection) {
@@ -81,15 +82,13 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
     @Override
     protected void createView() {
-        _teleNativeThread = inspection().focus().thread();
-        if (_teleNativeThread == null) {
-            _tabbedPane = null;
-        } else {
-            _tabbedPane = new JTabbedPane();
+        _thread = inspection().focus().thread();
+        _tabbedPane = new JTabbedPane();
+        if (_thread != null) {
             for (Safepoint.State state : Safepoint.State.CONSTANTS) {
-                final TeleThreadLocalValues values = _teleNativeThread.threadLocalsFor(state);
+                final TeleThreadLocalValues values = _thread.threadLocalsFor(state);
                 if (values != null) {
-                    final ThreadLocalsPanel panel = new ThreadLocalsPanel(inspection(), _teleNativeThread, values, _viewPreferences);
+                    final ThreadLocalsPanel panel = new ThreadLocalsPanel(inspection(), _thread, values, _viewPreferences);
                     _tabbedPane.add(state.toString(), panel);
                 }
             }
@@ -112,8 +111,8 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     @Override
     public String getTextForTitle() {
         String title = "Thread Locals: ";
-        if (_teleNativeThread != null) {
-            title += inspection().nameDisplay().longNameWithState(_teleNativeThread);
+        if (_thread != null) {
+            title += inspection().nameDisplay().longNameWithState(_thread);
         }
         return title;
     }
@@ -162,11 +161,11 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
         boolean panelsAddedOrRemoved = false;
         for (Safepoint.State state : Safepoint.State.CONSTANTS) {
-            final TeleThreadLocalValues values = _teleNativeThread.threadLocalsFor(state);
+            final TeleThreadLocalValues values = _thread.threadLocalsFor(state);
             final ThreadLocalsPanel panel = threadLocalsPanelFor(state);
             if (values != null) {
                 if (panel == null) {
-                    _tabbedPane.add(state.toString(), new ThreadLocalsPanel(inspection(), _teleNativeThread, values, _viewPreferences));
+                    _tabbedPane.add(state.toString(), new ThreadLocalsPanel(inspection(), _thread, values, _viewPreferences));
                     panelsAddedOrRemoved = true;
                 }
             } else {
@@ -190,13 +189,12 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         updateFrameTitle();
     }
 
-    @Override
     public void viewConfigurationChanged() {
         reconstructView();
     }
 
     @Override
-    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativThread) {
+    public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
         reconstructView();
     }
 
@@ -205,11 +203,21 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     }
 
     @Override
+    public void watchpointSetChanged() {
+        refreshView(false);
+    }
+
+    @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
         _threadLocalsInspector = null;
         _viewPreferences.removeListener(this);
         super.inspectorClosing();
+    }
+
+    @Override
+    public void vmProcessTerminated() {
+        reconstructView();
     }
 
 }

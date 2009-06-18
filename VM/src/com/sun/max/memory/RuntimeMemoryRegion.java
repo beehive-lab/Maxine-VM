@@ -95,8 +95,7 @@ public class RuntimeMemoryRegion implements MemoryRegion {
     }
 
     public boolean overlaps(MemoryRegion memoryRegion) {
-        return (_start.greaterEqual(memoryRegion.start()) && _start.lessThan(memoryRegion.end())) ||
-               (end().greaterEqual(memoryRegion.start()) && end().lessThan(memoryRegion.end()));
+        return start().lessThan(memoryRegion.end()) && end().greaterThan(memoryRegion.start());
     }
 
     public boolean sameAs(MemoryRegion otherMemoryRegion) {

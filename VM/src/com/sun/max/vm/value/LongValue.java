@@ -23,8 +23,8 @@ package com.sun.max.vm.value;
 import java.io.*;
 
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -91,7 +91,7 @@ public final class LongValue extends PrimitiveValue<LongValue> {
         if (Word.width() == WordWidth.BITS_64) {
             return Address.fromLong(_value).compareTo(Address.fromLong(other._value));
         }
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 
     @Override

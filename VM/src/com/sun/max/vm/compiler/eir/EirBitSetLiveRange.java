@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.compiler.eir.allocate.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * @author Bernd Mathiske
@@ -125,7 +126,7 @@ public final class EirBitSetLiveRange extends EirLiveRange {
                 makeCoverage(block).or(r._blockToCoverage.get(block));
             }
         } else {
-            Problem.unimplemented();
+            FatalError.unimplemented();
         }
     }
 

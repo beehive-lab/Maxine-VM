@@ -29,7 +29,7 @@ import com.sun.max.collect.*;
  * @author Michael Van De Vanter
  */
 public enum ObjectFieldColumnKind {
-    TAG("Tag", "Tags: register targets, watchpoints, ...", true, -1) {
+    TAG("Tag", "Tags: register targets, watchpoints, ...", true, 10) {
         @Override
         public boolean canBeMadeInvisible() {
             return false;

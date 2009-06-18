@@ -57,6 +57,7 @@ public class MonitorEnter extends AccessMonitor {
      * Checks whether this instruction can trap.
      * @return <code>true</code>, conservatively assuming the instruction may cause an exception
      */
+    @Override
     public boolean canTrap() {
         return true;
     }
@@ -65,6 +66,7 @@ public class MonitorEnter extends AccessMonitor {
      * Iterates over all the state values in this instruction.
      * @param closure the closure to apply
      */
+    @Override
     public void stateValuesDo(InstructionClosure closure) {
         super.stateValuesDo(closure);
         _lockStackBefore.valuesDo(closure);
@@ -74,6 +76,7 @@ public class MonitorEnter extends AccessMonitor {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitMonitorEnter(this);
     }

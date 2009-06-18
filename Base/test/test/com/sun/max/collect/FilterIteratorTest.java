@@ -42,7 +42,7 @@ public class FilterIteratorTest extends MaxTestCase {
         junit.textui.TestRunner.run(FilterIteratorTest.class);
     }
 
-    private final Predicate<Integer> _evenPred = new Predicate<Integer>() {
+    private final Predicate<Integer> evenPred = new Predicate<Integer>() {
         public boolean evaluate(Integer i) {
             return i % 2 == 0;
         }
@@ -54,7 +54,7 @@ public class FilterIteratorTest extends MaxTestCase {
             array[i] = new Integer(i);
         }
         final LinkedList<Integer> list = new LinkedList<Integer>(java.util.Arrays.asList(array));
-        FilterIterator<Integer> iter = new FilterIterator<Integer>(list.iterator(), _evenPred);
+        FilterIterator<Integer> iter = new FilterIterator<Integer>(list.iterator(), evenPred);
         int i = 0;
         Integer elem;
         while (iter.hasNext()) {
@@ -65,7 +65,7 @@ public class FilterIteratorTest extends MaxTestCase {
         assertEquals(i, 10);
         assertEquals(list.size(), 10);
         try {
-            iter = new FilterIterator<Integer>(list.iterator(), _evenPred);
+            iter = new FilterIterator<Integer>(list.iterator(), evenPred);
             while (iter.hasNext()) {
                 iter.remove();
             }

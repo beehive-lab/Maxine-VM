@@ -20,15 +20,13 @@
  */
 package com.sun.c1x.graph;
 
-import com.sun.c1x.ir.BlockBegin;
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.ci.CiExceptionHandler;
-import com.sun.c1x.C1XIntrinsic;
-import com.sun.c1x.C1XOptions;
-
 import java.util.*;
+
+import com.sun.c1x.*;
+import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>BlockMap</code> class builds a mapping between bytecodes and basic blocks
@@ -121,13 +119,13 @@ public class BlockMap {
     /**
      * Creates a new BlockMap instance from the specified bytecode.
      * @param method the compiler interface method containing the code
-     * @param firstBlock the first block number to use
+     * @param firstBlockNum the first block number to use
      */
-    public BlockMap(CiMethod method, int firstBlock) {
+    public BlockMap(CiMethod method, int firstBlockNum) {
         byte[] code = method.code();
         _code = code;
-        _firstBlock = firstBlock;
-        _blockNum = firstBlock;
+        _firstBlock = firstBlockNum;
+        _blockNum = firstBlockNum;
         _blockMap = new BlockBegin[code.length];
         _successorMap = new BlockBegin[code.length][];
         _loopBlocks = new ArrayList<BlockBegin>();
@@ -153,7 +151,10 @@ public class BlockMap {
      * @return the block starting at the specified index, if it exists; <code>null</code> otherwise
      */
     public BlockBegin get(int bci) {
-        return _blockMap[bci];
+        if (bci < _blockMap.length) {
+            return _blockMap[bci];
+        }
+        return null;
     }
 
     BlockBegin make(int bci) {
@@ -251,7 +252,7 @@ public class BlockMap {
         int bci = 0;
         ExceptionMap exceptionMap = _exceptionMap;
         byte[] code = _code;
-        make(0);
+        make(0).setStandardEntry();
         while (bci < code.length) {
             int opcode = Bytes.beU1(code, bci);
             switch (opcode) {
@@ -262,7 +263,9 @@ public class BlockMap {
                 case Bytecodes.DRETURN: // fall through
                 case Bytecodes.ARETURN: // fall through
                 case Bytecodes.RETURN:
-                    if (exceptionMap != null && exceptionMap._isObjectInit) exceptionMap.setCanTrap(bci);
+                    if (exceptionMap != null && exceptionMap._isObjectInit) {
+                        exceptionMap.setCanTrap(bci);
+                    }
                     _successorMap[bci] = NONE; // end of control flow
                     bci += 1; // these are all 1 byte opcodes
                     break;
@@ -288,25 +291,25 @@ public class BlockMap {
                 case Bytecodes.IF_ACMPNE: // fall through
                 case Bytecodes.IFNULL:    // fall through
                 case Bytecodes.IFNONNULL: {
-                    succ2(bci, bci + 3, Bytes.beS2(code, bci + 1));
+                    succ2(bci, bci + 3, bci + Bytes.beS2(code, bci + 1));
                     bci += 3; // these are all 3 byte opcodes
                     break;
                 }
 
                 case Bytecodes.GOTO: {
-                    succ1(bci, Bytes.beS2(code, bci + 1));
+                    succ1(bci, bci + Bytes.beS2(code, bci + 1));
                     bci += 3; // goto is 3 bytes
                     break;
                 }
 
                 case Bytecodes.GOTO_W: {
-                    succ1(bci, Bytes.beS4(code, bci + 1));
+                    succ1(bci, bci + Bytes.beS4(code, bci + 1));
                     bci += 5; // goto_w is 5 bytes
                     break;
                 }
 
                 case Bytecodes.JSR: {
-                    int target = Bytes.beS2(code, bci + 1);
+                    int target = bci + Bytes.beS2(code, bci + 1);
                     succ2(bci, bci + 3, target); // make JSR's a successor or not?
                     addEntrypoint(target, BlockBegin.BlockFlag.SubroutineEntry);
                     bci += 3; // jsr is 3 bytes
@@ -314,7 +317,7 @@ public class BlockMap {
                 }
 
                 case Bytecodes.JSR_W: {
-                    int target = Bytes.beS4(code, bci + 1);
+                    int target = bci + Bytes.beS4(code, bci + 1);
                     succ2(bci, bci + 5, target);
                     addEntrypoint(target, BlockBegin.BlockFlag.SubroutineEntry);
                     bci += 5; // jsr_w is 5 bytes
@@ -340,7 +343,9 @@ public class BlockMap {
                 }
 
                 default: {
-                    if (exceptionMap != null && Bytecodes.canTrap(opcode)) exceptionMap.setCanTrap(bci);
+                    if (exceptionMap != null && Bytecodes.canTrap(opcode)) {
+                        exceptionMap.setCanTrap(bci);
+                    }
                     bci += Bytecodes.length(opcode); // all variable length instructions are handled above
                 }
             }
@@ -403,12 +408,12 @@ public class BlockMap {
         if (visited.get(blockIndex)) {
             if (active.get(blockIndex)) {
                 // reached block via backward branch
-                block.setLoopHeader(true);
+                block.setParserLoopHeader(true);
                 _loopBlocks.add(block);
                 return true;
             }
             // return whether the block is already a loop header
-            return block.isLoopHeader();
+            return block.isParserLoopHeader();
         }
 
         visited.set(blockIndex);
@@ -428,7 +433,9 @@ public class BlockMap {
         // clear active bit after successors are processed
         active.clear(blockIndex);
         block.setDepthFirstNumber(_blockNum--);
-        if (inLoop) _loopBlocks.add(block);
+        if (inLoop) {
+            _loopBlocks.add(block);
+        }
 
         return inLoop;
     }
@@ -448,7 +455,7 @@ public class BlockMap {
                 } else {
                     bci += Bytecodes.length(code, bci);
                 }
-                if (_blockMap[bci] != null) {
+                if (bci >= code.length || _blockMap[bci] != null) {
                     // stop when we reach the next block
                     break;
                 }

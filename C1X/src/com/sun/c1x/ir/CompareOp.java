@@ -58,6 +58,7 @@ public class CompareOp extends Op2 {
      * Iterates over the other values in this instruction.
      * @param closure the closure to apply to each value
      */
+    @Override
     public void otherValuesDo(InstructionClosure closure) {
         if (_stateBefore != null) {
             _stateBefore.valuesDo(closure);
@@ -68,6 +69,7 @@ public class CompareOp extends Op2 {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitCompareOp(this);
     }

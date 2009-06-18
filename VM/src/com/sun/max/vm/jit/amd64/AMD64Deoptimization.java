@@ -126,7 +126,7 @@ public final class AMD64Deoptimization extends Deoptimization {
     }
 
     private double getFloatingPointRegisterValue(int index) {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 
     public void visit(TargetLocation.FloatingPointRegister floatingPointRegister) {
@@ -134,7 +134,7 @@ public final class AMD64Deoptimization extends Deoptimization {
     }
 
     private Word getIntegerRegisterValue(int index) {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 
     public void visit(TargetLocation.IntegerRegister integerRegister) {

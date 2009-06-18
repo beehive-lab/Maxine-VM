@@ -20,6 +20,9 @@
  */
 package com.sun.max.tele;
 
+import java.io.*;
+import java.util.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.tele.debug.*;
 
@@ -29,13 +32,18 @@ import com.sun.max.tele.debug.*;
  *
  * @author Michael Van De Vanter
  */
-public class TeleVMState implements MaxVMState {
+public final class TeleVMState implements MaxVMState {
+
+    private static final Sequence<MaxThread> EMPTY_THREAD_SEQUENCE = Sequence.Static.empty(MaxThread.class);
 
     private final ProcessState _processState;
     private final long _serialID;
     private final long _epoch;
-    private final TeleNativeThread _singleStepThread;
-    private final Sequence<TeleNativeThread> _breakpointThreads;
+    private final Sequence<MaxThread> _threads;
+    private final MaxThread _singleStepThread;
+    private final Sequence<MaxThread> _breakpointThreads;
+    private final Sequence<MaxThread> _threadsStarted;
+    private final Sequence<MaxThread> _threadsDied;
     private final boolean _isInGC;
     private final TeleVMState _previous;
 
@@ -44,18 +52,41 @@ public class TeleVMState implements MaxVMState {
      * @param epoch current process epoch counter
      * @param singleStepThread thread just single-stepped, null if none
      * @param breakpointThreads threads currently at a breakpoint, empty if none
+     * @param threads TODO
+     * @param threadsStarted threads created since the previous state
+     * @param threadsDied threads died since the previous state
      * @param isInGC is the VM, when paused, in a GC
      * @param previous previous state
      */
-    public TeleVMState(ProcessState processState, long epoch, TeleNativeThread singleStepThread, Sequence<TeleNativeThread> breakpointThreads, boolean isInGC, TeleVMState previous) {
+    public TeleVMState(ProcessState processState,
+                    long epoch,
+                    TeleNativeThread singleStepThread,
+                    Sequence<TeleNativeThread> breakpointThreads,
+                    Collection<TeleNativeThread> threads,
+                    Sequence<TeleNativeThread> threadsStarted,
+                    Sequence<TeleNativeThread> threadsDied,
+                    boolean isInGC, TeleVMState previous) {
         _processState = processState;
         _serialID = previous == null ? 0 : previous.serialID() + 1;
         _epoch = epoch;
         _singleStepThread = singleStepThread;
-        assert breakpointThreads != null;
-        _breakpointThreads = breakpointThreads;
+        _breakpointThreads = breakpointThreads.length() == 0 ? EMPTY_THREAD_SEQUENCE : new VectorSequence<MaxThread>(breakpointThreads);
+        _threadsStarted = threadsStarted.length() == 0 ? EMPTY_THREAD_SEQUENCE : new VectorSequence<MaxThread>(threadsStarted);
+        _threadsDied = threadsDied.length() == 0 ? EMPTY_THREAD_SEQUENCE : new VectorSequence<MaxThread>(threadsDied);
         _isInGC = isInGC;
         _previous = previous;
+
+        // Compute the current active thread list.
+        if (previous == null) {
+            // First state transition in the history.
+            _threads = new VectorSequence<MaxThread>(threadsStarted);
+        } else if (threadsStarted.length() + threadsDied.length() == 0)  {
+            // No changes since predecessor; share the thread list.
+            _threads = previous.threads();
+        } else {
+            // There have been some thread changes; make a new (immutable) sequence for the new state
+            _threads = new VectorSequence<MaxThread>(threads);
+        }
     }
 
     public ProcessState processState() {
@@ -70,12 +101,24 @@ public class TeleVMState implements MaxVMState {
         return _epoch;
     }
 
-    public TeleNativeThread singleStepThread() {
+    public Sequence<MaxThread> threads() {
+        return _threads;
+    }
+
+    public MaxThread singleStepThread() {
         return _singleStepThread;
     }
 
-    public Sequence<TeleNativeThread> breakpointThreads() {
+    public Sequence<MaxThread> breakpointThreads() {
         return _breakpointThreads;
+    }
+
+    public Sequence<MaxThread> threadsStarted() {
+        return _threadsStarted;
+    }
+
+    public  Sequence<MaxThread> threadsDied() {
+        return _threadsDied;
     }
 
     public boolean isInGC() {
@@ -107,6 +150,40 @@ public class TeleVMState implements MaxVMState {
         }
         sb.append(")");
         return sb.toString();
+    }
+
+    public void writeSummaryToStream(PrintStream printStream) {
+        MaxVMState state = this;
+        while (state != null) {
+            final StringBuilder sb = new StringBuilder(100);
+            sb.append(Long.toString(state.serialID())).append(":  ");
+            sb.append("proc=(").append(state.processState().toString()).append(", ").append(Long.toString(state.epoch())).append(") ");
+            sb.append("gc=").append(state.isInGC()).append(" ");
+            printStream.println(sb.toString());
+            if (state.singleStepThread() != null) {
+                printStream.println("\tstep=" + state.singleStepThread().toShortString());
+            }
+            for (MaxThread thread : state.breakpointThreads()) {
+                printStream.println("\t@breakpoint=" + thread.toShortString());
+            }
+            if (state.previous() != null && state.threads() == state.previous().threads()) {
+                printStream.println("\tthreads: <unchanged>");
+            } else if (state.threads().length() == 0) {
+                printStream.println("\tthreads: <empty>");
+            } else {
+                printStream.println("\tthreads:");
+                for (MaxThread thread : state.threads()) {
+                    printStream.println("\t\t" + thread.toShortString());
+                }
+            }
+            for (MaxThread thread : state.threadsStarted()) {
+                printStream.println("\tstarted=" + thread.toShortString());
+            }
+            for (MaxThread thread : state.threadsDied()) {
+                printStream.println("\tdied=" + thread.toShortString());
+            }
+            state = state.previous();
+        }
     }
 
 }

@@ -50,10 +50,11 @@ public class BitMap {
     public void set(int i) {
         if (checkIndex(i) < 32) {
             _low32 |= 1 << i;
+        } else {
+            int pos = (i >> 5) - 1;
+            int index = i & 31;
+            _extra32[pos] |= 1 << index;
         }
-        int pos = i >> 5;
-        int index = i & 31;
-        _extra32[pos] |= 1 << index;
     }
 
     /**
@@ -63,10 +64,11 @@ public class BitMap {
     public void clear(int i) {
         if (checkIndex(i) < 32) {
             _low32 &= ~(1 << i);
+        } else {
+            int pos = (i >> 5) - 1;
+            int index = i & 31;
+            _extra32[pos] &= ~(1 << index);
         }
-        int pos = i >> 5;
-        int index = i & 31;
-        _extra32[pos] &= ~(1 << index);
     }
 
     /**
@@ -102,7 +104,7 @@ public class BitMap {
         if (checkIndex(i) < 32) {
             return ((_low32 >> i) & 1) != 0;
         }
-        int pos = i >> 5;
+        int pos = (i >> 5) - 1;
         int index = i & 31;
         int bits = _extra32[pos];
         return ((bits >> index) & 1) != 0;

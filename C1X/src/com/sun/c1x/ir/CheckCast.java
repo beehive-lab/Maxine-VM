@@ -21,10 +21,12 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.util.InstructionVisitor;
+import com.sun.c1x.util.Util;
 import com.sun.c1x.ci.CiType;
 import com.sun.c1x.ci.CiMethod;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.value.ValueType;
+import com.sun.c1x.bytecode.Bytecodes;
 
 /**
  * The <code>CheckCast</code> instruction represents a checkcast bytecode.
@@ -84,6 +86,7 @@ public class CheckCast extends TypeCheck {
      * Gets the declared type of the result of this instruction.
      * @return the declared type of the result
      */
+    @Override
     public CiType declaredType() {
         return _targetClass;
     }
@@ -92,6 +95,7 @@ public class CheckCast extends TypeCheck {
      * Gets the exact type of the result of this instruction.
      * @return the exact type of the result
      */
+    @Override
     public CiType exactType() {
         return _targetClass.exactType();
     }
@@ -100,7 +104,23 @@ public class CheckCast extends TypeCheck {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitCheckCast(this);
     }
+
+    @Override
+    public int valueNumber() {
+        return _targetClass.isLoaded() ? Util.hash1(Bytecodes.CHECKCAST, _object) : 0;
+    }
+
+    @Override
+    public boolean valueEqual(Instruction i) {
+        if (i instanceof CheckCast) {
+            CheckCast o = (CheckCast) i;
+            return _targetClass == o._targetClass && _object == o._object;
+        }
+        return false;
+    }
+
 }

@@ -61,8 +61,29 @@ public enum IDE {
     ECLIPSE {
         @Override
         public File findIdeProjectDirectoryFromClasspathEntry(File classesDirectory) {
+            // shell puts classes in $workspace/$proj/bin/$package/$class.class
             if (classesDirectory.getName().equals("bin")) {
                 return classesDirectory.getAbsoluteFile().getParentFile();
+            }
+            return null;
+        }
+    },
+    INTELLIJ {
+        @Override
+        public File findIdeProjectDirectoryFromClasspathEntry(File classesDirectory) {
+            // IntelliJ puts classes in $workspace/out/production/$proj/$package/$class.class
+            File prodDir = classesDirectory;
+            while (prodDir != null) {
+                if (prodDir.getName().equals("production")) {
+                    break;
+                }
+                prodDir = prodDir.getParentFile();
+            }
+            if (prodDir != null) {
+                final File outDir = prodDir.getParentFile();
+                if (outDir != null && outDir.getName().equals("out")) {
+                    return new File(outDir.getParentFile(), classesDirectory.getName());
+                }
             }
             return null;
         }
@@ -70,6 +91,7 @@ public enum IDE {
     SHELL {
         @Override
         public File findIdeProjectDirectoryFromClasspathEntry(File classesDirectory) {
+            // shell puts classes in $workspace/$proj/bin/$package/$class.class
             if (classesDirectory.getName().equals("bin")) {
                 return classesDirectory.getAbsoluteFile().getParentFile();
             }
@@ -104,7 +126,7 @@ public enum IDE {
         return findIdeProjectDirectoryFromClasspathEntry(classpathEntry);
     }
 
-    private boolean isInUse() {
+    private boolean packageClassExists() {
         return MaxPackage.fromName(idePackageName()) != null;
     }
 
@@ -118,7 +140,8 @@ public enum IDE {
             }
         }
         for (IDE ide : IDE.values()) {
-            if (ide.isInUse()) {
+            if (ide.packageClassExists()) {
+                // if the package class exists, then the user has chosen an IDE
                 return ide;
             }
         }

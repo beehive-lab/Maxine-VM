@@ -123,8 +123,6 @@ public class ComputeLiveSets extends AlgorithmPart {
                 final EirInstruction<?, ?> instruction = instructions.get(i);
 
                 instruction.visitOperands(new EirOperand.Procedure() {
-
-                    @Override
                     public void run(EirOperand operand) {
 
                         final EirVariable variable = operand.eirValue().asVariable();
@@ -139,8 +137,6 @@ public class ComputeLiveSets extends AlgorithmPart {
                 });
 
                 instruction.visitOperands(new EirOperand.Procedure() {
-
-                    @Override
                     public void run(EirOperand operand) {
 
                         final EirVariable variable = operand.eirValue().asVariable();
@@ -230,8 +226,6 @@ public class ComputeLiveSets extends AlgorithmPart {
 
 
         final EirOperand.Procedure useProc = new EirOperand.Procedure() {
-
-            @Override
             public void run(EirOperand operand) {
 
                 final EirVariable variable = operand.eirValue().asVariable();
@@ -248,8 +242,6 @@ public class ComputeLiveSets extends AlgorithmPart {
         };
 
         final EirOperand.Procedure defProc = new EirOperand.Procedure() {
-
-            @Override
             public void run(EirOperand operand) {
 
                 final EirVariable variable = operand.eirValue().asVariable();

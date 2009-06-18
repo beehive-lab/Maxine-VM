@@ -57,7 +57,6 @@ public final class VMOptions {
      */
     @PROTOTYPE_ONLY
     private static final Comparator<VMOption> VMOPTION_SORTER = new Comparator<VMOption>() {
-        @Override
         public int compare(VMOption o1, VMOption o2) {
             return o2._prefix.compareTo(o1._prefix);
         }

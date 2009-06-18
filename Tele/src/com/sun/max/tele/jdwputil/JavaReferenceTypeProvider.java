@@ -28,7 +28,7 @@ import com.sun.max.vm.type.*;
 
 abstract class JavaReferenceTypeProvider implements ReferenceTypeProvider {
 
-    private Class _class;
+    private Class _clazz;
     private ClassProvider _superClass;
     private ClassLoaderProvider _classLoader;
     private InterfaceProvider[] _implementedInterfaces;
@@ -37,7 +37,7 @@ abstract class JavaReferenceTypeProvider implements ReferenceTypeProvider {
 
     protected JavaReferenceTypeProvider(Class c, VMAccess vm, ClassLoaderProvider classLoader) {
 
-        _class = c;
+        _clazz = c;
         _vm = vm;
         initReferencedClasses();
         initMethods();
@@ -49,13 +49,13 @@ abstract class JavaReferenceTypeProvider implements ReferenceTypeProvider {
 
     private void initReferencedClasses() {
 
-        if (_class.getSuperclass() != null) {
-            final ReferenceTypeProvider referenceTypeProvider = _vm.getReferenceType(_class.getSuperclass());
+        if (_clazz.getSuperclass() != null) {
+            final ReferenceTypeProvider referenceTypeProvider = _vm.getReferenceType(_clazz.getSuperclass());
             assert referenceTypeProvider instanceof ClassProvider;
             _superClass = (ClassProvider) referenceTypeProvider;
         }
 
-        final Class[] interfaces = _class.getInterfaces();
+        final Class[] interfaces = _clazz.getInterfaces();
         _implementedInterfaces = new InterfaceProvider[interfaces.length];
         for (int i = 0; i < interfaces.length; i++) {
             final ReferenceTypeProvider referenceTypeProvider = _vm.getReferenceType(interfaces[i]);
@@ -66,122 +66,104 @@ abstract class JavaReferenceTypeProvider implements ReferenceTypeProvider {
     }
 
     private void initMethods() {
-        final Method[] methods = _class.getDeclaredMethods();
+        final Method[] methods = _clazz.getDeclaredMethods();
         _methodProviders = new MethodProvider[methods.length];
         for (int i = 0; i < methods.length; i++) {
             _methodProviders[i] = new JavaMethodProvider(methods[i], this, _vm);
         }
     }
 
-    @Override
     public ClassLoaderProvider classLoader() {
         return _classLoader;
     }
 
-    @Override
     public ClassObjectProvider classObject() {
         // TODO: Consider implementing otherwise.
         return null;
     }
 
-    @Override
     public FieldProvider[] getFields() {
         // Currently only methods are supported.
         return new FieldProvider[0];
     }
 
-    @Override
     public int getFlags() {
-        return _class.getModifiers();
+        return _clazz.getModifiers();
     }
 
-    @Override
     public InterfaceProvider[] getImplementedInterfaces() {
         return _implementedInterfaces;
     }
 
-    @Override
     public ObjectProvider[] getInstances() {
         // TODO: Consider implementing this otherwise.
         return new ObjectProvider[0];
     }
 
-    @Override
     public MethodProvider[] getMethods() {
         return _methodProviders;
     }
 
-    @Override
     public String getName() {
-        return _class.getSimpleName();
+        return _clazz.getSimpleName();
     }
 
-    @Override
     public ReferenceTypeProvider[] getNestedTypes() {
         // Currently no nested types are supported.
         return new ReferenceTypeProvider[0];
     }
 
-    @Override
     public String getSignature() {
-        return JavaTypeDescriptor.forJavaClass(_class).toString();
+        return JavaTypeDescriptor.forJavaClass(_clazz).toString();
     }
 
-    @Override
     public String getSignatureWithGeneric() {
-        return _class.getName();
+        return _clazz.getName();
     }
 
-    @Override
     public String getSourceFileName() {
         // Currently no source file name is supported.
         return "";
     }
 
-    @Override
     public int getStatus() {
         return ClassStatus.INITIALIZED;
     }
 
-    @Override
     public VMValue.Type getType() {
-
-        if (this._class == Boolean.TYPE) {
+        if (this._clazz == Boolean.TYPE) {
             return VMValue.Type.BOOLEAN;
-        } else if (this._class == Byte.TYPE) {
+        } else if (this._clazz == Byte.TYPE) {
             return VMValue.Type.BYTE;
-        } else if (this._class == Character.TYPE) {
+        } else if (this._clazz == Character.TYPE) {
             return VMValue.Type.CHAR;
-        } else if (this._class == Double.TYPE) {
+        } else if (this._clazz == Double.TYPE) {
             return VMValue.Type.DOUBLE;
-        } else if (this._class == Float.TYPE) {
+        } else if (this._clazz == Float.TYPE) {
             return VMValue.Type.FLOAT;
-        } else if (this._class == Integer.TYPE) {
+        } else if (this._clazz == Integer.TYPE) {
             return VMValue.Type.INT;
-        } else if (this._class == Long.TYPE) {
+        } else if (this._clazz == Long.TYPE) {
             return VMValue.Type.LONG;
-        } else if (this._class == Short.TYPE) {
+        } else if (this._clazz == Short.TYPE) {
             return VMValue.Type.SHORT;
-        } else if (this._class == Void.TYPE) {
+        } else if (this._clazz == Void.TYPE) {
             return VMValue.Type.VOID;
         }
 
         return VMValue.Type.PROVIDER;
     }
 
-    @Override
     public int majorVersion() {
         // TODO: Check if this is correct.
         return 1;
     }
 
-    @Override
     public int minorVersion() {
         // TODO: Check if this is correct.
         return 5;
     }
 
-    @Override
     public ReferenceTypeProvider getReferenceType() {
         // TODO: Check if this is correct.
         return null;

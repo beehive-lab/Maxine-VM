@@ -122,6 +122,7 @@ public abstract class UnsafeRawOp extends UnsafeOp {
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         super.inputValuesDo(closure);
         _base = closure.apply(_base);

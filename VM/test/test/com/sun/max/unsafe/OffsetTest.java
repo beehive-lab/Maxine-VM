@@ -214,7 +214,7 @@ public class OffsetTest extends WordTestCase {
         }
         assertTrue(_offset0.remainder(42) == 0);
 
-        Problem.todo("implement negative cases");
+        // TODO: implement negative cases
     }
 
     public void test_isRoundedBy() {
@@ -228,7 +228,7 @@ public class OffsetTest extends WordTestCase {
         }
         assertTrue(_offset0.isRoundedBy(42));
 
-        Problem.todo("implement negative cases");
+        // TODO: implement negative cases
     }
 
     private int roundedUpBy(int base, int number) {
@@ -250,7 +250,7 @@ public class OffsetTest extends WordTestCase {
         }
         assertTrue(_offset0.roundedUpBy(12).equals(_offset0));
 
-        Problem.todo("implement negative cases");
+        // TODO: implement negative cases
     }
 
     public void test_roundedDownBy() {
@@ -264,7 +264,7 @@ public class OffsetTest extends WordTestCase {
         }
         assertTrue(_offset0.roundedDownBy(12).equals(_offset0));
 
-        Problem.todo("implement negative cases");
+        // TODO: implement negative cases
     }
 
     public void test_align() {

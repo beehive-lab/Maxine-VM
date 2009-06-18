@@ -37,7 +37,6 @@ public abstract class AbstractInterpreterScheme extends AbstractVMScheme impleme
 
     protected abstract InterpretedTargetMethodGenerator targetMethodGenerator();
 
-    @Override
     public TargetMethod makeInterpretedTargetMethod(ClassMethodActor classMethodActor) {
         final InterpretedMethodState methodState = InterpretedMethodState.makeMethodState(classMethodActor);
         synchronized (methodState) {

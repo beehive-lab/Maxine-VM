@@ -43,6 +43,7 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * A table-based viewer for an (immutable) section of {@link TargetCode} in the VM.
@@ -470,12 +471,10 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             return false;
         }
 
-        @Override
         public void redisplay() {
             // not used pending further refactoring
         }
 
-        @Override
         public void refresh(boolean force) {
             // not used pending further refactoring
         }
@@ -586,11 +585,9 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             return "";
         }
 
-        @Override
         public void redisplay() {
         }
 
-        @Override
         public void refresh(boolean force) {
         }
     }
@@ -689,7 +686,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     static final LiteralRenderer AMD64_LITERAL_RENDERER = new LiteralRenderer() {
         public WordValueLabel render(Inspection inspection, String literalLoadText, Word literal) {
-            final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.LITERAL_REFERENCE, literal);
+            final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.LITERAL_REFERENCE, literal, null);
             wordValueLabel.setPrefix(literalLoadText.substring(0, literalLoadText.indexOf("[")));
             wordValueLabel.setToolTipSuffix(" from RIP " + literalLoadText.substring(literalLoadText.indexOf("["), literalLoadText.length()));
             wordValueLabel.updateText();
@@ -699,7 +696,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     static final LiteralRenderer SPARC_LITERAL_RENDERER = new LiteralRenderer() {
         public WordValueLabel render(Inspection inspection, String literalLoadText, Word literal) {
-            final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.LITERAL_REFERENCE, literal);
+            final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.LITERAL_REFERENCE, literal, null);
             wordValueLabel.setSuffix(literalLoadText.substring(literalLoadText.indexOf(",")));
             wordValueLabel.setToolTipSuffix(" from " + literalLoadText.substring(0, literalLoadText.indexOf(",")));
             wordValueLabel.updateText();
@@ -717,7 +714,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             case ARM:
             case PPC:
             case IA32:
-                Problem.unimplemented();
+                FatalError.unimplemented();
                 return null;
         }
         ProgramError.unknownCase();
@@ -744,7 +741,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                                     if (maxVM().findJavaSourceFile(location.classMethodActor().holder()) != null) {
                                         final BytecodeLocation locationCopy = location;
                                         menu.add(new AbstractAction("Open " + fileName + " at line " + lineNumber) {
-                                            @Override
                                             public void actionPerformed(ActionEvent e) {
                                                 inspection().viewSourceExternally(locationCopy);
                                             }
@@ -769,7 +765,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             return text;
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BytecodeLocation bytecodeLocation = rowToBytecodeLocation(row);
             setText("");
@@ -802,7 +797,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             }
         }
 
-        @Override
         public void redisplay() {
             for (InspectorLabel wordValueLabel : _wordValueLabels) {
                 if (wordValueLabel != null) {
@@ -818,7 +812,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 final TargetCodeInstruction targetCodeInstruction = _model.getTargetCodeInstruction(row);
                 final String text = targetCodeInstruction.operands();
                 if (targetCodeInstruction._targetAddress != null && !teleTargetRoutine().targetCodeRegion().contains(targetCodeInstruction._targetAddress)) {
-                    inspectorLabel = new WordValueLabel(_inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, targetCodeInstruction._targetAddress);
+                    inspectorLabel = new WordValueLabel(_inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, targetCodeInstruction._targetAddress, _table);
                     _wordValueLabels[row] = inspectorLabel;
                 } else if (targetCodeInstruction._literalSourceAddress != null) {
                     final Word word = _inspection.maxVM().readWord(targetCodeInstruction._literalSourceAddress);

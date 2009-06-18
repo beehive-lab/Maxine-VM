@@ -21,9 +21,9 @@
 package com.sun.max.tele.debug;
 
 import com.sun.max.asm.amd64.*;
-import com.sun.max.program.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Encapsulates the values of the floating point registers for a tele native thread.
@@ -78,7 +78,7 @@ public final class TeleFloatingPointRegisters extends TeleRegisters {
             case SPARC:
                 return SparcFloatingPointRegister.ENUMERATOR;
             default:
-                Problem.unimplemented();
+                FatalError.unimplemented();
                 return null;
         }
     }

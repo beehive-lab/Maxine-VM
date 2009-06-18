@@ -80,7 +80,6 @@ public abstract class Safepoint {
             return _key.getConstantWord(vmThreadLocals).asPointer();
         }
 
-        @Override
         public int serial() {
             return ordinal();
         }

@@ -20,19 +20,13 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.value.BasicType;
-import com.sun.max.program.ProgramError;
-import com.sun.max.vm.actor.holder.ArrayClassActor;
-import com.sun.max.vm.actor.holder.ClassActor;
-import com.sun.max.vm.actor.member.InterfaceMethodActor;
-import com.sun.max.vm.actor.member.MethodActor;
-import com.sun.max.vm.actor.member.VirtualMethodActor;
-import com.sun.max.vm.classfile.constant.ClassConstant;
-import com.sun.max.vm.type.JavaTypeDescriptor;
-import com.sun.max.vm.type.Kind;
-import com.sun.max.vm.type.TypeDescriptor;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.value.*;
+import com.sun.max.program.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.type.*;
 
 /**
  * The <code>MaxCiType</code> class represents a compiler interface type,
@@ -213,7 +207,12 @@ public class MaxCiType implements CiType {
      * @throws MaxCiUnresolved if the class is not resolved
      */
     public CiType elementType() {
-        return _constantPool.canonicalCiType(asArrayClassActor("elementType()").elementClassActor());
+        if (_classActor instanceof ArrayClassActor) {
+            // the type is already resolved
+            return _constantPool.canonicalCiType(_classActor.elementClassActor());
+        }
+        // the type is not resolved, but we can get the type of the elements
+        return new MaxCiType(_constantPool, _typeDescriptor.elementTypeDescriptor());
     }
 
     /**
@@ -325,9 +324,11 @@ public class MaxCiType implements CiType {
             case DOUBLE:
                 return BasicType.Double;
             case WORD:
-                return BasicType.Address;
+                return BasicType.Object; // TODO: this is not really an object!
             case REFERENCE:
                 return BasicType.Object;
+            case VOID:
+                return BasicType.Void;
             default:
                 throw ProgramError.unknownCase();
         }

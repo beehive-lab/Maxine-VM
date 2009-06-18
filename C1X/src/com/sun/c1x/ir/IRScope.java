@@ -24,7 +24,7 @@ import com.sun.c1x.ci.CiMethod;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.util.BitMap;
 import com.sun.c1x.C1XOptions;
-import com.sun.c1x.Compilation;
+import com.sun.c1x.C1XCompilation;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -37,14 +37,15 @@ import java.util.ArrayList;
  */
 public class IRScope {
 
-    final Compilation _compilation; // XXX: is this necessary?
-    final IRScope _caller;
-    final int _callerBCI;
-    ValueStack _callerState;
-    final int _level;
-    final CiMethod _method;
-    final List<IRScope> _callees;
+    public final IRScope caller;
+    public final CiMethod method;
+    public final int level;
 
+    final C1XCompilation compilation; // XXX: is this necessary?
+    final int callerBCI;
+    final List<IRScope> callees;
+
+    ValueStack _callerState;
     List<ExceptionHandler> _exceptionHandlers;
     int _numberOfLocks;
     BlockBegin _start;
@@ -53,13 +54,13 @@ public class IRScope {
 
     BitMap _storesInLoops;
 
-    public IRScope(Compilation compilation, IRScope caller, int callerBCI, CiMethod method, int osrBCI) {
-        _compilation = compilation;
-        _caller = caller;
-        _callerBCI = callerBCI;
-        _method = method;
-        _level = _caller == null ? 0 : 1 + _caller._level;
-        _callees = new ArrayList<IRScope>();
+    public IRScope(C1XCompilation compilation, IRScope caller, int callerBCI, CiMethod method, int osrBCI) {
+        this.compilation = compilation;
+        this.caller = caller;
+        this.callerBCI = callerBCI;
+        this.method = method;
+        this.level = caller == null ? 0 : 1 + caller.level;
+        this.callees = new ArrayList<IRScope>();
     }
 
     /**
@@ -81,20 +82,11 @@ public class IRScope {
     }
 
     /**
-     * Gets the IR scope of the calling method; <code>null</code> if this
-     * scope is not inlined.
-     * @return the IR scope of the calling method
-     */
-    public final IRScope caller() {
-        return _caller;
-    }
-
-    /**
      * Gets the bytecode index of the callsite that called this method.
      * @return the call site's bytecode index
      */
     public final int callerBCI() {
-        return _callerBCI;
+        return callerBCI;
     }
 
     /**
@@ -106,27 +98,11 @@ public class IRScope {
     }
 
     /**
-     * Gets the method for this IR scope.
-     * @return the method
-     */
-    public final CiMethod method() {
-        return _method;
-    }
-
-    /**
-     * Gets the inlining level of this IR scope.
-     * @return the inlining level
-     */
-    public final int level() {
-        return _level;
-    }
-
-    /**
      * Returns whether this IR scope is the top scope (i.e. has no caller).
      * @return <code>true</code> if this inlining scope has no parent
      */
     public final boolean isTopScope() {
-        return _caller == null;
+        return caller == null;
     }
 
     /**
@@ -143,6 +119,17 @@ public class IRScope {
      */
     public List<ExceptionHandler> exceptionHandlers() {
         return _exceptionHandlers;
+    }
+
+    /**
+     * Add an exception handler to this scope.
+     * @param handler the exception handler to add
+     */
+    public void addExceptionHandler(ExceptionHandler handler) {
+        if (_exceptionHandlers == null) {
+            _exceptionHandlers = new ArrayList<ExceptionHandler>();
+        }
+        _exceptionHandlers.add(handler);
     }
 
     /**
@@ -167,7 +154,7 @@ public class IRScope {
      * @param callee the callee to add
      */
     public final void addCallee(IRScope callee) {
-        _callees.add(callee);
+        callees.add(callee);
     }
 
     /**
@@ -187,7 +174,7 @@ public class IRScope {
      * @return the number of callees
      */
     public final int numberOfCallees() {
-        return _callees.size();
+        return callees.size();
     }
 
     /**
@@ -196,7 +183,16 @@ public class IRScope {
      * @return the callee at the specified index
      */
     public final IRScope calleeAt(int i) {
-        return _callees.get(i);
+        return callees.get(i);
+    }
+
+    @Override
+    public String toString() {
+        if (caller == null) {
+            return "root-scope: " + method;
+        } else {
+            return "inline-scope @ " + callerBCI + ": " + method;
+        }
     }
 
     /**
@@ -204,12 +200,12 @@ public class IRScope {
      * @return the bytecode index of the caller of the top scope
      */
     public final int topScopeBCI() {
-        assert _caller != null;
+        assert caller != null;
         IRScope scope = this;
-        while (scope._caller != null) {
-            scope = scope._caller;
+        while (scope.caller != null) {
+            scope = scope.caller;
         }
-        return scope._callerBCI;
+        return scope.callerBCI;
     }
 
     public final void computeLockStackSize() {
@@ -219,7 +215,7 @@ public class IRScope {
         }
         IRScope curScope = this;
         while (curScope != null && curScope._exceptionHandlers.size() > 0) {
-            curScope = curScope.caller();
+            curScope = curScope.caller;
         }
         _lockStackSize = (curScope == null ? 0 :
                           (curScope.callerState() == null ? 0 :

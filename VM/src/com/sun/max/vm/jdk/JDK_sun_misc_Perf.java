@@ -25,7 +25,7 @@ import java.nio.*;
 import sun.misc.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.program.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Method sustitutions for the {@link sun.misc.Perf} class.
@@ -55,7 +55,7 @@ final class JDK_sun_misc_Perf {
      */
     @SUBSTITUTE
     private ByteBuffer attach(String user, int lvmid, int mode) throws IllegalArgumentException {
-        Problem.unimplemented();
+        FatalError.unimplemented();
         return null;
     }
 
@@ -66,7 +66,7 @@ final class JDK_sun_misc_Perf {
      */
     @SUBSTITUTE
     private void detach(ByteBuffer byteBuffer) {
-        Problem.unimplemented();
+        FatalError.unimplemented();
     }
 
     /**
@@ -80,7 +80,7 @@ final class JDK_sun_misc_Perf {
      */
     @SUBSTITUTE
     public ByteBuffer createLong(String name, int variability, int units, long value) {
-        Problem.unimplemented();
+        FatalError.unimplemented();
         return null;
     }
 
@@ -95,7 +95,7 @@ final class JDK_sun_misc_Perf {
      */
     @SUBSTITUTE
     public ByteBuffer createByteArray(String name, int variability, int units, byte[] value, int maxLength) {
-        Problem.unimplemented();
+        FatalError.unimplemented();
         return null;
     }
 
@@ -106,7 +106,7 @@ final class JDK_sun_misc_Perf {
      */
     @SUBSTITUTE
     public long highResCounter() {
-        Problem.unimplemented();
+        FatalError.unimplemented();
         return 0L;
     }
 
@@ -117,7 +117,7 @@ final class JDK_sun_misc_Perf {
      */
     @SUBSTITUTE
     public long highResFrequency() {
-        Problem.unimplemented();
+        FatalError.unimplemented();
         return 0L;
     }
 }

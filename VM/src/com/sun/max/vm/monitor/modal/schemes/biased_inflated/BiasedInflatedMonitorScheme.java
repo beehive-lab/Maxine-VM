@@ -40,7 +40,6 @@ public class BiasedInflatedMonitorScheme extends ModalMonitorScheme {
     @Override
     public ModalLockWordDecoder getModalLockWordDecoder() {
         return new ModalLockWordDecoder() {
-            @Override
             public boolean isLockWordInMode(ModalLockWord64 modalLockWord, Class<? extends ModalLockWord64> mode) {
                 if (mode == BiasedLockWord64.class) {
                     return BiasedLockWord64.isBiasedLockWord(modalLockWord);

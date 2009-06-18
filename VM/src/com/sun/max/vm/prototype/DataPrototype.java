@@ -320,7 +320,7 @@ public final class DataPrototype extends Prototype {
                                 referenceMap.set(index);
                             } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
                                 throw ProgramError.unexpected("Error while preparing reference map for mutable array in boot heap of type " +
-                                    classInfo._class.getName() + ": cell=" + cell.toHexString() + ", index=" + i +
+                                    classInfo._clazz.getName() + ": cell=" + cell.toHexString() + ", index=" + i +
                                     " [" + origin.toHexString() + "+" + (Word.size() * i) + "], refmap index=" + index, indexOutOfBoundsException);
                             }
                         }
@@ -340,7 +340,7 @@ public final class DataPrototype extends Prototype {
                         referenceMap.set(index);
                     } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
                         throw ProgramError.unexpected("Error while preparing reference map for mutable object in boot heap of type " +
-                            classInfo._class.getName() + ": cell=" + cell.toHexString() + ", field=" + fieldActor.name() +
+                            classInfo._clazz.getName() + ": cell=" + cell.toHexString() + ", field=" + fieldActor.name() +
                             " [" + origin.toHexString() + "+" + fieldActor.offset() + "], refmap index=" + index, indexOutOfBoundsException);
                     }
                 }
@@ -827,8 +827,6 @@ public final class DataPrototype extends Prototype {
             final Address regionStart = m.region().start();
             final int start = n;
             completionService.submit(new Callable<Integer>() {
-
-                @Override
                 public Integer call() throws Exception {
                     int numberOfBytes = 0;
                     final int end = Math.min(objects.length(), start + BATCH);
@@ -979,7 +977,6 @@ public final class DataPrototype extends Prototype {
      * A visitor that sets the relocation flag for the origin of all objects.
      */
     private final PointerOffsetVisitor _originOffsetVisitor = new PointerOffsetVisitor() {
-        @Override
         public void visitPointerOffset(Pointer origin, int offset) {
             setRelocationFlag(origin.plus(offset));
         }
@@ -1029,8 +1026,6 @@ public final class DataPrototype extends Prototype {
         for (int n = 0; n < objects.length(); n += BATCH) {
             final int start = n;
             completionService.submit(new Callable<Integer>() {
-
-                @Override
                 public Integer call() throws Exception {
                     try {
                         int numberOfRelocationsInBatch = 0;

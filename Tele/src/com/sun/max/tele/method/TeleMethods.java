@@ -71,7 +71,6 @@ public class TeleMethods extends AbstractTeleVMHolder {
 
     private static void updateSource(boolean inInspector) {
         final InspectedMemberReifier<Method> methodReifier = new InspectedMemberReifier<Method>() {
-            @Override
             public void reify(Method method, IndentWriter writer) {
                 final Class c = method.getDeclaringClass();
                 final boolean isStatic = Modifier.isStatic(method.getModifiers());

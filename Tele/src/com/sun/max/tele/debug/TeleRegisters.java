@@ -85,7 +85,7 @@ public abstract class TeleRegisters {
     }
 
     /**
-     * @return a list of the registers in this set that point into the described area of memory in the {@link TeleVM}.
+     * @return a list of the registers in this set that point into the described area of memory in the VM.
      * Empty if region starts at zero.
      */
     public Sequence<Symbol> find(Address startAddress, Address endAddress) {
@@ -100,6 +100,22 @@ public abstract class TeleRegisters {
         }
         return symbols;
     }
+
+    /**
+     * @return a comma-separated list of the register names in this set that
+     * point into the described area of memory in the VM.
+     */
+    public String findAsNameList(Address startAddress, Address endAddress) {
+        String nameList = "";
+        for (Symbol registerSymbol : find(startAddress, endAddress)) {
+            if (nameList.length() > 0) {
+                nameList += ",";
+            }
+            nameList += registerSymbol.name();
+        }
+        return nameList;
+    }
+
 
     public Address get(int index) {
         return _registerValues[index];

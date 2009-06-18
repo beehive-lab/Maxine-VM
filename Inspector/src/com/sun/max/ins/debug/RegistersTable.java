@@ -33,6 +33,7 @@ import com.sun.max.ins.value.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.util.*;
+import com.sun.max.vm.value.*;
 
 /**
  * A table specialized for displaying register values for a thread in the VM.
@@ -47,9 +48,11 @@ public class RegistersTable extends InspectorTable {
     private RegistersColumnModel _columnModel;
     private final TableColumn[] _columns;
 
-    public RegistersTable(Inspection inspection, TeleNativeThread teleNativeThread, RegistersViewPreferences viewPreferences) {
+    private MaxVMState _lastRefreshedState = null;
+
+    public RegistersTable(Inspection inspection, MaxThread thread, RegistersViewPreferences viewPreferences) {
         super(inspection);
-        _model = new RegistersTableModel(teleNativeThread);
+        _model = new RegistersTableModel(thread);
         _columns = new TableColumn[RegistersColumnKind.VALUES.length()];
         _columnModel = new RegistersColumnModel(viewPreferences);
         setModel(_model);
@@ -66,8 +69,6 @@ public class RegistersTable extends InspectorTable {
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
-
-    private MaxVMState _lastRefreshedState = null;
 
     public void refresh(boolean force) {
         if (maxVMState().newerThan(_lastRefreshedState) || force) {
@@ -139,17 +140,17 @@ public class RegistersTable extends InspectorTable {
      */
     private final class RegistersTableModel extends DefaultTableModel {
 
-        private final TeleNativeThread _teleNativeThread;
+        private final MaxThread _thread;
 
         private int _nRegisters = 0;
 
         private final RegisterInfo[] _registerInfos;
 
-        RegistersTableModel(TeleNativeThread teleNativeThread) {
-            _teleNativeThread = teleNativeThread;
-            final TeleIntegerRegisters integerRegisters = _teleNativeThread.integerRegisters();
-            final TeleStateRegisters stateRegisters = _teleNativeThread.stateRegisters();
-            final TeleFloatingPointRegisters floatingPointRegisters = _teleNativeThread.floatingPointRegisters();
+        RegistersTableModel(MaxThread thread) {
+            _thread = thread;
+            final TeleIntegerRegisters integerRegisters = _thread.integerRegisters();
+            final TeleStateRegisters stateRegisters = _thread.stateRegisters();
+            final TeleFloatingPointRegisters floatingPointRegisters = _thread.floatingPointRegisters();
             _nRegisters = integerRegisters.symbolizer().numberOfValues()
                  + stateRegisters.symbolizer().numberOfValues()
                  + floatingPointRegisters.symbolizer().numberOfValues();
@@ -170,6 +171,9 @@ public class RegistersTable extends InspectorTable {
                 row++;
             }
             assert _nRegisters == row;
+            for (int i = 0; i < _nRegisters; i++) {
+                _registerInfos[i].refresh();
+            }
         }
 
         /**
@@ -217,7 +221,6 @@ public class RegistersTable extends InspectorTable {
             super(inspection, null);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final RegisterInfo registerInfo = (RegisterInfo) value;
             final String name = registerInfo.name();
@@ -239,18 +242,21 @@ public class RegistersTable extends InspectorTable {
         ValueCellRenderer(Inspection inspection) {
             _labels = new WordValueLabel[_model.getRowCount()];
             for (int row = 0; row < _model.getRowCount(); row++) {
-                _labels[row] = new WordValueLabel(inspection, _model.getValueMode(row));
+                final RegisterInfo registerInfo = (RegisterInfo) _model.getValueAt(row, 0);
+                _labels[row] = new WordValueLabel(inspection, _model.getValueMode(row), RegistersTable.this) {
+
+                    @Override
+                    protected Value fetchValue() {
+                        return registerInfo.value();
+                    }
+                };
             }
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final RegisterInfo registerInfo = (RegisterInfo) value;
-            _labels[row].setValue(registerInfo.value());
             return _labels[row];
         }
 
-        @Override
         public void redisplay() {
             for (InspectorLabel label : _labels) {
                 if (label != null) {
@@ -259,7 +265,6 @@ public class RegistersTable extends InspectorTable {
             }
         }
 
-        @Override
         public void refresh(boolean force) {
             for (InspectorLabel label : _labels) {
                 if (label != null) {

@@ -50,6 +50,8 @@ public class MemoryWordsTable extends InspectorTable {
     private final MemoryWordsColumnModel _columnModel;
     private final TableColumn[] _columns;
 
+    private MaxVMState _lastRefreshedState = null;
+
     public MemoryWordsTable(final ObjectInspector objectInspector, TeleObject teleObject) {
         this(objectInspector, teleObject.getCurrentOrigin(), teleObject.getCurrentSize().toInt());
 
@@ -78,8 +80,24 @@ public class MemoryWordsTable extends InspectorTable {
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
-    MemoryWordsViewPreferences preferences() {
-        return _columnModel.localPreferences();
+    public void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
+            _model.refresh();
+            for (TableColumn column : _columns) {
+                final Prober prober = (Prober) column.getCellRenderer();
+                prober.refresh(force);
+            }
+        }
+    }
+
+    public void redisplay() {
+        for (TableColumn column : _columns) {
+            final Prober prober = (Prober) column.getCellRenderer();
+            prober.redisplay();
+        }
+        invalidate();
+        repaint();
     }
 
     @Override
@@ -120,10 +138,6 @@ public class MemoryWordsTable extends InspectorTable {
             createColumn(MemoryWordsColumnKind.REGION, new RegionRenderer(inspection()));
         }
 
-        private MemoryWordsViewPreferences localPreferences() {
-            return _localPreferences;
-        }
-
         private void createColumn(MemoryWordsColumnKind columnKind, TableCellRenderer renderer) {
             final int col = columnKind.ordinal();
             _columns[col] = new TableColumn(col, 0, renderer, null);
@@ -148,17 +162,14 @@ public class MemoryWordsTable extends InspectorTable {
             fireTableDataChanged();
         }
 
-        @Override
         public int getColumnCount() {
             return MemoryWordsColumnKind.VALUES.length();
         }
 
-        @Override
         public int getRowCount() {
             return _wordCount;
         }
 
-        @Override
         public Object getValueAt(int row, int col) {
             return row;
         }
@@ -182,7 +193,6 @@ public class MemoryWordsTable extends InspectorTable {
             super(inspection, null);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             setText("Tag(" + row + ")");
             return this;
@@ -217,7 +227,7 @@ public class MemoryWordsTable extends InspectorTable {
     private final class ValueRenderer extends WordValueLabel implements TableCellRenderer {
         // Designed so that we only read memory lazily, for words that are visible
         ValueRenderer(Inspection inspection) {
-            super(inspection, WordValueLabel.ValueMode.WORD);
+            super(inspection, WordValueLabel.ValueMode.WORD, null);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
@@ -235,28 +245,6 @@ public class MemoryWordsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
             setValue(WordValue.from(maxVM().readWord(_startAddress.plus(row * maxVM().wordSize()))));
             return this;
-        }
-    }
-
-    public void redisplay() {
-        for (TableColumn column : _columns) {
-            final Prober prober = (Prober) column.getCellRenderer();
-            prober.redisplay();
-        }
-        invalidate();
-        repaint();
-    }
-
-    private MaxVMState _lastRefreshedState = null;
-
-    public void refresh(boolean force) {
-        if (maxVMState().newerThan(_lastRefreshedState) || force) {
-            _lastRefreshedState = maxVMState();
-            _model.refresh();
-            for (TableColumn column : _columns) {
-                final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(force);
-            }
         }
     }
 }

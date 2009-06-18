@@ -88,22 +88,18 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
         return new ObserverModeHandler(delegate);
     }
 
-    @Override
     public void afterGarbageCollection() {
         delegate().delegateAfterGarbageCollection();
     }
 
-    @Override
     public void beforeGarbageCollection() {
         delegate().delegateBeforeGarbageCollection();
     }
 
-    @Override
     public Word createMisc(Object object) {
         return HashableLockWord64.from(Address.zero()).setHashcode(monitorScheme().createHashCode(object));
     }
 
-    @Override
     public int makeHashCode(Object object) {
         nullCheck(object);
         if (MaxineVM.isPrototyping()) {
@@ -113,7 +109,6 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
         return delegate().delegateMakeHashcode(object, ModalLockWord64.from(ObjectAccess.readMisc(object)));
     }
 
-    @Override
     public void monitorEnter(Object object) {
         nullCheck(object);
         if (MaxineVM.isPrototyping()) {
@@ -124,7 +119,6 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
         delegate().delegateMonitorEnter(object, ModalLockWord64.from(ObjectAccess.readMisc(object)), encodeCurrentThreadIDForLockword());
     }
 
-    @Override
     public void monitorExit(Object object) {
         nullCheck(object);
         if (MaxineVM.isPrototyping()) {
@@ -135,7 +129,6 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
         delegate().delegateMonitorExit(object, ModalLockWord64.from(ObjectAccess.readMisc(object)));
     }
 
-    @Override
     public void monitorNotify(Object object, boolean all) {
         nullCheck(object);
         if (MaxineVM.isPrototyping()) {
@@ -150,7 +143,6 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
         delegate().delegateMonitorNotify(object, all, ModalLockWord64.from(ObjectAccess.readMisc(object)));
     }
 
-    @Override
     public void monitorWait(Object object, long timeout) throws InterruptedException {
         nullCheck(object);
         if (MaxineVM.isPrototyping()) {
@@ -163,7 +155,6 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
 
     private final boolean[] _threadHoldsMonitorResult = new boolean[1];
 
-    @Override
     public boolean threadHoldsMonitor(Object object, VmThread thread) {
         nullCheck(object);
         final ModalLockWord64 lockWord = ModalLockWord64.from(ObjectAccess.readMisc(object));

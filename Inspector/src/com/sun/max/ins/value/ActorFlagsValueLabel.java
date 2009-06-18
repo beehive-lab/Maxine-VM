@@ -61,7 +61,6 @@ public final class ActorFlagsValueLabel extends ValueLabel {
         setToolTipText(_flagsAsString);
     }
 
-    @Override
     public void redisplay() {
         setFont(style().primitiveDataFont());
         setForeground(style().primitiveDataColor());

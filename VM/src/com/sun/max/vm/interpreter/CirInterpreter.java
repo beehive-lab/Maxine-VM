@@ -65,7 +65,7 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
                     pointerStore(pointerStoreBuiltin.kind(), arguments);
                     return new CirCall(normalContinuation, CirCall.NO_ARGUMENTS);
                 } catch (Throwable throwable) {
-                    Problem.todo("catch only those exceptions that are caused by the interpreted CIR code");
+                    //TODO: catch only those exceptions that are caused by the interpreted CIR code
                     final CirValue exceptionContinuation = cirArguments[cirArguments.length - 1];
                     return new CirCall(exceptionContinuation, CirConstant.fromObject(throwable));
                 }

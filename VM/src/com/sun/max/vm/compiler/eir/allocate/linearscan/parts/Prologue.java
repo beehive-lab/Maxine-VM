@@ -134,8 +134,6 @@ public class Prologue extends AlgorithmPart {
 
                         valueKilled[0] = false;
                         operand.instruction().visitOperands(new EirOperand.Procedure() {
-
-                            @Override
                             public void run(EirOperand curOperand) {
 
                                 if (curOperand == operand) {

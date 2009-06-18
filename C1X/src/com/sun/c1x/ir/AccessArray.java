@@ -75,6 +75,7 @@ public abstract class AccessArray extends Instruction {
      * Checks whether this instruction can cause a trap.
      * @return <code>true</code> if this instruction can cause a trap
      */
+    @Override
     public boolean canTrap() {
         return !checkFlag(Flag.NonNull);
     }
@@ -83,6 +84,7 @@ public abstract class AccessArray extends Instruction {
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply to each of the input values.
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         _array = closure.apply(_array);
     }
@@ -91,6 +93,7 @@ public abstract class AccessArray extends Instruction {
      * Iterates over the "other" values of this instruction.
      * @param closure the closure to apply to each of the other values
      */
+    @Override
     public void otherValuesDo(InstructionClosure closure) {
         if (_lockStack != null) {
             _lockStack.valuesDo(closure);

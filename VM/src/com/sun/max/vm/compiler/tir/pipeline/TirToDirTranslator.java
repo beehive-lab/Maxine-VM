@@ -34,6 +34,7 @@ import com.sun.max.vm.compiler.tir.TirInstruction.*;
 import com.sun.max.vm.compiler.tir.pipeline.TirToDirTranslator.VariableAllocator.*;
 import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.hotpath.state.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -296,7 +297,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
 
     @Override
     public void visit(TirDirCall call) {
-        Problem.unimplemented("Dir Inlining not supported yet.");
+        FatalError.unexpected("Dir Inlining not supported yet.");
     }
 
     private void patchLoops() {
@@ -394,57 +395,47 @@ public class TirToDirTranslator extends TirPipelineFilter  {
         for (DirBlock block : method.blocks()) {
             for (DirInstruction instruction : block.instructions()) {
                 instruction.acceptVisitor(new DirVisitor() {
-                    @Override
                     public void visitAssign(DirAssign dirAssign) {
-                        Problem.unimplemented();
+                        FatalError.unimplemented();
                     }
 
-                    @Override
                     public void visitBuiltinCall(DirBuiltinCall dirBuiltinCall) {
-                        Problem.unimplemented();
+                        FatalError.unimplemented();
                     }
 
-                    @Override
                     public void visitGoto(DirGoto dirGoto) {
-                        Problem.unimplemented();
+                        FatalError.unimplemented();
                     }
 
-                    @Override
                     public void visitMethodCall(DirMethodCall dirMethodCall) {
-                        Problem.unimplemented();
+                        FatalError.unimplemented();
                         // final DirVariable result = dirMethodCall.result();
                         // final DirVariable callResult = _allocator.allocate(result.kind(), VariableType.DIRTY);
                         // final DirMethodCall call = new DirMethodCall(callResult, dirMethodCall.method(), );
                     }
 
-                    @Override
                     public void visitReturn(DirReturn dirReturn) {
-                        Problem.unimplemented();
+                        FatalError.unimplemented();
                     }
 
-                    @Override
                     public void visitSafepoint(DirSafepoint safepoint) {
-                        Problem.unimplemented();
+                        FatalError.unimplemented();
                     }
 
-                    @Override
                     public void visitSwitch(DirSwitch dirSwitch) {
-                        Problem.unimplemented();
+                        FatalError.unimplemented();
                     }
 
-                    @Override
                     public void visitThrow(DirThrow dirThrow) {
-                        Problem.unimplemented();
+                        FatalError.unimplemented();
                     }
 
-                    @Override
                     public void visitGuardpoint(DirGuardpoint guardpoint) {
-                        Problem.unimplemented();
+                        FatalError.unimplemented();
                     }
 
-                    @Override
                     public void visitJump(DirJump dirJump) {
-                        Problem.unimplemented();
+                        FatalError.unimplemented();
                     }
                 });
             }

@@ -30,10 +30,10 @@ public class IntHashMap<Value_Type> {
 
     private static final int INITIAL_SIZE = 4;
 
-    private int[] _keys;
-    private MutableSequence<Value_Type> _values;
-    private int _numberOfValues;
-    private int _threshold;
+    private int[] keys;
+    private MutableSequence<Value_Type> values;
+    private int numberOfValues;
+    private int threshold;
     private static final float LOAD_FACTOR = 0.75f;
 
     public IntHashMap() {
@@ -56,8 +56,8 @@ public class IntHashMap<Value_Type> {
             capacity <<= 1;
         }
 
-        _keys = new int[capacity];
-        _values = new ArraySequence<Value_Type>(capacity);
+        keys = new int[capacity];
+        values = new ArraySequence<Value_Type>(capacity);
         setThreshold();
     }
 
@@ -83,50 +83,50 @@ public class IntHashMap<Value_Type> {
     }
 
     public Value_Type get(int key) {
-        if (_keys == null) {
+        if (keys == null) {
             return null;
         }
-        int index = key % _keys.length;
+        int index = key % keys.length;
         if (index < 0) {
             index *= -1;
         }
         final int start = index;
         do {
-            final Value_Type value = _values.get(index);
+            final Value_Type value = values.get(index);
             if (value == null) {
                 return null;
             }
-            if (_keys[index] == key) {
-                return _values.get(index);
+            if (keys[index] == key) {
+                return values.get(index);
             }
             index++;
-            index %= _keys.length;
+            index %= keys.length;
         } while (index != start);
         return null;
     }
 
     private void setThreshold() {
-        assert _keys.length == _values.length();
-        _threshold = (int) (_keys.length * LOAD_FACTOR);
+        assert keys.length == values.length();
+        threshold = (int) (keys.length * LOAD_FACTOR);
     }
 
     public void grow() {
-        if (_keys == null) {
-            _keys = new int[INITIAL_SIZE];
-            _values = new ArraySequence<Value_Type>(INITIAL_SIZE);
+        if (keys == null) {
+            keys = new int[INITIAL_SIZE];
+            values = new ArraySequence<Value_Type>(INITIAL_SIZE);
             setThreshold();
         } else {
-            final int[] keys = _keys;
-            final IndexedSequence<Value_Type> values = _values;
-            final int length = _keys.length * 2;
-            _keys = new int[length];
-            _values = new ArraySequence<Value_Type>(length);
-            _numberOfValues = 0;
+            final int[] ks = this.keys;
+            final IndexedSequence<Value_Type> vs = this.values;
+            final int length = ks.length * 2;
+            this.keys = new int[length];
+            this.values = new ArraySequence<Value_Type>(length);
+            numberOfValues = 0;
             setThreshold();
-            for (int i = 0; i < keys.length; i++) {
-                final Value_Type value = values.get(i);
+            for (int i = 0; i < ks.length; i++) {
+                final Value_Type value = vs.get(i);
                 if (value != null) {
-                    put(keys[i], value);
+                    put(ks[i], value);
                 }
             }
         }
@@ -134,37 +134,37 @@ public class IntHashMap<Value_Type> {
 
     public Value_Type put(int key, Value_Type value) {
         assert value != null;
-        if (_numberOfValues >= _threshold) {
+        if (numberOfValues >= threshold) {
             grow();
         }
-        int index = key % _keys.length;
+        int index = key % keys.length;
         if (index < 0) {
             index *= -1;
         }
         final int start = index;
-        while (_values.get(index) != null) {
-            if (_keys[index] == key) {
-                return _values.set(index, value);
+        while (values.get(index) != null) {
+            if (keys[index] == key) {
+                return values.set(index, value);
             }
             index++;
-            index %= _keys.length;
+            index %= keys.length;
             assert index != start;
         }
-        _keys[index] = key;
-        _values.set(index, value);
-        _numberOfValues++;
+        keys[index] = key;
+        values.set(index, value);
+        numberOfValues++;
         return null;
     }
 
     public Sequence<Value_Type> toSequence() {
-        if (_values == null) {
+        if (values == null) {
             final Class<Value_Type> type = null;
             return Sequence.Static.empty(type);
         }
-        final MutableSequence<Value_Type> sequence = new ArraySequence<Value_Type>(_numberOfValues);
+        final MutableSequence<Value_Type> sequence = new ArraySequence<Value_Type>(numberOfValues);
         int n = 0;
-        for (int i = 0; i < _values.length(); i++) {
-            final Value_Type value = _values.get(i);
+        for (int i = 0; i < values.length(); i++) {
+            final Value_Type value = values.get(i);
             if (value != null) {
                 sequence.set(n, value);
                 n++;
@@ -174,6 +174,6 @@ public class IntHashMap<Value_Type> {
     }
 
     public int count() {
-        return _numberOfValues;
+        return numberOfValues;
     }
 }

@@ -26,7 +26,7 @@ import com.sun.max.collect.*;
 
 /**
  * A word width value describes many bits there are in a machine word.
- * 
+ *
  * @author Bernd Mathiske
  */
 public enum WordWidth {
@@ -38,42 +38,42 @@ public enum WordWidth {
 
     public static final IndexedSequence<WordWidth> VALUES = new ArraySequence<WordWidth>(values());
 
-    private final int _numberOfBits;
-    private final int _numberOfBytes;
-    private final Class _canonicalPrimitiveType;
-    private final long _min;
-    private final long _max;
+    private final int numberOfBits;
+    private final int numberOfBytes;
+    private final Class canonicalPrimitiveType;
+    private final long min;
+    private final long max;
 
     private WordWidth(int numberOfBits, Class canonicalPrimitiveType, long min, long max) {
-        _numberOfBits = numberOfBits;
-        _numberOfBytes = numberOfBits / 8;
-        _canonicalPrimitiveType = canonicalPrimitiveType;
-        _min = min;
-        _max = max;
+        this.numberOfBits = numberOfBits;
+        numberOfBytes = numberOfBits / 8;
+        this.canonicalPrimitiveType = canonicalPrimitiveType;
+        this.min = min;
+        this.max = max;
     }
 
     @INLINE
     public final int numberOfBits() {
-        return _numberOfBits;
+        return numberOfBits;
     }
 
     @INLINE
     public final int numberOfBytes() {
-        return _numberOfBytes;
+        return numberOfBytes;
     }
 
     public Class canonicalPrimitiveType() {
-        return _canonicalPrimitiveType;
+        return canonicalPrimitiveType;
     }
 
     @INLINE
     public final long min() {
-        return _min;
+        return min;
     }
 
     @INLINE
     public final long max() {
-        return _max;
+        return max;
     }
 
     public boolean lessThan(WordWidth other) {
@@ -94,7 +94,7 @@ public enum WordWidth {
 
     @Override
     public String toString() {
-        return Integer.toString(_numberOfBits);
+        return Integer.toString(numberOfBits);
     }
 
     public static WordWidth fromInt(int wordWidth) {

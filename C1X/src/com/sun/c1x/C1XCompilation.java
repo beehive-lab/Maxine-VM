@@ -20,6 +20,8 @@
  */
 package com.sun.c1x;
 
+import java.io.*;
+
 import com.sun.c1x.ci.CiMethod;
 import com.sun.c1x.ci.CiOsrFrame;
 import com.sun.c1x.ci.CiRuntime;
@@ -28,6 +30,7 @@ import com.sun.c1x.graph.BlockMap;
 import com.sun.c1x.graph.GraphBuilder;
 import com.sun.c1x.ir.BlockBegin;
 import com.sun.c1x.ir.IRScope;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>Compilation</code> class encapsulates global information about the compilation
@@ -36,10 +39,10 @@ import com.sun.c1x.ir.IRScope;
  *
  * @author Ben L. Titzer
  */
-public class Compilation {
+public class C1XCompilation {
 
-    final CiRuntime _runtime;
-    final CiMethod _method;
+    public final CiRuntime _runtime;
+    public final CiMethod _method;
     final int _osrBCI;
 
     BlockBegin _start;
@@ -51,7 +54,7 @@ public class Compilation {
     Bailout _bailout;
 
     int _totalBlocks;
-    int _totalBytecodes;
+    int _totalInstructions;
 
     /**
      * Creates a new compilation for the specified method and runtime.
@@ -59,7 +62,7 @@ public class Compilation {
      * @param method the method to be compiled
      * @param osrBCI the bytecode index for on-stack replacement, if requested
      */
-    public Compilation(CiRuntime runtime, CiMethod method, int osrBCI) {
+    public C1XCompilation(CiRuntime runtime, CiMethod method, int osrBCI) {
         _runtime = runtime;
         _method = method;
         _osrBCI = osrBCI;
@@ -70,7 +73,7 @@ public class Compilation {
      * @param runtime the runtime implementation
      * @param method the method to be compiled
      */
-    public Compilation(CiRuntime runtime, CiMethod method) {
+    public C1XCompilation(CiRuntime runtime, CiMethod method) {
         _runtime = runtime;
         _method = method;
         _osrBCI = -1;
@@ -81,11 +84,28 @@ public class Compilation {
      */
     public BlockBegin startBlock() {
         try {
-            if (_start == null) {
-                _start = new GraphBuilder(this, new IRScope(this, null, 0, _method, _osrBCI)).start();
+            if (_start == null && _bailout == null) {
+                CFGPrinter cfgPrinter = null;
+                if (C1XOptions.PrintCFGToFile) {
+                    OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
+                    if (cfgFileStream != null) {
+                        cfgPrinter = new CFGPrinter(cfgFileStream);
+                        cfgPrinter.printCompilation(method());
+                    }
+                }
+
+                final GraphBuilder builder = new GraphBuilder(this, new IRScope(this, null, 0, _method, _osrBCI));
+                _start = builder.start();
+                _totalInstructions = builder.instructionCount();
+
+                if (C1XOptions.PrintCFGToFile && cfgPrinter != null) {
+                    cfgPrinter.printCFG(_start, "After Generation of HIR", true, false);
+                }
             }
         } catch (Bailout b) {
             _bailout = b;
+        } catch (Throwable t) {
+            _bailout = new Bailout("Unexpected exception while compiling: " + this.method(), t);
         }
         return _start;
     }
@@ -104,14 +124,6 @@ public class Compilation {
      */
     public CiMethod method() {
         return _method;
-    }
-
-    /**
-     * Gets the runtime for this compilation.
-     * @return the runtime
-     */
-    public CiRuntime runtime() {
-        return _runtime;
     }
 
     /**
@@ -198,6 +210,18 @@ public class Compilation {
     }
 
     /**
+     * Converts this compilation to a string.
+     * @return a string representation of this compilation
+     */
+    @Override
+    public String toString() {
+        if (isOsrCompilation()) {
+            return "osr-compile @ " + _osrBCI + ": " + _method;
+        }
+        return "compile: " + _method;
+    }
+
+    /**
      * Builds the block map for the specified method.
      * @param method the method for which to build the block map
      * @param osrBCI the OSR bytecode index; <code>-1</code> if this is not an OSR
@@ -205,6 +229,9 @@ public class Compilation {
      */
     public BlockMap getBlockMap(CiMethod method, int osrBCI) {
         // XXX: cache the block map for methods that are compiled or inlined often
+        if (_totalBlocks == 0) {
+            _totalBlocks = 1; // start at block 1 to skip header block
+        }
         BlockMap map = new BlockMap(method, _totalBlocks);
         boolean isOsrCompilation = false;
         if (osrBCI >= 0) {
@@ -213,9 +240,25 @@ public class Compilation {
         }
         if (!map.build(!isOsrCompilation && C1XOptions.ComputeStoresInLoops)) {
             throw new Bailout("build of BlockMap failed for " + method);
+        } else {
+            if (C1XOptions.PrintCFGToFile) {
+                OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
+                if (cfgFileStream != null) {
+                    CFGPrinter cfgPrinter = new CFGPrinter(cfgFileStream);
+                    cfgPrinter.printCFG(map, method.codeSize(), "BlockListBuilder " + Util.format("%f %r %H.%n(%p)", method, true), false, false);
+                }
+            }
         }
         map.cleanup();
         _totalBlocks += map.numberOfBlocks();
         return map;
+    }
+
+    /**
+     * Returns the number of bytecodes inlined into the compilation.
+     * @return the number of bytecodes
+     */
+    public int totalInstructions() {
+        return _totalInstructions;
     }
 }

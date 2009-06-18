@@ -75,6 +75,7 @@ public class NewMultiArray extends NewArray {
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         for (int i = 0; i < _dimensions.length; i++) {
             _dimensions[i] = closure.apply(_dimensions[i]);
@@ -84,6 +85,7 @@ public class NewMultiArray extends NewArray {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitNewMultiArray(this);
     }

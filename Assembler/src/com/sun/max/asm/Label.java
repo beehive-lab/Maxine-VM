@@ -160,8 +160,7 @@ public final class Label implements Argument {
     }
 
     public long asLong() {
-        Problem.unimplemented();
-        return 0L;
+        throw ProgramError.unexpected("unimplemented");
     }
 
     @Override

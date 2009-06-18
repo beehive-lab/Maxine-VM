@@ -23,9 +23,9 @@ package com.sun.max.tele.debug.guestvm.xen;
 import java.nio.*;
 
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
 
 public class GuestVMXenDataAccess extends DataAccessAdapter {
 
@@ -66,7 +66,7 @@ public class GuestVMXenDataAccess extends DataAccessAdapter {
     }
 
     public long readLong(Address address) {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 
     public void writeByte(Address address, byte value) {
@@ -81,14 +81,14 @@ public class GuestVMXenDataAccess extends DataAccessAdapter {
     }
 
     public void writeInt(Address address, int value) {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 
     public void writeLong(Address address, long value) {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 
     public void writeShort(Address address, short value) {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 }

@@ -671,27 +671,22 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitSpecialBuiltin(builtin, result, arguments);
     }
 
-    @Override
     public void visitConvertFloatToInt(ConvertFloatToInt builtin, IR_Type result, IR_Type[] arguments) {
         visitIEEE754Builtin(builtin, result, arguments);
     }
 
-    @Override
     public void visitConvertFloatToLong(ConvertFloatToLong builtin, IR_Type result, IR_Type[] arguments) {
         visitIEEE754Builtin(builtin, result, arguments);
     }
 
-    @Override
     public void visitConvertDoubleToInt(ConvertDoubleToInt builtin, IR_Type result, IR_Type[] arguments) {
         visitIEEE754Builtin(builtin, result, arguments);
     }
 
-    @Override
     public void visitConvertDoubleToLong(ConvertDoubleToLong builtin, IR_Type result, IR_Type[] arguments) {
         visitIEEE754Builtin(builtin, result, arguments);
     }
 
-    @Override
     public void visitConvertFloatToDouble(ConvertFloatToDouble builtin, IR_Type result, IR_Type[] arguments) {
         visitBuiltin(builtin, result, arguments);
     }

@@ -32,65 +32,65 @@ import com.sun.max.util.timer.*;
 public class ContextTree {
 
     protected static class Node {
-        protected final long _id;
-        protected Node _sibling;
-        protected Node _child;
-        protected Timer _timer;
+        protected final long id;
+        protected Node sibling;
+        protected Node child;
+        protected Timer timer;
 
         public Node(long id) {
-            this._id = id;
+            this.id = id;
         }
 
-        public Node findChild(long id) {
-            Node pos = _child;
+        public Node findChild(long searchId) {
+            Node pos = child;
             while (pos != null) {
-                if (pos._id == id) {
+                if (pos.id == this.id) {
                     return pos;
                 }
-                pos = pos._sibling;
+                pos = pos.sibling;
             }
             return null;
         }
 
-        public Node addChild(long id, Clock clock) {
-            Node child = findChild(id);
-            if (child == null) {
-                child = new Node(id);
-                child._timer = new SingleUseTimer(clock);
-                child._sibling = _child;
-                _child = child;
+        public Node addChild(long searchId, Clock clock) {
+            Node foundChild = findChild(searchId);
+            if (foundChild == null) {
+                foundChild = new Node(searchId);
+                foundChild.timer = new SingleUseTimer(clock);
+                foundChild.sibling = this.child;
+                this.child = foundChild;
             }
-            return child;
+            return foundChild;
         }
     }
 
     public static final int MAXIMUM_DEPTH = 1024;
 
-    protected final Clock _clock;
-    protected final Node[] _stack;
-    protected int _depth;
+    protected final Clock clock;
+    protected final Node[] stack;
+    protected int depth;
 
     public ContextTree(Clock clock) {
-        this._clock = clock;
-        this._stack = new Node[MAXIMUM_DEPTH];
-        _depth = 0;
-        _stack[0] = new Node(Long.MAX_VALUE);
+        this.clock = clock;
+        this.stack = new Node[MAXIMUM_DEPTH];
+        depth = 0;
+        stack[0] = new Node(Long.MAX_VALUE);
     }
 
     public void enter(long id) {
-        final Node top = _stack[_depth];
-        final Node child = top.addChild(id, _clock);
+        final Node top = stack[depth];
+        final Node child = top.addChild(id, clock);
         // push a new profiling node onto the stack
-        _stack[++_depth] = child;
-        child._timer.start();
+        stack[++depth] = child;
+        child.timer.start();
     }
 
     public void exit(long id) {
-        while (_depth > 0) {
+        while (depth > 0) {
             // pop all profiling nodes until we find the correct ID.
-            final Node top = _stack[_depth--];
-            top._timer.stop();
-            if (top._id == id) {
+            final Node top = stack[depth--];
+            top.timer.stop();
+            if (top.id == id) {
                 break;
             }
         }

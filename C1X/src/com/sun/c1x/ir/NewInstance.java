@@ -44,7 +44,7 @@ public class NewInstance extends StateSplit {
     }
 
     /**
-     * Gets the instance class being allocatd by this instruction.
+     * Gets the instance class being allocated by this instruction.
      * @return the instance class allocated
      */
     public CiType instanceClass() {
@@ -55,6 +55,7 @@ public class NewInstance extends StateSplit {
      * Checks whether this instruction can trap.
      * @return <code>true</code>, assuming that allocation can cause OutOfMemory or other exceptions
      */
+    @Override
     public boolean canTrap() {
         return true;
     }
@@ -64,6 +65,7 @@ public class NewInstance extends StateSplit {
      * always the class allocated.
      * @return the exact type produced by this instruction
      */
+    @Override
     public CiType exactType() {
         return _instanceClass;
     }
@@ -72,6 +74,7 @@ public class NewInstance extends StateSplit {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitNewInstance(this);
     }

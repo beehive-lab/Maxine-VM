@@ -35,7 +35,6 @@ public abstract class SPARCDisassembledInstruction extends RiscDisassembledInstr
         super(disassembler, position, bytes, template, arguments);
     }
 
-    @Override
     public String mnemonic() {
         final SPARCExternalInstruction instruction = new SPARCExternalInstruction(template(), arguments(), startAddress(), null);
         return instruction.name();

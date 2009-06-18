@@ -302,7 +302,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
 
         switch (purpose) {
             case REFERENCE_MAP_PREPARING: {
-                Problem.unimplemented();
+                FatalError.unimplemented();
                 // FIXME: this need to be revisited
                 if (!targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, instructionPointer, stackPointer, stackPointer)) {
                     return false;

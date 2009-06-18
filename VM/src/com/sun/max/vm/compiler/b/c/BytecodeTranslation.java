@@ -36,6 +36,7 @@ import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.builtin.*;
 import com.sun.max.vm.compiler.cir.operator.*;
+import com.sun.max.vm.compiler.cir.operator.Throw;
 import com.sun.max.vm.compiler.cir.snippet.*;
 import com.sun.max.vm.compiler.cir.variable.*;
 import com.sun.max.vm.compiler.snippet.*;
@@ -43,6 +44,7 @@ import com.sun.max.vm.compiler.snippet.FieldReadSnippet.*;
 import com.sun.max.vm.compiler.snippet.MethodSelectionSnippet.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -1117,7 +1119,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     @Override
     protected void breakpoint() {
-        Problem.unimplemented();
+        FatalError.unimplemented();
     }
 
     @Override

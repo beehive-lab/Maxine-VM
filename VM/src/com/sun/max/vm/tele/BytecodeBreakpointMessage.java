@@ -96,7 +96,6 @@ public final class BytecodeBreakpointMessage extends MaxineMessage<BytecodeBreak
 
     static {
         MaxineMessenger.subscribe(MaxineMessage.Tag.BYTECODE_BREAKPOINT, new MaxineMessage.Receiver<BytecodeBreakpointMessage>() {
-            @Override
             public void consume(BytecodeBreakpointMessage message) {
                 switch (message._action) {
                     case MAKE:

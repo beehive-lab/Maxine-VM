@@ -30,7 +30,6 @@ import com.sun.c1x.ir.*;
  * @author Ben L. Titzer
  */
 public interface InstructionVisitor {
-    void visitHiWord(HiWord i);
     void visitPhi(Phi i);
     void visitLocal(Local i);
     void visitConstant(Constant i);

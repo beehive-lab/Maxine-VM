@@ -73,25 +73,25 @@ public final class Streams {
 
     public static final class Redirector extends Thread {
 
-        private final InputStream _inputStream;
-        private final OutputStream _outputStream;
-        private final String _name;
-        private final int _maxLines;
-        private final Process _process;
-        private boolean _closed;
+        private final InputStream inputStream;
+        private final OutputStream outputStream;
+        private final String name;
+        private final int maxLines;
+        private final Process process;
+        private boolean closed;
 
         private Redirector(Process process, InputStream inputStream, OutputStream outputStream, String name, int maxLines) {
             super("StreamRedirector{" + name + "}");
-            _inputStream = inputStream;
-            _outputStream = outputStream;
-            _name = name;
-            _maxLines = maxLines;
-            _process = process;
+            this.inputStream = inputStream;
+            this.outputStream = outputStream;
+            this.name = name;
+            this.maxLines = maxLines;
+            this.process = process;
             start();
         }
 
         public void close() {
-            _closed = true;
+            closed = true;
         }
 
         @Override
@@ -99,8 +99,8 @@ public final class Streams {
             try {
                 try {
                     int line = 1;
-                    while (!_closed) {
-                        if (_inputStream.available() == 0) {
+                    while (!closed) {
+                        if (inputStream.available() == 0) {
                             // A busy yielding loop is used so that this thread can be
                             // stopped via a call to close() by another thread. Otherwise,
                             // this thread could be blocked forever on an input stream
@@ -112,24 +112,24 @@ public final class Streams {
                             continue;
                         }
 
-                        final int b = _inputStream.read();
+                        final int b = inputStream.read();
                         if (b < 0) {
                             return;
                         }
-                        if (line <= _maxLines) {
-                            _outputStream.write(b);
+                        if (line <= maxLines) {
+                            outputStream.write(b);
                         }
                         if (b == '\n') {
-                            if (line == _maxLines) {
-                                _outputStream.write(("<redirected stream concatenated after " + _maxLines + " lines>" + System.getProperty("line.separator", "\n")).getBytes());
+                            if (line == maxLines) {
+                                outputStream.write(("<redirected stream concatenated after " + maxLines + " lines>" + System.getProperty("line.separator", "\n")).getBytes());
                             }
                             ++line;
                         }
                     }
-                    _outputStream.flush();
+                    outputStream.flush();
                 } catch (IOException ioe) {
                     try {
-                        _process.exitValue();
+                        process.exitValue();
 
                         // This just means the process was terminated and the relevant pipe no longer exists
                     } catch (IllegalThreadStateException e) {
@@ -138,8 +138,8 @@ public final class Streams {
                     }
                 }
             } catch (Throwable throwable) {
-                if (_name != null) {
-                    System.err.println("Error while redirecting sub-process stream for \"" + _name + "\"");
+                if (name != null) {
+                    System.err.println("Error while redirecting sub-process stream for \"" + name + "\"");
                 }
                 throwable.printStackTrace();
             }

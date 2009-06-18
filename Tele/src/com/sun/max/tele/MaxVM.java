@@ -27,6 +27,7 @@ import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
+import com.sun.max.tele.debug.TeleWatchpoint.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
@@ -45,7 +46,7 @@ import com.sun.max.vm.value.*;
 
 
 /**
- * The Inspectors access to an instance of the Maxine VM.
+ * Access to an instance of the Maxine VM.
  * This could in the future be merged with the JDWP interface.
  *
  * @author Michael Van De Vanter
@@ -480,48 +481,56 @@ public interface MaxVM {
     void describeTeleTargetRoutines(PrintStream printStream);
 
     /**
-     * @return VM state; thread safe.
+     * An immutable summary of the VM state as of the most recent state transition.
+     * <br>
+     * Thread-safe.
+     *
+     * @return VM state summary
      */
     MaxVMState maxVMState();
 
     /**
+     * Adds a VM state observer.
+     * <br>
+     * Thread-safe.
+     *
      * @param observer will be notified of changes to {@link #maxVMState()}.
      */
     void addVMStateObserver(TeleVMStateObserver observer);
 
     /**
-     * Removes a observer that was being notified of changes to {@link #maxVMState()}.
+     * Removes a VM state observer.
+     * <br>
+     * Thread-safe.
      */
     void removeVMStateObserver(TeleVMStateObserver observer);
 
     /**
-     * @return a collection of all current threads in the VM, ordered by threadID.
+     * Writes a textual summary describing the current {@link #maxVMState()}, including all predecessor states.
+     * <br>
+     * Thread-safe.
      */
-    IterableWithLength<TeleNativeThread> threads();
-
-    //TODO (mlvdv) bogus
-    /**
-     * @return threads created since the previous ???
-     */
-    IterableWithLength<TeleNativeThread> recentlyCreatedThreads();
-
-    //TODO (mlvdv) bogus
-    /**
-     * @return threads died since the previous ???
-     */
-    IterableWithLength<TeleNativeThread> recentlyDiedThreads();
+    void describeVMStateHistory(PrintStream printStream);
 
     /**
+     * Finds a thread by ID.
+     * <br>
+     * Thread-safe
+     *
      * @param threadID
      * @return the thread associated with the id, null if none exists.
      */
-    TeleNativeThread getThread(long threadID);
+    MaxThread getThread(long threadID);
 
     /**
+     * Returns a VM thread, if any, whose memory includes a specified address.
+     * <br>
+     * Thread-safe.
+     *
      * @param address an address in the VM
      * @return thread whose stack contains the address, null if none.
      */
-    TeleNativeThread threadContaining(Address address);
+    MaxThread threadContaining(Address address);
 
     /**
      * Creates a code location in the VM based on a memory address,
@@ -592,10 +601,11 @@ public interface MaxVM {
 
     /**
      * All existing bytecode breakpoints.
+     * <br>
+     *  Modification safe against breakpoint removal.
      *
      * @return all existing bytecode breakpoints in the VM.
-     * Modification safe against breakpoint removal.
-     */
+      */
     Iterable<TeleBytecodeBreakpoint> bytecodeBreakpoints();
 
     /**
@@ -620,12 +630,43 @@ public interface MaxVM {
     TeleBytecodeBreakpoint getBytecodeBreakpoint(Key key);
 
     /**
+     * @return are watchpoints enabled in the VM?
+     */
+    boolean watchpointsEnabled();
+
+    /**
+     * Adds a observer for watchpoint changes in the VM.
+     *
+     * @param listener will be notified whenever watchpoints in VM change.
+     */
+    void addWatchpointObserver(Observer observer);
+
+    /**
      * Creates a new memory watchpoint in the VM.
      *
-     * @param memoryRegion a memory region in the VM
-     * @return a possibly new memory watchpoint
+     * @param address start of a memory region in the VM
+     * @param size size of the memory region in the VM
+     * @return a new memory watchpoint
+     * @throws TooManyWatchpointsException
+     * @throws DuplicateWatchpointException when the watchpoint overlaps in whole or part with an existing watchpoint
      */
-    TeleWatchpoint makeWatchpoint(MemoryRegion memoryRegion);
+    MaxWatchpoint setWatchpoint(Address address, Size size)  throws TooManyWatchpointsException, DuplicateWatchpointException;
+
+    /**
+     * @param address a memory address in the VM
+     * @return the watchpoint whose memory region includes the address, null if none.
+     */
+    MaxWatchpoint findWatchpoint(Address address);
+
+    /**
+     * All existing memory watchpoints set in the VM.
+     * <br>
+     * Immutable collection; membership is thread-safe; likely implemented as a copy.
+     *
+     * @return all existing watchpoints; empty if none.
+     * .
+     */
+    IterableWithLength<MaxWatchpoint> watchpoints();
 
     /**
      * Sets debugging trace level for the transport
@@ -679,7 +720,7 @@ public interface MaxVM {
      * @throws InvalidProcessRequestException execution not permissible in current VM state.
      * @throws OSExecutionRequestException execution failed in OS.
      */
-    void singleStep(final TeleNativeThread thread, boolean synchronous) throws InvalidProcessRequestException, OSExecutionRequestException;
+    void singleStep(final MaxThread maxThread, boolean synchronous) throws InvalidProcessRequestException, OSExecutionRequestException;
 
     /**
      * Single steps a thread in the VM; if the instruction is a call, then resume VM execution until call returns.
@@ -690,7 +731,7 @@ public interface MaxVM {
      * @throws InvalidProcessRequestException execution not permissible in current VM state.
      * @throws OSExecutionRequestException execution failed in OS.
      */
-    void stepOver(final TeleNativeThread thread, boolean synchronous, final boolean disableBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException;
+    void stepOver(final MaxThread maxThread, boolean synchronous, final boolean disableBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException;
 
     /**
      * Resumes execution of the VM with a temporary breakpoint set.

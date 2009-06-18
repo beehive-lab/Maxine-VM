@@ -798,17 +798,17 @@ public class VmThread {
     }
 
     public int countStackFrames() {
-        Problem.unimplemented();
+        FatalError.unimplemented();
         return -1;
     }
 
     public static StackTraceElement[][] dumpThreads(Thread[] threads) {
-        Problem.unimplemented();
+        FatalError.unimplemented();
         return null;
     }
 
     public static Thread[] getThreads() {
-        Problem.unimplemented();
+        FatalError.unimplemented();
         return null;
     }
 
@@ -864,16 +864,16 @@ public class VmThread {
 
     public void stop0(Object throwable) {
         _terminationCause = (Throwable) throwable;
-        Problem.unimplemented();
+        FatalError.unimplemented();
         Throw.raise(this); // not a Throwable => uncatchable - see 'run()' above
     }
 
     public void suspend0() {
-        Problem.unimplemented();
+        FatalError.unimplemented();
     }
 
     public void resume0() {
-        Problem.unimplemented();
+        FatalError.unimplemented();
     }
 
     public static native void nativeInterrupt(Word nativeThread);

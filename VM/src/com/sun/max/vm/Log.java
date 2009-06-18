@@ -25,6 +25,7 @@ import java.io.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
+import com.sun.max.program.ProgramWarning.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
@@ -87,7 +88,6 @@ public final class Log {
      */
     public static final OutputStream os = new LogOutputStream();
 
-
     /**
      * The singleton VM print stream. This print stream sends all its output to {@link #os}.
      */
@@ -143,7 +143,7 @@ public final class Log {
     }
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#print(boolean))} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#print(boolean))} on {@link #out}.
      */
     public static void print(boolean b) {
         out.print(b);
@@ -327,7 +327,7 @@ public final class Log {
     }
 
     /**
-     * Convenience routine for printing a FieldActor to a given DebugPrintStream. The output is of the form:
+     * Convenience routine for printing a FieldActor to a given LogPrintStream. The output is of the form:
      *
      * <pre>
      *     &lt;name&gt;:&lt;descriptor&gt; in &lt;holder&gt;
@@ -357,7 +357,7 @@ public final class Log {
     }
 
     /**
-     * Convenience routine for printing a MethodActor to a given DebugPrintStream. The output is of the form:
+     * Convenience routine for printing a MethodActor to a given LogPrintStream. The output is of the form:
      *
      * <pre>
      *     &lt;name&gt;&lt;descriptor&gt; in &lt;holder&gt;
@@ -386,7 +386,7 @@ public final class Log {
     }
 
     /**
-     * Convenience routine for printing a {@link VmThread} to a given DebugPrintStream. The output is of the form:
+     * Convenience routine for printing a {@link VmThread} to a given LogPrintStream. The output is of the form:
      *
      * <pre>
      *     &lt;name&gt;[&lt;id&gt;]
@@ -738,6 +738,16 @@ public final class Log {
     }
 
     static {
+        ProgramWarning.setHandler(new Handler() {
+            public void handle(String message) {
+                if (MaxineVM.isPrototyping()) {
+                    System.err.println(message);
+                } else {
+                    Log.println(message);
+                }
+            }
+        });
+
         new CriticalNativeMethod(Log.class, "log_lock");
         new CriticalNativeMethod(Log.class, "log_unlock");
 

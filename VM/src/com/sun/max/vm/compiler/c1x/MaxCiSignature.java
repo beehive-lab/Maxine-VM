@@ -20,11 +20,9 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import com.sun.c1x.ci.CiSignature;
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.value.BasicType;
-import com.sun.max.vm.type.SignatureDescriptor;
-import com.sun.max.vm.type.TypeDescriptor;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.value.*;
+import com.sun.max.vm.type.*;
 
 /**
  * The <code>MaxCiSignature</code> class implements a method signature for the
@@ -64,7 +62,7 @@ public class MaxCiSignature implements CiSignature {
      * @param index the index of the argument
      * @return the type of the specified argument
      */
-    public CiType argumentType(int index) {
+    public CiType argumentTypeAt(int index) {
         if (_ciTypes == null) {
             final int max = _descriptor.numberOfParameters();
             _ciTypes = new MaxCiType[max];
@@ -82,7 +80,7 @@ public class MaxCiSignature implements CiSignature {
      * @param index the index of the argument
      * @return the basic type of the argument
      */
-    public BasicType argumentBasicType(int index) {
+    public BasicType argumentBasicTypeAt(int index) {
         if (_basicTypes == null) {
             final int max = _descriptor.numberOfParameters();
             _basicTypes = new BasicType[max];
@@ -122,6 +120,11 @@ public class MaxCiSignature implements CiSignature {
      */
     public String asString() {
         return _descriptor.toString();
+    }
+
+    @Override
+    public String toString() {
+        return asString();
     }
 
     /**

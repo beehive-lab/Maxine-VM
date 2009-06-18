@@ -22,12 +22,12 @@ package com.sun.max.vm.jit.sparc;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.sparc.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.sparc.*;
 import com.sun.max.vm.jit.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.sparc.*;
 
@@ -44,7 +44,7 @@ public class SPARCJitTargetMethod extends JitTargetMethod implements SPARCTarget
 
     @Override
     public void forwardTo(TargetMethod newTargetMethod) {
-        Problem.unimplemented();
+        FatalError.unimplemented();
     }
 
     @Override

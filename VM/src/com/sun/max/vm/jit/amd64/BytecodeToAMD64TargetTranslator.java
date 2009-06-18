@@ -43,6 +43,7 @@ import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.jit.Stop.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.amd64.*;
 import com.sun.max.vm.template.*;
@@ -141,7 +142,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
                 break;
             }
             default: {
-                Problem.unimplemented();
+                FatalError.unimplemented();
             }
         }
     }

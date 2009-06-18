@@ -25,7 +25,6 @@ import java.awt.event.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -33,6 +32,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.classfile.constant.ConstantPool.*;
 import com.sun.max.vm.classfile.constant.FieldRefConstant.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 
@@ -237,7 +237,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     setText(_prefix + typeDescriptor.toJavaString(false));
                     break;
                 default:
-                    Problem.unimplemented();
+                    FatalError.unimplemented();
             }
             setJavapResolvableToolTipText("Class", typeDescriptor.toString());
             if (isResolved()) {
@@ -280,7 +280,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     setText(_prefix + fieldName);
                     break;
                 default:
-                    Problem.unimplemented();
+                    FatalError.unimplemented();
             }
             setJavapResolvableToolTipText("Field", holderName + "." + fieldName + ":" + fieldRefConstant.type(localConstantPool()).toString());
             if (isResolved()) {
@@ -339,7 +339,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     setText(_prefix + methodName + "()");
                     break;
                 default:
-                    Problem.unimplemented();
+                    FatalError.unimplemented();
             }
             setJavapResolvableToolTipText("ClassMethod", holderName + "." + methodName + ":" + methodRefConstant.descriptor(localConstantPool()).toString());
             if (_teleClassMethodActor == null) {
@@ -393,7 +393,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     setText(_prefix + methodName + "()");
                     break;
                 default:
-                    Problem.unimplemented();
+                    FatalError.unimplemented();
             }
             setJavapResolvableToolTipText("InterfaceMethod", holderName + "." + methodName + ":" + methodRefConstant.descriptor(localConstantPool()).toString());
             if (isResolved()) {
@@ -435,7 +435,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     setText(_prefix + shortText);
                     break;
                 default:
-                    Problem.unimplemented();
+                    FatalError.unimplemented();
             }
             setJavapToolTipText("String", fullText);
         }
@@ -461,7 +461,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     setText(_prefix + shortText);
                     break;
                 default:
-                    Problem.unimplemented();
+                    FatalError.unimplemented();
             }
             setJavapToolTipText("Utf8", fullText);
         }
@@ -486,7 +486,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     setText(_prefix + text);
                     break;
                 default:
-                    Problem.unimplemented();
+                    FatalError.unimplemented();
             }
             setJavapToolTipText("", text);
         }

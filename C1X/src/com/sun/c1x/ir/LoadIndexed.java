@@ -24,6 +24,7 @@ import com.sun.c1x.ci.CiType;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.value.BasicType;
 import com.sun.c1x.util.InstructionVisitor;
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>LoadIndexed</code> instruction represents a read from an element of an array.
@@ -66,6 +67,7 @@ public class LoadIndexed extends AccessIndexed {
      * Gets the declared type of this instruction's result.
      * @return the declared type
      */
+    @Override
     public CiType declaredType() {
         CiType arrayType = array().declaredType();
         if (arrayType == null) {
@@ -78,20 +80,29 @@ public class LoadIndexed extends AccessIndexed {
      * Gets the exact type of this instruction's result.
      * @return the exact type
      */
+    @Override
     public CiType exactType() {
-        CiType type = declaredType();
-        if (type == null || type.isTypeArrayClass()) {
-            return type;
-        }
-        if (type.isInstanceClass()) {
-            if (type.isLoaded() && type.isFinal()) {
-                return type;
-            }
-        }
-        return null;
+        CiType declared = declaredType();
+        return declared != null ? declared.exactType() : null;
     }
 
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitLoadIndexed(this);
     }
+
+    @Override
+    public int valueNumber() {
+        return Util.hash2(124, _array, _index);
+    }
+
+    @Override
+    public boolean valueEqual(Instruction i) {
+        if (i instanceof LoadIndexed) {
+            LoadIndexed o = (LoadIndexed) i;
+            return _array == o._array && _index == o._index;
+        }
+        return false;
+    }
+
 }

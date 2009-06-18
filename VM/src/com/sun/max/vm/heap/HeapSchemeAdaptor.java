@@ -35,12 +35,10 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         super(vmConfiguration);
     }
 
-    @Override
     public boolean decreaseMemory(Size amount) {
         return false;
     }
 
-    @Override
     public boolean increaseMemory(Size amount) {
         return false;
     }

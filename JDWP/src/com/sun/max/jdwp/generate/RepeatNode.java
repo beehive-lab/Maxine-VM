@@ -42,7 +42,6 @@ class RepeatNode extends AbstractTypeNode {
         }
     }
 
-    @Override
     String docType() {
         return "-BOGUS-"; // should never call this
     }
@@ -52,7 +51,6 @@ class RepeatNode extends AbstractTypeNode {
         return _member.javaType() + "[]";
     }
 
-    @Override
     public void genJavaWrite(PrintWriter writer, int depth, String writeLabel) {
         indent(writer, depth);
         writer.println("ps.write(" + writeLabel + ".length);");
@@ -63,7 +61,6 @@ class RepeatNode extends AbstractTypeNode {
         writer.println("}");
     }
 
-    @Override
     public void genJavaToString(PrintWriter writer, int depth, String writeLabel) {
         indent(writer, depth);
         writer.println("stringBuilder.append(\"" + writeLabel + "=[\" + " + writeLabel + ".length + \"]{\");");
@@ -79,7 +76,6 @@ class RepeatNode extends AbstractTypeNode {
         writer.println("stringBuilder.append(\"}\");");
     }
 
-    @Override
     String javaRead() {
         error("Internal - Should not call RepeatNode.javaRead()");
         return "";

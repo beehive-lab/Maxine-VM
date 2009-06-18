@@ -24,6 +24,7 @@ import com.sun.c1x.ci.CiField;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.util.InstructionClosure;
 import com.sun.c1x.util.InstructionVisitor;
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>StoreField</code> instruction represents a write to a static or instance field.
@@ -72,6 +73,7 @@ public class StoreField extends AccessField {
      * to the object receiver value and the written value.
      * @param closure the closure to apply to each value
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         super.inputValuesDo(closure);
         _value = closure.apply(_value);
@@ -81,7 +83,26 @@ public class StoreField extends AccessField {
      * Implements this instruction's half of the visitor interface.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitStoreField(this);
     }
+
+    @Override
+    public int valueNumber() {
+        if (_object != null) {
+            return Util.hash2(_field.hashCode(), _object, _value);
+        }
+        return Util.hash1(_field.hashCode(), _value);
+    }
+
+    @Override
+    public boolean valueEqual(Instruction i) {
+        if (i instanceof StoreField) {
+            StoreField o = (StoreField) i;
+            return _field == o._field && _object == o._object && _value == o._value;
+        }
+        return false;
+    }
+
 }

@@ -56,6 +56,7 @@ public class Throw extends BlockEnd {
      * Checks whether this instruction can trap.
      * @return <code>true</code> because this instruction definitely throws an exception!
      */
+    @Override
     public boolean canTrap() {
         return true;
     }
@@ -64,6 +65,7 @@ public class Throw extends BlockEnd {
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         _exception = closure.apply(_exception);
     }
@@ -72,6 +74,7 @@ public class Throw extends BlockEnd {
      * Iterates over the state values of this instruction.
      * @param closure the closure to apply
      */
+    @Override
     public void stateValuesDo(InstructionClosure closure) {
         _stateBefore.valuesDo(closure);
     }
@@ -80,6 +83,7 @@ public class Throw extends BlockEnd {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitThrow(this);
     }

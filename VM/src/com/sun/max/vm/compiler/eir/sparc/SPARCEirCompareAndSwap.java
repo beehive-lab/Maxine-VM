@@ -24,8 +24,8 @@ import static com.sun.max.vm.compiler.eir.EirLocationCategory.*;
 
 import java.lang.reflect.*;
 
-import com.sun.max.program.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -95,7 +95,7 @@ public class SPARCEirCompareAndSwap extends SPARCEirUnaryOperation {
                 emitter.assembler().cas(addressRegister().as(), oldValueRegister().as(), newValueRegister().as());
                 break;
             default: {
-                Problem.unimplemented();
+                FatalError.unimplemented();
             }
         }
     }

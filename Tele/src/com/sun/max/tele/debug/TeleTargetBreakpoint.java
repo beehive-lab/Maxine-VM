@@ -24,12 +24,12 @@ import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.BreakpointCondition.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.value.*;
 
@@ -157,6 +157,26 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
         private final TeleVM _teleVM;
         private final byte[] _code;
 
+        // The map implementations are not thread-safe; the factory must take care of that.
+        private final Map<Long, TeleTargetBreakpoint> _breakpoints = new HashMap<Long, TeleTargetBreakpoint>();
+        private final Map<Long, TeleTargetBreakpoint> _transientBreakpoints = new HashMap<Long, TeleTargetBreakpoint>();
+
+        public Factory(TeleVM teleVM) {
+            _teleVM = teleVM;
+            _code = TargetBreakpoint.createBreakpointCode(_teleVM.vmConfiguration().platform().processorKind().instructionSet());
+            teleVM.addVMStateObserver(new TeleVMStateObserver() {
+
+                public void upate(MaxVMState maxVMState) {
+                    if (maxVMState.processState() == ProcessState.TERMINATED) {
+                        _breakpoints.clear();
+                        _transientBreakpoints.clear();
+                        setChanged();
+                        notifyObservers();
+                    }
+                }
+            });
+        }
+
         /**
          * Gets the bytes encoding the platform dependent instruction(s) representing a breakpoint.
          */
@@ -170,15 +190,6 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
         public int codeSize() {
             return _code.length;
         }
-
-        public Factory(TeleVM teleVM) {
-            _teleVM = teleVM;
-            _code = TargetBreakpoint.createBreakpointCode(_teleVM.vmConfiguration().platform().processorKind().instructionSet());
-        }
-
-        private final Map<Long, TeleTargetBreakpoint> _breakpoints = new HashMap<Long, TeleTargetBreakpoint>();
-
-        private final Map<Long, TeleTargetBreakpoint> _transientBreakpoints = new HashMap<Long, TeleTargetBreakpoint>();
 
         /**
          * @return all the {@linkplain TeleBreakpoint#isTransient() persistent} target code breakpoints that currently exist
@@ -310,7 +321,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
                         // - returns nothing - problem, should not happen
                     }
                 } else if (!breakpoint.isEnabled()) {
-                    Problem.unimplemented("found disabled tele breakpoint at same ip as VM breakpoint");
+                    FatalError.unexpected("found disabled tele breakpoint at same ip as VM breakpoint");
                 }
             }
         }
@@ -318,7 +329,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
         /**
          * Removes the breakpoint, if it exists, at specified target code address in the {@link TeleVM}.
          */
-        public synchronized void removeBreakpointAt(Address address) {
+        private synchronized void removeBreakpointAt(Address address) {
             _breakpoints.remove(address.toLong());
             setChanged();
             notifyObservers();

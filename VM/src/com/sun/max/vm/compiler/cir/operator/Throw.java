@@ -34,13 +34,11 @@ public class Throw extends JavaOperator implements Lowerable{
         super(CALL);
     }
 
-    @Override
     public Kind resultKind() {
         ProgramError.unexpected();
         return null;
     }
 
-    @Override
     public void toLCir(Lowerable op, CirCall call, CompilerScheme compilerScheme) {
         final CirValue[] args = call.arguments();
         assert args[args.length - 2] == CirValue.UNDEFINED;

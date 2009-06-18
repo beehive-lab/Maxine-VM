@@ -21,13 +21,19 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.value.ConstType;
-import com.sun.c1x.value.ValueTag;
 
 /**
  * Condition codes used in conditionals.
  */
 public enum Condition {
-    eql, neq, lss, leq, gtr, geq;
+    eql("=="), neq("!="), lss("<"), leq("<="), gtr(">"), geq(">=");
+
+    public final String _operator;
+
+
+    private Condition(String operator) {
+        _operator = operator;
+    }
 
     /**
      * Negate this conditional.
@@ -57,7 +63,7 @@ public enum Condition {
             case leq: return geq;
             case gtr: return lss;
             case geq: return leq;
-         }
+        }
         throw new IllegalArgumentException();
     }
 
@@ -77,8 +83,8 @@ public enum Condition {
      * <code>Boolean.FALSE</code> if the comparison is known to be false, <code>null</code> otherwise.
      */
     public Boolean foldCondition(ConstType lt, ConstType rt) {
-        switch (lt.tag()) {
-            case ValueTag.INT_TAG: {
+        switch (lt.basicType()) {
+            case Int: {
                 int x = lt.asInt();
                 int y = rt.asInt();
                 switch (this) {
@@ -89,8 +95,9 @@ public enum Condition {
                     case gtr: return x > y;
                     case geq: return x >= y;
                 }
+                break;
             }
-            case ValueTag.LONG_TAG: {
+            case Long: {
                 long x = lt.asLong();
                 long y = rt.asLong();
                 switch (this) {
@@ -101,14 +108,16 @@ public enum Condition {
                     case gtr: return x > y;
                     case geq: return x >= y;
                 }
+                break;
             }
-            case ValueTag.OBJECT_TAG: {
+            case Object: {
                 Object x = lt.asObject();
                 Object y = rt.asObject();
                 switch (this) {
                     case eql: return x == y;
                     case neq: return x != y;
                 }
+                break;
             }
             // XXX: folding of floating comparisons should be possible
         }

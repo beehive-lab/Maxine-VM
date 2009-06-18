@@ -231,7 +231,6 @@ public abstract class JavaStackFrameLayout {
          *
          * @return an iterator of the slots that iterates over the slots in descending order of their {@linkplain Slot#offset() offsets}
          */
-        @Override
         public Iterator<Slot> iterator() {
             return Arrays.iterator(_slots);
         }

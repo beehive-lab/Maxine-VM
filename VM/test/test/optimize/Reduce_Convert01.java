@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,30 +18,40 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.program;
+package test.optimize;
 
-/**
- * Attention markers for programmers.
- *
- * @author Bernd Mathiske
+/*
+ * Tests optimization integer conversions.
+ * @Harness: java
+ * @Runs: 0=10; 1=11; 2=12
  */
-public final class Problem {
-
-    private Problem() {
+public class Reduce_Convert01 {
+    public static int test(int arg) {
+        if (arg == 0) {
+            return i2b(arg + 10);
+        }
+        if (arg == 1) {
+            return i2s(arg + 10);
+        }
+        if (arg == 2) {
+            return i2c(arg + 10);
+        }
+        return 0;
     }
 
-    public static void todo(String task) {
+    public static int i2b(int arg) {
+        int x = (byte) arg;
+        return (byte) x;
     }
 
-    public static ProgramError unimplemented(String message) {
-        throw ProgramError.unexpected("unimplemented: " + message);
+    public static int i2s(int arg) {
+        int x = (short) arg;
+        return (short) x;
     }
 
-    public static ProgramError unimplemented() {
-        throw ProgramError.unexpected("unimplemented");
+    public static int i2c(int arg) {
+        int x = (char) arg;
+        return (char) x;
     }
 
-    public static void error(String message) {
-        System.err.println("<Problem.error>: " + message);
-    }
 }

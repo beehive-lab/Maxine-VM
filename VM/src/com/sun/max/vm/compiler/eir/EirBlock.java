@@ -191,8 +191,6 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
         final AppendableSequence<EirBlock> result = new ArrayListSequence<EirBlock>(3);
 
         final Procedure filterProcedure = new Procedure() {
-
-            @Override
             public void run(EirBlock block) {
                 if (!blocks.contains(block)) {
                     blocks.add(block);
@@ -226,8 +224,6 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
         final AppendableSequence<EirBlock> result = new ArrayListSequence<EirBlock>(3);
 
         final Procedure filterProcedure = new Procedure() {
-
-            @Override
             public void run(EirBlock block) {
                 if (!blocks.contains(block)) {
                     blocks.add(block);

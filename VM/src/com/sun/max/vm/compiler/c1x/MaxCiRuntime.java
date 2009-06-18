@@ -20,15 +20,14 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import com.sun.c1x.ci.*;
-import com.sun.max.program.Problem;
-import com.sun.max.vm.actor.holder.ClassActor;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.classfile.constant.ConstantPool;
-import com.sun.max.vm.type.ClassRegistry;
-import com.sun.max.vm.type.JavaTypeDescriptor;
+import java.util.*;
 
-import java.util.WeakHashMap;
+import com.sun.c1x.ci.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 
 /**
  * The <code>MaxCiRuntime</code> class implements the runtime interface needed by C1X.
@@ -52,7 +51,7 @@ public class MaxCiRuntime implements CiRuntime {
      */
     public CiConstantPool getConstantPool(CiMethod method) {
         final ClassMethodActor classMethodActor = this.asClassMethodActor(method, "getConstantPool()");
-        final ConstantPool cp = classMethodActor.codeAttribute().constantPool();
+        final ConstantPool cp = classMethodActor.rawCodeAttribute().constantPool();
         synchronized (this) {
             MaxCiConstantPool constantPool = _constantPools.get(cp);
             if (constantPool == null) {
@@ -70,7 +69,7 @@ public class MaxCiRuntime implements CiRuntime {
      * @return the OSR frame
      */
     public CiOsrFrame getOsrFrame(CiMethod method, int bci) {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 
     /**
@@ -133,7 +132,7 @@ public class MaxCiRuntime implements CiRuntime {
      * @return a non-initialized instance of the specified compiler interface type
      */
     public Object allocateObject(CiType type) {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 
     /**
@@ -143,7 +142,7 @@ public class MaxCiRuntime implements CiRuntime {
      * @return an initialized array with the specified length and element type
      */
     public Object allocateArray(CiType type, int length) {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 
     /**
@@ -168,6 +167,15 @@ public class MaxCiRuntime implements CiRuntime {
      */
     public CiType getType(Class<?> javaClass) {
         return _globalConstantPool.canonicalCiType(ClassActor.fromJava(javaClass));
+    }
+
+    /**
+     * Gets the <code>CiMethod</code> for a given method actor.
+     * @param methodActor the method actor
+     * @return the canonical compiler interface method for the method actor
+     */
+    public CiMethod getCiMethod(MethodActor methodActor) {
+        return _globalConstantPool.canonicalCiMethod(methodActor);
     }
 
     ClassMethodActor asClassMethodActor(CiMethod method, String operation) {

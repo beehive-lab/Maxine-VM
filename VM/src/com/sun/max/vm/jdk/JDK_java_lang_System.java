@@ -482,7 +482,7 @@ public final class JDK_java_lang_System {
     private static String getISA() {
         switch (Platform.hostOrTarget().processorKind().instructionSet()) {
             case ARM:
-                Problem.unimplemented();
+                FatalError.unimplemented();
                 break;
             case AMD64:
                 return "amd64";
@@ -491,7 +491,7 @@ public final class JDK_java_lang_System {
             case SPARC:
                 return (Word.width() == WordWidth.BITS_64) ? "sparcv9" : "sparc";
             case PPC:
-                Problem.unimplemented();
+                FatalError.unimplemented();
                 break;
         }
         return null;
@@ -504,7 +504,7 @@ public final class JDK_java_lang_System {
     private static String getISAList() {
         switch (Platform.hostOrTarget().processorKind().instructionSet()) {
             case ARM:
-                Problem.unimplemented();
+                FatalError.unimplemented();
                 break;
             case AMD64:
                 return "amd64";
@@ -513,7 +513,7 @@ public final class JDK_java_lang_System {
             case SPARC:
                 return (Word.width() == WordWidth.BITS_64) ? "sparcv9" : "sparc";
             case PPC:
-                Problem.unimplemented();
+                FatalError.unimplemented();
                 break;
         }
         return null;

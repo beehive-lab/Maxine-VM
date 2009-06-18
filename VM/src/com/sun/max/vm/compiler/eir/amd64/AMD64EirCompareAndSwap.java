@@ -25,8 +25,8 @@ import static com.sun.max.vm.compiler.eir.EirLocationCategory.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.asm.amd64.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -91,14 +91,14 @@ public final class AMD64EirCompareAndSwap extends AMD64EirPointerOperation {
                 break;
             }
             default: {
-                Problem.unimplemented();
+                FatalError.unimplemented();
             }
         }
     }
 
     @Override
     protected void translateWithoutOffsetWithIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister, AMD64GeneralRegister64 indexRegister) {
-        Problem.unimplemented();
+        FatalError.unimplemented();
     }
 
     @Override
@@ -115,14 +115,14 @@ public final class AMD64EirCompareAndSwap extends AMD64EirPointerOperation {
                 break;
             }
             default: {
-                Problem.unimplemented();
+                FatalError.unimplemented();
             }
         }
     }
 
     @Override
     protected void translateWithRegisterOffsetWithIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister, AMD64GeneralRegister64 offsetRegister, AMD64GeneralRegister64 indexRegister) {
-        Problem.unimplemented();
+        FatalError.unimplemented();
     }
 
     @Override
@@ -139,14 +139,14 @@ public final class AMD64EirCompareAndSwap extends AMD64EirPointerOperation {
                 break;
             }
             default: {
-                Problem.unimplemented();
+                FatalError.unimplemented();
             }
         }
     }
 
     @Override
     protected void translateWithImmediateOffset8WithIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister, byte offset8, AMD64GeneralRegister64 indexRegister) {
-        Problem.unimplemented();
+        FatalError.unimplemented();
     }
 
     @Override
@@ -163,14 +163,14 @@ public final class AMD64EirCompareAndSwap extends AMD64EirPointerOperation {
                 break;
             }
             default: {
-                Problem.unimplemented();
+                FatalError.unimplemented();
             }
         }
     }
 
     @Override
     protected void translateWithImmediateOffset32WithIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister, int offset32, AMD64GeneralRegister64 indexRegister) {
-        Problem.unimplemented();
+        FatalError.unimplemented();
     }
 
 

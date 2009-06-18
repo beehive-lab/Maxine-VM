@@ -100,7 +100,6 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
      * @return the pointer to the address in which we can allocate. If null, a GC should be triggered.
      */
     @INLINE
-    @Override
     public Pointer allocate(Size size) {
         if (!MaxineVM.isRunning()) {
             return bumpAllocateSlowPath(getEdenSpace(), size);
@@ -153,13 +152,9 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
 
     @Override
     public boolean contains(Address address) {
-        if (address.greaterEqual(Heap.bootHeapRegion().start()) & address.lessEqual(getMatureSpace().end())) {
-            return true;
-        }
-        return false;
+        return address.greaterEqual(Heap.bootHeapRegion().start()) & address.lessEqual(getMatureSpace().end());
     }
 
-    @Override
     @INLINE
     public void writeBarrier(Reference from, Reference to) {
         // do nothing.

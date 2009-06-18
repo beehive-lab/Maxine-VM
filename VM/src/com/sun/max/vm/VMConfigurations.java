@@ -22,7 +22,7 @@ package com.sun.max.vm;
 
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
-import com.sun.max.program.*;
+import com.sun.max.vm.runtime.*;
 
 
 /**
@@ -44,7 +44,7 @@ public final class VMConfigurations {
             case SPARC:
                 return new com.sun.max.vm.compiler.b.c.d.e.sparc.target.Package();
             default:
-                throw Problem.unimplemented();
+                throw FatalError.unimplemented();
         }
     }
 
@@ -55,7 +55,7 @@ public final class VMConfigurations {
             case SPARC:
                 return new com.sun.max.vm.jit.sparc.Package();
             default:
-                throw Problem.unimplemented();
+                throw FatalError.unimplemented();
         }
     }
 
@@ -64,7 +64,7 @@ public final class VMConfigurations {
             case AMD64:
                 return new com.sun.max.vm.interpret.dt.amd64.Package();
             default:
-                throw Problem.unimplemented();
+                throw FatalError.unimplemented();
         }
     }
 
@@ -75,7 +75,7 @@ public final class VMConfigurations {
             case SPARC:
                 return new com.sun.max.vm.compiler.target.sparc.systemV.Package();
             default:
-                throw Problem.unimplemented();
+                throw FatalError.unimplemented();
         }
     }
 

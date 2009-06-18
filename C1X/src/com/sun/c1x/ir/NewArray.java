@@ -67,6 +67,7 @@ public abstract class NewArray extends StateSplit {
      * @return <true>true</code>, conservatively assuming that this instruction can throw such
      * exceptions as <code>OutOfMemoryError</code>
      */
+    @Override
     public boolean canTrap() {
         return true;
     }
@@ -75,6 +76,7 @@ public abstract class NewArray extends StateSplit {
      * Applies the specified closure to all input values of this instruction.
      * @param closure the closure to apply
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         _length = closure.apply(_length);
     }
@@ -83,8 +85,11 @@ public abstract class NewArray extends StateSplit {
      * Applies the specified closure to all the other input values of this instruction.
      * @param closure the closure to apply
      */
+    @Override
     public void otherValuesDo(InstructionClosure closure) {
         super.otherValuesDo(closure);
-        _stateBefore.valuesDo(closure);
+        if (_stateBefore != null) {
+            _stateBefore.valuesDo(closure);
+        }
     }
 }

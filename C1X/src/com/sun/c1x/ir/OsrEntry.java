@@ -35,7 +35,7 @@ public class OsrEntry extends Instruction {
      */
     public OsrEntry() {
         // XXX: an OSR takes what as input? A pointer to the stack frame?
-        super(ValueType.ADDRESS_TYPE);
+        super(ValueType.JSR_TYPE);
         pin();
     }
 
@@ -43,6 +43,7 @@ public class OsrEntry extends Instruction {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitOsrEntry(this);
     }

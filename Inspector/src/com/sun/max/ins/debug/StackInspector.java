@@ -122,7 +122,7 @@ public class StackInspector extends Inspector {
 
     private final SaveSettingsListener _saveSettingsListener = createGeometrySettingsClient(this, "stackInspector");
 
-    private TeleNativeThread _teleNativeThread = null;
+    private MaxThread _thread = null;
     private InspectorPanel _contentPane = null;
     private  DefaultListModel _stackFrameListModel = null;
     private JList _stackFrameList = null;
@@ -136,16 +136,16 @@ public class StackInspector extends Inspector {
     private StackFramePanel<? extends StackFrame> _selectedFrame;
 
     @Override
-    public void threadStateChanged(TeleNativeThread teleNativeThread) {
-        if (teleNativeThread.equals(_teleNativeThread)) {
-            _stateChanged = teleNativeThread.framesChanged();
+    public void threadStateChanged(MaxThread thread) {
+        if (thread.equals(_thread)) {
+            _stateChanged = thread.framesChanged();
         }
-        super.threadStateChanged(teleNativeThread);
+        super.threadStateChanged(thread);
     }
 
     @Override
-    public void stackFrameFocusChanged(StackFrame oldStackFrame, TeleNativeThread threadForStackFrame, StackFrame newStackFrame) {
-        if (threadForStackFrame == _teleNativeThread) {
+    public void stackFrameFocusChanged(StackFrame oldStackFrame, MaxThread threadForStackFrame, StackFrame newStackFrame) {
+        if (threadForStackFrame == _thread) {
             final int oldIndex = _stackFrameList.getSelectedIndex();
             for (int index = 0; index < _stackFrameListModel.getSize(); index++) {
                 final StackFrame stackFrame = (StackFrame) _stackFrameListModel.get(index);
@@ -250,22 +250,18 @@ public class StackInspector extends Inspector {
 
     @Override
     public void createView() {
-        _teleNativeThread = inspection().focus().thread();
-
-        if (_teleNativeThread == null) {
-            _contentPane = null;
-        } else {
-            _contentPane = new InspectorPanel(inspection(), new BorderLayout());
-
+        _thread = inspection().focus().thread();
+        _contentPane = new InspectorPanel(inspection(), new BorderLayout());
+        if (_thread != null) {
             _stackFrameListModel = new DefaultListModel();
             _stackFrameList = new JList(_stackFrameListModel);
             _stackFrameList.setCellRenderer(_stackFrameListCellRenderer);
 
             final JPanel header = new InspectorPanel(inspection(), new SpringLayout());
             header.add(new TextLabel(inspection(), "start: "));
-            header.add(new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, _teleNativeThread.stack().start()));
+            header.add(new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, _thread.stack().start(), _contentPane));
             header.add(new TextLabel(inspection(), "size: "));
-            header.add(new DataLabel.IntAsDecimal(inspection(), _teleNativeThread.stack().size().toInt()));
+            header.add(new DataLabel.IntAsDecimal(inspection(), _thread.stack().size().toInt()));
             SpringUtilities.makeCompactGrid(header, 2);
             _contentPane.add(header, BorderLayout.NORTH);
 
@@ -309,9 +305,8 @@ public class StackInspector extends Inspector {
         refreshView(true);
 
         SwingUtilities.invokeLater(new Runnable() {
-
             public void run() {
-                // System.err.println("setting divider location in stack inspector for " + inspection().inspectionThreadName(_teleNativeThread));
+                // System.err.println("setting divider location in stack inspector for " + inspection().inspectionThreadName(_thread));
                 // Try to place the split pane divider in the middle of the split pane's space initially
                 _splitPane.setDividerLocation(0.5d);
             }
@@ -321,32 +316,34 @@ public class StackInspector extends Inspector {
     @Override
     public String getTextForTitle() {
         String title = "Stack: ";
-        if (_teleNativeThread != null) {
-            title += inspection().nameDisplay().longNameWithState(_teleNativeThread);
+        if (_thread != null) {
+            title += inspection().nameDisplay().longNameWithState(_thread);
         }
         return title;
     }
 
     @Override
     protected void refreshView(boolean force) {
-        final Sequence<StackFrame> frames = _teleNativeThread.frames();
-        assert !frames.isEmpty();
-        if (_stateChanged || force) {
-            _stackFrameListModel.clear();
-            addToModel(frames);
-            _stateChanged = false;
-        } else {
-            // The stack is structurally unchanged with respect to methods,
-            // so avoid a complete redisplay for performance reasons.
-            // However, the object representing the top frame may be different,
-            // in which case the state of the old frame object is out of date.
-            final StackFrame newTopFrame = frames.first();
-            if (_selectedFrame != null && _selectedFrame.stackFrame().isTopFrame() && _selectedFrame.stackFrame().isSameFrame(newTopFrame)) {
-                _selectedFrame.setStackFrame(newTopFrame);
+        if (_thread != null && _thread.isLive()) {
+            final Sequence<StackFrame> frames = _thread.frames();
+            assert !frames.isEmpty();
+            if (_stateChanged || force) {
+                _stackFrameListModel.clear();
+                addToModel(frames);
+                _stateChanged = false;
+            } else {
+                // The stack is structurally unchanged with respect to methods,
+                // so avoid a complete redisplay for performance reasons.
+                // However, the object representing the top frame may be different,
+                // in which case the state of the old frame object is out of date.
+                final StackFrame newTopFrame = frames.first();
+                if (_selectedFrame != null && _selectedFrame.stackFrame().isTopFrame() && _selectedFrame.stackFrame().isSameFrame(newTopFrame)) {
+                    _selectedFrame.setStackFrame(newTopFrame);
+                }
             }
-        }
-        if (_selectedFrame != null) {
-            _selectedFrame.refresh(force);
+            if (_selectedFrame != null) {
+                _selectedFrame.refresh(force);
+            }
         }
         super.refreshView(force);
         // The title displays thread state, so must be updated.
@@ -359,7 +356,7 @@ public class StackInspector extends Inspector {
 
 
     @Override
-    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativThread) {
+    public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
         reconstructView();
     }
 
@@ -412,11 +409,11 @@ public class StackInspector extends Inspector {
             addLabel(header, new TextLabel(inspection(), "Frame size:", frameClassName));
             addLabel(header, new DataLabel.IntAsDecimal(inspection(), adapterStackFrame.layout().frameSize()));
             addLabel(header, new TextLabel(inspection(), "Frame pointer:", frameClassName));
-            addLabel(header, new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, adapterStackFrame.framePointer()));
+            addLabel(header, new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, adapterStackFrame.framePointer(), this));
             addLabel(header, new TextLabel(inspection(), "Stack pointer:", frameClassName));
             addLabel(header, new DataLabel.AddressAsHex(inspection(), adapterStackFrame.stackPointer()));
             addLabel(header, new TextLabel(inspection(), "Instruction pointer:", frameClassName));
-            addLabel(header, new WordValueLabel(inspection(), ValueMode.INTEGER_REGISTER, adapterStackFrame.instructionPointer()));
+            addLabel(header, new WordValueLabel(inspection(), ValueMode.INTEGER_REGISTER, adapterStackFrame.instructionPointer(), this));
             SpringUtilities.makeCompactGrid(header, 2);
 
             add(header, BorderLayout.NORTH);
@@ -462,7 +459,7 @@ public class StackInspector extends Inspector {
             final int frameSize = javaStackFrame.layout().frameSize();
 
             final JPanel header = new InspectorPanel(inspection(), new SpringLayout());
-            _instructionPointerLabel = new WordValueLabel(inspection(), ValueMode.INTEGER_REGISTER) {
+            _instructionPointerLabel = new WordValueLabel(inspection(), ValueMode.INTEGER_REGISTER, this) {
                 @Override
                 public Value fetchValue() {
                     return WordValue.from(stackFrame().instructionPointer());
@@ -499,7 +496,7 @@ public class StackInspector extends Inspector {
                 final int offset = slot.offset();
                 final TextLabel slotLabel = new TextLabel(inspection(), slot.name() + ":");
                 slotsPanel.add(slotLabel);
-                final WordValueLabel slotValue = new WordValueLabel(inspection(), WordValueLabel.ValueMode.INTEGER_REGISTER) {
+                final WordValueLabel slotValue = new WordValueLabel(inspection(), WordValueLabel.ValueMode.INTEGER_REGISTER, this) {
                     @Override
                     public Value fetchValue() {
                         // TODO (mlvdv)  generalize this, and catch at {@link WordValueLabel}
@@ -523,7 +520,6 @@ public class StackInspector extends Inspector {
             final JPanel slotNameFormatPanel = new InspectorPanel(inspection(), new FlowLayout(FlowLayout.LEFT));
             slotNameFormatPanel.add(_showSlotAddresses);
             _showSlotAddresses.addItemListener(new ItemListener() {
-                @Override
                 public void itemStateChanged(ItemEvent e) {
                     refresh(true);
                 }
@@ -623,13 +619,14 @@ public class StackInspector extends Inspector {
         StackFrameMouseClickAdapter(Inspection inspection) {
             super(inspection);
         }
+
         @Override
         public void procedure(final MouseEvent mouseEvent) {
             switch(MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
                 case MouseEvent.BUTTON1: {
                     final int index = _stackFrameList.getSelectedIndex();
                     final StackFrame stackFrame = (StackFrame) _stackFrameListModel.get(index);
-                    inspection().focus().setStackFrame(_teleNativeThread, stackFrame, true);
+                    inspection().focus().setStackFrame(_thread, stackFrame, true);
                 }
             }
         }
@@ -672,7 +669,6 @@ public class StackInspector extends Inspector {
             if (oldRightComponent != newRightComponent) {
                 _splitPane.setRightComponent(newRightComponent);
                 SwingUtilities.invokeLater(new Runnable() {
-
                     public void run() {
                         _splitPane.setDividerLocation(dividerLocation);
                     }
@@ -696,7 +692,7 @@ public class StackInspector extends Inspector {
                 if (index >= 0 && index < _stackFrameListModel.getSize()) {
                     final StackFrame stackFrame = (StackFrame) _stackFrameListModel.get(index);
                     if (stackFrame instanceof JitStackFrame) {
-                        LocalsInspector.make(inspection(), _teleNativeThread, (JitStackFrame) stackFrame).highlight();
+                        LocalsInspector.make(inspection(), _thread, (JitStackFrame) stackFrame).highlight();
                     }
                 }
             }
@@ -733,5 +729,9 @@ public class StackInspector extends Inspector {
         super.inspectorClosing();
     }
 
+    @Override
+    public void vmProcessTerminated() {
+        reconstructView();
+    }
 
 }

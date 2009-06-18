@@ -20,7 +20,7 @@
  */
 package com.sun.max.ins;
 
-import com.sun.max.tele.debug.*;
+import com.sun.max.tele.*;
 
 /**
  * An abstract adapter class for receiving inspection events.
@@ -39,13 +39,13 @@ public abstract class InspectionListenerAdapter implements InspectionListener {
     public void vmStateChanged(boolean force) {
     }
 
-    public void threadSetChanged() {
-    }
-
-    public void threadStateChanged(TeleNativeThread teleNativeThread) {
+    public void threadStateChanged(MaxThread thread) {
     }
 
     public void breakpointSetChanged() {
+    }
+
+    public void watchpointSetChanged() {
     }
 
     public void viewConfigurationChanged() {

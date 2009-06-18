@@ -189,7 +189,6 @@ public abstract class DataAccessAdapter implements DataAccess {
         return readWord(address.plus(displacement).plus(index * _wordWidth.numberOfBytes()));
     }
 
-    @Override
     public void writeBuffer(Address address, ByteBuffer buffer) {
         final int length = buffer.capacity();
         final int bytesWritten = write(buffer, 0, length, address);
@@ -341,6 +340,5 @@ public abstract class DataAccessAdapter implements DataAccess {
     public void setWord(Address address, int displacement, int index, Word value) {
         writeWord(address.plus(displacement).plus(index * _wordWidth.numberOfBytes()), value);
     }
-
 }
 

@@ -25,6 +25,7 @@ import java.awt.datatransfer.*;
 import java.awt.event.*;
 
 import javax.swing.*;
+import javax.swing.table.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
@@ -50,6 +51,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     private final JScrollPane _scrollPane;
     private final InspectorMainMenuBar _menuBar;
     private final InspectorMenu _desktopMenu = new InspectorMenu();
+    private final InspectorLabel _missingDataTableCellRenderer;
 
     /**
      * Manages saving and restoring the geometry of the main GUI window, accounting
@@ -88,7 +90,6 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
             }
         }
 
-        @Override
         public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
             final Rectangle bounds = _frame.getBounds();
             saveSettingsEvent.save(FRAME_X_KEY, bounds.x);
@@ -152,9 +153,11 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         _desktopMenu.add(actions.viewStack());
         _desktopMenu.add(actions.viewMethodCode());
         _desktopMenu.add(actions.viewBreakpoints());
+        if (_inspection.maxVM().watchpointsEnabled()) {
+            _desktopMenu.add(actions.viewWatchpoints());
+        }
 
         _desktopPane.addMouseListener(new InspectorMouseClickAdapter(_inspection) {
-
             @Override
             public void procedure(final MouseEvent mouseEvent) {
                 if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
@@ -164,6 +167,8 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         });
         pack();
         settings.addSaveSettingsListener(new InspectorMainFrameSaveSettingsListener(this, settings));
+
+        _missingDataTableCellRenderer = new MissingDataTableCellRenderer(inspection);
     }
 
     public void addInspector(Inspector inspector) {
@@ -315,6 +320,10 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         return this;
     }
 
+    public InspectorLabel getMissingDataTableCellRenderer() {
+        return _missingDataTableCellRenderer;
+    }
+
     private Point getMiddle(Component component) {
         final Point point = new Point((getWidth() / 2) - (component.getWidth() / 2), (getHeight() / 2) - (component.getHeight() / 2));
         if (point.y < 0) {
@@ -367,14 +376,12 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         frame.setLocation(location);
     }
 
-    @Override
     public void redisplay() {
         refresh(true);
     }
 
     private MaxVMState _lastRefreshedState = null;
 
-    @Override
     public void refresh(boolean force) {
         final MaxVMState maxVMState = _inspection.maxVM().maxVMState();
         if (maxVMState.newerThan(_lastRefreshedState)) {
@@ -401,4 +408,15 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         repaint();
     }
 
+    private final class MissingDataTableCellRenderer extends PlainLabel implements TableCellRenderer, TextSearchable, Prober {
+        MissingDataTableCellRenderer(Inspection inspection) {
+            super(inspection, null);
+            setText("<?>");
+            setToolTipText("No data available");
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            return this;
+        }
+    }
 }

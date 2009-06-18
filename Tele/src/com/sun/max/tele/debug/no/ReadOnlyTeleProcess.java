@@ -104,7 +104,6 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
             _base = base;
         }
 
-        @Override
         public int read(Address src, ByteBuffer dst, int dstOffset, int length) throws DataIOError {
             final int toRead = Math.min(length, dst.limit() - dstOffset);
             final ByteBuffer srcView = (ByteBuffer) _buffer.duplicate().position(src.toInt()).limit(toRead);
@@ -112,7 +111,6 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
             return toRead;
         }
 
-        @Override
         public int write(ByteBuffer src, int srcOffset, int length, Address dst) throws DataIOError {
             _buffer.position(dst.toInt());
             final ByteBuffer srcView = (ByteBuffer) src.duplicate().position(srcOffset).limit(length);
@@ -131,43 +129,34 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
             return _base.toInt() + address.toInt();
         }
 
-        @Override
         public byte readByte(Address address) {
             return _buffer.get(asOffset(address));
         }
 
-        @Override
         public int readInt(Address address) {
             return _buffer.getInt(asOffset(address));
         }
 
-        @Override
         public long readLong(Address address) {
-            final long result = _buffer.getLong(asOffset(address));
-            return result;
+            return _buffer.getLong(asOffset(address));
         }
 
-        @Override
         public short readShort(Address address) {
             return _buffer.getShort(asOffset(address));
         }
 
-        @Override
         public void writeByte(Address address, byte value) {
             _buffer.put(asOffset(address), value);
         }
 
-        @Override
         public void writeInt(Address address, int value) {
             _buffer.putInt(asOffset(address), value);
         }
 
-        @Override
         public void writeLong(Address address, long value) {
             _buffer.putLong(asOffset(address), value);
         }
 
-        @Override
         public void writeShort(Address address, short value) {
             _buffer.putShort(asOffset(address), value);
         }

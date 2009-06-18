@@ -74,12 +74,10 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
         return (-blockIndex) - 2;
     }
 
-    @Override
     public Object blockFrames() {
         return _blockFrames;
     }
 
-    @Override
     public void visitReferenceInLocalVariable(int localVariableIndex) {
         for (int stopIndex = _bytecodeStopsIterator.nextStopIndex(true); stopIndex != -1; stopIndex = _bytecodeStopsIterator.nextStopIndex(false)) {
             final int offset = stopIndex * _targetMethod.frameReferenceMapSize();
@@ -88,7 +86,6 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
         }
     }
 
-    @Override
     public void visitReferenceOnOperandStack(int operandStackIndex, boolean parametersPopped) {
         for (int stopIndex = _bytecodeStopsIterator.nextStopIndex(true); stopIndex != -1; stopIndex = _bytecodeStopsIterator.nextStopIndex(false)) {
             if (parametersPopped != _bytecodeStopsIterator.isDirectRuntimeCall()) {
@@ -99,7 +96,6 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
         }
     }
 
-    @Override
     public int blockStartBytecodePosition(int blockIndex) {
         if (blockIndex == _blockStartBytecodePositions.length) {
             return classMethodActor().rawCodeAttribute().code().length;
@@ -107,12 +103,10 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
         return _blockStartBytecodePositions[blockIndex];
     }
 
-    @Override
     public ClassMethodActor classMethodActor() {
         return _targetMethod.classMethodActor();
     }
 
-    @Override
     public ExceptionHandler exceptionHandlersActiveAt(int bytecodePosition) {
         if (_exceptionHandlerMap == null) {
             return null;
@@ -120,7 +114,6 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
         return _exceptionHandlerMap[bytecodePosition];
     }
 
-    @Override
     public int numberOfBlocks() {
         return _blockStartBytecodePositions.length;
     }

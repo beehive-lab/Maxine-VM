@@ -22,7 +22,9 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.util.InstructionVisitor;
 import com.sun.c1x.util.InstructionClosure;
+import com.sun.c1x.util.Util;
 import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.bytecode.Bytecodes;
 
 /**
  * The <code>NullCheck</code> class represents an explicit null check instruction.
@@ -77,17 +79,14 @@ public class NullCheck extends Instruction {
      * @param canTrap <code>true</code> if this instruction can cause a trap
      */
     public void setCanTrap(boolean canTrap) {
-        if (canTrap) {
-            setFlag(Flag.CanTrap);
-        } else {
-            clearFlag(Flag.CanTrap);
-        }
+        setFlag(Flag.CanTrap, canTrap);
     }
 
     /**
      * Checks whether this instruction can cause a trap.
      * @return <code>true</code> if this instruction can cause a trap
      */
+    @Override
     public boolean canTrap() {
         return checkFlag(Flag.CanTrap);
     }
@@ -96,6 +95,7 @@ public class NullCheck extends Instruction {
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply to each instruction
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         _object = closure.apply(_object);
     }
@@ -104,6 +104,7 @@ public class NullCheck extends Instruction {
      * Iterates over the other values of this instruction.
      * @param closure the closure to apply to each instruction
      */
+    @Override
     public void otherValuesDo(InstructionClosure closure) {
         if (_lockStack != null) {
             _lockStack.valuesDo(closure);
@@ -114,7 +115,23 @@ public class NullCheck extends Instruction {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitNullCheck(this);
     }
+
+    @Override
+    public int valueNumber() {
+        return Util.hash1(Bytecodes.IFNONNULL, _object);
+    }
+
+    @Override
+    public boolean valueEqual(Instruction i) {
+        if (i instanceof NullCheck) {
+            NullCheck o = (NullCheck) i;
+            return _object == o._object;
+        }
+        return false;
+    }
+
 }

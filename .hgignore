@@ -4,6 +4,7 @@ syntax: glob
 TEST-*
 *.class
 *.log
+*.iml
 log*.txt
 manifest*
 ^core
@@ -13,6 +14,8 @@ generated-classes.jar
 .metadata
 *.orig
 .DS_Store
+Maxine.ipr
+Maxine.iws
 maxine-tester
 
 # switch to regexp syntax
@@ -30,3 +33,4 @@ syntax: regexp
 ^trace.*
 ^dist/
 ^xref/
+^out/

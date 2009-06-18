@@ -41,6 +41,7 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Disassembler for machine code in the target VM.
@@ -100,7 +101,7 @@ public final class TeleDisassembler {
         Disassembler disassembler = null;
         switch (processorKind.instructionSet()) {
             case ARM:
-                Problem.unimplemented();
+                FatalError.unimplemented();
                 break;
             case AMD64:
                 disassembler = new AMD64Disassembler(startAddress.toLong(), inlineDataDecoder);
@@ -340,7 +341,7 @@ public final class TeleDisassembler {
         //final ProcessorKind processorKind = teleVM.vmConfiguration().platform().processorKind();
         switch (processorKind.instructionSet()) {
             case ARM:
-                Problem.unimplemented();
+                FatalError.unimplemented();
                 return null;
             case AMD64: {
                 final Class<Disassembler<AMD64Template, AMD64DisassembledInstruction>> type = null;
@@ -348,10 +349,10 @@ public final class TeleDisassembler {
                 return new AMD64LoadLiteralParser(disassembler, codeStart);
             }
             case IA32:
-                Problem.unimplemented();
+                FatalError.unimplemented();
                 return null;
             case PPC:
-                Problem.unimplemented();
+                FatalError.unimplemented();
                 return null;
             case SPARC: {
                 final Class<Disassembler<SPARCTemplate, SPARCDisassembledInstruction>> type = null;

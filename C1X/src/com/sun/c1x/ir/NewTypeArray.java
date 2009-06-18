@@ -45,6 +45,7 @@ public class NewTypeArray extends NewArray {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitNewTypeArray(this);
     }

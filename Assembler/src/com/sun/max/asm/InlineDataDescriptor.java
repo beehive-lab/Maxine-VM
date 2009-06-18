@@ -133,7 +133,6 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
      * descriptors overlap, then exactly one of the descriptors must describe unstructured {@linkplain ByteData byte
      * data} which will come later in the sort order.
      */
-    @Override
     public int compareTo(InlineDataDescriptor other) {
         final int thisStart = startPosition();
         final int otherStart = other.startPosition();

@@ -28,7 +28,7 @@ package test.threads;
 
 public class Thread_new02 implements Runnable {
 
-    static final Thread_new02 _this = new Thread_new02();
+    static final Thread_new02 _thisObject = new Thread_new02();
 
     public static boolean test(int i) {
         if (i == 0) {
@@ -38,10 +38,10 @@ public class Thread_new02 implements Runnable {
             return new Thread("Thread_new01") != null;
         }
         if (i == 2) {
-            return new Thread(_this) != null;
+            return new Thread(_thisObject) != null;
         }
         if (i == 3) {
-            return new Thread(_this, "Thread_new01") != null;
+            return new Thread(_thisObject, "Thread_new01") != null;
         }
         return false;
     }

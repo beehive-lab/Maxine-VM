@@ -97,7 +97,6 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
 
     @INLINE
     @NO_SAFEPOINTS("TODO")
-    @Override
     public Pointer allocate(Size size) {
         if (!MaxineVM.isRunning()) {
             return bumpAllocateSlowPath(getFromSpace(), size);
@@ -115,13 +114,9 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
 
     @Override
     public boolean contains(Address address) {
-        if (address.greaterEqual(Heap.bootHeapRegion().start()) & address.lessEqual(BeltwayConfiguration.getApplicationHeapEndAddress())) {
-            return true;
-        }
-        return false;
+        return address.greaterEqual(Heap.bootHeapRegion().start()) && address.lessEqual(BeltwayConfiguration.getApplicationHeapEndAddress());
     }
 
-    @Override
     @INLINE
     public void writeBarrier(Reference from, Reference to) {
         // do nothing.

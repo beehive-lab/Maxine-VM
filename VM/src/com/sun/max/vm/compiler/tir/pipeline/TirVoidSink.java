@@ -25,7 +25,6 @@ import com.sun.max.vm.compiler.tir.*;
 public class TirVoidSink implements TirMessageSink {
     public static final TirVoidSink SINK = new TirVoidSink();
 
-    @Override
     public void receive(TirMessage message) {
         // Nop.
     }

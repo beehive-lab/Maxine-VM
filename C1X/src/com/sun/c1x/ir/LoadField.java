@@ -24,6 +24,7 @@ import com.sun.c1x.ci.CiField;
 import com.sun.c1x.ci.CiType;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.util.InstructionVisitor;
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>LoadField</code> instruction a read of a static or instance field.
@@ -51,6 +52,7 @@ public class LoadField extends AccessField {
      * Gets the declared type of the field being accessed.
      * @return the declared type of the field being accessed.
      */
+    @Override
     public CiType declaredType() {
         return field().type();
     }
@@ -61,24 +63,35 @@ public class LoadField extends AccessField {
      * then the exact type is the same as the declared type. Otherwise it is <code>null</code>
      * @return the exact type of the field if known; <code>null</code> otherwise
      */
+    @Override
     public CiType exactType() {
-        CiType type = declaredType();
-        if (type.isTypeArrayClass()) {
-            return type;
-        }
-        if (type.isInstanceClass()) {
-            if (type.isLoaded() && type.isFinal()) {
-                return type;
-            }
-        }
-        return null;
+        return declaredType().exactType();
     }
 
     /**
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitLoadField(this);
     }
+
+    @Override
+    public int valueNumber() {
+        if (_object != null) {
+            return Util.hash1(_field.hashCode(), _object);
+        }
+        return 0x60000000 | _field.hashCode();
+    }
+
+    @Override
+    public boolean valueEqual(Instruction i) {
+        if (i instanceof LoadField) {
+            LoadField o = (LoadField) i;
+            return _field == o._field && _object == o._object;
+        }
+        return false;
+    }
+
 }

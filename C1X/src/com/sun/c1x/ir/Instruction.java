@@ -20,14 +20,13 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.ValueType;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.lir.LIROperand;
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.util.InstructionVisitor;
-import com.sun.c1x.util.InstructionClosure;
+import java.util.*;
 
-import java.util.List;
+import com.sun.c1x.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.lir.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>Instruction</code> class represents a node in the IR. Each instruction
@@ -97,7 +96,7 @@ public abstract class Instruction {
     private Instruction _next;
     private Instruction _subst;
 
-    private List<ExceptionHandler> _exceptionHandlers;
+    private List<ExceptionHandler> _exceptionHandlers = ExceptionHandler.ZERO_HANDLERS;
 
     private LIROperand _lirOperand;
 
@@ -133,7 +132,7 @@ public abstract class Instruction {
      */
     public final void setBCI(int bci) {
         // XXX: BCI field may not be needed at all
-        assert _bci >= 0 || _bci == SYNCHRONIZATION_ENTRY_BCI;
+        assert bci >= 0 || bci == SYNCHRONIZATION_ENTRY_BCI;
         _bci = bci;
     }
 
@@ -164,7 +163,7 @@ public abstract class Instruction {
     }
 
     /**
-     * Gets the value type of this instruction.
+     * Gets the type of the value pushed to the stack by this instruction.
      * @return the value type of this instruction
      */
     public final ValueType type() {
@@ -315,11 +314,21 @@ public abstract class Instruction {
      * @param val if <code>true</code>, set the flag, otherwise clear it
      */
     public final void setFlag(Flag flag, boolean val) {
-        // PERF: this is often called to initialize a flag, so clearing is often unnecessary
         if (val) {
             setFlag(flag);
         } else {
             clearFlag(flag);
+        }
+    }
+
+    /**
+     * Initialize a flag on this instruction.
+     * @param flag the flag to set
+     * @param val if <code>true</code>, set the flag, otherwise do nothing
+     */
+    public final void initFlag(Flag flag, boolean val) {
+        if (val) {
+            setFlag(flag);
         }
     }
 
@@ -335,7 +344,7 @@ public abstract class Instruction {
      * Gets the LIR operand associated with this instruction.
      * @return the LIR operand for this instruction
      */
-    public Object operand() {
+    public Object lirOperand() {
         return _lirOperand;
     }
 
@@ -343,7 +352,7 @@ public abstract class Instruction {
      * Sets the LIR operand associated with this instruction.
      * @param operand the operand to associate with this instruction
      */
-    public void setOperand(LIROperand operand) {
+    public void setLirOperand(LIROperand operand) {
         _lirOperand = operand;
     }
 
@@ -351,8 +360,7 @@ public abstract class Instruction {
      * Clears the LIR operand associated with this instruction by setting it
      * to an illegal operand.
      */
-    public void clearOperand() {
-        // TODO: set the _lirOperand to an illegal operand
+    public void clearLirOperand() {
         _lirOperand = null;
     }
 
@@ -375,16 +383,25 @@ public abstract class Instruction {
     //========================== Value numbering support =================================
 
     /**
-     * Compute the hashcode of this Instruction. Local and global value numbering
-     * optimizations use a hash map to implement equivalency checking, and all
-     * instruction subclasses therefore must define .equals() and .hashCode().
-     * The default implementation is to return the id of this instruction,
-     * and object identity is used.
+     * Compute the value number of this Instruction. Local and global value numbering
+     * optimizations use a hash map, and the value number provides a hash code.
+     * If the instruction cannot be value numbered, then this method should return
+     * {@code 0}.
      * @return the hashcode of this instruction
      */
-    @Override
-    public int hashCode() {
-        return _id;
+    public int valueNumber() {
+        return 0;
+    }
+
+    /**
+     * Checks that this instruction is equal to another instruction for the purposes
+     * of value numbering.
+     * @param i the other instruction
+     * @return <code>true</code> if this instruction is equivalent to the specified
+     * instruction w.r.t. value numbering
+     */
+    public boolean valueEqual(Instruction i) {
+        return false;
     }
 
     /**
@@ -462,4 +479,67 @@ public abstract class Instruction {
         otherValuesDo(closure);
     }
 
+    /**
+     * Utility method to check that two instructions have the same basic type.
+     * @param i the first instruction
+     * @param other the second instruction
+     * @return {@code true} if the instructions have the same basic type
+     */
+    public static boolean sameBasicType(Instruction i, Instruction other) {
+        return i.type().basicType() == other.type().basicType();
+    }
+
+    @Override
+    public String toString() {
+        return valueString(this);
+    }
+
+    /**
+     * Formats a given instruction as value is a {@linkplain ValueStack frame state}. If the instruction is a phi defined at a given
+     * block, its {@linkplain Phi#lirOperand() operands} are appended to the returned string.
+     *
+     * @param index the index of the value in the frame state
+     * @param value the frame state value
+     * @param block if {@code value} is a phi, then its operands are formatted if {@code block} is its
+     *            {@linkplain Phi#block() join point}
+     * @return the instruction representation as a string
+     */
+    public static String stateString(int index, Instruction value, BlockBegin block) {
+        StringBuilder sb = new StringBuilder(30);
+        sb.append(String.format("%2d  %s", index, valueString(value)));
+        if (value instanceof Phi) {
+            Phi phi = (Phi) value;
+            // print phi operands
+            if (phi.block() == block) {
+                sb.append(" [");
+                for (int j = 0; j < phi.operandCount(); j++) {
+                    sb.append(' ');
+                    Instruction operand = phi.operandAt(j);
+                    if (operand != null) {
+                        sb.append(valueString(operand));
+                    } else {
+                        sb.append("NULL");
+                    }
+                }
+                sb.append("] ");
+            }
+        }
+        if (value != value.subst()) {
+            sb.append("alias ").append(valueString(value.subst()));
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Converts a given instruction to a value string. The representation of an instruction as
+     * a value is formed by concatenating the {@linkplain com.sun.c1x.value.ValueType#tchar() character} denoting its
+     * {@linkplain com.sun.c1x.ir.Instruction#type() type} and its {@linkplain com.sun.c1x.ir.Instruction#id()}. For example,
+     * "i13".
+     *
+     * @param value the instruction to convert to a value string. If {@code value == null}, then "null" is returned.
+     * @return the instruction representation as a string
+     */
+    public static String valueString(Instruction value) {
+        return value == null ? "null" : "" + value.type().tchar() + value.id();
+    }
 }

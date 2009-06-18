@@ -24,10 +24,10 @@ import java.io.*;
 import java.nio.*;
 
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * A native Linux task (process or thread; threads are implemented as processes on Linux) that is controlled and
@@ -215,7 +215,7 @@ public final class LinuxTask {
 
     public synchronized boolean waitUntilStopped(final boolean allTasks) {
         if (!allTasks) {
-            Problem.unimplemented();
+            FatalError.unimplemented();
         }
         return SingleThread.execute(new Function<Boolean>() {
             public Boolean call() throws Exception {

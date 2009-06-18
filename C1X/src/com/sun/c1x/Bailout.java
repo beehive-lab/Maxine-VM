@@ -33,4 +33,8 @@ public class Bailout extends RuntimeException {
     public Bailout(String reason) {
         super(reason);
     }
+
+    public Bailout(String reason, Throwable cause) {
+        super(reason, cause);
+    }
 }

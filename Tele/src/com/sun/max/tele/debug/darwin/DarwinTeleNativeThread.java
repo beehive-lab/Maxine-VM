@@ -20,9 +20,9 @@
  */
 package com.sun.max.tele.debug.darwin;
 
-import com.sun.max.program.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * @author Bernd Mathiske
@@ -64,18 +64,18 @@ public class DarwinTeleNativeThread extends TeleNativeThread {
     }
 
     @Override
-    public boolean singleStep() {
+    protected boolean singleStep() {
         return nativeSingleStep(teleProcess().task(), machThread());
     }
 
     @Override
-    public boolean threadResume() {
-        throw Problem.unimplemented();
+    protected boolean threadResume() {
+        throw FatalError.unimplemented();
     }
 
     @Override
     public boolean threadSuspend() {
-        throw Problem.unimplemented();
+        throw FatalError.unimplemented();
     }
 
     private static native boolean nativeSingleStep(long task, long threadID);

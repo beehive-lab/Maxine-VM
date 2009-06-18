@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import com.sun.c1x.ci.CiExceptionHandler;
+import com.sun.c1x.ci.*;
 
 /**
  * The <code>MaxCiExceptionHandler</code> represents an exception handler
@@ -89,11 +89,4 @@ public class MaxCiExceptionHandler implements CiExceptionHandler {
         return _classCPI == 0;
     }
 
-    /**
-     * Checks whether this is a handler that simply rethrows the exception.
-     * @return <code>true</code> if this handler simply rethrows the exception
-     */
-    public boolean isRethrow() {
-        return false;
-    }
 }

@@ -49,7 +49,6 @@ public enum EirLocationCategory implements PoolObject {
         _shortName = shortName;
     }
 
-    @Override
     public int serial() {
         return ordinal();
     }

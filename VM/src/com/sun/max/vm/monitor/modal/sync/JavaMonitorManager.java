@@ -375,7 +375,6 @@ public class JavaMonitorManager {
     }
 
     private static class ProtectedMonitorGatherer implements Procedure<VmThread> {
-        @Override
         public void run(VmThread thread) {
             final JavaMonitor monitor = thread.protectedMonitor();
             if (monitor != null) {

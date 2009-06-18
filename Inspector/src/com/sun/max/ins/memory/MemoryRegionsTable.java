@@ -36,12 +36,10 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.stack.*;
 import com.sun.max.vm.value.*;
 
 
@@ -50,7 +48,7 @@ import com.sun.max.vm.value.*;
  *
  * @author Michael Van De Vanter
  */
-public class MemoryRegionsTable extends InspectorTable  implements ViewFocusListener {
+public class MemoryRegionsTable extends InspectorTable {
 
     private final HeapRegionDisplay _bootHeapRegionDisplay;
     private final CodeRegionDisplay _bootCodeRegionDisplay;
@@ -61,6 +59,8 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
     private final MemoryRegionsTableModel _model;
     private final MemoryRegionsColumnModel _columnModel;
     private final TableColumn[] _columns;
+
+    private MaxVMState _lastRefreshedState = null;
 
     MemoryRegionsTable(Inspection inspection, MemoryRegionsViewPreferences viewPreferences) {
         super(inspection);
@@ -84,13 +84,14 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
         addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
         refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
-        updateSelection();
+        updateFocusSelection();
     }
 
     /**
      * Sets table selection to the memory region, if any, that is the current user focus.
      */
-    private void updateSelection() {
+    @Override
+    public void updateFocusSelection() {
         final MemoryRegion memoryRegion = inspection().focus().memoryRegion();
         final int row = _model.findRow(memoryRegion);
         if (row < 0) {
@@ -98,6 +99,26 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
         } else  if (row != getSelectedRow()) {
             setRowSelectionInterval(row, row);
         }
+    }
+
+    public void refresh(boolean force) {
+        if (maxVMState().newerThan(_lastRefreshedState) || force) {
+            _lastRefreshedState = maxVMState();
+            _model.refresh();
+            for (TableColumn column : _columns) {
+                final Prober prober = (Prober) column.getCellRenderer();
+                prober.refresh(force);
+            }
+        }
+    }
+
+    public void redisplay() {
+        for (TableColumn column : _columns) {
+            final Prober prober = (Prober) column.getCellRenderer();
+            prober.redisplay();
+        }
+        invalidate();
+        repaint();
     }
 
     @Override
@@ -179,7 +200,7 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
                 }
             }
 
-            for (TeleNativeThread thread : maxVM().threads()) {
+            for (MaxThread thread : maxVMState().threads()) {
                 final TeleNativeStack stack = thread.stack();
                 if (!stack.size().isZero()) {
                     _sortedMemoryRegions.add(new StackRegionDisplay(stack));
@@ -189,17 +210,14 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
             fireTableDataChanged();
         }
 
-        @Override
         public int getColumnCount() {
             return MemoryRegionsColumnKind.VALUES.length();
         }
 
-        @Override
         public int getRowCount() {
             return _sortedMemoryRegions.length();
         }
 
-        @Override
         public Object getValueAt(int row, int col) {
             int count = 0;
             for (MemoryRegionDisplay memoryRegionDisplay : _sortedMemoryRegions.memoryRegions()) {
@@ -243,7 +261,6 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
             super(inspection, null);
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
             setText(memoryRegionData.description());
@@ -259,8 +276,6 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
     }
 
     private final class StartAddressCellRenderer implements TableCellRenderer, Prober {
-
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
             final WordValueLabel label = memoryRegionData.startLabel();
@@ -280,8 +295,6 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
     }
 
     private final class EndAddressCellRenderer implements TableCellRenderer, Prober{
-
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
             final WordValueLabel label = memoryRegionData.endLabel();
@@ -301,7 +314,6 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
     }
 
     private final class SizeCellRenderer extends DefaultTableCellRenderer implements TableCellRenderer, Prober {
-
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
@@ -322,7 +334,6 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
     }
 
     private final class AllocCellRenderer extends DefaultTableCellRenderer implements TableCellRenderer, Prober {
-
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
@@ -404,7 +415,7 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
 
         public WordValueLabel startLabel() {
             if (_startLabel == null) {
-                _startLabel = new WordValueLabel(inspection(), ValueMode.WORD) {
+                _startLabel = new WordValueLabel(inspection(), ValueMode.WORD, MemoryRegionsTable.this) {
                     @Override
                     public Value fetchValue() {
                         return WordValue.from(MemoryRegionDisplay.this.start());
@@ -418,7 +429,7 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
 
         public WordValueLabel endLabel() {
             if (_endLabel == null) {
-                _endLabel = new WordValueLabel(inspection(), ValueMode.WORD) {
+                _endLabel = new WordValueLabel(inspection(), ValueMode.WORD, MemoryRegionsTable.this) {
                     @Override
                     public Value fetchValue() {
                         return WordValue.from(MemoryRegionDisplay.this.end());
@@ -542,47 +553,5 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
 
     }
 
-    public void redisplay() {
-        for (TableColumn column : _columns) {
-            final Prober prober = (Prober) column.getCellRenderer();
-            prober.redisplay();
-        }
-        invalidate();
-        repaint();
-    }
 
-    private MaxVMState _lastRefreshedState = null;
-
-    public void refresh(boolean force) {
-        if (maxVMState().newerThan(_lastRefreshedState) || force) {
-            _lastRefreshedState = maxVMState();
-            _model.refresh();
-            for (TableColumn column : _columns) {
-                final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(force);
-            }
-        }
-    }
-
-    public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
-    }
-
-    public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-    }
-
-    public void stackFrameFocusChanged(StackFrame oldStackFrame, TeleNativeThread threadForStackFrame, StackFrame stackFrame) {
-    }
-
-    public void addressFocusChanged(Address oldAddress, Address address) {
-    }
-
-    public void memoryRegionFocusChanged(MemoryRegion oldMemoryRegion, MemoryRegion memoryRegion) {
-        updateSelection();
-    }
-
-    public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
-    }
-
-    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
-    }
 }

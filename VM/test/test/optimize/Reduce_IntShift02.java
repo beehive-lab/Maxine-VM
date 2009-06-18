@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,21 +18,45 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele;
+package test.optimize;
 
-/**
- * Response to an action or request that is inappropriate for the current state of the {@link TeleVM}.
- *
- * @author Michael Van De Vanter
+/*
+ * Tests optimization of integer operations.
+ * @Harness: java
+ * @Runs: 0=80; 1=11; 2=12; 3=13; 4=64
  */
-public class TeleVMException extends Exception {
-
-    public TeleVMException() {
-        super("");
+public class Reduce_IntShift02 {
+    public static int test(int arg) {
+        if (arg == 0) {
+            return shift0(arg + 80);
+        }
+        if (arg == 1) {
+            return shift1(arg + 0x8000000a);
+        }
+        if (arg == 2) {
+            return shift2(arg + 192);
+        }
+        if (arg == 3) {
+            return shift3(arg + 208);
+        }
+        if (arg == 4) {
+            return shift4(arg);
+        }
+        return 0;
     }
-
-    public TeleVMException(String message) {
-        super(message);
+    public static int shift0(int x) {
+        return x >>> 3 << 3;
+    }
+    public static int shift1(int x) {
+        return x << 3 >>> 3;
+    }
+    public static int shift2(int x) {
+        return x >> 3 >> 1;
+    }
+    public static int shift3(int x) {
+        return x >>> 3 >>> 1;
+    }
+    public static int shift4(int x) {
+        return x << 3 << 1;
     }
 }
-

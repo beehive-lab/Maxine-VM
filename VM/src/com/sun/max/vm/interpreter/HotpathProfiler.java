@@ -40,7 +40,6 @@ public class HotpathProfiler implements Profiler {
 
     private boolean _isTracing = false;
 
-    @Override
     public void jump(BytecodeLocation fromlocation, BytecodeLocation toLocation, BirState state) {
         assert fromlocation.classMethodActor() == toLocation.classMethodActor();
         if (toLocation.bytecodePosition() < fromlocation.bytecodePosition()) {
@@ -48,7 +47,6 @@ public class HotpathProfiler implements Profiler {
         }
     }
 
-    @Override
     public void trace(BytecodeLocation location, BirState state) {
         if (_isTracing) {
             _isTracing = BirTracer.current().visitBytecode(location, state);
@@ -58,7 +56,6 @@ public class HotpathProfiler implements Profiler {
         }
     }
 
-    @Override
     public void invoke(ClassMethodActor target, BirState state) {
         if (_isTracing) {
             _isTracing = BirTracer.current().visitInvoke(target, state);

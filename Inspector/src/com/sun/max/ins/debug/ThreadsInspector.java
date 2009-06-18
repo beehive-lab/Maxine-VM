@@ -29,6 +29,7 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 
 /**
  * A singleton inspector that displays the list of threads running in the process of the VM.
@@ -36,6 +37,8 @@ import com.sun.max.program.*;
  * @author Michael Van De Vanter
  */
 public final class ThreadsInspector extends Inspector implements TableColumnViewPreferenceListener {
+
+    private static final int TRACE_VALUE = 1;
 
     // Set to null when inspector closed.
     private static ThreadsInspector _threadsInspector;
@@ -58,11 +61,11 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
 
     private ThreadsInspector(Inspection inspection) {
         super(inspection);
-        Trace.begin(1,  tracePrefix() + " initializing");
+        Trace.begin(TRACE_VALUE,  tracePrefix() + " initializing");
         _viewPreferences = ThreadsViewPreferences.globalPreferences(inspection());
         _viewPreferences.addListener(this);
         createFrame(null);
-        Trace.end(1,  tracePrefix() + " initializing");
+        Trace.end(TRACE_VALUE,  tracePrefix() + " initializing");
     }
 
     @Override
@@ -87,11 +90,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
 
     @Override
     public void createView() {
-        if (_table != null) {
-            focus().removeListener(_table);
-        }
         _table = new ThreadsTable(inspection(), _viewPreferences);
-        focus().addListener(_table);
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _table);
         frame().setContentPane(scrollPane);
     }
@@ -100,6 +99,13 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
     protected void refreshView(boolean force) {
         _table.refresh(force);
         super.refreshView(force);
+    }
+
+    @Override
+    public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
+        if (_table != null) {
+            _table.updateFocusSelection();
+        }
     }
 
     @Override
@@ -130,14 +136,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         Trace.line(1, tracePrefix() + " closing");
         _threadsInspector = null;
         _viewPreferences.removeListener(this);
-        focus().removeListener(_table);
         super.inspectorClosing();
-    }
-
-    @Override
-    public void vmProcessTerminated() {
-        _threadsInspector = null;
-        dispose();
     }
 
 }

@@ -73,12 +73,12 @@ public final class SPARCSafepoint extends Safepoint {
 
     @Override
     public void setInstructionPointer(Pointer trapState, Pointer value) {
-        FatalError.unexpected("not yet implemented");
+        FatalError.unexpected("setInstructionPointer() not yet implemented");
     }
 
     @Override
     public void setReturnValue(Pointer trapState, Pointer value) {
-        FatalError.unexpected("not yet implemented");
+        FatalError.unexpected("setReturnValue() not yet implemented");
     }
 
     private final boolean _is32Bit;

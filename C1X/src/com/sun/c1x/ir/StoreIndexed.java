@@ -22,6 +22,7 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.util.InstructionClosure;
 import com.sun.c1x.util.InstructionVisitor;
+import com.sun.c1x.util.Util;
 import com.sun.c1x.value.BasicType;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.value.ValueType;
@@ -89,6 +90,7 @@ public class StoreIndexed extends AccessIndexed {
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply to each instruction
      */
+    @Override
     public void inputValuesDo(InstructionClosure closure) {
         super.inputValuesDo(closure);
         _value = closure.apply(_value);
@@ -98,7 +100,23 @@ public class StoreIndexed extends AccessIndexed {
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitStoreIndexed(this);
     }
+
+    @Override
+    public int valueNumber() {
+        return Util.hash3(125, _array, _index, _value);
+    }
+
+    @Override
+    public boolean valueEqual(Instruction i) {
+        if (i instanceof StoreIndexed) {
+            StoreIndexed o = (StoreIndexed) i;
+            return _array == o._array && _index == o._index && _value == o._value;
+        }
+        return false;
+    }
+
 }

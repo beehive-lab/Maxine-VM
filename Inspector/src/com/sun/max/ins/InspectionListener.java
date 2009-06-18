@@ -20,7 +20,7 @@
  */
 package com.sun.max.ins;
 
-import com.sun.max.tele.debug.*;
+import com.sun.max.tele.*;
 
 
 /**
@@ -39,20 +39,19 @@ public interface InspectionListener {
     void vmStateChanged(boolean force);
 
     /**
-     * Notifies that the set of threads in the VM has changed; listeners can assume
-     * that the set hasn't changed unless this notification is received.
-     */
-    void threadSetChanged();
-
-    /**
      * Notifies that the state associated with a particular thread  in the VM has changed.
      */
-    void threadStateChanged(TeleNativeThread teleNativeThread);
+    void threadStateChanged(MaxThread thread);
 
     /**
      * Notifies that the set of breakpoints in the VM has changed.
      */
     void breakpointSetChanged();
+
+    /**
+     * Notifies that the set of watchpoints in the VM has changed.
+     */
+    void watchpointSetChanged();
 
     /**
      * Notifies that an important aspect of view style/parameters/configuration have changed,

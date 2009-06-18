@@ -31,7 +31,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.lang.*;
-import com.sun.max.tele.debug.*;
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -46,18 +46,18 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
     /**
      * Display and highlight an inspector for stack frame locals.
      */
-    public static LocalsInspector make(Inspection inspection, TeleNativeThread teleNativeThread, JitStackFrame jitStackFrame) {
+    public static LocalsInspector make(Inspection inspection, MaxThread thread, JitStackFrame jitStackFrame) {
         // CLEANUP: probably want to hide the use of calleeFramePointer in framePointer() ?
         final Pointer localsBasePointer = jitStackFrame.localsPointer(0);
         final UniqueInspector.Key<LocalsInspector> key = UniqueInspector.Key.create(LocalsInspector.class, localsBasePointer.toLong());
         LocalsInspector localsInspector = UniqueInspector.find(inspection, key);
         if (localsInspector == null) {
-            localsInspector = new LocalsInspector(inspection, teleNativeThread, jitStackFrame);
+            localsInspector = new LocalsInspector(inspection, thread, jitStackFrame);
         }
         return localsInspector;
     }
 
-    private final TeleNativeThread _teleNativeThread;
+    private final MaxThread _thread;
     private final JitStackFrame _jitStackFrame;
 
     private final JPanel _localsPanel;
@@ -72,10 +72,10 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
      */
     private boolean _showAll;
 
-    public LocalsInspector(Inspection inspection, TeleNativeThread teleNativeThread, JitStackFrame jitStackFrame) {
+    public LocalsInspector(Inspection inspection, MaxThread thread, JitStackFrame jitStackFrame) {
         super(inspection, LongValue.from(jitStackFrame.framePointer().toLong()));
         assert jitStackFrame.targetMethod().compilerScheme() == maxVM().vmConfiguration().jitScheme();
-        _teleNativeThread = teleNativeThread;
+        _thread = thread;
         _jitStackFrame = jitStackFrame;
         final ClassMethodActor classMethodActor = jitStackFrame.targetMethod().classMethodActor();
         _locals = new WordValueLabel[classMethodActor.codeAttribute().maxLocals()];
@@ -110,7 +110,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
         if (isShowing() || force) {
             // First, refresh stack frame information.
             Pointer stackPointer = null;
-            final Sequence<StackFrame> frames = _teleNativeThread.frames();
+            final Sequence<StackFrame> frames = _thread.frames();
             for (StackFrame stackFrame : frames) {
                 if (stackFrame instanceof JitStackFrame) {
                     final JitStackFrame jitStackFrame = (JitStackFrame) stackFrame;
@@ -215,7 +215,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
     private void initPanelView() {
         final JitTargetMethod targetMethod = _jitStackFrame.targetMethod();
         final Word callEntryPoint = targetMethod.codeStart();
-        final WordValueLabel header = new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, callEntryPoint);
+        final WordValueLabel header = new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, callEntryPoint, _localsPanel);
         // header.setToolTipText(_jitStackFrame.targetMethod().name());
         _localsPanel.add(new Space(4));
         _localsPanel.add(header);
@@ -226,7 +226,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
 
         for (int  localVarIndex =  0; localVarIndex < _locals.length; localVarIndex++) {
             final Word localVar = readlocalVariable(localVarIndex);
-            final WordValueLabel label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, localVar);
+            final WordValueLabel label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, localVar, _localsPanel);
             JLabel indexLabel = new LocalIndex(localVarIndex);
             final int bytecodePosition = targetMethod.bytecodePositionFor(_jitStackFrame.instructionPointer());
             if (bytecodePosition != -1) {
@@ -254,14 +254,14 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
         final int tos = _showAll ? _stack.length : topOfStack(_stackDepth);
         for (int stackSlotIndex = 0; stackSlotIndex <  tos; stackSlotIndex++) {
             final Word stackItem = readStackSlot(stackSlotIndex);
-            final WordValueLabel label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, stackItem);
+            final WordValueLabel label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, stackItem, _localsPanel);
             label.setBackground(InspectorStyle.SunYellow2);
             _stack[stackSlotIndex] = label;
             _stackPanel.add(createStackPointerLabel(stackSlotIndex));
             _stackPanel.add(label);
         }
         for (int stackSlotIndex = tos; stackSlotIndex  < _stack.length; stackSlotIndex++) {
-            final WordValueLabel label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, Word.zero());
+            final WordValueLabel label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, Word.zero(), _localsPanel);
             label.setBackground(InspectorStyle.SunYellow2);
             _stack[stackSlotIndex] = label;
             _stackPanel.add(createStackPointerLabel(stackSlotIndex));

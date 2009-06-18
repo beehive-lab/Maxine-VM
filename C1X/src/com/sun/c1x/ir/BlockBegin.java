@@ -20,18 +20,11 @@
  */
 package com.sun.c1x.ir;
 
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
-import java.util.List;
+import java.util.*;
 
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.graph.BlockUtil;
-import com.sun.c1x.util.BitMap;
-import com.sun.c1x.util.BlockClosure;
-import com.sun.c1x.util.InstructionVisitor;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>BlockBegin</code> instruction represents the beginning of a basic block,
@@ -66,8 +59,7 @@ public class BlockBegin extends StateSplit {
     private static final int _entryFlags = BlockFlag.StandardEntry.mask() | BlockFlag.OsrEntry.mask() | BlockFlag.ExceptionEntry.mask();
 
 
-    private int _flags;
-    private final List<BlockBegin> _successors;
+    private int _blockFlags;
     private final List<BlockBegin> _predecessors;
     private BlockEnd _end;
 
@@ -89,7 +81,6 @@ public class BlockBegin extends StateSplit {
         super(ValueType.ILLEGAL_TYPE);
         _depthFirstNumber = -1;
         _linearScanNumber = -1;
-        _successors = new ArrayList<BlockBegin>(2);
         _predecessors = new ArrayList<BlockBegin>(2);
         _loopIndex = -1;
         _exceptionHandlerBlocks = new ArrayList<BlockBegin>(0);
@@ -109,14 +100,6 @@ public class BlockBegin extends StateSplit {
         _blockID = i;
     }
 
-
-    /**
-     * Gets the list of successors of this block.
-     * @return the successor list
-     */
-    public List<BlockBegin> successors() {
-        return _successors;
-    }
 
     /**
      * Gets the list of predecessors of this block.
@@ -219,22 +202,19 @@ public class BlockBegin extends StateSplit {
     public void setEnd(BlockEnd end) {
         assert end != null;
         BlockEnd old = _end;
-        if (old == end) {
-            return; // nothing to do
-        }
-        if (old != null) {
-            // disconnect this block from the old end
-            old.setBegin(null);
-            // disconnect this block from its current successors
-            for (BlockBegin s : successors()) {
-                s.predecessors().remove(this);
+        if (old != end) {
+            if (old != null) {
+                // disconnect this block from the old end
+                old.setBegin(null);
+                // disconnect this block from its current successors
+                for (BlockBegin s : old.successors()) {
+                    s.predecessors().remove(this);
+                }
             }
-        }
-        this._end = end;
-        // now reset the successors to be the end's successors
-        successors().clear();
-        for (BlockBegin s : end.successors()) {
-            BlockUtil.addEdge(this, s);
+            this._end = end;
+            for (BlockBegin s : end.successors()) {
+                s.addPredecessor(this);
+            }
         }
     }
 
@@ -252,7 +232,7 @@ public class BlockBegin extends StateSplit {
      * @return <code>true</code> if this block is an entrypoint
      */
     public boolean isEntryBlock() {
-        return (_flags & _entryFlags) != 0;
+        return (_blockFlags & _entryFlags) != 0;
     }
 
     /**
@@ -260,7 +240,7 @@ public class BlockBegin extends StateSplit {
      * @param flag the flag to set
      */
     public void setBlockFlag(BlockFlag flag) {
-        _flags |= flag.mask();
+        _blockFlags |= flag.mask();
     }
 
     /**
@@ -268,7 +248,7 @@ public class BlockBegin extends StateSplit {
      * @param flag the flag to clear
      */
     public void clearBlockFlag(BlockFlag flag) {
-        _flags &= ~flag.mask();
+        _blockFlags &= ~flag.mask();
     }
 
     public void copyBlockFlag(BlockBegin other, BlockFlag flag) {
@@ -281,7 +261,7 @@ public class BlockBegin extends StateSplit {
      * @return <code>true</code> if this block has the flag
      */
     public final boolean checkBlockFlag(BlockFlag flag) {
-        return (_flags & flag.mask()) != 0;
+        return (_blockFlags & flag.mask()) != 0;
     }
 
     /**
@@ -340,25 +320,6 @@ public class BlockBegin extends StateSplit {
     }
 
     /**
-     * Add a successor block to this block.
-     * @param succ the successor to add
-     */
-    public void addSuccessor(BlockBegin succ) {
-        assert _end == null : "cannot add successors after end is set";
-        _successors.add(succ);
-    }
-
-    /**
-     * Remove all occurrences of the specified block from the successor list of this block.
-     * @param succ the successor to remove
-     */
-    public void removeSuccessor(BlockBegin succ) {
-        while (_successors.remove(succ)) {
-            // the block may appear multiple times in the list
-        }
-    }
-
-    /**
      * Add a predecessor to this block.
      * @param pred the predecessor to add
      */
@@ -377,50 +338,45 @@ public class BlockBegin extends StateSplit {
     }
 
     /**
-     * Substitutes a new block for an old block in this node's successor list.
-     * @param oldSucc the old successor
-     * @param newSucc the new successor
-     */
-    public void substituteSuccessor(BlockBegin oldSucc, BlockBegin newSucc) {
-        Util.replaceInList(oldSucc, newSucc, successors());
-        oldSucc.predecessors().remove(this);
-        end().substituteSuccessor(oldSucc, newSucc);
-    }
-
-    /**
      * Implements half of the visitor pattern for this instruction.
      * @param v the visitor to accept
      */
+    @Override
     public void accept(InstructionVisitor v) {
         v.visitBlockBegin(this);
     }
 
-    public boolean tryMerge(ValueStack newState) {
+    public void merge(ValueStack newState) {
         ValueStack existingState = state();
 
         if (existingState == null) {
             // this is the first state for the block
             if (wasVisited()) {
                 // this can happen for complex jsr/ret patterns; just bail out
-                return false;
+                throw new Bailout("jsr/ret too complex");
             }
 
             // copy state because it is modified
             newState = newState.copy();
 
             // if a liveness map is available, use it to invalidate dead locals
-            BitMap liveness = scope().method().liveness(bci());
+            BitMap liveness = newState.scope().method.liveness(bci());
             if (liveness != null) {
                 invalidateDeadLocals(newState, liveness);
             }
 
             // if the block is a loop header, insert all necessary phis
-            if (isLoopHeader()) {
+            if (isParserLoopHeader()) {
                 insertLoopPhis(newState);
             }
 
             setState(newState);
-        } else if (existingState.isSameAcrossScopes(newState)) {
+        } else {
+
+            if (!C1XOptions.AssumeVerifiedBytecode && !existingState.isSameAcrossScopes(newState)) {
+                // stacks or locks do not match--bytecodes would not verify
+                throw new Bailout("stack or locks do not match");
+            }
 
             while (existingState.scope() != newState.scope()) {
                 // XXX: original code is not sure if this is necessary
@@ -428,38 +384,30 @@ public class BlockBegin extends StateSplit {
                 assert newState != null : "could not match scopes";
             }
 
-            assert existingState.scope() == newState.scope();
             assert existingState.localsSize() == newState.localsSize();
             assert existingState.stackSize() == newState.stackSize();
 
             if (wasVisited()) {
-                // this block better be a loop header
-                if (!isLoopHeader()) {
-                    // jsr/ret structure too complicated
-                    return false;
+                if (!isParserLoopHeader()) {
+                    // not a loop header => jsr/ret structure too complicated
+                    throw new Bailout("jsr/ret too complicated");
                 }
 
-                // check that all local and stack tags match
-                if (!existingState.checkLocalAndStackTags(newState)) {
-                    return false;
-                }
+                if (!C1XOptions.AssumeVerifiedBytecode) {
+                    // check that all local and stack tags match
+                    existingState.invalidateMismatchedLocalPhis(this, newState);
 
-                // verify all phis in locals and the stack
-                if (C1XOptions.ExtraPhiChecking && !existingState.checkPhis(this, newState)) {
-                    return false;
+                    // verify all phis in locals and the stack
+                    if (C1XOptions.ExtraPhiChecking) {
+                        existingState.checkPhis(this, newState);
+                    }
                 }
             } else {
                 // there is an existing state, but the block was not visited yet
                 // do a merge of the stacks and locals
                 existingState.merge(this, newState);
             }
-
-        } else {
-            // stacks or locks do not match--bytecodes would not verify
-            return false;
         }
-
-        return true;
     }
 
     private void invalidateDeadLocals(ValueStack newState, BitMap liveness) {
@@ -498,11 +446,6 @@ public class BlockBegin extends StateSplit {
         }
     }
 
-    public void merge(ValueStack newState) {
-        boolean b = tryMerge(newState);
-        assert b : "merge failed";
-    }
-
     public final boolean isStandardEntry() {
         return checkBlockFlag(BlockFlag.StandardEntry);
     }
@@ -517,6 +460,22 @@ public class BlockBegin extends StateSplit {
 
     public final void setOsrEntry(boolean value) {
         setBlockFlag(BlockFlag.OsrEntry, value);
+    }
+
+    public final boolean isBackwardBranchTarget() {
+        return checkBlockFlag(BlockFlag.BackwardBranchTarget);
+    }
+
+    public final void setBackwardBranchTarget(boolean value) {
+        setBlockFlag(BlockFlag.BackwardBranchTarget, value);
+    }
+
+    public final boolean isCriticalEdgeSplit() {
+        return checkBlockFlag(BlockFlag.CriticalEdgeSplit);
+    }
+
+    public final void setCriticalEdgeSplit(boolean value) {
+        setBlockFlag(BlockFlag.CriticalEdgeSplit, value);
     }
 
     public final boolean isExceptionEntry() {
@@ -551,14 +510,29 @@ public class BlockBegin extends StateSplit {
         setBlockFlag(BlockFlag.WasVisited, value);
     }
 
-    public final boolean isLoopHeader() {
+    public final boolean isParserLoopHeader() {
         return checkBlockFlag(BlockFlag.ParserLoopHeader);
     }
 
-    public final void setLoopHeader(boolean value) {
+    public final void setParserLoopHeader(boolean value) {
         setBlockFlag(BlockFlag.ParserLoopHeader, value);
     }
 
+    public final boolean isLinearScanLoopHeader() {
+        return checkBlockFlag(BlockFlag.LinearScanLoopHeader);
+    }
+
+    public final void setLinearScanLoopHeader(boolean value) {
+        setBlockFlag(BlockFlag.LinearScanLoopHeader, value);
+    }
+
+    public final boolean isLinearScanLoopEnd() {
+        return checkBlockFlag(BlockFlag.LinearScanLoopEnd);
+    }
+
+    public final void setLinearScanLoopEnd(boolean value) {
+        setBlockFlag(BlockFlag.LinearScanLoopEnd, value);
+    }
 
     private void setBlockFlag(BlockFlag flag, boolean value) {
         if (value) {
@@ -575,4 +549,35 @@ public class BlockBegin extends StateSplit {
         copyBlockFlag(other, BlockBegin.BlockFlag.WasVisited);
     }
 
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("block #");
+        builder.append(_blockID);
+        builder.append(" [");
+        boolean hasFlag = false;
+        for (BlockFlag f : BlockFlag.values()) {
+            if (checkBlockFlag(f)) {
+                if (hasFlag) {
+                    builder.append(' ');
+                }
+                builder.append(f.name());
+                hasFlag = true;
+            }
+        }
+        builder.append("]");
+        if (_end != null) {
+            builder.append(" -> ");
+            boolean hasSucc = false;
+            for (BlockBegin s : _end.successors()) {
+                if (hasSucc) {
+                    builder.append(", ");
+                }
+                builder.append("#");
+                builder.append(s._blockID);
+                hasSucc = true;
+            }
+        }
+        return builder.toString();
+    }
 }

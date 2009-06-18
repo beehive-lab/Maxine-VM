@@ -191,7 +191,6 @@ final class VMValueImpl implements VMValue {
             _stringValue = stringValue;
         }
 
-        @Override
         public String stringValue() {
             return _stringValue;
         }
@@ -208,7 +207,6 @@ final class VMValueImpl implements VMValue {
             _type = type;
         }
 
-        @Override
         public ReferenceTypeProvider getReferenceType() {
             return _type;
         }
@@ -230,12 +228,10 @@ final class VMValueImpl implements VMValue {
             _vm = vm;
         }
 
-        @Override
         public ArrayTypeProvider getArrayType() {
             return _arrayType;
         }
 
-        @Override
         public VMValue getValue(int i) {
             final Class klass = innerObject().getClass().getComponentType();
             assert klass != null;
@@ -244,12 +240,10 @@ final class VMValueImpl implements VMValue {
             return _vm.createJavaObjectValue(Array.get(innerObject(), i), klass);
         }
 
-        @Override
         public int length() {
             return Array.getLength(innerObject());
         }
 
-        @Override
         public void setValue(int i, VMValue value) {
             final Class klass = innerObject().getClass().getComponentType();
             assert klass != null;

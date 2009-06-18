@@ -84,7 +84,6 @@ public interface JDWPEventModifier {
             _count = count;
         }
 
-        @Override
         public boolean isAccepted(JDWPEventContext context) {
             return --_count == 0;
         }
@@ -118,7 +117,6 @@ public interface JDWPEventModifier {
             _thread = thread;
         }
 
-        @Override
         public boolean isAccepted(JDWPEventContext context) {
             return context.getThread() == null || context.getThread().equals(_thread);
         }
@@ -136,7 +134,6 @@ public interface JDWPEventModifier {
             _klass = klass;
         }
 
-        @Override
         public boolean isAccepted(JDWPEventContext context) {
             return context.getReferenceType() == null || context.getReferenceType().equals(_klass);
         }
@@ -150,7 +147,6 @@ public interface JDWPEventModifier {
             _regexp = regexp;
         }
 
-        @Override
         public boolean isAccepted(JDWPEventContext context) {
             if (context.getReferenceType() == null) {
                 return true;
@@ -170,7 +166,6 @@ public interface JDWPEventModifier {
             _regexp = regexp;
         }
 
-        @Override
         public boolean isAccepted(JDWPEventContext context) {
             if (context.getReferenceType() == null) {
                 return true;
@@ -194,7 +189,6 @@ public interface JDWPEventModifier {
             return _location;
         }
 
-        @Override
         public boolean isAccepted(JDWPEventContext context) {
             return context.getLocation() == null || context.getLocation().equals(_location);
         }
@@ -205,7 +199,6 @@ public interface JDWPEventModifier {
         public ExceptionOnly(ReferenceTypeProvider exceptionType, boolean caught, boolean uncaught) {
         }
 
-        @Override
         public boolean isAccepted(JDWPEventContext context) {
             // TODO: Implement correctly!
             return false;

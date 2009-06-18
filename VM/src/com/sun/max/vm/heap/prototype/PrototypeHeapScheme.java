@@ -155,7 +155,6 @@ public class PrototypeHeapScheme extends HeapSchemeAdaptor implements HeapScheme
     public void finalize(MaxineVM.Phase phase) {
     }
 
-    @Override
     @INLINE
     public void writeBarrier(Reference from, Reference to) {
         // do nothing.

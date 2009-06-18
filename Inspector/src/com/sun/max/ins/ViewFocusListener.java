@@ -21,6 +21,7 @@
 package com.sun.max.ins;
 
 import com.sun.max.memory.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -46,12 +47,12 @@ public interface ViewFocusListener {
     /**
      * Notifies that the global thread focus has been set (view state only), non-null once running.
      */
-    void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread);
+    void threadFocusSet(MaxThread oldThread, MaxThread thread);
 
     /**
      * Notifies that the global stack frame focus has been changed (view state only), non-null once running.
      */
-    void stackFrameFocusChanged(StackFrame oldStackFrame, TeleNativeThread threadForStackFrame, StackFrame stackFrame);
+    void stackFrameFocusChanged(StackFrame oldStackFrame, MaxThread threadForStackFrame, StackFrame stackFrame);
 
     /**
      * Notifies that the global {@link Address} focus has been changed (view state only).
@@ -67,6 +68,11 @@ public interface ViewFocusListener {
      * Notifies that the breakpoint focus has been changed (view state only), possibly to null.
      */
     void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint);
+
+    /**
+     * Notifies that the watchpoint focus has been changed (view state only), possibly to null.
+     */
+    void watchpointFocusSet(MaxWatchpoint oldWatchpoint, MaxWatchpoint watchpoint);
 
     /**
      * Notifies that the heap object focus has changed (view state only), possibly to null.

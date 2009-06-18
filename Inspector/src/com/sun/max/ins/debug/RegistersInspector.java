@@ -27,7 +27,7 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.debug.*;
+import com.sun.max.tele.*;
 
 
 /**
@@ -56,7 +56,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     // This is a singleton viewer, so only use a single level of view preferences.
     private final RegistersViewPreferences _viewPreferences;
 
-    private TeleNativeThread _teleNativeThread;
+    private MaxThread _thread;
     private RegistersTable _table;
 
     private RegistersInspector(Inspection inspection) {
@@ -76,11 +76,11 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
 
     @Override
     protected void createView() {
-        _teleNativeThread = inspection().focus().thread();
-        if (_teleNativeThread == null) {
+        _thread = inspection().focus().thread();
+        if (_thread == null) {
             _table = null;
         } else {
-            _table = new RegistersTable(inspection(), _teleNativeThread, _viewPreferences);
+            _table = new RegistersTable(inspection(), _thread, _viewPreferences);
         }
         frame().setContentPane(new InspectorScrollPane(inspection(), _table));
         updateFrameTitle();
@@ -99,8 +99,8 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     @Override
     public String getTextForTitle() {
         String title = "Registers: ";
-        if (_teleNativeThread != null) {
-            title += inspection().nameDisplay().longNameWithState(_teleNativeThread);
+        if (_thread != null) {
+            title += inspection().nameDisplay().longNameWithState(_thread);
         }
         return title;
     }
@@ -129,16 +129,14 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     }
 
     @Override
-    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
+    public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
         reconstructView();
     }
 
-    @Override
     public void tableColumnViewPreferencesChanged() {
         reconstructView();
     }
 
-    @Override
     public void viewConfigurationChanged() {
         reconstructView();
     }
@@ -149,6 +147,11 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         _registersInspector = null;
         _viewPreferences.removeListener(this);
         super.inspectorClosing();
+    }
+
+    @Override
+    public void vmProcessTerminated() {
+        reconstructView();
     }
 
 }

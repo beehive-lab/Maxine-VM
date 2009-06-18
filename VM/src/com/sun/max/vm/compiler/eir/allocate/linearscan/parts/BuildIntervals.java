@@ -96,10 +96,7 @@ public class BuildIntervals extends AlgorithmPart {
     }
 
     private final EirOperand.Procedure _useOperandVisitor = new EirOperand.Procedure() {
-
-        @Override
         public void run(EirOperand operand) {
-
             if (operand.eirValue().asVariable() != null) {
                 if (operand.effect() == EirOperand.Effect.UPDATE) {
                     addUpdate(operand, operand.eirValue().asVariable());
@@ -122,8 +119,6 @@ public class BuildIntervals extends AlgorithmPart {
     };
 
     private final EirOperand.Procedure _definitionOperandVisitor = new EirOperand.Procedure() {
-
-        @Override
         public void run(EirOperand operand) {
             if (operand.eirValue().asVariable() != null) {
                 if (operand.effect() == EirOperand.Effect.DEFINITION) {
