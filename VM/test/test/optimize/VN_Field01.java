@@ -25,8 +25,8 @@ package test.optimize;
  * @Harness: java
  * @Runs: 0=18; 1=18; 2=!java.lang.NullPointerException
  */
-public class VN_Cast01 {
-    static final Object _object = new VN_Cast01();
+public class VN_Field01 {
+    static final VN_Field01 _object = new VN_Field01();
 
     int _field = 9;
 
@@ -44,23 +44,19 @@ public class VN_Cast01 {
     }
 
     private static int test1() {
-        Object o = _object;
-        VN_Cast01 a = (VN_Cast01) o;
-        VN_Cast01 b = (VN_Cast01) o;
-        return a._field + b._field;
+        VN_Field01 a = _object;
+        return a._field + a._field;
     }
 
     private static int test2() {
-        Object obj = new VN_Cast01();
-        VN_Cast01 a = (VN_Cast01) obj;
-        VN_Cast01 b = (VN_Cast01) obj;
+        VN_Field01 a = _object;
+        VN_Field01 b = _object;
         return a._field + b._field;
     }
 
     private static int test3() {
-        Object o = null;
-        VN_Cast01 a = (VN_Cast01) o;
-        VN_Cast01 b = (VN_Cast01) o;
+        VN_Field01 a = null;
+        VN_Field01 b = null;
         return a._field + b._field;
     }
 
