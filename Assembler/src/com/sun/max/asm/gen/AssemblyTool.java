@@ -25,14 +25,14 @@ package com.sun.max.asm.gen;
  */
 public abstract class AssemblyTool<Template_Type extends Template> {
 
-    private final Assembly<Template_Type> _assembly;
+    private final Assembly<Template_Type> assembly;
 
     protected AssemblyTool(Assembly<Template_Type> assembly) {
-        _assembly = assembly;
+        this.assembly = assembly;
     }
 
     public Assembly<Template_Type> assembly() {
-        return _assembly;
+        return assembly;
     }
 
 }

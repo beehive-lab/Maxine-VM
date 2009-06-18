@@ -32,15 +32,15 @@ import com.sun.max.program.*;
  */
 public abstract class X86NumericalParameter extends X86Parameter implements AppendedParameter, ImmediateParameter {
 
-    private final WordWidth _width;
+    private final WordWidth width;
 
     public X86NumericalParameter(X86Operand.Designation designation, WordWidth width) {
         super(designation, ParameterPlace.APPEND);
-        _width = width;
+        this.width = width;
     }
 
     public WordWidth width() {
-        return _width;
+        return width;
     }
 
     public String valueString() {
@@ -53,7 +53,7 @@ public abstract class X86NumericalParameter extends X86Parameter implements Appe
 
     public Iterable< ? extends ImmediateArgument> getLegalTestArguments() {
         try {
-            switch (_width) {
+            switch (width) {
                 case BITS_8:
                     return Static.createSequence(Immediate8Argument.class, byte.class, Byte.MIN_VALUE, (byte) -1, (byte) 2, Byte.MAX_VALUE);
                 case BITS_16:
@@ -75,7 +75,7 @@ public abstract class X86NumericalParameter extends X86Parameter implements Appe
     }
 
     public Argument getExampleArgument() {
-        switch (_width) {
+        switch (width) {
             case BITS_8:
                 return new Immediate8Argument((byte) 0x12);
             case BITS_16:

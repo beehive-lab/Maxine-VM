@@ -32,38 +32,38 @@ import com.sun.max.lang.*;
  */
 public abstract class X86TemplateCreator<Template_Type extends X86Template> {
 
-    private final Assembly _assembly;
-    private final WordWidth _addressWidth;
-    private X86InstructionDescription _instructionDescription;
-    private InstructionAssessment _instructionAssessment;
-    private X86TemplateContext _context;
-    private int _serial = 1;
+    private final Assembly assembly;
+    private final WordWidth addressWidth;
+    private X86InstructionDescription instructionDescription;
+    private InstructionAssessment instructionAssessment;
+    private X86TemplateContext context;
+    private int serial = 1;
 
     protected X86TemplateCreator(Assembly assembly, WordWidth addressWidth) {
-        _assembly = assembly;
-        _addressWidth = addressWidth;
+        this.assembly = assembly;
+        this.addressWidth = addressWidth;
     }
 
-    private final AppendableSequence<Template_Type> _templates = new ArrayListSequence<Template_Type>();
+    private final AppendableSequence<Template_Type> templates = new ArrayListSequence<Template_Type>();
 
     public Sequence<Template_Type> templates() {
-        return _templates;
+        return templates;
     }
 
-    private final Map<String, AppendableSequence<Template_Type>> _internalNameToTemplates = new HashMap<String, AppendableSequence<Template_Type>>();
+    private final Map<String, AppendableSequence<Template_Type>> internalNameToTemplates = new HashMap<String, AppendableSequence<Template_Type>>();
 
     private void addTemplate(Template_Type template) {
-        _templates.append(template);
-        AppendableSequence<Template_Type> t = _internalNameToTemplates.get(template.internalName());
+        templates.append(template);
+        AppendableSequence<Template_Type> t = internalNameToTemplates.get(template.internalName());
         if (t == null) {
             t = new LinkSequence<Template_Type>();
-            _internalNameToTemplates.put(template.internalName(), t);
+            internalNameToTemplates.put(template.internalName(), t);
         }
         t.append(template);
     }
 
     private boolean isRedundant(X86Template template) {
-        final Sequence<Template_Type> t = _internalNameToTemplates.get(template.internalName());
+        final Sequence<Template_Type> t = internalNameToTemplates.get(template.internalName());
         if (t != null) {
             for (X86Template other : t) {
                 if (template.isRedundant(other)) {
@@ -74,32 +74,32 @@ public abstract class X86TemplateCreator<Template_Type extends X86Template> {
         return false;
     }
 
-    protected abstract Template_Type createTemplate(X86InstructionDescription instructionDescription, int serial, InstructionAssessment instructionFamily, X86TemplateContext context);
+    protected abstract Template_Type createTemplate(X86InstructionDescription description, int ser, InstructionAssessment instructionFamily, X86TemplateContext contxt);
 
     private void createTemplate() {
-        final Template_Type template = createTemplate(_instructionDescription, _serial, _instructionAssessment, _context);
-        if (X86InstructionDescriptionVisitor.Static.visitInstructionDescription(template, _instructionDescription)) {
+        final Template_Type template = createTemplate(instructionDescription, serial, instructionAssessment, context);
+        if (X86InstructionDescriptionVisitor.Static.visitInstructionDescription(template, instructionDescription)) {
             final InstructionDescription modRMInstructionDescription = template.modRMInstructionDescription();
             if (modRMInstructionDescription != null && !X86InstructionDescriptionVisitor.Static.visitInstructionDescription(template, modRMInstructionDescription)) {
                 return;
             }
             if (isRedundant(template)) {
-                if (_assembly.usingRedundantTemplates()) {
+                if (assembly.usingRedundantTemplates()) {
                     template.beRedundant();
                 } else {
                     return;
                 }
             }
             addTemplate(template);
-            _serial++;
+            serial++;
         }
     }
 
     private void createTemplatesForSibBaseCases() {
         for (X86TemplateContext.SibBaseCase sibBaseCase : X86TemplateContext.SibBaseCase.VALUES) {
-            if (sibBaseCase == X86TemplateContext.SibBaseCase.GENERAL_REGISTER || _context.modCase() == X86TemplateContext.ModCase.MOD_0) {
-                _context = _context.clone();
-                _context._sibBaseCase = sibBaseCase;
+            if (sibBaseCase == X86TemplateContext.SibBaseCase.GENERAL_REGISTER || context.modCase() == X86TemplateContext.ModCase.MOD_0) {
+                context = context.clone();
+                context.sibBaseCase = sibBaseCase;
                 createTemplate();
             }
         }
@@ -107,17 +107,17 @@ public abstract class X86TemplateCreator<Template_Type extends X86Template> {
 
     private void createTemplatesForSibIndexCases() {
         for (X86TemplateContext.SibIndexCase sibIndexCase : X86TemplateContext.SibIndexCase.VALUES) {
-            _context = _context.clone();
-            _context.setSibIndexCase(sibIndexCase);
+            context = context.clone();
+            context.setSibIndexCase(sibIndexCase);
             createTemplatesForSibBaseCases();
         }
     }
 
     private void createTemplatesForRMCases() {
         for (X86TemplateContext.RMCase rmCase : X86TemplateContext.RMCase.VALUES) {
-            _context = _context.clone();
-            _context.setRMCase(rmCase);
-            switch (_context.modCase()) {
+            context = context.clone();
+            context.setRMCase(rmCase);
+            switch (context.modCase()) {
                 case MOD_3: {
                     if (rmCase == X86TemplateContext.RMCase.NORMAL) {
                         createTemplate();
@@ -139,10 +139,10 @@ public abstract class X86TemplateCreator<Template_Type extends X86Template> {
     }
 
     private void createTemplatesForModRMGroups() {
-        if (_instructionAssessment.modRMGroup() != null) {
+        if (instructionAssessment.modRMGroup() != null) {
             for (ModRMGroup.Opcode modRMGroupOpcode : ModRMGroup.Opcode.VALUES) {
-                _context = _context.clone();
-                _context.setModRMGroupOpcode(modRMGroupOpcode);
+                context = context.clone();
+                context.setModRMGroupOpcode(modRMGroupOpcode);
                 createTemplatesForRMCases();
             }
         } else {
@@ -151,13 +151,13 @@ public abstract class X86TemplateCreator<Template_Type extends X86Template> {
     }
 
     private void createTemplatesForModCases(WordWidth operandSizeAttribute) {
-        _context = _context.clone();
-        _context.setOperandSizeAttribute(operandSizeAttribute);
+        context = context.clone();
+        context.setOperandSizeAttribute(operandSizeAttribute);
 
-        if (_instructionAssessment.hasModRMByte()) {
+        if (instructionAssessment.hasModRMByte()) {
             for (X86TemplateContext.ModCase modCase : X86TemplateContext.ModCase.VALUES) {
-                _context = _context.clone();
-                _context.setModCase(modCase);
+                context = context.clone();
+                context.setModCase(modCase);
                 createTemplatesForModRMGroups();
             }
         } else {
@@ -166,44 +166,44 @@ public abstract class X86TemplateCreator<Template_Type extends X86Template> {
     }
 
     private void createTemplatesForOperandSizeAttribute(WordWidth addressSizeAttribute) {
-        _context = _context.clone();
-        _context.setAddressSizeAttribute(addressSizeAttribute);
+        context = context.clone();
+        context.setAddressSizeAttribute(addressSizeAttribute);
 
-        if (_instructionDescription.requiredOperandSize() != null) {
-            createTemplatesForModCases(_instructionDescription.requiredOperandSize());
+        if (instructionDescription.requiredOperandSize() != null) {
+            createTemplatesForModCases(instructionDescription.requiredOperandSize());
         } else {
-            if (_instructionDescription.defaultOperandSize() != WordWidth.BITS_64) {
+            if (instructionDescription.defaultOperandSize() != WordWidth.BITS_64) {
                 createTemplatesForModCases(WordWidth.BITS_32);
             }
-            if (_addressWidth == WordWidth.BITS_64) {
+            if (addressWidth == WordWidth.BITS_64) {
                 createTemplatesForModCases(WordWidth.BITS_64);
             }
-            if (X86Assembly.are16BitOffsetsSupported() || !_instructionAssessment.isJump()) {
+            if (X86Assembly.are16BitOffsetsSupported() || !instructionAssessment.isJump()) {
                 createTemplatesForModCases(WordWidth.BITS_16);
             }
         }
     }
 
     private void createTemplatesForAddressSizeAttribute() {
-        if (_instructionDescription.requiredAddressSize() != null) {
-            if (X86Assembly.are16BitAddressesSupported() || _instructionDescription.requiredAddressSize() == _addressWidth) {
-                createTemplatesForOperandSizeAttribute(_instructionDescription.requiredAddressSize());
+        if (instructionDescription.requiredAddressSize() != null) {
+            if (X86Assembly.are16BitAddressesSupported() || instructionDescription.requiredAddressSize() == addressWidth) {
+                createTemplatesForOperandSizeAttribute(instructionDescription.requiredAddressSize());
             }
         } else {
-            createTemplatesForOperandSizeAttribute(_addressWidth);
-            if (X86Assembly.are16BitAddressesSupported() && _instructionAssessment.hasAddressSizeVariants()) {
-                createTemplatesForOperandSizeAttribute(WordWidth.fromInt(_addressWidth.numberOfBits() / 2));
+            createTemplatesForOperandSizeAttribute(addressWidth);
+            if (X86Assembly.are16BitAddressesSupported() && instructionAssessment.hasAddressSizeVariants()) {
+                createTemplatesForOperandSizeAttribute(WordWidth.fromInt(addressWidth.numberOfBits() / 2));
             }
         }
     }
 
     public void createTemplates(InstructionDescriptionCreator<X86InstructionDescription> instructionDescriptionCreator) {
-        for (X86InstructionDescription instructionDescription : instructionDescriptionCreator.instructionDescriptions()) {
-            _instructionDescription = instructionDescription;
-            _instructionAssessment = new InstructionAssessment();
-            final OpcodeAssessor assessor = new OpcodeAssessor(_instructionAssessment);
-            X86InstructionDescriptionVisitor.Static.visitInstructionDescription(assessor, _instructionDescription);
-            _context = new X86TemplateContext();
+        for (X86InstructionDescription description : instructionDescriptionCreator.instructionDescriptions()) {
+            this.instructionDescription = description;
+            this.instructionAssessment = new InstructionAssessment();
+            final OpcodeAssessor assessor = new OpcodeAssessor(instructionAssessment);
+            X86InstructionDescriptionVisitor.Static.visitInstructionDescription(assessor, description);
+            this.context = new X86TemplateContext();
             createTemplatesForAddressSizeAttribute();
         }
     }

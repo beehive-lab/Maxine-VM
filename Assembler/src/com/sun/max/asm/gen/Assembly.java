@@ -42,56 +42,56 @@ public abstract class Assembly<Template_Type extends Template> {
         return thisPackage.subPackage(instructionSet.category().name().toLowerCase(), instructionSet.name().toLowerCase());
     }
 
-    private final InstructionSet _instructionSet;
-    private final Class<Template_Type> _templateType;
+    private final InstructionSet instructionSet;
+    private final Class<Template_Type> templateType;
 
     protected Assembly(InstructionSet instructionSet, Class<Template_Type> templateType) {
-        _instructionSet = instructionSet;
-        _templateType = templateType;
+        this.instructionSet = instructionSet;
+        this.templateType = templateType;
     }
 
     public InstructionSet instructionSet() {
-        return _instructionSet;
+        return instructionSet;
     }
 
     public Class<Template_Type> templateType() {
-        return _templateType;
+        return templateType;
     }
 
     public MaxPackage getPackage() {
-        return instructionSetPackage(_instructionSet);
+        return instructionSetPackage(instructionSet);
     }
 
     // Switch this on if you also need to disassemble redundant instructions that you cannot assemble:
     private static final String USE_REDUNDANT_TEMPLATES_PROPERTY = "max.asm.useRedundantTemplates";
-    private boolean _usingRedundantTemplates = System.getProperty(USE_REDUNDANT_TEMPLATES_PROPERTY) != null;
+    private boolean usingRedundantTemplates = System.getProperty(USE_REDUNDANT_TEMPLATES_PROPERTY) != null;
 
     public boolean usingRedundantTemplates() {
-        return _usingRedundantTemplates;
+        return usingRedundantTemplates;
     }
 
     protected abstract Sequence<Template_Type> createTemplates();
 
-    private Sequence<Template_Type> _templates;
-    private AppendableSequence<Template_Type> _labelTemplates;
+    private Sequence<Template_Type> templates;
+    private AppendableSequence<Template_Type> labelTemplates;
 
     public final Sequence<Template_Type> templates() {
-        if (_templates == null) {
-            _templates = createTemplates();
+        if (templates == null) {
+            templates = createTemplates();
         }
-        return _templates;
+        return templates;
     }
 
     public final Sequence<Template_Type> labelTemplates() {
-        if (_labelTemplates == null) {
-            _labelTemplates = new LinkSequence<Template_Type>();
+        if (labelTemplates == null) {
+            labelTemplates = new LinkSequence<Template_Type>();
             for (Template_Type template : templates()) {
                 if (!template.isRedundant() && template.labelParameterIndex() >= 0) {
-                    _labelTemplates.append(template);
+                    labelTemplates.append(template);
                 }
             }
         }
-        return _labelTemplates;
+        return labelTemplates;
     }
 
     public abstract BitRangeOrder bitRangeEndianness();
@@ -128,10 +128,10 @@ public abstract class Assembly<Template_Type extends Template> {
             parameterTypes[index] = Label.class;
             return getAssemblerMethod(assembler, template, parameterTypes);
         }
-        if (template._assemblerMethod == null) {
-            template._assemblerMethod = getAssemblerMethod(assembler, template, parameterTypes);
+        if (template.assemblerMethod == null) {
+            template.assemblerMethod = getAssemblerMethod(assembler, template, parameterTypes);
         }
-        return template._assemblerMethod;
+        return template.assemblerMethod;
     }
 
     public void assemble(Assembler assembler, Template_Type template, IndexedSequence<Argument> arguments) throws AssemblyException {

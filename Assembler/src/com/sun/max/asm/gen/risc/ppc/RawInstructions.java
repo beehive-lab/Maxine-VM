@@ -133,334 +133,334 @@ public final class RawInstructions extends PPCInstructionDescriptionCreator {
     }
 
     private void generateBranches() {
-        define("b", opcd(18), _li, _lk, _aa);
-        define("bc", opcd(16), _bo, _bi, _bd, _lk, _aa);
-        define("bclr", opcd(19), _bo, _bi, _res_16_18, _bh, xo_21_30(16), _lk);
-        define("bcctr", opcd(19), _bo, _bi, _res_16_18, _bh, xo_21_30(528), _lk);
+        define("b", opcd(18), li, lk, aa);
+        define("bc", opcd(16), bo, bi, bd, lk, aa);
+        define("bclr", opcd(19), bo, bi, res_16_18, bh, xo_21_30(16), lk);
+        define("bcctr", opcd(19), bo, bi, res_16_18, bh, xo_21_30(528), lk);
     }
 
     private void generateConditionRegisterLogicals() {
-        define("crand", opcd(19), _bt, _ba, _bb, xo_21_30(257), _res_31);
-        define("crxor", opcd(19), _bt, _ba, _bb, xo_21_30(193), _res_31);
-        define("cror", opcd(19), _bt, _ba, _bb, xo_21_30(449), _res_31);
-        define("crnand", opcd(19), _bt, _ba, _bb, xo_21_30(225), _res_31);
+        define("crand", opcd(19), bt, ba, bb, xo_21_30(257), res_31);
+        define("crxor", opcd(19), bt, ba, bb, xo_21_30(193), res_31);
+        define("cror", opcd(19), bt, ba, bb, xo_21_30(449), res_31);
+        define("crnand", opcd(19), bt, ba, bb, xo_21_30(225), res_31);
 
-        define("crnor", opcd(19), _bt, _ba, _bb, xo_21_30(33), _res_31);
-        define("creqv", opcd(19), _bt, _ba, _bb, xo_21_30(289), _res_31);
-        define("crandc", opcd(19), _bt, _ba, _bb, xo_21_30(129), _res_31);
-        define("crorc", opcd(19), _bt, _ba, _bb, xo_21_30(417), _res_31);
+        define("crnor", opcd(19), bt, ba, bb, xo_21_30(33), res_31);
+        define("creqv", opcd(19), bt, ba, bb, xo_21_30(289), res_31);
+        define("crandc", opcd(19), bt, ba, bb, xo_21_30(129), res_31);
+        define("crorc", opcd(19), bt, ba, bb, xo_21_30(417), res_31);
     }
 
     private void generateConditionRegisterFields() {
-        define("mcrf", opcd(19), _bf, _res_9_10, _bfa, _res_14_15, _res_16_20, xo_21_30(0), _res_31);
+        define("mcrf", opcd(19), bf, res_9_10, bfa, res_14_15, res_16_20, xo_21_30(0), res_31);
     }
 
     private void generateLoads() {
 
-        define("lbz", opcd(34), _rt, _d, "(", _ra0_notR0, ")");
-        define("lbzu", opcd(35), _rt, _d, "(", _ra_notR0_notRT, ")");
-        define("lbzx", opcd(31), _rt, _ra0_notR0, _rb, xo_21_30(87), _res_31);
-        define("lbzux", opcd(31), _rt, _ra_notR0_notRT, _rb, xo_21_30(119), _res_31);
+        define("lbz", opcd(34), rt, d, "(", ra0_notR0, ")");
+        define("lbzu", opcd(35), rt, d, "(", ra_notR0_notRT, ")");
+        define("lbzx", opcd(31), rt, ra0_notR0, rb, xo_21_30(87), res_31);
+        define("lbzux", opcd(31), rt, ra_notR0_notRT, rb, xo_21_30(119), res_31);
 
-        define("lhz", opcd(40), _rt, _d, "(", _ra0_notR0, ")");
-        define("lhzu", opcd(41), _rt, _d, "(", _ra_notR0_notRT, ")");
-        define("lhzx", opcd(31), _rt, _ra0_notR0, _rb, xo_21_30(279), _res_31);
-        define("lhzux", opcd(31), _rt, _ra_notR0_notRT, _rb, xo_21_30(311), _res_31);
+        define("lhz", opcd(40), rt, d, "(", ra0_notR0, ")");
+        define("lhzu", opcd(41), rt, d, "(", ra_notR0_notRT, ")");
+        define("lhzx", opcd(31), rt, ra0_notR0, rb, xo_21_30(279), res_31);
+        define("lhzux", opcd(31), rt, ra_notR0_notRT, rb, xo_21_30(311), res_31);
 
-        define("lha", opcd(42), _rt, _d, "(", _ra0_notR0, ")");
-        define("lhau", opcd(43), _rt, _d, "(", _ra_notR0_notRT, ")");
-        define("lhax", opcd(31), _rt, _ra0_notR0, _rb, xo_21_30(343), _res_31);
-        define("lhaux", opcd(31), _rt, _ra_notR0_notRT, _rb, xo_21_30(375), _res_31);
+        define("lha", opcd(42), rt, d, "(", ra0_notR0, ")");
+        define("lhau", opcd(43), rt, d, "(", ra_notR0_notRT, ")");
+        define("lhax", opcd(31), rt, ra0_notR0, rb, xo_21_30(343), res_31);
+        define("lhaux", opcd(31), rt, ra_notR0_notRT, rb, xo_21_30(375), res_31);
 
-        define("lwz", opcd(32), _rt, _d, "(", _ra0_notR0, ")");
-        define("lwzu", opcd(33), _rt, _d, "(", _ra_notR0_notRT, ")");
-        define("lwzx", opcd(31), _rt, _ra0_notR0, _rb, xo_21_30(23), _res_31);
-        define("lwzux", opcd(31), _rt, _ra_notR0_notRT, _rb, xo_21_30(55), _res_31);
+        define("lwz", opcd(32), rt, d, "(", ra0_notR0, ")");
+        define("lwzu", opcd(33), rt, d, "(", ra_notR0_notRT, ")");
+        define("lwzx", opcd(31), rt, ra0_notR0, rb, xo_21_30(23), res_31);
+        define("lwzux", opcd(31), rt, ra_notR0_notRT, rb, xo_21_30(55), res_31);
 
-        define64("lwa", opcd(58), _rt, _ds, "(", _ra0_notR0, ")", xo_30_31(2));
-        define64("lwax", opcd(31), _rt, _ra0_notR0, _rb, xo_21_30(341), _res_31);
-        define64("lwaux", opcd(31), _rt, _ra_notR0_notRT, _rb, xo_21_30(373), _res_31);
+        define64("lwa", opcd(58), rt, ds, "(", ra0_notR0, ")", xo_30_31(2));
+        define64("lwax", opcd(31), rt, ra0_notR0, rb, xo_21_30(341), res_31);
+        define64("lwaux", opcd(31), rt, ra_notR0_notRT, rb, xo_21_30(373), res_31);
 
-        define64("ld", opcd(58), _rt, _ds, "(", _ra0_notR0, ")", xo_30_31(0));
-        define64("ldu", opcd(58), _rt, _ds, "(", _ra_notR0_notRT, ")", xo_30_31(1));
-        define64("ldx", opcd(31), _rt, _ra0_notR0, _rb, xo_21_30(21), _res_31);
-        define64("ldux", opcd(31), _rt, _ra_notR0_notRT, _rb, xo_21_30(53), _res_31);
+        define64("ld", opcd(58), rt, ds, "(", ra0_notR0, ")", xo_30_31(0));
+        define64("ldu", opcd(58), rt, ds, "(", ra_notR0_notRT, ")", xo_30_31(1));
+        define64("ldx", opcd(31), rt, ra0_notR0, rb, xo_21_30(21), res_31);
+        define64("ldux", opcd(31), rt, ra_notR0_notRT, rb, xo_21_30(53), res_31);
     }
 
     private void generateStores() {
 
-        define("stb", opcd(38), _rs, _d, "(", _ra0_notR0, ")");
-        define("stbu", opcd(39), _rs, _d, "(", _ra_notR0, ")");
-        define("stbx", opcd(31), _rs, _ra0_notR0, _rb, xo_21_30(215), _res_31);
-        define("stbux", opcd(31), _rs, _ra_notR0, _rb, xo_21_30(247), _res_31);
+        define("stb", opcd(38), rs, d, "(", ra0_notR0, ")");
+        define("stbu", opcd(39), rs, d, "(", ra_notR0, ")");
+        define("stbx", opcd(31), rs, ra0_notR0, rb, xo_21_30(215), res_31);
+        define("stbux", opcd(31), rs, ra_notR0, rb, xo_21_30(247), res_31);
 
-        define("sth", opcd(44), _rs, _d, "(", _ra0_notR0, ")");
-        define("sthu", opcd(45), _rs, _d, "(", _ra_notR0, ")");
-        define("sthx", opcd(31), _rs, _ra0_notR0, _rb, xo_21_30(407), _res_31);
-        define("sthux", opcd(31), _rs, _ra_notR0, _rb, xo_21_30(439), _res_31);
+        define("sth", opcd(44), rs, d, "(", ra0_notR0, ")");
+        define("sthu", opcd(45), rs, d, "(", ra_notR0, ")");
+        define("sthx", opcd(31), rs, ra0_notR0, rb, xo_21_30(407), res_31);
+        define("sthux", opcd(31), rs, ra_notR0, rb, xo_21_30(439), res_31);
 
-        define("stw", opcd(36), _rs, _d, "(", _ra0_notR0, ")");
-        define("stwu", opcd(37), _rs, _d, "(", _ra_notR0, ")");
-        define("stwx", opcd(31), _rs, _ra0_notR0, _rb, xo_21_30(151), _res_31);
-        define("stwux", opcd(31), _rs, _ra_notR0, _rb, xo_21_30(183), _res_31);
+        define("stw", opcd(36), rs, d, "(", ra0_notR0, ")");
+        define("stwu", opcd(37), rs, d, "(", ra_notR0, ")");
+        define("stwx", opcd(31), rs, ra0_notR0, rb, xo_21_30(151), res_31);
+        define("stwux", opcd(31), rs, ra_notR0, rb, xo_21_30(183), res_31);
 
-        define64("std", opcd(62), _rs, _ds, "(", _ra0_notR0, ")", xo_30_31(0));
-        define64("stdu", opcd(62), _rs, _ds, "(", _ra_notR0, ")", xo_30_31(1));
-        define64("stdx", opcd(31), _rs, _ra0_notR0, _rb, xo_21_30(149), _res_31);
-        define64("stdux", opcd(31), _rs, _ra_notR0, _rb, xo_21_30(181), _res_31);
+        define64("std", opcd(62), rs, ds, "(", ra0_notR0, ")", xo_30_31(0));
+        define64("stdu", opcd(62), rs, ds, "(", ra_notR0, ")", xo_30_31(1));
+        define64("stdx", opcd(31), rs, ra0_notR0, rb, xo_21_30(149), res_31);
+        define64("stdux", opcd(31), rs, ra_notR0, rb, xo_21_30(181), res_31);
     }
 
     private void generateByteReversals() {
 
-        define("lhbrx", opcd(31), _rt, _ra0_notR0, _rb, xo_21_30(790), _res_31);
-        define("lwbrx", opcd(31), _rt, _ra0_notR0, _rb, xo_21_30(534), _res_31);
-        define("sthbrx", opcd(31), _rt, _ra0_notR0, _rb, xo_21_30(918), _res_31);
-        define("stwbrx", opcd(31), _rt, _ra0_notR0, _rb, xo_21_30(662), _res_31);
+        define("lhbrx", opcd(31), rt, ra0_notR0, rb, xo_21_30(790), res_31);
+        define("lwbrx", opcd(31), rt, ra0_notR0, rb, xo_21_30(534), res_31);
+        define("sthbrx", opcd(31), rt, ra0_notR0, rb, xo_21_30(918), res_31);
+        define("stwbrx", opcd(31), rt, ra0_notR0, rb, xo_21_30(662), res_31);
     }
 
     private void generateLoadStoreMultiple() {
 
-        define("lmw", opcd(46), _rt, _d, "(", _ra0_notR0_ltRT, ")");
-        define("stmw", opcd(47), _rs, _d, "(", _ra0_notR0, ")");
+        define("lmw", opcd(46), rt, d, "(", ra0_notR0_ltRT, ")");
+        define("stmw", opcd(47), rs, d, "(", ra0_notR0, ")");
     }
 
     private void generateMoveAssists() {
 
         final Method predicateMethod = InstructionConstraint.Static.getPredicateMethod(ZeroOrRegister.class, "isOutsideRegisterRange", GPR.class, Integer.TYPE);
-        final InstructionConstraint lswiConstraint = InstructionConstraint.Static.makePredicate(predicateMethod, _ra0, _rt, _nb);
-        define("lswi", opcd(31), _rt, _ra0_notR0, _nb, xo_21_30(597), _res_31, lswiConstraint);
-        define("lswx", opcd(31), _rt, _ra0_notR0, _rb, xo_21_30(533), _res_31, ne(_rt, _ra0), ne(_rt, _rb));
-        define("stswi", opcd(31), _rs, _ra0_notR0, _nb, xo_21_30(725), _res_31);
-        define("stswx", opcd(31), _rs, _ra0_notR0, _rb, xo_21_30(661), _res_31);
+        final InstructionConstraint lswiConstraint = InstructionConstraint.Static.makePredicate(predicateMethod, ra0, rt, nb);
+        define("lswi", opcd(31), rt, ra0_notR0, nb, xo_21_30(597), res_31, lswiConstraint);
+        define("lswx", opcd(31), rt, ra0_notR0, rb, xo_21_30(533), res_31, ne(rt, ra0), ne(rt, rb));
+        define("stswi", opcd(31), rs, ra0_notR0, nb, xo_21_30(725), res_31);
+        define("stswx", opcd(31), rs, ra0_notR0, rb, xo_21_30(661), res_31);
     }
 
     private void generateFixedPointArithmetics() {
-        define("addi", opcd(14), _rt, _ra0_notR0, _si);
-        define("addis", opcd(15), _rt, _ra0_notR0, _sis);
-        define("add", opcd(31), _rt, _ra, _rb, _oe, xo_22_30(266), _rc);
-        define("subf", opcd(31), _rt, _ra, _rb, _oe, xo_22_30(40), _rc);
-        define("addic", opcd(12), _rt, _ra, _si);
-        define("addic_", opcd(13), _rt, _ra, _si).setExternalName("addic.");
-        define("subfic", opcd(8), _rt, _ra, _si);
-        define("addc", opcd(31), _rt, _ra, _rb, _oe, xo_22_30(10), _rc);
-        define("subfc", opcd(31), _rt, _ra, _rb, _oe, xo_22_30(8), _rc);
-        define("adde", opcd(31), _rt, _ra, _rb, _oe, xo_22_30(138), _rc);
-        define("subfe", opcd(31), _rt, _ra, _rb, _oe, xo_22_30(136), _rc);
-        define("addme", opcd(31), _rt, _ra, _res_16_20, _oe, xo_22_30(234), _rc);
-        define("subfme", opcd(31), _rt, _ra, _res_16_20, _oe, xo_22_30(232), _rc);
-        define("addze", opcd(31), _rt, _ra, _res_16_20, _oe, xo_22_30(202), _rc);
-        define("subfze", opcd(31), _rt, _ra, _res_16_20, _oe, xo_22_30(200), _rc);
-        define("neg", opcd(31), _rt, _ra, _res_16_20, _oe, xo_22_30(104), _rc);
+        define("addi", opcd(14), rt, ra0_notR0, si);
+        define("addis", opcd(15), rt, ra0_notR0, sis);
+        define("add", opcd(31), rt, ra, rb, oe, xo_22_30(266), rc);
+        define("subf", opcd(31), rt, ra, rb, oe, xo_22_30(40), rc);
+        define("addic", opcd(12), rt, ra, si);
+        define("addic_", opcd(13), rt, ra, si).setExternalName("addic.");
+        define("subfic", opcd(8), rt, ra, si);
+        define("addc", opcd(31), rt, ra, rb, oe, xo_22_30(10), rc);
+        define("subfc", opcd(31), rt, ra, rb, oe, xo_22_30(8), rc);
+        define("adde", opcd(31), rt, ra, rb, oe, xo_22_30(138), rc);
+        define("subfe", opcd(31), rt, ra, rb, oe, xo_22_30(136), rc);
+        define("addme", opcd(31), rt, ra, res_16_20, oe, xo_22_30(234), rc);
+        define("subfme", opcd(31), rt, ra, res_16_20, oe, xo_22_30(232), rc);
+        define("addze", opcd(31), rt, ra, res_16_20, oe, xo_22_30(202), rc);
+        define("subfze", opcd(31), rt, ra, res_16_20, oe, xo_22_30(200), rc);
+        define("neg", opcd(31), rt, ra, res_16_20, oe, xo_22_30(104), rc);
 
-        define("mulli", opcd(7), _rt, _ra, _si);
-        define64("mulld", opcd(31), _rt, _ra, _rb, _oe, xo_22_30(233), _rc);
-        define("mullw", opcd(31), _rt, _ra, _rb, _oe, xo_22_30(235), _rc);
-        define64("mulhd", opcd(31), _rt, _ra, _rb, _res_21, xo_22_30(73), _rc);
-        define("mulhw", opcd(31), _rt, _ra, _rb, _res_21, xo_22_30(75), _rc);
-        define64("mulhdu", opcd(31), _rt, _ra, _rb, _res_21, xo_22_30(9), _rc);
-        define("mulhwu", opcd(31), _rt, _ra, _rb, _res_21, xo_22_30(11), _rc);
-        define64("divd", opcd(31), _rt, _ra, _rb, _oe, xo_22_30(489), _rc);
-        define("divw", opcd(31), _rt, _ra, _rb, _oe, xo_22_30(491), _rc);
-        define64("divdu", opcd(31), _rt, _ra, _rb, _oe, xo_22_30(457), _rc);
-        define("divwu", opcd(31), _rt, _ra, _rb, _oe, xo_22_30(459), _rc);
+        define("mulli", opcd(7), rt, ra, si);
+        define64("mulld", opcd(31), rt, ra, rb, oe, xo_22_30(233), rc);
+        define("mullw", opcd(31), rt, ra, rb, oe, xo_22_30(235), rc);
+        define64("mulhd", opcd(31), rt, ra, rb, res_21, xo_22_30(73), rc);
+        define("mulhw", opcd(31), rt, ra, rb, res_21, xo_22_30(75), rc);
+        define64("mulhdu", opcd(31), rt, ra, rb, res_21, xo_22_30(9), rc);
+        define("mulhwu", opcd(31), rt, ra, rb, res_21, xo_22_30(11), rc);
+        define64("divd", opcd(31), rt, ra, rb, oe, xo_22_30(489), rc);
+        define("divw", opcd(31), rt, ra, rb, oe, xo_22_30(491), rc);
+        define64("divdu", opcd(31), rt, ra, rb, oe, xo_22_30(457), rc);
+        define("divwu", opcd(31), rt, ra, rb, oe, xo_22_30(459), rc);
     }
 
     private void generateFixedPointCompares() {
-        define("cmpi", opcd(11), _bf, _res_9, _l, _ra, _si);
-        define("cmp", opcd(31), _bf, _res_9, _l, _ra, _rb, xo_21_30(0), _res_31);
-        define("cmpli", opcd(10), _bf, _res_9, _l, _ra, _ui);
-        define("cmpl", opcd(31), _bf, _res_9, _l, _ra, _rb, xo_21_30(32), _res_31);
+        define("cmpi", opcd(11), bf, res_9, l, ra, si);
+        define("cmp", opcd(31), bf, res_9, l, ra, rb, xo_21_30(0), res_31);
+        define("cmpli", opcd(10), bf, res_9, l, ra, ui);
+        define("cmpl", opcd(31), bf, res_9, l, ra, rb, xo_21_30(32), res_31);
     }
 
     private void generateFixedPointTraps() {
-        define64("tdi", opcd(2), _to, _ra, _si);
-        define("twi", opcd(3), _to, _ra, _si);
-        define64("td", opcd(31), _to, _ra, _rb, xo_21_30(68), _res_31);
-        define("tw", opcd(31), _to, _ra, _rb, xo_21_30(4), _res_31);
+        define64("tdi", opcd(2), to, ra, si);
+        define("twi", opcd(3), to, ra, si);
+        define64("td", opcd(31), to, ra, rb, xo_21_30(68), res_31);
+        define("tw", opcd(31), to, ra, rb, xo_21_30(4), res_31);
     }
 
     private void generateFixedPointLogicals() {
 
-        define("andi_", opcd(28), _ra, _rs, _ui).setExternalName("andi.");
-        define("andis_", opcd(29), _ra, _rs, _ui).setExternalName("andis.");
-        define("ori", opcd(24), _ra, _rs, _ui);
-        define("oris", opcd(25), _ra, _rs, _ui);
-        define("xori", opcd(26), _ra, _rs, _ui);
-        define("xoris", opcd(27), _ra, _rs, _ui);
+        define("andi_", opcd(28), ra, rs, ui).setExternalName("andi.");
+        define("andis_", opcd(29), ra, rs, ui).setExternalName("andis.");
+        define("ori", opcd(24), ra, rs, ui);
+        define("oris", opcd(25), ra, rs, ui);
+        define("xori", opcd(26), ra, rs, ui);
+        define("xoris", opcd(27), ra, rs, ui);
 
-        define("and", opcd(31), _ra, _rs, _rb, xo_21_30(28), _rc);
-        define("or", opcd(31), _ra, _rs, _rb, xo_21_30(444), _rc);
-        define("xor", opcd(31), _ra, _rs, _rb, xo_21_30(316), _rc);
-        define("nand", opcd(31), _ra, _rs, _rb, xo_21_30(476), _rc);
-        define("nor", opcd(31), _ra, _rs, _rb, xo_21_30(124), _rc);
-        define("eqv", opcd(31), _ra, _rs, _rb, xo_21_30(284), _rc);
-        define("andc", opcd(31), _ra, _rs, _rb, xo_21_30(60), _rc);
-        define("orc", opcd(31), _ra, _rs, _rb, xo_21_30(412), _rc);
+        define("and", opcd(31), ra, rs, rb, xo_21_30(28), rc);
+        define("or", opcd(31), ra, rs, rb, xo_21_30(444), rc);
+        define("xor", opcd(31), ra, rs, rb, xo_21_30(316), rc);
+        define("nand", opcd(31), ra, rs, rb, xo_21_30(476), rc);
+        define("nor", opcd(31), ra, rs, rb, xo_21_30(124), rc);
+        define("eqv", opcd(31), ra, rs, rb, xo_21_30(284), rc);
+        define("andc", opcd(31), ra, rs, rb, xo_21_30(60), rc);
+        define("orc", opcd(31), ra, rs, rb, xo_21_30(412), rc);
 
-        define("extsb", opcd(31), _ra, _rs, _res_16_20, xo_21_30(954), _rc);
-        define("extsh", opcd(31), _ra, _rs, _res_16_20, xo_21_30(922), _rc);
-        define64("extsw", opcd(31), _ra, _rs, _res_16_20, xo_21_30(986), _rc);
-        define64("cntlzd", opcd(31), _ra, _rs, _res_16_20, xo_21_30(58), _rc);
-        define("cntlzw", opcd(31), _ra, _rs, _res_16_20, xo_21_30(26), _rc);
+        define("extsb", opcd(31), ra, rs, res_16_20, xo_21_30(954), rc);
+        define("extsh", opcd(31), ra, rs, res_16_20, xo_21_30(922), rc);
+        define64("extsw", opcd(31), ra, rs, res_16_20, xo_21_30(986), rc);
+        define64("cntlzd", opcd(31), ra, rs, res_16_20, xo_21_30(58), rc);
+        define("cntlzw", opcd(31), ra, rs, res_16_20, xo_21_30(26), rc);
 
-        defineP5("popcntb", opcd(31), _ra, _rs, _res_16_20, xo_21_30(122), _res_31);
+        defineP5("popcntb", opcd(31), ra, rs, res_16_20, xo_21_30(122), res_31);
     }
 
     private void generateFixedPointRotates() {
-        define64("rldicl", opcd(30), _ra, _rs, _sh64, _mb64, xo_27_29(0), _rc);
-        define64("rldicr", opcd(30), _ra, _rs, _sh64, _me64, xo_27_29(1), _rc);
-        define64("rldic", opcd(30), _ra, _rs, _sh64, _mb64, xo_27_29(2), _rc);
-        define("rlwinm", opcd(21), _ra, _rs, _sh, _mb, _me, _rc);
-        define64("rldcl", opcd(30), _ra, _rs, _rb, _mb64, xo_27_30(8), _rc);
-        define64("rldcr", opcd(30), _ra, _rs, _rb, _me64, xo_27_30(9), _rc);
-        define("rlwnm", opcd(23), _ra, _rs, _rb, _mb, _me, _rc);
-        define64("rldimi", opcd(30), _ra, _rs, _sh64, _mb64, xo_27_29(3), _rc);
-        define("rlwimi", opcd(20), _ra, _rs, _sh, _mb, _me, _rc);
+        define64("rldicl", opcd(30), ra, rs, sh64, mb64, xo_27_29(0), rc);
+        define64("rldicr", opcd(30), ra, rs, sh64, me64, xo_27_29(1), rc);
+        define64("rldic", opcd(30), ra, rs, sh64, mb64, xo_27_29(2), rc);
+        define("rlwinm", opcd(21), ra, rs, sh, mb, me, rc);
+        define64("rldcl", opcd(30), ra, rs, rb, mb64, xo_27_30(8), rc);
+        define64("rldcr", opcd(30), ra, rs, rb, me64, xo_27_30(9), rc);
+        define("rlwnm", opcd(23), ra, rs, rb, mb, me, rc);
+        define64("rldimi", opcd(30), ra, rs, sh64, mb64, xo_27_29(3), rc);
+        define("rlwimi", opcd(20), ra, rs, sh, mb, me, rc);
     }
 
     private void generateFixedPointShifts() {
-        define64("sld", opcd(31), _ra, _rs, _rb, xo_21_30(27), _rc);
-        define("slw", opcd(31), _ra, _rs, _rb, xo_21_30(24), _rc);
-        define64("srd", opcd(31), _ra, _rs, _rb, xo_21_30(539), _rc);
-        define("srw", opcd(31), _ra, _rs, _rb, xo_21_30(536), _rc);
-        define64("sradi", opcd(31), _ra, _rs, _sh64, xo_21_29(413), _rc);
-        define("srawi", opcd(31), _ra, _rs, _sh, xo_21_30(824), _rc);
-        define64("srad", opcd(31), _ra, _rs, _rb, xo_21_30(794), _rc);
-        define("sraw", opcd(31), _ra, _rs, _rb, xo_21_30(792), _rc);
+        define64("sld", opcd(31), ra, rs, rb, xo_21_30(27), rc);
+        define("slw", opcd(31), ra, rs, rb, xo_21_30(24), rc);
+        define64("srd", opcd(31), ra, rs, rb, xo_21_30(539), rc);
+        define("srw", opcd(31), ra, rs, rb, xo_21_30(536), rc);
+        define64("sradi", opcd(31), ra, rs, sh64, xo_21_29(413), rc);
+        define("srawi", opcd(31), ra, rs, sh, xo_21_30(824), rc);
+        define64("srad", opcd(31), ra, rs, rb, xo_21_30(794), rc);
+        define("sraw", opcd(31), ra, rs, rb, xo_21_30(792), rc);
     }
 
     private void generateMoveToFromSystemRegisters() {
-        define("mtspr", opcd(31), _spr, _rs, xo_21_30(467), _res_31);
-        define("mfspr", opcd(31), _rt, _spr, xo_21_30(339), _res_31);
-        define("mtcrf", opcd(31), _fxm, _rs, bit_11(0), _res_20, xo_21_30(144), _res_31);
-        define("mfcr", opcd(31), _rt, bit_11(0), _res_12_20, xo_21_30(19), _res_31);
+        define("mtspr", opcd(31), spr, rs, xo_21_30(467), res_31);
+        define("mfspr", opcd(31), rt, spr, xo_21_30(339), res_31);
+        define("mtcrf", opcd(31), fxm, rs, bit_11(0), res_20, xo_21_30(144), res_31);
+        define("mfcr", opcd(31), rt, bit_11(0), res_12_20, xo_21_30(19), res_31);
     }
 
     private void generateFloatingPointLoads() {
 
-        define("lfs", opcd(48), _frt, _d, "(", _ra0_notR0, ")");
-        define("lfsx", opcd(31), _frt, _ra0_notR0, _rb, xo_21_30(535), _res_31);
-        define("lfsu", opcd(49), _frt, _d, "(", _ra_notR0, ")");
-        define("lfsux", opcd(31), _frt, _ra_notR0, _rb, xo_21_30(567), _res_31);
+        define("lfs", opcd(48), frt, d, "(", ra0_notR0, ")");
+        define("lfsx", opcd(31), frt, ra0_notR0, rb, xo_21_30(535), res_31);
+        define("lfsu", opcd(49), frt, d, "(", ra_notR0, ")");
+        define("lfsux", opcd(31), frt, ra_notR0, rb, xo_21_30(567), res_31);
 
-        define("lfd", opcd(50), _frt, _d, "(", _ra0_notR0, ")");
-        define("lfdx", opcd(31), _frt, _ra0_notR0, _rb, xo_21_30(599), _res_31);
-        define("lfdu", opcd(51), _frt, _d, "(", _ra_notR0, ")");
-        define("lfdux", opcd(31), _frt, _ra_notR0, _rb, xo_21_30(631), _res_31);
+        define("lfd", opcd(50), frt, d, "(", ra0_notR0, ")");
+        define("lfdx", opcd(31), frt, ra0_notR0, rb, xo_21_30(599), res_31);
+        define("lfdu", opcd(51), frt, d, "(", ra_notR0, ")");
+        define("lfdux", opcd(31), frt, ra_notR0, rb, xo_21_30(631), res_31);
     }
 
     private void generateFloatingPointStores() {
 
-        define("stfs", opcd(52), _frs, _d, "(", _ra0_notR0, ")");
-        define("stfsx", opcd(31), _frs, _ra0_notR0, _rb, xo_21_30(663), _res_31);
-        define("stfsu", opcd(53), _frs, _d, "(", _ra_notR0, ")");
-        define("stfsux", opcd(31), _frs, _ra_notR0, _rb, xo_21_30(695), _res_31);
+        define("stfs", opcd(52), frs, d, "(", ra0_notR0, ")");
+        define("stfsx", opcd(31), frs, ra0_notR0, rb, xo_21_30(663), res_31);
+        define("stfsu", opcd(53), frs, d, "(", ra_notR0, ")");
+        define("stfsux", opcd(31), frs, ra_notR0, rb, xo_21_30(695), res_31);
 
-        define("stfd", opcd(54), _frs, _d, "(", _ra0_notR0, ")");
-        define("stfdx", opcd(31), _frs, _ra0_notR0, _rb, xo_21_30(727), _res_31);
-        define("stfdu", opcd(55), _frs, _d, "(", _ra_notR0, ")");
-        define("stfdux", opcd(31), _frs, _ra_notR0, _rb, xo_21_30(759), _res_31);
+        define("stfd", opcd(54), frs, d, "(", ra0_notR0, ")");
+        define("stfdx", opcd(31), frs, ra0_notR0, rb, xo_21_30(727), res_31);
+        define("stfdu", opcd(55), frs, d, "(", ra_notR0, ")");
+        define("stfdux", opcd(31), frs, ra_notR0, rb, xo_21_30(759), res_31);
     }
 
     private void generateFloatingPointMoves() {
-        define("fmr", opcd(63), _frt, _res_11_15, _frb, xo_21_30(72), _rc);
-        define("fneg", opcd(63), _frt, _res_11_15, _frb, xo_21_30(40), _rc);
-        define("fabs", opcd(63), _frt, _res_11_15, _frb, xo_21_30(264), _rc);
-        define("fnabs", opcd(63), _frt, _res_11_15, _frb, xo_21_30(136), _rc);
+        define("fmr", opcd(63), frt, res_11_15, frb, xo_21_30(72), rc);
+        define("fneg", opcd(63), frt, res_11_15, frb, xo_21_30(40), rc);
+        define("fabs", opcd(63), frt, res_11_15, frb, xo_21_30(264), rc);
+        define("fnabs", opcd(63), frt, res_11_15, frb, xo_21_30(136), rc);
     }
 
     private void generateFloatingPointAriths() {
-        define("fadd", opcd(63), _frt, _fra, _frb, _res_21_25, xo_26_30(21), _rc);
-        define("fadds", opcd(59), _frt, _fra, _frb, _res_21_25, xo_26_30(21), _rc);
-        define("fsub", opcd(63), _frt, _fra, _frb, _res_21_25, xo_26_30(20), _rc);
-        define("fsubs", opcd(59), _frt, _fra, _frb, _res_21_25, xo_26_30(20), _rc);
-        define("fmul", opcd(63), _frt, _fra, _res_16_20, _frc, xo_26_30(25), _rc);
-        define("fmuls", opcd(59), _frt, _fra, _res_16_20, _frc, xo_26_30(25), _rc);
-        define("fdiv", opcd(63), _frt, _fra, _frb, _res_21_25, xo_26_30(18), _rc);
-        define("fdivs", opcd(59), _frt, _fra, _frb, _res_21_25, xo_26_30(18), _rc);
+        define("fadd", opcd(63), frt, fra, frb, res_21_25, xo_26_30(21), rc);
+        define("fadds", opcd(59), frt, fra, frb, res_21_25, xo_26_30(21), rc);
+        define("fsub", opcd(63), frt, fra, frb, res_21_25, xo_26_30(20), rc);
+        define("fsubs", opcd(59), frt, fra, frb, res_21_25, xo_26_30(20), rc);
+        define("fmul", opcd(63), frt, fra, res_16_20, frc, xo_26_30(25), rc);
+        define("fmuls", opcd(59), frt, fra, res_16_20, frc, xo_26_30(25), rc);
+        define("fdiv", opcd(63), frt, fra, frb, res_21_25, xo_26_30(18), rc);
+        define("fdivs", opcd(59), frt, fra, frb, res_21_25, xo_26_30(18), rc);
 
-        define("fmadd", opcd(63), _frt, _fra, _frc, _frb, xo_26_30(29), _rc);
-        define("fmadds", opcd(59), _frt, _fra, _frc, _frb, xo_26_30(29), _rc);
-        define("fmsub", opcd(63), _frt, _fra, _frc, _frb, xo_26_30(28), _rc);
-        define("fmsubs", opcd(59), _frt, _fra, _frc, _frb, xo_26_30(28), _rc);
-        define("fnmadd", opcd(63), _frt, _fra, _frc, _frb, xo_26_30(31), _rc);
-        define("fnmadds", opcd(59), _frt, _fra, _frc, _frb, xo_26_30(31), _rc);
-        define("fnmsub", opcd(63), _frt, _fra, _frc, _frb, xo_26_30(30), _rc);
-        define("fnmsubs", opcd(59), _frt, _fra, _frc, _frb, xo_26_30(30), _rc);
+        define("fmadd", opcd(63), frt, fra, frc, frb, xo_26_30(29), rc);
+        define("fmadds", opcd(59), frt, fra, frc, frb, xo_26_30(29), rc);
+        define("fmsub", opcd(63), frt, fra, frc, frb, xo_26_30(28), rc);
+        define("fmsubs", opcd(59), frt, fra, frc, frb, xo_26_30(28), rc);
+        define("fnmadd", opcd(63), frt, fra, frc, frb, xo_26_30(31), rc);
+        define("fnmadds", opcd(59), frt, fra, frc, frb, xo_26_30(31), rc);
+        define("fnmsub", opcd(63), frt, fra, frc, frb, xo_26_30(30), rc);
+        define("fnmsubs", opcd(59), frt, fra, frc, frb, xo_26_30(30), rc);
     }
 
     private void generateFloatingPointRoundsAndCvts() {
-        define("frsp", opcd(63), _frt, _res_11_15, _frb, xo_21_30(12), _rc);
-        define64("fctid", opcd(63), _frt, _res_11_15, _frb, xo_21_30(814), _rc);
-        define64("fctidz", opcd(63), _frt, _res_11_15, _frb, xo_21_30(815), _rc);
-        define("fctiw", opcd(63), _frt, _res_11_15, _frb, xo_21_30(14), _rc);
-        define("fctiwz", opcd(63), _frt, _res_11_15, _frb, xo_21_30(15), _rc);
-        define64("fcfid", opcd(63), _frt, _res_11_15, _frb, xo_21_30(846), _rc);
+        define("frsp", opcd(63), frt, res_11_15, frb, xo_21_30(12), rc);
+        define64("fctid", opcd(63), frt, res_11_15, frb, xo_21_30(814), rc);
+        define64("fctidz", opcd(63), frt, res_11_15, frb, xo_21_30(815), rc);
+        define("fctiw", opcd(63), frt, res_11_15, frb, xo_21_30(14), rc);
+        define("fctiwz", opcd(63), frt, res_11_15, frb, xo_21_30(15), rc);
+        define64("fcfid", opcd(63), frt, res_11_15, frb, xo_21_30(846), rc);
     }
 
     private void generateFloatingPointCompares() {
-        define("fcmpu", opcd(63), _bf, _res_9_10, _fra, _frb, xo_21_30(0), _res_31);
-        define("fcmpo", opcd(63), _bf, _res_9_10, _fra, _frb, xo_21_30(32), _res_31);
+        define("fcmpu", opcd(63), bf, res_9_10, fra, frb, xo_21_30(0), res_31);
+        define("fcmpo", opcd(63), bf, res_9_10, fra, frb, xo_21_30(32), res_31);
     }
 
     private void generateFloatingPointStatusAndCRs() {
-        define("mffs", opcd(63), _frt, _res_11_15, _res_16_20, xo_21_30(583), _rc);
-        define("mcrfs", opcd(63), _bf, _res_9_10, _bfa, _res_14_15, _res_16_20, xo_21_30(64), _res_31);
-        define("mtfsfi", opcd(63), _bf, _res_9_10, _res_11_15, _u, _res_20, xo_21_30(134), _rc);
-        define("mtfsf", opcd(63), _res_6, _flm, _res_15, _frb, xo_21_30(711), _rc);
-        define("mtfsb0", opcd(63), _bt, _res_11_15, _res_16_20, xo_21_30(70), _rc);
-        define("mtfsb1", opcd(63), _bt, _res_11_15, _res_16_20, xo_21_30(38), _rc);
+        define("mffs", opcd(63), frt, res_11_15, res_16_20, xo_21_30(583), rc);
+        define("mcrfs", opcd(63), bf, res_9_10, bfa, res_14_15, res_16_20, xo_21_30(64), res_31);
+        define("mtfsfi", opcd(63), bf, res_9_10, res_11_15, u, res_20, xo_21_30(134), rc);
+        define("mtfsf", opcd(63), res_6, flm, res_15, frb, xo_21_30(711), rc);
+        define("mtfsb0", opcd(63), bt, res_11_15, res_16_20, xo_21_30(70), rc);
+        define("mtfsb1", opcd(63), bt, res_11_15, res_16_20, xo_21_30(38), rc);
     }
 
     private void generateMoveToFromSystemRegistersOptional() {
-        define("mtocrf", opcd(31), _fxm, _rs, bit_11(1), _res_20, xo_21_30(144), _res_31);
+        define("mtocrf", opcd(31), fxm, rs, bit_11(1), res_20, xo_21_30(144), res_31);
         final Method predicateMethod = InstructionConstraint.Static.getPredicateMethod(CRF.class, "isExactlyOneCRFSelected", int.class);
-        final InstructionConstraint ic = InstructionConstraint.Static.makePredicate(predicateMethod, _fxm);
-        define("mfocrf", opcd(31), _rt, _fxm, bit_11(1), _res_20, xo_21_30(19), _res_31, ic);
+        final InstructionConstraint ic = InstructionConstraint.Static.makePredicate(predicateMethod, fxm);
+        define("mfocrf", opcd(31), rt, fxm, bit_11(1), res_20, xo_21_30(19), res_31, ic);
     }
 
     private void generateFloatingPointArithsOptional() {
-        define64("fsqrt", opcd(63), _frt, _res_11_15, _frb, _res_21_25, xo_26_30(22), _rc);
-        define("fsqrts", opcd(59), _frt, _res_11_15, _frb, _res_21_25, xo_26_30(22), _rc);
-        define64("fre", opcd(63), _frt, _res_11_15, _frb, _res_21_25, xo_26_30(24), _rc);
-        define("fres", opcd(59), _frt, _res_11_15, _frb, _res_21_25, xo_26_30(24), _rc);
-        define64("frsqrte", opcd(63), _frt, _res_11_15, _frb, _res_21_25, xo_26_30(26), _rc);
-        define("frsqrtes", opcd(59), _frt, _res_11_15, _frb, _res_21_25, xo_26_30(26), _rc);
+        define64("fsqrt", opcd(63), frt, res_11_15, frb, res_21_25, xo_26_30(22), rc);
+        define("fsqrts", opcd(59), frt, res_11_15, frb, res_21_25, xo_26_30(22), rc);
+        define64("fre", opcd(63), frt, res_11_15, frb, res_21_25, xo_26_30(24), rc);
+        define("fres", opcd(59), frt, res_11_15, frb, res_21_25, xo_26_30(24), rc);
+        define64("frsqrte", opcd(63), frt, res_11_15, frb, res_21_25, xo_26_30(26), rc);
+        define("frsqrtes", opcd(59), frt, res_11_15, frb, res_21_25, xo_26_30(26), rc);
     }
 
     private void generateFloatingPointSelectOptional() {
-        define("fsel", opcd(63), _frt, _fra, _frc, _frb, xo_26_30(23), _rc);
+        define("fsel", opcd(63), frt, fra, frc, frb, xo_26_30(23), rc);
     }
 
     private void generateDeprecated() {
-        define("mcrxr", opcd(31), _bf, _res_9_10, _res_11_15, _res_16_20, xo_21_30(512), _res_31);
+        define("mcrxr", opcd(31), bf, res_9_10, res_11_15, res_16_20, xo_21_30(512), res_31);
     }
 
     private void generateICacheManagement() {
-        define("icbi", opcd(31), _res_6_10, _ra0_notR0, _rb, xo_21_30(982), _res_31);
+        define("icbi", opcd(31), res_6_10, ra0_notR0, rb, xo_21_30(982), res_31);
     }
 
     private void generateDCacheManagement() {
-        define("dcbt", opcd(31), _res_6_10, _ra0_notR0, _rb, xo_21_30(278), _res_31);
-        define("dcbtst", opcd(31), _res_6_10, _ra0_notR0, _rb, xo_21_30(246), _res_31);
-        define("dcbz", opcd(31), _res_6_10, _ra0_notR0, _rb, xo_21_30(1014), _res_31);
-        define("dcbst", opcd(31), _res_6_10, _ra0_notR0, _rb, xo_21_30(54), _res_31);
-        define("dcbf", opcd(31), _res_6_10, _ra0_notR0, _rb, xo_21_30(86), _res_31);
+        define("dcbt", opcd(31), res_6_10, ra0_notR0, rb, xo_21_30(278), res_31);
+        define("dcbtst", opcd(31), res_6_10, ra0_notR0, rb, xo_21_30(246), res_31);
+        define("dcbz", opcd(31), res_6_10, ra0_notR0, rb, xo_21_30(1014), res_31);
+        define("dcbst", opcd(31), res_6_10, ra0_notR0, rb, xo_21_30(54), res_31);
+        define("dcbf", opcd(31), res_6_10, ra0_notR0, rb, xo_21_30(86), res_31);
     }
 
     private void generateInstructionSynchronization() {
-        define("isync", opcd(19), _res_6_10, _res_11_15, _res_16_20, xo_21_30(150), _res_31);
+        define("isync", opcd(19), res_6_10, res_11_15, res_16_20, xo_21_30(150), res_31);
     }
 
     private void generateAtomicUpdates() {
-        define("lwarx", opcd(31), _rt, _ra0_notR0, _rb, xo_21_30(20), _res_31);
-        define64("ldarx", opcd(31), _rt, _ra0_notR0, _rb, xo_21_30(84), _res_31);
-        define("stwcx", opcd(31), _rs, _ra0_notR0, _rb, xo_21_30(150), bit_31(1)).setExternalName("stwcx.");
-        define64("stdcx", opcd(31), _rs, _ra0_notR0, _rb, xo_21_30(214), bit_31(1)).setExternalName("stdcx.");
+        define("lwarx", opcd(31), rt, ra0_notR0, rb, xo_21_30(20), res_31);
+        define64("ldarx", opcd(31), rt, ra0_notR0, rb, xo_21_30(84), res_31);
+        define("stwcx", opcd(31), rs, ra0_notR0, rb, xo_21_30(150), bit_31(1)).setExternalName("stwcx.");
+        define64("stdcx", opcd(31), rs, ra0_notR0, rb, xo_21_30(214), bit_31(1)).setExternalName("stdcx.");
     }
 
     private void generateMemoryBarrier() {
-        define("sync", opcd(31), _res_6_10, _res_11_15, _res_16_20, xo_21_30(598), _res_31);
-        define("eieio", opcd(31), _res_6_10, _res_11_15, _res_16_20, xo_21_30(854), _res_31);
+        define("sync", opcd(31), res_6_10, res_11_15, res_16_20, xo_21_30(598), res_31);
+        define("eieio", opcd(31), res_6_10, res_11_15, res_16_20, xo_21_30(854), res_31);
     }
 }

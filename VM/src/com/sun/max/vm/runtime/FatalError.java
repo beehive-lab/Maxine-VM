@@ -42,7 +42,7 @@ public final class FatalError extends Error {
     static {
         ProgramError.setHandler(new Handler() {
             public void handle(String message, Throwable throwable) {
-                unexpected(message, throwable);
+                unexpected(message, Address.zero(), throwable);
             }
         });
     }
@@ -56,7 +56,7 @@ public final class FatalError extends Error {
     }
 
     private FatalError(String msg, Throwable throwable) {
-        super(msg);
+        super(msg, throwable);
     }
 
     /**

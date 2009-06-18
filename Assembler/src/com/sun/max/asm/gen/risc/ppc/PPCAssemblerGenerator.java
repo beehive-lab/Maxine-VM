@@ -25,7 +25,6 @@ import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.dis.ppc.*;
 import com.sun.max.asm.gen.risc.*;
-import com.sun.max.asm.ppc.complete.*;
 import com.sun.max.collect.*;
 
 /**
@@ -51,15 +50,15 @@ public final class PPCAssemblerGenerator extends RiscAssemblerGenerator<PPCTempl
 
     public static void main(String[] programArguments) {
         final PPCAssemblerGenerator generator = new PPCAssemblerGenerator();
-        generator._options.parseArguments(programArguments);
+        generator.options.parseArguments(programArguments);
         generator.generate();
     }
 
     @Override
     protected DisassembledInstruction generateExampleInstruction(PPCTemplate template, IndexedSequence<Argument> arguments) throws AssemblyException {
-        final PPCAssembler assembler = new PPC32Assembler(0);
-        assembly().assemble(assembler, template, arguments);
-        final byte[] bytes = assembler.toByteArray();
-        return new PPC32DisassembledInstruction(new PPC32Disassembler(0, null), 0, bytes, template, arguments);
+//        final PPCAssembler assembler = new PPC32Assembler(0);
+//        assembly().assemble(assembler, template, arguments);
+//        final byte[] bytes = assembler.toByteArray();
+        return new PPC32DisassembledInstruction(new PPC32Disassembler(0, null), 0, new byte[] {0, 0, 0, 0}, template, arguments);
     }
 }

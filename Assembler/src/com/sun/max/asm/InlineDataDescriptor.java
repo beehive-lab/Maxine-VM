@@ -161,12 +161,12 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
      * Describes an unstructured sequence of non-code bytes in an instruction stream.
      */
     public static class ByteData extends InlineDataDescriptor {
-        private final Label _startPosition;
-        private final int _size;
+        private final Label startPosition;
+        private final int size;
 
         public ByteData(Label startPosition, int size) {
-            _startPosition = startPosition;
-            _size = size;
+            this.startPosition = startPosition;
+            this.size = size;
         }
 
         public ByteData(int startPosition, int size) {
@@ -174,26 +174,26 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
         }
 
         public ByteData(DataInputStream dataInputStream) throws IOException {
-            _startPosition = new Label();
-            _startPosition.bind(dataInputStream.readInt());
-            _size = dataInputStream.readInt();
+            startPosition = new Label();
+            startPosition.bind(dataInputStream.readInt());
+            size = dataInputStream.readInt();
         }
 
         @Override
         public void writeBody(DataOutputStream dataOutputStream) throws IOException {
             dataOutputStream.writeInt(startPosition());
-            dataOutputStream.writeInt(_size);
+            dataOutputStream.writeInt(size);
         }
 
         @Override
         public int size() {
-            return _size;
+            return size;
         }
 
         @Override
         public int startPosition() {
             try {
-                return _startPosition.position();
+                return startPosition.position();
             } catch (AssemblyException assemblyException) {
                 throw ProgramError.unexpected("Cannot get start position of " + getClass().getSimpleName() + " until labels have been fixed", assemblyException);
             }
@@ -239,36 +239,36 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
      * inclusive. The number of entries is given by the expression {@code high() - low() + 1}.
      */
     public static final class JumpTable32 extends InlineDataDescriptor {
-        private final Label _tablePosition;
-        private final int _low;
-        private final int _high;
+        private final Label tablePosition;
+        private final int low;
+        private final int high;
 
         public JumpTable32(int tablePosition, int low, int high) {
             this(Label.createBoundLabel(tablePosition), low, high);
         }
 
         public JumpTable32(Label tablePosition, int low, int high) {
-            _tablePosition = tablePosition;
-            _low = low;
-            _high = high;
+            this.tablePosition = tablePosition;
+            this.low = low;
+            this.high = high;
         }
 
         public JumpTable32(DataInputStream dataInputStream) throws IOException {
-            _tablePosition = new Label();
-            _tablePosition.bind(dataInputStream.readInt());
-            _low = dataInputStream.readInt();
-            _high = dataInputStream.readInt();
+            tablePosition = new Label();
+            tablePosition.bind(dataInputStream.readInt());
+            low = dataInputStream.readInt();
+            high = dataInputStream.readInt();
         }
 
         @Override
         public void writeBody(DataOutputStream dataOutputStream) throws IOException {
             dataOutputStream.writeInt(startPosition());
-            dataOutputStream.writeInt(_low);
-            dataOutputStream.writeInt(_high);
+            dataOutputStream.writeInt(low);
+            dataOutputStream.writeInt(high);
         }
 
         public int numberOfEntries() {
-            return _high - _low + 1;
+            return high - low + 1;
         }
 
         @Override
@@ -279,7 +279,7 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
         @Override
         public int startPosition() {
             try {
-                return _tablePosition.position();
+                return tablePosition.position();
             } catch (AssemblyException assemblyException) {
                 throw ProgramError.unexpected("Cannot get start position of " + getClass().getSimpleName() + " until labels have been fixed", assemblyException);
             }
@@ -295,17 +295,17 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
         }
 
         public int low() {
-            return _low;
+            return low;
         }
 
         public int high() {
-            return _high;
+            return high;
         }
 
         @Override
         public String toString() {
-            final String start = _tablePosition.state() != State.BOUND ? "?" : String.valueOf(startPosition());
-            return super.toString() + "[start=" + start + ", size=" + size() + ", low=" + _low + ", high=" + _high + "]";
+            final String start = tablePosition.state() != State.BOUND ? "?" : String.valueOf(startPosition());
+            return super.toString() + "[start=" + start + ", size=" + size() + ", low=" + low + ", high=" + high + "]";
         }
     }
 
@@ -318,32 +318,32 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
      * instruction).
      */
     public static final class LookupTable32 extends InlineDataDescriptor {
-        private final Label _tablePosition;
-        private final int _numberOfEntries;
+        private final Label tablePosition;
+        private final int numberOfEntries;
 
         public LookupTable32(int tablePosition, int numberOfEntries) {
             this(Label.createBoundLabel(tablePosition), numberOfEntries);
         }
 
         public LookupTable32(Label tablePosition, int numberOfEntries) {
-            _tablePosition = tablePosition;
-            _numberOfEntries = numberOfEntries;
+            this.tablePosition = tablePosition;
+            this.numberOfEntries = numberOfEntries;
         }
 
         public LookupTable32(DataInputStream dataInputStream) throws IOException {
-            _tablePosition = new Label();
-            _tablePosition.bind(dataInputStream.readInt());
-            _numberOfEntries = dataInputStream.readInt();
+            tablePosition = new Label();
+            tablePosition.bind(dataInputStream.readInt());
+            numberOfEntries = dataInputStream.readInt();
         }
 
         @Override
         public void writeBody(DataOutputStream dataOutputStream) throws IOException {
             dataOutputStream.writeInt(startPosition());
-            dataOutputStream.writeInt(_numberOfEntries);
+            dataOutputStream.writeInt(numberOfEntries);
         }
 
         public int numberOfEntries() {
-            return _numberOfEntries;
+            return numberOfEntries;
         }
 
         @Override
@@ -354,7 +354,7 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
         @Override
         public int startPosition() {
             try {
-                return _tablePosition.position();
+                return tablePosition.position();
             } catch (AssemblyException assemblyException) {
                 throw ProgramError.unexpected("Cannot get start position of " + getClass().getSimpleName() + " until labels have been fixed", assemblyException);
             }
@@ -371,8 +371,8 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
 
         @Override
         public String toString() {
-            final String start = _tablePosition.state() != State.BOUND ? "?" : String.valueOf(startPosition());
-            return super.toString() + "[start=" + start + ", size=" + size() + ", numberOfEntries=" + _numberOfEntries + "]";
+            final String start = tablePosition.state() != State.BOUND ? "?" : String.valueOf(startPosition());
+            return super.toString() + "[start=" + start + ", size=" + size() + ", numberOfEntries=" + numberOfEntries + "]";
         }
     }
 }

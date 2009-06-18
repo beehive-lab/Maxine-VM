@@ -63,10 +63,10 @@ public class AMD64Disassembler extends X86Disassembler<AMD64Template, AMD64Disas
         return new AMD64Assembler(startAddress().asLong() + position);
     }
 
-    private static Map<X86InstructionHeader, AppendableSequence<AMD64Template>> _headerToTemplates = X86InstructionHeader.createMapping(AMD64Assembly.ASSEMBLY, WordWidth.BITS_64);
+    private static Map<X86InstructionHeader, AppendableSequence<AMD64Template>> headerToTemplates = X86InstructionHeader.createMapping(AMD64Assembly.ASSEMBLY, WordWidth.BITS_64);
 
     @Override
     protected Map<X86InstructionHeader, AppendableSequence<AMD64Template>> headerToTemplates() {
-        return _headerToTemplates;
+        return headerToTemplates;
     }
 }

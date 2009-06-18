@@ -29,11 +29,11 @@ import com.sun.max.asm.gen.*;
  */
 public abstract class DisassembledData implements DisassembledObject {
 
-    private final ImmediateArgument _startAddress;
-    private final int _startPosition;
-    private final byte[] _bytes;
-    private final String _mnemonic;
-    private final ImmediateArgument _targetAddress;
+    private final ImmediateArgument startAddress;
+    private final int startPosition;
+    private final byte[] bytes;
+    private final String mnemonic;
+    private final ImmediateArgument targetAddress;
 
     /**
      * Creates an object encapsulating some inline data that starts at a given position.
@@ -44,15 +44,15 @@ public abstract class DisassembledData implements DisassembledObject {
      * @param bytes the raw bytes of the inline data
      */
     public DisassembledData(ImmediateArgument startAddress, int startPosition, String mnemonic, byte[] bytes, ImmediateArgument targetAddress) {
-        _startAddress = startAddress;
-        _startPosition = startPosition;
-        _mnemonic = mnemonic;
-        _bytes = bytes;
-        _targetAddress = targetAddress;
+        this.startAddress = startAddress;
+        this.startPosition = startPosition;
+        this.mnemonic = mnemonic;
+        this.bytes = bytes;
+        this.targetAddress = targetAddress;
     }
 
     public ImmediateArgument startAddress() {
-        return _startAddress;
+        return startAddress;
     }
 
     public ImmediateArgument endAddress() {
@@ -60,15 +60,15 @@ public abstract class DisassembledData implements DisassembledObject {
     }
 
     public int startPosition() {
-        return _startPosition;
+        return startPosition;
     }
 
     public int endPosition() {
-        return _startPosition + _bytes.length;
+        return startPosition + bytes.length;
     }
 
     public byte[] bytes() {
-        return _bytes.clone();
+        return bytes.clone();
     }
 
     public Type type() {
@@ -76,11 +76,11 @@ public abstract class DisassembledData implements DisassembledObject {
     }
 
     public ImmediateArgument targetAddress() {
-        return _targetAddress;
+        return targetAddress;
     }
 
     public String mnemonic() {
-        return _mnemonic;
+        return mnemonic;
     }
 
     public abstract String operandsToString(AddressMapper addressMapper);

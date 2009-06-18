@@ -30,14 +30,14 @@ public enum TestRegister implements EnumerableArgument<TestRegister> {
 
     TR3(3), TR4(4), TR5(5), TR6(6), TR7(7);
 
-    private final int _number;
+    private final int number;
 
     private TestRegister(int number) {
-        _number = number;
+        this.number = number;
     }
 
     public int value() {
-        return _number;
+        return number;
     }
 
     public long asLong() {

@@ -52,13 +52,13 @@ public enum AMD64GeneralRegister8 implements GeneralRegister<AMD64GeneralRegiste
 
     public static final Enumerator<AMD64GeneralRegister8> ENUMERATOR = new Enumerator<AMD64GeneralRegister8>(AMD64GeneralRegister8.class);
 
-    private final int _value;
-    private final boolean _isHighByte;
+    private final int value;
+    private final boolean isHighByte;
 
 
     private AMD64GeneralRegister8(int value, boolean isHighByte) {
-        _value = value;
-        _isHighByte = isHighByte;
+        this.value = value;
+        this.isHighByte = isHighByte;
     }
 
     public static AMD64GeneralRegister8 lowFrom(GeneralRegister generalRegister) {
@@ -70,18 +70,18 @@ public enum AMD64GeneralRegister8 implements GeneralRegister<AMD64GeneralRegiste
     }
 
     public static AMD64GeneralRegister8 fromValue(int value, boolean isRexBytePresent) {
-        if (!isRexBytePresent && value >= AH._value) {
-            return ENUMERATOR.get((value - AH._value) + AH.ordinal());
+        if (!isRexBytePresent && value >= AH.value) {
+            return ENUMERATOR.get((value - AH.value) + AH.ordinal());
         }
         return ENUMERATOR.fromValue(value);
     }
 
     public boolean isHighByte() {
-        return _isHighByte;
+        return isHighByte;
     }
 
     public boolean requiresRexPrefix() {
-        return _value >= 4 && !_isHighByte;
+        return value >= 4 && !isHighByte;
     }
 
     public WordWidth width() {
@@ -93,7 +93,7 @@ public enum AMD64GeneralRegister8 implements GeneralRegister<AMD64GeneralRegiste
     }
 
     public int value() {
-        return _value;
+        return value;
     }
 
     public long asLong() {

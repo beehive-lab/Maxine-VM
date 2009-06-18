@@ -29,16 +29,15 @@ package com.sun.max.asm.gen.risc.bitRange;
  */
 public abstract class SimpleBitRange extends ContiguousBitRange {
 
-    protected final int _firstBitIndex;
-    protected final int _lastBitIndex;
+    protected final int firstBitIndex;
+    protected final int lastBitIndex;
 
     protected SimpleBitRange(int firstBitIndex, int lastBitIndex) {
-        super();
         if (!(firstBitIndex >= 0 && lastBitIndex >= 0 && firstBitIndex < 32 && lastBitIndex < 32)) {
             throw new IllegalArgumentException("bit indexes must be between 0 and 31");
         }
-        _firstBitIndex = firstBitIndex;
-        _lastBitIndex = lastBitIndex;
+        this.firstBitIndex = firstBitIndex;
+        this.lastBitIndex = lastBitIndex;
     }
 
     @Override
@@ -59,12 +58,12 @@ public abstract class SimpleBitRange extends ContiguousBitRange {
             return false;
         }
         final SimpleBitRange simpleBitRange = (SimpleBitRange) other;
-        return _firstBitIndex == simpleBitRange._firstBitIndex && _lastBitIndex == simpleBitRange._lastBitIndex;
+        return firstBitIndex == simpleBitRange.firstBitIndex && lastBitIndex == simpleBitRange.lastBitIndex;
     }
 
     @Override
     public int hashCode() {
-        return _firstBitIndex ^ _lastBitIndex;
+        return firstBitIndex ^ lastBitIndex;
     }
 
     // extracting
@@ -112,6 +111,6 @@ public abstract class SimpleBitRange extends ContiguousBitRange {
 
     @Override
     public String toString() {
-        return _firstBitIndex + ":" + _lastBitIndex;
+        return firstBitIndex + ":" + lastBitIndex;
     }
 }

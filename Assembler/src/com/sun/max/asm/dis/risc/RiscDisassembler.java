@@ -101,12 +101,12 @@ public abstract class RiscDisassembler<Template_Type extends RiscTemplate, Disas
                         final IndexedSequence<Argument> arguments = disassemble(instruction, template);
                         if (arguments != null && (expectedNumberOfArguments() < 0 || arguments.length() == expectedNumberOfArguments())) {
                             if (isLegalArgumentList(template, arguments)) {
-                                final Assembler assembler = createAssembler(_currentPosition);
+                                final Assembler assembler = createAssembler(currentPosition);
                                 try {
                                     assembly().assemble(assembler, template, arguments);
                                     final byte[] bytes = assembler.toByteArray();
                                     if (Arrays.equals(bytes, instructionBytes)) {
-                                        final DisassembledInstruction_Type disassembledInstruction = createDisassembledInstruction(_currentPosition, bytes, template, arguments);
+                                        final DisassembledInstruction_Type disassembledInstruction = createDisassembledInstruction(currentPosition, bytes, template, arguments);
                                         result.append(disassembledInstruction);
                                     }
                                 } catch (AssemblyException assemblyException) {
@@ -121,14 +121,14 @@ public abstract class RiscDisassembler<Template_Type extends RiscTemplate, Disas
         if (result.isEmpty()) {
             if (INLINE_INVALID_INSTRUCTIONS_AS_BYTES) {
                 stream.reset();
-                final InlineData inlineData = new InlineData(_currentPosition, instructionBytes);
+                final InlineData inlineData = new InlineData(currentPosition, instructionBytes);
                 final DisassembledData disassembledData = createDisassembledDataObjects(inlineData).iterator().next();
                 result.append(disassembledData);
             } else {
                 throw new AssemblyException("instruction could not be disassembled: " + Bytes.toHexLiteral(endianness().toBytes(instruction)));
             }
         }
-        _currentPosition += 4;
+        currentPosition += 4;
         return result;
     }
 
@@ -166,7 +166,7 @@ public abstract class RiscDisassembler<Template_Type extends RiscTemplate, Disas
 
     protected abstract Template_Type createInlineDataTemplate(InstructionDescription instructionDescription);
 
-    private final ImmediateOperandField[] _byteFields = {createByteField(0), createByteField(1), createByteField(2), createByteField(3)};
+    private final ImmediateOperandField[] byteFields = {createByteField(0), createByteField(1), createByteField(2), createByteField(3)};
 
     private ImmediateOperandField createByteField(int index) {
         if (assembly().bitRangeEndianness() == BitRangeOrder.ASCENDING) {

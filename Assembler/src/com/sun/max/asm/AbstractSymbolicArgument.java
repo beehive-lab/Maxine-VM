@@ -30,28 +30,28 @@ import com.sun.max.lang.*;
  */
 public abstract class AbstractSymbolicArgument implements SymbolicArgument, StaticFieldName {
 
-    private String _name;
-    private final int _value;
+    private String name;
+    private final int value;
 
     protected AbstractSymbolicArgument(String name, int value) {
-        _name = name;
-        _value = value;
+        this.name = name;
+        this.value = value;
     }
 
     protected AbstractSymbolicArgument(int value) {
-        _value = value;
+        this.value = value;
     }
 
     public void setName(String name) {
-        _name = name;
+        this.name = name;
     }
 
     public String name() {
-        return _name;
+        return name;
     }
 
     public int value() {
-        return _value;
+        return value;
     }
 
     public String externalValue() {

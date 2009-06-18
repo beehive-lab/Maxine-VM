@@ -27,10 +27,10 @@ import com.sun.max.lang.*;
  */
 public class Immediate64Argument extends ImmediateArgument {
 
-    private long _value;
+    private final long value;
 
     public Immediate64Argument(long value) {
-        _value = value;
+        this.value = value;
     }
 
     @Override
@@ -39,7 +39,7 @@ public class Immediate64Argument extends ImmediateArgument {
     }
 
     public long value() {
-        return _value;
+        return value;
     }
 
     public long asLong() {
@@ -47,35 +47,35 @@ public class Immediate64Argument extends ImmediateArgument {
     }
 
     public String externalValue() {
-        return "0x" + Long.toHexString(_value);
+        return "0x" + Long.toHexString(value);
     }
 
     public String disassembledValue() {
-        return "0x" + String.format("%X", _value);
+        return "0x" + String.format("%X", value);
     }
 
     @Override
     public String signedExternalValue() {
-        return Long.toString(_value);
+        return Long.toString(value);
     }
 
     @Override
     public Object boxedJavaValue() {
-        return new Long(_value);
+        return new Long(value);
     }
 
     @Override
     public boolean equals(Object other) {
         if (other instanceof Immediate64Argument) {
             final Immediate64Argument argument = (Immediate64Argument) other;
-            return _value == argument._value;
+            return value == argument.value;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return (int) (_value ^ _value >> 32);
+        return (int) (value ^ value >> 32);
     }
 
 }

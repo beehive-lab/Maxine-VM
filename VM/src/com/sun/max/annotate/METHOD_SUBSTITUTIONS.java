@@ -38,7 +38,7 @@ import com.sun.max.vm.type.*;
  * class (the {@link #value "substitutee"}).
  *
  * @see SUBSTITUTE
- * 
+ *
  * @author Bernd Mathiske
  */
 @Retention(RetentionPolicy.RUNTIME)
@@ -146,7 +146,7 @@ public @interface METHOD_SUBSTITUTIONS {
 
         /**
          * Searches for a substitute implementation for a given method.
-         * 
+         *
          * @param originalMethod
          * @return a substitute implementation for {@code javaMethod} or null if no substitution is found
          */
