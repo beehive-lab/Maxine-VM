@@ -229,6 +229,9 @@ public class C1XCompilation {
      */
     public BlockMap getBlockMap(CiMethod method, int osrBCI) {
         // XXX: cache the block map for methods that are compiled or inlined often
+        if (_totalBlocks == 0) {
+            _totalBlocks = 1; // start at block 1 to skip header block
+        }
         BlockMap map = new BlockMap(method, _totalBlocks);
         boolean isOsrCompilation = false;
         if (osrBCI >= 0) {

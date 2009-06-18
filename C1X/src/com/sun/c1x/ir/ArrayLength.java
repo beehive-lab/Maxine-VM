@@ -23,6 +23,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.value.ValueType;
 import com.sun.c1x.util.InstructionVisitor;
+import com.sun.c1x.util.Util;
 import com.sun.c1x.bytecode.Bytecodes;
 
 /**
@@ -70,7 +71,7 @@ public class ArrayLength extends AccessArray {
 
     @Override
     public int valueNumber() {
-        return hash1(Bytecodes.ARRAYLENGTH, _array);
+        return Util.hash1(Bytecodes.ARRAYLENGTH, _array);
     }
 
     @Override

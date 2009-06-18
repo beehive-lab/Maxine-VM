@@ -21,15 +21,40 @@
 package com.sun.c1x.ci;
 
 /**
- * The <code>CiExceptionHandler</code> class definition.
+ * The <code>CiExceptionHandler</code> interface represents an exception
+ * handler.
  *
  * @author Ben L. Titzer
  */
 public interface CiExceptionHandler {
+    /**
+     * Gets the start bytecode index of the protected range of this handler.
+     * @return the start bytecode index
+     */
     int startBCI();
+
+    /**
+     * Gets the end bytecode index of the protected range of this handler.
+     * @return the end bytecode index
+     */
     int endBCI();
+
+    /**
+     * Gets the bytecode index of the handler block of this handler.
+     * @return the handler block bytecode index
+     */
     int handlerBCI();
+
+    /**
+     * Gets the index into the constant pool representing the type of exceptions
+     * caught by this handler.
+     * @return the constant pool index of the catch type
+     */
     int catchClassIndex();
+
+    /**
+     * Checks whether this handler catches all exceptions.
+     * @return {@code true} if this handler catches all exceptions
+     */
     boolean isCatchAll();
-    boolean isRethrow();
 }

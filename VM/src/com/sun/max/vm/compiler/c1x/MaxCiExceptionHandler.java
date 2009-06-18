@@ -89,11 +89,4 @@ public class MaxCiExceptionHandler implements CiExceptionHandler {
         return _classCPI == 0;
     }
 
-    /**
-     * Checks whether this is a handler that simply rethrows the exception.
-     * @return <code>true</code> if this handler simply rethrows the exception
-     */
-    public boolean isRethrow() {
-        return false;
-    }
 }

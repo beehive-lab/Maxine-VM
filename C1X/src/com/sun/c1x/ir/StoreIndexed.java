@@ -22,6 +22,7 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.util.InstructionClosure;
 import com.sun.c1x.util.InstructionVisitor;
+import com.sun.c1x.util.Util;
 import com.sun.c1x.value.BasicType;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.value.ValueType;
@@ -106,7 +107,7 @@ public class StoreIndexed extends AccessIndexed {
 
     @Override
     public int valueNumber() {
-        return hash3(125, _array, _index, _value);
+        return Util.hash3(125, _array, _index, _value);
     }
 
     @Override

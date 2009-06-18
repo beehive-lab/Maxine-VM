@@ -23,20 +23,80 @@ package com.sun.c1x.ci;
 import com.sun.c1x.value.BasicType;
 
 /**
- * The <code>CiField</code> class definition.
+ * The <code>CiField</code> interface represents a reference to a field, including both
+ * resolved and unresolved fields. Fields, like methods and types, are resolved through
+ * {@link CiConstantPool constant pools}, and their actual implementation is provided
+ * by the {@link CiRuntime runtime} to the compiler. Note that some operations are only
+ * available on resolved fields.
  *
  * @author Ben L. Titzer
  */
 public interface CiField {
+    /**
+     * Gets the name of this field as a string.
+     * @return the name of this field
+     */
     String name();
+
+    /**
+     * Gets the type of this field as a compiler interface type.
+     * @return the type of this field
+     */
     CiType type();
+
+    /**
+     * Gets the basic type of this field.
+     * @return the basic type
+     */
     BasicType basicType();
+
+    /**
+     * Gets the holder of this field as a compiler interface type.
+     * @return the holder of this field
+     */
     CiType holder();
+
+
     boolean willLink(CiType where, int opcode);
+
+    /**
+     * Checks whether this field is loaded (i.e. resolved).
+     * @return {@code true} if this field is resolved
+     */
     boolean isLoaded();
+
+    /**
+     * Checks whether this field is volatile.
+     * ONLY AVAILABLE FOR RESOLVED FIELDS.
+     * @return {@code true} if this field is volatile
+     */
     boolean isVolatile();
+
+    /**
+     * Checks whether this field is constant.
+     * ONLY AVAILABLE FOR RESOLVED FIELDS.
+     * @return {@code true} if this field is constant
+     */
     boolean isConstant();
+
+    /**
+     * Checks whether this field is static
+     * ONLY AVAILABLE FOR RESOLVED FIELDS.
+     * @return {@code true} if this field is static
+     */
     boolean isStatic();
+
+    /**
+     * Gets the offset of this field from the origin of an object.
+     * ONLY AVAILABLE FOR RESOLVED FIELDS.
+     * @return the offset of the field from origin of an object.
+     */
     int offset();
+
+    /**
+     * Gets the constant value of this field, if it is a constant (i.e. {@code static final} and <i>initialized</i>).
+     * ONLY AVAILABLE FOR RESOLVED FIELDS.
+     * @return the constant value of this field
+     */
     CiConstant constantValue();
 }

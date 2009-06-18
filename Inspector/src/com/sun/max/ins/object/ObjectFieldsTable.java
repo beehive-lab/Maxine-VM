@@ -388,14 +388,14 @@ public final class ObjectFieldsTable extends InspectorTable {
             if (label == null) {
                 final FieldActor fieldActor = (FieldActor) value;
                 if (fieldActor.kind() == Kind.REFERENCE) {
-                    label = new WordValueLabel(_inspection, WordValueLabel.ValueMode.REFERENCE) {
+                    label = new WordValueLabel(_inspection, WordValueLabel.ValueMode.REFERENCE, ObjectFieldsTable.this) {
                         @Override
                         public Value fetchValue() {
                             return _teleObject.readFieldValue(fieldActor);
                         }
                     };
                 } else if (fieldActor.kind() == Kind.WORD) {
-                    label = new WordValueLabel(_inspection, WordValueLabel.ValueMode.WORD) {
+                    label = new WordValueLabel(_inspection, WordValueLabel.ValueMode.WORD, ObjectFieldsTable.this) {
                         @Override
                         public Value fetchValue() {
                             return _teleObject.readFieldValue(fieldActor);

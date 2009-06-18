@@ -259,7 +259,7 @@ public class StackInspector extends Inspector {
 
             final JPanel header = new InspectorPanel(inspection(), new SpringLayout());
             header.add(new TextLabel(inspection(), "start: "));
-            header.add(new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, _thread.stack().start()));
+            header.add(new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, _thread.stack().start(), _contentPane));
             header.add(new TextLabel(inspection(), "size: "));
             header.add(new DataLabel.IntAsDecimal(inspection(), _thread.stack().size().toInt()));
             SpringUtilities.makeCompactGrid(header, 2);
@@ -409,11 +409,11 @@ public class StackInspector extends Inspector {
             addLabel(header, new TextLabel(inspection(), "Frame size:", frameClassName));
             addLabel(header, new DataLabel.IntAsDecimal(inspection(), adapterStackFrame.layout().frameSize()));
             addLabel(header, new TextLabel(inspection(), "Frame pointer:", frameClassName));
-            addLabel(header, new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, adapterStackFrame.framePointer()));
+            addLabel(header, new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, adapterStackFrame.framePointer(), this));
             addLabel(header, new TextLabel(inspection(), "Stack pointer:", frameClassName));
             addLabel(header, new DataLabel.AddressAsHex(inspection(), adapterStackFrame.stackPointer()));
             addLabel(header, new TextLabel(inspection(), "Instruction pointer:", frameClassName));
-            addLabel(header, new WordValueLabel(inspection(), ValueMode.INTEGER_REGISTER, adapterStackFrame.instructionPointer()));
+            addLabel(header, new WordValueLabel(inspection(), ValueMode.INTEGER_REGISTER, adapterStackFrame.instructionPointer(), this));
             SpringUtilities.makeCompactGrid(header, 2);
 
             add(header, BorderLayout.NORTH);
@@ -459,7 +459,7 @@ public class StackInspector extends Inspector {
             final int frameSize = javaStackFrame.layout().frameSize();
 
             final JPanel header = new InspectorPanel(inspection(), new SpringLayout());
-            _instructionPointerLabel = new WordValueLabel(inspection(), ValueMode.INTEGER_REGISTER) {
+            _instructionPointerLabel = new WordValueLabel(inspection(), ValueMode.INTEGER_REGISTER, this) {
                 @Override
                 public Value fetchValue() {
                     return WordValue.from(stackFrame().instructionPointer());
@@ -496,7 +496,7 @@ public class StackInspector extends Inspector {
                 final int offset = slot.offset();
                 final TextLabel slotLabel = new TextLabel(inspection(), slot.name() + ":");
                 slotsPanel.add(slotLabel);
-                final WordValueLabel slotValue = new WordValueLabel(inspection(), WordValueLabel.ValueMode.INTEGER_REGISTER) {
+                final WordValueLabel slotValue = new WordValueLabel(inspection(), WordValueLabel.ValueMode.INTEGER_REGISTER, this) {
                     @Override
                     public Value fetchValue() {
                         // TODO (mlvdv)  generalize this, and catch at {@link WordValueLabel}
