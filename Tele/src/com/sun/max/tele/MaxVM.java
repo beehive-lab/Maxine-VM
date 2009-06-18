@@ -630,7 +630,7 @@ public interface MaxVM {
     TeleBytecodeBreakpoint getBytecodeBreakpoint(Key key);
 
     /**
-     * @return are watchpoints enabled in the VM?
+     * @return are watchpoints implemented in this VM configuration?
      */
     boolean watchpointsEnabled();
 
