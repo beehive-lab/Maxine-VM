@@ -34,7 +34,7 @@ import com.sun.c1x.value.*;
  *
  * @author Doug Simon
  */
-public class InstructionPrinter implements InstructionVisitor {
+public class InstructionPrinter extends InstructionVisitor {
     /**
      * The columns printed in a tabulated instruction
      * {@linkplain InstructionPrinter#printInstructionListing(Instruction) listing}.
@@ -146,6 +146,7 @@ public class InstructionPrinter implements InstructionVisitor {
         _out.println();
     }
 
+    @Override
     public void visitArithmeticOp(ArithmeticOp arithOp) {
         _out.print(arithOp.x()).
              print(' ').
@@ -154,10 +155,12 @@ public class InstructionPrinter implements InstructionVisitor {
              print(arithOp.y());
     }
 
+    @Override
     public void visitArrayLength(ArrayLength i) {
         _out.print(i.array()).print(".length");
     }
 
+    @Override
     public void visitBase(Base i) {
         _out.print("std entry B").print(i.standardEntry().blockID());
         if (i.successors().size() > 1) {
@@ -165,6 +168,7 @@ public class InstructionPrinter implements InstructionVisitor {
         }
     }
 
+    @Override
     public void visitBlockBegin(BlockBegin block) {
         // print block id
         BlockEnd end = block.end();
@@ -313,6 +317,7 @@ public class InstructionPrinter implements InstructionVisitor {
         return value instanceof Phi && ((Phi) value).block() == block;
     }
 
+    @Override
     public void visitCheckCast(CheckCast checkcast) {
         _out.print("checkcast(").
              print(checkcast.object()).
@@ -320,6 +325,7 @@ public class InstructionPrinter implements InstructionVisitor {
              print(checkcast.targetClass().name());
     }
 
+    @Override
     public void visitCompareOp(CompareOp compareOp) {
         _out.print(compareOp.x()).
              print(' ').
@@ -328,6 +334,7 @@ public class InstructionPrinter implements InstructionVisitor {
              print(compareOp.y());
     }
 
+    @Override
     public void visitConstant(Constant constant) {
         ValueType type = constant.type();
         if (type == ConstType.NULL_OBJECT) {
@@ -354,14 +361,17 @@ public class InstructionPrinter implements InstructionVisitor {
         }
     }
 
+    @Override
     public void visitConvert(Convert convert) {
         _out.print(Bytecodes.name(convert.opcode())).print('(').print(convert.value()).print(')');
     }
 
+    @Override
     public void visitExceptionObject(ExceptionObject i) {
         _out.print("incoming exception");
     }
 
+    @Override
     public void visitGoto(Goto go2) {
         _out.print("goto B").print(go2.defaultSuccessor().blockID());
         if (go2.isSafepoint()) {
@@ -369,6 +379,7 @@ public class InstructionPrinter implements InstructionVisitor {
         }
     }
 
+    @Override
     public void visitIf(If i) {
         _out.print("if ").
              print(i.x()).
@@ -385,10 +396,12 @@ public class InstructionPrinter implements InstructionVisitor {
         }
     }
 
+    @Override
     public void visitIfInstanceOf(IfInstanceOf i) {
         _out.print("<IfInstanceOf>");
     }
 
+    @Override
     public void visitIfOp(IfOp i) {
         _out.print(i.x()).
              print(' ').
@@ -401,10 +414,12 @@ public class InstructionPrinter implements InstructionVisitor {
              print(i.falseValue());
     }
 
+    @Override
     public void visitInstanceOf(InstanceOf i) {
         _out.print("instanceof(").print(i.object()).print(") ").print(i.targetClass().name());
     }
 
+    @Override
     public void visitIntrinsic(Intrinsic intrinsic) {
         _out.print(intrinsic.intrinsic().simpleClassName()).print('.').print(intrinsic.intrinsic().name()).print('(');
         for (int i = 0; i < intrinsic.arguments().length; i++) {
@@ -416,6 +431,7 @@ public class InstructionPrinter implements InstructionVisitor {
         _out.print(')');
     }
 
+    @Override
     public void visitInvoke(Invoke invoke) {
         if (invoke.object() != null) {
             _out.print(invoke.object()).print('.');
@@ -435,6 +451,7 @@ public class InstructionPrinter implements InstructionVisitor {
           _out.print(target.holder().name()).print('.').print(target.name()).print(target.signatureType().asString());
     }
 
+    @Override
     public void visitLoadField(LoadField i) {
         _out.print(i.object()).
              print("._").
@@ -444,18 +461,22 @@ public class InstructionPrinter implements InstructionVisitor {
              print(")");
     }
 
+    @Override
     public void visitLoadIndexed(LoadIndexed load) {
         _out.print(load).print('[').print(load.index()).print("] (").print(load.type().tchar()).print(')');
     }
 
+    @Override
     public void visitLocal(Local local) {
         _out.print("local[index ").print(local.javaIndex()).print(']');
     }
 
+    @Override
     public void visitLogicOp(LogicOp logicOp) {
         _out.print(logicOp.x()).print(' ').print(Bytecodes.operator(logicOp.opcode())).print(' ').print(logicOp.y());
     }
 
+    @Override
     public void visitLookupSwitch(LookupSwitch lswitch) {
         _out.print("lookupswitch ");
         if (lswitch.isSafepoint()) {
@@ -472,22 +493,27 @@ public class InstructionPrinter implements InstructionVisitor {
 
     }
 
+    @Override
     public void visitMonitorEnter(MonitorEnter monitorenter) {
         _out.print("enter monitor[").print(monitorenter.lockNumber()).print("](").print(monitorenter.object()).print(')');
     }
 
+    @Override
     public void visitMonitorExit(MonitorExit monitorexit) {
         _out.print("exit monitor[").print(monitorexit.lockNumber()).print("](").print(monitorexit.object()).print(')');
     }
 
+    @Override
     public void visitNegateOp(NegateOp negate) {
         _out.print('-').print(negate);
     }
 
+    @Override
     public void visitNewInstance(NewInstance newInstance) {
         _out.print("new instance ").print(newInstance.instanceClass().name());
     }
 
+    @Override
     public void visitNewMultiArray(NewMultiArray newMultiArray) {
         _out.print("new multi array [");
         final Instruction[] dimensions = newMultiArray.dimensions();
@@ -500,14 +526,17 @@ public class InstructionPrinter implements InstructionVisitor {
         _out.print("] ").print(newMultiArray.elementType().name());
     }
 
+    @Override
     public void visitNewObjectArray(NewObjectArray newObjectArray) {
         _out.print("new object array [").print(newObjectArray.length()).print("] ").print(newObjectArray.elementClass().name());
     }
 
+    @Override
     public void visitNewTypeArray(NewTypeArray newTypeArray) {
         _out.print("new ").print(newTypeArray.elementType().name()).print(" array [").print(newTypeArray.length()).print(']');
     }
 
+    @Override
     public void visitNullCheck(NullCheck i) {
         _out.print("null_check(").print(i.object()).print(')');
         if (!i.canTrap()) {
@@ -515,14 +544,17 @@ public class InstructionPrinter implements InstructionVisitor {
         }
     }
 
+    @Override
     public void visitOsrEntry(OsrEntry osrEntry) {
         _out.print("osr entry");
     }
 
+    @Override
     public void visitPhi(Phi phi) {
         _out.print("phi function");
     }
 
+    @Override
     public void visitProfileCall(ProfileCall profileCall) {
         final CiMethod method = profileCall.method();
         _out.print("profile ").print(profileCall.object()).print(method.holder().name()).print('.').print(method.name());
@@ -532,11 +564,13 @@ public class InstructionPrinter implements InstructionVisitor {
         _out.print(')');
     }
 
+    @Override
     public void visitProfileCounter(ProfileCounter i) {
         // TODO: Recognize interpreter invocation counter specially
         _out.print("counter [").print(i.mdo()).print(").print(").print(i.offset()).print("] += ").print(i.increment());
     }
 
+    @Override
     public void visitReturn(Return ret) {
         if (ret.result() == null) {
             _out.print("return");
@@ -545,22 +579,27 @@ public class InstructionPrinter implements InstructionVisitor {
         }
     }
 
+    @Override
     public void visitRoundFP(RoundFP i) {
         _out.print("roundfp ").print(i.value());
     }
 
+    @Override
     public void visitShiftOp(ShiftOp shiftOp) {
         _out.print(shiftOp.x()).print(' ').print(Bytecodes.operator(shiftOp.opcode())).print(' ').print(shiftOp.y());
     }
 
+    @Override
     public void visitStoreField(StoreField store) {
         _out.print(store.object()).print("._").print(store.offset()).print(" := ").print(store.value()).print(" (").print(store.field().type().basicType().basicChar).print(')');
     }
 
+    @Override
     public void visitStoreIndexed(StoreIndexed store) {
         _out.print(store).print('[').print(store.index()).print("] := ").print(store.value()).print(" (").print(store.type().tchar()).print(')');
     }
 
+    @Override
     public void visitTableSwitch(TableSwitch tswitch) {
         _out.print("tableswitch ");
         if (tswitch.isSafepoint()) {
@@ -576,14 +615,17 @@ public class InstructionPrinter implements InstructionVisitor {
         _out.print("default   : B").print(tswitch.defaultSuccessor().blockID());
     }
 
+    @Override
     public void visitThrow(Throw i) {
         _out.print("throw ").print(i.exception());
     }
 
+    @Override
     public void visitUnsafeGetObject(UnsafeGetObject unsafe) {
         _out.print("UnsafeGetObject.(").print(unsafe.object()).print(", ").print(unsafe.offset()).print(')');
     }
 
+    @Override
     public void visitUnsafeGetRaw(UnsafeGetRaw unsafe) {
         _out.print("UnsafeGetRaw.(base ").print(unsafe.base());
         if (unsafe.hasIndex()) {
@@ -592,19 +634,23 @@ public class InstructionPrinter implements InstructionVisitor {
         _out.print(')');
     }
 
+    @Override
     public void visitUnsafePrefetchRead(UnsafePrefetchRead unsafe) {
         _out.print("UnsafePrefetchRead.(").print(unsafe.object()).print(", ").print(unsafe.offset()).print(')');
     }
 
+    @Override
     public void visitUnsafePrefetchWrite(UnsafePrefetchWrite unsafe) {
         _out.print("UnsafePrefetchWrite.(").print(unsafe.object()).print(", ").print(unsafe.offset()).print(')');
     }
 
+    @Override
     public void visitUnsafePutObject(UnsafePutObject unsafe) {
         _out.print("UnsafePutObject.(").print(unsafe.object()).print(", ").print(unsafe.offset() +
                         ", value ").print(unsafe.value()).print(')');
     }
 
+    @Override
     public void visitUnsafePutRaw(UnsafePutRaw unsafe) {
         _out.print("UnsafePutRaw.(base ").print(unsafe.base());
         if (unsafe.hasIndex()) {
