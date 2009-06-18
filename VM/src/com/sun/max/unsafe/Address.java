@@ -31,8 +31,10 @@ import com.sun.max.vm.compiler.builtin.*;
 
 /**
  * A machine word interpreted as a linear address.
+ * An Address is unsigned and arithmetic is supported.
  *
  * @author Bernd Mathiske
+ * @author Paul Caprioli
  */
 public abstract class Address extends Word {
 
@@ -262,6 +264,12 @@ public abstract class Address extends Word {
     }
 
     @INLINE(override = true)
+    public Address plus(long addend) {
+        return asOffset().plus(addend).asAddress();
+    }
+
+
+    @INLINE(override = true)
     public Address minus(Address subtrahend) {
         return asOffset().minus(subtrahend.asOffset()).asAddress();
     }
@@ -273,6 +281,11 @@ public abstract class Address extends Word {
 
     @INLINE(override = true)
     public Address minus(int subtrahend) {
+        return asOffset().minus(subtrahend).asAddress();
+    }
+
+    @INLINE(override = true)
+    public Address minus(long subtrahend) {
         return asOffset().minus(subtrahend).asAddress();
     }
 
@@ -382,7 +395,7 @@ public abstract class Address extends Word {
     }
 
     @INLINE(override = true)
-    public Address bitCleared(int index) {
+    public Address bitClear(int index) {
         return fromLong(toLong() & ~(1L << index));
     }
 
@@ -400,6 +413,11 @@ public abstract class Address extends Word {
     }
 
     @INLINE(override = true)
+    public Address and(long operand) {
+        return and(fromLong(operand));
+    }
+
+    @INLINE(override = true)
     public Address or(Address operand) {
         if (Word.width() == WordWidth.BITS_64) {
             return fromLong(toLong() | operand.toLong());
@@ -410,6 +428,11 @@ public abstract class Address extends Word {
     @INLINE(override = true)
     public Address or(int operand) {
         return or(fromInt(operand));
+    }
+
+    @INLINE(override = true)
+    public Address or(long operand) {
+        return or(fromLong(operand));
     }
 
     @INLINE(override = true)
