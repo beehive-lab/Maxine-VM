@@ -206,6 +206,11 @@ public abstract class Offset extends Word {
     }
 
     @INLINE
+    public final Offset plus(long addend) {
+        return plus(fromLong(addend));
+    }
+
+    @INLINE
     public final Offset minus(Offset subtrahend) {
         if (Word.width() == WordWidth.BITS_64) {
             return fromLong(toLong() - subtrahend.toLong());
@@ -221,6 +226,11 @@ public abstract class Offset extends Word {
     @INLINE
     public final Offset minus(int subtrahend) {
         return minus(fromInt(subtrahend));
+    }
+
+    @INLINE
+    public final Offset minus(long subtrahend) {
+        return minus(fromLong(subtrahend));
     }
 
     @INLINE
@@ -293,6 +303,11 @@ public abstract class Offset extends Word {
     }
 
     @INLINE(override = true)
+    public Offset and(long operand) {
+        return and(fromLong(operand));
+    }
+
+    @INLINE(override = true)
     public Offset or(Offset operand) {
         if (Word.width() == WordWidth.BITS_64) {
             return fromLong(toLong() | operand.toLong());
@@ -303,6 +318,11 @@ public abstract class Offset extends Word {
     @INLINE(override = true)
     public Offset or(int operand) {
         return or(fromInt(operand));
+    }
+
+    @INLINE(override = true)
+    public Offset or(long operand) {
+        return or(fromLong(operand));
     }
 
     @INLINE(override = true)
