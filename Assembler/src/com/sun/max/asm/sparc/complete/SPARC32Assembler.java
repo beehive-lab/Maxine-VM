@@ -34,10 +34,10 @@ public class SPARC32Assembler extends SPARCAssembler implements Assembler32 {
     public SPARC32Assembler() {
     }
 
-    private int _startAddress; // address of first instruction
+    private int startAddress; // address of first instruction
 
     public SPARC32Assembler(int startAddress) {
-        _startAddress = startAddress;
+        this.startAddress = startAddress;
     }
 
     @Override
@@ -46,16 +46,16 @@ public class SPARC32Assembler extends SPARCAssembler implements Assembler32 {
     }
 
     public int startAddress() {
-        return _startAddress;
+        return startAddress;
     }
 
     public void setStartAddress(int address) {
-        _startAddress = address;
+        startAddress = address;
     }
 
     @Override
     public long baseAddress() {
-        return _startAddress;
+        return startAddress;
     }
 
     public void fixLabel(Label label, int address) {
@@ -66,11 +66,11 @@ public class SPARC32Assembler extends SPARCAssembler implements Assembler32 {
         return address32(label);
     }
 
-    private SPARC32Directives _directives = new SPARC32Directives();
+    private SPARC32Directives directives = new SPARC32Directives();
 
     @Override
     public Directives directives() {
-        return _directives;
+        return directives;
     }
 
     public class SPARC32Directives extends Directives {

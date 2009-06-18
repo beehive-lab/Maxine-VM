@@ -26,17 +26,17 @@ import com.sun.max.program.*;
 
 /**
  * A field describes a bit range and how it relates to an operand.
- * 
+ *
  * @author Bernd Mathiske
  * @author Dave Ungar
  * @author Adam Spitz
  */
 public abstract class RiscField implements Cloneable, StaticFieldName, StaticFieldLiteral {
 
-    private final BitRange _bitRange;
+    private final BitRange bitRange;
 
     protected RiscField(BitRange bitRange) {
-        _bitRange = bitRange;
+        this.bitRange = bitRange;
     }
 
     @Override
@@ -48,38 +48,38 @@ public abstract class RiscField implements Cloneable, StaticFieldName, StaticFie
         }
     }
 
-    private String _name;
+    private String name;
 
     public String name() {
-        return _name;
+        return name;
     }
 
     public void setName(String name) {
-        _name = name;
+        this.name = name;
     }
 
-    private String _literal;
+    private String literal;
 
     public String literal() {
-        return _literal;
+        return literal;
     }
 
     public void setLiteral(String literal) {
-        _literal = literal;
+        this.literal = literal;
     }
 
-    private Class _literalClass;
+    private Class literalClass;
 
     public Class literalClass() {
-        return _literalClass;
+        return literalClass;
     }
 
     public void setLiteralClass(Class literalClass) {
-        _literalClass = literalClass;
+        this.literalClass = literalClass;
     }
 
     public BitRange bitRange() {
-        return _bitRange;
+        return bitRange;
     }
 
     /**
@@ -97,9 +97,9 @@ public abstract class RiscField implements Cloneable, StaticFieldName, StaticFie
 
     @Override
     public int hashCode() {
-        int result = _bitRange.hashCode();
-        if (_name != null) {
-            result ^= _name.hashCode();
+        int result = bitRange.hashCode();
+        if (name != null) {
+            result ^= name.hashCode();
         }
         return result;
     }

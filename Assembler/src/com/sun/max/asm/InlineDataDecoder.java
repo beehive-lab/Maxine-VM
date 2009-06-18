@@ -39,7 +39,7 @@ import com.sun.max.program.*;
  */
 public class InlineDataDecoder {
 
-    protected final Map<Integer, InlineDataDescriptor> _positionToDescriptorMap;
+    protected final Map<Integer, InlineDataDescriptor> positionToDescriptorMap;
 
     /**
      * Creates a decoder from an encoded sequence of inline data descriptors.
@@ -70,9 +70,9 @@ public class InlineDataDecoder {
     }
 
     public InlineDataDecoder(Sequence<InlineDataDescriptor> descriptors) {
-        _positionToDescriptorMap = new TreeMap<Integer, InlineDataDescriptor>();
+        positionToDescriptorMap = new TreeMap<Integer, InlineDataDescriptor>();
         for (InlineDataDescriptor descriptor : descriptors) {
-            _positionToDescriptorMap.put(descriptor.startPosition(), descriptor);
+            positionToDescriptorMap.put(descriptor.startPosition(), descriptor);
         }
     }
 
@@ -87,11 +87,11 @@ public class InlineDataDecoder {
             final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(encodedDescriptors);
             final DataInputStream dataInputStream = new DataInputStream(byteArrayInputStream);
             final int numberOfEntries = dataInputStream.readInt();
-            _positionToDescriptorMap = new TreeMap<Integer, InlineDataDescriptor>();
+            positionToDescriptorMap = new TreeMap<Integer, InlineDataDescriptor>();
             for (int i = 0; i < numberOfEntries; ++i) {
                 final Tag tag = InlineDataDescriptor.Tag.VALUES.get(dataInputStream.readByte());
                 final InlineDataDescriptor inlineDataDescriptor = tag.decode(dataInputStream);
-                _positionToDescriptorMap.put(inlineDataDescriptor.startPosition(), inlineDataDescriptor);
+                positionToDescriptorMap.put(inlineDataDescriptor.startPosition(), inlineDataDescriptor);
             }
             assert byteArrayInputStream.available() == 0;
         } catch (IOException ioException) {
@@ -107,7 +107,7 @@ public class InlineDataDecoder {
      * @return the inline data decoded from the stream or null if there is no inline data at {@code currentPosition}
      */
     public InlineData decode(int currentPosition, BufferedInputStream stream) throws IOException {
-        final InlineDataDescriptor inlineDataDescriptor = _positionToDescriptorMap.get(currentPosition);
+        final InlineDataDescriptor inlineDataDescriptor = positionToDescriptorMap.get(currentPosition);
         if (inlineDataDescriptor != null) {
             final int size = inlineDataDescriptor.size();
             final byte[] data = new byte[size];

@@ -30,13 +30,13 @@ import static com.sun.max.asm.gen.risc.sparc.SPARCFields.*;
 public class PrivilegedRegisterAccess extends SPARCInstructionDescriptionCreator {
 
     private void create_A42() {
-        define("rdpr", op(0x2), op3(0x2a), _res_13_0, _rs1PrivReg, _rd);
+        define("rdpr", op(0x2), op3(0x2a), res_13_0, rs1PrivReg, rd);
     }
 
     private void create_A61() {
-        final Object[] head = {op(0x2), op3(0x32), _rs1};
-        define("wrpr", head, i(0), _res_12_5, _rs2, _rdPrivReg);
-        define("wrpr", head, i(1), _simm13, _rdPrivReg);
+        final Object[] head = {op(0x2), op3(0x32), rs1};
+        define("wrpr", head, i(0), res_12_5, rs2, rdPrivReg);
+        define("wrpr", head, i(1), simm13, rdPrivReg);
     }
 
     PrivilegedRegisterAccess(SPARCTemplateCreator templateCreator) {

@@ -33,24 +33,24 @@ public final class X86InstructionDescription extends InstructionDescription {
         super(specifications);
     }
 
-    private boolean _isExternalOperandOrderingInverted = true;
+    private boolean isExternalOperandOrderingInverted = true;
 
     public boolean isExternalOperandOrderingInverted() {
-        return _isExternalOperandOrderingInverted;
+        return isExternalOperandOrderingInverted;
     }
 
     public void revertExternalOperandOrdering() {
-        _isExternalOperandOrderingInverted = false;
+        isExternalOperandOrderingInverted = false;
     }
 
-    private WordWidth _defaultOperandSize = WordWidth.BITS_32;
+    private WordWidth defaultOperandSize = WordWidth.BITS_32;
 
     public WordWidth defaultOperandSize() {
-        return _defaultOperandSize;
+        return defaultOperandSize;
     }
 
-    public X86InstructionDescription setDefaultOperandSize(WordWidth defaultOperandSize) {
-        _defaultOperandSize = defaultOperandSize;
+    public X86InstructionDescription setDefaultOperandSize(WordWidth operandSize) {
+        this.defaultOperandSize = operandSize;
         return this;
     }
 

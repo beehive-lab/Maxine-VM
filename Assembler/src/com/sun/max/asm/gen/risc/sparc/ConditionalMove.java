@@ -35,37 +35,37 @@ class ConditionalMove extends SPARCInstructionDescriptionCreator {
         // A.33
         final Object[] fmovHead = {op(0x2), op3(0x35), bits_18_18(0), cond_17_14(condContents), fmovTypeBit(typeBitContents), fmovccField};
         setCurrentArchitectureManualSection("A.33");
-        define("fmovs" + suffix, fmovHead, opfLow_10_5(0x1), _sfrs2, _sfrd);
-        define("fmovd" + suffix, fmovHead, opfLow_10_5(0x2), _dfrs2, _dfrd);
-        define("fmovq" + suffix, fmovHead, opfLow_10_5(0x3), _qfrs2, _qfrd);
+        define("fmovs" + suffix, fmovHead, opfLow_10_5(0x1), sfrs2, sfrd);
+        define("fmovd" + suffix, fmovHead, opfLow_10_5(0x2), dfrs2, dfrd);
+        define("fmovq" + suffix, fmovHead, opfLow_10_5(0x3), qfrs2, qfrd);
         // A.35
         final Object[] movHead = {op(0x2), op3(0x2c), movTypeBit(typeBitContents), cond_17_14(condContents), movccField};
         setCurrentArchitectureManualSection("A.35");
-        define("mov" + suffix, movHead, i(1), _simm11, _rd);
-        define("mov" + suffix, movHead, i(0), _res_10_5, _rs2, _rd);
+        define("mov" + suffix, movHead, i(1), simm11, rd);
+        define("mov" + suffix, movHead, i(0), res_10_5, rs2, rd);
     }
 
     private void addMovr(String suffix, int rcondContents) {
         // A.34
         final Object[] fmovrHead = {op(0x2), op3(0x35), bits_13_13(0), rcond_12_10(rcondContents)};
         setCurrentArchitectureManualSection("A.34");
-        define("fmovrs" + suffix, fmovrHead, opfLow_9_5(0x5), _rs1, _sfrs2, _sfrd);
-        define("fmovrd" + suffix, fmovrHead, opfLow_9_5(0x6), _rs1, _dfrs2, _dfrd);
-        define("fmovrq" + suffix, fmovrHead, opfLow_9_5(0x7), _rs1, _qfrs2, _qfrd);
+        define("fmovrs" + suffix, fmovrHead, opfLow_9_5(0x5), rs1, sfrs2, sfrd);
+        define("fmovrd" + suffix, fmovrHead, opfLow_9_5(0x6), rs1, dfrs2, dfrd);
+        define("fmovrq" + suffix, fmovrHead, opfLow_9_5(0x7), rs1, qfrs2, qfrd);
         // A.36
         final Object[] movrHead = {op(0x2), op3(0x2f), rcond_12_10(rcondContents)};
         setCurrentArchitectureManualSection("A.36");
-        define("movr" + suffix, movrHead, i(0), _res_9_5, _rs1, _rs2, _rd);
+        define("movr" + suffix, movrHead, i(0), res_9_5, rs1, rs2, rd);
         // sparc asm is too lenient with simm10
-        define("movr" + suffix, movrHead, i(1), _rs1, _simm10, _rd);
+        define("movr" + suffix, movrHead, i(1), rs1, simm10, rd);
     }
 
     private void addIcc(String suffix, int condContents) {
-        addIccOrFcc(suffix, _fmovicc, _movicc, 1, condContents);
+        addIccOrFcc(suffix, fmovicc, movicc, 1, condContents);
     }
 
     private void addFcc(String suffix, int condContents) {
-        addIccOrFcc(suffix, _fmovfcc, _movfcc, 0, condContents);
+        addIccOrFcc(suffix, fmovfcc, movfcc, 0, condContents);
     }
 
     private void create_A33_A35() {

@@ -41,18 +41,18 @@ public class AscendingBitRange extends SimpleBitRange {
     @Override
     public AscendingBitRange move(boolean left, int bits) {
         if (left) {
-            return new AscendingBitRange(_firstBitIndex - bits, _lastBitIndex - bits);
+            return new AscendingBitRange(firstBitIndex - bits, lastBitIndex - bits);
         }
-        return new AscendingBitRange(_firstBitIndex + bits, _lastBitIndex + bits);
+        return new AscendingBitRange(firstBitIndex + bits, lastBitIndex + bits);
     }
 
     @Override
     public int numberOfLessSignificantBits() {
-        return (32 - _lastBitIndex) - 1;
+        return (32 - lastBitIndex) - 1;
     }
 
     @Override
     public int width() {
-        return (_lastBitIndex - _firstBitIndex) + 1;
+        return (lastBitIndex - firstBitIndex) + 1;
     }
 }

@@ -26,7 +26,7 @@ package com.sun.max.asm.gen.risc.bitRange;
  * positions in an instruction. The implicit bits are 0. This type of bit range
  * is typically used to represent the low-order bits for a field value's that is
  * always modulo {@code n} where {@code n > 1}. That is, an aligned value.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  * @author Dave Ungar
@@ -34,17 +34,16 @@ package com.sun.max.asm.gen.risc.bitRange;
  */
 public class OmittedBitRange extends ContiguousBitRange {
 
-    private int _width;
+    private int width;
 
     OmittedBitRange(int width) {
-        super();
-        _width = width;
+        this.width = width;
         assert width > 0;
     }
 
     @Override
     public int width() {
-        return _width;
+        return width;
     }
 
     @Override
@@ -75,12 +74,12 @@ public class OmittedBitRange extends ContiguousBitRange {
             throw new Error("Invalid argument type\n");
         }
         final OmittedBitRange omittedBitRange = (OmittedBitRange) other;
-        return _width == omittedBitRange._width;
+        return width == omittedBitRange.width;
     }
 
     @Override
     public int hashCode() {
-        return _width;
+        return width;
     }
 
     /* Extracting */
@@ -112,6 +111,6 @@ public class OmittedBitRange extends ContiguousBitRange {
 
     @Override
     public String toString() {
-        return "omit" + _width;
+        return "omit" + width;
     }
 }

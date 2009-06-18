@@ -22,20 +22,20 @@ package com.sun.max.asm;
 
 /**
  * An assembler instruction that references some address with a {@linkplain Label label}.
- * 
+ *
  * @author Bernd Mathiske
  */
 public abstract class InstructionWithLabel extends MutableAssembledObject {
 
-    private final Label _label;
+    private final Label label;
 
     protected InstructionWithLabel(Assembler assembler, int startPosition, int endPosition, Label label) {
         super(assembler, startPosition, endPosition);
-        _label = label;
+        this.label = label;
     }
 
     protected Label label() {
-        return _label;
+        return label;
     }
 
     public final Type type() {

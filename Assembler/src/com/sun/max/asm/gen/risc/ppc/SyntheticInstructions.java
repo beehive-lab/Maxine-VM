@@ -56,45 +56,45 @@ class SyntheticInstructions extends PPCInstructionDescriptionCreator {
         setCurrentArchitectureManualSection("B.2.2");
 
         // Derived from "bc", "bca", "bcl" and "bcla" raw instructions
-        define("b", opcd(16), _bo_CR, _bi,  _bd, _lk, _aa, _bo_CR_prediction);
-        define("b", opcd(16), _bo_CTR, bi(0), _bd, _lk, _aa, _bo_CTR_prediction);
-        define("b", opcd(16), _bo_CTR_and_CR, _bi,  _bd, _lk, _aa);
+        define("b", opcd(16), bo_CR, bi,  bd, lk, aa, bo_CR_prediction);
+        define("b", opcd(16), bo_CTR, bi(0), bd, lk, aa, bo_CTR_prediction);
+        define("b", opcd(16), bo_CTR_and_CR, bi,  bd, lk, aa);
 
         // Derived from "bclr" and "bclrl" raw instructions
-        define("blr", opcd(19), bo(Always), bi(0), _res_16_18, bh(0), xo_21_30(16), _lk);
-        define("b", opcd(19), _bo_CR, _bi, _res_16_18, bh(0), xo_21_30(16), _put_lr_in_name, _lk, _bo_CR_prediction);
-        define("b", opcd(19), _bo_CTR, bi(0), _res_16_18, bh(0), xo_21_30(16), _put_lr_in_name, _lk, _bo_CTR_prediction);
-        define("b", opcd(19), _bo_CTR_and_CR, _bi, _res_16_18, bh(0), xo_21_30(16), _put_lr_in_name, _lk);
+        define("blr", opcd(19), bo(Always), bi(0), res_16_18, bh(0), xo_21_30(16), lk);
+        define("b", opcd(19), bo_CR, bi, res_16_18, bh(0), xo_21_30(16), put_lr_in_name, lk, bo_CR_prediction);
+        define("b", opcd(19), bo_CTR, bi(0), res_16_18, bh(0), xo_21_30(16), put_lr_in_name, lk, bo_CTR_prediction);
+        define("b", opcd(19), bo_CTR_and_CR, bi, res_16_18, bh(0), xo_21_30(16), put_lr_in_name, lk);
 
         // Derived from "bcctr" and "bcctrl" raw instructions
-        define("bctr", opcd(19), bo(Always), bi(0), _res_16_18, bh(0), xo_21_30(528), _lk);
-        define("b", opcd(19), _bo_CR, _bi, _res_16_18, bh(0), xo_21_30(528), _put_ctr_in_name, _lk, _bo_CR_prediction);
+        define("bctr", opcd(19), bo(Always), bi(0), res_16_18, bh(0), xo_21_30(528), lk);
+        define("b", opcd(19), bo_CR, bi, res_16_18, bh(0), xo_21_30(528), put_ctr_in_name, lk, bo_CR_prediction);
 
         setCurrentArchitectureManualSection("B.2.3");
 
         // Derived from "bc", "bca", "bcl" and "bcla" raw instructions
-        define("b", opcd(16), "cr", _br_crf, _branch_conds, _bd, _lk, _aa, _bo_CR_prediction);
-        define("b", opcd(19), "cr", _br_crf, _branch_conds, _res_16_18, bh(0), xo_21_30(16), _put_lr_in_name, _lk, _bo_CR_prediction);
-        define("b", opcd(19), "cr", _br_crf, _branch_conds, _res_16_18, bh(0), xo_21_30(528), _put_ctr_in_name, _lk, _bo_CR_prediction);
+        define("b", opcd(16), "cr", br_crf, branch_conds, bd, lk, aa, bo_CR_prediction);
+        define("b", opcd(19), "cr", br_crf, branch_conds, res_16_18, bh(0), xo_21_30(16), put_lr_in_name, lk, bo_CR_prediction);
+        define("b", opcd(19), "cr", br_crf, branch_conds, res_16_18, bh(0), xo_21_30(528), put_ctr_in_name, lk, bo_CR_prediction);
 
         setCurrentArchitectureManualSection("B.3");
 
-        synthesize("crset", "creqv", bt(_ba), bb(_ba));
-        synthesize("crclr", "crxor", bt(_ba), bb(_ba));
-        synthesize("crmove", "cror", bb(_ba));
-        synthesize("crnot", "crnor", bb(_ba));
+        synthesize("crset", "creqv", bt(ba), bb(ba));
+        synthesize("crclr", "crxor", bt(ba), bb(ba));
+        synthesize("crmove", "cror", bb(ba));
+        synthesize("crnot", "crnor", bb(ba));
 
         setCurrentArchitectureManualSection("B.4.1");
 
-        synthesize("subi", "addi", si(neg(_value)), _value);
-        synthesize("subis", "addis", si(neg(_value)), _value);
-        synthesize("subic", "addic", si(neg(_value)), _value);
-        synthesize("subic_", "addic_", si(neg(_value)), _value).setExternalName("subic.");
+        synthesize("subi", "addi", si(neg(val)), val);
+        synthesize("subis", "addis", si(neg(val)), val);
+        synthesize("subic", "addic", si(neg(val)), val);
+        synthesize("subic_", "addic_", si(neg(val)), val).setExternalName("subic.");
 
         setCurrentArchitectureManualSection("B.4.2");
 
-        synthesize("sub", "subf", _rt).swap(_ra, _rb);
-        synthesize("subc", "subfc", _rt).swap(_ra, _rb);
+        synthesize("sub", "subf", rt).swap(ra, rb);
+        synthesize("subc", "subfc", rt).swap(ra, rb);
 
         setCurrentArchitectureManualSection("B.5.1");
 
@@ -120,54 +120,54 @@ class SyntheticInstructions extends PPCInstructionDescriptionCreator {
 
         setCurrentArchitectureManualSection("B.6");
 
-        synthesize("tw", "twi", _to_option, _put_i_in_name);
-        synthesize("tw", "tw", _to_option);
+        synthesize("tw", "twi", to_option, put_i_in_name);
+        synthesize("tw", "tw", to_option);
         synthesize("trap", "tw", to(31), ra(GPR.R0), rb(GPR.R0));
-        synthesize64("td", "tdi", _to_option, _put_i_in_name);
-        synthesize64("td", "td", _to_option);
+        synthesize64("td", "tdi", to_option, put_i_in_name);
+        synthesize64("td", "td", to_option);
 
         setCurrentArchitectureManualSection("B.7.1");
 
-        synthesize("extldi", "rldicr", sh64(_b64), me64(sub(_n64, 1)), _n64, _b64);
-        synthesize("extrdi", "rldicl", sh64(add(_b64, _n64)), mb64(sub(64, _n64)), _n64, _b64);
-        synthesize("insrdi", "rldimi", sh64(sub(64, add(_b64, _n64))), mb64(_b64), _n64, _b64);
-        synthesize("rotldi", "rldicl", sh64(_n64), mb64(0), _n64);
-        synthesize("rotrdi", "rldicl", sh64(sub(64, _n64)), mb64(0), _n64);
+        synthesize("extldi", "rldicr", sh64(b64), me64(sub(n64, 1)), n64, b64);
+        synthesize("extrdi", "rldicl", sh64(add(b64, n64)), mb64(sub(64, n64)), n64, b64);
+        synthesize("insrdi", "rldimi", sh64(sub(64, add(b64, n64))), mb64(b64), n64, b64);
+        synthesize("rotldi", "rldicl", sh64(n64), mb64(0), n64);
+        synthesize("rotrdi", "rldicl", sh64(sub(64, n64)), mb64(0), n64);
         synthesize("rotld", "rldcl", mb64(0));
-        synthesize("sldi", "rldicr", sh64(_n64), mb64(sub(63, _n64)), _n64);
-        synthesize("srdi", "rldicl", sh64(sub(64, _n64)), mb64(_n64), _n64);
-        synthesize("clrldi", "rldicl", sh64(0), mb64(_n64), _n64);
-        synthesize("clrrdi", "rldicr", sh64(0), me64(sub(63, _n64)), _n64);
-        synthesize("clrlsldi", "rldic", sh64(_n64), mb64(sub(_b64, _n64)), _b64, _n64);
+        synthesize("sldi", "rldicr", sh64(n64), mb64(sub(63, n64)), n64);
+        synthesize("srdi", "rldicl", sh64(sub(64, n64)), mb64(n64), n64);
+        synthesize("clrldi", "rldicl", sh64(0), mb64(n64), n64);
+        synthesize("clrrdi", "rldicr", sh64(0), me64(sub(63, n64)), n64);
+        synthesize("clrlsldi", "rldic", sh64(n64), mb64(sub(b64, n64)), b64, n64);
 
         setCurrentArchitectureManualSection("B.7.2");
 
-        synthesize("extlwi", "rlwinm", sh(_b), mb(0), me(sub(_n, 1)), _n, _b, gt(_n, 0));
-        synthesize("extrwi", "rlwinm", sh(add(_b, _n)), mb(sub(32, _n)), me(31), _n, _b, gt(_n, 0));
-        synthesize("inslwi", "rlwimi", sh(sub(32, _b)), mb(_b), me(sub(add(_b, _n), 1)), _n, _b, gt(_n, 0));
-        synthesize("insrwi", "rlwimi", sh(sub(32, add(_b, _n))), mb(_b), me(sub(add(_b, _n), 1)), _n, _b, gt(_n, 0));
-        synthesize("rotlwi", "rlwinm", sh(_n), mb(0), me(31), _n);
-        synthesize("rotrwi", "rlwinm", sh(sub(32, _n)), mb(0), me(31), _n);
+        synthesize("extlwi", "rlwinm", sh(b), mb(0), me(sub(n, 1)), n, b, gt(n, 0));
+        synthesize("extrwi", "rlwinm", sh(add(b, n)), mb(sub(32, n)), me(31), n, b, gt(n, 0));
+        synthesize("inslwi", "rlwimi", sh(sub(32, b)), mb(b), me(sub(add(b, n), 1)), n, b, gt(n, 0));
+        synthesize("insrwi", "rlwimi", sh(sub(32, add(b, n))), mb(b), me(sub(add(b, n), 1)), n, b, gt(n, 0));
+        synthesize("rotlwi", "rlwinm", sh(n), mb(0), me(31), n);
+        synthesize("rotrwi", "rlwinm", sh(sub(32, n)), mb(0), me(31), n);
         synthesize("rotlw", "rlwnm", mb(0), me(31));
-        synthesize("slwi", "rlwinm", sh(_n), mb(0), me(sub(31, _n)), _n, lt(_n, 32));
-        synthesize("srwi", "rlwinm", sh(sub(32, _n)), mb(_n), me(31), _n, lt(_n, 32));
-        synthesize("clrlwi", "rlwinm", sh(0), mb(_n), me(31), _n, lt(_n, 32));
-        synthesize("clrrwi", "rlwinm", sh(0), mb(0), me(sub(31, _n)), _n, lt(_n, 32));
-        synthesize("clrlslwi", "rlwinm", sh(_n), mb(sub(_b, _n)), me(sub(31, _n)), _b, _n, le(_n, _b), lt(_b, 32));
+        synthesize("slwi", "rlwinm", sh(n), mb(0), me(sub(31, n)), n, lt(n, 32));
+        synthesize("srwi", "rlwinm", sh(sub(32, n)), mb(n), me(31), n, lt(n, 32));
+        synthesize("clrlwi", "rlwinm", sh(0), mb(n), me(31), n, lt(n, 32));
+        synthesize("clrrwi", "rlwinm", sh(0), mb(0), me(sub(31, n)), n, lt(n, 32));
+        synthesize("clrlslwi", "rlwinm", sh(n), mb(sub(b, n)), me(sub(31, n)), b, n, le(n, b), lt(b, 32));
 
         setCurrentArchitectureManualSection("B.8");
 
-        synthesize("mt", "mtspr", _spr_option);
-        synthesize("mf", "mfspr", _spr_option);
+        synthesize("mt", "mtspr", spr_option);
+        synthesize("mf", "mfspr", spr_option);
 
         setCurrentArchitectureManualSection("B.9");
 
         synthesize("nop", "ori", ra0(Zero.ZERO), rs(GPR.R0), ui(0));
         synthesize("li", "addi", ra0(Zero.ZERO));
         synthesize("lis", "addis", ra0(Zero.ZERO));
-        define("la", opcd(14), _rt, _si, "(", _ra0_notR0, ")");
-        synthesize("mr", "or", rs(_rb));
-        synthesize("not", "nor", rs(_rb));
+        define("la", opcd(14), rt, si, "(", ra0_notR0, ")");
+        synthesize("mr", "or", rs(rb));
+        synthesize("not", "nor", rs(rb));
         synthesize("mtcr", "mtcrf", fxm(0xFF));
     }
 }

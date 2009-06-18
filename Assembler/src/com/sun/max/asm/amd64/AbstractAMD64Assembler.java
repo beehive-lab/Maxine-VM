@@ -41,10 +41,10 @@ public abstract class AbstractAMD64Assembler extends LittleEndianAssembler imple
         return WordWidth.BITS_64;
     }
 
-    private long _startAddress; // address of first instruction
+    private long startAddress; // address of first instruction
 
     public AbstractAMD64Assembler(long startAddress) {
-        _startAddress = startAddress;
+        this.startAddress = startAddress;
     }
 
     public AbstractAMD64Assembler() {
@@ -52,15 +52,15 @@ public abstract class AbstractAMD64Assembler extends LittleEndianAssembler imple
 
     @Override
     public long baseAddress() {
-        return _startAddress;
+        return startAddress;
     }
 
     public long startAddress() {
-        return _startAddress;
+        return startAddress;
     }
 
     public void setStartAddress(long address) {
-        _startAddress = address;
+        startAddress = address;
     }
 
     public void fixLabel(Label label, long address) {
@@ -71,11 +71,11 @@ public abstract class AbstractAMD64Assembler extends LittleEndianAssembler imple
         return address64(label);
     }
 
-    private final AMD64Directives _directives = new AMD64Directives();
+    private final AMD64Directives directives = new AMD64Directives();
 
     @Override
     public Directives directives() {
-        return _directives;
+        return directives;
     }
 
     public class AMD64Directives extends Directives {

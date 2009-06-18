@@ -25,48 +25,48 @@ import com.sun.max.lang.*;
 
 /**
  * Wraps mere object arrays into instruction descriptions.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
 public abstract class InstructionDescriptionCreator<InstructionDescription_Type extends InstructionDescription> {
 
-    private final Assembly _assembly;
+    private final Assembly assembly;
 
     protected InstructionDescriptionCreator(Assembly assembly) {
-        _assembly = assembly;
+        this.assembly = assembly;
     }
 
     public Assembly assembly() {
-        return _assembly;
+        return assembly;
     }
 
     protected abstract InstructionDescription_Type createInstructionDescription(MutableSequence<Object> specifications);
 
     protected InstructionDescription_Type defineInstructionDescription(MutableSequence<Object> specifications) {
         final InstructionDescription_Type instructionDescription = createInstructionDescription(specifications);
-        _instructionDescriptions.append(instructionDescription);
-        instructionDescription.setArchitectureManualSection(_currentArchitectureManualSection);
+        instructionDescriptions.append(instructionDescription);
+        instructionDescription.setArchitectureManualSection(currentArchitectureManualSection);
         return instructionDescription;
     }
 
-    private final AppendableSequence<InstructionDescription_Type> _instructionDescriptions = new LinkSequence<InstructionDescription_Type>();
+    private final AppendableSequence<InstructionDescription_Type> instructionDescriptions = new LinkSequence<InstructionDescription_Type>();
 
     protected InstructionDescription_Type define(Object... specifications) {
         return defineInstructionDescription(new ArraySequence<Object>(Arrays.flatten(specifications)));
     }
 
-    private String _currentArchitectureManualSection;
+    private String currentArchitectureManualSection;
 
     /**
      * Sets the name of the architecture manual section for which instruction descriptions are
      * currently being {@link #define defined}.
      */
     public void setCurrentArchitectureManualSection(String section) {
-        _currentArchitectureManualSection = section;
+        currentArchitectureManualSection = section;
     }
 
     public Sequence<InstructionDescription_Type> instructionDescriptions() {
-        return _instructionDescriptions;
+        return instructionDescriptions;
     }
 }

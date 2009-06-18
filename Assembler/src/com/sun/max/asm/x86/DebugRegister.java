@@ -30,14 +30,14 @@ public enum DebugRegister implements EnumerableArgument<DebugRegister> {
 
     DR0(0), DR1(1), DR2(2), DR3(3), DR6(6), DR7(7);
 
-    private final int _number;
+    private final int number;
 
     private DebugRegister(int number) {
-        _number = number;
+        this.number = number;
     }
 
     public int value() {
-        return _number;
+        return number;
     }
 
     public long asLong() {

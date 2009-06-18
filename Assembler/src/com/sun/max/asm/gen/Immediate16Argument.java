@@ -27,10 +27,10 @@ import com.sun.max.lang.*;
  */
 public class Immediate16Argument extends ImmediateArgument {
 
-    private short _value;
+    private final short value;
 
     public Immediate16Argument(short value) {
-        _value = value;
+        this.value = value;
     }
 
     @Override
@@ -39,7 +39,7 @@ public class Immediate16Argument extends ImmediateArgument {
     }
 
     public short value() {
-        return _value;
+        return value;
     }
 
     public long asLong() {
@@ -47,34 +47,34 @@ public class Immediate16Argument extends ImmediateArgument {
     }
 
     public String externalValue() {
-        return "0x" + Integer.toHexString(_value & 0xffff);
+        return "0x" + Integer.toHexString(value & 0xffff);
     }
 
     public String disassembledValue() {
-        return "0x" + String.format("%X", _value);
+        return "0x" + String.format("%X", value);
     }
 
     @Override
     public String signedExternalValue() {
-        return Integer.toString(_value);
+        return Integer.toString(value);
     }
 
     @Override
     public Object boxedJavaValue() {
-        return new Short(_value);
+        return new Short(value);
     }
 
     @Override
     public boolean equals(Object other) {
         if (other instanceof Immediate16Argument) {
             final Immediate16Argument argument = (Immediate16Argument) other;
-            return _value == argument._value;
+            return value == argument.value;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return _value;
+        return value;
     }
 }

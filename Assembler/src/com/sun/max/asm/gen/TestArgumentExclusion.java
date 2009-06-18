@@ -30,30 +30,30 @@ import com.sun.max.collect.*;
  */
 public class TestArgumentExclusion {
 
-    private final AssemblyTestComponent _component;
-    private final WrappableSpecification _specification;
-    private final Set<Argument> _arguments;
+    private final AssemblyTestComponent component;
+    private final WrappableSpecification specification;
+    private final Set<Argument> arguments;
 
     public TestArgumentExclusion(AssemblyTestComponent component, WrappableSpecification specification, Set<Argument> arguments) {
-        _component = component;
-        _specification = specification;
-        _arguments = arguments;
+        this.component = component;
+        this.specification = specification;
+        this.arguments = arguments;
     }
 
     public AssemblyTestComponent component() {
-        return _component;
+        return component;
     }
 
     public WrappableSpecification wrappedSpecification() {
-        return _specification;
+        return specification;
     }
 
     public Set<Argument> arguments() {
-        return _arguments;
+        return arguments;
     }
 
     public static final TestArgumentExclusion NONE = new TestArgumentExclusion(AssemblyTestComponent.EXTERNAL_ASSEMBLER, new WrappableSpecification() {
-        public TestArgumentExclusion excludeExternalTestArguments(Argument... arguments) {
+        public TestArgumentExclusion excludeExternalTestArguments(Argument... args) {
             return TestArgumentExclusion.NONE;
         }
     }, Sets.empty(Argument.class));

@@ -27,40 +27,40 @@ import com.sun.max.asm.*;
  */
 public class ArgumentRange {
 
-    private final WrappableSpecification _specification;
-    private final long _minValue;
-    private final long _maxValue;
+    private final WrappableSpecification specification;
+    private final long minValue;
+    private final long maxValue;
 
     public ArgumentRange(WrappableSpecification specification, long minValue, long maxValue) {
-        _specification = specification;
-        _minValue = minValue;
-        _maxValue = maxValue;
+        this.specification = specification;
+        this.minValue = minValue;
+        this.maxValue = maxValue;
     }
 
     public WrappableSpecification wrappedSpecification() {
-        return _specification;
+        return specification;
     }
 
     public long minValue() {
-        return _minValue;
+        return minValue;
     }
 
     public long maxValue() {
-        return _maxValue;
+        return maxValue;
     }
 
     public boolean includes(Argument argument) {
-        return _minValue <= argument.asLong() && argument.asLong() <= _maxValue;
+        return minValue <= argument.asLong() && argument.asLong() <= maxValue;
     }
 
-    private boolean _appliesInternally = true;
+    private boolean appliesInternally = true;
 
     public boolean appliesInternally() {
-        return _appliesInternally;
+        return appliesInternally;
     }
 
     public void doNotApplyInternally() {
-        _appliesInternally = false;
+        appliesInternally = false;
     }
 
     public static final ArgumentRange UNSPECIFIED = null;

@@ -30,8 +30,8 @@ import static com.sun.max.asm.gen.risc.sparc.SPARCFields.*;
 public class ImplementationDependent extends SPARCInstructionDescriptionCreator {
 
     private void create_A23() {
-        define("impdep1", op(0x2), op3(0x36), _impl_dep);
-        define("impdep2", op(0x2), op3(0x37), _impl_dep);
+        define("impdep1", op(0x2), op3(0x36), impl_dep);
+        define("impdep2", op(0x2), op3(0x37), impl_dep);
     }
 
     ImplementationDependent(SPARCTemplateCreator templateCreator) {

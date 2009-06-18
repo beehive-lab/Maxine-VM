@@ -60,24 +60,24 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
         final X86InstructionHeader header = new X86InstructionHeader();
         do {
             final HexByte hexByte = HexByte.VALUES.get(byteValue);
-            if (header._opcode1 == null) {
+            if (header.opcode1 == null) {
                 if (hexByte == X86Opcode.ADDRESS_SIZE) {
-                    header._hasAddressSizePrefix = true;
+                    header.hasAddressSizePrefix = true;
                 } else if (hexByte == X86Opcode.OPERAND_SIZE) {
-                    header._instructionSelectionPrefix = hexByte;
+                    header.instructionSelectionPrefix = hexByte;
                 } else if (hexByte == X86Opcode.REPE || hexByte == X86Opcode.REPNE) {
-                    header._instructionSelectionPrefix = hexByte;
+                    header.instructionSelectionPrefix = hexByte;
                     return header;
                 } else if (isRexPrefix(hexByte)) {
-                    header._rexPrefix = hexByte;
+                    header.rexPrefix = hexByte;
                 } else {
-                    header._opcode1 = hexByte;
+                    header.opcode1 = hexByte;
                     if (hexByte != HexByte._0F) {
                         return header;
                     }
                 }
             } else {
-                header._opcode2 = hexByte;
+                header.opcode2 = hexByte;
                 return header;
             }
             byteValue = stream.read();
@@ -87,7 +87,7 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
 
     private IndexedSequence<Argument> scanArguments(BufferedInputStream stream, Template_Type template, X86InstructionHeader header, byte modRMByte, byte sibByte) throws IOException {
         final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
-        final byte rexByte = (header._rexPrefix != null) ? header._rexPrefix.byteValue() : 0;
+        final byte rexByte = (header.rexPrefix != null) ? header.rexPrefix.byteValue() : 0;
         for (X86Parameter parameter : template.parameters()) {
             int value = 0;
             switch (parameter.place()) {
@@ -145,19 +145,19 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
                     value = X86Field.extractRexValue(X86Field.REX_B_BIT_INDEX, rexByte);
                     // fall through...
                 case OPCODE1:
-                    value += header._opcode1.ordinal() & 7;
+                    value += header.opcode1.ordinal() & 7;
                     break;
                 case OPCODE2_REXB:
                     value = X86Field.extractRexValue(X86Field.REX_B_BIT_INDEX, rexByte);
                     // fall through...
                 case OPCODE2:
-                    value += header._opcode2.ordinal() & 7;
+                    value += header.opcode2.ordinal() & 7;
                     break;
             }
             final X86EnumerableParameter enumerableParameter = (X86EnumerableParameter) parameter;
             final Enumerator enumerator = enumerableParameter.enumerator();
             if (enumerator == AMD64GeneralRegister8.ENUMERATOR) {
-                arguments.append(AMD64GeneralRegister8.fromValue(value, header._rexPrefix != null));
+                arguments.append(AMD64GeneralRegister8.fromValue(value, header.rexPrefix != null));
             } else {
                 arguments.append((Argument) enumerator.fromValue(value));
             }
@@ -225,18 +225,18 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
 
     protected abstract Map<X86InstructionHeader, AppendableSequence<Template_Type>> headerToTemplates();
 
-    private static int _serial;
+    private static int serial;
 
     public DisassembledObject scanInstruction(BufferedInputStream stream, X86InstructionHeader header) throws IOException, AssemblyException {
-        _serial++;
-        Trace.line(4, "instruction: " + _serial);
-        if (header._opcode1 != null) {
+        serial++;
+        Trace.line(4, "instruction: " + serial);
+        if (header.opcode1 != null) {
             boolean isFloatingPointEscape = false;
-            if (X86Opcode.isFloatingPointEscape(header._opcode1)) {
+            if (X86Opcode.isFloatingPointEscape(header.opcode1)) {
                 final int byte2 = stream.read();
                 if (byte2 >= 0xC0) {
                     isFloatingPointEscape = true;
-                    header._opcode2 = HexByte.VALUES.get(byte2);
+                    header.opcode2 = HexByte.VALUES.get(byte2);
                 }
             }
             final Sequence<Template_Type> templates = headerToTemplates().get(header);
@@ -281,7 +281,7 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
                         if (!Sequence.Static.containsIdentical(arguments, null)) {
                             byte[] bytes;
                             if (true) {
-                                final Assembler assembler = createAssembler(_currentPosition);
+                                final Assembler assembler = createAssembler(currentPosition);
                                 assembly().assemble(assembler, template, arguments);
                                 bytes = assembler.toByteArray();
                             } else { // TODO: does not work yet
@@ -291,8 +291,8 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
                             if (bytes != null) {
                                 stream.reset();
                                 if (Streams.startsWith(stream, bytes)) {
-                                    final DisassembledInstruction_Type disassembledInstruction = createDisassembledInstruction(_currentPosition, bytes, template, arguments);
-                                    _currentPosition += bytes.length;
+                                    final DisassembledInstruction_Type disassembledInstruction = createDisassembledInstruction(currentPosition, bytes, template, arguments);
+                                    currentPosition += bytes.length;
                                     return disassembledInstruction;
                                 }
                             }
@@ -303,14 +303,14 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
                 }
             }
         }
-        if (header._instructionSelectionPrefix == X86Opcode.REPE || header._instructionSelectionPrefix == X86Opcode.REPNE) {
+        if (header.instructionSelectionPrefix == X86Opcode.REPE || header.instructionSelectionPrefix == X86Opcode.REPNE) {
             final X86InstructionHeader prefixHeader = new X86InstructionHeader();
-            prefixHeader._opcode1 = header._instructionSelectionPrefix;
+            prefixHeader.opcode1 = header.instructionSelectionPrefix;
             final Sequence<Template_Type> prefixTemplates = headerToTemplates().get(prefixHeader);
             final Template_Type template = prefixTemplates.first();
-            final byte[] bytes = new byte[]{header._instructionSelectionPrefix.byteValue()};
-            final DisassembledInstruction_Type disassembledInstruction = createDisassembledInstruction(_currentPosition, bytes, template, IndexedSequence.Static.empty(Argument.class));
-            _currentPosition++;
+            final byte[] bytes = new byte[]{header.instructionSelectionPrefix.byteValue()};
+            final DisassembledInstruction_Type disassembledInstruction = createDisassembledInstruction(currentPosition, bytes, template, IndexedSequence.Static.empty(Argument.class));
+            currentPosition++;
             return disassembledInstruction;
         }
         if (INLINE_INVALID_INSTRUCTIONS_AS_BYTES) {
@@ -318,9 +318,9 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
             final int size = 1;
             final byte[] data = new byte[size];
             Streams.readFully(stream, data);
-            final InlineData inlineData = new InlineData(_currentPosition, data);
+            final InlineData inlineData = new InlineData(currentPosition, data);
             final DisassembledData disassembledData = createDisassembledDataObjects(inlineData).iterator().next();
-            _currentPosition += size;
+            currentPosition += size;
             return disassembledData;
         }
         throw new AssemblyException("unknown instruction");
@@ -348,7 +348,7 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
         boolean processingKnownValidCode = true;
 
         while (true) {
-            while (knownGoodCodePositions.size() > 0 && knownGoodCodePositions.first().intValue() < _currentPosition) {
+            while (knownGoodCodePositions.size() > 0 && knownGoodCodePositions.first().intValue() < currentPosition) {
                 knownGoodCodePositions.remove(knownGoodCodePositions.first());
             }
 
@@ -372,7 +372,7 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
                     final byte[] data = new byte[size];
                     Streams.readFully(stream, data);
                     final InlineData inlineData = new InlineData(startPosition, data);
-                    _currentPosition += addDisassembledDataObjects(result, inlineData);
+                    currentPosition += addDisassembledDataObjects(result, inlineData);
                     processingKnownValidCode = true;
                 } else {
                     result.append(disassembledObject);

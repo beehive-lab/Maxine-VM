@@ -38,20 +38,20 @@ public class CompoundBitRange extends BitRange {
         super();
     }
 
-    private AppendableIndexedSequence<ContiguousBitRange> _contiguousBitRanges = new ArrayListSequence<ContiguousBitRange>();
+    private AppendableIndexedSequence<ContiguousBitRange> contiguousBitRanges = new ArrayListSequence<ContiguousBitRange>();
 
     public Sequence<ContiguousBitRange> contiguousBitRanges() {
-        return _contiguousBitRanges;
+        return contiguousBitRanges;
     }
 
     public void add(ContiguousBitRange contiguousBitRange) {
-        _contiguousBitRanges.append(contiguousBitRange);
+        contiguousBitRanges.append(contiguousBitRange);
     }
 
     @Override
     public CompoundBitRange move(boolean left, int bits) {
         final CompoundBitRange movedRange = new CompoundBitRange();
-        for (ContiguousBitRange contiguousBitRange : _contiguousBitRanges) {
+        for (ContiguousBitRange contiguousBitRange : contiguousBitRanges) {
             movedRange.add((ContiguousBitRange) contiguousBitRange.move(left, bits));
         }
         return movedRange;
@@ -60,7 +60,7 @@ public class CompoundBitRange extends BitRange {
     @Override
     public int width() {
         int result = 0;
-        for (ContiguousBitRange contiguousBitRange : _contiguousBitRanges) {
+        for (ContiguousBitRange contiguousBitRange : contiguousBitRanges) {
             result += contiguousBitRange.width();
         }
         return result;
@@ -69,7 +69,7 @@ public class CompoundBitRange extends BitRange {
     @Override
     public int encodedWidth() {
         int result = 0;
-        for (ContiguousBitRange contiguousBitRange : _contiguousBitRanges) {
+        for (ContiguousBitRange contiguousBitRange : contiguousBitRanges) {
             result += contiguousBitRange.encodedWidth();
         }
         return result;
@@ -78,7 +78,7 @@ public class CompoundBitRange extends BitRange {
     @Override
     public int instructionMask() {
         int mask = 0;
-        for (ContiguousBitRange contiguousBitRange : _contiguousBitRanges) {
+        for (ContiguousBitRange contiguousBitRange : contiguousBitRanges) {
             mask |= contiguousBitRange.instructionMask();
         }
         return mask;
@@ -87,7 +87,7 @@ public class CompoundBitRange extends BitRange {
     @Override
     public int numberOfLessSignificantBits() {
         int result = 32;
-        for (ContiguousBitRange contiguousBitRange : _contiguousBitRanges) {
+        for (ContiguousBitRange contiguousBitRange : contiguousBitRanges) {
             final int n = contiguousBitRange.numberOfLessSignificantBits();
             if (n < result) {
                 result = n;
@@ -102,18 +102,18 @@ public class CompoundBitRange extends BitRange {
             return false;
         }
         final CompoundBitRange compoundBitRange = (CompoundBitRange) other;
-        return _contiguousBitRanges.equals(compoundBitRange._contiguousBitRanges);
+        return contiguousBitRanges.equals(compoundBitRange.contiguousBitRanges);
     }
 
     @Override
     public int hashCode() {
-        return _contiguousBitRanges.hashCode();
+        return contiguousBitRanges.hashCode();
     }
 
     @Override
     public String toString() {
         String result = null;
-        for (ContiguousBitRange contiguousBitRange : _contiguousBitRanges) {
+        for (ContiguousBitRange contiguousBitRange : contiguousBitRanges) {
             if (result != null) {
                 result += "," + contiguousBitRange;
             } else {
@@ -127,7 +127,7 @@ public class CompoundBitRange extends BitRange {
 
     @Override
     public int extractSignedInt(int instruction) {
-        final Iterator<ContiguousBitRange> iterator = _contiguousBitRanges.iterator();
+        final Iterator<ContiguousBitRange> iterator = contiguousBitRanges.iterator();
         final ContiguousBitRange firstBitRange = iterator.next();
         int signedInt = firstBitRange.extractSignedInt(instruction);
         while (iterator.hasNext()) {
@@ -141,7 +141,7 @@ public class CompoundBitRange extends BitRange {
     @Override
     public int extractUnsignedInt(int instruction) {
         int unsignedInt = 0;
-        for (ContiguousBitRange contiguousBitRange : _contiguousBitRanges) {
+        for (ContiguousBitRange contiguousBitRange : contiguousBitRanges) {
             unsignedInt <<= contiguousBitRange.width();
             unsignedInt |= contiguousBitRange.extractUnsignedInt(instruction);
         }
@@ -154,8 +154,8 @@ public class CompoundBitRange extends BitRange {
     public int assembleUncheckedSignedInt(int signedInt) throws IndexOutOfBoundsException {
         int value = signedInt;
         int result = 0;
-        for (int i = _contiguousBitRanges.length() - 1; i >= 0; i--) {
-            final ContiguousBitRange contiguousBitRange = _contiguousBitRanges.get(i);
+        for (int i = contiguousBitRanges.length() - 1; i >= 0; i--) {
+            final ContiguousBitRange contiguousBitRange = contiguousBitRanges.get(i);
             result |= contiguousBitRange.assembleUncheckedSignedInt(value);
             value >>= contiguousBitRange.width();
         }
@@ -166,8 +166,8 @@ public class CompoundBitRange extends BitRange {
     public int assembleUncheckedUnsignedInt(int unsignedInt) throws IndexOutOfBoundsException {
         int value = unsignedInt;
         int result = 0;
-        for (int i = _contiguousBitRanges.length() - 1; i >= 0; i--) {
-            final ContiguousBitRange contiguousBitRange = _contiguousBitRanges.get(i);
+        for (int i = contiguousBitRanges.length() - 1; i >= 0; i--) {
+            final ContiguousBitRange contiguousBitRange = contiguousBitRanges.get(i);
             result |= contiguousBitRange.assembleUncheckedUnsignedInt(value);
             value >>>= contiguousBitRange.width();
         }
@@ -178,8 +178,8 @@ public class CompoundBitRange extends BitRange {
     public String encodingString(String value, boolean signed, boolean checked) {
         final StringBuilder sb = new StringBuilder();
         int shift = 0;
-        for (int i = _contiguousBitRanges.length() - 1; i >= 0; i--) {
-            final ContiguousBitRange contiguousBitRange = _contiguousBitRanges.get(i);
+        for (int i = contiguousBitRanges.length() - 1; i >= 0; i--) {
+            final ContiguousBitRange contiguousBitRange = contiguousBitRanges.get(i);
             final String bits = (shift == 0) ? value : "(" + value + (signed ? " >> " : " >>> ") + shift + ")";
             final String encoding = contiguousBitRange.encodingString(bits, signed, false);
             if (encoding.length() != 0) {

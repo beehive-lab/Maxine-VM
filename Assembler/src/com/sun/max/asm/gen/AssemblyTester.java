@@ -75,23 +75,23 @@ import com.sun.max.util.*;
  */
 public abstract class AssemblyTester<Template_Type extends Template, DisassembledInstruction_Type extends DisassembledInstruction<Template_Type>> {
 
-    private final Assembly<Template_Type> _assembly;
-    private final WordWidth _addressWidth;
-    private final EnumSet<AssemblyTestComponent> _components;
+    private final Assembly<Template_Type> assembly;
+    private final WordWidth addressWidth;
+    private final EnumSet<AssemblyTestComponent> components;
 
     protected AssemblyTester(Assembly<Template_Type> assembly, WordWidth addressWidth, EnumSet<AssemblyTestComponent> components) {
-        _assembly = assembly;
-        _addressWidth = addressWidth;
-        _components = components;
-        _tmpFilePrefix = System.getProperty("user.name") + "-" + _assembly.instructionSet().name().toLowerCase() + "-asmTest-";
+        this.assembly = assembly;
+        this.addressWidth = addressWidth;
+        this.components = components;
+        this.tmpFilePrefix = System.getProperty("user.name") + "-" + assembly.instructionSet().name().toLowerCase() + "-asmTest-";
     }
 
     public Assembly<Template_Type> assembly() {
-        return _assembly;
+        return assembly;
     }
 
     public WordWidth addressWidth() {
-        return _addressWidth;
+        return addressWidth;
     }
 
     enum TestCaseLegality {
@@ -112,17 +112,17 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
      */
     class ArgumentListIterator implements Iterator<IndexedSequence<Argument>> {
 
-        private final Template_Type _template;
-        private final Parameter[] _parameters;
-        private final Iterator<? extends Argument>[] _testArgumentIterators;
-        private final int _count;
-        private final Argument[] _arguments;
-        private final IndexedSequence<Argument> _next;
-        private final TestCaseLegality _testCaseLegality;
+        private final Template_Type template;
+        private final Parameter[] parameters;
+        private final Iterator<? extends Argument>[] testArgumentIterators;
+        private final int count;
+        private final Argument[] arguments;
+        private final IndexedSequence<Argument> next;
+        private final TestCaseLegality testCaseLegality;
 
-        private boolean _hasNext;
-        private boolean _advanced;
-        private int _iterations;
+        private boolean hasNext;
+        private boolean advanced;
+        private int iterations;
 
         /**
          * Creates an iterator over a set of test cases for a given template.
@@ -137,32 +137,32 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
          *            otherwise at least one argument in a returned test case will be {@link Parameter#getIllegalTestArguments illegal}
          */
         ArgumentListIterator(Template_Type template, TestCaseLegality testCaseLegality) {
-            _testCaseLegality  = testCaseLegality;
-            _template = template;
-            _parameters = Sequence.Static.toArray(template.parameters(), Parameter.class);
-            _count = template.parameters().length();
-            _arguments = new Argument[_count];
-            _next = new ArraySequence<Argument>(_arguments);
+            this.testCaseLegality  = testCaseLegality;
+            this.template = template;
+            this.parameters = Sequence.Static.toArray(template.parameters(), Parameter.class);
+            this.count = template.parameters().length();
+            this.arguments = new Argument[count];
+            this.next = new ArraySequence<Argument>(arguments);
             final Class<Iterator<? extends Argument>[]> type = null;
-            _testArgumentIterators = StaticLoophole.cast(type, new Iterator[_count]);
-            _hasNext = advance();
+            this.testArgumentIterators = StaticLoophole.cast(type, new Iterator[count]);
+            this.hasNext = advance();
         }
 
         /**
-         * @return the number of times {@link #_next} has been invoked on this iterator without throwing a NoSuchElementException.
+         * @return the number of times {@link #next} has been invoked on this iterator without throwing a NoSuchElementException.
          */
         public int iterations() {
-            return _iterations;
+            return iterations;
         }
 
         public boolean hasNext() {
-            if (_count == 0) {
-                return _testCaseLegality == TestCaseLegality.LEGAL ? (_iterations == 0) : false;
+            if (count == 0) {
+                return testCaseLegality == TestCaseLegality.LEGAL ? (iterations == 0) : false;
             }
-            if (!_advanced) {
-                _hasNext = advance();
+            if (!advanced) {
+                hasNext = advance();
             }
-            return _hasNext;
+            return hasNext;
         }
 
         /**
@@ -173,9 +173,9 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
-            _advanced = false;
-            ++_iterations;
-            return _next;
+            advanced = false;
+            ++iterations;
+            return next;
         }
 
         /**
@@ -184,15 +184,15 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
          * @return true if the iterator could advance
          */
         private boolean advance() {
-            assert !_advanced;
-            _advanced = true;
-            if (_count == 0) {
-                return _testCaseLegality == TestCaseLegality.LEGAL;
+            assert !advanced;
+            advanced = true;
+            if (count == 0) {
+                return testCaseLegality == TestCaseLegality.LEGAL;
             }
             boolean result;
             do {
                 result = advance0();
-            } while (result && isLegalArgumentList(_template, _next) != (_testCaseLegality == TestCaseLegality.LEGAL));
+            } while (result && isLegalArgumentList(template, next) != (testCaseLegality == TestCaseLegality.LEGAL));
             return result;
         }
 
@@ -202,8 +202,8 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
          * @return true if the iterator could advance
          */
         private boolean advanceArgumentFor(int i) {
-            if (_testArgumentIterators[i].hasNext()) {
-                _arguments[i] = _testArgumentIterators[i].next();
+            if (testArgumentIterators[i].hasNext()) {
+                arguments[i] = testArgumentIterators[i].next();
                 return true;
             }
             return false;
@@ -215,8 +215,8 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
          * @return true if the iterator could advance
          */
         private boolean advance0() {
-            for (int i = _count - 1; i >= 0; --i) {
-                if (_testArgumentIterators[i] != null) {
+            for (int i = count - 1; i >= 0; --i) {
+                if (testArgumentIterators[i] != null) {
                     if (advanceArgumentFor(i)) {
                         return true;
                     }
@@ -226,14 +226,14 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
                 }
 
                 // Reset iterator over test arguments of the i'th parameter
-                final Parameter parameter = _parameters[i];
-                if (_testCaseLegality != TestCaseLegality.ILLEGAL_BY_ARGUMENT) {
-                    final Iterable<? extends Argument> arguments = parameter.getLegalTestArguments();
+                final Parameter parameter = parameters[i];
+                if (testCaseLegality != TestCaseLegality.ILLEGAL_BY_ARGUMENT) {
+                    final Iterable<? extends Argument> argumentsIterable = parameter.getLegalTestArguments();
                     final ArgumentRange argumentRange = parameter.argumentRange();
                     if (argumentRange == null || !argumentRange.appliesInternally()) {
-                        _testArgumentIterators[i] = arguments.iterator();
+                        testArgumentIterators[i] = argumentsIterable.iterator();
                     } else {
-                        _testArgumentIterators[i] = new FilterIterator<Argument>(arguments.iterator(), new Predicate<Argument>() {
+                        testArgumentIterators[i] = new FilterIterator<Argument>(argumentsIterable.iterator(), new Predicate<Argument>() {
                             public boolean evaluate(Argument argument) {
                                 return argumentRange.includes(argument);
                             }
@@ -256,9 +256,9 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
                             iterator.next();
                         }
                         assert iterator.hasNext();
-                        _testArgumentIterators[i] = iterator;
+                        testArgumentIterators[i] = iterator;
                     } else {
-                        _testArgumentIterators[i] = iterator;
+                        testArgumentIterators[i] = iterator;
                     }
                 }
                 if (!advanceArgumentFor(i)) {
@@ -280,7 +280,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
 
     protected abstract void assembleExternally(IndentWriter stream, Template_Type template, Sequence<Argument> argumentList, String label);
 
-    private final String _tmpFilePrefix;
+    private final String tmpFilePrefix;
     private static final String SOURCE_EXTENSION = ".s";
     private static final String BINARY_EXTENSION = ".o";
 
@@ -307,17 +307,17 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
         return false;
     }
 
-    protected final int _nNOPs = 10;
+    protected final int nNOPs = 10;
 
     private File createExternalSourceFile(Template_Type template, Iterator<IndexedSequence<Argument>> argumentLists) throws IOException {
-        final File sourceFile = File.createTempFile(_tmpFilePrefix + template.internalName(), SOURCE_EXTENSION);
+        final File sourceFile = File.createTempFile(tmpFilePrefix + template.internalName(), SOURCE_EXTENSION);
         final IndentWriter stream = new IndentWriter(new PrintWriter(new BufferedWriter(new FileWriter(sourceFile))));
         stream.indent();
-        for (int i = 0; i < _nNOPs; i++) {
+        for (int i = 0; i < nNOPs; i++) {
             stream.println("nop");
         }
         createExternalSource(template, argumentLists, stream);
-        for (int i = 0; i < _nNOPs; i++) {
+        for (int i = 0; i < nNOPs; i++) {
             stream.println("nop");
         }
         stream.outdent();
@@ -339,7 +339,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
 
     protected abstract String assemblerCommand();
 
-    private String _remoteAssemblerPath = "";
+    private String remoteAssemblerPath = "";
 
     /**
      * Sets the path of the directory on a remote machine containing the
@@ -351,10 +351,10 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
      */
     public void setRemoteAssemblerPath(String path) {
         assert path != null;
-        _remoteAssemblerPath = path;
+        remoteAssemblerPath = path;
     }
 
-    private String _remoteUserAndHost;
+    private String remoteUserAndHost;
 
     /**
      * Sets the {@code user@host} string that will be used to execute the external
@@ -395,7 +395,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
      *        supports remote execution via SSH2 using public key authentication
      */
     public void setRemoteUserAndHost(String remoteUserAndHost) {
-        _remoteUserAndHost = remoteUserAndHost;
+        this.remoteUserAndHost = remoteUserAndHost;
     }
 
     /**
@@ -438,19 +438,19 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
     private File createExternalBinaryFile(File sourceFile) throws IOException {
         try {
             final File binaryFile = new File(sourceFile.getPath().substring(0, sourceFile.getPath().length() - SOURCE_EXTENSION.length()) + BINARY_EXTENSION);
-            if (_remoteUserAndHost != null) {
+            if (remoteUserAndHost != null) {
 
                 // Copy input source to remote machine
-                exec("scp -C " + sourceFile.getAbsolutePath() + " " + _remoteUserAndHost + ":" + sourceFile.getName());
+                exec("scp -C " + sourceFile.getAbsolutePath() + " " + remoteUserAndHost + ":" + sourceFile.getName());
 
                 // Execute assembler remotely
-                exec("ssh " + _remoteUserAndHost + " " + _remoteAssemblerPath + assemblerCommand() + " -o " + binaryFile.getName() + " " + sourceFile.getName());
+                exec("ssh " + remoteUserAndHost + " " + remoteAssemblerPath + assemblerCommand() + " -o " + binaryFile.getName() + " " + sourceFile.getName());
 
                 // Copy output binary to local machine
-                exec("scp -C " + _remoteUserAndHost + ":" + binaryFile.getName() + " " + binaryFile.getAbsolutePath());
+                exec("scp -C " + remoteUserAndHost + ":" + binaryFile.getName() + " " + binaryFile.getAbsolutePath());
 
                 // Delete input source and output binary from remote machine
-                exec("ssh " + _remoteUserAndHost + " rm " + binaryFile.getName() + " " + sourceFile.getName());
+                exec("ssh " + remoteUserAndHost + " rm " + binaryFile.getName() + " " + sourceFile.getName());
             } else {
                 exec(assemblerCommand() + " " + sourceFile.getAbsolutePath() + " -o " + binaryFile.getAbsolutePath());
             }
@@ -466,7 +466,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
         while (stream.available() > 0) {
             if (readNop(stream)) {
                 boolean found = true;
-                for (int i = 1; i < _nNOPs; i++) {
+                for (int i = 1; i < nNOPs; i++) {
                     if (!readNop(stream)) {
                         found = false;
                         break;
@@ -580,7 +580,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
     }
 
     private void testTemplate(final Template_Type template, AppendableSequence<File> temporaryFiles) throws IOException, InterruptedException, AssemblyException {
-        final boolean testingExternally = _components.contains(AssemblyTestComponent.EXTERNAL_ASSEMBLER) && template.isExternallyTestable();
+        final boolean testingExternally = components.contains(AssemblyTestComponent.EXTERNAL_ASSEMBLER) && template.isExternallyTestable();
 
         // Process legal test cases
         final ArgumentListIterator argumentLists = new ArgumentListIterator(template, TestCaseLegality.LEGAL);
@@ -611,7 +611,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
             if (Trace.hasLevel(3)) {
                 Trace.line(3, "assembleInternally[" + testCaseNumber + "]: " + assembly().createMethodCallString(template, argumentList) + " = " + DisassembledInstruction.toHexString(internalResult));
             }
-            if (_components.contains(AssemblyTestComponent.DISASSEMBLER) && template.isDisassemblable() &&
+            if (components.contains(AssemblyTestComponent.DISASSEMBLER) && template.isDisassemblable() &&
                     !findExcludedDisassemblerTestArgument(template.parameters(), argumentList)) {
                 try {
                     testDisassembler(template, argumentList, internalResult);
@@ -666,7 +666,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
             Trace.line(2, "    caught expected IllegalArgumentException: " + message);
         }
         if (testingExternally) {
-            for (int i = 0; i < _nNOPs; i++) {
+            for (int i = 0; i < nNOPs; i++) {
                 if (!readNop(externalInputStream)) {
                     ProgramError.unexpected("end pattern missing in: " + binaryFile.getAbsolutePath());
                 }
@@ -675,7 +675,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
         }
     }
 
-    private String _templatePattern;
+    private String templatePattern;
 
     /**
      * Sets the pattern that restricts which templates are tested.
@@ -684,7 +684,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
      *                {@code pattern} as a substring are tested
      */
     public void setTemplatePattern(String pattern) {
-        _templatePattern = pattern;
+        templatePattern = pattern;
     }
 
     /**
@@ -701,7 +701,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
      */
     public void run(int startTemplateSerial, int endTemplateSerial, boolean parallelize) {
 
-        if (_components.contains(AssemblyTestComponent.EXTERNAL_ASSEMBLER)) {
+        if (components.contains(AssemblyTestComponent.EXTERNAL_ASSEMBLER)) {
             try {
                 Runtime.getRuntime().exec(assemblerCommand());
             } catch (IOException ioException) {
@@ -710,7 +710,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
         }
 
         final int numberOfWorkerThreads;
-        if (_remoteUserAndHost != null) {
+        if (remoteUserAndHost != null) {
             // Don't go parallel when using ssh as the max number of ssh connections on the remote host will most likely be a problem
             numberOfWorkerThreads = 1;
         } else {
@@ -727,7 +727,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
             }
             Trace.on(2);
             if (!template.isRedundant() && template.serial() >= startTemplateSerial) {
-                if (_templatePattern == null || template.internalName().contains(_templatePattern)) {
+                if (templatePattern == null || template.internalName().contains(templatePattern)) {
                     ++submittedTests;
                     compilationCompletionService.submit(new Callable<Template_Type>() {
                         public Template_Type call() {
@@ -801,7 +801,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
             }
             Trace.on(2);
             if (!template.isRedundant() && template.serial() >= startTemplateSerial) {
-                if (_templatePattern == null || template.internalName().contains(_templatePattern)) {
+                if (templatePattern == null || template.internalName().contains(templatePattern)) {
                     createExternalSource(template, stream);
                 }
             }

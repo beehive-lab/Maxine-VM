@@ -36,8 +36,8 @@ public abstract class InstructionWithOffset extends InstructionWithLabel {
      */
     public static final int ALL_VALID_OFFSET_SIZES_MASK = WordWidth.BITS_8.numberOfBytes() | WordWidth.BITS_16.numberOfBytes() | WordWidth.BITS_32.numberOfBytes() | WordWidth.BITS_64.numberOfBytes();
 
-    private final int _validOffsetSizesMask;
-    private int _offsetSize;
+    private final int validOffsetSizesMask;
+    private int offsetSize;
 
     /**
      * Creates an object representing an instruction that addresses some data as an offset from itself.
@@ -55,30 +55,30 @@ public abstract class InstructionWithOffset extends InstructionWithLabel {
      */
     protected InstructionWithOffset(Assembler assembler, int startPosition, int endPosition, Label label, int validOffsetSizesMask) {
         super(assembler, startPosition, endPosition, label);
-        _validOffsetSizesMask = validOffsetSizesMask;
+        this.validOffsetSizesMask = validOffsetSizesMask;
         assert validOffsetSizesMask != 0;
         assert (validOffsetSizesMask & ~ALL_VALID_OFFSET_SIZES_MASK) == 0;
         if (Ints.isPowerOfTwoOrZero(validOffsetSizesMask)) {
             assembler.addFixedSizeAssembledObject(this);
-            _offsetSize = validOffsetSizesMask;
+            this.offsetSize = validOffsetSizesMask;
         } else {
             assembler.addSpanDependentInstruction(this);
-            _offsetSize = Integer.lowestOneBit(validOffsetSizesMask);
+            this.offsetSize = Integer.lowestOneBit(validOffsetSizesMask);
         }
     }
 
     protected InstructionWithOffset(Assembler assembler, int startPosition, int endPosition, Label label) {
         super(assembler, startPosition, endPosition, label);
-        _validOffsetSizesMask = 0;
+        this.validOffsetSizesMask = 0;
         assembler.addFixedSizeAssembledObject(this);
     }
 
     void setSize(int nBytes) {
-        _variableSize = nBytes;
+        variableSize = nBytes;
     }
 
     protected final int labelSize() {
-        return _offsetSize;
+        return offsetSize;
     }
 
     /**
@@ -87,19 +87,19 @@ public abstract class InstructionWithOffset extends InstructionWithLabel {
      * @return true if the size of this instruction's label was changed
      */
     boolean updateLabelSize() throws AssemblyException {
-        if (_validOffsetSizesMask == 0) {
+        if (validOffsetSizesMask == 0) {
             return false;
         }
-        int offsetSize = WordWidth.signedEffective(offset()).numberOfBytes();
-        if (offsetSize > _offsetSize) {
-            final int maxLabelSize = Integer.highestOneBit(_validOffsetSizesMask);
-            if (offsetSize > maxLabelSize) {
+        int newOffsetSize = WordWidth.signedEffective(offset()).numberOfBytes();
+        if (newOffsetSize > this.offsetSize) {
+            final int maxLabelSize = Integer.highestOneBit(validOffsetSizesMask);
+            if (newOffsetSize > maxLabelSize) {
                 throw new AssemblyException("instruction cannot accomodate number of bits required for offset");
             }
-            while ((offsetSize & _validOffsetSizesMask) == 0) {
-                offsetSize = offsetSize << 1;
+            while ((newOffsetSize & validOffsetSizesMask) == 0) {
+                newOffsetSize = newOffsetSize << 1;
             }
-            _offsetSize = offsetSize;
+            this.offsetSize = newOffsetSize;
             return true;
         }
         return false;
