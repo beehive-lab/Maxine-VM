@@ -22,6 +22,7 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.util.InstructionVisitor;
 import com.sun.c1x.util.InstructionClosure;
+import com.sun.c1x.util.Util;
 import com.sun.c1x.value.ValueType;
 
 /**
@@ -82,7 +83,7 @@ public class Convert extends Instruction {
 
     @Override
     public int valueNumber() {
-        return hash1(_opcode, _value);
+        return Util.hash1(_opcode, _value);
     }
 
     @Override

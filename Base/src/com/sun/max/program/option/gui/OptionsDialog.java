@@ -48,32 +48,32 @@ public class OptionsDialog extends JDialog {
     public static final int TEXT_FIELD_COLUMNS = 40;
 
     protected abstract static class GUIOption<Value_Type> implements ItemListener {
-        protected final Option<Value_Type> _option;
-        protected final JCheckBox _guard;
-        protected final JLabel _label;
-        protected JComponent _input;
+        protected final Option<Value_Type> option;
+        protected final JCheckBox guard;
+        protected final JLabel label;
+        protected JComponent input;
 
         protected GUIOption(Option<Value_Type> opt) {
-            this._option = opt;
-            _guard = new JCheckBox();
-            _label = new JLabel(_option.getName());
-            _guard.addItemListener(this);
+            this.option = opt;
+            guard = new JCheckBox();
+            label = new JLabel(option.getName());
+            guard.addItemListener(this);
         }
 
         public JCheckBox getGuard() {
-            return _guard;
+            return guard;
         }
 
         public JLabel getLabel() {
-            return _label;
+            return label;
         }
 
         public JComponent getInputComponent() {
-            return _input;
+            return input;
         }
 
         public void itemStateChanged(ItemEvent e) {
-            setInputAndLabelEnabled(_guard.isSelected());
+            setInputAndLabelEnabled(guard.isSelected());
         }
 
         protected void setEnabledOfContainedComponents(Container container, boolean enabled) {
@@ -86,9 +86,9 @@ public class OptionsDialog extends JDialog {
         }
 
         protected void setInputAndLabelEnabled(boolean enabled) {
-            _input.setEnabled(enabled);
-            setEnabledOfContainedComponents(_input, enabled);
-            _label.setEnabled(enabled);
+            input.setEnabled(enabled);
+            setEnabledOfContainedComponents(input, enabled);
+            label.setEnabled(enabled);
         }
 
         public abstract Value_Type getValue() throws Option.Error;
@@ -96,187 +96,187 @@ public class OptionsDialog extends JDialog {
         public abstract void setValue(Value_Type value);
 
         public void commitOption() {
-            if (_guard.isSelected()) {
-                _option.setValue(getValue());
+            if (guard.isSelected()) {
+                option.setValue(getValue());
             }
         }
 
         public String unparse() {
-            return _option.getType().unparseValue(getValue());
+            return option.getType().unparseValue(getValue());
         }
 
         public void parse(String str) {
-            _guard.setEnabled(true);
-            setValue(_option.getType().parseValue(str));
+            guard.setEnabled(true);
+            setValue(option.getType().parseValue(str));
         }
     }
 
     protected static class IntegerGUIOption extends GUIOption<Integer> {
-        private final JTextField _textField;
+        private final JTextField textField;
 
         protected IntegerGUIOption(Option<Integer> option) {
             super(option);
-            _textField = new JTextField();
-            _input = _textField;
-            _textField.setColumns(TEXT_FIELD_COLUMNS);
+            textField = new JTextField();
+            input = textField;
+            textField.setColumns(TEXT_FIELD_COLUMNS);
             setValue(option.getValue());
         }
 
         @Override
         public void setValue(Integer i) {
-            _textField.setText(String.valueOf(i));
-            _guard.setSelected(i != null);
+            textField.setText(String.valueOf(i));
+            guard.setSelected(i != null);
             setInputAndLabelEnabled(i != null);
         }
 
         @Override
         public Integer getValue() {
-            if (_guard.isSelected()) {
-                return _option.getType().parseValue(_textField.getText());
+            if (guard.isSelected()) {
+                return option.getType().parseValue(textField.getText());
             }
             return null;
         }
     }
 
     protected static class BooleanGUIOption extends GUIOption<Boolean> {
-        private final JLabel _helpText;
+        private final JLabel helpText;
         protected BooleanGUIOption(Option<Boolean> option) {
             super(option);
-            _helpText = new JLabel("<html>" + option.getHelp() + "</html>");
-            _input = _helpText;
+            helpText = new JLabel("<html>" + option.getHelp() + "</html>");
+            input = helpText;
             setValue(option.getValue());
         }
 
         @Override
         public void commitOption() {
-            if (_guard.isSelected()) {
-                _option.setValue(true);
+            if (guard.isSelected()) {
+                option.setValue(true);
             } else {
-                _option.setValue(false);
+                option.setValue(false);
             }
         }
 
         @Override
         public void setValue(Boolean b) {
-            _guard.setSelected(b);
-            _helpText.setEnabled(b);
+            guard.setSelected(b);
+            helpText.setEnabled(b);
             setInputAndLabelEnabled(b);
         }
 
         @Override
         public Boolean getValue() {
-            return _guard.isSelected();
+            return guard.isSelected();
         }
     }
 
     protected static class StringGUIOption extends GUIOption<String> {
-        private final JTextField _textField;
+        private final JTextField textField;
 
         protected StringGUIOption(Option<String> option) {
             super(option);
-            _textField = new JTextField(TEXT_FIELD_COLUMNS);
-            _input = _textField;
+            textField = new JTextField(TEXT_FIELD_COLUMNS);
+            input = textField;
             setValue(option.getValue());
         }
 
         @Override
         public void setValue(String i) {
-            _textField.setText(String.valueOf(i));
-            _guard.setSelected(i != null);
+            textField.setText(String.valueOf(i));
+            guard.setSelected(i != null);
             setInputAndLabelEnabled(i != null);
         }
 
         @Override
         public String getValue() {
-            if (_guard.isSelected()) {
-                return _textField.getText();
+            if (guard.isSelected()) {
+                return textField.getText();
             }
             return null;
         }
     }
 
     protected static class ListGUIOption extends GUIOption<List<Object>> {
-        private final JTextField _textField;
-        private final JList _list;
+        private final JTextField textField;
+        private final JList list;
 
         protected ListGUIOption(Option<List<Object>> option) {
             super(option);
             if (option.getType() instanceof OptionTypes.EnumListType) {
-                _textField = null;
+                textField = null;
                 final OptionTypes.EnumListType elt = (OptionTypes.EnumListType) option.getType();
-                final OptionTypes.EnumType et = (OptionTypes.EnumType) elt._elementOptionType;
-                _list = new JList(et._values);
-                _list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-                _list.setVisibleRowCount(Math.min(10, et._values.length));
-                _list.setLayoutOrientation(JList.VERTICAL);
-                final JScrollPane scrollPane = new JScrollPane(_list);
-                _input = scrollPane;
+                final OptionTypes.EnumType et = (OptionTypes.EnumType) elt.elementOptionType;
+                list = new JList(et.values);
+                list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+                list.setVisibleRowCount(Math.min(10, et.values.length));
+                list.setLayoutOrientation(JList.VERTICAL);
+                final JScrollPane scrollPane = new JScrollPane(list);
+                input = scrollPane;
             } else {
-                _list = null;
-                _textField = new JTextField(TEXT_FIELD_COLUMNS);
-                _input = _textField;
+                list = null;
+                textField = new JTextField(TEXT_FIELD_COLUMNS);
+                input = textField;
             }
             setValue(option.getValue());
         }
 
         @Override
-        public void setValue(List<Object> list) {
-            if (list != null) {
-                if (_textField == null) {
-                    _list.clearSelection();
-                    final int[] selectedIndices = new int[list.size()];
+        public void setValue(List<Object> objects) {
+            if (objects != null) {
+                if (textField == null) {
+                    this.list.clearSelection();
+                    final int[] selectedIndices = new int[objects.size()];
                     int i = 0;
-                    for (Object value : list) {
+                    for (Object value : objects) {
                         final Enum enumValue = (Enum) value;
                         selectedIndices[i++] = enumValue.ordinal();
                     }
-                    _list.setSelectedIndices(selectedIndices);
+                    this.list.setSelectedIndices(selectedIndices);
                 } else {
-                    _textField.setText(String.valueOf(_option.getType().unparseValue(list)));
+                    textField.setText(String.valueOf(option.getType().unparseValue(objects)));
                 }
             }
-            _guard.setSelected(list != null);
-            setInputAndLabelEnabled(list != null);
+            guard.setSelected(objects != null);
+            setInputAndLabelEnabled(objects != null);
         }
 
         @Override
         public List<Object> getValue() {
-            if (_guard.isSelected()) {
-                if (_textField == null) {
-                    final List<Object> list = new LinkedList<Object>();
-                    for (Object value : _list.getSelectedValues()) {
-                        list.add(value);
+            if (guard.isSelected()) {
+                if (textField == null) {
+                    final List<Object> result = new LinkedList<Object>();
+                    for (Object value : this.list.getSelectedValues()) {
+                        result.add(value);
                     }
-                    return list;
+                    return result;
                 }
-                return _option.getType().parseValue(_textField.getText());
+                return option.getType().parseValue(textField.getText());
             }
             return null;
         }
     }
 
     protected static class URLGUIOption extends GUIOption<URL> {
-        private final JTextField _textField;
+        private final JTextField textField;
 
         protected URLGUIOption(Option<URL> option) {
             super(option);
-            _textField = new JTextField(TEXT_FIELD_COLUMNS);
-            _input = _textField;
+            textField = new JTextField(TEXT_FIELD_COLUMNS);
+            input = textField;
             setValue(option.getValue());
         }
 
         @Override
         public void setValue(URL i) {
-            _textField.setText(String.valueOf(i));
-            _guard.setSelected(i != null);
+            textField.setText(String.valueOf(i));
+            guard.setSelected(i != null);
             setInputAndLabelEnabled(i != null);
         }
 
         @Override
         public URL getValue() {
-            if (_guard.isSelected()) {
+            if (guard.isSelected()) {
                 try {
-                    return new URL(_textField.getText());
+                    return new URL(textField.getText());
                 } catch (MalformedURLException e) {
                     return null;
                 }
@@ -286,86 +286,86 @@ public class OptionsDialog extends JDialog {
     }
 
     protected static class EnumGUIOption extends GUIOption<Object> {
-        private final JComboBox _comboBox;
+        private final JComboBox comboBox;
 
         protected EnumGUIOption(Option<Object> option) {
             super(option);
             final OptionTypes.EnumType et = (OptionTypes.EnumType) option.getType();
-            _comboBox = new JComboBox(et._values);
-            _input = _comboBox;
+            comboBox = new JComboBox(et.values);
+            input = comboBox;
             setValue(option.getValue());
         }
 
         @Override
         public void setValue(Object value) {
-            _comboBox.setSelectedItem(value);
-            _guard.setSelected(true);
+            comboBox.setSelectedItem(value);
+            guard.setSelected(true);
         }
 
         @Override
         public Object getValue() {
-            return _comboBox.getSelectedItem();
+            return comboBox.getSelectedItem();
         }
     }
 
     protected static class FileGUIOption extends GUIOption<File> {
-        private final JTextField _textField;
-        private final JButton _fileChooserButton;
-        private JFileChooser _fileChooser;
+        private final JTextField textField;
+        private final JButton fileChooserButton;
+        private JFileChooser fileChooser;
 
         protected FileGUIOption(Option<File> option) {
             super(option);
-            _textField = new JTextField(TEXT_FIELD_COLUMNS);
+            textField = new JTextField(TEXT_FIELD_COLUMNS);
             final JPanel inputPanel = new JPanel();
-            _input = inputPanel;
-            _fileChooserButton = new JButton(new AbstractAction("Select") {
+            input = inputPanel;
+            fileChooserButton = new JButton(new AbstractAction("Select") {
                 public void actionPerformed(ActionEvent e) {
-                    if (_fileChooser == null) {
-                        _fileChooser = new JFileChooser(new File("."));
-                        _fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
-                        _fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+                    if (fileChooser == null) {
+                        fileChooser = new JFileChooser(new File("."));
+                        fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
+                        fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
                     }
 
-                    final File file = new File(_textField.getText());
+                    final File file = new File(textField.getText());
                     if (file.exists()) {
                         final File parent = file.getParentFile();
                         if (parent != null && parent.isDirectory()) {
-                            _fileChooser.setCurrentDirectory(parent);
+                            fileChooser.setCurrentDirectory(parent);
                         }
-                        _fileChooser.ensureFileIsVisible(file);
-                        _fileChooser.setSelectedFile(file);
+                        fileChooser.ensureFileIsVisible(file);
+                        fileChooser.setSelectedFile(file);
                     }
-                    if (_fileChooser.showDialog(_fileChooserButton, "Select") == JFileChooser.APPROVE_OPTION) {
-                        _textField.setText(_fileChooser.getSelectedFile().getAbsolutePath());
+                    if (fileChooser.showDialog(fileChooserButton, "Select") == JFileChooser.APPROVE_OPTION) {
+                        textField.setText(fileChooser.getSelectedFile().getAbsolutePath());
                     }
                 }
             });
-            inputPanel.add(_textField);
-            inputPanel.add(_fileChooserButton);
+            inputPanel.add(textField);
+            inputPanel.add(fileChooserButton);
             setValue(option.getValue());
         }
 
         @Override
         public void setValue(File i) {
             if (i != null) {
-                if (_fileChooser != null) {
-                    _fileChooser.setSelectedFile(i);
+                if (fileChooser != null) {
+                    fileChooser.setSelectedFile(i);
                 }
-                _textField.setText(i.getAbsolutePath());
+                textField.setText(i.getAbsolutePath());
             }
-            _guard.setSelected(i != null);
+            guard.setSelected(i != null);
             setInputAndLabelEnabled(i != null);
         }
 
         @Override
         public File getValue() {
-            return new File(_textField.getText());
+            return new File(textField.getText());
         }
 
     }
 
     protected static class PackageGUIOption extends GUIOption<MaxPackage> {
-        private final JComboBox _values;
+        private final JComboBox values;
 
         protected PackageGUIOption(Option<MaxPackage> option) {
             super(option);
@@ -373,42 +373,42 @@ public class OptionsDialog extends JDialog {
             final MaxPackageOptionType type = (MaxPackageOptionType) option.getType();
 
             final AppendableSequence<MaxPackage> maxPackages = new LinkSequence<MaxPackage>();
-            for (MaxPackage maxPackage : type._superPackage.getTransitiveSubPackages(Classpath.fromSystem())) {
-                final Class<Scheme> schemeClass = StaticLoophole.cast(type._classType);
+            for (MaxPackage maxPackage : type.superPackage.getTransitiveSubPackages(Classpath.fromSystem())) {
+                final Class<Scheme> schemeClass = StaticLoophole.cast(type.classType);
                 if (maxPackage.schemeTypeToImplementation(schemeClass) != null) {
                     maxPackages.append(maxPackage);
                 }
             }
 
-            final MaxPackage[] values = Sequence.Static.toArray(maxPackages, MaxPackage.class);
-            Arrays.sort(values, new Comparator<MaxPackage>() {
+            final MaxPackage[] pkgs = Sequence.Static.toArray(maxPackages, MaxPackage.class);
+            Arrays.sort(pkgs, new Comparator<MaxPackage>() {
                 public int compare(MaxPackage o1, MaxPackage o2) {
                     return o1.name().compareTo(o2.name());
                 }
             });
 
-            _values = new JComboBox(values);
-            _input = _values;
+            this.values = new JComboBox(pkgs);
+            input = this.values;
 
             // The combo box must be editable as the prepopulated items are just those packages found from the super package
-            _values.setEditable(true);
+            this.values.setEditable(true);
 
             setValue(option.getValue());
         }
 
         @Override
         public MaxPackage getValue() {
-            return _option.getType().parseValue(_values.getSelectedItem().toString());
+            return option.getType().parseValue(values.getSelectedItem().toString());
         }
 
         @Override
         public void setValue(MaxPackage p) {
             if (p != null) {
-                _values.setSelectedItem(p);
-                _guard.setSelected(true);
+                values.setSelectedItem(p);
+                guard.setSelected(true);
             } else {
-                _values.setSelectedIndex(-1);
-                _guard.setSelected(false);
+                values.setSelectedIndex(-1);
+                guard.setSelected(false);
             }
         }
     }
@@ -450,7 +450,7 @@ public class OptionsDialog extends JDialog {
         return null;
     }
 
-    private boolean _cancelled;
+    private boolean cancelled;
 
     public OptionsDialog(JFrame owner, final OptionSet optionSet) {
         super(owner, "Options Dialog", true);
@@ -502,7 +502,7 @@ public class OptionsDialog extends JDialog {
         final JButton cancel = new JButton(new AbstractAction("Use Defaults") {
             public void actionPerformed(ActionEvent e) {
                 OptionsDialog.this.setVisible(false);
-                OptionsDialog.this._cancelled = true;
+                OptionsDialog.this.cancelled = true;
             }
         });
 
@@ -548,7 +548,7 @@ public class OptionsDialog extends JDialog {
             buttonPanel.add(ok);
 
             final JLabel textPane = new JLabel();
-            textPane.setText("Invalid value for " + guiOption._option.getType().getTypeName() + " option \"-" + guiOption._option.getName() + "\"");
+            textPane.setText("Invalid value for " + guiOption.option.getType().getTypeName() + " option \"-" + guiOption.option.getName() + "\"");
             contentPane.add(textPane);
 
             contentPane.add(buttonPanel, BorderLayout.SOUTH);
@@ -560,8 +560,8 @@ public class OptionsDialog extends JDialog {
     }
 
     public void showErrorDialog(GUIOption guiOption, Option.Error error) {
-        final String typeName = guiOption._option.getType().getTypeName();
-        JOptionPane.showMessageDialog(this, "Error in option \"-" + guiOption._option.getName() + "\" of type " + typeName + "\n" + error.getMessage());
+        final String typeName = guiOption.option.getType().getTypeName();
+        JOptionPane.showMessageDialog(this, "Error in option \"-" + guiOption.option.getName() + "\" of type " + typeName + "\n" + error.getMessage());
 //        new ErrorDialog(this, guiOption, error).setVisible(true);
     }
 
@@ -575,6 +575,6 @@ public class OptionsDialog extends JDialog {
         final OptionsDialog programOptionDialog = new OptionsDialog(owner, optionSet);
         programOptionDialog.setVisible(true);
         programOptionDialog.dispose();
-        return !programOptionDialog._cancelled;
+        return !programOptionDialog.cancelled;
     }
 }

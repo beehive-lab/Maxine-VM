@@ -29,20 +29,20 @@ import com.sun.max.collect.*;
  */
 public class RiscInstructionDescriptionModifier {
 
-    private final Sequence<RiscInstructionDescription> _instructionDescriptions;
+    private final Sequence<RiscInstructionDescription> instructionDescriptions;
 
     public RiscInstructionDescriptionModifier(Sequence<RiscInstructionDescription> instructionDescriptions) {
-        _instructionDescriptions = instructionDescriptions;
+        this.instructionDescriptions = instructionDescriptions;
     }
 
     /**
      * Replaces a specification in the set of instruction descriptions.
-     * 
+     *
      * @param before  the specification to be replaced (matched with {@link Object#equals})
      * @param after   the replacement value
      */
     public RiscInstructionDescriptionModifier replace(Object before, Object after) {
-        for (RiscInstructionDescription instructionDescription : _instructionDescriptions) {
+        for (RiscInstructionDescription instructionDescription : instructionDescriptions) {
             final MutableSequence<Object> specifications = instructionDescription.specifications();
             for (int i = 0; i < specifications.length(); i++) {
                 if (specifications.get(i).equals(before)) {
@@ -55,7 +55,7 @@ public class RiscInstructionDescriptionModifier {
 
 
     public RiscInstructionDescriptionModifier swap(Object a, Object b) {
-        for (RiscInstructionDescription instructionDescription : _instructionDescriptions) {
+        for (RiscInstructionDescription instructionDescription : instructionDescriptions) {
             final MutableSequence<Object> specifications = instructionDescription.specifications();
             final int aIndex = Sequence.Static.indexOfIdentical(specifications, a);
             final int bIndex = Sequence.Static.indexOfIdentical(specifications, b);
@@ -68,7 +68,7 @@ public class RiscInstructionDescriptionModifier {
     }
 
     public RiscInstructionDescriptionModifier setExternalName(String externalName) {
-        for (RiscInstructionDescription instructionDescription : _instructionDescriptions) {
+        for (RiscInstructionDescription instructionDescription : instructionDescriptions) {
             instructionDescription.setExternalName(externalName);
         }
         return this;

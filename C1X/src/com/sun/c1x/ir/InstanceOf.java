@@ -21,6 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.util.InstructionVisitor;
+import com.sun.c1x.util.Util;
 import com.sun.c1x.ci.CiType;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.value.ValueType;
@@ -54,7 +55,7 @@ public class InstanceOf extends TypeCheck {
 
     @Override
     public int valueNumber() {
-        return hash1(Bytecodes.INSTANCEOF, _object);
+        return Util.hash1(Bytecodes.INSTANCEOF, _object);
     }
 
     @Override

@@ -36,7 +36,7 @@ import com.sun.max.program.*;
  */
 public class TestCaseClassSet extends LinkedHashSet<Class<? extends TestCase>> {
 
-    private final String _defaultTestSuiteName;
+    private final String defaultTestSuiteName;
 
     /**
      * Creates a set of classes whose {@linkplain #toTestSuite() derived} test suite will have a given name.
@@ -44,7 +44,7 @@ public class TestCaseClassSet extends LinkedHashSet<Class<? extends TestCase>> {
      * @param defaultTestSuiteName the default name to be used for the test suite derived from this set
      */
     public TestCaseClassSet(String defaultTestSuiteName) {
-        _defaultTestSuiteName = defaultTestSuiteName;
+        this.defaultTestSuiteName = defaultTestSuiteName;
     }
 
     /**
@@ -55,7 +55,7 @@ public class TestCaseClassSet extends LinkedHashSet<Class<? extends TestCase>> {
      * @param scanSubPackages specifies if the sub-packages of {@code maxPackage} should also be scanned
      */
     public TestCaseClassSet(MaxPackage maxPackage, boolean scanSubPackages) {
-        _defaultTestSuiteName = maxPackage.name();
+        defaultTestSuiteName = maxPackage.name();
         add(maxPackage);
         if (scanSubPackages) {
             for (MaxPackage subPackage : maxPackage.getTransitiveSubPackages(Classpath.fromSystem())) {
@@ -139,6 +139,6 @@ public class TestCaseClassSet extends LinkedHashSet<Class<? extends TestCase>> {
     }
 
     public TestSuite toTestSuite() {
-        return toTestSuite(_defaultTestSuiteName);
+        return toTestSuite(defaultTestSuiteName);
     }
 }

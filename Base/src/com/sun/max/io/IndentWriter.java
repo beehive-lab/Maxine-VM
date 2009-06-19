@@ -31,8 +31,8 @@ import com.sun.max.program.*;
  */
 public class IndentWriter {
 
-    private final PrintWriter _writer;
-    private int _lineCount;
+    private final PrintWriter writer;
+    private int lineCount;
 
     /**
      * Gets an IndentWriter that wraps the {@linkplain Trace#stream() trace stream}.
@@ -43,52 +43,52 @@ public class IndentWriter {
     }
 
     public IndentWriter(Writer writer) {
-        _writer = (writer instanceof PrintWriter) ? (PrintWriter) writer : new PrintWriter(writer);
+        this.writer = (writer instanceof PrintWriter) ? (PrintWriter) writer : new PrintWriter(writer);
     }
 
     public void close() {
-        _writer.close();
+        writer.close();
     }
 
     public void flush() {
-        _writer.flush();
+        writer.flush();
     }
 
-    private int _indentation = 4;
+    private int indentation = 4;
 
     public int indentation() {
-        return _indentation;
+        return indentation;
     }
 
     public void setIndentation(int indentation) {
-        _indentation = indentation;
+        this.indentation = indentation;
     }
 
-    private int _prefix;
+    private int prefix;
 
     public void indent() {
-        _prefix += _indentation;
+        prefix += indentation;
     }
 
     public void outdent() {
-        _prefix -= _indentation;
-        assert _prefix >= 0;
+        prefix -= indentation;
+        assert prefix >= 0;
     }
 
-    private boolean _isCurrentLineIndented;
+    private boolean isCurrentLineIndented;
 
     private void writeIndentation() {
-        if (!_isCurrentLineIndented) {
-            for (int i = 0; i < _prefix; i++) {
-                _writer.print(" ");
+        if (!isCurrentLineIndented) {
+            for (int i = 0; i < prefix; i++) {
+                writer.print(" ");
             }
-            _isCurrentLineIndented = true;
+            isCurrentLineIndented = true;
         }
     }
 
     public void printSpaces(int width) {
         for (int i = 0; i < width; i++) {
-            _writer.print(" ");
+            writer.print(" ");
         }
     }
 
@@ -102,26 +102,26 @@ public class IndentWriter {
                 text = s.substring(0, width);
             }
         }
-        _writer.print(text);
+        writer.print(text);
         printSpaces(width - text.length());
     }
 
     public void print(String s) {
         writeIndentation();
-        _writer.print(s);
+        writer.print(s);
     }
 
     public void println() {
-        _writer.println();
-        _isCurrentLineIndented = false;
-        ++_lineCount;
+        writer.println();
+        isCurrentLineIndented = false;
+        ++lineCount;
     }
 
     public void println(String s) {
         writeIndentation();
-        _writer.println(s);
-        _isCurrentLineIndented = false;
-        ++_lineCount;
+        writer.println(s);
+        isCurrentLineIndented = false;
+        ++lineCount;
     }
 
     public void printLines(InputStream inputStream) {
@@ -141,6 +141,6 @@ public class IndentWriter {
     }
 
     public int lineCount() {
-        return _lineCount;
+        return lineCount;
     }
 }

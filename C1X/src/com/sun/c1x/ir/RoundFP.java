@@ -22,6 +22,7 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.util.InstructionVisitor;
 import com.sun.c1x.util.InstructionClosure;
+import com.sun.c1x.util.Util;
 import com.sun.c1x.bytecode.Bytecodes;
 
 /**
@@ -70,7 +71,7 @@ public class RoundFP extends Instruction {
 
     @Override
     public int valueNumber() {
-        return hash1(Bytecodes.D2F, _value); // just use d2f for the hash code
+        return Util.hash1(Bytecodes.D2F, _value); // just use d2f for the hash code
     }
 
     @Override

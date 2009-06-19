@@ -40,9 +40,9 @@ class ControlTransfer extends SPARCInstructionDescriptionCreator {
     }
 
     private void create_A3() {
-        createBPr("br", op(0x0), _a, _p, bits_28_28(0), bits_24_22(0x3), _rs1, _d16);
-        createBPr("br", op(0x0), a(NO_A), p(PT), bits_28_28(0), bits_24_22(0x3), _rs1, _d16);
-        define("br", op(0x0), _rcond_27_25, _a, _p, bits_28_28(0), bits_24_22(0x3), _rs1, _d16);
+        createBPr("br", op(0x0), a, p, bits_28_28(0), bits_24_22(0x3), rs1, d16);
+        createBPr("br", op(0x0), a(NO_A), p(PT), bits_28_28(0), bits_24_22(0x3), rs1, d16);
+        define("br", op(0x0), rcond_27_25, a, p, bits_28_28(0), bits_24_22(0x3), rs1, d16);
     }
 
     private void createFBfcc(String prefix, Object... objects) {
@@ -53,17 +53,17 @@ class ControlTransfer extends SPARCInstructionDescriptionCreator {
 
     private void create_A4() {
         if (assembly().generatingDeprecatedInstructions()) {
-            createFBfcc("fb", op(0x0), _a, bits_24_22(0x6), _disp22);
-            createFBfcc("fb", op(0x0), a(NO_A), bits_24_22(0x6), _disp22);
-            define("fb", op(0x0), _fcond_28_25, _a, bits_24_22(0x6), _disp22);
+            createFBfcc("fb", op(0x0), a, bits_24_22(0x6), disp22);
+            createFBfcc("fb", op(0x0), a(NO_A), bits_24_22(0x6), disp22);
+            define("fb", op(0x0), fcond_28_25, a, bits_24_22(0x6), disp22);
         }
     }
 
     private void create_A5() {
         if (assembly().generatingV9Instructions()) {
-            createFBfcc("fb", op(0x0), _a, _p, bits_24_22(0x5), _fcc_21_20, _disp19);
-            createFBfcc("fb", op(0x0), a(NO_A), p(PT), bits_24_22(0x5), _fcc_21_20, _disp19);
-            define("fb", op(0x0), _fcond_28_25, _a, _p, bits_24_22(0x5), _fcc_21_20, _disp19);
+            createFBfcc("fb", op(0x0), a, p, bits_24_22(0x5), fcc_21_20, disp19);
+            createFBfcc("fb", op(0x0), a(NO_A), p(PT), bits_24_22(0x5), fcc_21_20, disp19);
+            define("fb", op(0x0), fcond_28_25, a, p, bits_24_22(0x5), fcc_21_20, disp19);
         }
     }
 
@@ -76,54 +76,54 @@ class ControlTransfer extends SPARCInstructionDescriptionCreator {
 
     private void create_A6() {
         if (assembly().generatingDeprecatedInstructions()) {
-            createBicc("b", op(0x0), _a, bits_24_22(0x2), _disp22);
-            createBicc("b", op(0x0), a(NO_A), bits_24_22(0x2), _disp22);
-            define("b", op(0x0), _icond_28_25, _a, bits_24_22(0x2), _disp22);
+            createBicc("b", op(0x0), a, bits_24_22(0x2), disp22);
+            createBicc("b", op(0x0), a(NO_A), bits_24_22(0x2), disp22);
+            define("b", op(0x0), icond_28_25, a, bits_24_22(0x2), disp22);
         }
     }
 
     private void create_A7() {
         if (assembly().generatingV9Instructions()) {
-            createBicc("b", op(0x0), _a, _p, bits_24_22(0x1), _cc, _disp19);
-            createBicc("b", op(0x0), a(NO_A), p(PT), bits_24_22(0x1), _cc, _disp19);
-            define("b", op(0x0), _icond_28_25, _a, _p, bits_24_22(0x1), _cc, _disp19);
+            createBicc("b", op(0x0), a, p, bits_24_22(0x1), cc, disp19);
+            createBicc("b", op(0x0), a(NO_A), p(PT), bits_24_22(0x1), cc, disp19);
+            define("b", op(0x0), icond_28_25, a, p, bits_24_22(0x1), cc, disp19);
         }
     }
 
     private void create_A8() {
-        define("call", op(0x1), _disp30);
+        define("call", op(0x1), disp30);
     }
 
     private void create_A11() {
-        define("done", op(0x2), op3(0x3e), _res_18_0, fcnc(0));
-        define("retry", op(0x2), op3(0x3e), _res_18_0, fcnc(1));
+        define("done", op(0x2), op3(0x3e), res_18_0, fcnc(0));
+        define("retry", op(0x2), op3(0x3e), res_18_0, fcnc(1));
     }
 
     private void create_A22() {
-        define("illtrap", op(0x0), _res_29_25, op2(0x0), _const22);
+        define("illtrap", op(0x0), res_29_25, op2(0x0), const22);
     }
 
     private void create_A24() {
-        define("jmpl", op(0x2), op3(0x38), _rs1, " + ", i(0), _res_12_5, _rs2, _rd);
-        define("jmpl", op(0x2), op3(0x38), _rs1, " + ", i(1), _simm13, _rd);
+        define("jmpl", op(0x2), op3(0x38), rs1, " + ", i(0), res_12_5, rs2, rd);
+        define("jmpl", op(0x2), op3(0x38), rs1, " + ", i(1), simm13, rd);
     }
 
     private void create_A45() {
-        final Object[] head = {op(0x2), _res_29_25, op3(0x39), _rs1, " + "};
+        final Object[] head = {op(0x2), res_29_25, op3(0x39), rs1, " + "};
 
         // should be called "return", but that's a Java keyword
-        define("return_", head, i(0), _res_12_5, _rs2).setExternalName("return");
-        define("return_", head, i(1), _simm13).setExternalName("return");
+        define("return_", head, i(0), res_12_5, rs2).setExternalName("return");
+        define("return_", head, i(1), simm13).setExternalName("return");
     }
 
     private void create_A50() {
-        define("sir", op(0x2), rd(15), op3(0x30), bits_18_14(0), i(1), _simm13);
+        define("sir", op(0x2), rd(15), op3(0x30), bits_18_14(0), i(1), simm13);
     }
 
     private void create_A61() {
-        final Object[] head = {op(0x2), _res_29_29, op3(0x3a), _tcc, _rs1, " + "};
-        createBicc("t", head, i(0), _res_10_5, _rs2);
-        createBicc("t", head, i(1), _res_10_7, _swTrapNumber);
+        final Object[] head = {op(0x2), res_29_29, op3(0x3a), tcc, rs1, " + "};
+        createBicc("t", head, i(0), res_10_5, rs2);
+        createBicc("t", head, i(1), res_10_7, swTrapNumber);
     }
 
     ControlTransfer(SPARCTemplateCreator templateCreator) {

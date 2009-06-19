@@ -43,7 +43,7 @@ public class IA32AssemblerGenerator extends X86AssemblerGenerator<IA32Template> 
 
     public static void main(String[] programArguments) {
         final IA32AssemblerGenerator generator = new IA32AssemblerGenerator();
-        generator._options.parseArguments(programArguments);
+        generator.options.parseArguments(programArguments);
         generator.generate();
     }
 

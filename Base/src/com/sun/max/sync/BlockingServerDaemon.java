@@ -37,7 +37,7 @@ import com.sun.max.program.*;
  */
 public class BlockingServerDaemon extends Thread {
 
-    private final Object _token = new Object();
+    private final Object token = new Object();
 
     public BlockingServerDaemon(String name) {
         super(name);
@@ -45,11 +45,11 @@ public class BlockingServerDaemon extends Thread {
         synchronized (this) {
             setDaemon(true);
 
-            synchronized (_token) {
+            synchronized (token) {
                 start();
                 try {
                     // Block clients until the server is waiting for requests:
-                    _token.wait();
+                    token.wait();
                 } catch (InterruptedException interruptedException) {
                     ProgramError.unexpected();
                 }
@@ -57,35 +57,35 @@ public class BlockingServerDaemon extends Thread {
         }
     }
 
-    private Runnable _procedure;
+    private Runnable procedure;
 
     @Override
     public final void run() {
         while (true) {
             // Let the client thread continue as soon as we are waiting for requests again:
-            synchronized (_token) {
-                _token.notify();
+            synchronized (token) {
+                token.notify();
                 try {
-                    _token.wait();
+                    token.wait();
                 } catch (InterruptedException interruptedException) {
                     ProgramError.unexpected();
                 }
-                _procedure.run();
+                procedure.run();
             }
         }
     }
 
-    public synchronized void execute(Runnable procedure) {
-        _procedure = procedure;
-        synchronized (_token) {
+    public synchronized void execute(Runnable proc) {
+        this.procedure = proc;
+        synchronized (token) {
 
             // Make the server run one loop round:
-            _token.notify();
+            token.notify();
 
             try {
                 // Block the client until the procedure has been executed
                 // and the server is waiting for requests again:
-                _token.wait();
+                token.wait();
             } catch (InterruptedException interruptedException) {
                 ProgramError.unexpected();
             }

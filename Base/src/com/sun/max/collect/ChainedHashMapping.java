@@ -78,36 +78,36 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
      * computing this hash code is an expensive operation, then using a {@link HashEntryChainedHashMapping} may provide better performance.
      */
     public static class DefaultEntry<Key_Type, Value_Type> implements Entry<Key_Type, Value_Type> {
-        final Key_Type _key;
+        final Key_Type key;
         @INSPECTED
-        Value_Type _value;
+        Value_Type value;
         @INSPECTED
-        Entry<Key_Type, Value_Type> _next;
+        Entry<Key_Type, Value_Type> next;
 
         public DefaultEntry(Key_Type key, Value_Type value, Entry<Key_Type, Value_Type> next) {
-            _key = key;
-            _value = value;
-            _next = next;
+            this.key = key;
+            this.value = value;
+            this.next = next;
         }
 
         public final Key_Type key() {
-            return _key;
+            return key;
         }
 
         public final Entry<Key_Type, Value_Type> next() {
-            return _next;
+            return next;
         }
 
         public void setNext(Entry<Key_Type, Value_Type> next) {
-            _next = next;
+            this.next = next;
         }
 
         public void setValue(Value_Type value) {
-            _value = value;
+            this.value = value;
         }
 
         public final Value_Type value() {
-            return _value;
+            return value;
         }
 
         @Override
@@ -117,15 +117,15 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
     }
 
     @INSPECTED
-    private Entry<Key_Type, Value_Type>[] _table;
+    private Entry<Key_Type, Value_Type>[] table;
 
-    private int _numberOfEntries;
-    private int _growThreshold;
-    private int _shrinkThreshold;
+    private int numberOfEntries;
+    private int growThreshold;
+    private int shrinkThreshold;
 
     private void setThreshold() {
-        _growThreshold = (int) (_table.length * MAX_LOAD_FACTOR);
-        _shrinkThreshold = (int) (_table.length * MIN_LOAD_FACTOR);
+        growThreshold = (int) (table.length * MAX_LOAD_FACTOR);
+        shrinkThreshold = (int) (table.length * MIN_LOAD_FACTOR);
     }
 
     /**
@@ -177,7 +177,7 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
         }
 
         final Class<Entry<Key_Type, Value_Type>[]> type = null;
-        _table = StaticLoophole.cast(type, new Entry[capacity]);
+        table = StaticLoophole.cast(type, new Entry[capacity]);
         setThreshold();
     }
 
@@ -204,7 +204,7 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
     }
 
     public int length() {
-        return _numberOfEntries;
+        return numberOfEntries;
     }
 
     /**
@@ -230,8 +230,8 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
             throw new IllegalArgumentException("Key cannot be null");
         }
         final int hashForKey = hash(hashCode(key));
-        final int index = indexFor(hashForKey, _table.length);
-        for (Entry<Key_Type, Value_Type> entry = _table[index]; entry != null; entry = entry.next()) {
+        final int index = indexFor(hashForKey, table.length);
+        for (Entry<Key_Type, Value_Type> entry = table[index]; entry != null; entry = entry.next()) {
             if (matches(entry, key, hashForKey)) {
                 return entry.value();
             }
@@ -243,7 +243,7 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
         final Class<Entry<Key_Type, Value_Type>[]> type = null;
         final Entry<Key_Type, Value_Type>[] newTable = StaticLoophole.cast(type, new Entry[newTableLength]);
         transfer(newTable);
-        _table = newTable;
+        table = newTable;
         setThreshold();
     }
 
@@ -251,7 +251,7 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
      * Transfers all entries from current table to newTable.
      */
     private void transfer(Entry<Key_Type, Value_Type>[] newTable) {
-        final Entry<Key_Type, Value_Type>[] src = _table;
+        final Entry<Key_Type, Value_Type>[] src = table;
         final int newCapacity = newTable.length;
         for (int j = 0; j < src.length; j++) {
             Entry<Key_Type, Value_Type> entry = src[j];
@@ -275,20 +275,20 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
         }
 
         final int hashForKey = hash(hashCode(key));
-        final int index = indexFor(hashForKey, _table.length);
-        Entry<Key_Type, Value_Type> prev = _table[index];
+        final int index = indexFor(hashForKey, table.length);
+        Entry<Key_Type, Value_Type> prev = table[index];
         Entry<Key_Type, Value_Type> entry = prev;
 
         while (entry != null) {
             final Entry<Key_Type, Value_Type> next = entry.next();
             if (matches(entry, key, hashForKey)) {
                 if (prev == entry) {
-                    _table[index] = next;
+                    table[index] = next;
                 } else {
                     prev.setNext(next);
                 }
-                if (--_numberOfEntries < _shrinkThreshold) {
-                    resize(_table.length >> 1);
+                if (--numberOfEntries < shrinkThreshold) {
+                    resize(table.length >> 1);
                 }
                 entry.setNext(null);
                 return entry.value();
@@ -308,8 +308,8 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
         }
 
         final int hashForKey = hash(hashCode(key));
-        final int index = indexFor(hashForKey, _table.length);
-        for (Entry<Key_Type, Value_Type> entry = _table[index]; entry != null; entry = entry.next()) {
+        final int index = indexFor(hashForKey, table.length);
+        for (Entry<Key_Type, Value_Type> entry = table[index]; entry != null; entry = entry.next()) {
             if (matches(entry, key, hashForKey)) {
                 final Value_Type oldValue = entry.value();
                 entry.setValue(value);
@@ -317,17 +317,17 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
             }
         }
 
-        _table[index] = createEntry(hashForKey, key, value, _table[index]);
-        if (_numberOfEntries++ >= _growThreshold) {
-            resize(2 * _table.length);
+        table[index] = createEntry(hashForKey, key, value, table[index]);
+        if (numberOfEntries++ >= growThreshold) {
+            resize(2 * table.length);
         }
         return null;
     }
 
     public void clear() {
         final Class<Entry<Key_Type, Value_Type>[]> type = null;
-        _table = StaticLoophole.cast(type, new Entry[1]);
-        _numberOfEntries = 0;
+        table = StaticLoophole.cast(type, new Entry[1]);
+        numberOfEntries = 0;
         setThreshold();
     }
 
@@ -340,38 +340,38 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
         /**
          * Next entry to return.
          */
-        Entry<Key_Type, Value_Type> _nextEntry;
+        Entry<Key_Type, Value_Type> nextEntry;
 
         /**
          * Index at which to start searching for the next entry.
          */
-        int _index;
+        int index;
 
         HashIterator() {
             // advance to first entry
-            if (_numberOfEntries > 0) {
-                final Entry<Key_Type, Value_Type>[] table = _table;
-                while (_index < table.length && _nextEntry == null) {
-                    _nextEntry = table[_index++];
+            if (numberOfEntries > 0) {
+                final Entry<Key_Type, Value_Type>[] t = table;
+                while (index < t.length && nextEntry == null) {
+                    nextEntry = t[index++];
                 }
             }
         }
 
         public final boolean hasNext() {
-            return _nextEntry != null;
+            return nextEntry != null;
         }
 
         final Entry<Key_Type, Value_Type> nextEntry() {
-            final Entry<Key_Type, Value_Type> entry = _nextEntry;
+            final Entry<Key_Type, Value_Type> entry = nextEntry;
             if (entry == null) {
                 throw new NoSuchElementException();
             }
 
-            _nextEntry = entry.next();
-            if (_nextEntry == null) {
-                final Entry<Key_Type, Value_Type>[] table = _table;
-                while (_index < table.length && _nextEntry == null) {
-                    _nextEntry = table[_index++];
+            nextEntry = entry.next();
+            if (nextEntry == null) {
+                final Entry<Key_Type, Value_Type>[] t = table;
+                while (index < t.length && nextEntry == null) {
+                    nextEntry = t[index++];
                 }
             }
             return entry;
@@ -426,7 +426,7 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
      * value should only be used for diagnostic purposes.
      */
     public int capacity() {
-        return _table.length;
+        return table.length;
     }
 
     /**
@@ -438,7 +438,7 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
      */
     public int computeLongestChain() {
         int max = 0;
-        for (Entry head : _table) {
+        for (Entry head : table) {
             if (head != null) {
                 int total = 0;
                 for (Entry e = head; e != null; e = e.next()) {

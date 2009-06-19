@@ -24,7 +24,7 @@ import com.sun.max.lang.*;
 
 /**
  * Represents a position assembled as an absolute address.
- * 
+ *
  * @author Doug Simon
  */
 public class AddressLiteral extends MutableAssembledObject {
@@ -32,24 +32,24 @@ public class AddressLiteral extends MutableAssembledObject {
     protected AddressLiteral(Assembler assembler, int startPosition, int endPosition, Label label) {
         super(assembler, startPosition, endPosition);
         assembler.addFixedSizeAssembledObject(this);
-        _label = label;
+        this.label = label;
     }
 
-    private final Label _label;
+    private final Label label;
 
     @Override
     protected final void assemble() throws AssemblyException {
         final Assembler assembler = assembler();
         final WordWidth wordWidth = assembler.wordWidth();
         if (wordWidth == WordWidth.BITS_64) {
-            assembler.emitLong(assembler.baseAddress() + _label.position());
+            assembler.emitLong(assembler.baseAddress() + label.position());
         } else if  (wordWidth == WordWidth.BITS_32) {
-            assembler.emitInt((int) (assembler.baseAddress() + _label.position()));
+            assembler.emitInt((int) (assembler.baseAddress() + label.position()));
         } else if  (wordWidth == WordWidth.BITS_16) {
-            assembler.emitShort((short) (assembler.baseAddress() + _label.position()));
+            assembler.emitShort((short) (assembler.baseAddress() + label.position()));
         } else {
             assert wordWidth == WordWidth.BITS_8;
-            assembler.emitByte((byte) (assembler.baseAddress() + _label.position()));
+            assembler.emitByte((byte) (assembler.baseAddress() + label.position()));
         }
     }
 

@@ -31,29 +31,29 @@ import com.sun.max.profile.*;
  */
 public class SingleUseTimer implements Timer {
     @RESET
-    private long _start;
+    private long start;
     @RESET
-    private long _last;
-    private final Clock _clock;
+    private long last;
+    private final Clock clock;
 
     public SingleUseTimer(Clock clock) {
-        this._clock = clock;
+        this.clock = clock;
     }
 
     public void start() {
-        _start = _clock.getTicks();
+        start = clock.getTicks();
     }
 
     public void stop() {
-        _last = _clock.getTicks() - _start;
+        last = clock.getTicks() - start;
     }
 
     public Clock getClock() {
-        return _clock;
+        return clock;
     }
 
     public long getLastElapsedTime() {
-        return _last;
+        return last;
     }
 
     public long getLastNestedTime() {

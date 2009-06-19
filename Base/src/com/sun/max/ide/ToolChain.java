@@ -45,19 +45,19 @@ public final class ToolChain {
     private ToolChain() {
     }
 
-    private static JavaCompiler _javaCompiler;
+    private static JavaCompiler javaCompiler;
 
     private static JavaCompiler javaCompiler() {
-        if (_javaCompiler == null) {
+        if (javaCompiler == null) {
             final Iterator<JavaCompiler> iterator = ServiceLoader.load(JavaCompiler.class).iterator();
             if (iterator.hasNext()) {
-                _javaCompiler = iterator.next();
+                javaCompiler = iterator.next();
             } else {
-                _javaCompiler = ToolProvider.getSystemJavaCompiler();
+                javaCompiler = ToolProvider.getSystemJavaCompiler();
             }
-            ProgramError.check(_javaCompiler != null, "Cannot find a Java compiler");
+            ProgramError.check(javaCompiler != null, "Cannot find a Java compiler");
         }
-        return _javaCompiler;
+        return javaCompiler;
     }
 
     /**
@@ -176,10 +176,10 @@ public final class ToolChain {
         return result;
     }
 
-    private static Method _javahMainMethod;
+    private static Method javahMainMethod;
 
     private static Method javah() {
-        if (_javahMainMethod == null) {
+        if (javahMainMethod == null) {
             Class<?> javahMainClass = null;
             try {
                 // On the Apple JDKs, there is no tools.jar: all the tools are in classes.jar
@@ -198,13 +198,13 @@ public final class ToolChain {
             }
             try {
                 if (javahMainClass != null) {
-                    _javahMainMethod = javahMainClass.getDeclaredMethod("main", String[].class);
+                    javahMainMethod = javahMainClass.getDeclaredMethod("main", String[].class);
                 }
             } catch (Exception exception) {
                 ProgramWarning.message("Cannot find or initialize javah: " + exception);
             }
         }
-        return _javahMainMethod;
+        return javahMainMethod;
     }
 
     /**
@@ -238,10 +238,10 @@ public final class ToolChain {
         return false;
     }
 
-    private static Method _javapMainMethod;
+    private static Method javapMainMethod;
 
     private static Method javap() {
-        if (_javapMainMethod == null) {
+        if (javapMainMethod == null) {
             Class<?> javapMainClass = null;
             try {
                 // On the Apple JDKs, there is no tools.jar: all the tools are in classes.jar
@@ -258,13 +258,13 @@ public final class ToolChain {
             }
             try {
                 if (javapMainClass != null) {
-                    _javapMainMethod = javapMainClass.getDeclaredMethod("main", String[].class);
+                    javapMainMethod = javapMainClass.getDeclaredMethod("main", String[].class);
                 }
             } catch (Exception exception) {
                 ProgramWarning.message("Cannot find or initialize javap: " + exception);
             }
         }
-        return _javapMainMethod;
+        return javapMainMethod;
     }
 
     public static boolean javap(String[] args) {

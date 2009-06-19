@@ -61,50 +61,50 @@ public class SequenceMultiMapTest extends MaxTestCase {
         check_empty(new SequenceBag<String, Integer>(SequenceBag.MapType.SORTED));
     }
 
-    private final int _nKeys = 10;
-    private String[] _keys = new String[_nKeys];
-    private Integer[] _vals = new Integer[_nKeys];
+    private final int nKeys = 10;
+    private String[] keys = new String[nKeys];
+    private Integer[] vals = new Integer[nKeys];
 
     private void initialize() {
-        for (int i = 0; i < _nKeys; i++) {
-            _keys[i] = "key" + i;
-            _vals[i] = new Integer(i);
+        for (int i = 0; i < nKeys; i++) {
+            keys[i] = "key" + i;
+            vals[i] = new Integer(i);
         }
     }
 
     private void check_nonempty(Bag<String, Integer, Sequence<Integer>> map) {
-        for (int i = 0; i < _nKeys; i++) {
-            final String key = _keys[i];
+        for (int i = 0; i < nKeys; i++) {
+            final String key = keys[i];
             for (int j = 0; j < i; j++) {
-                map.add(key, _vals[j]);
+                map.add(key, vals[j]);
             }
         }
         // should be no entry for key 0
-        assertFalse(map.containsKey(_keys[0]));
-        assertSame(Sequence.Static.empty(Integer.class), map.get(_keys[0]));
+        assertFalse(map.containsKey(keys[0]));
+        assertSame(Sequence.Static.empty(Integer.class), map.get(keys[0]));
         final Set<String> keySet = map.keys();
-        assertEquals(keySet.size(), _nKeys - 1);
-        assertFalse(keySet.contains(_keys[0]));
+        assertEquals(keySet.size(), nKeys - 1);
+        assertFalse(keySet.contains(keys[0]));
         // check all the keys that were added for correct values
-        for (int i = 1; i < _nKeys; i++) {
-            final String key = _keys[i];
+        for (int i = 1; i < nKeys; i++) {
+            final String key = keys[i];
             assertTrue(map.containsKey(key));
             assertTrue(keySet.contains(key));
             final Sequence<Integer> values = map.get(key);
             for (int j = 0; j < i; j++) {
-                assertTrue(Sequence.Static.containsIdentical(values, _vals[j]));
+                assertTrue(Sequence.Static.containsIdentical(values, vals[j]));
             }
-            for (int j = i; j < _nKeys; j++) {
-                assertFalse(Sequence.Static.containsIdentical(values, _vals[j]));
+            for (int j = i; j < nKeys; j++) {
+                assertFalse(Sequence.Static.containsIdentical(values, vals[j]));
             }
         }
         // iterate over all values in map (union of all collections)
         int valuesFound = 0;
         for (Integer val : map) {
             valuesFound++;
-            assertTrue(com.sun.max.lang.Arrays.contains(_vals, val));
+            assertTrue(com.sun.max.lang.Arrays.contains(vals, val));
         }
-        assertEquals(valuesFound, _nKeys * (_nKeys - 1) / 2);
+        assertEquals(valuesFound, nKeys * (nKeys - 1) / 2);
     }
 
     public void test_sorted() {
@@ -114,22 +114,22 @@ public class SequenceMultiMapTest extends MaxTestCase {
         // Check order of keys
         int i = 1;
         for (String key : map.keys()) {
-            assertSame(key, _keys[i]);
+            assertSame(key, keys[i]);
             i++;
         }
-        assertEquals(i, _nKeys);
+        assertEquals(i, nKeys);
         // Check order and content of collections
         i = 1;
         for (Sequence<Integer> values : map.collections()) {
             for (int j = 0; j < i; j++) {
-                assertTrue(Sequence.Static.containsIdentical(values, _vals[j]));
+                assertTrue(Sequence.Static.containsIdentical(values, vals[j]));
             }
-            for (int j = i; j < _nKeys; j++) {
-                assertFalse(Sequence.Static.containsIdentical(values, _vals[j]));
+            for (int j = i; j < nKeys; j++) {
+                assertFalse(Sequence.Static.containsIdentical(values, vals[j]));
             }
             i++;
         }
-        assertEquals(i, _nKeys);
+        assertEquals(i, nKeys);
     }
 
     public void test_hashed() {
@@ -141,10 +141,10 @@ public class SequenceMultiMapTest extends MaxTestCase {
         for (Sequence<Integer> collection : map.collections()) {
             collectionsFound++;
             for (Integer val : collection) {
-                assertTrue(com.sun.max.lang.Arrays.contains(_vals, val));
+                assertTrue(com.sun.max.lang.Arrays.contains(vals, val));
             }
         }
-        assertEquals(collectionsFound, _nKeys - 1);
+        assertEquals(collectionsFound, nKeys - 1);
     }
 
     public void test_identityHashed() {
@@ -156,10 +156,10 @@ public class SequenceMultiMapTest extends MaxTestCase {
         for (Sequence<Integer> collection : map.collections()) {
             collectionsFound++;
             for (Integer val : collection) {
-                assertTrue(com.sun.max.lang.Arrays.contains(_vals, val));
+                assertTrue(com.sun.max.lang.Arrays.contains(vals, val));
             }
         }
-        assertEquals(collectionsFound, _nKeys - 1);
+        assertEquals(collectionsFound, nKeys - 1);
     }
 
 

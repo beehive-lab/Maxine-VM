@@ -126,7 +126,7 @@ public final class VmClassLoader extends ClassLoader {
         if (classpathFile == null) {
             throw new ClassNotFoundException(name);
         }
-        return ClassfileReader.defineClassActor(name, this, classpathFile._contents, null, classpathFile._classpathEntry).toJava();
+        return ClassfileReader.defineClassActor(name, this, classpathFile.contents, null, classpathFile.classpathEntry).toJava();
     }
 
     public synchronized Class<?> findBootstrapClass(String name) throws ClassNotFoundException {

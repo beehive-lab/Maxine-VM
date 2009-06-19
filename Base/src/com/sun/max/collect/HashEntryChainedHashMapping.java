@@ -23,24 +23,24 @@ package com.sun.max.collect;
 /**
  * A chained hash table whose {@linkplain HashEntry entries} record the hash of the key. This can provide better
  * performance improvement when the cost of computing the key's hash code is high.
- * 
+ *
  * @author Doug Simon
  */
 public class HashEntryChainedHashMapping<Key_Type, Value_Type> extends ChainedHashMapping<Key_Type, Value_Type> {
 
     public static class HashEntry<Key_Type, Value_Type> extends DefaultEntry<Key_Type, Value_Type> {
 
-        final int _hashOfKey;
+        final int hashOfKey;
 
         public HashEntry(int hashOfKey, Key_Type key, Value_Type value, Entry<Key_Type, Value_Type> next) {
             super(key, value, next);
-            _hashOfKey = hashOfKey;
+            this.hashOfKey = hashOfKey;
         }
     }
 
     /**
      * Creates a chained hash table whose entries record the hash of the key.
-     * 
+     *
      * @param equivalence
      *            the semantics of key comparison and hashing. If {@code null}, then {@link HashEquality} is used.
      * @param initialCapacity
@@ -53,7 +53,7 @@ public class HashEntryChainedHashMapping<Key_Type, Value_Type> extends ChainedHa
     /**
      * Creates a chained hash table with {@linkplain HashEquality equality} key semantics whose entries record the hash
      * of the key.
-     * 
+     *
      * @param initialCapacity
      *            the initial capacity of the table
      */
@@ -64,7 +64,7 @@ public class HashEntryChainedHashMapping<Key_Type, Value_Type> extends ChainedHa
     /**
      * Creates a chained hash table with an initial capacity of {@value ChainedHashMapping#DEFAULT_INITIAL_CAPACITY}
      * whose entries record the hash of the key.
-     * 
+     *
      * @param equivalence
      *            the semantics of key comparison and hashing. If {@code null}, then {@link HashEquality} is used.
      */
@@ -88,6 +88,6 @@ public class HashEntryChainedHashMapping<Key_Type, Value_Type> extends ChainedHa
     @Override
     protected boolean matches(Entry<Key_Type, Value_Type> entry, Key_Type key, int hashForKey) {
         final Key_Type entryKey = entry.key();
-        return entryKey == key || (hashForKey == ((HashEntryChainedHashMapping.HashEntry) entry)._hashOfKey && key.equals(entryKey));
+        return entryKey == key || (hashForKey == ((HashEntryChainedHashMapping.HashEntry) entry).hashOfKey && key.equals(entryKey));
     }
 }

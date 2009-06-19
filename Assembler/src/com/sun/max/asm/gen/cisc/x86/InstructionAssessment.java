@@ -23,60 +23,60 @@ package com.sun.max.asm.gen.cisc.x86;
 
 /**
  * Some information about a family of instructions that have the same basic opcode.
- * 
+ *
  * @see OpcodeAssessor
- * 
+ *
  * @author Bernd Mathiske
  */
 public class InstructionAssessment {
 
-    private boolean _hasAddressSizeVariants;
-    private boolean _hasOperandSizeVariants;
-    private boolean _hasModRMByte;
-    private ModRMGroup _modRMGroup;
-    private boolean _isJump;
+    private boolean hasAddressSizeVariants;
+    private boolean hasOperandSizeVariants;
+    private boolean hasModRMByte;
+    private ModRMGroup modRMGroup;
+    private boolean isJump;
 
     public InstructionAssessment() {
     }
 
     public void haveAddressSizeVariants() {
-        _hasAddressSizeVariants = true;
+        hasAddressSizeVariants = true;
     }
 
     public boolean hasAddressSizeVariants() {
-        return _hasAddressSizeVariants;
+        return hasAddressSizeVariants;
     }
 
     public void haveOperandSizeVariants() {
-        _hasOperandSizeVariants = true;
+        hasOperandSizeVariants = true;
     }
 
     public boolean hasOperandSizeVariants() {
-        return _hasOperandSizeVariants;
+        return hasOperandSizeVariants;
     }
 
     public void haveModRMByte() {
-        _hasModRMByte = true;
+        hasModRMByte = true;
     }
 
     public boolean hasModRMByte() {
-        return _hasModRMByte;
+        return hasModRMByte;
     }
 
     public void setModRMGroup(ModRMGroup modRMGroup) {
-        _modRMGroup = modRMGroup;
-        _hasModRMByte = modRMGroup != null;
+        this.modRMGroup = modRMGroup;
+        this.hasModRMByte = modRMGroup != null;
     }
 
     public ModRMGroup modRMGroup() {
-        return _modRMGroup;
+        return modRMGroup;
     }
 
     public void beJump() {
-        _isJump = true;
+        isJump = true;
     }
 
     public boolean isJump() {
-        return _isJump;
+        return isJump;
     }
 }

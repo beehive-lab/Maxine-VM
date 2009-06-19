@@ -43,53 +43,53 @@ import com.sun.max.program.option.*;
  */
 public abstract class AssemblerGenerator<Template_Type extends Template> {
 
-    protected OptionSet _options = new OptionSet();
+    protected OptionSet options = new OptionSet();
 
-    private final Option<File> _outputDirectory = _options.newFileOption("d", JavaProject.findSourceDirectory(),
+    private final Option<File> outputDirectoryOption = options.newFileOption("d", JavaProject.findSourceDirectory(),
             "Source directory of the class(es) containing the for generated assembler methods.");
-    private final Option<String> _assemblerInterfaceName = _options.newStringOption("i", null,
+    private final Option<String> assemblerInterfaceNameOption = options.newStringOption("i", null,
             "Interface used to constrain which assembler methods will be generated. " +
             "If absent, an assembler method is generated for each template in the specification.");
-    private final Option<String> _rawAssemblerClassName = _options.newStringOption("r", null,
+    private final Option<String> rawAssemblerClassNameOption = options.newStringOption("r", null,
             "Class containing the generated raw assembler methods.");
-    private final Option<String> _labelAssemblerClassName = _options.newStringOption("l", null,
+    private final Option<String> labelAssemblerClassNameOption = options.newStringOption("l", null,
             "Class containing the generated label assembler methods.");
 
-    private final Assembly<Template_Type> _assembly;
-    private final boolean _sortAssemblerMethods;
-    private Sequence<Template_Type> _templates;
-    private Sequence<Template_Type> _labelTemplates;
+    private final Assembly<Template_Type> assembly;
+    private final boolean sortAssemblerMethods;
+    private Sequence<Template_Type> templates;
+    private Sequence<Template_Type> labelTemplates;
 
     protected AssemblerGenerator(Assembly<Template_Type> assembly, boolean sortAssemblerMethods) {
-        Trace.addTo(_options);
-        _assembly = assembly;
+        Trace.addTo(options);
+        this.assembly = assembly;
         final String isa = assembly.instructionSet().name();
         final String defaultOutputPackage = MaxPackage.fromClass(Assembler.class).subPackage(isa.toLowerCase()).name() + ".complete";
-        _rawAssemblerClassName.setDefaultValue(defaultOutputPackage + "." + isa + "RawAssembler");
-        _labelAssemblerClassName.setDefaultValue(defaultOutputPackage + "." + isa + "LabelAssembler");
-        _sortAssemblerMethods = sortAssemblerMethods;
+        this.rawAssemblerClassNameOption.setDefaultValue(defaultOutputPackage + "." + isa + "RawAssembler");
+        this.labelAssemblerClassNameOption.setDefaultValue(defaultOutputPackage + "." + isa + "LabelAssembler");
+        this.sortAssemblerMethods = sortAssemblerMethods;
     }
 
     public Assembly<Template_Type> assembly() {
-        return _assembly;
+        return assembly;
     }
 
     static class MethodKey {
-        final String _name;
-        final Class[] _parameterTypes;
+        final String name;
+        final Class[] parameterTypes;
 
         MethodKey(Method method) {
-            _name = method.getName();
-            _parameterTypes = method.getParameterTypes();
+            name = method.getName();
+            parameterTypes = method.getParameterTypes();
         }
 
         MethodKey(Template template, boolean asLabelTemplate) {
-            _name = template.assemblerMethodName();
-            _parameterTypes = template.parameterTypes();
+            name = template.assemblerMethodName();
+            parameterTypes = template.parameterTypes();
             if (asLabelTemplate) {
                 final int labelParameterIndex = template.labelParameterIndex();
                 assert labelParameterIndex != -1;
-                _parameterTypes[labelParameterIndex] = Label.class;
+                parameterTypes[labelParameterIndex] = Label.class;
             }
         }
 
@@ -97,20 +97,20 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
         public boolean equals(Object object) {
             if (object instanceof MethodKey) {
                 final MethodKey other = (MethodKey) object;
-                return other._name.equals(_name) && Arrays.equals(_parameterTypes, other._parameterTypes);
+                return other.name.equals(name) && Arrays.equals(parameterTypes, other.parameterTypes);
             }
             return false;
         }
 
         @Override
         public int hashCode() {
-            return _name.hashCode() ^ _parameterTypes.length;
+            return name.hashCode() ^ parameterTypes.length;
         }
 
         @Override
         public String toString() {
-            final String parameterTypes = Arrays.toString(_parameterTypes);
-            return _name + "(" + parameterTypes.substring(1, parameterTypes.length() - 1) + ")";
+            final String paramTypes = Arrays.toString(this.parameterTypes);
+            return name + "(" + paramTypes.substring(1, paramTypes.length() - 1) + ")";
         }
 
 
@@ -118,18 +118,18 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
     /**
      * Initializes the set of label and raw templates that will be generated as assembler methods.
-     * This includes doing any filtering out of templates based on an {@linkplain #_assemblerInterfaceName assembler interface}.
+     * This includes doing any filtering out of templates based on an {@linkplain #assemblerInterfaceNameOption assembler interface}.
      */
     private void initTemplates() {
-        assert (_labelTemplates == null) == (_templates == null);
-        if (_templates == null) {
-            final String assemblerInterfaceName = _assemblerInterfaceName.getValue();
+        assert (labelTemplates == null) == (templates == null);
+        if (templates == null) {
+            final String assemblerInterfaceName = assemblerInterfaceNameOption.getValue();
             if (assemblerInterfaceName == null) {
-                _templates = assembly().templates();
-                _labelTemplates = assembly().labelTemplates();
+                templates = assembly().templates();
+                labelTemplates = assembly().labelTemplates();
             } else {
-                final AppendableSequence<Template_Type> templates = new ArrayListSequence<Template_Type>();
-                final AppendableSequence<Template_Type> labelTemplates = new ArrayListSequence<Template_Type>();
+                final AppendableSequence<Template_Type> newTemplates = new ArrayListSequence<Template_Type>();
+                final AppendableSequence<Template_Type> newLabelTemplates = new ArrayListSequence<Template_Type>();
 
                 Class assemberInterface = null;
                 try {
@@ -146,40 +146,40 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
                 for (Template_Type labelTemplate : assembly().labelTemplates()) {
                     if (assemblerInterfaceMethods.contains(new MethodKey(labelTemplate, true))) {
                         assert labelTemplate.labelParameterIndex() != -1;
-                        labelTemplates.append(labelTemplate);
+                        newLabelTemplates.append(labelTemplate);
                     }
                 }
 
                 for (Template_Type template : assembly().templates()) {
                     if (template.labelParameterIndex() != -1 && assemblerInterfaceMethods.contains(new MethodKey(template, true))) {
-                        templates.append(template);
+                        newTemplates.append(template);
                     } else if (assemblerInterfaceMethods.contains(new MethodKey(template, false))) {
-                        templates.append(template);
+                        newTemplates.append(template);
                     }
                 }
 
-                _templates = templates;
-                _labelTemplates = labelTemplates;
+                this.templates = newTemplates;
+                this.labelTemplates = newLabelTemplates;
 
-                Trace.line(1, "Based on " + assemberInterface + ", " + (assembly().templates().length() - templates.length()) + " (of " + assembly().templates().length() + ") raw templates and " +
-                              (assembly().labelTemplates().length() - labelTemplates.length()) + " (of " + assembly().labelTemplates().length() + ") label templates will be omitted from generated assembler methods");
+                Trace.line(1, "Based on " + assemberInterface + ", " + (assembly().templates().length() - newTemplates.length()) + " (of " + assembly().templates().length() + ") raw templates and " +
+                              (assembly().labelTemplates().length() - newLabelTemplates.length()) + " (of " + assembly().labelTemplates().length() + ") label templates will be omitted from generated assembler methods");
             }
 
-            if (_sortAssemblerMethods) {
-                _templates = Sequence.Static.sort(_templates, assembly().templateType());
-                _labelTemplates = Sequence.Static.sort(_labelTemplates, assembly().templateType());
+            if (sortAssemblerMethods) {
+                templates = Sequence.Static.sort(templates, assembly().templateType());
+                labelTemplates = Sequence.Static.sort(labelTemplates, assembly().templateType());
             }
         }
     }
 
     protected final Sequence<Template_Type> templates() {
         initTemplates();
-        return _templates;
+        return templates;
     }
 
     protected final Sequence<Template_Type> labelTemplates() {
         initTemplates();
-        return _labelTemplates;
+        return labelTemplates;
     }
 
     /**
@@ -188,7 +188,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
      * @param className the name of the Java class that contains the generated assembler methods
      */
     private File getSourceFileFor(String className) {
-        return new File(_outputDirectory.getValue(), className.replace('.', File.separatorChar) + ".java").getAbsoluteFile();
+        return new File(outputDirectoryOption.getValue(), className.replace('.', File.separatorChar) + ".java").getAbsoluteFile();
     }
 
     protected final String formatParameterList(String separator, Sequence<? extends Parameter> parameters, boolean typesOnly) {
@@ -228,17 +228,17 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
      * Gets the set of packages that must be imported for the generated code to compile successfully.
      *
      * @param className the name of the Java class that contains the assembler methods generated from {@code templates}
-     * @param templates the list of templates for which code is being generated
+     * @param templateList the list of templates for which code is being generated
      * @return a set of packages sorted by name
      */
-    public Set<MaxPackage> getImportPackages(String className, Iterable<Template_Type> templates) {
+    public Set<MaxPackage> getImportPackages(String className, Iterable<Template_Type> templateList) {
         final int indexOfLastPeriod = className.lastIndexOf('.');
         final String outputPackageName = indexOfLastPeriod == -1 ? "" : className.substring(0, indexOfLastPeriod);
         final MaxPackage outputPackage = MaxPackage.fromName(outputPackageName);
         final Set<MaxPackage> packages = new TreeSet<MaxPackage>();
         packages.add(MaxPackage.fromClass(AssemblyException.class));
         packages.add(MaxPackage.fromClass(Label.class));
-        for (Template_Type template : templates) {
+        for (Template_Type template : templateList) {
             for (Parameter parameter : template.parameters()) {
                 final Class type = parameter.type();
                 if (!type.isPrimitive()) {
@@ -304,6 +304,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
         final boolean printExampleInstruction = true;
         if (printExampleInstruction) {
+
             final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
             final AddressMapper addressMapper = new AddressMapper();
             int parameterIndex = 0;
@@ -408,7 +409,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
     private boolean generateRawAssemblerMethods(String rawAssemblerClassName) throws IOException {
         Trace.line(1, "Generating raw assembler methods");
-        final Sequence<Template_Type> templates = templates();
+        final Sequence<Template_Type> templateList = templates();
         final File sourceFile = getSourceFileFor(rawAssemblerClassName);
         ProgramError.check(sourceFile.exists(), "Source file for class containing raw assembler methods does not exist: " + sourceFile);
         final CharArraySource charArrayWriter = new CharArraySource((int) sourceFile.length());
@@ -419,7 +420,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
         final Map<InstructionDescription, Integer> instructionDescriptions = new HashMap<InstructionDescription, Integer>();
         int maxTemplatesPerDescription = 0;
         int i = 0;
-        for (Template_Type template : templates) {
+        for (Template_Type template : templateList) {
             printMethodComment(writer, template, i + 1, false);
             codeLineCount += printMethod(writer, template);
             writer.println();
@@ -443,8 +444,8 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
         Trace.line(1, "Generated raw assembler methods" +
                         " [code line count=" + codeLineCount + ", total line count=" + writer.lineCount() +
-                        ", method count=" + (templates.length() + subroutineCount) +
-                        ", instruction templates=" + templates.length() + ", max templates per description=" + maxTemplatesPerDescription +
+                        ", method count=" + (templateList.length() + subroutineCount) +
+                        ", instruction templates=" + templateList.length() + ", max templates per description=" + maxTemplatesPerDescription +
                         "]");
 
         return Files.updateGeneratedContent(sourceFile, charArrayWriter, "// START GENERATED RAW ASSEMBLER METHODS", "// END GENERATED RAW ASSEMBLER METHODS");
@@ -489,15 +490,15 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
      */
     public class InstructionWithLabelSubclass {
 
-        final Class<? extends InstructionWithLabel> _superClass;
-        final String _name;
-        final String _extraConstructorArguments;
-        final String _labelArgumentPrefix;
+        final Class<? extends InstructionWithLabel> superClass;
+        final String name;
+        final String extraConstructorArguments;
+        final String labelArgumentPrefix;
 
         public InstructionWithLabelSubclass(Template template, Class<? extends InstructionWithLabel> superClass, String extraConstructorArguments) {
-            _superClass = superClass;
-            _name = template.assemblerMethodName() + "_" + template.serial();
-            _extraConstructorArguments = extraConstructorArguments;
+            this.superClass = superClass;
+            this.name = template.assemblerMethodName() + "_" + template.serial();
+            this.extraConstructorArguments = extraConstructorArguments;
             final String labelType;
             if (superClass == InstructionWithAddress.class) {
                 labelType = "address";
@@ -506,7 +507,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
             } else {
                 throw ProgramError.unexpected("Unknown instruction with label type: " + superClass);
             }
-            _labelArgumentPrefix = labelType + "As";
+            this.labelArgumentPrefix = labelType + "As";
         }
 
         /**
@@ -524,13 +525,13 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
             String separator = "";
             int index = 0;
             final int labelParameterIndex = template.labelParameterIndex();
-            final String labelArgument = _labelArgumentPrefix + Strings.firstCharToUpperCase(parameters.get(labelParameterIndex).type().getName()) + "()";
+            final String labelArgument = labelArgumentPrefix + Strings.firstCharToUpperCase(parameters.get(labelParameterIndex).type().getName()) + "()";
             for (Parameter parameter : parameters) {
                 writer.print(separator);
                 if (index == labelParameterIndex) {
                     writer.print(labelArgument);
                 } else {
-                    writer.print("_" + parameter.variableName());
+                    writer.print(parameter.variableName());
                 }
                 separator = ", ";
                 index++;
@@ -540,7 +541,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
         @Override
         public String toString() {
-            return _name;
+            return name;
         }
     }
 
@@ -610,7 +611,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
         printLabelMethodHead(writer, template, parameters);
         writer.println("final int startPosition = currentPosition();");
         final String size = printPlaceholderBytes(writer, template, placeholderInstructionSize);
-        writer.print("new " + labelInstructionSubclassGenerator._name + "(startPosition, " + size + ", ");
+        writer.print("new " + labelInstructionSubclassGenerator.name + "(startPosition, " + size + ", ");
         for (Parameter parameter : parameters) {
             if (!(parameter instanceof LabelParameter)) {
                 writer.print(parameter.variableName() + ", ");
@@ -630,10 +631,10 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
                         parameters,
                         assemblerClassName,
                         labelInstructionSubclassGenerator);
-        _labelMethodHelperClasses.append(stringWriter.toString());
+        labelMethodHelperClasses.append(stringWriter.toString());
     }
 
-    private final AppendableSequence<String> _labelMethodHelperClasses = new ArrayListSequence<String>();
+    private final AppendableSequence<String> labelMethodHelperClasses = new ArrayListSequence<String>();
 
     private void printLabelMethodHelperClass(
                     IndentWriter writer,
@@ -642,7 +643,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
                     String assemblerClassName,
                     InstructionWithLabelSubclass labelInstructionSubclass) {
         final String simpleAssemblerClassName = assemblerClassName.substring(assemblerClassName.lastIndexOf('.') + 1);
-        writer.println("class " + labelInstructionSubclass + " extends " + labelInstructionSubclass._superClass.getSimpleName() + " {");
+        writer.println("class " + labelInstructionSubclass + " extends " + labelInstructionSubclass.superClass.getSimpleName() + " {");
         writer.indent();
         String parametersDecl = "";
         for (Parameter parameter : parameters) {
@@ -650,18 +651,18 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
                 final Class parameterType = parameter.type();
                 final String typeName = Classes.getSimpleName(parameterType, true);
                 final String variableName = parameter.variableName();
-                writer.println("private final " + typeName + " _" + variableName + ";");
+                writer.println("private final " + typeName + " " + variableName + ";");
                 parametersDecl = parametersDecl + typeName + " " + variableName + ", ";
             }
         }
 
         writer.println(labelInstructionSubclass + "(int startPosition, int endPosition, " + parametersDecl + "Label label) {");
         writer.indent();
-        writer.println("super(" + simpleAssemblerClassName + ".this, startPosition, currentPosition(), label" + labelInstructionSubclass._extraConstructorArguments + ");");
+        writer.println("super(" + simpleAssemblerClassName + ".this, startPosition, currentPosition(), label" + labelInstructionSubclass.extraConstructorArguments + ");");
         for (Parameter parameter : parameters) {
             if (!(parameter instanceof LabelParameter)) {
                 final String variableName = parameter.variableName();
-                writer.println("_" + variableName + " = " + variableName + ";");
+                writer.println("this." + variableName + " = " + variableName + ";");
             }
         }
         writer.outdent();
@@ -679,7 +680,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
     private boolean generateLabelAssemblerMethods(String labelAssemblerClassName) throws IOException {
         Trace.line(1, "Generating label assembler methods");
-        final Sequence<Template_Type> labelTemplates = labelTemplates();
+        final Sequence<Template_Type> labelTemplateList = labelTemplates();
         final File sourceFile = getSourceFileFor(labelAssemblerClassName);
         ProgramError.check(sourceFile.exists(), "Source file for class containing label assembler methods does not exist: " + sourceFile);
         final CharArraySource charArrayWriter = new CharArraySource((int) sourceFile.length());
@@ -688,7 +689,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
         int codeLineCount = 0;
         int i = 0;
-        for (Template_Type labelTemplate : labelTemplates) {
+        for (Template_Type labelTemplate : labelTemplateList) {
             if (!omitLabelTemplate(labelTemplate)) {
                 printMethodComment(writer, labelTemplate, i + 1, true);
                 final int startLineCount = writer.lineCount();
@@ -699,7 +700,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
         }
         writer.outdent();
 
-        for (String labelMethodHelperClass : _labelMethodHelperClasses) {
+        for (String labelMethodHelperClass : labelMethodHelperClasses) {
             writer.print(labelMethodHelperClass);
         }
 
@@ -723,8 +724,8 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
     protected void generate() {
         try {
-            final String rawAssemblerClassName = _rawAssemblerClassName.getValue();
-            final String labelAssemblerClassName = _labelAssemblerClassName.getValue();
+            final String rawAssemblerClassName = rawAssemblerClassNameOption.getValue();
+            final String labelAssemblerClassName = labelAssemblerClassNameOption.getValue();
 
             final boolean rawAssemblerMethodsUpdated = generateRawAssemblerMethods(rawAssemblerClassName);
             final boolean labelAssemblerMethodsUpdated = generateLabelAssemblerMethods(labelAssemblerClassName);

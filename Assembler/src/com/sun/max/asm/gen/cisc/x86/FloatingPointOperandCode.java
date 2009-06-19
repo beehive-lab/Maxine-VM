@@ -40,14 +40,14 @@ public enum FloatingPointOperandCode implements WrappableSpecification {
     packed_bcd(""),
     ST_i("");
 
-    private final String _operandTypeSuffix;
+    private final String operandTypeSuffix;
 
     private FloatingPointOperandCode(String operandTypeSuffix) {
-        _operandTypeSuffix = operandTypeSuffix;
+        this.operandTypeSuffix = operandTypeSuffix;
     }
 
     public String operandTypeSuffix() {
-        return _operandTypeSuffix;
+        return operandTypeSuffix;
     }
 
     public TestArgumentExclusion excludeExternalTestArguments(Argument... arguments) {

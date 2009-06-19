@@ -31,68 +31,68 @@ import com.sun.max.profile.Metrics.*;
  * @author Ben L. Titzer
  */
 public class TimerMetric implements Timer, Metric {
-    private final Timer _timer;
+    private final Timer timer;
 
-    private int _count;
-    private long _elapsed;
-    private long _nested;
+    private int count;
+    private long elapsed;
+    private long nested;
 
     public TimerMetric(Timer timer) {
-        this._timer = timer;
+        this.timer = timer;
     }
 
     public void start() {
-        _timer.start();
+        timer.start();
     }
 
     public void stop() {
-        _timer.stop();
+        timer.stop();
         synchronized (this) {
-            _count++;
-            _elapsed += _timer.getLastElapsedTime();
-            _nested += _timer.getLastNestedTime();
+            count++;
+            elapsed += timer.getLastElapsedTime();
+            nested += timer.getLastNestedTime();
         }
     }
 
     public Clock getClock() {
-        return _timer.getClock();
+        return timer.getClock();
     }
 
     public long getLastElapsedTime() {
-        return _timer.getLastElapsedTime();
+        return timer.getLastElapsedTime();
     }
 
     public long getLastNestedTime() {
-        return _timer.getLastNestedTime();
+        return timer.getLastNestedTime();
     }
 
     public synchronized void reset() {
-        _count = 0;
-        _elapsed = 0;
-        _nested = 0;
+        count = 0;
+        elapsed = 0;
+        nested = 0;
     }
 
     public long getElapsedTime() {
-        return _elapsed;
+        return elapsed;
     }
 
     public long getNestedTime() {
-        return _nested;
+        return nested;
     }
 
     public synchronized void report(String name, PrintStream stream) {
-        if (_count > 0) {
-            final long hz = _timer.getClock().getHZ();
-            final long total = _elapsed - _nested;
+        if (count > 0) {
+            final long hz = timer.getClock().getHZ();
+            final long total = elapsed - nested;
             if (hz > 0) {
                 // report in seconds
                 final double secs = total / (double) hz;
                 Metrics.report(stream, name, "total", "--", String.valueOf(secs), "seconds");
-                Metrics.report(stream, name, "average", "--", String.valueOf(secs / _count), "seconds (" + _count + " intervals)");
+                Metrics.report(stream, name, "average", "--", String.valueOf(secs / count), "seconds (" + count + " intervals)");
             } else {
                 // report in ticks
                 Metrics.report(stream, name, "total", "--", String.valueOf(total), "ticks");
-                Metrics.report(stream, name, "average", "--", String.valueOf(total / (double) _count), "ticks (" + _count + " intervals)");
+                Metrics.report(stream, name, "average", "--", String.valueOf(total / (double) count), "ticks (" + count + " intervals)");
             }
         }
     }

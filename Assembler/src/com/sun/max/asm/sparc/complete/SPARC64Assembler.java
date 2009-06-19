@@ -26,18 +26,18 @@ import com.sun.max.lang.*;
 
 /**
  * The concrete class for a 64-bit SPARC assembler.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class SPARC64Assembler extends SPARCAssembler implements Assembler64 {
 
-    private long _startAddress; // address of first instruction
+    private long startAddress; // address of first instruction
 
     public SPARC64Assembler() {
     }
 
     public SPARC64Assembler(long startAddress) {
-        _startAddress = startAddress;
+        this.startAddress = startAddress;
     }
 
     @Override
@@ -46,16 +46,16 @@ public class SPARC64Assembler extends SPARCAssembler implements Assembler64 {
     }
 
     public long startAddress() {
-        return _startAddress;
+        return startAddress;
     }
 
     @Override
     public long baseAddress() {
-        return _startAddress;
+        return startAddress;
     }
 
     public void setStartAddress(long address) {
-        _startAddress = address;
+        startAddress = address;
     }
 
     public void fixLabel(Label label, long address) {
@@ -66,11 +66,11 @@ public class SPARC64Assembler extends SPARCAssembler implements Assembler64 {
         return address64(label);
     }
 
-    private SPARC64Directives _directives = new SPARC64Directives();
+    private SPARC64Directives directives = new SPARC64Directives();
 
     @Override
     public Directives directives() {
-        return _directives;
+        return directives;
     }
 
     public class SPARC64Directives extends Directives {

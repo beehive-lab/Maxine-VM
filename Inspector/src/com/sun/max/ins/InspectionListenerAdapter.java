@@ -42,7 +42,7 @@ public abstract class InspectionListenerAdapter implements InspectionListener {
     public void threadStateChanged(MaxThread thread) {
     }
 
-    public void breakpointSetChanged() {
+    public void breakpointStateChanged() {
     }
 
     public void watchpointSetChanged() {

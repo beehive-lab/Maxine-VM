@@ -47,14 +47,14 @@ public final class ProgramWarning {
      * Registers a handler to which warnings are redirected. Any previously registered handler
      * is overwritten and discarded.
      *
-     * @param handler if non-null, this object's {@link Handler#handle(String)} method is messaged instead of
+     * @param h if non-null, this object's {@link Handler#handle(String)} method is messaged instead of
      *            printing the warning to {@link System#err} a ProgramError.
      */
-    public static void setHandler(Handler handler) {
-        _handler = handler;
+    public static void setHandler(Handler h) {
+        handler = h;
     }
 
-    private static Handler _handler;
+    private static Handler handler;
 
     private ProgramWarning() {
     }
@@ -65,8 +65,8 @@ public final class ProgramWarning {
      * @param warning the warning message to print
      */
     public static void message(String warning) {
-        if (_handler != null) {
-            _handler.handle(warning);
+        if (handler != null) {
+            handler.handle(warning);
         } else {
             System.err.println("WARNING: " + warning);
         }

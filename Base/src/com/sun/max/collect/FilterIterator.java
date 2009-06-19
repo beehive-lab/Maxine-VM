@@ -31,46 +31,46 @@ import com.sun.max.util.*;
  */
 public class FilterIterator<Element_Type> implements Iterator<Element_Type> {
 
-    private final Iterator<? extends Element_Type> _iterator;
-    private final Predicate<Element_Type> _predicate;
-    private Element_Type _next;
-    private boolean _advanced;
+    private final Iterator<? extends Element_Type> iterator;
+    private final Predicate<Element_Type> predicate;
+    private Element_Type next;
+    private boolean advanced;
 
     public FilterIterator(Iterator<? extends Element_Type> iterator, Predicate<Element_Type> predicate) {
-        _iterator = iterator;
-        _predicate = predicate;
+        this.iterator = iterator;
+        this.predicate = predicate;
     }
 
     public boolean hasNext() {
-        if (_advanced) {
+        if (advanced) {
             return true;
         }
         return advance();
     }
 
     public Element_Type next() {
-        if (!_advanced) {
+        if (!advanced) {
             if (!advance()) {
                 throw new NoSuchElementException();
             }
         }
-        _advanced = false;
-        return _next;
+        advanced = false;
+        return next;
     }
 
     public void remove() {
-        if (_advanced) {
+        if (advanced) {
             throw new IllegalStateException("remove() cannot be called");
         }
-        _iterator.remove();
+        iterator.remove();
     }
 
     private boolean advance() {
-        while (_iterator.hasNext()) {
-            final Element_Type next = _iterator.next();
-            if (_predicate.evaluate(next)) {
-                _next = next;
-                _advanced = true;
+        while (iterator.hasNext()) {
+            final Element_Type n = iterator.next();
+            if (predicate.evaluate(n)) {
+                next = n;
+                advanced = true;
                 return true;
             }
         }

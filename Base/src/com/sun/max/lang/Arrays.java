@@ -107,13 +107,13 @@ public final class Arrays {
      */
     public static <Element_Type> Iterator<Element_Type> reverseIterator(final Element_Type[] array) {
         return new Iterator<Element_Type>() {
-            int _index = array.length - 1;
+            int index = array.length - 1;
             public boolean hasNext() {
-                return _index >= 0;
+                return index >= 0;
             }
             public Element_Type next() {
                 try {
-                    return array[_index--];
+                    return array[index--];
                 } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
                     throw new NoSuchElementException();
                 }

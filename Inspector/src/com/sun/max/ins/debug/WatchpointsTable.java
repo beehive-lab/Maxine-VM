@@ -263,7 +263,7 @@ public class WatchpointsTable extends InspectorTable {
             private final MaxWatchpoint _watchpoint;
 
             WatchpointStartWordValueLabel(Inspection inspection, WordValueLabel.ValueMode valueMode, MaxWatchpoint watchpoint) {
-                super(inspection, valueMode, watchpoint.start());
+                super(inspection, valueMode, watchpoint.start(), WatchpointsTable.this);
                 _watchpoint = watchpoint;
             }
 
@@ -328,7 +328,7 @@ public class WatchpointsTable extends InspectorTable {
             private final MaxWatchpoint _watchpoint;
 
             WatchpointEndWordValueLabel(Inspection inspection, WordValueLabel.ValueMode valueMode, MaxWatchpoint watchpoint) {
-                super(inspection, valueMode, watchpoint.end());
+                super(inspection, valueMode, watchpoint.end(), WatchpointsTable.this);
                 _watchpoint = watchpoint;
             }
 

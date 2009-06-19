@@ -28,52 +28,52 @@ import com.sun.max.program.*;
 
 /**
  * An explicit operand, specifying an assembler method parameter.
- * 
+ *
  * @author Bernd Mathiske
  */
 public abstract class X86Parameter extends X86Operand implements Parameter {
 
-    private final ParameterPlace _place;
+    private final ParameterPlace place;
 
     protected X86Parameter(X86Operand.Designation designation, ParameterPlace place) {
         super(designation);
-        _place = place;
+        this.place = place;
     }
 
     public ParameterPlace place() {
-        return _place;
+        return place;
     }
 
-    private String _variableName = "p";
+    private String variableName = "p";
 
     public void setVariableName(String variableName) {
-        _variableName = variableName;
+        this.variableName = variableName;
     }
 
     public String variableName() {
-        return _variableName;
+        return variableName;
     }
 
-    private ArgumentRange _argumentRange;
+    private ArgumentRange argumentRange;
 
     public ArgumentRange argumentRange() {
-        return _argumentRange;
+        return argumentRange;
     }
 
     public void setArgumentRange(ArgumentRange argumentRange) {
-        _argumentRange = argumentRange;
+        this.argumentRange = argumentRange;
     }
 
-    private Set<Argument> _excludedDisassemblerTestArguments = new HashSet<Argument>();
-    private Set<Argument> _excludedExternalTestArguments = new HashSet<Argument>();
+    private Set<Argument> excludedDisassemblerTestArguments = new HashSet<Argument>();
+    private Set<Argument> excludedExternalTestArguments = new HashSet<Argument>();
 
     public void excludeTestArguments(TestArgumentExclusion testArgumentExclusion) {
         switch (testArgumentExclusion.component()) {
             case DISASSEMBLER:
-                _excludedDisassemblerTestArguments = testArgumentExclusion.arguments();
+                excludedDisassemblerTestArguments = testArgumentExclusion.arguments();
                 break;
             case EXTERNAL_ASSEMBLER:
-                _excludedExternalTestArguments = testArgumentExclusion.arguments();
+                excludedExternalTestArguments = testArgumentExclusion.arguments();
                 break;
             default:
                 ProgramError.unexpected();
@@ -81,11 +81,11 @@ public abstract class X86Parameter extends X86Operand implements Parameter {
     }
 
     public Set<Argument> excludedDisassemblerTestArguments() {
-        return _excludedDisassemblerTestArguments;
+        return excludedDisassemblerTestArguments;
     }
 
     public Set<Argument> excludedExternalTestArguments() {
-        return _excludedExternalTestArguments;
+        return excludedExternalTestArguments;
     }
 
     public int compareTo(Parameter other) {

@@ -70,14 +70,14 @@ public class OptionSet {
         public abstract String getUsage(Option option);
     }
 
-    protected final Map<String, Option> _optionMap;
-    protected final Map<String, Syntax> _optionSyntax;
-    protected final Map<String, String> _optionValues;
-    protected final boolean _allowUnrecognizedOptions;
+    protected final Map<String, Option> optionMap;
+    protected final Map<String, Syntax> optionSyntax;
+    protected final Map<String, String> optionValues;
+    protected final boolean allowUnrecognizedOptions;
 
     protected static final String[] NO_ARGUMENTS = {};
 
-    protected String[] _arguments = NO_ARGUMENTS;
+    protected String[] arguments = NO_ARGUMENTS;
 
     /**
      * Creates an option set that does not allow unrecognized options to be present when
@@ -97,11 +97,11 @@ public class OptionSet {
      *            {@linkplain #loadOptions(OptionSet) loading options from another option set}.
      */
     public OptionSet(boolean allowUnrecognizedOptions) {
-        _optionValues = new HashMap<String, String>();
+        optionValues = new HashMap<String, String>();
         // Using a LinkedHashMap to preserve insertion order when iterating over values
-        _optionMap = new LinkedHashMap<String, Option>();
-        _optionSyntax = new HashMap<String, Syntax>();
-        _allowUnrecognizedOptions = allowUnrecognizedOptions;
+        optionMap = new LinkedHashMap<String, Option>();
+        optionSyntax = new HashMap<String, Syntax>();
+        this.allowUnrecognizedOptions = allowUnrecognizedOptions;
     }
 
     /**
@@ -114,11 +114,11 @@ public class OptionSet {
      * @return a new array of program arguments that includes these options
      */
     public String[] asArguments() {
-        final String[] newArgs = Arrays.copyOf(_arguments, _arguments.length + _optionValues.size());
+        final String[] newArgs = Arrays.copyOf(arguments, arguments.length + optionValues.size());
         int i = 0;
-        for (String name : _optionValues.keySet()) {
-            final String value = _optionValues.get(name);
-            if (_optionSyntax.get(name) == Syntax.REQUIRES_BLANK) {
+        for (String name : optionValues.keySet()) {
+            final String value = optionValues.get(name);
+            if (optionSyntax.get(name) == Syntax.REQUIRES_BLANK) {
                 newArgs[i++] = "-" + name;
             } else {
                 newArgs[i++] = "-" + name + "=" + value;
@@ -135,12 +135,12 @@ public class OptionSet {
      */
     public OptionSet getArgumentsAndUnrecognizedOptions() {
         final OptionSet argumentsAndUnrecognizedOptions = new OptionSet(true);
-        for (Map.Entry<String, String> entry : _optionValues.entrySet()) {
-            if (!_optionMap.containsKey(entry.getKey())) {
-                argumentsAndUnrecognizedOptions._optionValues.put(entry.getKey(), entry.getValue());
+        for (Map.Entry<String, String> entry : optionValues.entrySet()) {
+            if (!optionMap.containsKey(entry.getKey())) {
+                argumentsAndUnrecognizedOptions.optionValues.put(entry.getKey(), entry.getValue());
             }
         }
-        argumentsAndUnrecognizedOptions._arguments = _arguments;
+        argumentsAndUnrecognizedOptions.arguments = arguments;
         return argumentsAndUnrecognizedOptions;
     }
 
@@ -159,26 +159,26 @@ public class OptionSet {
      * Parses a list of command line arguments, processing the leading options (i.e. arguments that start with '-')
      * and returning the "leftover" arguments to the caller. The longest tail of {@code arguments} that starts with a non-option argument can be retrieved after parsing with {@link #getArguments()}.
      *
-     * @param arguments
+     * @param args
      *            the arguments
      * @return this option set
      */
-    public OptionSet parseArguments(String[] arguments) {
+    public OptionSet parseArguments(String[] args) {
         // parse the options
         int i = 0;
-        for (; i < arguments.length; i++) {
-            final String argument = arguments[i];
+        for (; i < args.length; i++) {
+            final String argument = args[i];
             if (argument.charAt(0) == '-') {
                 // is the beginning of a valid option.
                 final int index = argument.indexOf('=');
                 final String optionName = getOptionName(argument, index);
                 String value = getOptionValue(argument, index);
-                final Syntax syntax = _optionSyntax.get(optionName);
+                final Syntax syntax = optionSyntax.get(optionName);
                 // check the syntax of this option
                 try {
-                    checkSyntax(optionName, syntax, value, i, arguments);
+                    checkSyntax(optionName, syntax, value, i, args);
                     if (syntax == Syntax.CONSUMES_NEXT) {
-                        value = arguments[++i];
+                        value = args[++i];
                     }
                     setValue(optionName, value);
                 } catch (Option.Error error) {
@@ -190,9 +190,9 @@ public class OptionSet {
             }
         }
 
-        final int left = arguments.length - i;
-        _arguments = new String[left];
-        System.arraycopy(arguments, i, _arguments, 0, left);
+        final int left = args.length - i;
+        arguments = new String[left];
+        System.arraycopy(args, i, arguments, 0, left);
 
         if (System.getProperty("useProgramOptionDialog") != null) {
             OptionsDialog.show(null, this);
@@ -207,17 +207,17 @@ public class OptionSet {
      * @return the leftover command line options
      */
     public String[] getArguments() {
-        if (_arguments.length == 0) {
-            return _arguments;
+        if (arguments.length == 0) {
+            return arguments;
         }
-        return Arrays.copyOf(_arguments, _arguments.length);
+        return Arrays.copyOf(arguments, arguments.length);
     }
 
     /**
      * Determines if this option set allows parsing or loading of unrecognized options.
      */
     public boolean allowsUnrecognizedOptions() {
-        return _allowUnrecognizedOptions;
+        return allowUnrecognizedOptions;
     }
 
     /**
@@ -248,7 +248,7 @@ public class OptionSet {
      */
     public void storeSystemProperties(String prefix) {
         // TODO: store all options, or only explicitly set ones?
-        for (Map.Entry<String, String> entry : _optionValues.entrySet()) {
+        for (Map.Entry<String, String> entry : optionValues.entrySet()) {
             System.setProperty(prefix + entry.getKey(), entry.getValue());
         }
     }
@@ -279,7 +279,7 @@ public class OptionSet {
             // if loadall is not specified, only load options that are in this option set.
             for (Object o : p.keySet()) {
                 final String name = (String) o;
-                if (_optionMap.containsKey(name)) {
+                if (optionMap.containsKey(name)) {
                     final String val = p.getProperty(name);
                     try {
                         setValue(name, val);
@@ -322,14 +322,14 @@ public class OptionSet {
      * @return this option set
      */
     public OptionSet loadOptions(OptionSet options) {
-        for (Map.Entry<String, String> entry : options._optionValues.entrySet()) {
+        for (Map.Entry<String, String> entry : options.optionValues.entrySet()) {
             try {
                 setValue(entry.getKey(), entry.getValue());
             } catch (Option.Error error) {
                 handleErrorDuringParseOrLoad(error, entry.getKey());
             }
         }
-        _arguments = options._arguments;
+        arguments = options.arguments;
 
         if (System.getProperty("useProgramOptionDialog") != null) {
             OptionsDialog.show(null, this);
@@ -368,7 +368,7 @@ public class OptionSet {
      */
     public void addOptions(OptionSet optionSet) {
         for (Option<?> option : optionSet.getOptions()) {
-            final Syntax syntax = optionSet._optionSyntax.get(option.getName());
+            final Syntax syntax = optionSet.optionSyntax.get(option.getName());
             addOption(option, syntax);
         }
     }
@@ -393,11 +393,11 @@ public class OptionSet {
      */
     public <T> Option<T> addOption(Option<T> option, Syntax syntax) {
         final String name = option.getName();
-        final Option existingOption = _optionMap.put(name, option);
+        final Option existingOption = optionMap.put(name, option);
         if (existingOption != null) {
             ProgramError.unexpected("Cannot register more than one option under the same name: " + option.getName());
         }
-        _optionSyntax.put(name, syntax);
+        optionSyntax.put(name, syntax);
         return option;
     }
 
@@ -408,7 +408,7 @@ public class OptionSet {
      * @param syntax the new syntax for the instruction
      */
     public void setSyntax(Option option, Syntax syntax) {
-        _optionSyntax.put(option.getName(), syntax);
+        optionSyntax.put(option.getName(), syntax);
     }
 
     /**
@@ -422,19 +422,19 @@ public class OptionSet {
      */
     public void setValue(String name, String value) {
         final String v = value == null ? "" : value;
-        final Option opt = _optionMap.get(name);
+        final Option opt = optionMap.get(name);
         if (opt != null) {
             opt.setString(v);
         } else {
-            if (!_allowUnrecognizedOptions) {
+            if (!allowUnrecognizedOptions) {
                 throw new Option.Error("unrecognized option -" + name);
             }
         }
-        _optionValues.put(name, v);
+        optionValues.put(name, v);
     }
 
     public String getStringValue(String name) {
-        return _optionValues.get(name);
+        return optionValues.get(name);
     }
 
     /**
@@ -447,7 +447,7 @@ public class OptionSet {
      * @return true if an option with the specified name has been set; false otherwise
      */
     public boolean hasOptionSpecified(String name) {
-        return _optionValues.containsKey(name);
+        return optionValues.containsKey(name);
     }
 
     /**
@@ -456,7 +456,7 @@ public class OptionSet {
      * @return an iterable collection of {@code Option} instances, sorted according to insertion order
      */
     public Iterable<Option<?>> getOptions() {
-        return StaticLoophole.cast(_optionMap.values());
+        return StaticLoophole.cast(optionMap.values());
     }
 
     /**
@@ -467,11 +467,11 @@ public class OptionSet {
     public Iterable<Option<?>> getSortedOptions() {
         final List<Option<?>> list = new LinkedList<Option<?>>();
         final TreeSet<String> tree = new TreeSet<String>();
-        for (String string : _optionMap.keySet()) {
+        for (String string : optionMap.keySet()) {
             tree.add(string);
         }
         for (String string : tree) {
-            list.add(_optionMap.get(string));
+            list.add(optionMap.get(string));
         }
         return list;
     }
@@ -514,7 +514,7 @@ public class OptionSet {
      * @return a string describing the usage syntax for the specified option
      */
     public String getUsage(Option option) {
-        return _optionSyntax.get(option.getName()).getUsage(option);
+        return optionSyntax.get(option.getName()).getUsage(option);
     }
 
 

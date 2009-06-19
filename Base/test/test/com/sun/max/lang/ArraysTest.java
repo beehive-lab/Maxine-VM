@@ -306,12 +306,12 @@ public class ArraysTest extends MaxTestCase {
         assertEquals(Arrays.countElement(original, original[1]), 2);
     }
 
-    private final Predicate<Integer> _nonNegPred = new Predicate<Integer>() {
+    private final Predicate<Integer> nonNegPred = new Predicate<Integer>() {
         public boolean evaluate(Integer i) {
             return i >= 0;
         }
     };
-    private final Predicate<Integer> _posPred = new Predicate<Integer>() {
+    private final Predicate<Integer> posPred = new Predicate<Integer>() {
         public boolean evaluate(Integer i) {
             return i > 0;
         }
@@ -321,8 +321,8 @@ public class ArraysTest extends MaxTestCase {
         final Integer[] none = new Integer[0];
         final Integer[] int2Array = makeIntegerArray(2);
         // filter by numeric predicates
-        assertTrue(Arrays.equals(Arrays.filter(int2Array, _nonNegPred, none), int2Array));
-        assertFalse(Arrays.equals(Arrays.filter(int2Array, _posPred, none), int2Array));
+        assertTrue(Arrays.equals(Arrays.filter(int2Array, nonNegPred, none), int2Array));
+        assertFalse(Arrays.equals(Arrays.filter(int2Array, posPred, none), int2Array));
         // filter by class
         assertTrue(Arrays.equals(Arrays.filter(int2Array, Integer.class, none), int2Array));
         final Integer[] int3Array = makeIntegerArray(3);
@@ -333,8 +333,8 @@ public class ArraysTest extends MaxTestCase {
     public void test_verify() {
         final Integer[] intArray = makeIntegerArray(2);
         // verify by numeric predicates
-        assertTrue(Arrays.verify(intArray, _nonNegPred));
-        assertFalse(Arrays.verify(intArray, _posPred));
+        assertTrue(Arrays.verify(intArray, nonNegPred));
+        assertFalse(Arrays.verify(intArray, posPred));
         // verify by class
         final Object[] array = makeObjectArray(3);
         assertTrue(Arrays.verify(array, Object.class));

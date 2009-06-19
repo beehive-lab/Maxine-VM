@@ -44,7 +44,7 @@ public class ArithmeticOp extends Op2 {
      */
     public ArithmeticOp(int opcode, Instruction x, Instruction y, boolean isStrictFP, ValueStack lockStack) {
         super(x.type().meet(y.type()), opcode, x, y);
-        setFlag(Flag.IsStrictFP, isStrictFP);
+        initFlag(Flag.IsStrictFP, isStrictFP);
         _lockStack = lockStack;
         if (canTrap()) {
             pin();

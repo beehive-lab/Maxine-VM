@@ -104,7 +104,7 @@ public class GraphStats {
             if (s._objectCount != 0) {
                 cumul += s._objectSize;
                 final String fixedDouble = Strings.padLengthWithSpaces(6, Strings.fixedDouble(cumul * 100.0d / total, 2));
-                printStream.printf("(%s%%) %-10d (%6d kb) / %-10d = %-10d %s\n", fixedDouble, s._objectSize, s._objectSize / 1024, s._objectCount, s._objectSize / s._objectCount, info._class.getName());
+                printStream.printf("(%s%%) %-10d (%6d kb) / %-10d = %-10d %s\n", fixedDouble, s._objectSize, s._objectSize / 1024, s._objectCount, s._objectSize / s._objectCount, info._clazz.getName());
             }
         }
         printStream.println("Object Histogram End\n");
@@ -141,7 +141,7 @@ public class GraphStats {
         for (ClassInfo info : classInfos) {
             final ClassStats s = getClassStats(info);
             printStream.printf("%-10d %-10d %-10d %-10d %-10d %-10d %-10d %-6d %s\n", s.classSize(), s._hubSize, s._classActorSize,
-                s._staticHubSize, s._staticSize, s._methodsSize, s._targetSize, s._methodsCount, info._class.getName());
+                s._staticHubSize, s._staticSize, s._methodsSize, s._targetSize, s._methodsCount, info._clazz.getName());
         }
         printStream.println("Class Histogram End\n");
     }
@@ -164,7 +164,7 @@ public class GraphStats {
     private int computeClassStats() {
         for (ClassInfo classInfo : _graphPrototype._classInfos.values()) {
             final ClassStats classStats = classInfo._stats;
-            final ClassActor classActor = ClassActor.fromJava(classInfo._class);
+            final ClassActor classActor = ClassActor.fromJava(classInfo._clazz);
             classStats._hubSize = sizeOf(classActor.dynamicHub());
             classStats._classActorSize = computeClassActorSize(classActor);
             classStats._staticHubSize = sizeOf(classActor.staticHub());

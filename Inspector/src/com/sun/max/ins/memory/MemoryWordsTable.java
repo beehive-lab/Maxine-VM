@@ -227,7 +227,7 @@ public class MemoryWordsTable extends InspectorTable {
     private final class ValueRenderer extends WordValueLabel implements TableCellRenderer {
         // Designed so that we only read memory lazily, for words that are visible
         ValueRenderer(Inspection inspection) {
-            super(inspection, WordValueLabel.ValueMode.WORD);
+            super(inspection, WordValueLabel.ValueMode.WORD, null);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {

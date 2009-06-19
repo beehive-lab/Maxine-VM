@@ -42,7 +42,7 @@ public class ClassfileVersion {
     public ClassfileVersion(String className, Classpath classpath) {
         try {
             final ClasspathFile classpathFile = PrototypeClassLoader.readClassFile(classpath, className);
-            final DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(classpathFile._contents));
+            final DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(classpathFile.contents));
             try {
                 final int magic = dataInputStream.readInt();
                 if (magic != 0xcafebabe) {

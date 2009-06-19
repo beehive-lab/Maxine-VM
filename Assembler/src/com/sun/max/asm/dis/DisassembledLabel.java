@@ -31,34 +31,34 @@ import com.sun.max.asm.gen.*;
  */
 public class DisassembledLabel {
 
-    private final DisassembledObject _disassembledObject;
-    private final ImmediateArgument _address;
+    private final DisassembledObject disassembledObject;
+    private final ImmediateArgument address;
 
     public DisassembledLabel(Object addressOrDisassembledObject, String name) {
         if (addressOrDisassembledObject instanceof ImmediateArgument) {
-            _address = (ImmediateArgument) addressOrDisassembledObject;
-            _disassembledObject = null;
+            address = (ImmediateArgument) addressOrDisassembledObject;
+            disassembledObject = null;
         } else {
-            _address = null;
-            _disassembledObject = (DisassembledObject) addressOrDisassembledObject;
+            address = null;
+            disassembledObject = (DisassembledObject) addressOrDisassembledObject;
         }
-        _name = name;
+        this.name = name;
     }
 
-    private final String _name;
+    private final String name;
 
     public String name() {
-        return _name;
+        return name;
     }
 
     /**
      * Gets the disassembled object (if any) denoted by this label.
      */
     public DisassembledObject target() {
-        return _disassembledObject;
+        return disassembledObject;
     }
 
     public ImmediateArgument address() {
-        return _disassembledObject != null ? _disassembledObject.startAddress() : _address;
+        return disassembledObject != null ? disassembledObject.startAddress() : address;
     }
 }

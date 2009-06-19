@@ -182,6 +182,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             if (enabled) {
                 activate();
             }
+            _factory.announceStateChange();
             // TODO (mlvdv) disable bytecode breakpoint
             return true;
         }
@@ -274,14 +275,21 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 public void upate(MaxVMState maxVMState) {
                     if (maxVMState.processState() == ProcessState.TERMINATED) {
                         _breakpoints.clear();
-                        setChanged();
-                        notifyObservers();
+                        announceStateChange();
                     }
                 }
             });
         }
 
         private final VariableMapping<Key, TeleBytecodeBreakpoint> _breakpoints = HashMapping.createVariableEqualityMapping();
+
+        /**
+         * Notify all observers that there has been a state change concerning these breakpoints.
+         */
+        private void announceStateChange() {
+            setChanged();
+            notifyObservers();
+        }
 
         /**
          * @return all bytecode breakpoints that currently exist in the {@link TeleVM}.
@@ -313,8 +321,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         private TeleBytecodeBreakpoint createBreakpoint(Key key, boolean persistent) {
             final TeleBytecodeBreakpoint breakpoint = new TeleBytecodeBreakpoint(_teleVM, this, key, false);
             _breakpoints.put(key, breakpoint);
-            setChanged();
-            notifyObservers();
+            announceStateChange();
             return breakpoint;
         }
 
@@ -338,8 +345,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          */
         private synchronized void removeBreakpoint(Key key) {
             _breakpoints.remove(key);
-            setChanged();
-            notifyObservers();
+            announceStateChange();
         }
 
         /**
@@ -350,8 +356,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 teleBytecodeBreakpoint.dispose();
             }
             _breakpoints.clear();
-            setChanged();
-            notifyObservers();
+            announceStateChange();
         }
     }
 }
