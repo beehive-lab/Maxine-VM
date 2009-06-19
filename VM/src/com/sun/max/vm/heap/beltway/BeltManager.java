@@ -95,7 +95,7 @@ public final class BeltManager {
             _belts.get(i).resetAllocationMark();
             _belts.get(i).setFramePercentageOfUsableMemory(BeltwayConfiguration.getPercentOfUsableMemoryPerBelt(i));
         }
-        // Initialise the last belt.
+        // Initialize the last belt.
         // Because of the alignment the last belt will be a little bit smaller
         // than the previous ones, as it has to stop at the belt's boundaries
         if (i < BeltwayConfiguration.getNumberOfBelts()) {
