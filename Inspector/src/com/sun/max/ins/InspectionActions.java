@@ -1915,7 +1915,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _refreshableActions.append(this);
             inspection().addInspectionListener(new InspectionListenerAdapter() {
                 @Override
-                public void breakpointSetChanged() {
+                public void breakpointStateChanged() {
                     refresh(true);
                 }
             });
@@ -2134,7 +2134,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             });
             inspection().addInspectionListener(new InspectionListenerAdapter() {
                 @Override
-                public void breakpointSetChanged() {
+                public void breakpointStateChanged() {
                     refresh(true);
                 }
             });
@@ -2177,7 +2177,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _refreshableActions.append(this);
             inspection().addInspectionListener(new InspectionListenerAdapter() {
                 @Override
-                public void breakpointSetChanged() {
+                public void breakpointStateChanged() {
                     refresh(true);
                 }
             });
@@ -2443,7 +2443,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             _refreshableActions.append(this);
             inspection().addInspectionListener(new InspectionListenerAdapter() {
                 @Override
-                public void breakpointSetChanged() {
+                public void breakpointStateChanged() {
                     refresh(true);
                 }
             });
