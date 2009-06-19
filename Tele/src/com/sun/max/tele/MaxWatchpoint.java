@@ -44,4 +44,24 @@ public interface MaxWatchpoint extends MemoryRegion {
      */
     boolean remove();
 
+    /**
+     * Set read flag for this watchpoint.
+     * @param read
+     * @return whether set succeeded
+     */
+    boolean setRead(boolean read);
+
+    /**
+     * Set write flag for this watchpoint.
+     * @param write
+     * @return whether set succeded.
+     */
+    boolean setWrite(boolean write);
+
+    /**
+     * Set execute flag for this watchpoint.
+     * @param exec
+     * @return wheter set succeded.
+     */
+    boolean setExec(boolean exec);
 }
