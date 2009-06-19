@@ -358,7 +358,7 @@ public final class Inspection {
             if (java.awt.EventQueue.isDispatchThread()) {
                 Trace.line(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
                 for (InspectionListener listener : _inspectionListeners.clone()) {
-                    listener.breakpointSetChanged();
+                    listener.breakpointStateChanged();
                 }
             } else {
                 SwingUtilities.invokeLater(new Runnable() {
@@ -366,7 +366,7 @@ public final class Inspection {
                     public void run() {
                         Trace.line(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
                         for (InspectionListener listener : _inspectionListeners.clone()) {
-                            listener.breakpointSetChanged();
+                            listener.breakpointStateChanged();
                         }
                     }
                 });
