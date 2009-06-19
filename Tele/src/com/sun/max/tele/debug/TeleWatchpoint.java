@@ -43,7 +43,7 @@ public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint
 
     // configuration flags
     private boolean read = false;
-    private boolean write = true;
+    private boolean write = false;
     private boolean exec = false;
     private boolean after = true;
 
@@ -52,7 +52,7 @@ public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint
         _factory = factory;
     }
 
-    public TeleWatchpoint(Factory factory, Address address, Size size, boolean after, boolean read, boolean write, boolean exec){
+    public TeleWatchpoint(Factory factory, Address address, Size size, boolean after, boolean read, boolean write, boolean exec) {
         super(address, size);
         _factory = factory;
         this.after = after;
@@ -71,6 +71,22 @@ public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint
         return false;
     }
 
+    public boolean isAfter() {
+        return after;
+    }
+
+    public boolean isRead() {
+        return read;
+    }
+
+    public boolean isWrite() {
+        return write;
+    }
+
+    public boolean isExec() {
+        return exec;
+    }
+
     /* (non-Javadoc)
      * @see com.sun.max.tele.MaxWatchpoint#isActive()
      */
@@ -85,44 +101,6 @@ public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint
         return  _factory.removeWatchpoint(this);
     }
 
-    public boolean isRead() {
-        return read;
-    }
-
-
-    public void setRead(boolean read) {
-        this.read = read;
-    }
-
-
-    public boolean isWrite() {
-        return write;
-    }
-
-
-    public void setWrite(boolean write) {
-        this.write = write;
-    }
-
-
-    public boolean isExec() {
-        return exec;
-    }
-
-
-    public void setExec(boolean exec) {
-        this.exec = exec;
-    }
-
-
-    public boolean isAfter() {
-        return after;
-    }
-
-
-    public void setAfter(boolean after) {
-        this.after = after;
-    }
 
     @Override
     public String toString() {
@@ -215,7 +193,7 @@ public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint
         }
 
         /**
-         * Resets an already set watchpoint
+         * Resets an already set watchpoint.
          *
          * @param teleWatchpoint
          * @return true if reset was successful
@@ -306,6 +284,22 @@ public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint
         DuplicateWatchpointException(String message) {
             super(message);
         }
+    }
+
+    public boolean setExec(boolean exec) {
+        this.exec = exec;
+        return _factory.resetWatchpoint(this);
+    }
+
+
+    public boolean setRead(boolean read) {
+        this.read = read;
+        return _factory.resetWatchpoint(this);
+    }
+
+    public boolean setWrite(boolean write) {
+        this.write = write;
+        return _factory.resetWatchpoint(this);
     }
 
 }
