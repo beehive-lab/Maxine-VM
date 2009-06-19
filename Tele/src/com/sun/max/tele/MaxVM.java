@@ -646,11 +646,15 @@ public interface MaxVM {
      *
      * @param address start of a memory region in the VM
      * @param size size of the memory region in the VM
+     * @param after trap after accessing memory field
+     * @param read read access
+     * @param write write access
+     * @param exec execution access
      * @return a new memory watchpoint
      * @throws TooManyWatchpointsException
      * @throws DuplicateWatchpointException when the watchpoint overlaps in whole or part with an existing watchpoint
      */
-    MaxWatchpoint setWatchpoint(Address address, Size size)  throws TooManyWatchpointsException, DuplicateWatchpointException;
+    MaxWatchpoint setWatchpoint(Address address, Size size, boolean after, boolean read, boolean write, boolean exec)  throws TooManyWatchpointsException, DuplicateWatchpointException;
 
     /**
      * @param address a memory address in the VM

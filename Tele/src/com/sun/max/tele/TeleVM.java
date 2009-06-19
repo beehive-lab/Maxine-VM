@@ -1127,8 +1127,8 @@ public abstract class TeleVM implements MaxVM {
     /* (non-Javadoc)
      * @see com.sun.max.tele.MaxVM#setWatchpoint(com.sun.max.unsafe.Address, com.sun.max.unsafe.Size)
      */
-    public final MaxWatchpoint setWatchpoint(Address address, Size size) throws TooManyWatchpointsException, DuplicateWatchpointException {
-        return _teleProcess.watchpointFactory().setWatchpoint(address, size);
+    public final MaxWatchpoint setWatchpoint(Address address, Size size, boolean after, boolean read, boolean write, boolean exec) throws TooManyWatchpointsException, DuplicateWatchpointException {
+        return _teleProcess.watchpointFactory().setWatchpoint(address, size, after, read, write, exec);
     }
 
     /* (non-Javadoc)

@@ -25,6 +25,7 @@
 #include "os.h"
 #include "threadSpecifics.h"
 #include "solarisTeleProcess.h"
+#include <sys/siginfo.h>
 
 struct ps_lwphandle {
     struct ps_prochandle *lwp_proc;	/* process to which this lwp belongs */
