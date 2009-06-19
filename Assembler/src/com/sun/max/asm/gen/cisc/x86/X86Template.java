@@ -33,23 +33,23 @@ import com.sun.max.util.*;
  * @author Bernd Mathiske
  */
 public abstract class X86Template extends Template implements X86InstructionDescriptionVisitor {
-    private final InstructionAssessment _instructionFamily;
-    private boolean _hasSibByte;
-    private final X86TemplateContext _context;
-    private HexByte _instructionSelectionPrefix;
-    private HexByte _opcode1;
-    private HexByte _opcode2;
-    private ModRMGroup _modRMGroup;
-    private ModRMGroup.Opcode _modRMGroupOpcode;
-    private AppendableSequence<X86Operand> _operands = new LinkSequence<X86Operand>();
-    private AppendableSequence<X86ImplicitOperand> _implicitOperands = new LinkSequence<X86ImplicitOperand>();
-    private AppendableIndexedSequence<X86Parameter> _parameters = new ArrayListSequence<X86Parameter>();
-    protected boolean _isLabelMethodWritten;
+    private final InstructionAssessment instructionFamily;
+    private boolean hasSibByte;
+    private final X86TemplateContext context;
+    private HexByte instructionSelectionPrefix;
+    private HexByte opcode1;
+    private HexByte opcode2;
+    private ModRMGroup modRMGroup;
+    private ModRMGroup.Opcode modRMGroupOpcode;
+    private AppendableSequence<X86Operand> operands = new LinkSequence<X86Operand>();
+    private AppendableSequence<X86ImplicitOperand> implicitOperands = new LinkSequence<X86ImplicitOperand>();
+    private AppendableIndexedSequence<X86Parameter> parameters = new ArrayListSequence<X86Parameter>();
+    protected boolean isLabelMethodWritten;
 
     protected X86Template(X86InstructionDescription instructionDescription, int serial, InstructionAssessment instructionFamily, X86TemplateContext context) {
         super(instructionDescription, serial);
-        _instructionFamily = instructionFamily;
-        _context = context;
+        this.instructionFamily = instructionFamily;
+        this.context = context;
     }
 
     @Override
@@ -58,76 +58,76 @@ public abstract class X86Template extends Template implements X86InstructionDesc
     }
 
     protected X86TemplateContext context() {
-        return _context;
+        return context;
     }
 
     public HexByte instructionSelectionPrefix() {
-        return _instructionSelectionPrefix;
+        return instructionSelectionPrefix;
     }
 
     public HexByte opcode1() {
-        return _opcode1;
+        return opcode1;
     }
 
     public HexByte opcode2() {
-        return _opcode2;
+        return opcode2;
     }
 
     public boolean hasModRMByte() {
-        return _instructionFamily.hasModRMByte();
+        return instructionFamily.hasModRMByte();
     }
 
     public X86TemplateContext.ModCase modCase() {
-        return _context.modCase();
+        return context.modCase();
     }
 
     public ModRMGroup modRMGroup() {
-        return _modRMGroup;
+        return modRMGroup;
     }
 
     public ModRMGroup.Opcode modRMGroupOpcode() {
-        return _modRMGroupOpcode;
+        return modRMGroupOpcode;
     }
 
     public X86TemplateContext.RMCase rmCase() {
-        return _context.rmCase();
+        return context.rmCase();
     }
 
     public boolean hasSibByte() {
-        return _hasSibByte;
+        return hasSibByte;
     }
 
     protected void haveSibByte() {
-        _hasSibByte = true;
+        hasSibByte = true;
     }
 
     public X86TemplateContext.SibBaseCase sibBaseCase() {
-        return _context.sibBaseCase();
+        return context.sibBaseCase();
     }
 
     public WordWidth addressSizeAttribute() {
-        return _context.addressSizeAttribute();
+        return context.addressSizeAttribute();
     }
 
     public WordWidth operandSizeAttribute() {
-        return _context.operandSizeAttribute();
+        return context.operandSizeAttribute();
     }
 
-    private WordWidth _externalCodeSizeAttribute;
+    private WordWidth externalCodeSizeAttribute;
 
     public WordWidth externalCodeSizeAttribute() {
-        return _externalCodeSizeAttribute;
+        return externalCodeSizeAttribute;
     }
 
-    protected void setExternalCodeSizeAttribute(WordWidth externalCodeSizeAttribute) {
-        _externalCodeSizeAttribute = externalCodeSizeAttribute;
+    protected void setExternalCodeSizeAttribute(WordWidth codeSizeAttribute) {
+        this.externalCodeSizeAttribute = codeSizeAttribute;
     }
 
     @Override
     public String internalName() {
         String result = super.internalName();
-        if (result != null && _internalOperandTypeSuffix != null) {
-            result += _internalOperandTypeSuffix;
+        if (result != null && internalOperandTypeSuffix != null) {
+            result += internalOperandTypeSuffix;
         }
         return result;
     }
@@ -138,8 +138,8 @@ public abstract class X86Template extends Template implements X86InstructionDesc
             return instructionDescription().externalName();
         }
         String result = super.internalName();
-        if (_externalOperandTypeSuffix != null) {
-            result += _externalOperandTypeSuffix;
+        if (externalOperandTypeSuffix != null) {
+            result += externalOperandTypeSuffix;
         }
         return result;
     }
@@ -150,51 +150,51 @@ public abstract class X86Template extends Template implements X86InstructionDesc
 
     @Override
     public String toString() {
-        return "<X86Template #" + serial() + ": " + internalName() + " " + format(_instructionSelectionPrefix) + format(_opcode1) + format(_opcode2) + _operands + ">";
+        return "<X86Template #" + serial() + ": " + internalName() + " " + format(instructionSelectionPrefix) + format(opcode1) + format(opcode2) + operands + ">";
     }
 
-    private String _namePrefix = "";
+    private String namePrefix = "";
 
-    protected void useNamePrefix(String namePrefix) {
-        if (_namePrefix.length() == 0) {
-            _namePrefix = namePrefix;
+    protected void useNamePrefix(String prefix) {
+        if (this.namePrefix.length() == 0) {
+            this.namePrefix = prefix;
         }
     }
 
-    private boolean _isRedundant;
+    private boolean isRedundant;
 
     @Override
     public boolean isRedundant() {
-        return _isRedundant;
+        return isRedundant;
     }
 
     public void beRedundant() {
-        _isRedundant = true;
+        isRedundant = true;
     }
 
-    private String _canonicalName;
+    private String canonicalName;
 
     public String canonicalName() {
-        if (_canonicalName == null) {
-            _canonicalName = _namePrefix + internalName();
-            if (_implicitOperands.length() == 1) {
-                final X86ImplicitOperand implicitOperand = _implicitOperands.first();
+        if (canonicalName == null) {
+            canonicalName = namePrefix + internalName();
+            if (implicitOperands.length() == 1) {
+                final X86ImplicitOperand implicitOperand = implicitOperands.first();
                 switch (implicitOperand.designation()) {
                     case DESTINATION:
                     case OTHER:
                         break;
                     case SOURCE:
-                        _canonicalName += "__";
+                        canonicalName += "__";
                         break;
                 }
-                _canonicalName += "_" + implicitOperand.name();
+                canonicalName += "_" + implicitOperand.name();
             } else {
-                for (X86ImplicitOperand implicitOperand : _implicitOperands) {
-                    _canonicalName += "_" + implicitOperand.name();
+                for (X86ImplicitOperand implicitOperand : implicitOperands) {
+                    canonicalName += "_" + implicitOperand.name();
                 }
             }
         }
-        return _canonicalName;
+        return canonicalName;
     }
 
     @Override
@@ -210,15 +210,15 @@ public abstract class X86Template extends Template implements X86InstructionDesc
     }
 
     public InstructionDescription modRMInstructionDescription() {
-        if (_modRMGroup == null) {
+        if (modRMGroup == null) {
             return null;
         }
-        return _modRMGroup.getInstructionDescription(_modRMGroupOpcode);
+        return modRMGroup.getInstructionDescription(modRMGroupOpcode);
     }
 
     protected <Parameter_Type extends X86Parameter> Parameter_Type addParameter(Parameter_Type parameter) {
-        _parameters.append(parameter);
-        _operands.append(parameter);
+        parameters.append(parameter);
+        operands.append(parameter);
         if (parameter instanceof X86AddressParameter) {
             useNamePrefix("m_");
         }
@@ -241,22 +241,22 @@ public abstract class X86Template extends Template implements X86InstructionDesc
     }
 
     protected void addImplicitOperand(X86ImplicitOperand implicitOperand) {
-        _implicitOperands.append(implicitOperand);
-        _operands.append(implicitOperand);
+        implicitOperands.append(implicitOperand);
+        operands.append(implicitOperand);
     }
 
     public Sequence<X86ImplicitOperand> implicitOperands() {
-        return _implicitOperands;
+        return implicitOperands;
     }
 
     @Override
     public Sequence<X86Operand> operands() {
-        return _operands;
+        return operands;
     }
 
     @Override
     public IndexedSequence<X86Parameter> parameters() {
-        return _parameters;
+        return parameters;
     }
 
     public void visitAddressingMethodCode(AddressingMethodCode addressingMethodCode, X86Operand.Designation designation) throws TemplateNotNeededException {
@@ -303,23 +303,23 @@ public abstract class X86Template extends Template implements X86InstructionDesc
         }
     }
 
-    private String _externalOperandTypeSuffix;
+    private String externalOperandTypeSuffix;
 
     private void setExternalOperandTypeSuffix(String suffix) {
-        checkSuffix(suffix, _externalOperandTypeSuffix);
-        _externalOperandTypeSuffix = suffix;
+        checkSuffix(suffix, externalOperandTypeSuffix);
+        externalOperandTypeSuffix = suffix;
     }
 
     protected void setExternalOperandTypeSuffix(OperandTypeCode operandTypeCode) throws TemplateNotNeededException {
         setExternalOperandTypeSuffix(getOperandTypeSuffix(operandTypeCode));
     }
 
-    private String _internalOperandTypeSuffix;
+    private String internalOperandTypeSuffix;
 
     protected void setOperandTypeSuffix(String suffix) {
         setExternalOperandTypeSuffix(suffix);
-        checkSuffix(suffix, _internalOperandTypeSuffix);
-        _internalOperandTypeSuffix = suffix;
+        checkSuffix(suffix, internalOperandTypeSuffix);
+        internalOperandTypeSuffix = suffix;
     }
 
     public void visitOperandTypeCode(OperandTypeCode operandTypeCode) throws TemplateNotNeededException {
@@ -334,18 +334,18 @@ public abstract class X86Template extends Template implements X86InstructionDesc
         addImplicitOperand(new X86ImplicitOperand(designation, ImplicitOperand.ExternalPresence.EXPLICIT, segmentRegister));
     }
 
-    public void visitModRMGroup(ModRMGroup modRMGroup) throws TemplateNotNeededException {
-        _modRMGroup = modRMGroup;
-        final ModRMDescription instructionDescription = modRMGroup.getInstructionDescription(_context.modRMGroupOpcode());
+    public void visitModRMGroup(ModRMGroup modRM) throws TemplateNotNeededException {
+        this.modRMGroup = modRM;
+        final ModRMDescription instructionDescription = modRM.getInstructionDescription(context.modRMGroupOpcode());
         if (instructionDescription == null) {
             TemplateNotNeededException.raise();
         }
-        _modRMGroupOpcode = instructionDescription.opcode();
+        this.modRMGroupOpcode = instructionDescription.opcode();
         setInternalName(instructionDescription.name().toLowerCase());
     }
 
     public void visitModCase(X86TemplateContext.ModCase modCase) throws TemplateNotNeededException {
-        if (_context.modCase() != X86TemplateContext.ModCase.MOD_3) {
+        if (context.modCase() != X86TemplateContext.ModCase.MOD_3) {
             TemplateNotNeededException.raise();
         }
     }
@@ -397,18 +397,18 @@ public abstract class X86Template extends Template implements X86InstructionDesc
     }
 
     public void visitHexByte(HexByte hexByte) throws TemplateNotNeededException {
-        if (_opcode1 == null) {
-            _opcode1 = hexByte;
-        } else if (_opcode2 == null) {
-            _opcode2 = hexByte;
+        if (opcode1 == null) {
+            opcode1 = hexByte;
+        } else if (opcode2 == null) {
+            opcode2 = hexByte;
         } else {
-            if (hexByte == HexByte._66 && _context.operandSizeAttribute() == WordWidth.BITS_16) {
+            if (hexByte == HexByte._66 && context.operandSizeAttribute() == WordWidth.BITS_16) {
                 TemplateNotNeededException.raise();
             }
-            assert _instructionSelectionPrefix == null;
-            _instructionSelectionPrefix = _opcode1;
-            _opcode1 = _opcode2;
-            _opcode2 = hexByte;
+            assert instructionSelectionPrefix == null;
+            instructionSelectionPrefix = opcode1;
+            opcode1 = opcode2;
+            opcode2 = hexByte;
         }
     }
 
@@ -423,11 +423,11 @@ public abstract class X86Template extends Template implements X86InstructionDesc
         if (!canonicalName().equals(other.canonicalName())) {
             return false;
         }
-        if (_parameters.length() != other._parameters.length()) {
+        if (parameters.length() != other.parameters.length()) {
             return false;
         }
-        for (int i = 0; i < _parameters.length(); i++) {
-            if (!_parameters.get(i).type().equals(other._parameters.get(i).type())) {
+        for (int i = 0; i < parameters.length(); i++) {
+            if (!parameters.get(i).type().equals(other.parameters.get(i).type())) {
                 return false;
             }
         }

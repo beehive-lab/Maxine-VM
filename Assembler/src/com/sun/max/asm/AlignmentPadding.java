@@ -31,31 +31,31 @@ public abstract class AlignmentPadding extends MutableAssembledObject {
 
     public AlignmentPadding(Assembler assembler, int startPosition, int endPosition, int alignment, byte padByte) {
         super(assembler, startPosition, endPosition);
-        _alignment = alignment;
-        _padByte = padByte;
+        this.alignment = alignment;
+        this.padByte = padByte;
         assembler.addAlignmentPadding(this);
     }
 
-    private final int _alignment;
+    private final int alignment;
 
     public int alignment() {
-        return _alignment;
+        return alignment;
     }
 
-    private final byte _padByte;
+    private final byte padByte;
 
     public void updatePadding() {
         // We avoid sign problems with '%' below by masking off the sign bit:
         final long unsignedAddend = (assembler().baseAddress() + startPosition()) & 0x7fffffffffffffffL;
 
-        final int misalignmentSize = (int) (unsignedAddend % _alignment);
-        _variableSize = (misalignmentSize > 0) ? (_alignment - misalignmentSize) : 0;
+        final int misalignmentSize = (int) (unsignedAddend % alignment);
+        variableSize = (misalignmentSize > 0) ? (alignment - misalignmentSize) : 0;
     }
 
     @Override
     protected void assemble() throws AssemblyException {
         for (int i = 0; i < size(); i++) {
-            assembler().emitByte(_padByte);
+            assembler().emitByte(padByte);
         }
     }
 }

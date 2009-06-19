@@ -55,8 +55,8 @@ public class Invoke extends StateSplit {
         _target = target;
         if (target.isLoaded()) {
             setFlag(Flag.TargetIsLoaded);
-            setFlag(Flag.TargetIsFinal, target.isFinalMethod());
-            setFlag(Flag.TargetIsStrictfp, target.isStrictFP());
+            initFlag(Flag.TargetIsFinal, target.isFinalMethod());
+            initFlag(Flag.TargetIsStrictfp, target.isStrictFP());
         }
     }
 

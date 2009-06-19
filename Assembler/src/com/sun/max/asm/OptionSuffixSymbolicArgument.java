@@ -24,22 +24,22 @@ package com.sun.max.asm;
 
 /**
  * An argument that corresponds to an optional mnemonic suffix in the external assembler syntax.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
 public abstract class OptionSuffixSymbolicArgument extends AbstractSymbolicArgument implements ExternalMnemonicSuffixArgument {
 
-    private final String _externalMnemonicSuffix;
+    private final String externalMnemonicSuffix;
 
     protected OptionSuffixSymbolicArgument(int value, String externalMnemonicSuffix) {
         super(value);
-        _externalMnemonicSuffix = externalMnemonicSuffix;
+        this.externalMnemonicSuffix = externalMnemonicSuffix;
     }
 
     @Override
     public String externalValue() {
-        return _externalMnemonicSuffix;
+        return externalMnemonicSuffix;
     }
 
     public boolean isOptional() {

@@ -55,13 +55,13 @@ public abstract class Assembler {
      * overriding implementation must call this method in its superclass.
      */
     public Assembler reset() {
-        _boundLabels.clear();
-        ((LinkSequence) _assembledObjects).clear();
-        ((LinkSequence) _mutableAssembledObjects).clear();
-        _padOutput = false;
-        _potentialExpansionSize = 0;
-        _selectingLabelInstructions = true;
-        _stream.reset();
+        boundLabels.clear();
+        ((LinkSequence) assembledObjects).clear();
+        ((LinkSequence) mutableAssembledObjects).clear();
+        padOutput = false;
+        potentialExpansionSize = 0;
+        selectingLabelInstructions = true;
+        stream.reset();
         if (this instanceof Assembler32) {
             final Assembler32 assembler32 = (Assembler32) this;
             assembler32.setStartAddress(0);
@@ -190,7 +190,7 @@ public abstract class Assembler {
      * Gets the number of bytes that have been written to the underlying output stream.
      */
     public int currentPosition() {
-        return _stream.size();
+        return stream.size();
     }
 
     /**
@@ -198,15 +198,15 @@ public abstract class Assembler {
      */
     public abstract long baseAddress();
 
-    private ByteArrayOutputStream _stream = new ByteArrayOutputStream();
+    private ByteArrayOutputStream stream = new ByteArrayOutputStream();
 
     protected void emitByte(int byteValue) {
-        _stream.write(byteValue);
+        stream.write(byteValue);
     }
 
     protected void emitZeroes(int count) {
         for (int i = 0; i < count; ++i) {
-            _stream.write(0);
+            stream.write(0);
         }
     }
 
@@ -217,19 +217,19 @@ public abstract class Assembler {
     protected abstract void emitLong(long longValue);
 
     protected void emitByteArray(byte[] byteArrayValue, int off, int len) {
-        _stream.write(byteArrayValue, off, len);
+        stream.write(byteArrayValue, off, len);
     }
 
-    private boolean _selectingLabelInstructions = true;
+    private boolean selectingLabelInstructions = true;
 
     boolean selectingLabelInstructions() {
-        return _selectingLabelInstructions;
+        return selectingLabelInstructions;
     }
 
-    private final IdentityHashSet<Label> _boundLabels = new IdentityHashSet<Label>();
+    private final IdentityHashSet<Label> boundLabels = new IdentityHashSet<Label>();
 
     public IdentityHashSet<Label> boundLabels() {
-        return _boundLabels;
+        return boundLabels;
     }
 
     /**
@@ -244,13 +244,13 @@ public abstract class Assembler {
      */
     public final void bindLabel(Label label) {
         label.bind(currentPosition());
-        _boundLabels.add(label);
+        boundLabels.add(label);
     }
 
-    private final AppendableSequence<AssembledObject> _assembledObjects = new LinkSequence<AssembledObject>();
-    private final AppendableSequence<MutableAssembledObject> _mutableAssembledObjects = new LinkSequence<MutableAssembledObject>();
+    private final AppendableSequence<AssembledObject> assembledObjects = new LinkSequence<AssembledObject>();
+    private final AppendableSequence<MutableAssembledObject> mutableAssembledObjects = new LinkSequence<MutableAssembledObject>();
 
-    private int _potentialExpansionSize;
+    private int potentialExpansionSize;
 
     /**
      * Adds the description of an instruction that is fixed in size.
@@ -258,9 +258,9 @@ public abstract class Assembler {
      * @param fixedSizeAssembledObject
      */
     void addFixedSizeAssembledObject(AssembledObject fixedSizeAssembledObject) {
-        _assembledObjects.append(fixedSizeAssembledObject);
+        assembledObjects.append(fixedSizeAssembledObject);
         if (fixedSizeAssembledObject instanceof MutableAssembledObject) {
-            _mutableAssembledObjects.append((MutableAssembledObject) fixedSizeAssembledObject);
+            mutableAssembledObjects.append((MutableAssembledObject) fixedSizeAssembledObject);
         }
     }
 
@@ -271,22 +271,22 @@ public abstract class Assembler {
      * @param spanDependentInstruction
      */
     void addSpanDependentInstruction(InstructionWithOffset spanDependentInstruction) {
-        _assembledObjects.append(spanDependentInstruction);
-        _mutableAssembledObjects.append(spanDependentInstruction);
+        assembledObjects.append(spanDependentInstruction);
+        mutableAssembledObjects.append(spanDependentInstruction);
         // A span-dependent instruction's offset operand can potentially grow from 8 bits to 32 bits.
         // Also, some instructions need an extra byte for encoding when not using an 8-bit operand.
         // Together, this might enlarge every span-dependent label instruction by maximally 4 bytes.
-        _potentialExpansionSize += 4;
+        potentialExpansionSize += 4;
     }
 
     void addAlignmentPadding(AlignmentPadding alignmentPadding) {
-        _assembledObjects.append(alignmentPadding);
-        _mutableAssembledObjects.append(alignmentPadding);
-        _potentialExpansionSize += alignmentPadding.alignment() - alignmentPadding.size();
+        assembledObjects.append(alignmentPadding);
+        mutableAssembledObjects.append(alignmentPadding);
+        potentialExpansionSize += alignmentPadding.alignment() - alignmentPadding.size();
     }
 
     void addInlineData(int startPosition, int size) {
-        _assembledObjects.append(new AssembledObject(startPosition, startPosition + size) {
+        assembledObjects.append(new AssembledObject(startPosition, startPosition + size) {
             public Type type() {
                 return Type.DATA;
             }
@@ -294,14 +294,14 @@ public abstract class Assembler {
     }
 
     private void gatherLabels() throws AssemblyException {
-        for (AssembledObject assembledObject : _assembledObjects) {
+        for (AssembledObject assembledObject : assembledObjects) {
             if (assembledObject instanceof InstructionWithLabel) {
                 final InstructionWithLabel labelInstruction = (InstructionWithLabel) assembledObject;
                 switch (labelInstruction.label().state()) {
                     case UNASSIGNED:
                         throw new AssemblyException("unassigned label");
                     case BOUND:
-                        _boundLabels.add(labelInstruction.label());
+                        boundLabels.add(labelInstruction.label());
                         break;
                     default:
                         break;
@@ -316,9 +316,9 @@ public abstract class Assembler {
         }
         final int oldSize = instruction.size();
         final int oldEndPosition = instruction.endPosition();
-        _stream.reset();
+        stream.reset();
         instruction.assemble();
-        final int newSize = _stream.toByteArray().length;
+        final int newSize = stream.toByteArray().length;
         instruction.setSize(newSize);
         final int delta = newSize - oldSize;
         adjustMutableAssembledObjects(delta, oldEndPosition, null);
@@ -350,13 +350,13 @@ public abstract class Assembler {
      *            value is not null, then its position will not be adjusted by this call.
      */
     private void adjustMutableAssembledObjects(int delta, int startPosition, AlignmentPadding adjustedPadding) throws AssemblyException {
-        for (Label label : _boundLabels) {
+        for (Label label : boundLabels) {
             if (label.position() >= startPosition) {
                 label.adjust(delta);
             }
         }
 
-        for (MutableAssembledObject mutableAssembledObject : _mutableAssembledObjects) {
+        for (MutableAssembledObject mutableAssembledObject : mutableAssembledObjects) {
             if (mutableAssembledObject != adjustedPadding && mutableAssembledObject.startPosition() >= startPosition) {
                 mutableAssembledObject.adjust(delta);
             }
@@ -367,7 +367,7 @@ public abstract class Assembler {
         boolean changed;
         do {
             changed = false;
-            for (MutableAssembledObject mutableAssembledObject : _mutableAssembledObjects) {
+            for (MutableAssembledObject mutableAssembledObject : mutableAssembledObjects) {
                 if (mutableAssembledObject instanceof InstructionWithOffset) {
                     changed |= updateSpanDependentInstruction((InstructionWithOffset) mutableAssembledObject);
                 } else if (mutableAssembledObject instanceof AlignmentPadding) {
@@ -378,11 +378,11 @@ public abstract class Assembler {
     }
 
     private int writeOutput(OutputStream outputStream, byte[] initialBytes, InlineDataRecorder inlineDataRecorder) throws IOException, AssemblyException {
-        _selectingLabelInstructions = false;
+        selectingLabelInstructions = false;
         int bytesWritten = 0;
         try {
             int initialOffset = 0;
-            for (AssembledObject assembledObject : _assembledObjects) {
+            for (AssembledObject assembledObject : assembledObjects) {
                 if (inlineDataRecorder != null && assembledObject.type() == Type.DATA) {
                     inlineDataRecorder.add(new InlineDataDescriptor.ByteData(assembledObject.startPosition(), assembledObject.size()));
                 }
@@ -396,10 +396,10 @@ public abstract class Assembler {
                     bytesWritten += length;
 
                     // Now (re)assemble the mutable assembled object
-                    _stream.reset();
+                    stream.reset();
                     mutableAssembledObject.assemble();
-                    _stream.writeTo(outputStream);
-                    bytesWritten += _stream.size();
+                    stream.writeTo(outputStream);
+                    bytesWritten += stream.size();
                     initialOffset = mutableAssembledObject.initialEndPosition();
                 } else {
                     // Copy the original assembler output between the end of the last assembled object and the end of current one
@@ -414,19 +414,19 @@ public abstract class Assembler {
             outputStream.write(initialBytes, initialOffset, initialBytes.length - initialOffset);
             bytesWritten += initialBytes.length - initialOffset;
 
-            if (_padOutput) {
-                final int padding = (initialBytes.length + _potentialExpansionSize) - bytesWritten;
+            if (padOutput) {
+                final int padding = (initialBytes.length + potentialExpansionSize) - bytesWritten;
                 assert padding >= 0;
                 if (padding > 0) {
-                    _stream.reset();
+                    stream.reset();
                     emitPadding(padding);
-                    _stream.writeTo(outputStream);
+                    stream.writeTo(outputStream);
                     bytesWritten += padding;
                 }
             }
             return bytesWritten;
         } finally {
-            _selectingLabelInstructions = true;
+            selectingLabelInstructions = true;
         }
     }
 
@@ -447,11 +447,11 @@ public abstract class Assembler {
      */
     public int output(OutputStream outputStream, InlineDataRecorder inlineDataRecorder) throws IOException, AssemblyException {
         final int upperLimitForCurrentOutputSize = upperLimitForCurrentOutputSize();
-        final byte[] initialBytes = _stream.toByteArray();
+        final byte[] initialBytes = stream.toByteArray();
         gatherLabels();
         updateSpanDependentVariableInstructions();
         final int bytesWritten = writeOutput(outputStream, initialBytes, inlineDataRecorder);
-        assert !_padOutput || upperLimitForCurrentOutputSize == bytesWritten;
+        assert !padOutput || upperLimitForCurrentOutputSize == bytesWritten;
         return bytesWritten;
     }
 
@@ -465,11 +465,11 @@ public abstract class Assembler {
      * returned by this method.</b>
      */
     public int upperLimitForCurrentOutputSize() {
-        return currentPosition() + _potentialExpansionSize;
+        return currentPosition() + potentialExpansionSize;
     }
 
 
-    private boolean _padOutput;
+    private boolean padOutput;
 
     /**
      * Sets or unsets the flag determining if the code assembled by a call to {@link #output(OutputStream)} or
@@ -477,7 +477,7 @@ public abstract class Assembler {
      * returned by {@link #upperLimitForCurrentOutputSize()}. This default value of the flag is {@code false}.
      */
     public void setPadOutput(boolean flag) {
-        _padOutput = flag;
+        padOutput = flag;
     }
 
     /**
@@ -487,11 +487,11 @@ public abstract class Assembler {
      *             if there any problem with binding labels to addresses
      */
     public byte[] toByteArray(InlineDataRecorder inlineDataRecorder) throws AssemblyException {
-        final ByteArrayOutputStream stream = new ByteArrayOutputStream(upperLimitForCurrentOutputSize());
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream(upperLimitForCurrentOutputSize());
         try {
-            output(stream, inlineDataRecorder);
-            stream.close();
-            final byte[] result = stream.toByteArray();
+            output(baos, inlineDataRecorder);
+            baos.close();
+            final byte[] result = baos.toByteArray();
             return result;
         } catch (IOException ioException) {
             throw ProgramError.unexpected("IOException during output to byte array", ioException);

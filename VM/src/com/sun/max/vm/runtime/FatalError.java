@@ -42,7 +42,7 @@ public final class FatalError extends Error {
     static {
         ProgramError.setHandler(new Handler() {
             public void handle(String message, Throwable throwable) {
-                unexpected(message, throwable);
+                unexpected(message, Address.zero(), throwable);
             }
         });
     }
@@ -55,8 +55,8 @@ public final class FatalError extends Error {
     private static void breakpoint() {
     }
 
-    private FatalError(String msg) {
-        super(msg);
+    private FatalError(String msg, Throwable throwable) {
+        super(msg, throwable);
     }
 
     /**
@@ -110,16 +110,16 @@ public final class FatalError extends Error {
      */
     public static FatalError unexpected(String message, Address nativeTrapAddress, Throwable throwable) {
         if (MaxineVM.isPrototyping()) {
-            throw new FatalError(message);
+            throw new FatalError(message, throwable);
         }
 
         breakpoint();
 
-        if (ExitingGuard._guard) {
+        if (ExitingGuard.guard) {
             Log.println("FATAL VM ERROR: Error occurred while handling previous fatal VM error");
             MaxineVM.native_exit(11);
         }
-        ExitingGuard._guard = true;
+        ExitingGuard.guard = true;
 
         final boolean lockDisabledSafepoints = Log.lock();
         Log.print("FATAL VM ERROR: ");
@@ -171,12 +171,11 @@ public final class FatalError extends Error {
      *
      * @see #unexpected(String, Address, Throwable)
      */
-
     public static FatalError unimplemented() {
         throw unexpected("Unimplemented", Address.zero(), null);
     }
 
     static class ExitingGuard {
-        static boolean _guard;
+        static boolean guard;
     }
 }

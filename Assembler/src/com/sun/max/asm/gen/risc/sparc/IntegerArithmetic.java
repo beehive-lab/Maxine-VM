@@ -30,8 +30,8 @@ import static com.sun.max.asm.gen.risc.sparc.SPARCFields.*;
 class IntegerArithmetic extends SPARCInstructionDescriptionCreator {
 
     private void createBinaryArithmetic(String name, int op3Contents) {
-        define(name, op(0x2), _rs1, i(0), _res_12_5, _rs2, _rd, op3(op3Contents));
-        define(name, op(0x2), _rs1, i(1), _simm13, _rd, op3(op3Contents));
+        define(name, op(0x2), rs1, i(0), res_12_5, rs2, rd, op3(op3Contents));
+        define(name, op(0x2), rs1, i(1), simm13, rd, op3(op3Contents));
     }
 
     private void create_A2() {
@@ -90,20 +90,20 @@ class IntegerArithmetic extends SPARCInstructionDescriptionCreator {
     }
 
     private void create_A41() {
-        define("popc", op(0x2), _res_18_14, i(0), _res_12_5, _rs2, _rd, op3(0x2e));
-        define("popc", op(0x2), _res_18_14, i(1), _simm13, _rd, op3(0x2e));
+        define("popc", op(0x2), res_18_14, i(0), res_12_5, rs2, rd, op3(0x2e));
+        define("popc", op(0x2), res_18_14, i(1), simm13, rd, op3(0x2e));
     }
 
     private void create_A48() {
-        define("sethi", op(0x0), op2(0x4), _imm22, _rd);
+        define("sethi", op(0x0), op2(0x4), imm22, rd);
     }
 
     private void createShift(String name, int op3Contents) {
-        final Object[] head = {op(0x2), _rs1, op3(op3Contents)};
-        define(name, head, i(0), x(0), _res_11_5, _rs2, _rd);
-        define(name + "x", head, i(0), x(1), _res_11_5, _rs2, _rd);
-        define(name, head, i(1), x(0), _res_11_5, _shcnt32, _rd);
-        define(name + "x", head, i(1), x(1), _res_11_6, _shcnt64, _rd);
+        final Object[] head = {op(0x2), rs1, op3(op3Contents)};
+        define(name, head, i(0), x(0), res_11_5, rs2, rd);
+        define(name + "x", head, i(0), x(1), res_11_5, rs2, rd);
+        define(name, head, i(1), x(0), res_11_5, shcnt32, rd);
+        define(name + "x", head, i(1), x(1), res_11_6, shcnt64, rd);
     }
 
     private void create_A49() {

@@ -34,7 +34,7 @@ public interface Predicate<Type> {
         private Static() {
         }
 
-        private static Predicate<Object> _alwaysTrue = new Predicate<Object>() {
+        private static Predicate<Object> alwaysTrue = new Predicate<Object>() {
             public boolean evaluate(Object object) {
                 return true;
             }
@@ -42,7 +42,7 @@ public interface Predicate<Type> {
 
         public static <Object_Type> Predicate<Object_Type> alwaysTrue(Class<Object_Type> type) {
             final Class<Predicate<Object_Type>> predicateType = null;
-            return StaticLoophole.cast(predicateType, _alwaysTrue);
+            return StaticLoophole.cast(predicateType, alwaysTrue);
         }
     }
 

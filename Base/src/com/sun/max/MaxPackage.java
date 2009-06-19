@@ -47,10 +47,10 @@ import com.sun.max.program.*;
  */
 public abstract class MaxPackage implements Comparable<MaxPackage> {
 
-    private final String _packageName;
+    private final String packageName;
 
     protected MaxPackage() {
-        _packageName = toJava().getName();
+        packageName = toJava().getName();
         assert getClass().getSimpleName().equals(Package.class.getSimpleName());
     }
 
@@ -79,7 +79,7 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
     }
 
     private MaxPackage(String packageName) {
-        _packageName = packageName;
+        this.packageName = packageName;
     }
 
     public static MaxPackage fromJava(String name) {
@@ -104,11 +104,11 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
     }
 
     public String name() {
-        return _packageName;
+        return packageName;
     }
 
     public String lastIdentifier() {
-        return _packageName.substring(_packageName.lastIndexOf('.') + 1);
+        return packageName.substring(packageName.lastIndexOf('.') + 1);
     }
 
     public MaxPackage superPackage() {
@@ -138,9 +138,9 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
         new ClassSearch() {
             @Override
             protected boolean visitClass(String className) {
-                final String packageName = Classes.getPackageName(className);
-                if (packageName.startsWith(name())) {
-                    packageNames.add(packageName);
+                final String pkgName = Classes.getPackageName(className);
+                if (pkgName.startsWith(name())) {
+                    packageNames.add(pkgName);
                 }
                 return true;
             }
@@ -148,10 +148,10 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
 
 
         final AppendableSequence<MaxPackage> packages = new ArrayListSequence<MaxPackage>(packageNames.size());
-        for (String packageName : packageNames) {
-            final MaxPackage maxPackage = MaxPackage.fromName(packageName);
+        for (String pkgName : packageNames) {
+            final MaxPackage maxPackage = MaxPackage.fromName(pkgName);
             if (maxPackage == null) {
-                System.err.println("WARNING: missing Package class in package: " + packageName);
+                System.err.println("WARNING: missing Package class in package: " + pkgName);
             } else {
                 packages.append(maxPackage);
             }
@@ -159,15 +159,15 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
         return packages;
     }
 
-    private Map<Class<? extends Scheme>, Class<? extends Scheme>> _schemeTypeToImplementation;
+    private Map<Class<? extends Scheme>, Class<? extends Scheme>> schemeTypeToImplementation;
 
     public synchronized <Scheme_Type extends Scheme> void registerScheme(Class<Scheme_Type> schemeType, Class<? extends Scheme_Type> schemeImplementation) {
         assert schemeType.isInterface() || Modifier.isAbstract(schemeType.getModifiers());
         assert schemeImplementation.getPackage().getName().equals(name());
-        if (_schemeTypeToImplementation == null) {
-            _schemeTypeToImplementation = new IdentityHashMap<Class<? extends Scheme>, Class<? extends Scheme>>();
+        if (schemeTypeToImplementation == null) {
+            schemeTypeToImplementation = new IdentityHashMap<Class<? extends Scheme>, Class<? extends Scheme>>();
         }
-        _schemeTypeToImplementation.put(schemeType, schemeImplementation);
+        schemeTypeToImplementation.put(schemeType, schemeImplementation);
     }
 
     /**
@@ -177,10 +177,10 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
      *         exists
      */
     public synchronized <Scheme_Type extends Scheme> Class<? extends Scheme_Type> schemeTypeToImplementation(Class<Scheme_Type> schemeType) {
-        if (_schemeTypeToImplementation == null) {
+        if (schemeTypeToImplementation == null) {
             return null;
         }
-        final Class< ? extends Scheme> implementation = _schemeTypeToImplementation.get(schemeType);
+        final Class< ? extends Scheme> implementation = schemeTypeToImplementation.get(schemeType);
         if (implementation == null) {
             return null;
         }
@@ -193,7 +193,7 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
             return true;
         }
         if (other instanceof MaxPackage) {
-            return _packageName.equals(((MaxPackage) other)._packageName);
+            return packageName.equals(((MaxPackage) other).packageName);
         }
         return false;
     }
@@ -222,7 +222,7 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
         final Set<MaxPackage> otherPrerequisites = other.prerequisites();
         if (myPrerequisites.isEmpty()) {
             if (otherPrerequisites.isEmpty()) {
-                return _packageName.compareTo(other._packageName);
+                return packageName.compareTo(other.packageName);
             }
             return -1;
         }
@@ -239,7 +239,7 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
                 return -1;
             }
         }
-        return _packageName.compareTo(other._packageName);
+        return packageName.compareTo(other.packageName);
     }
 
     private synchronized <Scheme_Type extends Scheme> Class<? extends Scheme_Type> loadSchemeImplementation(Class<Scheme_Type> schemeType) {

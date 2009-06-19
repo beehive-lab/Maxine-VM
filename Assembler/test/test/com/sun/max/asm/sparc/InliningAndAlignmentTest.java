@@ -375,14 +375,14 @@ public class InliningAndAlignmentTest extends MaxTestCase {
         return Ints.numberOfEffectiveSignedBits(imm) <= 13;
     }
 
-    private static int[][] _switchTableInputs = {
+    private static int[][] switchTableInputs = {
         new int[] {0, 1, 3, 4, 6, 7},
         new int[] {3, 4, 6, 7, 10},
         new int[] {-4, -2, 7, 10, 6}
     };
 
     public void test_switchTable32() throws IOException, AssemblyException {
-        for (int[] matches : _switchTableInputs) {
+        for (int[] matches : switchTableInputs) {
             System.out.println("--- testSwitchTable32:{" + Ints.toString(matches, ", ") + "} ---");
             final int startAddress = 0x12345678;
             final SPARC32Assembler assembler = new SPARC32Assembler(startAddress);
@@ -396,7 +396,7 @@ public class InliningAndAlignmentTest extends MaxTestCase {
     }
 
     public void test_switchTable64() throws IOException, AssemblyException {
-        for (int[] matches : _switchTableInputs) {
+        for (int[] matches : switchTableInputs) {
             System.out.println("--- testSwitchTable64:{" + Ints.toString(matches, ", ") + "} ---");
             final long startAddress = 0x1234567812340000L;
             final SPARCAssembler assembler = new SPARC64Assembler(startAddress);

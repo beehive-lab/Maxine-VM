@@ -26,12 +26,12 @@ import com.sun.max.lang.*;
 
 /**
  * The concrete class for a 64-bit PowerPC assembler.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class PPC64Assembler extends PPCAssembler implements Assembler64 {
 
-    private long _startAddress; // address of first instruction
+    private long startAddress; // address of first instruction
 
     public PPC64Assembler() {
     }
@@ -42,20 +42,20 @@ public class PPC64Assembler extends PPCAssembler implements Assembler64 {
     }
 
     public PPC64Assembler(long startAddress) {
-        _startAddress = startAddress;
+        this.startAddress = startAddress;
     }
 
     public long startAddress() {
-        return _startAddress;
+        return startAddress;
     }
 
     @Override
     public long baseAddress() {
-        return _startAddress;
+        return startAddress;
     }
 
     public void setStartAddress(long address) {
-        _startAddress = address;
+        startAddress = address;
     }
 
     public void fixLabel(Label label, long address) {
@@ -66,11 +66,11 @@ public class PPC64Assembler extends PPCAssembler implements Assembler64 {
         return address64(label);
     }
 
-    private PPC64Directives _directives = new PPC64Directives();
+    private PPC64Directives directives = new PPC64Directives();
 
     @Override
     public Directives directives() {
-        return _directives;
+        return directives;
     }
 
     public class PPC64Directives extends Directives {

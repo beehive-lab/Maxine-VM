@@ -34,43 +34,43 @@ import com.sun.max.collect.*;
  */
 public abstract class DisassembledInstruction<Template_Type extends Template> implements DisassembledObject {
 
-    private final Disassembler _disassembler;
-    private final int _startPosition;
-    private final byte[] _bytes;
-    private final Template_Type _template;
-    private final IndexedSequence<Argument> _arguments;
+    private final Disassembler disassembler;
+    private final int startPosition;
+    private final byte[] bytes;
+    private final Template_Type template;
+    private final IndexedSequence<Argument> arguments;
 
     protected DisassembledInstruction(Disassembler disassembler, int position, byte[] bytes, Template_Type template, IndexedSequence<Argument> arguments) {
         assert bytes.length != 0;
-        _disassembler = disassembler;
-        _startPosition = position;
-        _bytes = bytes;
-        _template = template;
-        _arguments = arguments;
+        this.disassembler = disassembler;
+        this.startPosition = position;
+        this.bytes = bytes;
+        this.template = template;
+        this.arguments = arguments;
     }
 
     public ImmediateArgument startAddress() {
-        return _disassembler.startAddress().plus(_startPosition);
+        return disassembler.startAddress().plus(startPosition);
     }
 
     public ImmediateArgument endAddress() {
-        return _disassembler.startAddress().plus(endPosition());
+        return disassembler.startAddress().plus(endPosition());
     }
 
     public int startPosition() {
-        return _startPosition;
+        return startPosition;
     }
 
     public int endPosition() {
-        return _startPosition + _bytes.length;
+        return startPosition + bytes.length;
     }
 
     public byte[] bytes() {
-        return _bytes.clone();
+        return bytes.clone();
     }
 
     public Template_Type template() {
-        return _template;
+        return template;
     }
 
     public Type type() {
@@ -78,7 +78,7 @@ public abstract class DisassembledInstruction<Template_Type extends Template> im
     }
 
     public IndexedSequence<Argument> arguments() {
-        return _arguments;
+        return arguments;
     }
 
     public static String toHexString(byte[] bytes) {
@@ -94,7 +94,7 @@ public abstract class DisassembledInstruction<Template_Type extends Template> im
 
     @Override
     public String toString() {
-        return toString(_disassembler.addressMapper());
+        return toString(disassembler.addressMapper());
     }
 
     public abstract String toString(AddressMapper addressMapper);
@@ -107,11 +107,10 @@ public abstract class DisassembledInstruction<Template_Type extends Template> im
     public abstract ImmediateArgument addressForRelativeAddressing();
 
     public ImmediateArgument targetAddress() {
-        final Template_Type template = template();
-        final int parameterIndex = template.labelParameterIndex();
+        final int parameterIndex = template().labelParameterIndex();
         if (parameterIndex >= 0) {
             final ImmediateArgument immediateArgument = (ImmediateArgument) arguments().get(parameterIndex);
-            final Parameter parameter = template.parameters().get(parameterIndex);
+            final Parameter parameter = template().parameters().get(parameterIndex);
             if (parameter instanceof OffsetParameter) {
                 return addressForRelativeAddressing().plus(immediateArgument);
             }
@@ -124,6 +123,6 @@ public abstract class DisassembledInstruction<Template_Type extends Template> im
      * Gets the byte array encoding this instruction.
      */
     protected byte[] rawInstruction() {
-        return _bytes;
+        return bytes;
     }
 }

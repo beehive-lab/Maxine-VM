@@ -64,22 +64,22 @@ public class OptionField extends RiscField {
         return new RiscConstant(this, value);
     }
 
-    protected Option _defaultOption;
+    protected Option defaultOption;
 
     public Option defaultOption() {
-        return _defaultOption;
+        return defaultOption;
     }
 
-    protected AppendableSequence<Option> _options = new LinkSequence<Option>();
+    protected AppendableSequence<Option> options = new LinkSequence<Option>();
 
     public Iterable<Option> options() {
-        return _options;
+        return options;
     }
 
     @Override
     public OptionField clone() {
         final OptionField result = (OptionField) super.clone();
-        result._options = new LinkSequence<Option>(_options);
+        result.options = new LinkSequence<Option>(options);
         return result;
     }
 
@@ -94,15 +94,15 @@ public class OptionField extends RiscField {
     public OptionField withOption(String name, int value, String externalName) {
         final OptionField result = clone();
         final Option newOption = new Option(name, value, externalName, result);
-        for (Option option : _options) {
+        for (Option option : options) {
             if (option.equals(newOption)) {
                 ProgramError.unexpected("duplicate option: " + option);
             }
         }
-        result._options.append(newOption);
+        result.options.append(newOption);
 
         if (name.equals("")) {
-            result._defaultOption = newOption;
+            result.defaultOption = newOption;
         }
         return result;
     }

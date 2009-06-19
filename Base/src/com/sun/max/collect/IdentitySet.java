@@ -53,30 +53,30 @@ public class IdentitySet<Element_Type> implements Iterable<Element_Type> {
     /**
      * The number of key-value mappings contained in this map.
      */
-    private int _numberOfElements;
+    private int numberOfElements;
 
     /**
      * Gets the number of key-value mappings contained in this map.
      */
     public int numberOfElements() {
-        return _numberOfElements;
+        return numberOfElements;
     }
 
     /**
      * The table, resized as necessary. Length MUST Always be a power of two.
      */
-    private Element_Type[] _table;
+    private Element_Type[] table;
 
     /**
      * The next size value at which to resize (capacity * load factor).
      */
-    private int _threshold;
+    private int threshold;
 
     private void setThreshold() {
-        if (_table.length == 0) {
-            _threshold = -1;
+        if (table.length == 0) {
+            threshold = -1;
         } else {
-            _threshold = (_table.length >> 2) * 3;
+            threshold = (table.length >> 2) * 3;
         }
     }
 
@@ -103,16 +103,16 @@ public class IdentitySet<Element_Type> implements Iterable<Element_Type> {
         }
 
         final Class<Element_Type[]> type = null;
-        _table = StaticLoophole.cast(type, new Object[capacity]);
+        table = StaticLoophole.cast(type, new Object[capacity]);
         setThreshold();
     }
 
     private void resize(int newTableLength) {
-        final Element_Type[] oldTable = _table;
+        final Element_Type[] oldTable = table;
         final Class<Element_Type[]> type = null;
-        _table = StaticLoophole.cast(type, new Object[newTableLength]);
+        table = StaticLoophole.cast(type, new Object[newTableLength]);
         setThreshold();
-        _numberOfElements = 0;
+        numberOfElements = 0;
         for (int i = 0; i < oldTable.length; i++) {
             final Element_Type oldValue = oldTable[i];
             if (oldValue != null) {
@@ -153,22 +153,22 @@ public class IdentitySet<Element_Type> implements Iterable<Element_Type> {
         if (element == null) {
             throw new IllegalArgumentException("Element cannot be null");
         }
-        if (_numberOfElements > _threshold) {
-            resize(_table.length * 2);
+        if (numberOfElements > threshold) {
+            resize(table.length * 2);
         }
-        final int start = indexFor(System.identityHashCode(element), _table.length);
+        final int start = indexFor(System.identityHashCode(element), table.length);
         int i = start;
         do {
-            final Element_Type entry = _table[i];
+            final Element_Type entry = table[i];
             if (entry == null) {
-                _table[i] = element;
-                _numberOfElements++;
+                table[i] = element;
+                numberOfElements++;
                 return;
             }
             if (entry == element) {
                 return;
             }
-            if (++i == _table.length) {
+            if (++i == table.length) {
                 i = 0;
             }
         } while (i != start);
@@ -185,20 +185,20 @@ public class IdentitySet<Element_Type> implements Iterable<Element_Type> {
         if (element == null) {
             throw new IllegalArgumentException("Element cannot be null");
         }
-        if (_numberOfElements == 0) {
+        if (numberOfElements == 0) {
             return false;
         }
-        final int start = indexFor(System.identityHashCode(element), _table.length);
+        final int start = indexFor(System.identityHashCode(element), table.length);
         int i = start;
         while (true) {
-            final Element_Type entry = _table[i];
+            final Element_Type entry = table[i];
             if (entry == element) {
                 return true;
             }
             if (entry == null) {
                 return false;
             }
-            if (++i == _table.length) {
+            if (++i == table.length) {
                 i = 0;
             }
             assert i != start;
@@ -209,8 +209,8 @@ public class IdentitySet<Element_Type> implements Iterable<Element_Type> {
         final Class<Element_Type[]> type = null;
         final Element_Type[] array = StaticLoophole.cast(type, new Object[numberOfElements()]);
         int j = 0;
-        for (int i = 0; i < _table.length; i++) {
-            final Element_Type element = _table[i];
+        for (int i = 0; i < table.length; i++) {
+            final Element_Type element = table[i];
             if (element != null) {
                 array[j++] = element;
             }

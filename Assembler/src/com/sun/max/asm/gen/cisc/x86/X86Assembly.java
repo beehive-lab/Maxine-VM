@@ -42,27 +42,27 @@ public abstract class X86Assembly<Template_Type extends X86Template> extends Ass
     /**
      * Whether to support 16 bit addressing.
      */
-    private static boolean _are16BitAddressesSupported;
+    private static boolean are16BitAddressesSupported;
 
     public static boolean are16BitAddressesSupported() {
-        return _are16BitAddressesSupported;
+        return are16BitAddressesSupported;
     }
 
     public static void support16BitAddresses() {
-        _are16BitAddressesSupported = true;
+        are16BitAddressesSupported = true;
     }
 
     /**
      * Whether to support 16 bit addressing.
      */
-    private static boolean _are16BitOffsetsSupported;
+    private static boolean are16BitOffsetsSupported;
 
     public static boolean are16BitOffsetsSupported() {
-        return _are16BitOffsetsSupported;
+        return are16BitOffsetsSupported;
     }
 
     public static void support16BitOffsets() {
-        _are16BitOffsetsSupported = true;
+        are16BitOffsetsSupported = true;
     }
 
     private static <Template_Type extends X86Template> boolean parametersMatching(Template_Type original, Template_Type candidate, Class argumentType) {

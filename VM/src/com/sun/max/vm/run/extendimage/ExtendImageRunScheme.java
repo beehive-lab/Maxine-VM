@@ -162,6 +162,10 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     @Override
     protected void resetLauncher(ClassActor launcherClassActor) {
         if (_resetLauncher) {
+            final ReferenceFieldActor rfa = (ReferenceFieldActor) ClassActor.fromJava(sun.misc.Launcher.class).findLocalStaticFieldActor("bootstrapClassPath");
+            if (rfa != null) {
+                rfa.writeStatic(null);
+            }
             launcherClassActor.callInitializer();
         }
     }

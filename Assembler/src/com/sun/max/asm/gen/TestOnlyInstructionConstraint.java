@@ -28,35 +28,35 @@ import com.sun.max.collect.*;
 /**
  * These instruction constraints are only used for generating test cases.
  * They do not appear in the generated assembler methods.
- * 
+ *
  * @author Sumeet Panchal
  */
 public class TestOnlyInstructionConstraint implements InstructionConstraint {
 
-    private final InstructionConstraint _delegate;
+    private final InstructionConstraint delegate;
 
     public TestOnlyInstructionConstraint(InstructionConstraint delegate) {
-        _delegate = delegate;
+        this.delegate = delegate;
     }
 
     public String asJavaExpression() {
-        return _delegate.asJavaExpression();
+        return delegate.asJavaExpression();
     }
 
     public boolean check(Template template, IndexedSequence<Argument> arguments) {
-        return _delegate.check(template, arguments);
+        return delegate.check(template, arguments);
     }
 
     public Method predicateMethod() {
-        return _delegate.predicateMethod();
+        return delegate.predicateMethod();
     }
 
     public boolean referencesParameter(Parameter parameter) {
-        return _delegate.referencesParameter(parameter);
+        return delegate.referencesParameter(parameter);
     }
 
     @Override
     public String toString() {
-        return _delegate.toString();
+        return delegate.toString();
     }
 }

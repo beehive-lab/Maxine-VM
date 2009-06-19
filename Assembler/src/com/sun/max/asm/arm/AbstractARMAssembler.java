@@ -31,10 +31,10 @@ import com.sun.max.lang.*;
  */
 public abstract class AbstractARMAssembler extends BigEndianAssembler implements Assembler32 {
 
-    private int _startAddress; // address of first instruction
+    private int startAddress; // address of first instruction
 
     public AbstractARMAssembler(int startAddress) {
-        _startAddress = startAddress;
+        this.startAddress = startAddress;
     }
 
     public AbstractARMAssembler() {
@@ -51,16 +51,16 @@ public abstract class AbstractARMAssembler extends BigEndianAssembler implements
     }
 
     public int startAddress() {
-        return _startAddress;
+        return startAddress;
     }
 
     public void setStartAddress(int address) {
-        _startAddress = address;
+        startAddress = address;
     }
 
     @Override
     public long baseAddress() {
-        return _startAddress;
+        return startAddress;
     }
 
     public void fixLabel(Label label, int address) {
@@ -81,11 +81,11 @@ public abstract class AbstractARMAssembler extends BigEndianAssembler implements
         return WordWidth.BITS_32;
     }
 
-    private ARMDirectives _directives = new ARMDirectives();
+    private ARMDirectives directives = new ARMDirectives();
 
     @Override
     public Directives directives() {
-        return _directives;
+        return directives;
     }
 
     public class ARMDirectives extends Directives {

@@ -127,7 +127,7 @@ public final class ObjectAggregatorInspector extends UniqueInspector<ObjectAggre
         _referenceLabels = new WordValueLabel[(_end + 1) - _start];
         int i = 0;
         while (index <= _end) {
-            final WordValueLabel referenceLabel = new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, iterator.next().toOrigin());
+            final WordValueLabel referenceLabel = new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, iterator.next().toOrigin(), null);
             _referenceLabels[i++] = referenceLabel;
             view.add(referenceLabel);
             ++index;

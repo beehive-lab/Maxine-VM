@@ -52,18 +52,18 @@ public abstract class SPARCAssemblyTester<DisassembledInstruction_Type extends D
         return "as -xarch=v9a";
     }
 
-    private SPARCTemplate _lastTemplate;
+    private SPARCTemplate lastTemplate;
 
     @Override
     protected void assembleExternally(IndentWriter writer, SPARCTemplate template, Sequence<Argument> argumentList, String label) {
 
         // This is a workaround for SPARC V9 ABI compliance checks: http://developers.sun.com/solaris/articles/sparcv9abi.html
-        if (_lastTemplate == null || template != _lastTemplate) {
+        if (lastTemplate == null || template != lastTemplate) {
             writer.println(".register %g2,#scratch");
             writer.println(".register %g3,#scratch");
             writer.println(".register %g6,#scratch");
             writer.println(".register %g7,#scratch");
-            _lastTemplate = template;
+            lastTemplate = template;
         }
         final SPARCExternalInstruction instruction = new SPARCExternalInstruction(template, argumentList);
         writer.println(instruction.toString());

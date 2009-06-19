@@ -115,14 +115,14 @@ public interface DeterministicSet<Element_Type> extends Sequence<Element_Type> {
     }
 
     public static final class Singleton<Element_Type> implements DeterministicSet<Element_Type> {
-        private final Element_Type _element;
+        private final Element_Type element;
 
         public Singleton(Element_Type element) {
-            _element = element;
+            this.element = element;
         }
 
-        public boolean contains(Element_Type element) {
-            return element == _element;
+        public boolean contains(Element_Type e) {
+            return this.element == e;
         }
 
         public int size() {
@@ -138,7 +138,7 @@ public interface DeterministicSet<Element_Type> extends Sequence<Element_Type> {
         }
 
         public Element_Type first() {
-            return _element;
+            return element;
         }
 
         public Element_Type getOne() {
@@ -146,7 +146,7 @@ public interface DeterministicSet<Element_Type> extends Sequence<Element_Type> {
         }
 
         public Element_Type last() {
-            return _element;
+            return element;
         }
 
         @Override
@@ -160,23 +160,23 @@ public interface DeterministicSet<Element_Type> extends Sequence<Element_Type> {
         }
 
         public Collection<Element_Type> toCollection() {
-            return Collections.singleton(_element);
+            return Collections.singleton(element);
         }
 
         public Iterator<Element_Type> iterator() {
             return new Iterator<Element_Type>() {
-                private boolean _isDone;
+                private boolean isDone;
 
                 public boolean hasNext() {
-                    return !_isDone;
+                    return !isDone;
                 }
 
                 public Element_Type next() {
-                    if (_isDone) {
+                    if (isDone) {
                         throw new NoSuchElementException();
                     }
-                    _isDone = true;
-                    return _element;
+                    isDone = true;
+                    return element;
                 }
 
                 public void remove() {

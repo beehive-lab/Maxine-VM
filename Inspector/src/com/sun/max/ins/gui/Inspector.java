@@ -196,7 +196,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     public void threadStateChanged(MaxThread thread) {
     }
 
-    public void breakpointSetChanged() {
+    public void breakpointStateChanged() {
     }
 
     public void watchpointSetChanged() {

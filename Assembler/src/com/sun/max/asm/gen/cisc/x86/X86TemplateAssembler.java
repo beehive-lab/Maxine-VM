@@ -35,22 +35,22 @@ import com.sun.max.util.*;
  */
 public class X86TemplateAssembler<Template_Type extends X86Template> {
 
-    private static final int _MORE_BYTES_THAN_ANY_INSTRUCTION = 32;
-    private final byte[] _bytes = new byte[_MORE_BYTES_THAN_ANY_INSTRUCTION];
-    private int _n;
+    private static final int MORE_BYTES_THAN_ANY_INSTRUCTION = 32;
+    private final byte[] bytes = new byte[MORE_BYTES_THAN_ANY_INSTRUCTION];
+    private int n;
 
-    private int _rexByte;
+    private int rexByte;
 
     private void emit(byte b) {
-        _bytes[_n++] = b;
+        bytes[n++] = b;
     }
 
     private void emit(int b) {
-        _bytes[_n++] = (byte) (b & 0xff);
+        bytes[n++] = (byte) (b & 0xff);
     }
 
     private void emit(HexByte b) {
-        _bytes[_n++] = b.byteValue();
+        bytes[n++] = b.byteValue();
     }
 
     private int createRexData(int bitIndex, long argument) {
@@ -65,28 +65,28 @@ public class X86TemplateAssembler<Template_Type extends X86Template> {
         return field.inPlace((byte) (argument & 0xffL));
     }
 
-    private final Template_Type _template;
-    private WordWidth _addressWidth;
+    private final Template_Type template;
+    private WordWidth addressWidth;
 
     public X86TemplateAssembler(Template_Type template, WordWidth addressWidth) {
-        _template = template;
-        _addressWidth = addressWidth;
+        this.template = template;
+        this.addressWidth = addressWidth;
     }
 
     private int createModRMByte() {
-        if (!_template.hasModRMByte()) {
+        if (!template.hasModRMByte()) {
             return 0;
         }
-        int result = _template.modCase().ordinal() << X86Field.MOD.shift();
-        if (_template.modRMGroupOpcode() != null) {
-            result |= _template.modRMGroupOpcode().byteValue() << X86Field.REG.shift();
+        int result = template.modCase().ordinal() << X86Field.MOD.shift();
+        if (template.modRMGroupOpcode() != null) {
+            result |= template.modRMGroupOpcode().byteValue() << X86Field.REG.shift();
         }
-        result |= _template.rmCase().value() << X86Field.RM.shift();
+        result |= template.rmCase().value() << X86Field.RM.shift();
         return result;
     }
 
     private int createSibByte() {
-        if (_template.hasSibByte() && _template.sibBaseCase() == X86TemplateContext.SibBaseCase.SPECIAL) {
+        if (template.hasSibByte() && template.sibBaseCase() == X86TemplateContext.SibBaseCase.SPECIAL) {
             return 5 << X86Field.BASE.shift();
         }
         return 0;
@@ -108,39 +108,39 @@ public class X86TemplateAssembler<Template_Type extends X86Template> {
     }
 
     public byte[] assemble(IndexedSequence<Argument> arguments) {
-        int rexByte = 0;
-        if (_template.operandSizeAttribute() == WordWidth.BITS_64 && _template.instructionDescription().defaultOperandSize() != WordWidth.BITS_64) {
-            rexByte = X86Opcode.REX_MIN.byteValue() | (1 << X86Field.REX_W_BIT_INDEX);
+        int rexByt = 0;
+        if (template.operandSizeAttribute() == WordWidth.BITS_64 && template.instructionDescription().defaultOperandSize() != WordWidth.BITS_64) {
+            rexByt = X86Opcode.REX_MIN.byteValue() | (1 << X86Field.REX_W_BIT_INDEX);
         }
-        int opcode1 = _template.opcode1().byteValue() & 0xff;
-        int opcode2 = _template.opcode2() == null ? 0 : _template.opcode2().byteValue() & 0xff;
+        int opcode1 = template.opcode1().byteValue() & 0xff;
+        int opcode2 = template.opcode2() == null ? 0 : template.opcode2().byteValue() & 0xff;
         int modRMByte = createModRMByte();
         int sibByte = createSibByte();
         final ByteArrayOutputStream appendStream = new ByteArrayOutputStream();
         for (int i = 0; i < arguments.length(); i++) {
-            final X86Parameter parameter = _template.parameters().get(i);
+            final X86Parameter parameter = template.parameters().get(i);
             final long argument = arguments.get(i).asLong();
             switch (parameter.place()) {
                 case MOD_REG_REXR:
-                    rexByte |= createRexData(X86Field.REX_R_BIT_INDEX, argument);
+                    rexByt |= createRexData(X86Field.REX_R_BIT_INDEX, argument);
                     // fall through...
                 case MOD_REG:
                     modRMByte |= createFieldData(X86Field.REG, argument);
                     break;
                 case MOD_RM_REXB:
-                    rexByte |= createRexData(X86Field.REX_B_BIT_INDEX, argument);
+                    rexByt |= createRexData(X86Field.REX_B_BIT_INDEX, argument);
                     // fall through...
                 case MOD_RM:
                     modRMByte |= createFieldData(X86Field.RM, argument);
                     break;
                 case SIB_BASE_REXB:
-                    rexByte |= createRexData(X86Field.REX_B_BIT_INDEX, argument);
+                    rexByt |= createRexData(X86Field.REX_B_BIT_INDEX, argument);
                     // fall through...
                 case SIB_BASE:
                     sibByte |= createFieldData(X86Field.BASE, argument);
                     break;
                 case SIB_INDEX_REXX:
-                    rexByte |= createRexData(X86Field.REX_X_BIT_INDEX, argument);
+                    rexByt |= createRexData(X86Field.REX_X_BIT_INDEX, argument);
                     // fall through...
                 case SIB_INDEX:
                     sibByte |= createFieldData(X86Field.INDEX, argument);
@@ -174,42 +174,42 @@ public class X86TemplateAssembler<Template_Type extends X86Template> {
                     }
                     break;
                 case OPCODE1_REXB:
-                    rexByte |= createRexData(X86Field.REX_B_BIT_INDEX, argument);
+                    rexByt |= createRexData(X86Field.REX_B_BIT_INDEX, argument);
                     // fall through...
                 case OPCODE1:
                     opcode1 |= (int) argument & 7;
                     break;
                 case OPCODE2_REXB:
-                    rexByte |= createRexData(X86Field.REX_B_BIT_INDEX, argument);
+                    rexByt |= createRexData(X86Field.REX_B_BIT_INDEX, argument);
                     // fall through...
                 case OPCODE2:
                     opcode2 |= (int) argument & 7;
                     break;
             }
         }
-        if (rexByte > 0) {
-            emit(rexByte);
+        if (rexByt > 0) {
+            emit(rexByt);
         }
-        if (_template.addressSizeAttribute() != _addressWidth) {
+        if (template.addressSizeAttribute() != addressWidth) {
             emit(X86Opcode.ADDRESS_SIZE);
         }
-        if (_template.operandSizeAttribute() == WordWidth.BITS_16) {
+        if (template.operandSizeAttribute() == WordWidth.BITS_16) {
             emit(X86Opcode.OPERAND_SIZE);
         }
-        if (_template.instructionSelectionPrefix() != null) {
-            emit(_template.instructionSelectionPrefix());
+        if (template.instructionSelectionPrefix() != null) {
+            emit(template.instructionSelectionPrefix());
         }
         emit(opcode1);
         if (opcode2 != 0) {
             emit(opcode2);
         }
-        if (_template.hasModRMByte()) {
+        if (template.hasModRMByte()) {
             emit(modRMByte);
             if (modRMRequiresImmediate(modRMByte) && appendStream.size() == 0) {
                 return null;
             }
         }
-        if (_template.hasSibByte()) {
+        if (template.hasSibByte()) {
             if (sibRequiresImmediate(sibByte) && appendStream.size() == 0) {
                 return null;
             }
@@ -220,7 +220,7 @@ public class X86TemplateAssembler<Template_Type extends X86Template> {
         for (byte b : appendStream.toByteArray()) {
             emit(b);
         }
-        return Bytes.withLength(_bytes, _n);
+        return Bytes.withLength(bytes, n);
     }
 
 }

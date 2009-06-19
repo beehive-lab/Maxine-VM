@@ -137,13 +137,13 @@ public class InliningAndAlignmentTest extends MaxTestCase {
         return asmBytes;
     }
 
-    private final int _startAddress = 0x12345678;
+    private final int intStartAddress = 0x12345678;
 
     public void testInlinedData() throws IOException, AssemblyException {
         System.out.println("--- testInlinedData: ---");
         final InlineDataRecorder recorder = new InlineDataRecorder();
-        final byte[] bytes = assembleInlinedData(_startAddress, recorder);
-        disassemble(_startAddress, bytes, InlineDataDecoder.createFrom(recorder));
+        final byte[] bytes = assembleInlinedData(intStartAddress, recorder);
+        disassemble(intStartAddress, bytes, InlineDataDecoder.createFrom(recorder));
     }
 
     private byte[] assembleAlignmentPadding(int startAddress, InlineDataRecorder recorder) throws IOException, AssemblyException {
@@ -246,8 +246,8 @@ public class InliningAndAlignmentTest extends MaxTestCase {
     public void testAlignmentPadding() throws IOException, AssemblyException {
         System.out.println("--- testAlignmentPadding: ---");
         final InlineDataRecorder recorder = new InlineDataRecorder();
-        final byte[] bytes = assembleAlignmentPadding(_startAddress, recorder);
-        disassemble(_startAddress, bytes, InlineDataDecoder.createFrom(recorder));
+        final byte[] bytes = assembleAlignmentPadding(intStartAddress, recorder);
+        disassemble(intStartAddress, bytes, InlineDataDecoder.createFrom(recorder));
     }
 
     private byte[] assembleJumpAndAlignmentPadding(int startAddress, InlineDataRecorder recorder) throws IOException, AssemblyException {
@@ -314,8 +314,8 @@ public class InliningAndAlignmentTest extends MaxTestCase {
     public void testJumpAndAlignmentPadding() throws IOException, AssemblyException {
         System.out.println("--- testJumpAndAlignmentPadding: ---");
         final InlineDataRecorder recorder = new InlineDataRecorder();
-        final byte[] bytes = assembleJumpAndAlignmentPadding(_startAddress, recorder);
-        disassemble(_startAddress, bytes, InlineDataDecoder.createFrom(recorder));
+        final byte[] bytes = assembleJumpAndAlignmentPadding(intStartAddress, recorder);
+        disassemble(intStartAddress, bytes, InlineDataDecoder.createFrom(recorder));
     }
 
     private byte[] assembleInvalidInstructionDisassembly(int startAddress, InlineDataRecorder recorder) throws IOException, AssemblyException {
@@ -351,8 +351,8 @@ public class InliningAndAlignmentTest extends MaxTestCase {
     public void testInvalidInstructionDisassembly() throws IOException, AssemblyException {
         System.out.println("--- testInvalidInstructionDisassembly: ---");
         final InlineDataRecorder recorder = new InlineDataRecorder();
-        final byte[] bytes = assembleInvalidInstructionDisassembly(_startAddress, recorder);
-        disassemble(_startAddress, bytes, InlineDataDecoder.createFrom(recorder));
+        final byte[] bytes = assembleInvalidInstructionDisassembly(intStartAddress, recorder);
+        disassemble(intStartAddress, bytes, InlineDataDecoder.createFrom(recorder));
     }
 
     /**
@@ -426,8 +426,8 @@ public class InliningAndAlignmentTest extends MaxTestCase {
         for (int[] matches : inputs) {
             System.out.println("--- testSwitchTable:{" + Ints.toString(matches, ", ") + "} ---");
             final InlineDataRecorder inlineDataRecorder = new InlineDataRecorder();
-            final byte[] bytes = assembleSwitchTable(_startAddress, matches, inlineDataRecorder);
-            disassemble(_startAddress, bytes, InlineDataDecoder.createFrom(inlineDataRecorder));
+            final byte[] bytes = assembleSwitchTable(intStartAddress, matches, inlineDataRecorder);
+            disassemble(intStartAddress, bytes, InlineDataDecoder.createFrom(inlineDataRecorder));
         }
     }
 

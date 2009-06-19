@@ -64,16 +64,16 @@ public final class RiscInstructionDescription extends InstructionDescription {
         }
     }
 
-    private boolean _synthetic;
+    private boolean synthetic;
 
     public InstructionDescription beSynthetic() {
-        _synthetic = true;
+        synthetic = true;
         return this;
     }
 
     @Override
     public boolean isSynthetic() {
-        return _synthetic;
+        return synthetic;
     }
 
 }

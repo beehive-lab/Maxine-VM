@@ -39,7 +39,7 @@ public final class Label implements Argument {
         UNASSIGNED, BOUND, FIXED_32, FIXED_64;
     }
 
-    protected State _state = State.UNASSIGNED;
+    protected State state = State.UNASSIGNED;
 
     public static Label createBoundLabel(int position) {
         final Label label = new Label();
@@ -51,19 +51,19 @@ public final class Label implements Argument {
     }
 
     public State state() {
-        return _state;
+        return state;
     }
 
-    private int _position;
+    private int position;
 
     /**
      * Must only be called when the label is bound!
      */
     public int position() throws AssemblyException {
-        if (_state != State.BOUND) {
+        if (state != State.BOUND) {
             throw new AssemblyException("unassigned or unbound label");
         }
-        return _position;
+        return position;
     }
 
     /**
@@ -73,23 +73,23 @@ public final class Label implements Argument {
      *
      * Only to be called by {@link Assembler#bindLabel(Label)}.
      *
-     * @param position
+     * @param pos
      *            an instruction's position in the assembler's instruction stream
      *
      * @see Assembler#bindLabel(Label)
      */
-    void bind(int position) {
-        _position = position;
-        _state = State.BOUND;
+    void bind(int pos) {
+        this.position = pos;
+        state = State.BOUND;
     }
 
     void adjust(int delta) {
-        assert _state == State.BOUND;
-        _position += delta;
+        assert state == State.BOUND;
+        position += delta;
     }
 
-    private int _address32;
-    private long _address64;
+    private int address32;
+    private long address64;
 
     /**
      * Assigns a fixed, absolute 32-bit address to this label.
@@ -100,9 +100,9 @@ public final class Label implements Argument {
      *
      * @see Assembler#bindLabel(Label)
      */
-    void fix32(int address32) {
-        _address32 = address32;
-        _state = State.FIXED_32;
+    void fix32(int addr32) {
+        this.address32 = addr32;
+        state = State.FIXED_32;
     }
 
     /**
@@ -112,18 +112,18 @@ public final class Label implements Argument {
      *
      * @see Assembler#bindLabel(Label)
      */
-    void fix64(long address64) {
-        _address64 = address64;
-        _state = State.FIXED_64;
+    void fix64(long addr64) {
+        this.address64 = addr64;
+        state = State.FIXED_64;
     }
 
     /**
      * Must only be called if this label has been {@link #fix32 fixed}.
      */
     public int address32() throws AssemblyException {
-        switch (_state) {
+        switch (state) {
             case FIXED_32: {
-                return _address32;
+                return address32;
             }
             case FIXED_64: {
                 throw ProgramError.unexpected("64-bit address in 32-bit assembler");
@@ -138,9 +138,9 @@ public final class Label implements Argument {
      * Must only be called if this label has been {@link #fix64 fixed}.
      */
     public long address64() throws AssemblyException {
-        switch (_state) {
+        switch (state) {
             case FIXED_64: {
-                return _address64;
+                return address64;
             }
             case FIXED_32: {
                 throw ProgramError.unexpected("32-bit address in 64-bit assembler");
@@ -167,18 +167,18 @@ public final class Label implements Argument {
     public boolean equals(Object other) {
         if (other instanceof Label) {
             final Label label = (Label) other;
-            if (_state != label._state) {
+            if (state != label.state) {
                 return false;
             }
-            switch (_state) {
+            switch (state) {
                 case UNASSIGNED:
                     return this == label;
                 case BOUND:
-                    return _position == label._position;
+                    return position == label.position;
                 case FIXED_32:
-                    return _address32 == label._address32;
+                    return address32 == label.address32;
                 case FIXED_64:
-                    return _address64 == label._address64;
+                    return address64 == label.address64;
                 default:
                     ProgramError.unexpected();
             }
@@ -188,13 +188,13 @@ public final class Label implements Argument {
 
     @Override
     public int hashCode() {
-        switch (_state) {
+        switch (state) {
             case BOUND:
-                return _position;
+                return position;
             case FIXED_32:
-                return _address32;
+                return address32;
             case FIXED_64:
-                return (int) (_address64 ^ (_address64 >> 32));
+                return (int) (address64 ^ (address64 >> 32));
             default:
                 return super.hashCode();
         }
@@ -202,15 +202,15 @@ public final class Label implements Argument {
 
     @Override
     public String toString() {
-        switch (_state) {
+        switch (state) {
             case UNASSIGNED:
                 return "<unassigned>";
             case BOUND:
-                return _position >= 0 ? "+" + _position : String.valueOf(_position);
+                return position >= 0 ? "+" + position : String.valueOf(position);
             case FIXED_32:
-                return String.valueOf(_address32);
+                return String.valueOf(address32);
             case FIXED_64:
-                return String.valueOf(_address64);
+                return String.valueOf(address64);
             default:
                 throw ProgramError.unexpected();
         }

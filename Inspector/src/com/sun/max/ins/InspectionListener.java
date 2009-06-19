@@ -44,9 +44,9 @@ public interface InspectionListener {
     void threadStateChanged(MaxThread thread);
 
     /**
-     * Notifies that the set of breakpoints in the VM has changed.
+     * Notifies that the set and/or status (enabled/disabled) of breakpoints in the VM has changed.
      */
-    void breakpointSetChanged();
+    void breakpointStateChanged();
 
     /**
      * Notifies that the set of watchpoints in the VM has changed.

@@ -45,34 +45,34 @@ public final class ARMFields {
     private ARMFields() {
     }
 
-    public static final SymbolicOperandField<ConditionCode> _cond = SymbolicOperandField.createDescending("cond", ConditionCode.SYMBOLIZER, 31, 28);
-    public static final SymbolicOperandField<SBit> _s = SymbolicOperandField.createDescending(SBit.SYMBOLIZER, 20, 20);
+    public static final SymbolicOperandField<ConditionCode> cond = SymbolicOperandField.createDescending("cond", ConditionCode.SYMBOLIZER, 31, 28);
+    public static final SymbolicOperandField<SBit> s = SymbolicOperandField.createDescending(SBit.SYMBOLIZER, 20, 20);
 
-    public static final ImmediateOperandField _bits_27_26 = ImmediateOperandField.createDescending(27, 26);
-    public static final ImmediateOperandField _i = ImmediateOperandField.createDescending(25, 25);
-    public static final ImmediateOperandField _opcode = ImmediateOperandField.createDescending(24, 21);
-    public static final ImmediateOperandField _rotate_imm = ImmediateOperandField.createDescending(11, 8);
-    public static final ImmediateOperandField _immed_8 = ImmediateOperandField.createDescending(7, 0);
-    public static final ImmediateOperandField _shifter_operand = ImmediateOperandField.createDescending(11, 0);
-    public static final ImmediateOperandField _bits_11_7 = ImmediateOperandField.createDescending(11, 7);
-    public static final ImmediateOperandField _bits_6_4 = ImmediateOperandField.createDescending(6, 4);
-    public static final ImmediateOperandField _shift_imm = ImmediateOperandField.createDescending(11, 7);
-    public static final ImmediateOperandField _bits_7_4 = ImmediateOperandField.createDescending(7, 4);
-    public static final ImmediateOperandField _bits_11_4 = ImmediateOperandField.createDescending(11, 4);
-    public static final ImmediateOperandField _bits_4_0 = ImmediateOperandField.createDescending(4, 0);
-    public static final ImmediateOperandField _sbz_19_16 = ImmediateOperandField.createDescending(19, 16);
-    public static final ImmediateOperandField _sbz_15_12 = ImmediateOperandField.createDescending(15, 12);
-    public static final ImmediateOperandField _sbz_11_0 = ImmediateOperandField.createDescending(11, 0);
-    public static final ImmediateOperandField _sbz_11_8 = ImmediateOperandField.createDescending(11, 8);
-    public static final ImmediateOperandField _sbo_19_16 = ImmediateOperandField.createDescending(19, 16);
-    public static final ImmediateOperandField _sbo_11_8 = ImmediateOperandField.createDescending(11, 8);
-    public static final ImmediateOperandField _bits_5_0 = new ImmediateOperandField(new DescendingBitRange(5, 0)) {
+    public static final ImmediateOperandField bits_27_26 = ImmediateOperandField.createDescending(27, 26);
+    public static final ImmediateOperandField i = ImmediateOperandField.createDescending(25, 25);
+    public static final ImmediateOperandField opcode = ImmediateOperandField.createDescending(24, 21);
+    public static final ImmediateOperandField rotate_imm = ImmediateOperandField.createDescending(11, 8);
+    public static final ImmediateOperandField immed_8 = ImmediateOperandField.createDescending(7, 0);
+    public static final ImmediateOperandField shifter_operand = ImmediateOperandField.createDescending(11, 0);
+    public static final ImmediateOperandField bits_11_7 = ImmediateOperandField.createDescending(11, 7);
+    public static final ImmediateOperandField bits_6_4 = ImmediateOperandField.createDescending(6, 4);
+    public static final ImmediateOperandField shift_imm = ImmediateOperandField.createDescending(11, 7);
+    public static final ImmediateOperandField bits_7_4 = ImmediateOperandField.createDescending(7, 4);
+    public static final ImmediateOperandField bits_11_4 = ImmediateOperandField.createDescending(11, 4);
+    public static final ImmediateOperandField bits_4_0 = ImmediateOperandField.createDescending(4, 0);
+    public static final ImmediateOperandField sbz_19_16 = ImmediateOperandField.createDescending(19, 16);
+    public static final ImmediateOperandField sbz_15_12 = ImmediateOperandField.createDescending(15, 12);
+    public static final ImmediateOperandField sbz_11_0 = ImmediateOperandField.createDescending(11, 0);
+    public static final ImmediateOperandField sbz_11_8 = ImmediateOperandField.createDescending(11, 8);
+    public static final ImmediateOperandField sbo_19_16 = ImmediateOperandField.createDescending(19, 16);
+    public static final ImmediateOperandField sbo_11_8 = ImmediateOperandField.createDescending(11, 8);
+    public static final ImmediateOperandField bits_5_0 = new ImmediateOperandField(new DescendingBitRange(5, 0)) {
         @Override
         public ArgumentRange argumentRange() {
             return new ArgumentRange(this, 0, 32);
         }
     };
-    public static final ImmediateOperandField _bits_31_0 = new ImmediateOperandField(new DescendingBitRange(31, 0)) {
+    public static final ImmediateOperandField bits_31_0 = new ImmediateOperandField(new DescendingBitRange(31, 0)) {
         @Override
         public Iterable< ? extends Argument> getIllegalTestArguments() {
             final List<Immediate32Argument> illegalTestArguments = new ArrayList<Immediate32Argument>();
@@ -88,9 +88,9 @@ public final class ARMFields {
         public Iterable< ? extends Argument> getLegalTestArguments() {
             final List<Immediate32Argument> legalTestArguments = new ArrayList<Immediate32Argument>();
             int argument;
-            for (int immediate : new int[]{0, 1, 31, 32, 33, 63, 64, 65, 127, 128, 129, 254, 255}) {
-                for (int i = 0; i < 32; i += 2) {
-                    argument = Integer.rotateLeft(immediate, i);
+            for (int imm : new int[]{0, 1, 31, 32, 33, 63, 64, 65, 127, 128, 129, 254, 255}) {
+                for (int j = 0; j < 32; j += 2) {
+                    argument = Integer.rotateLeft(imm, j);
                     final Immediate32Argument immediate32Argument = new Immediate32Argument(argument);
                     if (!legalTestArguments.contains(immediate32Argument)) {
                         legalTestArguments.add(immediate32Argument);
@@ -104,165 +104,165 @@ public final class ARMFields {
             return new ArgumentRange(this, 0x80000000, 0x7fffffff);
         }
     };
-    public static final ImmediateOperandField _bits_27_21 = ImmediateOperandField.createDescending(27, 21);
-    public static final ImmediateOperandField _bits_27_20 = ImmediateOperandField.createDescending(27, 20);
-    public static final ImmediateOperandField _bit_27 = ImmediateOperandField.createDescending(27, 27);
-    public static final ImmediateOperandField _bit_26 = ImmediateOperandField.createDescending(26, 26);
-    public static final ImmediateOperandField _bit_25 = ImmediateOperandField.createDescending(25, 25);
-    public static final ImmediateOperandField _bit_24 = ImmediateOperandField.createDescending(24, 24);
-    public static final ImmediateOperandField _bit_23 = ImmediateOperandField.createDescending(23, 23);
-    public static final ImmediateOperandField _r = ImmediateOperandField.createDescending(22, 22);
-    public static final ImmediateOperandField _bit_21 = ImmediateOperandField.createDescending(21, 21);
-    public static final ImmediateOperandField _bit_20 = ImmediateOperandField.createDescending(20, 20);
-    public static final ImmediateOperandField _bit_4 = ImmediateOperandField.createDescending(4, 4);
-    public static final ImmediateOperandField _p = ImmediateOperandField.createDescending(24, 24);
-    public static final ImmediateOperandField _u = ImmediateOperandField.createDescending(23, 23);
-    public static final ImmediateOperandField _b = ImmediateOperandField.createDescending(22, 22);
-    public static final ImmediateOperandField _w = ImmediateOperandField.createDescending(21, 21);
-    public static final ImmediateOperandField _l = ImmediateOperandField.createDescending(20, 20);
-    public static final ImmediateOperandField _offset_12 = ImmediateOperandField.createDescending(11, 0);
-    public static final ImmediateOperandField _shift = ImmediateOperandField.createDescending(6, 5);
-    public static final ImmediateOperandField _bits_31_28 = ImmediateOperandField.createDescending(31, 28);
-    public static final ImmediateOperandField _immed_19_8 = ImmediateOperandField.createDescending(19, 8);
-    public static final ImmediateOperandField _immed_3_0 = ImmediateOperandField.createDescending(3, 0);
-    public static final ImmediateOperandField _immed_24 = ImmediateOperandField.createDescending(23, 0);
-    public static final ImmediateOperandField _bits_27_24 = ImmediateOperandField.createDescending(27, 24);
+    public static final ImmediateOperandField bits_27_21 = ImmediateOperandField.createDescending(27, 21);
+    public static final ImmediateOperandField bits_27_20 = ImmediateOperandField.createDescending(27, 20);
+    public static final ImmediateOperandField bit_27 = ImmediateOperandField.createDescending(27, 27);
+    public static final ImmediateOperandField bit_26 = ImmediateOperandField.createDescending(26, 26);
+    public static final ImmediateOperandField bit_25 = ImmediateOperandField.createDescending(25, 25);
+    public static final ImmediateOperandField bit_24 = ImmediateOperandField.createDescending(24, 24);
+    public static final ImmediateOperandField bit_23 = ImmediateOperandField.createDescending(23, 23);
+    public static final ImmediateOperandField r = ImmediateOperandField.createDescending(22, 22);
+    public static final ImmediateOperandField bit_21 = ImmediateOperandField.createDescending(21, 21);
+    public static final ImmediateOperandField bit_20 = ImmediateOperandField.createDescending(20, 20);
+    public static final ImmediateOperandField bit_4 = ImmediateOperandField.createDescending(4, 4);
+    public static final ImmediateOperandField p = ImmediateOperandField.createDescending(24, 24);
+    public static final ImmediateOperandField u = ImmediateOperandField.createDescending(23, 23);
+    public static final ImmediateOperandField b = ImmediateOperandField.createDescending(22, 22);
+    public static final ImmediateOperandField w = ImmediateOperandField.createDescending(21, 21);
+    public static final ImmediateOperandField l = ImmediateOperandField.createDescending(20, 20);
+    public static final ImmediateOperandField offset_12 = ImmediateOperandField.createDescending(11, 0);
+    public static final ImmediateOperandField shift = ImmediateOperandField.createDescending(6, 5);
+    public static final ImmediateOperandField bits_31_28 = ImmediateOperandField.createDescending(31, 28);
+    public static final ImmediateOperandField immed_19_8 = ImmediateOperandField.createDescending(19, 8);
+    public static final ImmediateOperandField immed_3_0 = ImmediateOperandField.createDescending(3, 0);
+    public static final ImmediateOperandField immed_24 = ImmediateOperandField.createDescending(23, 0);
+    public static final ImmediateOperandField bits_27_24 = ImmediateOperandField.createDescending(27, 24);
 
-    public static final InputOperandField _immediate = InputOperandField.create(_bits_31_0).setVariableName("immediate");
-    public static final InputOperandField _rotate_amount = InputOperandField.create(_bits_4_0).setVariableName("rotate_amount");
-    public static final InputOperandField _shift_imm2 = (InputOperandField) InputOperandField.create(_bits_5_0).withExcludedExternalTestArguments(new Immediate32Argument(0)).setVariableName("shift_imm");
-    public static final InputOperandField _immediate2 = InputOperandField.create(new ImmediateOperandField(new DescendingBitRange(15, 0))).setVariableName("immediate");
+    public static final InputOperandField immediate = InputOperandField.create(bits_31_0).setVariableName("immediate");
+    public static final InputOperandField rotate_amount = InputOperandField.create(bits_4_0).setVariableName("rotate_amount");
+    public static final InputOperandField shift_imm2 = (InputOperandField) InputOperandField.create(bits_5_0).withExcludedExternalTestArguments(new Immediate32Argument(0)).setVariableName("shift_imm");
+    public static final InputOperandField immediate2 = InputOperandField.create(new ImmediateOperandField(new DescendingBitRange(15, 0))).setVariableName("immediate");
 
     public static RiscConstant s(int value) {
-        return _s.constant(value);
+        return s.constant(value);
     }
     public static RiscConstant cond(int value) {
-        return _cond.constant(value);
+        return cond.constant(value);
     }
     public static RiscConstant bits_27_26(int value) {
-        return _bits_27_26.constant(value);
+        return bits_27_26.constant(value);
     }
     public static RiscConstant i(int value) {
-        return _i.constant(value);
+        return i.constant(value);
     }
     public static RiscConstant opcode(int value) {
-        return _opcode.constant(value);
+        return opcode.constant(value);
     }
     public static RiscConstant bits_11_7(int value) {
-        return _bits_11_7.constant(value);
+        return bits_11_7.constant(value);
     }
     public static RiscConstant bits_6_4(int value) {
-        return _bits_6_4.constant(value);
+        return bits_6_4.constant(value);
     }
     public static RiscConstant bits_7_4(int value) {
-        return _bits_7_4.constant(value);
+        return bits_7_4.constant(value);
     }
     public static RiscConstant bits_11_4(int value) {
-        return _bits_11_4.constant(value);
+        return bits_11_4.constant(value);
     }
     public static RiscConstant sbz_19_16(int value) {
-        return _sbz_19_16.constant(value);
+        return sbz_19_16.constant(value);
     }
     public static RiscConstant sbz_15_12(int value) {
-        return _sbz_15_12.constant(value);
+        return sbz_15_12.constant(value);
     }
     public static RiscConstant sbz_11_0(int value) {
-        return _sbz_11_0.constant(value);
+        return sbz_11_0.constant(value);
     }
     public static RiscConstant sbz_11_8(int value) {
-        return _sbz_11_8.constant(value);
+        return sbz_11_8.constant(value);
     }
     public static RiscConstant sbo_19_16(int value) {
-        return _sbo_19_16.constant(value);
+        return sbo_19_16.constant(value);
     }
     public static RiscConstant sbo_11_8(int value) {
-        return _sbo_11_8.constant(value);
+        return sbo_11_8.constant(value);
     }
     public static RiscConstant bits_27_21(int value) {
-        return _bits_27_21.constant(value);
+        return bits_27_21.constant(value);
     }
     public static RiscConstant bits_27_20(int value) {
-        return _bits_27_20.constant(value);
+        return bits_27_20.constant(value);
     }
     public static RiscConstant bit_27(int value) {
-        return _bit_27.constant(value);
+        return bit_27.constant(value);
     }
     public static RiscConstant bit_26(int value) {
-        return _bit_26.constant(value);
+        return bit_26.constant(value);
     }
     public static RiscConstant bit_25(int value) {
-        return _bit_25.constant(value);
+        return bit_25.constant(value);
     }
     public static RiscConstant bit_24(int value) {
-        return _bit_24.constant(value);
+        return bit_24.constant(value);
     }
     public static RiscConstant bit_23(int value) {
-        return _bit_23.constant(value);
+        return bit_23.constant(value);
     }
     public static RiscConstant bit_4(int value) {
-        return _bit_4.constant(value);
+        return bit_4.constant(value);
     }
     public static RiscConstant r(int value) {
-        return _r.constant(value);
+        return r.constant(value);
     }
     public static RiscConstant bit_21(int value) {
-        return _bit_21.constant(value);
+        return bit_21.constant(value);
     }
     public static RiscConstant bit_20(int value) {
-        return _bit_20.constant(value);
+        return bit_20.constant(value);
     }
     public static RiscConstant p(int value) {
-        return _p.constant(value);
+        return p.constant(value);
     }
     public static RiscConstant u(int value) {
-        return _u.constant(value);
+        return u.constant(value);
     }
     public static RiscConstant b(int value) {
-        return _b.constant(value);
+        return b.constant(value);
     }
     public static RiscConstant w(int value) {
-        return _w.constant(value);
+        return w.constant(value);
     }
     public static RiscConstant l(int value) {
-        return _l.constant(value);
+        return l.constant(value);
     }
     public static RiscConstant shift(int value) {
-        return _shift.constant(value);
+        return shift.constant(value);
     }
     public static RiscConstant shift_imm(int value) {
-        return _shift_imm.constant(value);
+        return shift_imm.constant(value);
     }
     public static RiscConstant bits_31_28(int value) {
-        return _bits_31_28.constant(value);
+        return bits_31_28.constant(value);
     }
     public static RiscConstant bits_27_24(int value) {
-        return _bits_27_24.constant(value);
+        return bits_27_24.constant(value);
     }
 
     public static OperandField<ImmediateArgument> rotate_imm(Expression expression) {
-        return _rotate_imm.bindTo(expression);
+        return rotate_imm.bindTo(expression);
     }
     public static OperandField<ImmediateArgument> shifter_operand(Expression expression) {
-        return _shifter_operand.bindTo(expression);
+        return shifter_operand.bindTo(expression);
     }
     public static OperandField<ImmediateArgument> shift_imm(Expression expression) {
-        return _shift_imm.bindTo(expression);
+        return shift_imm.bindTo(expression);
     }
     public static OperandField<ImmediateArgument> immed_19_8(Expression expression) {
-        return _immed_19_8.bindTo(expression);
+        return immed_19_8.bindTo(expression);
     }
     public static OperandField<ImmediateArgument> immed_3_0(Expression expression) {
-        return _immed_3_0.bindTo(expression);
+        return immed_3_0.bindTo(expression);
     }
 
-    public static final SymbolicOperandField<GPR> _Rn = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 19, 16);
-    public static final SymbolicOperandField<GPR> _Rn2 = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 15, 12).setVariableName("Rn");
-    public static final SymbolicOperandField<GPR> _Rd = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 15, 12);
-    public static final SymbolicOperandField<GPR> _Rd2 = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 19, 16).setVariableName("Rd");
-    public static final SymbolicOperandField<GPR> _Rm = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 3, 0);
-    public static final SymbolicOperandField<GPR> _Rs = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 11, 8);
-    public static final SymbolicOperandField<GPR> _RdHi = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 19, 16);
-    public static final SymbolicOperandField<GPR> _RdLo = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 15, 12);
+    public static final SymbolicOperandField<GPR> Rn = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 19, 16);
+    public static final SymbolicOperandField<GPR> Rn2 = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 15, 12).setVariableName("Rn");
+    public static final SymbolicOperandField<GPR> Rd = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 15, 12);
+    public static final SymbolicOperandField<GPR> Rd2 = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 19, 16).setVariableName("Rd");
+    public static final SymbolicOperandField<GPR> Rm = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 3, 0);
+    public static final SymbolicOperandField<GPR> Rs = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 11, 8);
+    public static final SymbolicOperandField<GPR> RdHi = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 19, 16);
+    public static final SymbolicOperandField<GPR> RdLo = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 15, 12);
 
     static {
         StaticFieldName.Static.initialize(ARMFields.class, new StaticFieldName.StringFunction() {

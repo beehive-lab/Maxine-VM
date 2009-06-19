@@ -32,97 +32,497 @@ import com.sun.max.vm.reference.*;
  * (instead of twice, once against Pointer and once against Reference).
  *
  * @author Bernd Mathiske
+ * @author Paul Caprioli
  */
 public interface Accessor {
 
+    /**
+     * Tests whether this is zero.
+     * @return true if all bits are zero.
+     */
     boolean isZero();
 
+    /**
+     * Reads a byte at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the byte value
+     */
     byte readByte(Offset offset);
+
+    /**
+     * Reads a byte at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the byte value
+     */
     byte readByte(int offset);
+
+    /**
+     * Gets a byte at index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in bytes
+     * @return the byte value
+     */
     byte getByte(int displacement, int index);
 
+    /**
+     * Writes a byte at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeByte(Offset offset, byte value);
+
+    /**
+     * Writes a byte at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeByte(int offset, byte value);
+
+    /**
+     * Writes a byte at index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in bytes
+     * @param value the data to be written
+     */
     void setByte(int displacement, int index, byte value);
 
+    /**
+     * Reads a boolean at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the boolean value
+     */
     boolean readBoolean(Offset offset);
+
+    /**
+     * Reads a boolean at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the boolean value
+     */
     boolean readBoolean(int offset);
+
+    /**
+     * Gets a boolean at index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in bytes
+     * @return the boolean value
+     */
     boolean getBoolean(int displacement, int index);
 
+    /**
+     * Writes a boolean at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeBoolean(Offset offset, boolean value);
+
+    /**
+     * Writes a boolean at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeBoolean(int offset, boolean value);
+
+    /**
+     * Writes a boolean at index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in bytes
+     * @param value the data to be written
+     */
     void setBoolean(int displacement, int index, boolean value);
 
+    /**
+     * Reads a short at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the short value
+     */
     short readShort(Offset offset);
+
+    /**
+     * Reads a short at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the short value
+     */
     short readShort(int offset);
+
+    /**
+     * Gets a short at the scaled index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in shorts
+     * @return the short value
+     */
     short getShort(int displacement, int index);
 
+    /**
+     * Writes a short at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeShort(Offset offset, short value);
+
+    /**
+     * Writes a short at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeShort(int offset, short value);
+
+    /**
+     * Writes a short at index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in shorts
+     * @param value the data to be written
+     */
     void setShort(int displacement, int index, short value);
 
+    /**
+     * Reads a character at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the character value
+     */
     char readChar(Offset offset);
+
+    /**
+     * Reads a character at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the character value
+     */
     char readChar(int offset);
+
+    /**
+     * Gets a character at the scaled index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in chars
+     * @return the character value
+     */
     char getChar(int displacement, int index);
 
+    /**
+     * Writes a character at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeChar(Offset offset, char value);
+
+    /**
+     * Writes a character at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeChar(int offset, char value);
+
+    /**
+     * Writes a character at index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in characters
+     * @param value the data to be written
+     */
     void setChar(int displacement, int index, char value);
 
+    /**
+     * Reads an integer at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the integer value
+     */
     int readInt(Offset offset);
+
+    /**
+     * Reads an integer at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the integer value
+     */
     int readInt(int offset);
+
+    /**
+     * Gets an integer at the scaled index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in ints
+     * @return the integer value
+     */
     int getInt(int displacement, int index);
 
+    /**
+     * Writes an integer at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeInt(Offset offset, int value);
+    /**
+     * Writes an integer at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeInt(int offset, int value);
+
+    /**
+     * Writes an integer at index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in ints
+     * @param value the data to be written
+     */
     void setInt(int displacement, int index, int value);
 
+    /**
+     * Reads a float at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the float value
+     */
     float readFloat(Offset offset);
+
+    /**
+     * Reads a float at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the float value
+     */
     float readFloat(int offset);
+
+    /**
+     * Gets a float at the scaled index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in floats
+     * @return the float value
+     */
     float getFloat(int displacement, int index);
 
+    /**
+     * Writes a float at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeFloat(Offset offset, float value);
+
+    /**
+     * Writes a float at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeFloat(int offset, float value);
+
+    /**
+     * Writes a float at index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in floats
+     * @param value the data to be written
+     */
     void setFloat(int displacement, int index, float value);
 
+    /**
+     * Reads a long at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the long value
+     */
     long readLong(Offset offset);
+
+    /**
+     * Reads a long at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the long value
+     */
     long readLong(int offset);
+
+    /**
+     * Gets a long at the scaled index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in longs
+     * @return the long value
+     */
     long getLong(int displacement, int index);
 
+    /**
+     * Writes a long at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeLong(Offset offset, long value);
+
+    /**
+     * Writes a long at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeLong(int offset, long value);
+
+    /**
+     * Writes a long at index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in longs
+     * @param value the data to be written
+     */
     void setLong(int displacement, int index, long value);
 
+    /**
+     * Reads a double at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the double value
+     */
     double readDouble(Offset offset);
+
+    /**
+     * Reads a double at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the double value
+     */
     double readDouble(int offset);
+
+    /**
+     * Gets a double at the scaled index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in doubles
+     * @return the double value
+     */
     double getDouble(int displacement, int index);
 
+    /**
+     * Writes a double at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeDouble(Offset offset, double value);
+
+    /**
+     * Writes a double at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeDouble(int offset, double value);
+
+    /**
+     * Writes a double at index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in doubles
+     * @param value the data to be written
+     */
     void setDouble(int displacement, int index, double value);
 
+    /**
+     * Reads a Word at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the Word value
+     */
     Word readWord(Offset offset);
+
+    /**
+     * Reads a Word at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the Word value
+     */
     Word readWord(int offset);
+
+    /**
+     * Gets a Word at the scaled index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in Words
+     * @return the Word value
+     */
     Word getWord(int displacement, int index);
 
+    /**
+     * Writes a Word at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeWord(Offset offset, Word value);
+
+    /**
+     * Writes a Word at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeWord(int offset, Word value);
+
+    /**
+     * Writes a Word at index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in Words
+     * @param value the data to be written
+     */
     void setWord(int displacement, int index, Word value);
 
+    /**
+     * Reads a Grip at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the Grip value
+     */
     Grip readGrip(Offset offset);
+
+    /**
+     * Reads a Grip at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the Grip value
+     */
     Grip readGrip(int offset);
+
+    /**
+     * Gets a Grip at the scaled index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in Grips
+     * @return the Grip value
+     */
     Grip getGrip(int displacement, int index);
 
+    /**
+     * Writes a Grip at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeGrip(Offset offset, Grip value);
+
+    /**
+     * Writes a Grip at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeGrip(int offset, Grip value);
+
+    /**
+     * Writes a Grip at index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in Grips
+     * @param value the data to be written
+     */
     void setGrip(int displacement, int index, Grip value);
 
+    /**
+     * Reads a Reference at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the Reference value
+     */
     Reference readReference(Offset offset);
+
+    /**
+     * Reads a Reference at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @return the Reference value
+     */
     Reference readReference(int offset);
+
+    /**
+     * Gets a Reference at the scaled index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in References
+     * @return the Reference value
+     */
     Reference getReference(int displacement, int index);
 
+    /**
+     * Writes a Reference at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeReference(Offset offset, Reference value);
+
+    /**
+     * Writes a Reference at an offset from this location.
+     * @param offset the signed offset in bytes from this
+     * @param value the data to be written
+     */
     void writeReference(int offset, Reference value);
+
+    /**
+     * Writes a Reference at index plus displacement from this location.
+     * @param displacement signed displacement in bytes
+     * @param index signed index measured in References
+     * @param value the data to be written
+     */
     void setReference(int displacement, int index, Reference value);
 
     /**

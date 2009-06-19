@@ -33,6 +33,7 @@ import com.sun.max.ins.value.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.util.*;
+import com.sun.max.vm.value.*;
 
 /**
  * A table specialized for displaying register values for a thread in the VM.
@@ -170,6 +171,9 @@ public class RegistersTable extends InspectorTable {
                 row++;
             }
             assert _nRegisters == row;
+            for (int i = 0; i < _nRegisters; i++) {
+                _registerInfos[i].refresh();
+            }
         }
 
         /**
@@ -238,13 +242,18 @@ public class RegistersTable extends InspectorTable {
         ValueCellRenderer(Inspection inspection) {
             _labels = new WordValueLabel[_model.getRowCount()];
             for (int row = 0; row < _model.getRowCount(); row++) {
-                _labels[row] = new WordValueLabel(inspection, _model.getValueMode(row));
+                final RegisterInfo registerInfo = (RegisterInfo) _model.getValueAt(row, 0);
+                _labels[row] = new WordValueLabel(inspection, _model.getValueMode(row), RegistersTable.this) {
+
+                    @Override
+                    protected Value fetchValue() {
+                        return registerInfo.value();
+                    }
+                };
             }
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final RegisterInfo registerInfo = (RegisterInfo) value;
-            _labels[row].setValue(registerInfo.value());
             return _labels[row];
         }
 

@@ -30,12 +30,12 @@ import static com.sun.max.asm.gen.risc.sparc.SPARCFields.*;
 public class RegisterWindowManagement extends SPARCInstructionDescriptionCreator {
 
     private void createSaveOrRestore(String name, int op3Contents) {
-        define(name, op(0x2), _rs1, op3(op3Contents), i(0), _res_12_5, _rs2, _rd);
-        define(name, op(0x2), _rs1, op3(op3Contents), i(1), _simm13, _rd);
+        define(name, op(0x2), rs1, op3(op3Contents), i(0), res_12_5, rs2, rd);
+        define(name, op(0x2), rs1, op3(op3Contents), i(1), simm13, rd);
     }
 
     private void create_A21() {
-        define("flushw", op(0x2), _res_29_25, op3(0x2b), _res_18_14, i(0), _res_12_0);
+        define("flushw", op(0x2), res_29_25, op3(0x2b), res_18_14, i(0), res_12_0);
     }
 
     private void create_A45() {
@@ -44,8 +44,8 @@ public class RegisterWindowManagement extends SPARCInstructionDescriptionCreator
     }
 
     private void create_A46() {
-        define("saved", op(0x2), fcnc(0), op3(0x31), _res_18_0);
-        define("restored", op(0x2), fcnc(1), op3(0x31), _res_18_0);
+        define("saved", op(0x2), fcnc(0), op3(0x31), res_18_0);
+        define("restored", op(0x2), fcnc(1), op3(0x31), res_18_0);
     }
 
     RegisterWindowManagement(SPARCTemplateCreator templateCreator) {

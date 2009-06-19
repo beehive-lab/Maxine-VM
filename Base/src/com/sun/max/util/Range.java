@@ -27,8 +27,8 @@ package com.sun.max.util;
  * @author Doug Simon
  */
 public class Range {
-    private final int _start;
-    private final int _end;
+    private final int start;
+    private final int end;
 
     public Range(int start) {
         this(start, start + 1);
@@ -44,8 +44,8 @@ public class Range {
      */
     public Range(int start, int end) {
         assert end >= start;
-        _start = start;
-        _end = end;
+        this.start = start;
+        this.end = end;
         assert length() >= 0;
     }
 
@@ -54,7 +54,7 @@ public class Range {
      * @return
      */
     public int start() {
-        return _start;
+        return start;
     }
 
     /**
@@ -62,18 +62,18 @@ public class Range {
      */
     public long length() {
         // This cast and the long return type prevents integer overflow
-        return ((long) _end) - _start;
+        return ((long) end) - start;
     }
 
     /**
      * Gets the value one greater than the highest value in this range.
      */
     public int end() {
-        return _end;
+        return end;
     }
 
     public boolean contains(long value) {
-        return value >= _start && value < _end;
+        return value >= start && value < end;
     }
 
     @Override

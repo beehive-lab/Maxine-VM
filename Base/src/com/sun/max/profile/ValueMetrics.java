@@ -46,25 +46,25 @@ public class ValueMetrics {
     }
 
     public static class FixedApproximation extends Approximation {
-        protected final Object[] _values;
+        protected final Object[] values;
         public FixedApproximation(Object... values) {
-            this._values = values.clone();
+            this.values = values.clone();
         }
     }
 
     public static class IntegerRangeApproximation extends Approximation {
-        protected final int _lowValue;
-        protected final int _highValue;
+        protected final int lowValue;
+        protected final int highValue;
         public IntegerRangeApproximation(int low, int high) {
-            _lowValue = low;
-            _highValue = high;
+            lowValue = low;
+            highValue = high;
         }
     }
 
     public static class IntegerTraceApproximation extends Approximation {
-        protected final int _bufferSize;
+        protected final int bufferSize;
         public IntegerTraceApproximation(int bufferSize) {
-            _bufferSize = bufferSize;
+            this.bufferSize = bufferSize;
         }
     }
 
@@ -82,40 +82,40 @@ public class ValueMetrics {
     }
 
     public static class FixedRangeIntegerDistribution extends IntegerDistribution {
-        protected final int _lowValue;
-        protected final int[] _counts;
-        protected int _missed;
+        protected final int lowValue;
+        protected final int[] counts;
+        protected int missed;
 
         public FixedRangeIntegerDistribution(int low, int high) {
-            _lowValue = low;
-            _counts = new int[high - low];
+            lowValue = low;
+            counts = new int[high - low];
         }
 
         @Override
         public void record(int value) {
-            _total++;
-            final int index = value - _lowValue;
-            if (index >= 0 && index < _counts.length) {
-                _counts[index]++;
+            total++;
+            final int index = value - lowValue;
+            if (index >= 0 && index < counts.length) {
+                counts[index]++;
             } else {
-                _missed++;
+                missed++;
             }
         }
 
         @Override
         public int getCount(Integer value) {
-            final int index = value - _lowValue;
-            if (index >= 0 && index < _counts.length) {
-                return _counts[index];
+            final int index = value - lowValue;
+            if (index >= 0 && index < counts.length) {
+                return counts[index];
             }
-            return _missed > 0 ? -1 : 0;
+            return missed > 0 ? -1 : 0;
         }
 
         @Override
         public Map<Integer, Integer> asMap() {
             final Map<Integer, Integer> map = new HashMap<Integer, Integer>();
-            for (int i = 0; i != _counts.length; ++i) {
-                map.put(_lowValue + i, _counts[i]);
+            for (int i = 0; i != counts.length; ++i) {
+                map.put(lowValue + i, counts[i]);
             }
             return map;
         }
@@ -123,51 +123,51 @@ public class ValueMetrics {
         @Override
         public void reset() {
             super.reset();
-            _missed = 0;
-            Arrays.fill(_counts, 0);
+            missed = 0;
+            Arrays.fill(counts, 0);
         }
     }
 
     public static class FixedSetIntegerDistribution extends IntegerDistribution {
 
-        private final int[] _set;
-        private final int[] _count;
-        protected int _missed;
+        private final int[] set;
+        private final int[] count;
+        protected int missed;
 
         public FixedSetIntegerDistribution(int[] set) {
             // TODO: sort() and binarySearch for large sets.
-            _set = set.clone();
-            _count = new int[set.length];
+            this.set = set.clone();
+            count = new int[set.length];
         }
 
         @Override
         public void record(int value) {
-            _total++;
-            for (int i = 0; i < _set.length; i++) {
-                if (_set[i] == value) {
-                    _count[i]++;
+            total++;
+            for (int i = 0; i < set.length; i++) {
+                if (set[i] == value) {
+                    count[i]++;
                     return;
                 }
             }
-            _missed++;
+            missed++;
         }
 
         @Override
         public int getCount(Integer value) {
             final int val = value;
-            for (int i = 0; i < _set.length; i++) {
-                if (_set[i] == val) {
-                    return _count[i];
+            for (int i = 0; i < set.length; i++) {
+                if (set[i] == val) {
+                    return count[i];
                 }
             }
-            return _missed > 0 ? -1 : 0;
+            return missed > 0 ? -1 : 0;
         }
 
         @Override
         public Map<Integer, Integer> asMap() {
             final Map<Integer, Integer> map = new HashMap<Integer, Integer>();
-            for (int i = 0; i != _count.length; ++i) {
-                map.put(_set[i], _count[i]);
+            for (int i = 0; i != count.length; ++i) {
+                map.put(set[i], count[i]);
             }
             return map;
         }
@@ -175,9 +175,9 @@ public class ValueMetrics {
         @Override
         public void reset() {
             super.reset();
-            _missed = 0;
-            Arrays.fill(_set, 0);
-            Arrays.fill(_count, 0);
+            missed = 0;
+            Arrays.fill(set, 0);
+            Arrays.fill(count, 0);
         }
     }
 
@@ -197,22 +197,22 @@ public class ValueMetrics {
      * @author Ben L. Titzer
      */
     public static class TraceIntegerDistribution extends IntegerDistribution {
-        private final int[] _buffer;
-        private int _cursor;
+        private final int[] buffer;
+        private int cursor;
 
-        private int[] _values;
-        private int[] _counts;
+        private int[] values;
+        private int[] counts;
 
         public TraceIntegerDistribution(int bufferSize) {
             assert bufferSize > 0;
-            _buffer = new int[bufferSize];
+            buffer = new int[bufferSize];
         }
 
         @Override
         public void record(int value) {
-            _total++;
-            _buffer[_cursor++] = value;
-            if (_cursor == _buffer.length) {
+            total++;
+            buffer[cursor++] = value;
+            if (cursor == buffer.length) {
                 reduce();
             }
         }
@@ -220,11 +220,11 @@ public class ValueMetrics {
         @Override
         public int getCount(Integer value) {
             reduce();
-            final int index = Arrays.binarySearch(_values, value);
+            final int index = Arrays.binarySearch(values, value);
             if (index < 0) {
                 return 0;
             }
-            return _counts[index];
+            return counts[index];
         }
 
         @Override
@@ -232,9 +232,9 @@ public class ValueMetrics {
             reduce();
             // TODO: another map implementation might be better.
             final Map<Integer, Integer> map = new HashMap<Integer, Integer>();
-            if (_values != null) {
-                for (int i = 0; i < _values.length; i++) {
-                    map.put(_values[i], _counts[i]);
+            if (values != null) {
+                for (int i = 0; i < values.length; i++) {
+                    map.put(values[i], counts[i]);
                 }
             }
             return map;
@@ -243,58 +243,58 @@ public class ValueMetrics {
         @Override
         public void reset() {
             super.reset();
-            _cursor = 0;
-            Arrays.fill(_buffer, 0);
-            Arrays.fill(_values, 0);
-            Arrays.fill(_counts, 0);
+            cursor = 0;
+            Arrays.fill(buffer, 0);
+            Arrays.fill(values, 0);
+            Arrays.fill(counts, 0);
         }
 
         private void reduce() {
-            if (_cursor == 0) {
+            if (cursor == 0) {
                 // no recorded values to reduce
                 return;
             }
             // compression needed.
-            Arrays.sort(_buffer, 0, _cursor);
-            if (_values != null) {
+            Arrays.sort(buffer, 0, cursor);
+            if (values != null) {
                 // there are already some entries. need to merge counts
                 removeExistingValues();
-                if (_cursor > 0) {
-                    final int[] ovalues = _values;
-                    final int[] ocounts = _counts;
-                    reduceBuffer(_buffer);
-                    mergeValues(ovalues, ocounts, _values, _counts);
+                if (cursor > 0) {
+                    final int[] ovalues = values;
+                    final int[] ocounts = counts;
+                    reduceBuffer(buffer);
+                    mergeValues(ovalues, ocounts, values, counts);
                 }
             } else {
                 // there currently aren't any entry arrays. reduce the buffer to generate the first ones.
-                reduceBuffer(_buffer);
+                reduceBuffer(buffer);
             }
-            _cursor = 0;
+            cursor = 0;
         }
 
         private void removeExistingValues() {
             // increment counts for values that already occur in the entry arrays
             // and leave leftover values in the buffer
             int valuesPos = 0;
-            final int ocursor = _cursor;
-            _cursor = 0;
+            final int ocursor = cursor;
+            cursor = 0;
             for (int i = 0; i < ocursor; i++) {
-                final int nvalue = _buffer[i];
-                while (valuesPos < _values.length && _values[valuesPos] < nvalue) {
+                final int nvalue = buffer[i];
+                while (valuesPos < values.length && values[valuesPos] < nvalue) {
                     valuesPos++;
                 }
-                if (valuesPos < _values.length && _values[valuesPos] == nvalue) {
-                    _counts[valuesPos]++;
+                if (valuesPos < values.length && values[valuesPos] == nvalue) {
+                    counts[valuesPos]++;
                 } else {
                     // retain the new values in the buffer
-                    _buffer[_cursor++] = nvalue;
+                    buffer[cursor++] = nvalue;
                 }
             }
         }
 
         private void mergeValues(int[] avalues, int[] acounts, int[] bvalues, int[] bcounts) {
-            final int[] nvalues = new int[avalues.length + _values.length];
-            final int[] ncounts = new int[acounts.length + _counts.length];
+            final int[] nvalues = new int[avalues.length + values.length];
+            final int[] ncounts = new int[acounts.length + counts.length];
 
             int a = 0;
             int b = 0;
@@ -314,86 +314,86 @@ public class ValueMetrics {
                 }
             }
             assert n == nvalues.length && a == avalues.length && b == bvalues.length;
-            _values = nvalues;
-            _counts = ncounts;
+            values = nvalues;
+            counts = ncounts;
         }
 
-        private void reduceBuffer(int[] buffer) {
+        private void reduceBuffer(int[] buf) {
             // count the unique values
-            int last1 = buffer[0];
+            int last1 = buf[0];
             int unique = 1;
-            for (int i1 = 1; i1 < _cursor; i1++) {
-                if (_buffer[i1] != last1) {
+            for (int i1 = 1; i1 < cursor; i1++) {
+                if (buffer[i1] != last1) {
                     unique++;
-                    last1 = _buffer[i1];
+                    last1 = buffer[i1];
                 }
             }
             // create the values arrays and populate them
-            _values = new int[unique];
-            _counts = new int[unique];
-            int last = _buffer[0];
+            values = new int[unique];
+            counts = new int[unique];
+            int last = buffer[0];
             int count = 1;
             int pos = 0;
-            for (int i = 1; i < _cursor; i++) {
-                if (_buffer[i] != last) {
-                    _values[pos] = last;
-                    _counts[pos] = count;
+            for (int i = 1; i < cursor; i++) {
+                if (buffer[i] != last) {
+                    values[pos] = last;
+                    counts[pos] = count;
                     pos++;
                     count = 1;
-                    last = _buffer[i];
+                    last = buffer[i];
                 } else {
                     count++;
                 }
             }
-            assert pos == _values.length - 1;
-            _values[pos] = last;
-            _counts[pos] = count;
+            assert pos == values.length - 1;
+            values[pos] = last;
+            counts[pos] = count;
         }
     }
 
     public static class HashedIntegerDistribution extends IntegerDistribution {
-        private Map<Integer, Distribution> _map;
+        private Map<Integer, Distribution> map;
 
         private Map<Integer, Distribution> map() {
-            if (_map == null) {
-                _map = new HashMap<Integer, Distribution>();
+            if (map == null) {
+                map = new HashMap<Integer, Distribution>();
             }
-            return _map;
+            return map;
         }
 
         @Override
         public void record(int value) {
-            _total++;
+            total++;
             final Integer integer = value;
             Distribution distribution = map().get(integer);
             if (distribution == null) {
                 distribution = new Distribution();
                 map().put(integer, distribution);
             }
-            distribution._total++;
+            distribution.total++;
         }
         @Override
         public int getCount(Integer value) {
             final Distribution distribution = map().get(value);
             if (distribution != null) {
-                return distribution._total;
+                return distribution.total;
             }
             return 0;
         }
 
         @Override
         public Map<Integer, Integer> asMap() {
-            final Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+            final Map<Integer, Integer> result = new HashMap<Integer, Integer>();
             for (Map.Entry<Integer, Distribution> entry : map().entrySet()) {
-                map.put(entry.getKey(), entry.getValue()._total);
+                result.put(entry.getKey(), entry.getValue().total);
             }
-            return map;
+            return result;
         }
 
         @Override
         public void reset() {
             super.reset();
-            _map = null;
+            map = null;
         }
     }
 
@@ -409,12 +409,12 @@ public class ValueMetrics {
     }
 
     public static class HashedObjectDistribution<Value_Type> extends ObjectDistribution<Value_Type> {
-        private Map<Value_Type, Distribution> _map;
+        private Map<Value_Type, Distribution> map;
         private Map<Value_Type, Distribution> map() {
-            if (_map == null) {
-                _map = new IdentityHashMap<Value_Type, Distribution>();
+            if (map == null) {
+                map = new IdentityHashMap<Value_Type, Distribution>();
             }
-            return _map;
+            return map;
         }
 
         public HashedObjectDistribution() {
@@ -422,76 +422,76 @@ public class ValueMetrics {
 
         @Override
         public void record(Value_Type value) {
-            _total++;
+            total++;
             Distribution distribution = map().get(value);
             if (distribution == null) {
                 distribution = new Distribution();
                 map().put(value, distribution);
             }
-            distribution._total++;
+            distribution.total++;
         }
         @Override
         public int getCount(Value_Type value) {
             final Distribution distribution = map().get(value);
             if (distribution != null) {
-                return distribution._total;
+                return distribution.total;
             }
             return 0;
         }
 
         @Override
         public Map<Value_Type, Integer> asMap() {
-            final Map<Value_Type, Integer> map = new IdentityHashMap<Value_Type, Integer>();
+            final Map<Value_Type, Integer> result = new IdentityHashMap<Value_Type, Integer>();
             for (Map.Entry<Value_Type, Distribution> entry : map().entrySet()) {
-                map.put(entry.getKey(), entry.getValue()._total);
+                result.put(entry.getKey(), entry.getValue().total);
             }
-            return map;
+            return result;
         }
 
         @Override
         public void reset() {
             super.reset();
-            _map = null;
+            map = null;
         }
     }
 
     public static class FixedSetObjectDistribution<Value_Type> extends ObjectDistribution<Value_Type> {
 
-        private final Value_Type[] _set;
-        private final int[] _count;
-        private int _missed;
+        private final Value_Type[] set;
+        private final int[] count;
+        private int missed;
 
         public FixedSetObjectDistribution(Value_Type[] set) {
-            _set = set.clone();
-            _count = new int[set.length];
+            this.set = set.clone();
+            count = new int[set.length];
         }
 
         @Override
         public void record(Value_Type value) {
-            _total++;
-            for (int i = 0; i < _set.length; i++) {
-                if (_set[i] == value) {
-                    _count[i]++;
+            total++;
+            for (int i = 0; i < set.length; i++) {
+                if (set[i] == value) {
+                    count[i]++;
                     return;
                 }
             }
-            _missed++;
+            missed++;
         }
         @Override
         public int getCount(Value_Type value) {
-            for (int i = 0; i < _set.length; i++) {
-                if (_set[i] == value) {
-                    return _count[i];
+            for (int i = 0; i < set.length; i++) {
+                if (set[i] == value) {
+                    return count[i];
                 }
             }
-            return _missed > 0 ? -1 : 0;
+            return missed > 0 ? -1 : 0;
         }
 
         @Override
         public Map<Value_Type, Integer> asMap() {
             final Map<Value_Type, Integer> map = new IdentityHashMap<Value_Type, Integer>();
-            for (int i = 0; i != _count.length; ++i) {
-                map.put(_set[i], _count[i]);
+            for (int i = 0; i != count.length; ++i) {
+                map.put(set[i], count[i]);
             }
             return map;
         }
@@ -499,9 +499,9 @@ public class ValueMetrics {
         @Override
         public void reset() {
             super.reset();
-            _missed = 0;
-            Arrays.fill(_set, 0);
-            Arrays.fill(_count, 0);
+            missed = 0;
+            Arrays.fill(set, 0);
+            Arrays.fill(count, 0);
         }
     }
 
@@ -528,22 +528,22 @@ public class ValueMetrics {
     private static IntegerDistribution createIntegerDistribution(Approximation approx) throws ProgramError {
         if (approx instanceof FixedApproximation) {
             final FixedApproximation fixedApprox = (FixedApproximation) approx;
-            final int[] values = new int[fixedApprox._values.length];
+            final int[] values = new int[fixedApprox.values.length];
             for (int i = 0; i < values.length; i++) {
-                values[i] = (Integer) fixedApprox._values[i];
+                values[i] = (Integer) fixedApprox.values[i];
             }
             return new FixedSetIntegerDistribution(values);
         }
         if (approx instanceof IntegerRangeApproximation) {
             final IntegerRangeApproximation fixedApprox = (IntegerRangeApproximation) approx;
-            return new FixedRangeIntegerDistribution(fixedApprox._lowValue, fixedApprox._highValue);
+            return new FixedRangeIntegerDistribution(fixedApprox.lowValue, fixedApprox.highValue);
         }
         if (approx == EXACT) {
             return new HashedIntegerDistribution();
         }
         if (approx instanceof IntegerTraceApproximation) {
             final IntegerTraceApproximation traceApprox = (IntegerTraceApproximation) approx;
-            return new TraceIntegerDistribution(traceApprox._bufferSize);
+            return new TraceIntegerDistribution(traceApprox.bufferSize);
         }
         return new HashedIntegerDistribution();
     }
@@ -612,7 +612,7 @@ public class ValueMetrics {
     private static <Value_Type> ObjectDistribution<Value_Type> createObjectDistribution(Approximation approx) {
         if (approx instanceof FixedApproximation) {
             final FixedApproximation fixedApprox = (FixedApproximation) approx;
-            final Value_Type[] values = StaticLoophole.cast(fixedApprox._values);
+            final Value_Type[] values = StaticLoophole.cast(fixedApprox.values);
             return new FixedSetObjectDistribution<Value_Type>(values);
         }
         if (approx == EXACT) {
@@ -649,34 +649,34 @@ public class ValueMetrics {
 
     public static class ThreadsafeIntegerDistribution extends IntegerDistribution {
 
-        private final IntegerDistribution _distribution;
+        private final IntegerDistribution distribution;
 
         public ThreadsafeIntegerDistribution(IntegerDistribution distribution) {
-            _distribution = distribution;
+            this.distribution = distribution;
         }
         @Override
         public void record(int value) {
-            synchronized (_distribution) {
-                _distribution.record(value);
+            synchronized (distribution) {
+                distribution.record(value);
             }
         }
         @Override
         public int getCount(Integer value) {
-            synchronized (_distribution) {
-                return _distribution.getCount(value);
+            synchronized (distribution) {
+                return distribution.getCount(value);
             }
         }
 
         @Override
         public Map<Integer, Integer> asMap() {
-            synchronized (_distribution) {
-                return _distribution.asMap();
+            synchronized (distribution) {
+                return distribution.asMap();
             }
         }
         @Override
         public void reset() {
             super.reset();
-            _distribution.reset();
+            distribution.reset();
         }
 
 
@@ -684,28 +684,28 @@ public class ValueMetrics {
 
     private static class ThreadsafeObjectDistribution<Value_Type> extends ObjectDistribution<Value_Type> {
 
-        private final ObjectDistribution<Value_Type> _distribution;
+        private final ObjectDistribution<Value_Type> distribution;
 
         ThreadsafeObjectDistribution(ObjectDistribution<Value_Type> distribution) {
-            this._distribution = distribution;
+            this.distribution = distribution;
         }
         @Override
         public void record(Value_Type value) {
-            synchronized (_distribution) {
-                _distribution.record(value);
+            synchronized (distribution) {
+                distribution.record(value);
             }
         }
         @Override
         public int getCount(Value_Type value) {
-            synchronized (_distribution) {
-                return _distribution.getCount(value);
+            synchronized (distribution) {
+                return distribution.getCount(value);
             }
         }
 
         @Override
         public Map<Value_Type, Integer> asMap() {
-            synchronized (_distribution) {
-                return _distribution.asMap();
+            synchronized (distribution) {
+                return distribution.asMap();
             }
         }
     }

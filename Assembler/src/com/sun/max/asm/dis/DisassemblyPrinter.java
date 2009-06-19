@@ -32,10 +32,10 @@ import com.sun.max.lang.*;
  */
 public class DisassemblyPrinter {
 
-    protected final boolean _includeHeader;
+    protected final boolean includeHeader;
 
     public DisassemblyPrinter(boolean includeHeader) {
-        _includeHeader = includeHeader;
+        this.includeHeader = includeHeader;
     }
 
     public static final String SPACE = "   ";
@@ -51,7 +51,7 @@ public class DisassemblyPrinter {
         final PrintStream stream = outputStream instanceof PrintStream ? (PrintStream) outputStream : new PrintStream(outputStream);
         final int nOffsetChars = Integer.toString(disassembledObjects.last().startPosition()).length();
         final int nLabelChars = disassembler.addressMapper().maximumLabelNameLength();
-        if (_includeHeader) {
+        if (includeHeader) {
             printHeading(disassembler, stream, nOffsetChars, nLabelChars);
         }
         for (DisassembledObject disassembledObject : disassembledObjects) {

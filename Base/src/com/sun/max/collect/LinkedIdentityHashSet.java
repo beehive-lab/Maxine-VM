@@ -56,12 +56,12 @@ public class LinkedIdentityHashSet<Element_Type> extends IdentityHashSet<Element
         GrowableDeterministicSet.Static.addAll(this, elements);
     }
 
-    private final LinkedList<Element_Type> _order = new LinkedList<Element_Type>();
+    private final LinkedList<Element_Type> order = new LinkedList<Element_Type>();
 
     @Override
     public boolean add(Element_Type element) {
         if (!super.add(element)) {
-            _order.add(element);
+            order.add(element);
             return false;
         }
         return true;
@@ -72,25 +72,25 @@ public class LinkedIdentityHashSet<Element_Type> extends IdentityHashSet<Element
      */
     @Override
     public Iterator<Element_Type> iterator() {
-        assert _order.size() == length() : _order.size() + " != " + length();
-        return _order.iterator();
+        assert order.size() == length() : order.size() + " != " + length();
+        return order.iterator();
     }
 
     @Override
     public void remove(Element_Type element) {
-        _order.remove(element);
+        order.remove(element);
         super.remove(element);
     }
 
     @Override
     public void clear() {
-        _order.clear();
+        order.clear();
         super.clear();
     }
 
     @Override
     public Element_Type first() {
-        return _order.getFirst();
+        return order.getFirst();
     }
 
     public Element_Type getOne() {
@@ -98,18 +98,18 @@ public class LinkedIdentityHashSet<Element_Type> extends IdentityHashSet<Element
     }
 
     public Element_Type last() {
-        return _order.getLast();
+        return order.getLast();
     }
 
     @Override
     public boolean equals(Object other) {
         if (other instanceof LinkedIdentityHashSet) {
             final LinkedIdentityHashSet set = (LinkedIdentityHashSet) other;
-            if (_order.size() != set._order.size()) {
+            if (order.size() != set.order.size()) {
                 return false;
             }
-            final Iterator iterator = set._order.iterator();
-            for (Element_Type element : _order) {
+            final Iterator iterator = set.order.iterator();
+            for (Element_Type element : order) {
                 if (element != iterator.next()) {
                     return false;
                 }
@@ -121,7 +121,7 @@ public class LinkedIdentityHashSet<Element_Type> extends IdentityHashSet<Element
 
     @Override
     public int hashCode() {
-        return _order.hashCode();
+        return order.hashCode();
     }
 
     @Override
@@ -130,6 +130,6 @@ public class LinkedIdentityHashSet<Element_Type> extends IdentityHashSet<Element
     }
 
     public Collection<Element_Type> toCollection() {
-        return _order;
+        return order;
     }
 }

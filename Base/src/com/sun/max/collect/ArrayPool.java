@@ -29,23 +29,23 @@ import java.util.*;
  */
 public class ArrayPool<PoolObject_Type extends PoolObject> extends Pool<PoolObject_Type> {
 
-    protected final PoolObject_Type[] _objects;
+    protected final PoolObject_Type[] objects;
 
     public ArrayPool(PoolObject_Type... objects) {
-        _objects = objects;
+        this.objects = objects;
     }
 
     @Override
     public PoolObject_Type get(int serial) {
-        return _objects[serial];
+        return objects[serial];
     }
 
     @Override
     public int length() {
-        return _objects.length;
+        return objects.length;
     }
 
     public Iterator<PoolObject_Type> iterator() {
-        return Iterators.iterator(_objects);
+        return Iterators.iterator(objects);
     }
 }

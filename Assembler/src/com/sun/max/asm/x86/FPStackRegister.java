@@ -47,14 +47,14 @@ public enum FPStackRegister implements EnumerableArgument<FPStackRegister> {
         }
     };
 
-    private final int _value;
+    private final int value;
 
     private FPStackRegister(int value) {
-        _value = value;
+        this.value = value;
     }
 
     public int value() {
-        return _value;
+        return value;
     }
 
     public long asLong() {

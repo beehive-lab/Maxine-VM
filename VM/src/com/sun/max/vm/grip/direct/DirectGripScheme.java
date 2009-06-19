@@ -138,7 +138,7 @@ public final class DirectGripScheme extends AbstractVMScheme implements GripSche
 
     @INLINE
     public Grip unmarked(Grip grip) {
-        final Pointer pointer = toOrigin(grip).bitCleared(0);
+        final Pointer pointer = toOrigin(grip).bitClear(0);
         return UnsafeLoophole.wordToGrip(pointer);
     }
 

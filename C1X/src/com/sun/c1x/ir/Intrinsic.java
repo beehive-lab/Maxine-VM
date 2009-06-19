@@ -60,8 +60,8 @@ public class Intrinsic extends StateSplit {
         // Preserves state means that the intrinsic preserves register state across all cases,
         // including slow cases--even if it causes a trap. If so, it can still be a candidate
         // for load elimination and common subexpression elimination
-        setFlag(Flag.PreservesState, preservesState);
-        setFlag(Flag.CanTrap, canTrap);
+        initFlag(Flag.PreservesState, preservesState);
+        initFlag(Flag.CanTrap, canTrap);
         if (!canTrap) {
             // some intrinsics cannot trap, so unpin them
             unpin(PinReason.PinStateSplitConstructor);

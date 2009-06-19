@@ -22,6 +22,7 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.util.InstructionVisitor;
 import com.sun.c1x.util.InstructionClosure;
+import com.sun.c1x.util.Util;
 import com.sun.c1x.bytecode.Bytecodes;
 
 /**
@@ -106,7 +107,7 @@ public class IfOp extends Op2 {
 
     @Override
     public int valueNumber() {
-        return hash4(_cond.hashCode(), _x, _y, _trueVal, _falseVal);
+        return Util.hash4(_cond.hashCode(), _x, _y, _trueVal, _falseVal);
     }
 
     @Override

@@ -32,14 +32,14 @@ import java.util.*;
  */
 public class PoolBitSet<PoolObject_Type extends PoolObject> extends PoolSet<PoolObject_Type> {
 
-    private final BitSet _set;
+    private final BitSet set;
 
     /**
      * Creates an empty pool bit set.
      */
     public PoolBitSet(Pool<PoolObject_Type> pool) {
         super(pool);
-        _set = new BitSet(pool.length());
+        set = new BitSet(pool.length());
     }
 
     /**
@@ -47,7 +47,7 @@ public class PoolBitSet<PoolObject_Type extends PoolObject> extends PoolSet<Pool
      */
     protected PoolBitSet(PoolBitSet<PoolObject_Type> toBeCloned) {
         super(toBeCloned.pool());
-        _set = (BitSet) toBeCloned._set.clone();
+        set = (BitSet) toBeCloned.set.clone();
     }
 
     @Override
@@ -55,34 +55,34 @@ public class PoolBitSet<PoolObject_Type extends PoolObject> extends PoolSet<Pool
         if (value == null) {
             return false;
         }
-        assert _pool.get(value.serial()) == value;
-        return _set.get(value.serial());
+        assert pool.get(value.serial()) == value;
+        return set.get(value.serial());
     }
 
     @Override
     public int length() {
-        return _set.cardinality();
+        return set.cardinality();
     }
 
     @Override
     public void clear() {
-        _set.clear();
+        set.clear();
     }
 
     @Override
     public boolean isEmpty() {
-        return _set.isEmpty();
+        return set.isEmpty();
     }
 
     @Override
     public void add(PoolObject_Type value) {
-        assert _pool.get(value.serial()) == value;
-        _set.set(value.serial());
+        assert pool.get(value.serial()) == value;
+        set.set(value.serial());
     }
 
     @Override
     public PoolBitSet<PoolObject_Type> addAll() {
-        _set.set(0, _pool.length());
+        set.set(0, pool.length());
         return this;
     }
 
@@ -90,7 +90,7 @@ public class PoolBitSet<PoolObject_Type extends PoolObject> extends PoolSet<Pool
     public void or(PoolSet<PoolObject_Type> others) {
         if (others instanceof PoolBitSet) {
             final PoolBitSet otherPoolBitSet = (PoolBitSet) others;
-            _set.or(otherPoolBitSet._set);
+            set.or(otherPoolBitSet.set);
         } else {
             for (PoolObject_Type element : others) {
                 add(element);
@@ -100,31 +100,31 @@ public class PoolBitSet<PoolObject_Type extends PoolObject> extends PoolSet<Pool
 
     @Override
     public boolean remove(PoolObject_Type value) {
-        assert _pool.get(value.serial()) == value;
-        final boolean present = _set.get(value.serial());
-        _set.clear(value.serial());
+        assert pool.get(value.serial()) == value;
+        final boolean present = set.get(value.serial());
+        set.clear(value.serial());
         return present;
     }
 
     @Override
     public PoolObject_Type removeOne() {
-        final int index = _set.nextSetBit(0);
+        final int index = set.nextSetBit(0);
         if (index < 0) {
             throw new NoSuchElementException();
         }
-        _set.clear(index);
-        return _pool.get(index);
+        set.clear(index);
+        return pool.get(index);
     }
 
     @Override
     public void and(PoolSet<PoolObject_Type> others) {
         if (others instanceof PoolBitSet) {
             final PoolBitSet otherPoolBitSet = (PoolBitSet) others;
-            _set.and(otherPoolBitSet._set);
+            set.and(otherPoolBitSet.set);
         } else {
-            for (int i = _set.nextSetBit(0); i >= 0; i = _set.nextSetBit(i + 1)) {
-                if (!others.contains(_pool.get(i))) {
-                    _set.clear(i);
+            for (int i = set.nextSetBit(0); i >= 0; i = set.nextSetBit(i + 1)) {
+                if (!others.contains(pool.get(i))) {
+                    set.clear(i);
                 }
             }
         }
@@ -151,11 +151,11 @@ public class PoolBitSet<PoolObject_Type extends PoolObject> extends PoolSet<Pool
     public Iterator<PoolObject_Type> iterator() {
         return new Iterator<PoolObject_Type>() {
 
-            private int _currentBit = -1;
-            private int _nextSetBit = _set.nextSetBit(0);
+            private int currentBit = -1;
+            private int nextSetBit = set.nextSetBit(0);
 
             public boolean hasNext() {
-                return _nextSetBit != -1;
+                return nextSetBit != -1;
             }
 
             public PoolObject_Type next() {
@@ -163,17 +163,17 @@ public class PoolBitSet<PoolObject_Type extends PoolObject> extends PoolSet<Pool
                     throw new NoSuchElementException();
                 }
 
-                _currentBit = _nextSetBit;
-                _nextSetBit = _set.nextSetBit(_nextSetBit + 1);
-                return _pool.get(_currentBit);
+                currentBit = nextSetBit;
+                nextSetBit = set.nextSetBit(nextSetBit + 1);
+                return pool.get(currentBit);
             }
 
             public void remove() {
-                if (_currentBit == -1) {
+                if (currentBit == -1) {
                     throw new IllegalStateException();
                 }
-                _set.clear(_currentBit);
-                _currentBit = -1;
+                set.clear(currentBit);
+                currentBit = -1;
             }
         };
     }

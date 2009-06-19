@@ -30,17 +30,17 @@ import static com.sun.max.asm.gen.risc.sparc.SPARCFields.*;
 class MemoryAccess extends SPARCInstructionDescriptionCreator {
 
     private void create_A9() {
-        define("casa",  op(0x3), op3(0x3c), "[", _rs1, "] ", i(0), _immAsi, ",",    _rs2, _rd);
-        define("casa",  op(0x3), op3(0x3c), "[", _rs1, "] %asi, ", i(1), _res_12_5, _rs2, _rd);
-        define("casxa", op(0x3), op3(0x3e), "[", _rs1, "] ", i(0), _immAsi, ",",    _rs2, _rd);
-        define("casxa", op(0x3), op3(0x3e), "[", _rs1, "] %asi, ", i(1), _res_12_5, _rs2, _rd);
+        define("casa",  op(0x3), op3(0x3c), "[", rs1, "] ", i(0), immAsi, ",",    rs2, rd);
+        define("casa",  op(0x3), op3(0x3c), "[", rs1, "] %asi, ", i(1), res_12_5, rs2, rd);
+        define("casxa", op(0x3), op3(0x3e), "[", rs1, "] ", i(0), immAsi, ",",    rs2, rd);
+        define("casxa", op(0x3), op3(0x3e), "[", rs1, "] %asi, ", i(1), res_12_5, rs2, rd);
     }
 
     private void create_A20() {
-        final Object[] head = {op(0x2), _res_29_25, op3(0x3b), _rs1, " + "};
+        final Object[] head = {op(0x2), res_29_25, op3(0x3b), rs1, " + "};
 
-        define("flush", head, i(0), _res_12_5, _rs2);
-        define("flush", head, i(1), _simm13);
+        define("flush", head, i(0), res_12_5, rs2);
+        define("flush", head, i(1), simm13);
     }
 
     private void createLoad(String name, Object resultRegister, int op3Contents) {
@@ -50,74 +50,74 @@ class MemoryAccess extends SPARCInstructionDescriptionCreator {
             internalName += "_fsr";
             resultPrefix = "%fsr";
         }
-        final Object[] head = {op(0x3), "[", _rs1, " + ", op3(op3Contents)};
-        define(internalName, head, i(0), _res_12_5,  _rs2, "], ", resultPrefix, resultRegister).setExternalName(name);
-        define(internalName, head, i(1), _simm13, "], ", resultPrefix, resultRegister).setExternalName(name);
+        final Object[] head = {op(0x3), "[", rs1, " + ", op3(op3Contents)};
+        define(internalName, head, i(0), res_12_5,  rs2, "], ", resultPrefix, resultRegister).setExternalName(name);
+        define(internalName, head, i(1), simm13, "], ", resultPrefix, resultRegister).setExternalName(name);
     }
 
     private void create_A25() {
-        createLoad("ld", _sfrd, 0x20);
-        createLoad("ldd", _dfrd, 0x23);
-        createLoad("ldq", _qfrd, 0x22);
+        createLoad("ld", sfrd, 0x20);
+        createLoad("ldd", dfrd, 0x23);
+        createLoad("ldq", qfrd, 0x22);
         createLoad("ldx", rd(1), 0x21); // ldxfsr
         if (assembly().generatingDeprecatedInstructions()) {
             createLoad("ld", rd(0), 0x21); // ldfsr
-            createLoad("swap", _rd, 0xf);
+            createLoad("swap", rd, 0xf);
         }
     }
 
     private void createLoadA(String name, Object resultRegister, int op3Contents) {
-        final Object[] head = {op(0x3), "[", _rs1, " + ", op3(op3Contents)};
-        define(name, head, i(0), _rs2, "] ", _immAsi, resultRegister);
-        define(name, head, i(1), _simm13, "] %asi, ", resultRegister);
+        final Object[] head = {op(0x3), "[", rs1, " + ", op3(op3Contents)};
+        define(name, head, i(0), rs2, "] ", immAsi, resultRegister);
+        define(name, head, i(1), simm13, "] %asi, ", resultRegister);
     }
 
     private void create_A26() {
-        createLoadA("lda", _sfrd, 0x30);
-        createLoadA("ldda", _dfrd, 0x33);
-        createLoadA("ldqa", _qfrd, 0x32);
+        createLoadA("lda", sfrd, 0x30);
+        createLoadA("ldda", dfrd, 0x33);
+        createLoadA("ldqa", qfrd, 0x32);
     }
 
     private void create_A27() {
-        createLoad("ldsb", _rd, 0x9);
-        createLoad("ldsh", _rd, 0xa);
-        createLoad("ldsw", _rd, 0x8);
-        createLoad("ldub", _rd, 0x1);
-        createLoad("lduh", _rd, 0x2);
-        createLoad("lduw", _rd, 0x0);
-        createLoad("ldx", _rd, 0xb);
+        createLoad("ldsb", rd, 0x9);
+        createLoad("ldsh", rd, 0xa);
+        createLoad("ldsw", rd, 0x8);
+        createLoad("ldub", rd, 0x1);
+        createLoad("lduh", rd, 0x2);
+        createLoad("lduw", rd, 0x0);
+        createLoad("ldx", rd, 0xb);
         if (assembly().generatingDeprecatedInstructions()) {
-            createLoad("ldd", _rd_even, 0x3);
+            createLoad("ldd", rd_even, 0x3);
         }
     }
 
     private void create_A28() {
-        createLoadA("ldsba", _rd, 0x19);
-        createLoadA("ldsha", _rd, 0x1a);
-        createLoadA("ldswa", _rd, 0x18);
-        createLoadA("lduba", _rd, 0x11);
-        createLoadA("lduha", _rd, 0x12);
-        createLoadA("lduwa", _rd, 0x10);
-        createLoadA("ldxa", _rd, 0x1b);
+        createLoadA("ldsba", rd, 0x19);
+        createLoadA("ldsha", rd, 0x1a);
+        createLoadA("ldswa", rd, 0x18);
+        createLoadA("lduba", rd, 0x11);
+        createLoadA("lduha", rd, 0x12);
+        createLoadA("lduwa", rd, 0x10);
+        createLoadA("ldxa", rd, 0x1b);
 
         if (assembly().generatingDeprecatedInstructions()) {
-            createLoadA("ldda", _rd_even, 0x13);
+            createLoadA("ldda", rd_even, 0x13);
         }
     }
 
     private void create_A29() {
-        createLoad("ldstub", _rd, 0xd);
+        createLoad("ldstub", rd, 0xd);
     }
 
     private void create_A30() {
-        createLoadA("ldstuba", _rd, 0x1d);
+        createLoadA("ldstuba", rd, 0x1d);
     }
 
     private void create_A41() {
-        define("prefetch", op(0x3), op3(0x2d), "[", _rs1, " + ", i(0), _res_12_5, _rs2, "], ", _fcn);
-        define("prefetch", op(0x3), op3(0x2d), "[", _rs1, " + ", i(1), _simm13, "], ", _fcn);
-        define("prefetcha", op(0x3), op3(0x3d), "[", _rs1, " + ", i(0), _rs2, "] ", _immAsi, _fcn);
-        define("prefetcha", op(0x3), op3(0x3d), "[", _rs1, " + ", i(1), _simm13, "] %asi, ", _fcn);
+        define("prefetch", op(0x3), op3(0x2d), "[", rs1, " + ", i(0), res_12_5, rs2, "], ", fcn);
+        define("prefetch", op(0x3), op3(0x2d), "[", rs1, " + ", i(1), simm13, "], ", fcn);
+        define("prefetcha", op(0x3), op3(0x3d), "[", rs1, " + ", i(0), rs2, "] ", immAsi, fcn);
+        define("prefetcha", op(0x3), op3(0x3d), "[", rs1, " + ", i(1), simm13, "] %asi, ", fcn);
     }
 
     private void createStore(String name, Object fromRegister, int op3Contents) {
@@ -127,15 +127,15 @@ class MemoryAccess extends SPARCInstructionDescriptionCreator {
             internalName += "_fsr";
             openBracket = " %fsr, [";
         }
-        final Object[] head = {op(0x3), op3(op3Contents), fromRegister, openBracket, _rs1, " + "};
-        define(internalName, head, i(0), _res_12_5, _rs2, "]").setExternalName(name);
-        define(internalName, head, i(1), _simm13, "]").setExternalName(name);
+        final Object[] head = {op(0x3), op3(op3Contents), fromRegister, openBracket, rs1, " + "};
+        define(internalName, head, i(0), res_12_5, rs2, "]").setExternalName(name);
+        define(internalName, head, i(1), simm13, "]").setExternalName(name);
     }
 
     private void create_A51() {
-        createStore("st", _sfrd, 0x24);
-        createStore("std", _dfrd, 0x27);
-        createStore("stq", _qfrd, 0x26);
+        createStore("st", sfrd, 0x24);
+        createStore("std", dfrd, 0x27);
+        createStore("stq", qfrd, 0x26);
         createStore("stx", rd(1), 0x25);
         if (assembly().generatingDeprecatedInstructions()) {
             createStore("st", rd(0), 0x25);
@@ -143,36 +143,36 @@ class MemoryAccess extends SPARCInstructionDescriptionCreator {
     }
 
     private void createStoreA(String name, Object fromRegister, int op3Contents) {
-        final Object[] head = {op(0x3), op3(op3Contents), fromRegister, ", [", _rs1, " + "};
-        define(name, head, i(0), _rs2, "]", _immAsi);
-        define(name, head, i(1), _simm13, "] %asi");
+        final Object[] head = {op(0x3), op3(op3Contents), fromRegister, ", [", rs1, " + "};
+        define(name, head, i(0), rs2, "]", immAsi);
+        define(name, head, i(1), simm13, "] %asi");
     }
 
     private void create_A52() {
-        createStoreA("sta", _sfrd, 0x34);
-        createStoreA("stda", _dfrd, 0x37);
-        createStoreA("stqa", _qfrd, 0x36);
+        createStoreA("sta", sfrd, 0x34);
+        createStoreA("stda", dfrd, 0x37);
+        createStoreA("stqa", qfrd, 0x36);
     }
 
     private void create_A53() {
-        createStore("stb", _rd, 0x5);
-        createStore("sth", _rd, 0x6);
-        createStore("stw", _rd, 0x4);
-        createStore("stx", _rd, 0xe);
+        createStore("stb", rd, 0x5);
+        createStore("sth", rd, 0x6);
+        createStore("stw", rd, 0x4);
+        createStore("stx", rd, 0xe);
 
         if (assembly().generatingDeprecatedInstructions()) {
-            createStore("std", _rd_even, 0x7);
+            createStore("std", rd_even, 0x7);
         }
     }
 
     private void create_A54() {
-        createStoreA("stba", _rd, 0x15);
-        createStoreA("stha", _rd, 0x16);
-        createStoreA("stwa", _rd, 0x14);
-        createStoreA("stxa", _rd, 0x1e);
+        createStoreA("stba", rd, 0x15);
+        createStoreA("stha", rd, 0x16);
+        createStoreA("stwa", rd, 0x14);
+        createStoreA("stxa", rd, 0x1e);
 
         if (assembly().generatingDeprecatedInstructions()) {
-            createStoreA("stda", _rd_even, 0x17);
+            createStoreA("stda", rd_even, 0x17);
         }
     }
 

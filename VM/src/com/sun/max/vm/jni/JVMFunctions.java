@@ -72,7 +72,7 @@ public class JVMFunctions {
         if (classpathFile == null) {
             return null;
         }
-        return classpathFile._classpathEntry.path();
+        return classpathFile.classpathEntry.path();
     }
 
     public static String[] GetSystemPackages() {
