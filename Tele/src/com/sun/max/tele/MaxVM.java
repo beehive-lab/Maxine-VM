@@ -50,6 +50,7 @@ import com.sun.max.vm.value.*;
  * This could in the future be merged with the JDWP interface.
  *
  * @author Michael Van De Vanter
+ * @author Hannes Payer
  */
 public interface MaxVM {
 
@@ -661,6 +662,30 @@ public interface MaxVM {
      * @return the watchpoint whose memory region includes the address, null if none.
      */
     MaxWatchpoint findWatchpoint(Address address);
+
+    /**
+     * Update caches of all registered watchpoints.
+     * @return whether update succeeded
+     */
+    void updateWatchpointCaches();
+
+    /**
+     * Find watchpoint which triggered a signal.
+     * @return watchpoint which triggered a signal
+     */
+    MaxWatchpoint findTriggeredWatchpoint();
+
+    /**
+     * Returns the address which triggered the watchpoint.
+     * @return
+     */
+    Address getTriggeredWatchpointAddress();
+
+    /**
+     * Returns the code of the triggered watchpoint.
+     * @return
+     */
+    int getTriggeredWatchpointCode();
 
     /**
      * All existing memory watchpoints set in the VM.

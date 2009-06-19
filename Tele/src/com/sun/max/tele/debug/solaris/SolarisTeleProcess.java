@@ -36,6 +36,7 @@ import com.sun.max.vm.prototype.*;
  * @author Bernd Mathiske
  * @author Aritra Bandyopadhyay
  * @author Doug Simon
+ * @author Hannes Payer
  */
 public final class SolarisTeleProcess extends TeleProcess {
 

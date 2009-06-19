@@ -31,6 +31,7 @@ import com.sun.max.unsafe.*;
 /**
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
+ * @author Hannes Payer
  */
 public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint {
 
@@ -47,14 +48,16 @@ public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint
     private boolean exec = false;
     private boolean after = true;
 
+    private byte[] teleWatchpointCache;
+
     public TeleWatchpoint(Factory factory, Address address, Size size) {
         super(address, size);
         _factory = factory;
+        teleWatchpointCache = new byte[size.toInt()];
     }
 
     public TeleWatchpoint(Factory factory, Address address, Size size, boolean after, boolean read, boolean write, boolean exec) {
-        super(address, size);
-        _factory = factory;
+        this(factory, address, size);
         this.after = after;
         this.read = read;
         this.write = write;
@@ -101,6 +104,9 @@ public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint
         return  _factory.removeWatchpoint(this);
     }
 
+    protected void updateTeleWatchpointCache(TeleProcess teleProcess) {
+        teleWatchpointCache = teleProcess.dataAccess().readFully(_start, _size.toInt());
+    }
 
     @Override
     public String toString() {
@@ -127,6 +133,9 @@ public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint
         // A thread-safe, immutable collection of the current watchpoint list.
         // This list will be read many, many more times than it will change.
         private volatile IterableWithLength<MaxWatchpoint> _watchpointsCache;
+
+        private Address triggeredWatchpointAddress;
+        private int triggeredWatchpointCode;
 
         public Factory(TeleProcess teleProcess) {
             _teleProcess = teleProcess;
@@ -198,7 +207,7 @@ public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint
          * @param teleWatchpoint
          * @return true if reset was successful
          */
-        public synchronized boolean resetWatchpoint(TeleWatchpoint teleWatchpoint) {
+        private synchronized boolean resetWatchpoint(TeleWatchpoint teleWatchpoint) {
             if (_teleProcess.deactivateWatchpoint(teleWatchpoint)) {
                 if (!_teleProcess.activateWatchpoint(teleWatchpoint)) {
                     Trace.line(TRACE_VALUE, "Failed to reset and install watchpoint at " + teleWatchpoint.start().toHexString());
@@ -240,6 +249,42 @@ public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint
             }
             Trace.line(TRACE_VALUE, "Failed to remove watchpoint at start=" + teleWatchpoint.start().toHexString() + ", size=" + teleWatchpoint.size().toString());
             return false;
+        }
+
+        /**
+         * Updates the watchpoints of all caches.
+         */
+        public void updateWatchpointCaches() {
+            for (TeleWatchpoint teleWatchpoint : _watchpoints) {
+                teleWatchpoint.updateTeleWatchpointCache(_teleProcess);
+            }
+        }
+
+        /**
+         * Finds the watchpoint which triggered a signal.
+         * @return triggered watchpoint
+         */
+        public MaxWatchpoint findTriggeredWatchpoint() {
+            triggeredWatchpointAddress = Address.fromLong(_teleProcess.readWatchpointAddress());
+            triggeredWatchpointCode = _teleProcess.readWatchpointAccessCode();
+
+            return findWatchpoint(triggeredWatchpointAddress);
+        }
+
+        /**
+         * Returns the address which triggered the watchpoint.
+         * @return
+         */
+        public Address getTriggeredWatchpointAddress() {
+            return triggeredWatchpointAddress;
+        }
+
+        /**
+         * Returns the code of the triggered watchpoint.
+         * @return
+         */
+        public int getTriggeredWatchpointCode() {
+            return triggeredWatchpointCode;
         }
 
         /**
@@ -301,5 +346,4 @@ public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint
         this.write = write;
         return _factory.resetWatchpoint(this);
     }
-
 }

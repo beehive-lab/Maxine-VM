@@ -20,6 +20,7 @@
  */
 /*
  * @author Bernd Mathiske
+ * @author Hannes Payer
  */
 
 #include <string.h>

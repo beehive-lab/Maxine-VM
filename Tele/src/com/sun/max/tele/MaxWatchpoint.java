@@ -23,11 +23,11 @@ package com.sun.max.tele;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 
-
 /**
  * Access to a memory watchpoint in the Maxine VM.
  *
  * @author Michael Van De Vanter
+ * @author Hannes Payer
  */
 public interface MaxWatchpoint extends MemoryRegion {
 
@@ -54,14 +54,14 @@ public interface MaxWatchpoint extends MemoryRegion {
     /**
      * Set write flag for this watchpoint.
      * @param write
-     * @return whether set succeded.
+     * @return whether set succeeded.
      */
     boolean setWrite(boolean write);
 
     /**
      * Set execute flag for this watchpoint.
      * @param exec
-     * @return wheter set succeded.
+     * @return whether set succeeded.
      */
     boolean setExec(boolean exec);
 }
