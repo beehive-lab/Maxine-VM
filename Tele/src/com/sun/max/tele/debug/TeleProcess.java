@@ -46,6 +46,7 @@ import com.sun.max.vm.thread.*;
  * @author Aritra Bandyopadhyay
  * @author Doug Simon
  * @author Michael Van De Vanter
+ * @author Hannes Payer
  */
 public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO {
 

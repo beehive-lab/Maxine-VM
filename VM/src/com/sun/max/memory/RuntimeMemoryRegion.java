@@ -26,7 +26,7 @@ import com.sun.max.unsafe.*;
 public class RuntimeMemoryRegion implements MemoryRegion {
 
     @INSPECTED
-    private Address _start;
+    protected Address _start;
 
     @INSPECTED
     protected Address _mark;
@@ -41,7 +41,7 @@ public class RuntimeMemoryRegion implements MemoryRegion {
     }
 
     @INSPECTED
-    private Size _size;
+    protected Size _size;
 
     public Size size() {
         return _size;
