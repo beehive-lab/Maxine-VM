@@ -393,8 +393,8 @@ public abstract class CirStrengthReducible extends CirSpecialBuiltin {
                 if (shift == 0) {
                     return new CirCall(normalContinuation, dividendValue);
                 }
-                final Builtin builtin = (Word.width() == WordWidth.BITS_64) ? JavaBuiltin.LongUnsignedShiftedRight.BUILTIN : JavaBuiltin.IntUnsignedShiftedRight.BUILTIN;
-                return new CirCall(CirBuiltin.get(builtin), dividendValue, new CirConstant(IntValue.from(shift)), normalContinuation, exceptionContinuation);
+                final Builtin bltin = (Word.width() == WordWidth.BITS_64) ? JavaBuiltin.LongUnsignedShiftedRight.BUILTIN : JavaBuiltin.IntUnsignedShiftedRight.BUILTIN;
+                return new CirCall(CirBuiltin.get(bltin), dividendValue, new CirConstant(IntValue.from(shift)), normalContinuation, exceptionContinuation);
             }
             assert dividendValue.value().isZero();
             return new CirCall(normalContinuation, dividendValue);
@@ -436,8 +436,8 @@ public abstract class CirStrengthReducible extends CirSpecialBuiltin {
                     return new CirCall(normalContinuation, dividendValue);
                 }
                 final int shift = Integer.numberOfTrailingZeros(divisor);
-                final Builtin builtin = (Word.width() == WordWidth.BITS_64) ? JavaBuiltin.LongUnsignedShiftedRight.BUILTIN : JavaBuiltin.IntUnsignedShiftedRight.BUILTIN;
-                return new CirCall(CirBuiltin.get(builtin), dividendValue, new CirConstant(IntValue.from(shift)), normalContinuation, exceptionContinuation);
+                final Builtin bltin = (Word.width() == WordWidth.BITS_64) ? JavaBuiltin.LongUnsignedShiftedRight.BUILTIN : JavaBuiltin.IntUnsignedShiftedRight.BUILTIN;
+                return new CirCall(CirBuiltin.get(bltin), dividendValue, new CirConstant(IntValue.from(shift)), normalContinuation, exceptionContinuation);
             }
             assert dividendValue.value().isZero();
             return new CirCall(normalContinuation, dividendValue);

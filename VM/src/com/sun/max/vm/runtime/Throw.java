@@ -135,7 +135,6 @@ public final class Throw {
      * @param throwable throwable the object to be passed to the exception handler. If this value is null, then a
      *            {@link NullPointerException} is instantiated and raised instead.
      */
-    // Checkstyle: stop parameter assignment check
     public static void raise(Throwable throwable) {
         if (throwable == null) {
             throwable = new NullPointerException();
@@ -158,7 +157,6 @@ public final class Throw {
         Safepoint.disable();
         raise(throwable, VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), VMRegister.getInstructionPointer());
     }
-    // Checkstyle: resume parameter assignment check
 
     public static void stackDumpWithException(Object throwable) {
         stackDump("Throwing " + throwable + ";", VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());

@@ -30,16 +30,16 @@ import com.sun.max.vm.classfile.*;
  */
 public class MillClassLoader extends ClassLoader {
 
-    private final byte[] _classfileBytes;
+    private final byte[] classfileBytes;
 
     MillClassLoader(byte[] classfileBytes) {
-        _classfileBytes = classfileBytes.clone();
+        this.classfileBytes = classfileBytes.clone();
     }
 
     @Override
     public Class<?> findClass(String name) {
-        final Class result = defineClass(name, _classfileBytes, 0, _classfileBytes.length);
-        ClassfileReader.defineClassActor(name, this, _classfileBytes, null, null);
+        final Class result = defineClass(name, classfileBytes, 0, classfileBytes.length);
+        ClassfileReader.defineClassActor(name, this, classfileBytes, null, null);
         return result;
     }
 

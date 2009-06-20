@@ -78,20 +78,20 @@ public abstract class ReferenceMapInterpreter {
         return new StandardReferenceMapInterpreter();
     }
 
-    private ConstantPool _constantPool;
-    private CodeAttribute _codeAttribute;
-    private byte[] _code;
-    private int _bytecodePosition;
-    private int _sp;
+    private ConstantPool constantPool;
+    private CodeAttribute codeAttribute;
+    private byte[] code;
+    private int bytecodePosition;
+    private int sp;
 
-    private ReferenceMapInterpreterContext _context;
+    private ReferenceMapInterpreterContext context;
 
     protected int maxStack() {
-        return _codeAttribute.maxStack();
+        return codeAttribute.maxStack();
     }
 
     protected int maxLocals() {
-        return _codeAttribute.maxLocals();
+        return codeAttribute.maxLocals();
     }
 
     /**
@@ -134,7 +134,7 @@ public abstract class ReferenceMapInterpreter {
     }
 
     private boolean merge(int targetBlockIndex) {
-        return mergeInto(targetBlockIndex, _sp);
+        return mergeInto(targetBlockIndex, sp);
     }
 
     private boolean merge(int targetBlock1Index, int targetBlock2Index) {
@@ -142,7 +142,7 @@ public abstract class ReferenceMapInterpreter {
     }
 
     // Keeping this info around for debugging:
-    private ClassMethodActor _classMethodActor;
+    private ClassMethodActor classMethodActor;
 
     /**
      * Performs any initialization necessary before interpretation begins.
@@ -152,14 +152,14 @@ public abstract class ReferenceMapInterpreter {
      * call {@code super.resetInterpreter(context)}.
      */
     protected void resetInterpreter(ReferenceMapInterpreterContext context) {
-        _classMethodActor = context.classMethodActor();
-        final CodeAttribute codeAttribute = _classMethodActor.rawCodeAttribute();
-        _constantPool = codeAttribute.constantPool();
-        _codeAttribute = codeAttribute;
-        _code = codeAttribute.code();
-        _context = context;
-        _sp = 0;
-        _bytecodePosition = -1;
+        this.classMethodActor = context.classMethodActor();
+        final CodeAttribute codeAttribute = classMethodActor.rawCodeAttribute();
+        this.constantPool = codeAttribute.constantPool();
+        this.codeAttribute = codeAttribute;
+        this.code = codeAttribute.code();
+        this.context = context;
+        this.sp = 0;
+        this.bytecodePosition = -1;
     }
 
     /**
@@ -174,7 +174,7 @@ public abstract class ReferenceMapInterpreter {
      */
     class FramesInitialization implements FrameModel, VerificationRegistry {
 
-        int _activeLocals;
+        int activeLocals;
 
         // Implementation of ParameterVisitor
 
@@ -186,45 +186,45 @@ public abstract class ReferenceMapInterpreter {
                 final TypeDescriptor parameter = signature.parameterDescriptorAt(i);
                 final Kind parameterKind = parameter.toKind();
                 if (parameterKind == Kind.REFERENCE) {
-                    updateLocal(_activeLocals, true);
+                    updateLocal(activeLocals, true);
                 }
-                _activeLocals += parameterKind.isCategory1() ? 1 : 2;
+                activeLocals += parameterKind.isCategory1() ? 1 : 2;
             }
         }
 
         // Implementation of FrameModel
 
         public int activeLocals() {
-            return _activeLocals;
+            return activeLocals;
         }
 
         public void chopLocals(int numberOfLocals) {
-            _activeLocals -= numberOfLocals;
+            activeLocals -= numberOfLocals;
             adjustCurrentFrame();
         }
 
         public void clear() {
-            _activeLocals = 0;
-            _sp = 0;
+            activeLocals = 0;
+            sp = 0;
             adjustCurrentFrame();
         }
 
         public void clearStack() {
-            _sp = 0;
+            sp = 0;
             adjustCurrentFrame();
         }
 
         private void adjustCurrentFrame() {
-            for (int sp = _sp; sp < maxStack(); ++sp) {
+            for (int sp = ReferenceMapInterpreter.this.sp; sp < maxStack(); ++sp) {
                 updateStack(sp, false);
             }
-            for (int local = _activeLocals; local < maxLocals(); ++local) {
+            for (int local = activeLocals; local < maxLocals(); ++local) {
                 updateLocal(local, false);
             }
         }
 
         private boolean isReference(VerificationType type) {
-            return ReferenceMapInterpreter.isReference(_context.classMethodActor().holder().kind() == Kind.WORD, _code, _constantPool, type);
+            return ReferenceMapInterpreter.isReference(context.classMethodActor().holder().kind() == Kind.WORD, code, constantPool, type);
         }
 
         public void push(VerificationType type) {
@@ -238,10 +238,10 @@ public abstract class ReferenceMapInterpreter {
         public void store(VerificationType type, int index) {
             if (type.isCategory2()) {
                 storeCategory2(index);
-                _activeLocals = Math.max(_activeLocals, index + 2);
+                activeLocals = Math.max(activeLocals, index + 2);
             } else {
                 storeCategory1(index, isReference(type));
-                _activeLocals = Math.max(_activeLocals, index + 1);
+                activeLocals = Math.max(activeLocals, index + 1);
             }
         }
 
@@ -252,7 +252,7 @@ public abstract class ReferenceMapInterpreter {
         }
 
         public ConstantPool constantPool() {
-            return _constantPool;
+            return constantPool;
         }
 
         public ObjectType getObjectType(TypeDescriptor typeDescriptor) {
@@ -303,7 +303,7 @@ public abstract class ReferenceMapInterpreter {
 
         merge(0);
 
-        final StackMapTable stackMapTable = _codeAttribute.stackMapTable();
+        final StackMapTable stackMapTable = codeAttribute.stackMapTable();
 
         if (stackMapTable != null) {
             final StackMapFrame[] stackMapFrames = stackMapTable.getFrames(framesInitialization);
@@ -324,7 +324,7 @@ public abstract class ReferenceMapInterpreter {
         }
         final Object frames = frames();
         assert frames != null;
-        _context = null;
+        this.context = null;
         return frames;
     }
 
@@ -345,7 +345,7 @@ public abstract class ReferenceMapInterpreter {
      * @param context the interpretation context for a method
      */
     public void finalizeFrames(ReferenceMapInterpreterContext context) {
-        assert _context == null;
+        assert this.context == null;
         resetInterpreter(context);
 
         final int numberOfBlocks = context.numberOfBlocks();
@@ -371,7 +371,7 @@ public abstract class ReferenceMapInterpreter {
             }
             ++iterations;
         }
-        _context = null;
+        this.context = null;
     }
 
     /**
@@ -388,7 +388,7 @@ public abstract class ReferenceMapInterpreter {
      *            in the abstract interpretation state
      */
     public void interpretReferenceSlots(ReferenceMapInterpreterContext context, ReferenceSlotVisitor visitor, BytecodePositionIterator bytecodePositionIterator) {
-        assert _context == null;
+        assert this.context == null;
         resetInterpreter(context);
 
         bytecodePositionIterator.reset();
@@ -398,14 +398,14 @@ public abstract class ReferenceMapInterpreter {
             interpretBlock(blockIndex, bytecodePositionIterator, visitor);
         }
 
-        _context = null;
+        this.context = null;
     }
 
     abstract boolean isLocalRef(int index);
     abstract boolean isStackRef(int index);
 
     void popAndStoreRefOrWord(int index) {
-        final boolean isRef = isStackRef(--_sp);
+        final boolean isRef = isStackRef(--sp);
         storeCategory1(index, isRef);
     }
 
@@ -427,29 +427,29 @@ public abstract class ReferenceMapInterpreter {
     }
 
     void loadAndPushRefOrWord(int index) {
-        assert _sp < maxStack();
-        updateStack(_sp++, isLocalRef(index));
+        assert sp < maxStack();
+        updateStack(sp++, isLocalRef(index));
     }
 
     void pushRef() {
-        assert _sp < maxStack();
-        updateStack(_sp++, true);
+        assert sp < maxStack();
+        updateStack(sp++, true);
     }
 
     void pushCategory1() {
-        assert _sp < maxStack();
-        updateStack(_sp++, false);
+        assert sp < maxStack();
+        updateStack(sp++, false);
     }
 
     void pushCategory1(boolean isRef) {
-        assert _sp < maxStack();
-        updateStack(_sp++, isRef);
+        assert sp < maxStack();
+        updateStack(sp++, isRef);
     }
 
     void pushCategory2() {
-        assert _sp < maxStack() - 1;
-        updateStack(_sp++, false);
-        updateStack(_sp++, false);
+        assert sp < maxStack() - 1;
+        updateStack(sp++, false);
+        updateStack(sp++, false);
     }
 
     void push(Kind kind) {
@@ -467,17 +467,17 @@ public abstract class ReferenceMapInterpreter {
     }
 
     boolean topIsRef() {
-        return isStackRef(_sp - 1);
+        return isStackRef(sp - 1);
     }
 
     void popCategory2() {
-        assert _sp > 1;
-        _sp = _sp - 2;
+        assert sp > 1;
+        sp = sp - 2;
     }
 
     boolean popCategory1() {
-        assert _sp > 0;
-        return isStackRef(--_sp);
+        assert sp > 0;
+        return isStackRef(--sp);
     }
 
     boolean pop(Kind kind) {
@@ -492,22 +492,22 @@ public abstract class ReferenceMapInterpreter {
     abstract void updateLocal(int index, boolean isRef);
 
     private void skip1() {
-        _bytecodePosition++;
+        bytecodePosition++;
     }
 
     private void skip2() {
-        _bytecodePosition += 2;
+        bytecodePosition += 2;
     }
 
     private void alignBytecodePosition() {
-        final int remainder = _bytecodePosition % 4;
+        final int remainder = bytecodePosition % 4;
         if (remainder != 0) {
-            _bytecodePosition += 4 - remainder;
+            bytecodePosition += 4 - remainder;
         }
     }
 
     private byte readByte() {
-        return _code[_bytecodePosition++];
+        return code[bytecodePosition++];
     }
 
     private int readUnsigned1() {
@@ -542,7 +542,7 @@ public abstract class ReferenceMapInterpreter {
                 }
             }
         }
-        for (int i = 0; i < _sp; i++) {
+        for (int i = 0; i < sp; i++) {
             if (isStackRef(i)) {
                 visitor.visitReferenceOnOperandStack(i, parametersPopped);
             }
@@ -550,11 +550,11 @@ public abstract class ReferenceMapInterpreter {
     }
 
     private int blockIndexFor(int bytecodePosition) {
-        return _context.blockIndexFor(bytecodePosition);
+        return context.blockIndexFor(bytecodePosition);
     }
 
     private int blockStartBytecodePosition(int blockIndex) {
-        return _context.blockStartBytecodePosition(blockIndex);
+        return context.blockStartBytecodePosition(blockIndex);
     }
 
     /**
@@ -586,7 +586,7 @@ public abstract class ReferenceMapInterpreter {
 
     private boolean mergeWithExceptionHandlers(int bytecodePosition) {
         boolean changed = false;
-        for (ExceptionHandler handler = _context.exceptionHandlersActiveAt(bytecodePosition); handler != null; handler = handler.next()) {
+        for (ExceptionHandler handler = context.exceptionHandlersActiveAt(bytecodePosition); handler != null; handler = handler.next()) {
             changed = mergeInto(blockIndexFor(handler.position()), -1) || changed;
         }
         return changed;
@@ -608,8 +608,8 @@ public abstract class ReferenceMapInterpreter {
             } catch (Throwable e) {
                 System.err.println("Re-interpreting block after error: ");
                 e.printStackTrace();
-                System.err.println(_context);
-                CodeAttributePrinter.print(System.err, _codeAttribute);
+                System.err.println(context);
+                CodeAttributePrinter.print(System.err, codeAttribute);
                 return interpretBlock0(blockIndex, sp, bytecodePositionIterator, visitor, true);
             }
         }
@@ -618,7 +618,7 @@ public abstract class ReferenceMapInterpreter {
 
     @PROTOTYPE_ONLY
     public String[] framesToStrings(ReferenceMapInterpreterContext context) {
-        assert _context == null;
+        assert this.context == null;
         resetInterpreter(context);
 
         final int numberOfBlocks = context.numberOfBlocks();
@@ -627,7 +627,7 @@ public abstract class ReferenceMapInterpreter {
             resetAtBlock(blockIndex);
             frameStrings[blockIndex] = currentFrameToString();
         }
-        _context = null;
+        this.context = null;
         return frameStrings;
     }
 
@@ -639,8 +639,8 @@ public abstract class ReferenceMapInterpreter {
                 sb.append(i).append(" ");
             }
         }
-        sb.append("}, stack[").append(_sp).append("] = { ");
-        for (int i = 0; i != _sp; ++i) {
+        sb.append("}, stack[").append(sp).append("] = { ");
+        for (int i = 0; i != sp; ++i) {
             if (isStackRef(i)) {
                 sb.append(i).append(" ");
             }
@@ -651,8 +651,8 @@ public abstract class ReferenceMapInterpreter {
     @INLINE
     private boolean interpretBlock0(int blockIndex, int sp, BytecodePositionIterator bytecodePositionIterator, ReferenceSlotVisitor visitor, boolean trace) {
         assert sp >= 0;
-        _bytecodePosition = blockStartBytecodePosition(blockIndex);
-        _sp = sp;
+        bytecodePosition = blockStartBytecodePosition(blockIndex);
+        this.sp = sp;
         final int endPosition = blockStartBytecodePosition(blockIndex + 1);
         Bytecode opcode = null;
         int opcodeBytecodePosition;
@@ -660,8 +660,8 @@ public abstract class ReferenceMapInterpreter {
 
         int searchBytecodePosition = bytecodePositionIterator == null ? -1 : bytecodePositionIterator.bytecodePosition();
 
-        while (_bytecodePosition != endPosition) {
-            opcodeBytecodePosition = _bytecodePosition;
+        while (bytecodePosition != endPosition) {
+            opcodeBytecodePosition = bytecodePosition;
             changed = mergeWithExceptionHandlers(opcodeBytecodePosition) || changed;
 
             final boolean atSearchPosition = opcodeBytecodePosition == searchBytecodePosition;
@@ -720,7 +720,7 @@ public abstract class ReferenceMapInterpreter {
                 case LDC_W:
                 case LDC: {
                     final int index = opcode == Bytecode.LDC ? readUnsigned1() : readUnsigned2();
-                    final ConstantPool.Tag tag = _constantPool.tagAt(index);
+                    final ConstantPool.Tag tag = constantPool.tagAt(index);
                     switch (tag) {
                         case FLOAT:
                         case INTEGER: {
@@ -881,7 +881,7 @@ public abstract class ReferenceMapInterpreter {
                     break;
                 }
                 case DUP: {
-                    if (isStackRef(_sp - 1)) {
+                    if (isStackRef(this.sp - 1)) {
                         pushRef();
                     } else {
                         pushCategory1();
@@ -1146,8 +1146,8 @@ public abstract class ReferenceMapInterpreter {
                 }
                 case GETSTATIC: {
                     final int index = readUnsigned2();
-                    final FieldRefConstant fieldConstant = _constantPool.fieldAt(index);
-                    final TypeDescriptor type = fieldConstant.type(_constantPool);
+                    final FieldRefConstant fieldConstant = constantPool.fieldAt(index);
+                    final TypeDescriptor type = fieldConstant.type(constantPool);
                     final Kind kind = type.toKind();
                     if (kind == Kind.REFERENCE) {
                         pushRef();
@@ -1162,8 +1162,8 @@ public abstract class ReferenceMapInterpreter {
                 }
                 case PUTSTATIC: {
                     final int index = readUnsigned2();
-                    final FieldRefConstant fieldConstant = _constantPool.fieldAt(index);
-                    final TypeDescriptor type = fieldConstant.type(_constantPool);
+                    final FieldRefConstant fieldConstant = constantPool.fieldAt(index);
+                    final TypeDescriptor type = fieldConstant.type(constantPool);
                     final Kind kind = type.toKind();
                     if (kind.isCategory1()) {
                         popCategory1();
@@ -1175,8 +1175,8 @@ public abstract class ReferenceMapInterpreter {
                 case GETFIELD: {
                     popCategory1(); // instance containing the field
                     final int index = readUnsigned2();
-                    final FieldRefConstant fieldConstant = _constantPool.fieldAt(index);
-                    final TypeDescriptor type = fieldConstant.type(_constantPool);
+                    final FieldRefConstant fieldConstant = constantPool.fieldAt(index);
+                    final TypeDescriptor type = fieldConstant.type(constantPool);
                     final Kind kind = type.toKind();
                     if (kind == Kind.REFERENCE) {
                         pushRef();
@@ -1192,8 +1192,8 @@ public abstract class ReferenceMapInterpreter {
                 }
                 case PUTFIELD: {
                     final int index = readUnsigned2();
-                    final FieldRefConstant fieldConstant = _constantPool.fieldAt(index);
-                    final TypeDescriptor type = fieldConstant.type(_constantPool);
+                    final FieldRefConstant fieldConstant = constantPool.fieldAt(index);
+                    final TypeDescriptor type = fieldConstant.type(constantPool);
                     final Kind kind = type.toKind();
                     if (kind.isCategory1()) {
                         popCategory1();
@@ -1205,7 +1205,7 @@ public abstract class ReferenceMapInterpreter {
                 }
                 case CALLNATIVE: {
                     final int index = readUnsigned2();
-                    final SignatureDescriptor methodSignature = SignatureDescriptor.create(_constantPool.utf8At(index));
+                    final SignatureDescriptor methodSignature = SignatureDescriptor.create(constantPool.utf8At(index));
                     for (int i = methodSignature.numberOfParameters() - 1; i >= 0; --i) {
                         final TypeDescriptor parameter = methodSignature.parameterDescriptorAt(i);
                         pop(parameter.toKind());
@@ -1226,8 +1226,8 @@ public abstract class ReferenceMapInterpreter {
                     if (opcode == Bytecode.INVOKEINTERFACE) {
                         skip2();
                     }
-                    final MethodRefConstant methodConstant = _constantPool.methodAt(index);
-                    final SignatureDescriptor methodSignature = methodConstant.signature(_constantPool);
+                    final MethodRefConstant methodConstant = constantPool.methodAt(index);
+                    final SignatureDescriptor methodSignature = methodConstant.signature(constantPool);
                     for (int i = methodSignature.numberOfParameters() - 1; i >= 0; --i) {
                         final TypeDescriptor parameter = methodSignature.parameterDescriptorAt(i);
                         pop(parameter.toKind());
@@ -1248,7 +1248,7 @@ public abstract class ReferenceMapInterpreter {
                 }
                 case NEW: {
                     final int index = readUnsigned2();
-                    push(_constantPool.classAt(index).typeDescriptor().toKind());
+                    push(constantPool.classAt(index).typeDescriptor().toKind());
                     break;
                 }
                 case NEWARRAY: {
@@ -1278,7 +1278,7 @@ public abstract class ReferenceMapInterpreter {
                 case CHECKCAST: {
                     popCategory1();
                     final int index = readUnsigned2();
-                    push(_constantPool.classAt(index).typeDescriptor().toKind());
+                    push(constantPool.classAt(index).typeDescriptor().toKind());
                     break;
                 }
                 case INSTANCEOF: {

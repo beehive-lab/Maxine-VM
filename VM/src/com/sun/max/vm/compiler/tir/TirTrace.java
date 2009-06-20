@@ -28,28 +28,28 @@ import com.sun.max.vm.hotpath.state.*;
 
 
 public class TirTrace {
-    private TirTree _tree;
-    private TraceAnchor _anchor;
-    private AppendableIndexedSequence<TirInstruction> _instructions = new ArrayListSequence<TirInstruction>();
-    private TirState _tailState;
+    private TirTree tree;
+    private TraceAnchor anchor;
+    private AppendableIndexedSequence<TirInstruction> instructions = new ArrayListSequence<TirInstruction>();
+    private TirState tailState;
 
     public TirTrace(TirTree tree, TraceAnchor anchor) {
-        _tree = tree;
-        _anchor = anchor;
+        this.tree = tree;
+        this.anchor = anchor;
     }
 
     public Sequence<TirInstruction> instructions() {
-        return _instructions;
+        return instructions;
     }
 
-    public void append(Sequence<TirInstruction> instructions) {
-        for (TirInstruction instruction : instructions) {
+    public void append(Sequence<TirInstruction> instructionList) {
+        for (TirInstruction instruction : instructionList) {
             append(instruction);
         }
     }
 
     public void append(TirInstruction instruction) {
-        _instructions.append(instruction);
+        instructions.append(instruction);
     }
 
     public void send(TirMessageSink sink) {
@@ -59,22 +59,22 @@ public class TirTrace {
     }
 
     public void sendInstructions(TirMessageSink sink) {
-        for (int i = _instructions.length() - 1; i >= 0; i--) {
-            sink.receive(_instructions.get(i));
+        for (int i = instructions.length() - 1; i >= 0; i--) {
+            sink.receive(instructions.get(i));
         }
     }
 
     public TirState tailState() {
-        return _tailState;
+        return tailState;
     }
 
     public void complete(TirState tailState) {
-        ProgramError.check(_tree.entryState().matches(tailState), "Tail state should match entry state!");
-        ProgramError.check(Sequence.Static.containsIdentical(_tree.traces(), this), "This trace should already be in the tree!");
-        _tailState = tailState;
+        ProgramError.check(tree.entryState().matches(tailState), "Tail state should match entry state!");
+        ProgramError.check(Sequence.Static.containsIdentical(tree.traces(), this), "This trace should already be in the tree!");
+        this.tailState = tailState;
 
         // Inspect locals that were modified on this trace.
-        _tree.entryState().compare(_tailState, new StatePairVisitor<TirInstruction, TirInstruction>() {
+        tree.entryState().compare(tailState, new StatePairVisitor<TirInstruction, TirInstruction>() {
             @Override
             public void visit(TirInstruction entry, TirInstruction tail) {
                 final TirLocal local = (TirLocal) entry;
@@ -88,11 +88,11 @@ public class TirTrace {
         //
         // Alternately we could just flag all uses of locals as read, but this creates unnecessary write-backs.
 
-        for (TirTrace trace : _tree.traces()) {
+        for (TirTrace trace : tree.traces()) {
             for (TirInstruction instruction : trace.instructions()) {
                 if (instruction instanceof TirGuard) {
                     final TirGuard guard = (TirGuard) instruction;
-                    guard.state().compare(_tree.entryState(), new StatePairVisitor<TirInstruction, TirInstruction>() {
+                    guard.state().compare(tree.entryState(), new StatePairVisitor<TirInstruction, TirInstruction>() {
                         @Override
                         public void visit(TirInstruction exit, TirInstruction entry) {
                             if (entry instanceof TirLocal) {
@@ -114,10 +114,10 @@ public class TirTrace {
     }
 
     public TraceAnchor anchor() {
-        return _anchor;
+        return anchor;
     }
 
     public TirTree tree() {
-        return _tree;
+        return tree;
     }
 }

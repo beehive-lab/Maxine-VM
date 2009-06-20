@@ -25,20 +25,20 @@ import com.sun.max.vm.compiler.tir.*;
 
 public class TargetTree {
 
-    private TargetMethod _targetMethod;
-    private TreeEirMethod _treeEirMethod;
+    private TargetMethod targetMethod;
+    private TreeEirMethod treeEirMethod;
 
     public TreeEirMethod treeEirMethod() {
-        return _treeEirMethod;
+        return treeEirMethod;
     }
 
     public TargetMethod targetMethod() {
-        return _targetMethod;
+        return targetMethod;
     }
 
     public void setGenerated(TreeEirMethod eirMethod, TargetMethod targetMethod) {
-        _treeEirMethod = eirMethod;
-        _targetMethod = targetMethod;
+        this.treeEirMethod = eirMethod;
+        this.targetMethod = targetMethod;
     }
 
 }

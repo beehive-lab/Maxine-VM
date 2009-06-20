@@ -34,7 +34,7 @@ import com.sun.max.vm.runtime.*;
 
 public class CopyActionImpl implements Action {
 
-    private static Verify _verifyAction = new VerifyActionImpl();
+    private static Verify verifyAction = new VerifyActionImpl();
 
     public Grip doAction(Grip origin, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         final Pointer fromOrigin = origin.toOrigin();
@@ -45,7 +45,7 @@ public class CopyActionImpl implements Action {
                 FatalError.unexpected("invalid grip");
             }
 
-            _verifyAction.checkGripTag(origin);
+            verifyAction.checkGripTag(origin);
         }
 
         if (from.contains(fromOrigin)) {
@@ -57,7 +57,7 @@ public class CopyActionImpl implements Action {
             final Size size = Layout.size(fromOrigin);
             final Pointer toCell = ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).gcAllocate(to, size);
             if (toCell.isZero()) {
-                throw BeltwayHeapScheme._outOfMemoryError;
+                throw BeltwayHeapScheme.outOfMemoryError;
             }
             DebugHeap.writeCellTag(toCell);
             Memory.copyBytes(fromCell, toCell, size);

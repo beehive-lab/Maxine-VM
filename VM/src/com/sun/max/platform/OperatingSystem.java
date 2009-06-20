@@ -32,18 +32,18 @@ public enum OperatingSystem implements PoolObject {
     WINDOWS(4),
     GUESTVM(4);
 
-    private final int _defaultPageSize;
+    private final int defaultPageSize;
 
     public int serial() {
         return ordinal();
     }
 
     public int defaultPageSize() {
-        return _defaultPageSize;
+        return defaultPageSize;
     }
 
     private OperatingSystem(int pageKBytes) {
-        _defaultPageSize = pageKBytes * Ints.K;
+        defaultPageSize = pageKBytes * Ints.K;
     }
 
     private static OperatingSystem getCurrent() {
@@ -64,13 +64,13 @@ public enum OperatingSystem implements PoolObject {
     }
 
     @RESET
-    private static OperatingSystem _current;
+    private static OperatingSystem current;
 
     public static OperatingSystem current() {
-        if (_current == null) {
-            _current = getCurrent();
+        if (current == null) {
+            current = getCurrent();
         }
-        return _current;
+        return current;
     }
 
     private static final Pool<OperatingSystem> VALUE_POOL = new ArrayPool<OperatingSystem>(values());

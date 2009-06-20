@@ -26,64 +26,64 @@ import com.sun.max.unsafe.*;
 public class RuntimeMemoryRegion implements MemoryRegion {
 
     @INSPECTED
-    private Address _start;
+    private Address start;
 
     @INSPECTED
-    protected Address _mark;
+    protected Address mark;
 
     @INLINE
     public final Address start() {
-        return _start;
+        return start;
     }
 
     public void setStart(Address start) {
-        _start = start;
+        this.start = start;
     }
 
     @INSPECTED
-    private Size _size;
+    private Size size;
 
     public Size size() {
-        return _size;
+        return size;
     }
 
     public void setSize(Size size) {
-        _size = size;
+        this.size = size;
     }
 
     public void setEnd(Address end) {
-        _size = end.minus(_start).asSize();
+        size = end.minus(start).asSize();
     }
 
     @INSPECTED
-    private String _description = "?";
+    private String description = "?";
 
     public String description() {
-        return _description;
+        return description;
     }
 
     public void setDescription(String description) {
-        _description = description;
+        this.description = description;
     }
 
     public RuntimeMemoryRegion() {
-        _start = Address.zero();
-        _size = Size.zero();
+        start = Address.zero();
+        size = Size.zero();
     }
 
     public RuntimeMemoryRegion(Size size) {
-        _start = Address.zero();
-        _size = size;
+        start = Address.zero();
+        this.size = size;
     }
 
     public RuntimeMemoryRegion(Address start, Size size) {
-        _start = start;
-        _size = size;
+        this.start = start;
+        this.size = size;
     }
 
     public RuntimeMemoryRegion(MemoryRegion memoryRegion) {
-        _start = memoryRegion.start();
-        _size = memoryRegion.size();
+        start = memoryRegion.start();
+        size = memoryRegion.size();
     }
 
     public Address end() {
@@ -108,11 +108,11 @@ public class RuntimeMemoryRegion implements MemoryRegion {
 
     @Override
     public String toString() {
-        return "[" + _start.toHexString() + " - " + end().minus(1).toHexString() + "]";
+        return "[" + start.toHexString() + " - " + end().minus(1).toHexString() + "]";
     }
 
     @INLINE
     public final Address getAllocationMark() {
-        return _mark;
+        return mark;
     }
 }

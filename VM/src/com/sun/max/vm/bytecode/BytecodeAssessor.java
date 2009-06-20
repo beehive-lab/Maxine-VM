@@ -30,7 +30,7 @@ import com.sun.max.vm.classfile.constant.*;
  */
 public final class BytecodeAssessor {
 
-    private static final int _MAX_STRAIGHT_LINE_CODE_LENGTH = 20;
+    private static final int MAX_STRAIGHT_LINE_CODE_LENGTH = 20;
 
     private static boolean hasStraightLineCode(final ClassMethodActor classMethodActor, final Cons<ClassMethodActor> callers) {
         if (classMethodActor.isDeclaredNeverInline()) {
@@ -40,7 +40,7 @@ public final class BytecodeAssessor {
         if (codeAttribute == null) {
             return true;
         }
-        if (classMethodActor.codeAttribute().code().length > _MAX_STRAIGHT_LINE_CODE_LENGTH) {
+        if (classMethodActor.codeAttribute().code().length > MAX_STRAIGHT_LINE_CODE_LENGTH) {
             return false;
         }
         if (Cons.containsIdentical(callers, classMethodActor)) {

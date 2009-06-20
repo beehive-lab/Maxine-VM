@@ -30,10 +30,10 @@ import com.sun.max.collect.*;
 public abstract class EirSwitch<EirInstructionVisitor_Type extends EirInstructionVisitor, EirTargetEmitter_Type extends EirTargetEmitter> extends
                 EirInstruction<EirInstructionVisitor_Type, EirTargetEmitter_Type> {
 
-    private final EirOperand _tag;
+    private final EirOperand tag;
 
     public EirOperand tag() {
-        return _tag;
+        return tag;
     }
 
     private final EirOperand[] _matches;
@@ -42,10 +42,10 @@ public abstract class EirSwitch<EirInstructionVisitor_Type extends EirInstructio
         return _matches;
     }
 
-    private final EirBlock[] _targets;
+    private final EirBlock[] targets;
 
     public EirBlock[] targets() {
-        return _targets;
+        return targets;
     }
 
     private EirBlock _defaultTarget;
@@ -58,14 +58,14 @@ public abstract class EirSwitch<EirInstructionVisitor_Type extends EirInstructio
         super(block);
         assert matches.length >= 1;
         assert matches.length == targets.length;
-        _tag = new EirOperand(this, EirOperand.Effect.USE, G);
-        _tag.setEirValue(tag);
+        this.tag = new EirOperand(this, EirOperand.Effect.USE, G);
+        this.tag.setEirValue(tag);
         _matches = new EirOperand[matches.length];
         for (int i = 0; i < matches.length; i++) {
             _matches[i] = new EirOperand(this, EirOperand.Effect.USE, I32_I64_L);
             _matches[i].setEirValue(matches[i]);
         }
-        _targets = targets;
+        this.targets = targets;
         for (EirBlock target : targets) {
             target.addPredecessor(block);
         }
@@ -75,7 +75,7 @@ public abstract class EirSwitch<EirInstructionVisitor_Type extends EirInstructio
 
     @Override
     public void visitOperands(EirOperand.Procedure visitor) {
-        visitor.run(_tag);
+        visitor.run(tag);
         for (EirOperand match : _matches) {
             visitor.run(match);
         }
@@ -87,7 +87,7 @@ public abstract class EirSwitch<EirInstructionVisitor_Type extends EirInstructio
         if (_defaultTarget != null) {
             procedure.run(_defaultTarget);
         }
-        for (EirBlock block : _targets) {
+        for (EirBlock block : targets) {
             procedure.run(block);
         }
     }
@@ -99,9 +99,9 @@ public abstract class EirSwitch<EirInstructionVisitor_Type extends EirInstructio
             _defaultTarget = map.get(_defaultTarget);
         }
 
-        for (int i = 0; i < _targets.length; i++) {
-            if (map.containsKey(_targets[i])) {
-                _targets[i] = map.get(_targets[i]);
+        for (int i = 0; i < targets.length; i++) {
+            if (map.containsKey(targets[i])) {
+                targets[i] = map.get(targets[i]);
             }
         }
     }
@@ -110,7 +110,7 @@ public abstract class EirSwitch<EirInstructionVisitor_Type extends EirInstructio
     public String toString() {
         final StringBuilder result = new StringBuilder(super.toString());
 
-        for (EirBlock b : _targets) {
+        for (EirBlock b : targets) {
             result.append("; " + b.toString());
         }
 
@@ -124,7 +124,7 @@ public abstract class EirSwitch<EirInstructionVisitor_Type extends EirInstructio
         if (eligibleBlocks.contains(_defaultTarget)) {
             return _defaultTarget;
         }
-        for (EirBlock block : _targets) {
+        for (EirBlock block : targets) {
             if (eligibleBlocks.contains(block)) {
                 return block;
             }

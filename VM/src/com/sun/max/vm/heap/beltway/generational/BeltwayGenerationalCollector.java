@@ -34,9 +34,9 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
     // /Dependency injection of the corresponding heap scheme
     private static HeapScheme _beltwayHeapScheme;
 
-    public static long _edenCollections = 0;
-    public static long _majorCollections = 0;
-    public static long _toCollections = 0;
+    public static long edenCollections = 0;
+    public static long majorCollections = 0;
+    public static long toCollections = 0;
 
     public void setBeltwayHeapScheme(HeapScheme beltwayHeapScheme) {
         _beltwayHeapScheme = beltwayHeapScheme;
@@ -54,13 +54,13 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
     public void run() {
     }
 
-    private final Runnable _majorGC = new Runnable() {
+    private final Runnable majorGC = new Runnable() {
 
         public void run() {
-            _majorCollections++;
+            majorCollections++;
             if (Heap.verbose()) {
                 Log.print("Major Collection: ");
-                Log.println(_majorCollections);
+                Log.println(majorCollections);
             }
             final BeltwayHeapSchemeGenerational beltwayHeapSchemeGen = (BeltwayHeapSchemeGenerational) _beltwayHeapScheme;
 
@@ -107,10 +107,10 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 Log.print("Scavenge");
             }
 
-            if (BeltwayConfiguration._parallelScavenging) {
+            if (BeltwayConfiguration.parallelScavenging) {
                 beltwayHeapSchemeGen.fillLastTLAB();
                 beltwayHeapSchemeGen.markSideTableLastTLAB();
-                BeltwayHeapScheme._inScavening = true;
+                BeltwayHeapScheme.inScavening = true;
                 beltwayHeapSchemeGen.initializeGCThreads(beltwayHeapSchemeGen, beltwayHeapSchemeGen.getMatureSpace(), beltwayHeapSchemeGen.getToSpace());
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
                 if (Heap.verbose()) {
@@ -118,7 +118,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 }
 
                 beltwayHeapSchemeGen.startGCThreads();
-                BeltwayHeapScheme._inScavening = false;
+                BeltwayHeapScheme.inScavening = false;
                 if (Heap.verbose()) {
                     Log.println("Join Threads");
                 }
@@ -142,7 +142,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 if (Heap.verbose()) {
                     Log.println("The living objects size is equal greater than the copy reserve");
                 }
-                throw BeltwayHeapScheme._outOfMemoryError;
+                throw BeltwayHeapScheme.outOfMemoryError;
             }
             beltwayHeapSchemeGen.getEdenSpace().setEnd(beltwayHeapSchemeGen.getEdenSpace().getAllocationMark());
             if (Heap.verbose()) {
@@ -186,10 +186,10 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 Log.print("Mature Space End: ");
                 Log.println(beltwayHeapSchemeGen.getMatureSpace().end());
             }
-            if (BeltwayConfiguration._parallelScavenging) {
+            if (BeltwayConfiguration.parallelScavenging) {
                 beltwayHeapSchemeGen.fillLastTLAB();
                 beltwayHeapSchemeGen.markSideTableLastTLAB();
-                BeltwayHeapScheme._inScavening = true;
+                BeltwayHeapScheme.inScavening = true;
                 beltwayHeapSchemeGen.initializeGCThreads(beltwayHeapSchemeGen, beltwayHeapSchemeGen.getEdenSpace(), beltwayHeapSchemeGen.getMatureSpace());
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
                 if (Heap.verbose()) {
@@ -197,7 +197,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 }
 
                 beltwayHeapSchemeGen.startGCThreads();
-                BeltwayHeapScheme._inScavening = false;
+                BeltwayHeapScheme.inScavening = false;
                 if (Heap.verbose()) {
                     Log.println("Join Threads");
                 }
@@ -235,30 +235,30 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             }
             if (Heap.verbose()) {
                 Log.print("Finished Eden Collection: ");
-                Log.println(_edenCollections);
+                Log.println(edenCollections);
             }
         }
     };
 
     public Runnable getMinorGC() {
-        return _edenGC;
+        return edenGC;
     }
 
     public Runnable getMajorGC() {
-        return _majorGC;
+        return majorGC;
     }
 
     public Runnable getToGC() {
-        return _toGC;
+        return toGC;
     }
 
-    private final Runnable _toGC = new Runnable() {
+    private final Runnable toGC = new Runnable() {
 
         public void run() {
-            _toCollections++;
+            toCollections++;
             if (Heap.verbose()) {
                 Log.print("To Collection: ");
-                Log.println(_toCollections);
+                Log.println(toCollections);
             }
             final BeltwayHeapSchemeGenerational beltwayHeapSchemeGen = (BeltwayHeapSchemeGenerational) _beltwayHeapScheme;
 
@@ -309,10 +309,10 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 Log.println("Move Reachable Objects");
             }
 
-            if (BeltwayConfiguration._parallelScavenging) {
+            if (BeltwayConfiguration.parallelScavenging) {
                 beltwayHeapSchemeGen.fillLastTLAB();
                 beltwayHeapSchemeGen.markSideTableLastTLAB();
-                BeltwayHeapScheme._inScavening = true;
+                BeltwayHeapScheme.inScavening = true;
                 beltwayHeapSchemeGen.initializeGCThreads(beltwayHeapSchemeGen, beltwayHeapSchemeGen.getToSpace(), beltwayHeapSchemeGen.getMatureSpace());
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
                 if (Heap.verbose()) {
@@ -320,7 +320,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 }
 
                 beltwayHeapSchemeGen.startGCThreads();
-                BeltwayHeapScheme._inScavening = false;
+                BeltwayHeapScheme.inScavening = false;
                 if (Heap.verbose()) {
                     Log.println("Join Threads");
                 }
@@ -329,7 +329,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 beltwayHeapSchemeGen.fillLastTLAB();
             }
 
-            BeltwayHeapSchemeGenerational._sideTable.restoreAllChunkSlots();
+            BeltwayHeapSchemeGenerational.sideTable.restoreAllChunkSlots();
 
             // TODO: Delete
             //Debug.println("Wipe To");
@@ -351,18 +351,18 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             TeleHeapInfo.afterGarbageCollection();
             if (Heap.verbose()) {
                 Log.print("Finished To Collection: ");
-                Log.println(_toCollections);
+                Log.println(toCollections);
             }
         }
     };
 
-    private final Runnable _edenGC = new Runnable() {
+    private final Runnable edenGC = new Runnable() {
 
         public void run() {
-            _edenCollections++;
+            edenCollections++;
             if (Heap.verbose()) {
                 Log.print("Eden Collection: ");
-                Log.println(_edenCollections);
+                Log.println(edenCollections);
             }
             final BeltwayHeapSchemeGenerational beltwayHeapSchemeGen = (BeltwayHeapSchemeGenerational) _beltwayHeapScheme;
 
@@ -414,10 +414,10 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 Log.println("Move Reachable Objects");
             }
 
-            if (BeltwayConfiguration._parallelScavenging) {
+            if (BeltwayConfiguration.parallelScavenging) {
                 beltwayHeapSchemeGen.fillLastTLAB();
                 beltwayHeapSchemeGen.markSideTableLastTLAB();
-                BeltwayHeapScheme._inScavening = true;
+                BeltwayHeapScheme.inScavening = true;
                 beltwayHeapSchemeGen.initializeGCThreads(beltwayHeapSchemeGen, beltwayHeapSchemeGen.getEdenSpace(), beltwayHeapSchemeGen.getToSpace());
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
                 if (Heap.verbose()) {
@@ -425,7 +425,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 }
 
                 beltwayHeapSchemeGen.startGCThreads();
-                BeltwayHeapScheme._inScavening = false;
+                BeltwayHeapScheme.inScavening = false;
                 if (Heap.verbose()) {
                     Log.println("Join Threads");
                 }
@@ -434,7 +434,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 beltwayHeapSchemeGen.fillLastTLAB();
             }
 
-            BeltwayHeapSchemeGenerational._sideTable.restoreAllChunkSlots();
+            BeltwayHeapSchemeGenerational.sideTable.restoreAllChunkSlots();
 
             // TODO: Delete
             //Debug.println("Wipe Eden");
@@ -461,7 +461,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             TeleHeapInfo.afterGarbageCollection();
             if (Heap.verbose()) {
                 Log.print("Finished Eden Collection: ");
-                Log.println(_edenCollections);
+                Log.println(edenCollections);
             }
         }
     };

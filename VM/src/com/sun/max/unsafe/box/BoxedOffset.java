@@ -29,7 +29,7 @@ import com.sun.max.unsafe.*;
  */
 public final class BoxedOffset extends Offset implements UnsafeBox {
 
-    private long _nativeWord;
+    private long nativeWord;
 
     public static final BoxedOffset ZERO = new BoxedOffset(0);
 
@@ -60,10 +60,10 @@ public final class BoxedOffset extends Offset implements UnsafeBox {
     }
 
     private BoxedOffset(long value) {
-        _nativeWord = value;
+        nativeWord = value;
     }
 
     public long nativeWord() {
-        return _nativeWord;
+        return nativeWord;
     }
 }

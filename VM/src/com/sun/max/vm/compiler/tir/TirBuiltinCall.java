@@ -26,11 +26,11 @@ import com.sun.max.vm.compiler.tir.pipeline.*;
 
 
 public class TirBuiltinCall extends TirCall {
-    private final Builtin _builtin;
+    private final Builtin builtin;
 
     public TirBuiltinCall(Builtin builtin, TirInstruction... arguments) {
         super(builtin.classMethodActor(), arguments);
-        _builtin = builtin;
+        this.builtin = builtin;
     }
 
     @Override
@@ -44,11 +44,11 @@ public class TirBuiltinCall extends TirCall {
     }
 
     public Builtin builtin() {
-        return _builtin;
+        return builtin;
     }
 
     @Override
     public boolean isLiveIfUnused() {
-        return _builtin.hasSideEffects();
+        return builtin.hasSideEffects();
     }
 }

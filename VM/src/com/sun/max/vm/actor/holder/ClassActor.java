@@ -107,7 +107,7 @@ public abstract class ClassActor extends Actor {
         if (MaxineVM.isPrototyping()) {
             checkProhibited(name);
             if (MaxineVM.isMaxineClass(typeDescriptor)) {
-                _initializationState = InitializationState.INITIALIZED;
+                initializationState = InitializationState.INITIALIZED;
             } else {
                 // TODO: At some point, it may be worth trying to put JDK classes into the image in the VERIFIED state
                 // so that their class initializers are run at the 'right time' (i.e. according to the JVM spec).
@@ -117,23 +117,23 @@ public abstract class ClassActor extends Actor {
                 // classes that will be re-initialized. Also, all code in the boot image will need to have
                 // the appropriate class initialization barriers (that would be required if the same code
                 // was compiled at runtime).
-                _initializationState = InitializationState.INITIALIZED;
+                initializationState = InitializationState.INITIALIZED;
             }
 
         } else {
-            _initializationState = InitializationState.PREPARED;
+            initializationState = InitializationState.PREPARED;
         }
 
-        _majorVersion = majorVersion;
-        _minorVersion = minorVersion;
-        _kind = kind;
-        _componentClassActor = componentClassActor;
-        _id = elementClassActor().makeID(numberOfDimensions());
-        ClassID.register(_id, this);
-        _typeDescriptor = typeDescriptor;
-        _superClassActor = superClassActor;
-        _sourceFileName = sourceFileName;
-        _classLoader = classLoader;
+        this.majorVersion = majorVersion;
+        this.minorVersion = minorVersion;
+        this.kind = kind;
+        this.componentClassActor = componentClassActor;
+        this.id = elementClassActor().makeID(numberOfDimensions());
+        ClassID.register(id, this);
+        this.typeDescriptor = typeDescriptor;
+        this.superClassActor = superClassActor;
+        this.sourceFileName = sourceFileName;
+        this.classLoader = classLoader;
 
         final ClassRegistry classRegistry = classRegistry();
         classRegistry.set(ENCLOSING_METHOD_INFO, this, enclosingMethodInfo);
@@ -153,21 +153,21 @@ public abstract class ClassActor extends Actor {
             assert !isInnerClass(flags());
         }
 
-        _localInterfaceActors = interfaceActors;
+        this.localInterfaceActors = interfaceActors;
 
-        _localStaticMethodActors = Arrays.filter(methodActors, StaticMethodActor.class, NO_STATIC_METHODS);
-        _localVirtualMethodActors = Arrays.filter(methodActors, VirtualMethodActor.class, NO_VIRTUAL_METHODS);
-        _localInterfaceMethodActors = Arrays.filter(methodActors, InterfaceMethodActor.class, NO_INTERFACE_METHODS);
+        this.localStaticMethodActors = Arrays.filter(methodActors, StaticMethodActor.class, NO_STATIC_METHODS);
+        this.localVirtualMethodActors = Arrays.filter(methodActors, VirtualMethodActor.class, NO_VIRTUAL_METHODS);
+        this.localInterfaceMethodActors = Arrays.filter(methodActors, InterfaceMethodActor.class, NO_INTERFACE_METHODS);
 
-        _localStaticFieldActors = InjectedFieldActor.Static.injectFieldActors(true, Arrays.filter(fieldActors, Actor._staticPredicate, NO_FIELDS), typeDescriptor);
-        _localInstanceFieldActors = InjectedFieldActor.Static.injectFieldActors(false, Arrays.filter(fieldActors, Actor._dynamicPredicate, NO_FIELDS), typeDescriptor);
+        this.localStaticFieldActors = InjectedFieldActor.Static.injectFieldActors(true, Arrays.filter(fieldActors, Actor.staticPredicate, NO_FIELDS), typeDescriptor);
+        this.localInstanceFieldActors = InjectedFieldActor.Static.injectFieldActors(false, Arrays.filter(fieldActors, Actor.dynamicPredicate, NO_FIELDS), typeDescriptor);
 
-        _clinit = findLocalStaticMethodActor(SymbolTable.CLINIT);
+        this.clinit = findLocalStaticMethodActor(SymbolTable.CLINIT);
 
         assignHolderToLocalFieldActors();
 
         // A map for matching methods based on their name and descriptor (and not holder)
-        final int maxVtableSize = computeMaxVTableSize(superClassActor, _localVirtualMethodActors);
+        final int maxVtableSize = computeMaxVTableSize(superClassActor, localVirtualMethodActors);
         final GrowableMapping<MethodActor, VirtualMethodActor> methodLookup = new ChainedHashMapping<MethodActor, VirtualMethodActor>(maxVtableSize) {
             @Override
             public boolean equivalent(MethodActor methodActor1, MethodActor methodActor2) {
@@ -181,14 +181,14 @@ public abstract class ClassActor extends Actor {
 
         new Deferrable(DEFERRABLE_QUEUE_1) {
             public void run() {
-                final Size staticTupleSize = Layout.tupleLayout().layoutFields(NO_SUPER_CLASS_ACTOR, _localStaticFieldActors);
-                final TupleReferenceMap staticReferenceMap = new TupleReferenceMap(_localStaticFieldActors);
-                final StaticHub staticHub = new StaticHub(staticTupleSize, ClassActor.this, staticReferenceMap);
-                _staticHub = staticHub.expand(staticReferenceMap);
-                _staticTuple = StaticTuple.create(ClassActor.this);
+                final Size staticTupleSize = Layout.tupleLayout().layoutFields(NO_SUPER_CLASS_ACTOR, localStaticFieldActors);
+                final TupleReferenceMap staticReferenceMap = new TupleReferenceMap(localStaticFieldActors);
+                final StaticHub sHub = new StaticHub(staticTupleSize, ClassActor.this, staticReferenceMap);
+                ClassActor.this.staticHub = sHub.expand(staticReferenceMap);
+                ClassActor.this.staticTuple = StaticTuple.create(ClassActor.this);
 
                 final IdentityHashSet<InterfaceActor> allInterfaceActors = getAllInterfaceActors();
-                _allVirtualMethodActors = Sequence.Static.toArray(gatherVirtualMethodActors(allInterfaceActors, methodLookup), VirtualMethodActor.class);
+                ClassActor.this.allVirtualMethodActors = Sequence.Static.toArray(gatherVirtualMethodActors(allInterfaceActors, methodLookup), VirtualMethodActor.class);
                 assignHolderToLocalMethodActors();
                 if (isReferenceClassActor() || isInterfaceActor()) {
                     final Size dynamicTupleSize = layoutFields(specificLayout);
@@ -198,16 +198,16 @@ public abstract class ClassActor extends Actor {
 
                     if (isReferenceClassActor()) {
                         dynamicReferenceMap = new TupleReferenceMap(ClassActor.this);
-                        vTableLength = _allVirtualMethodActors.length;
+                        vTableLength = ClassActor.this.allVirtualMethodActors.length;
                     } else {
                         assert isInterfaceActor();
                         dynamicReferenceMap = TupleReferenceMap.EMPTY;
                         vTableLength = 0;
                     }
 
-                    final DynamicHub dynamicHub = new DynamicHub(dynamicTupleSize, specificLayout, ClassActor.this, superClassActorSerials, allInterfaceActors, vTableLength, dynamicReferenceMap);
-                    _iToV = new int[dynamicHub.iTableLength()];
-                    _dynamicHub = dynamicHub.expand(superClassActorSerials, allInterfaceActors, methodLookup, _iToV, dynamicReferenceMap);
+                    final DynamicHub dHub = new DynamicHub(dynamicTupleSize, specificLayout, ClassActor.this, superClassActorSerials, allInterfaceActors, vTableLength, dynamicReferenceMap);
+                    ClassActor.this.iToV = new int[dHub.iTableLength()];
+                    ClassActor.this.dynamicHub = dHub.expand(superClassActorSerials, allInterfaceActors, methodLookup, iToV, dynamicReferenceMap);
                 }
             }
         };
@@ -215,8 +215,8 @@ public abstract class ClassActor extends Actor {
         if (isReferenceClassActor()) {
             new Deferrable(DEFERRABLE_QUEUE_2) {
                 public void run() {
-                    _dynamicHub.initializeVTable(_allVirtualMethodActors);
-                    _dynamicHub.initializeITable(getAllInterfaceActors(), methodLookup);
+                    dynamicHub.initializeVTable(allVirtualMethodActors);
+                    dynamicHub.initializeITable(getAllInterfaceActors(), methodLookup);
                 }
             };
         }
@@ -240,8 +240,8 @@ public abstract class ClassActor extends Actor {
 
     private static int computeMaxVTableSize(ClassActor superClassActor, VirtualMethodActor[] localVirtualMethodActors) {
         int maxVTableSize = localVirtualMethodActors.length;
-        if (superClassActor != null && superClassActor._allVirtualMethodActors != null) {
-            maxVTableSize += superClassActor._allVirtualMethodActors.length;
+        if (superClassActor != null && superClassActor.allVirtualMethodActors != null) {
+            maxVTableSize += superClassActor.allVirtualMethodActors.length;
         }
         return maxVTableSize;
     }
@@ -309,7 +309,7 @@ public abstract class ClassActor extends Actor {
     }
 
     @INSPECTED
-    private final ClassActor _componentClassActor;
+    private final ClassActor componentClassActor;
 
     /**
      * Gets the component type of the array type represented by this actor. If this actor does not represent an array,
@@ -332,7 +332,7 @@ public abstract class ClassActor extends Actor {
      */
     @INLINE
     public final ClassActor componentClassActor() {
-        return _componentClassActor;
+        return componentClassActor;
     }
 
     /**
@@ -352,10 +352,10 @@ public abstract class ClassActor extends Actor {
      * @see #componentClassActor()
      */
     public final ClassActor elementClassActor() {
-        if (_componentClassActor == null) {
+        if (componentClassActor == null) {
             return this;
         }
-        return _componentClassActor.elementClassActor();
+        return componentClassActor.elementClassActor();
     }
 
     /**
@@ -365,55 +365,55 @@ public abstract class ClassActor extends Actor {
      *         array class actor
      */
     public final int numberOfDimensions() {
-        if (_componentClassActor == null) {
+        if (componentClassActor == null) {
             return 0;
         }
         return componentClassActor().numberOfDimensions() + 1;
     }
 
-    private int[] _arrayClassIDs;
+    private int[] arrayClassIDs;
 
     protected final synchronized int makeID(int numberOfDimensions) {
         if (numberOfDimensions <= 0) {
             return ClassID.create();
         }
 
-        if (_arrayClassIDs == null) {
-            _arrayClassIDs = new int[numberOfDimensions];
+        if (arrayClassIDs == null) {
+            arrayClassIDs = new int[numberOfDimensions];
             for (int i = 0; i < numberOfDimensions; i++) {
-                _arrayClassIDs[i] = ClassID.create();
+                arrayClassIDs[i] = ClassID.create();
             }
-        } else if (_arrayClassIDs.length < numberOfDimensions) {
+        } else if (arrayClassIDs.length < numberOfDimensions) {
             final int[] a = new int[numberOfDimensions];
-            Ints.copyAll(_arrayClassIDs, a);
-            for (int i = _arrayClassIDs.length; i < a.length; i++) {
+            Ints.copyAll(arrayClassIDs, a);
+            for (int i = arrayClassIDs.length; i < a.length; i++) {
                 a[i] = ClassID.create();
             }
-            _arrayClassIDs = a;
+            arrayClassIDs = a;
         }
-        return _arrayClassIDs[numberOfDimensions - 1];
+        return arrayClassIDs[numberOfDimensions - 1];
     }
 
     /**
      * Unique class actor identifier. Simplifies the implementation of type checking, interface dispatch, etc.
      */
     @INSPECTED
-    private final int _id;
+    private final int id;
 
     @INLINE
     public final int id() {
-        return _id;
+        return id;
     }
 
     @INSPECTED
-    private final ClassLoader _classLoader;
+    private final ClassLoader classLoader;
 
     @INSPECTED
-    private final TypeDescriptor _typeDescriptor;
+    private final TypeDescriptor typeDescriptor;
 
     @INSPECTED
     @CONSTANT_WHEN_NOT_ZERO
-    private Class _mirror;
+    private Class mirror;
 
     @Override
     public Utf8Constant genericSignature() {
@@ -425,48 +425,48 @@ public abstract class ClassActor extends Actor {
         return classRegistry().get(RUNTIME_VISIBLE_ANNOTATION_BYTES, this);
     }
 
-    private final ClassActor _superClassActor;
+    private final ClassActor superClassActor;
 
     public final ClassActor superClassActor() {
-        return _superClassActor;
+        return superClassActor;
     }
 
-    private final char _majorVersion;
+    private final char majorVersion;
 
     public final int majorVersion() {
-        return _majorVersion;
+        return majorVersion;
     }
 
-    private final char _minorVersion;
+    private final char minorVersion;
 
     public final int minorVersion() {
-        return _minorVersion;
+        return minorVersion;
     }
 
-    private final InterfaceActor[] _localInterfaceActors;
+    private final InterfaceActor[] localInterfaceActors;
 
     public final InterfaceActor[] localInterfaceActors() {
-        return _localInterfaceActors;
+        return localInterfaceActors;
     }
 
     @CONSTANT
     @INSPECTED
-    private Object _staticTuple;
+    private Object staticTuple;
 
     @INLINE
     public final Object staticTuple() {
-        return _staticTuple;
+        return staticTuple;
     }
 
     @INSPECTED
-    private final FieldActor[] _localStaticFieldActors;
+    private final FieldActor[] localStaticFieldActors;
 
     public final FieldActor[] localStaticFieldActors() {
-        return _localStaticFieldActors;
+        return localStaticFieldActors;
     }
 
     public final FieldActor findLocalStaticFieldActor(Utf8Constant name) {
-        for (FieldActor fieldActor : _localStaticFieldActors) {
+        for (FieldActor fieldActor : localStaticFieldActors) {
             if (fieldActor.name() == name) {
                 return fieldActor;
             }
@@ -475,7 +475,7 @@ public abstract class ClassActor extends Actor {
     }
 
     public final FieldActor findLocalStaticFieldActor(String name) {
-        for (FieldActor fieldActor : _localStaticFieldActors) {
+        for (FieldActor fieldActor : localStaticFieldActors) {
             if (fieldActor.name().toString().equals(name)) {
                 return fieldActor;
             }
@@ -508,11 +508,11 @@ public abstract class ClassActor extends Actor {
     }
 
     public final FieldActor findLocalStaticFieldActor(Utf8Constant name, TypeDescriptor descriptor) {
-        return findMemberActor(_localStaticFieldActors, name, descriptor);
+        return findMemberActor(localStaticFieldActors, name, descriptor);
     }
 
     public final FieldActor findLocalStaticFieldActor(int offset) {
-        for (FieldActor fieldActor : _localStaticFieldActors) {
+        for (FieldActor fieldActor : localStaticFieldActors) {
             if (fieldActor.offset() == offset) {
                 return fieldActor;
             }
@@ -527,7 +527,7 @@ public abstract class ClassActor extends Actor {
             if (result != null) {
                 return result;
             }
-            for (InterfaceActor interfaceActor : holder._localInterfaceActors) {
+            for (InterfaceActor interfaceActor : holder.localInterfaceActors) {
                 final FieldActor interfaceResult = interfaceActor.findStaticFieldActor(name, descriptor);
                 if (interfaceResult != null) {
                     return interfaceResult;
@@ -545,7 +545,7 @@ public abstract class ClassActor extends Actor {
             if (result != null) {
                 return result;
             }
-            for (InterfaceActor interfaceActor : holder._localInterfaceActors) {
+            for (InterfaceActor interfaceActor : holder.localInterfaceActors) {
                 final FieldActor interfaceResult = interfaceActor.findStaticFieldActor(offset);
                 if (interfaceResult != null) {
                     return interfaceResult;
@@ -563,7 +563,7 @@ public abstract class ClassActor extends Actor {
             if (result != null) {
                 return result;
             }
-            for (InterfaceActor interfaceActor : holder._localInterfaceActors) {
+            for (InterfaceActor interfaceActor : holder.localInterfaceActors) {
                 final FieldActor interfaceResult = interfaceActor.findStaticFieldActor(name);
                 if (interfaceResult != null) {
                     return interfaceResult;
@@ -575,10 +575,10 @@ public abstract class ClassActor extends Actor {
     }
 
     @INSPECTED
-    private final FieldActor[] _localInstanceFieldActors;
+    private final FieldActor[] localInstanceFieldActors;
 
     public final FieldActor[] localInstanceFieldActors() {
-        return _localInstanceFieldActors;
+        return localInstanceFieldActors;
     }
 
     public final FieldActor findLocalInstanceFieldActor(Utf8Constant name) {
@@ -704,17 +704,17 @@ public abstract class ClassActor extends Actor {
     /**
      * The class initializer for this class or null if this class has not class initializer.
      */
-    private final StaticMethodActor _clinit;
+    private final StaticMethodActor clinit;
 
     @INSPECTED
-    private final StaticMethodActor[] _localStaticMethodActors;
+    private final StaticMethodActor[] localStaticMethodActors;
 
     public final StaticMethodActor[] localStaticMethodActors() {
-        return _localStaticMethodActors;
+        return localStaticMethodActors;
     }
 
     public final StaticMethodActor findLocalStaticMethodActor(Utf8Constant name, SignatureDescriptor descriptor) {
-        return findMemberActor(_localStaticMethodActors, name, descriptor);
+        return findMemberActor(localStaticMethodActors, name, descriptor);
     }
 
     public final boolean forAllStaticMethodActors(Predicate<StaticMethodActor> predicate) {
@@ -753,10 +753,10 @@ public abstract class ClassActor extends Actor {
     }
 
     @INSPECTED
-    private VirtualMethodActor[] _localVirtualMethodActors;
+    private VirtualMethodActor[] localVirtualMethodActors;
 
     public final VirtualMethodActor[] localVirtualMethodActors() {
-        return _localVirtualMethodActors;
+        return localVirtualMethodActors;
     }
 
     /**
@@ -769,7 +769,7 @@ public abstract class ClassActor extends Actor {
      * @return the matching method or {@code null} in none is found
      */
     public final VirtualMethodActor findLocalVirtualMethodActor(Utf8Constant name, SignatureDescriptor descriptor) {
-        return findMemberActor(_localVirtualMethodActors, name, descriptor);
+        return findMemberActor(localVirtualMethodActors, name, descriptor);
     }
 
     public final VirtualMethodActor findLocalVirtualMethodActor(MethodActor declaredMethod) {
@@ -777,7 +777,7 @@ public abstract class ClassActor extends Actor {
     }
 
     public final VirtualMethodActor findLocalVirtualMethodActor(Utf8Constant name) {
-        for (VirtualMethodActor dynamicMethodActor : _localVirtualMethodActors) {
+        for (VirtualMethodActor dynamicMethodActor : localVirtualMethodActors) {
             if (dynamicMethodActor.name().equals(name)) {
                 return dynamicMethodActor;
             }
@@ -786,7 +786,7 @@ public abstract class ClassActor extends Actor {
     }
 
     public final VirtualMethodActor findLocalVirtualMethodActor(String name) {
-        for (VirtualMethodActor dynamicMethodActor : _localVirtualMethodActors) {
+        for (VirtualMethodActor dynamicMethodActor : localVirtualMethodActors) {
             if (dynamicMethodActor.name().toString().equals(name)) {
                 return dynamicMethodActor;
             }
@@ -795,14 +795,14 @@ public abstract class ClassActor extends Actor {
     }
 
     @CONSTANT
-    private VirtualMethodActor[] _allVirtualMethodActors;
+    private VirtualMethodActor[] allVirtualMethodActors;
 
     public final VirtualMethodActor[] allVirtualMethodActors() {
-        return _allVirtualMethodActors;
+        return allVirtualMethodActors;
     }
 
     public final boolean forAllVirtualMethodActors(Predicate<VirtualMethodActor> predicate) {
-        for (VirtualMethodActor dynamicMethodActor : _allVirtualMethodActors) {
+        for (VirtualMethodActor dynamicMethodActor : allVirtualMethodActors) {
             if (!predicate.evaluate(dynamicMethodActor)) {
                 return false;
             }
@@ -811,13 +811,13 @@ public abstract class ClassActor extends Actor {
     }
 
     public final void forAllVirtualMethodActors(Procedure<VirtualMethodActor> procedure) {
-        for (VirtualMethodActor dynamicMethodActor : _allVirtualMethodActors) {
+        for (VirtualMethodActor dynamicMethodActor : allVirtualMethodActors) {
             procedure.run(dynamicMethodActor);
         }
     }
 
     public final VirtualMethodActor findVirtualMethodActor(Utf8Constant name, SignatureDescriptor descriptor) {
-        return findMemberActor(_allVirtualMethodActors, name, descriptor);
+        return findMemberActor(allVirtualMethodActors, name, descriptor);
     }
 
     public final VirtualMethodActor findVirtualMethodActor(MethodActor declaredMethod) {
@@ -825,7 +825,7 @@ public abstract class ClassActor extends Actor {
     }
 
     public final VirtualMethodActor getVirtualMethodActorByVTableIndex(int vTableIndex) {
-        return _allVirtualMethodActors[vTableIndex - DynamicHub.vTableStartIndex()];
+        return allVirtualMethodActors[vTableIndex - DynamicHub.vTableStartIndex()];
     }
 
     /**
@@ -833,7 +833,7 @@ public abstract class ClassActor extends Actor {
      * @return VirtualMethodActor
      */
     public final VirtualMethodActor getVirtualMethodActorByIIndex(int iIndex) {
-        return getVirtualMethodActorByVTableIndex(_iToV[iIndex]);
+        return getVirtualMethodActorByVTableIndex(iToV[iIndex]);
     }
 
     /**
@@ -855,8 +855,8 @@ public abstract class ClassActor extends Actor {
 
     public final StaticMethodActor findLocalStaticMethodActor(Utf8Constant name) {
         // Old style for loop so this can be used in the primordial VM phase:
-        for (int i = 0; i < _localStaticMethodActors.length; i++) {
-            final StaticMethodActor staticMethodActor = _localStaticMethodActors[i];
+        for (int i = 0; i < localStaticMethodActors.length; i++) {
+            final StaticMethodActor staticMethodActor = localStaticMethodActors[i];
             if (staticMethodActor.name().equals(name)) {
                 return staticMethodActor;
             }
@@ -938,14 +938,14 @@ public abstract class ClassActor extends Actor {
     }
 
     @INSPECTED
-    private final InterfaceMethodActor[] _localInterfaceMethodActors;
+    private final InterfaceMethodActor[] localInterfaceMethodActors;
 
     public final InterfaceMethodActor[] localInterfaceMethodActors() {
-        return _localInterfaceMethodActors;
+        return localInterfaceMethodActors;
     }
 
     public final InterfaceMethodActor findLocalInterfaceMethodActor(Utf8Constant name, SignatureDescriptor descriptor) {
-        return findMemberActor(_localInterfaceMethodActors, name, descriptor);
+        return findMemberActor(localInterfaceMethodActors, name, descriptor);
     }
 
     public final MethodActor findLocalMethodActor(Utf8Constant name, SignatureDescriptor descriptor) {
@@ -968,41 +968,41 @@ public abstract class ClassActor extends Actor {
     }
 
     private void assignHolderToLocalFieldActors() {
-        assignHolderToMembers(_localInstanceFieldActors, _localStaticFieldActors);
+        assignHolderToMembers(localInstanceFieldActors, localStaticFieldActors);
     }
 
     public FieldActor getLocalFieldActor(int memberIndex) {
-        if (memberIndex < _localInstanceFieldActors.length) {
-            return _localInstanceFieldActors[memberIndex];
+        if (memberIndex < localInstanceFieldActors.length) {
+            return localInstanceFieldActors[memberIndex];
         }
-        final int index = memberIndex - _localInstanceFieldActors.length;
-        if (index < _localStaticFieldActors.length) {
-            return _localStaticFieldActors[index];
+        final int index = memberIndex - localInstanceFieldActors.length;
+        if (index < localStaticFieldActors.length) {
+            return localStaticFieldActors[index];
         }
         return null;
     }
 
     private void assignHolderToLocalMethodActors() {
-        assignHolderToMembers(_localVirtualMethodActors, _localStaticMethodActors, _localInterfaceMethodActors);
+        assignHolderToMembers(localVirtualMethodActors, localStaticMethodActors, localInterfaceMethodActors);
     }
 
     public MethodActor getLocalMethodActor(int memberIndex) {
-        if (memberIndex < _localVirtualMethodActors.length) {
-            return _localVirtualMethodActors[memberIndex];
+        if (memberIndex < localVirtualMethodActors.length) {
+            return localVirtualMethodActors[memberIndex];
         }
-        int index = memberIndex - _localVirtualMethodActors.length;
-        if (index < _localStaticMethodActors.length) {
-            return _localStaticMethodActors[index];
+        int index = memberIndex - localVirtualMethodActors.length;
+        if (index < localStaticMethodActors.length) {
+            return localStaticMethodActors[index];
         }
-        index -= _localStaticMethodActors.length;
-        if (index < _localInterfaceMethodActors.length) {
-            return _localInterfaceMethodActors[index];
+        index -= localStaticMethodActors.length;
+        if (index < localInterfaceMethodActors.length) {
+            return localInterfaceMethodActors[index];
         }
         return null;
     }
 
     @CONSTANT
-    private int[] _iToV;
+    private int[] iToV;
 
     private Sequence<VirtualMethodActor> gatherVirtualMethodActors(IdentityHashSet<InterfaceActor> allInterfaceActors, GrowableMapping<MethodActor, VirtualMethodActor> lookup) {
         if (!isReferenceClassActor()) {
@@ -1065,32 +1065,32 @@ public abstract class ClassActor extends Actor {
 
         // Update local virtual methods with local Miranda methods (if any)
         if (numberOfLocalMirandaMethods != 0) {
-            final VirtualMethodActor[] newLocalVirtualMethodActors = new VirtualMethodActor[_localVirtualMethodActors.length + numberOfLocalMirandaMethods];
-            System.arraycopy(_localVirtualMethodActors, 0, newLocalVirtualMethodActors, 0, _localVirtualMethodActors.length);
+            final VirtualMethodActor[] newLocalVirtualMethodActors = new VirtualMethodActor[localVirtualMethodActors.length + numberOfLocalMirandaMethods];
+            System.arraycopy(localVirtualMethodActors, 0, newLocalVirtualMethodActors, 0, localVirtualMethodActors.length);
             int resultIndex = result.length() - numberOfLocalMirandaMethods;
             memberIndex = localVirtualMethodActors().length;
             for (int i = 0; i != numberOfLocalMirandaMethods; ++i) {
                 newLocalVirtualMethodActors[memberIndex++] = result.get(resultIndex++);
             }
-            _localVirtualMethodActors = newLocalVirtualMethodActors;
+            localVirtualMethodActors = newLocalVirtualMethodActors;
         }
 
         return result;
     }
 
     @PROTOTYPE_ONLY
-    private static String _prohibitedPackagePrefix = null;
+    private static String prohibitedPackagePrefix = null;
 
     @PROTOTYPE_ONLY
     public static void prohibitPackagePrefix(MaxPackage prefix) {
-        _prohibitedPackagePrefix = (prefix == null) ? null : prefix.name();
+        prohibitedPackagePrefix = (prefix == null) ? null : prefix.name();
     }
 
     @PROTOTYPE_ONLY
     private void checkProhibited(Utf8Constant typeName) {
         if (MaxineVM.isPrototyping()) {
-            if (_prohibitedPackagePrefix != null && !isArrayClassActor() && !InvocationStubGenerator.isGeneratedStubClassName(typeName.toString())) {
-                ProgramError.check(!typeName.toString().startsWith(_prohibitedPackagePrefix), "attempt to load from prohibited package: " + typeName);
+            if (prohibitedPackagePrefix != null && !isArrayClassActor() && !InvocationStubGenerator.isGeneratedStubClassName(typeName.toString())) {
+                ProgramError.check(!typeName.toString().startsWith(prohibitedPackagePrefix), "attempt to load from prohibited package: " + typeName);
             }
         }
     }
@@ -1123,7 +1123,7 @@ public abstract class ClassActor extends Actor {
         if (outerClassDescriptor == null) {
             return null;
         }
-        return outerClassDescriptor.resolve(_classLoader);
+        return outerClassDescriptor.resolve(classLoader);
     }
 
     /**
@@ -1147,12 +1147,12 @@ public abstract class ClassActor extends Actor {
         }
         final ClassActor[] innerClassActors = new ClassActor[innerClassDescriptors.length];
         for (int i = 0; i != innerClassDescriptors.length; ++i) {
-            innerClassActors[i] = innerClassDescriptors[i].resolve(_classLoader);
+            innerClassActors[i] = innerClassDescriptors[i].resolve(classLoader);
         }
         return innerClassActors;
     }
 
-    private final String _sourceFileName;
+    private final String sourceFileName;
 
     /**
      * Gets the value of the SourceFile class file attribute associated with this class actor.
@@ -1160,7 +1160,7 @@ public abstract class ClassActor extends Actor {
      * @return null if there is no SourceFile attribute associated with this class actor
      */
     public final String sourceFileName() {
-        return _sourceFileName;
+        return sourceFileName;
     }
 
     /**
@@ -1170,19 +1170,19 @@ public abstract class ClassActor extends Actor {
      * class.
      */
     public String sourceFilePath() {
-        String sourceFileName = _sourceFileName;
-        if (sourceFileName == null) {
+        String sourceFile = this.sourceFileName;
+        if (sourceFile == null) {
             Class topLevelClass = toJava();
             for (Class enclosingClass = topLevelClass.getEnclosingClass(); enclosingClass != null; enclosingClass = enclosingClass.getEnclosingClass()) {
                 topLevelClass = enclosingClass;
             }
-            sourceFileName = topLevelClass.getSimpleName() + ".java";
+            sourceFile = topLevelClass.getSimpleName() + ".java";
         }
         final String packageName = packageName();
         if (packageName.isEmpty()) {
-            return sourceFileName;
+            return sourceFile;
         }
-        return packageName.replace('.', File.separatorChar) + File.separatorChar + sourceFileName;
+        return packageName.replace('.', File.separatorChar) + File.separatorChar + sourceFile;
     }
 
     /**
@@ -1206,41 +1206,41 @@ public abstract class ClassActor extends Actor {
     }
 
     @CONSTANT
-    private DynamicHub _dynamicHub;
+    private DynamicHub dynamicHub;
 
     /**
      * The dynamic hub is used by dynamic-instance-related operations and by subtype checks.
      * @return the dynamic hub
      */
     public final DynamicHub dynamicHub() {
-        return _dynamicHub;
+        return dynamicHub;
     }
 
     @CONSTANT
-    private StaticHub _staticHub;
+    private StaticHub staticHub;
 
     /**
      * The static hub is used by static-tuple-related operations.
      * @return the static hub
      */
     public final StaticHub staticHub() {
-        return _staticHub;
+        return staticHub;
     }
 
     public Size dynamicTupleSize() {
-        return _dynamicHub.tupleSize();
+        return dynamicHub.tupleSize();
     }
 
     public final ClassLoader classLoader() {
-        return _classLoader;
+        return classLoader;
     }
 
     public final ClassRegistry classRegistry() {
-        return ClassRegistry.makeRegistry(_classLoader);
+        return ClassRegistry.makeRegistry(classLoader);
     }
 
     public final TypeDescriptor typeDescriptor() {
-        return _typeDescriptor;
+        return typeDescriptor;
     }
 
     /**
@@ -1273,12 +1273,12 @@ public abstract class ClassActor extends Actor {
         if (isInterfaceActor()) {
             result.add((InterfaceActor) this);
         }
-        for (InterfaceActor interfaceActor : _localInterfaceActors) {
+        for (InterfaceActor interfaceActor : localInterfaceActors) {
             result.add(interfaceActor);
             result.addAll(interfaceActor.getAllInterfaceActors());
         }
-        if (_superClassActor != null) {
-            result.addAll(_superClassActor.getAllInterfaceActors());
+        if (superClassActor != null) {
+            result.addAll(superClassActor.getAllInterfaceActors());
         }
         return result;
     }
@@ -1294,13 +1294,13 @@ public abstract class ClassActor extends Actor {
         return result;
     }
 
-    public final boolean hasSuperClass(ClassActor superClassActor) {
+    public final boolean hasSuperClass(ClassActor superClass) {
         ClassActor subClassActor = this;
         do {
-            if (subClassActor == superClassActor) {
+            if (subClassActor == superClass) {
                 return true;
             }
-            subClassActor = subClassActor._superClassActor;
+            subClassActor = subClassActor.superClassActor;
         } while (subClassActor != null);
         return false;
     }
@@ -1316,13 +1316,13 @@ public abstract class ClassActor extends Actor {
 
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static ReferenceFieldActor _mirrorFieldActor;
+    private static ReferenceFieldActor mirrorFieldActor;
 
     private static ReferenceFieldActor mirrorFieldActor() {
-        if (_mirrorFieldActor == null) {
-            _mirrorFieldActor = (ReferenceFieldActor) ClassActor.fromJava(ClassActor.class).findFieldActor(SymbolTable.makeSymbol("_mirror"));
+        if (mirrorFieldActor == null) {
+            mirrorFieldActor = (ReferenceFieldActor) ClassActor.fromJava(ClassActor.class).findFieldActor(SymbolTable.makeSymbol("mirror"));
         }
-        return _mirrorFieldActor;
+        return mirrorFieldActor;
     }
 
     @INLINE
@@ -1330,20 +1330,20 @@ public abstract class ClassActor extends Actor {
         if (MaxineVM.isPrototyping()) {
             return JavaPrototype.javaPrototype().toJava(this);
         }
-        if (_mirror == null) {
+        if (mirror == null) {
             return noninlineCreateMirror();
         }
-        return _mirror;
+        return mirror;
     }
 
     private Class noninlineCreateMirror() {
         // Non-blocking synchronization is used here to swap in the mirror reference.
         // This could lead to some extra Class objects being created that become garbage, but should be harmless.
-        final Class mirror = (Class) Heap.createTuple(ClassRegistry.javaLangClassActor().dynamicHub());
-        Class_classActor.writeObject(mirror, this);
-        final Reference oldValue = Reference.fromJava(this).compareAndSwapReference(mirrorFieldActor().offset(), null,  Reference.fromJava(mirror));
+        final Class newMirror = (Class) Heap.createTuple(ClassRegistry.javaLangClassActor().dynamicHub());
+        Class_classActor.writeObject(newMirror, this);
+        final Reference oldValue = Reference.fromJava(this).compareAndSwapReference(mirrorFieldActor().offset(), null,  Reference.fromJava(newMirror));
         if (oldValue == null) {
-            return mirror;
+            return newMirror;
         }
         return UnsafeLoophole.cast(oldValue.toJava());
     }
@@ -1351,16 +1351,16 @@ public abstract class ClassActor extends Actor {
 
     @INLINE
     public final Class uncheckedGetMirror() {
-        return _mirror;
+        return mirror;
     }
 
     @PROTOTYPE_ONLY
     public final void setMirror(Class javaClass) {
-        if (_mirror == null) {
-            _mirror = javaClass;
+        if (mirror == null) {
+            mirror = javaClass;
         } else {
-            if (_mirror != javaClass) {
-                ProgramError.unexpected("setMirror called with different value, old=" + _mirror + ", new=" + javaClass);
+            if (mirror != javaClass) {
+                ProgramError.unexpected("setMirror called with different value, old=" + mirror + ", new=" + javaClass);
             }
         }
     }
@@ -1375,11 +1375,11 @@ public abstract class ClassActor extends Actor {
         return javaSignature(true);
     }
 
-    private final Kind _kind;
+    private final Kind kind;
 
     @INLINE
     public final Kind kind() {
-        return _kind;
+        return kind;
     }
 
     @INLINE
@@ -1388,12 +1388,11 @@ public abstract class ClassActor extends Actor {
     }
 
     public final ArrayLayout arrayLayout() {
-        final Kind kind = kind();
-        return kind.arrayLayout(Layout.layoutScheme());
+        return kind().arrayLayout(Layout.layoutScheme());
     }
 
     @PROTOTYPE_ONLY
-    private static final Map<Class, ClassActor> _classToClassActorMap = new HashMap<Class, ClassActor>();
+    private static final Map<Class, ClassActor> classToClassActorMap = new HashMap<Class, ClassActor>();
 
     /**
      * Gets the class actor for a given Java class.
@@ -1425,7 +1424,7 @@ public abstract class ClassActor extends Actor {
     protected BitSet getSuperClassActorSerials() {
         final BitSet result = new BitSet();
         result.set(id());
-        if (_superClassActor != null) {
+        if (superClassActor != null) {
             result.or(superClassActor().getSuperClassActorSerials());
         }
         for (InterfaceActor interfaceActor : localInterfaceActors()) {
@@ -1467,25 +1466,25 @@ public abstract class ClassActor extends Actor {
         public static final InitializationState INITIALIZED = null;
     }
 
-    private InitializationState _initializationState;
-    private Thread _initializingThread;
+    private InitializationState initializationState;
+    private Thread initializingThread;
 
     /**
      * Determines if this class actor has a parameterless static method named "<clinit>".
      */
     public final boolean hasClassInitializer() {
-        return _clinit != null;
+        return clinit != null;
     }
 
     public final StaticMethodActor classInitializer() {
-        return _clinit;
+        return clinit;
     }
 
     public void callInitializer() {
-        if (_clinit != null) {
-            SpecialBuiltin.call(CompilationScheme.Static.compile(_clinit, CallEntryPoint.OPTIMIZED_ENTRY_POINT, CompilationDirective.DEFAULT));
+        if (clinit != null) {
+            SpecialBuiltin.call(CompilationScheme.Static.compile(clinit, CallEntryPoint.OPTIMIZED_ENTRY_POINT, CompilationDirective.DEFAULT));
         }
-        _initializationState = InitializationState.INITIALIZED;
+        initializationState = InitializationState.INITIALIZED;
     }
 
     private boolean tryInitialization() {
@@ -1494,22 +1493,22 @@ public abstract class ClassActor extends Actor {
                 if (isInitialized()) {
                     return false;
                 }
-                switch (_initializationState) {
+                switch (initializationState) {
                     case ERROR: {
                         throw new NoClassDefFoundError();
                     }
                     case PREPARED: {
                         verify();
-                        _initializationState = InitializationState.VERIFIED;
+                        initializationState = InitializationState.VERIFIED;
                         break;
                     }
                     case VERIFIED: {
-                        _initializingThread = Thread.currentThread();
-                        _initializationState = InitializationState.INITIALIZING;
+                        initializingThread = Thread.currentThread();
+                        initializationState = InitializationState.INITIALIZING;
                         return true;
                     }
                     case INITIALIZING: {
-                        if (_initializingThread == Thread.currentThread()) {
+                        if (initializingThread == Thread.currentThread()) {
                             return false;
                         }
                         try {
@@ -1523,9 +1522,9 @@ public abstract class ClassActor extends Actor {
         }
     }
 
-    private synchronized void terminateInitialization(InitializationState initializationState) {
-        _initializationState = initializationState;
-        _initializingThread = null;
+    private synchronized void terminateInitialization(InitializationState state) {
+        this.initializationState = state;
+        this.initializingThread = null;
         notifyAll();
     }
 
@@ -1539,7 +1538,7 @@ public abstract class ClassActor extends Actor {
      */
     @INLINE
     public final boolean isInitialized() {
-        return _initializationState == null;
+        return initializationState == null;
     }
 
     /**
@@ -1547,9 +1546,9 @@ public abstract class ClassActor extends Actor {
      */
     public void makeInitialized() {
         if (tryInitialization()) {
-            if (_superClassActor != null) {
+            if (superClassActor != null) {
                 try {
-                    _superClassActor.makeInitialized();
+                    superClassActor.makeInitialized();
                 } catch (Exception exception) {
                     ProgramError.unexpected("exception not wrapped by ExceptionInInitializerError: " + exception);
                 } catch (Error error) {
@@ -1571,24 +1570,24 @@ public abstract class ClassActor extends Actor {
         }
     }
 
-    private Object[] _signers;
+    private Object[] signers;
 
     public Object[] signers() {
-        return _signers;
+        return signers;
     }
 
     public void setSigners(Object[] signers) {
-        _signers = signers;
+        this.signers = signers;
     }
 
-    private ProtectionDomain _protectionDomain;
+    private ProtectionDomain protectionDomain;
 
     public ProtectionDomain protectionDomain() {
-        return _protectionDomain;
+        return protectionDomain;
     }
 
     public void setProtectionDomain(ProtectionDomain protectionDomain) {
-        _protectionDomain = protectionDomain;
+        this.protectionDomain = protectionDomain;
     }
 
     public ConstantPool constantPool() {
@@ -1596,7 +1595,7 @@ public abstract class ClassActor extends Actor {
     }
 
     public WordWidth wordWidth() {
-        return _dynamicHub.wordWidth();
+        return dynamicHub.wordWidth();
     }
 
     @INLINE

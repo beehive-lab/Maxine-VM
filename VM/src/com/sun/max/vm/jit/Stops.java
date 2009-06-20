@@ -39,13 +39,13 @@ import com.sun.max.vm.template.*;
  */
 public class Stops {
 
-    public final int[] _stopPositions;
+    public final int[] stopPositions;
     public final ClassMethodActor[] _directCallees;
-    public final int _numberOfIndirectCalls;
-    public final int _numberOfSafepoints;
-    public final byte[] _referenceMaps;
-    public final ByteArrayBitMap _isDirectCallToRuntime;
-    public final BytecodeStopsIterator _bytecodeStopsIterator;
+    public final int numberOfIndirectCalls;
+    public final int numberOfSafepoints;
+    public final byte[] referenceMaps;
+    public final ByteArrayBitMap isDirectCallToRuntime;
+    public final BytecodeStopsIterator bytecodeStopsIterator;
 
     Stops(ClassMethodActor[] directCallees,
            ByteArrayBitMap isDirectCallToRuntime,
@@ -54,13 +54,13 @@ public class Stops {
            int[] stopPositions,
            BytecodeStopsIterator bytecodeStopsIterator,
            byte[] referenceMaps) {
-        _directCallees = directCallees;
-        _isDirectCallToRuntime = isDirectCallToRuntime;
-        _numberOfIndirectCalls = numberOfIndirectCalls;
-        _numberOfSafepoints = numberOfSafepoints;
-        _stopPositions = stopPositions;
-        _referenceMaps = referenceMaps;
-        _bytecodeStopsIterator = bytecodeStopsIterator;
+        this._directCallees = directCallees;
+        this.isDirectCallToRuntime = isDirectCallToRuntime;
+        this.numberOfIndirectCalls = numberOfIndirectCalls;
+        this.numberOfSafepoints = numberOfSafepoints;
+        this.stopPositions = stopPositions;
+        this.referenceMaps = referenceMaps;
+        this.bytecodeStopsIterator = bytecodeStopsIterator;
     }
 
     public int numberOfDirectCalls() {
@@ -75,37 +75,37 @@ public class Stops {
      */
     public static class StopsBuilder {
 
-        private final int[] _stopTypeCount;
-        private Stop[] _stops;
-        private int _uniqueBytecodePositions = 1;
+        private final int[] stopTypeCount;
+        private Stop[] stops;
+        private int uniqueBytecodePositions = 1;
         private int _count;
 
         public StopsBuilder(int initialCapacity) {
-            _stops = new Stop[initialCapacity];
-            _stopTypeCount = new int[StopType.VALUES.length()];
+            stops = new Stop[initialCapacity];
+            stopTypeCount = new int[StopType.VALUES.length()];
         }
 
         private void ensureCapacity(int minCapacity) {
-            final int oldCapacity = _stops.length;
+            final int oldCapacity = stops.length;
             if (minCapacity > oldCapacity) {
                 int newCapacity = ((oldCapacity * 3) >> 1) + 1;
                 if (newCapacity < minCapacity) {
                     newCapacity = minCapacity;
                 }
                 // minCapacity is usually close to size, so this is a win:
-                _stops = Arrays.copyOf(_stops, newCapacity);
+                stops = Arrays.copyOf(stops, newCapacity);
             }
 
         }
 
         private void addNoCheck(Stop stop) {
-            _stops[_count] = stop;
-            _stopTypeCount[stop.type().ordinal()]++;
-            final int bytecodePosition = stop._bytecodePosition;
+            stops[_count] = stop;
+            stopTypeCount[stop.type().ordinal()]++;
+            final int bytecodePosition = stop.bytecodePosition;
             if (_count > 0) {
-                final int previousBytecodePosition = _stops[_count - 1]._bytecodePosition;
+                final int previousBytecodePosition = stops[_count - 1].bytecodePosition;
                 if (bytecodePosition > previousBytecodePosition) {
-                    _uniqueBytecodePositions++;
+                    uniqueBytecodePositions++;
                 } else {
                     assert bytecodePosition == previousBytecodePosition : "Stops must be accumulated in bytecode order";
                 }
@@ -144,9 +144,9 @@ public class Stops {
         }
 
         Stops pack(int frameReferenceMapSize, int registerReferenceMapSize, int firstTemplateSlot) {
-            final int numberOfDirectCalls = _stopTypeCount[DIRECT_CALL.ordinal()];
-            final int numberOfIndirectCalls = _stopTypeCount[INDIRECT_CALL.ordinal()];
-            final int numberOfSafepoints = _stopTypeCount[SAFEPOINT.ordinal()];
+            final int numberOfDirectCalls = stopTypeCount[DIRECT_CALL.ordinal()];
+            final int numberOfIndirectCalls = stopTypeCount[INDIRECT_CALL.ordinal()];
+            final int numberOfSafepoints = stopTypeCount[SAFEPOINT.ordinal()];
             final int numberOfStopPositions = _count;
             final int numberOfCalls = numberOfDirectCalls + numberOfIndirectCalls;
             assert numberOfStopPositions == numberOfCalls + numberOfSafepoints;
@@ -161,7 +161,7 @@ public class Stops {
                 assert frameReferenceMapSize > 0 || numberOfSafepoints > 0;
                 referenceMaps = new byte[(numberOfStopPositions * frameReferenceMapSize) + (numberOfSafepoints  * registerReferenceMapSize)];
                 stopPositions = new int[numberOfStopPositions];
-                final int[] bytecodeStopsMap = new int[numberOfStopPositions + _uniqueBytecodePositions];
+                final int[] bytecodeStopsMap = new int[numberOfStopPositions + uniqueBytecodePositions];
                 int bytecodeStopsMapIndex = 0;
                 if (numberOfDirectCalls > 0) {
                     isDirectCallToRuntimeMap = new ByteArrayBitMap(numberOfDirectCalls);
@@ -177,7 +177,7 @@ public class Stops {
                 final ByteArrayBitMap bitMap = new ByteArrayBitMap(referenceMaps, 0, frameReferenceMapSize);
                 int lastBytecodePosition = -1;
                 for (int i = 0; i != numberOfStopPositions; ++i) {
-                    final Stop stop = _stops[i];
+                    final Stop stop = stops[i];
                     final int stopIndex;
                     boolean isDirectCallToRuntime = false;
                     switch (stop.type()) {
@@ -205,7 +205,7 @@ public class Stops {
                             throw ProgramError.unknownCase();
                     }
 
-                    final int bytecodePosition = stop._bytecodePosition;
+                    final int bytecodePosition = stop.bytecodePosition;
                     if (lastBytecodePosition != bytecodePosition) {
                         bytecodeStopsMap[bytecodeStopsMapIndex++] = bytecodePosition | BytecodeStopsIterator.BCP_BIT;
                         lastBytecodePosition = bytecodePosition;
@@ -216,7 +216,7 @@ public class Stops {
                     } else {
                         bytecodeStopsMap[bytecodeStopsMapIndex++] = stopIndex;
                     }
-                    stopPositions[stopIndex] = stop._position;
+                    stopPositions[stopIndex] = stop.position;
                     bitMap.setSize(frameReferenceMapSize);
                     bitMap.setOffset(stopIndex * frameReferenceMapSize);
                     stop.initializeStackReferenceMap(bitMap, firstTemplateSlot);

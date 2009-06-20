@@ -39,38 +39,38 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
      * The relative order of a belt. Always starts from Zero (0). The lower the value, the older
      * the generation and vice versa.
      */
-    private int _index;
+    private int index;
 
     /**
      * Specifies if the belt is expandable or not (i.e. whether it can overlap with a contiguous memory segment).
      */
-    private boolean _expandable = false;
+    private boolean expandable = false;
 
     /**
      * The percent of usable memory frames the belt occupies. This corresponds to the "X" described in the Beltway paper.
      */
-    private int _framePercentageOfUsableMemory;
+    private int framePercentageOfUsableMemory;
 
-    private Pointer _markPointer;
+    private Pointer markPointer;
 
-    private static final FieldActor _markActor = ClassActor.fromJava(Belt.class).findFieldActor(SymbolTable.makeSymbol("_mark"));
+    private static final FieldActor markActor = ClassActor.fromJava(Belt.class).findFieldActor(SymbolTable.makeSymbol("mark"));
 
     // The address and the pointer to the address
     // of the previous allocation mark
-    private volatile Address _prevAllocationMark = Address.zero();
+    private volatile Address prevAllocationMark = Address.zero();
 
-    private Address _usableMemoryEnd;
-    private Address _usableMemoryStart;
+    private Address usableMemoryEnd;
+    private Address usableMemoryStart;
 
-    private Size _usableMemory;
+    private Size usableMemory;
 
     public Belt(int index, Address beltStartAddress, Size beltSize, int framePercentageOfUsableMemory) {
         super(beltStartAddress, beltSize);
-        _index = index;
-        _usableMemoryStart = beltStartAddress;
-        _framePercentageOfUsableMemory = framePercentageOfUsableMemory;
-        _mark = beltStartAddress;
-        _markPointer = _markActor.pointer(this);
+        this.index = index;
+        this.usableMemoryStart = beltStartAddress;
+        this.framePercentageOfUsableMemory = framePercentageOfUsableMemory;
+        this.mark = beltStartAddress;
+        this.markPointer = markActor.pointer(this);
 
     }
 
@@ -78,7 +78,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
     }
 
     public final Address getPrevAllocationMark() {
-        return _prevAllocationMark;
+        return prevAllocationMark;
     }
 
     public final Size getUsedMemorySize() {
@@ -90,34 +90,34 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
     }
 
     public final void resetAllocationMark() {
-        _mark = start();
-        _markPointer = _markActor.pointer(this);
+        mark = start();
+        markPointer = markActor.pointer(this);
     }
 
     @Override
     public void setStart(Address beltStartAddress) {
         super.setStart(beltStartAddress);
-        _mark = beltStartAddress;
+        mark = beltStartAddress;
     }
 
     public void setIndex(int index) {
-        _index = index;
+        this.index = index;
     }
 
     public int getIndex() {
-        return _index;
+        return index;
     }
 
     public int getFramePercentageOfUsableMemory() {
-        return _framePercentageOfUsableMemory;
+        return framePercentageOfUsableMemory;
     }
 
     public void setFramePercentageOfUsableMemory(int framePercentageOfUsableMemory) {
-        _framePercentageOfUsableMemory = framePercentageOfUsableMemory;
+        this.framePercentageOfUsableMemory = framePercentageOfUsableMemory;
     }
 
     public void setExpandable(boolean expandable) {
-        _expandable = expandable;
+        this.expandable = expandable;
     }
 
     public Pointer allocate(RuntimeMemoryRegion from, Size size) {
@@ -128,7 +128,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
     @INLINE
     public final Pointer allocate(Size size) {
         Pointer cell;
-        final Pointer oldAllocationMark = _mark.asPointer();
+        final Pointer oldAllocationMark = mark.asPointer();
 
         if (VMConfiguration.hostOrTarget().debugging()) {
             cell = oldAllocationMark.plusWords(1);
@@ -138,11 +138,11 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
         final Pointer end = cell.plus(size);
 
         if (!checkObjectInBelt(size)) {
-            if (!_expandable) {
+            if (!expandable) {
                 return Pointer.zero();
             }
         }
-        if (_markPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark) {
+        if (markPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark) {
             if (Heap.verbose()) {
                 Log.println("Conflict! retry-allocate");
             }
@@ -155,7 +155,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
     @INLINE
     public final Pointer bumpAllocate(Size size) {
         Pointer cell;
-        final Pointer oldAllocationMark = _mark.asPointer();
+        final Pointer oldAllocationMark = mark.asPointer();
 
         if (VMConfiguration.hostOrTarget().debugging()) {
             cell = oldAllocationMark.plusWords(1);
@@ -165,11 +165,11 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
         final Pointer end = cell.plus(size);
 
         if (!checkObjectInBelt(size)) {
-            if (!_expandable) {
+            if (!expandable) {
                 return Pointer.zero();
             }
         }
-        _mark = end;
+        mark = end;
         return cell;
     }
 
@@ -179,7 +179,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
         Pointer cell;
         Address end;
         do {
-            oldAllocationMark = _mark.asPointer();
+            oldAllocationMark = mark.asPointer();
             if (VMConfiguration.hostOrTarget().debugging()) {
                 cell = oldAllocationMark.plusWords(1);
             } else {
@@ -189,15 +189,15 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
             if (checkNotExceedUsable(end.asSize())) {
                 return Pointer.zero();
             }
-            oldAllocationMark = _mark.asPointer();
-        } while (_markPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark);
+            oldAllocationMark = mark.asPointer();
+        } while (markPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark);
         return cell;
     }
 
     @INLINE
     public final Pointer gcAllocate(Size size) {
         Pointer cell;
-        final Pointer oldAllocationMark = _mark.asPointer();
+        final Pointer oldAllocationMark = mark.asPointer();
         if (VMConfiguration.hostOrTarget().debugging()) {
             cell = oldAllocationMark.plusWords(1);
         } else {
@@ -207,7 +207,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
         final Pointer end = cell.plus(size);
 
         if (!end.lessThan(end())) {
-            if (!_expandable) {
+            if (!expandable) {
                 if (Heap.verbose()) {
                     Log.println(" Trying to Overwrite contiguous spaces");
                 }
@@ -217,7 +217,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
             if (!end.lessThan(BeltManager.getApplicationHeap().end())) {
                 return Pointer.zero();
             }
-            if (!(_markPointer.compareAndSwapWord(oldAllocationMark, end) == oldAllocationMark)) {
+            if (!(markPointer.compareAndSwapWord(oldAllocationMark, end) == oldAllocationMark)) {
                 if (Heap.verbose()) {
                     Log.println("Conflict - Retry allocate");
                 }
@@ -225,7 +225,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
             }
 
         } else {
-            if (!(_markPointer.compareAndSwapWord(oldAllocationMark, end) == oldAllocationMark)) {
+            if (!(markPointer.compareAndSwapWord(oldAllocationMark, end) == oldAllocationMark)) {
                 if (Heap.verbose()) {
                     Log.println("Conflict - Retry allocate");
                 }
@@ -241,15 +241,15 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
         Pointer cell;
         Address end;
         do {
-            oldAllocationMark = _mark.asPointer();
+            oldAllocationMark = mark.asPointer();
             if (VMConfiguration.hostOrTarget().debugging()) {
                 cell = oldAllocationMark.plusWords(1);
             } else {
                 cell = oldAllocationMark;
             }
             end = cell.plus(size);
-            oldAllocationMark = _mark.asPointer();
-        } while (_markPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark);
+            oldAllocationMark = mark.asPointer();
+        } while (markPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark);
 
         return cell;
     }
@@ -257,7 +257,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
     @INLINE
     public final Pointer gcBumpAllocate(Size size) {
         Pointer cell;
-        final Pointer oldAllocationMark = _mark.asPointer();
+        final Pointer oldAllocationMark = mark.asPointer();
 
         if (VMConfiguration.hostOrTarget().debugging()) {
             cell = oldAllocationMark.plusWords(1);
@@ -268,23 +268,23 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
         final Pointer end = cell.plus(size);
 
         if (!end.lessThan(end())) {
-            if (!_expandable) {
-                FatalError.check(_mark.lessThan(end()), "GC allocation overflow");
+            if (!expandable) {
+                FatalError.check(mark.lessThan(end()), "GC allocation overflow");
             }
             if (Heap.verbose()) {
                 Log.println(" Trying to Overwrite contiguous spaces");
             }
-            _mark = end;
+            mark = end;
 
         } else {
-            _mark = end;
+            mark = end;
         }
         return cell;
     }
 
     @INLINE
     private boolean checkObjectInBelt(Size size) {
-        final Pointer oldAllocationMark = _mark.asPointer();
+        final Pointer oldAllocationMark = mark.asPointer();
         if (oldAllocationMark.plus(size).greaterThan(end().asPointer())) {
             if (Heap.verbose()) {
                 Log.println("Allocation did not fit, check whether a new frame can be fit in the belt");
@@ -301,15 +301,15 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
     }
 
     public void setAllocationMarkSnapshot() {
-        _prevAllocationMark = _mark;
+        prevAllocationMark = mark;
     }
 
     public void setAllocationMark(Address address) {
-        _mark = address;
+        mark = address;
     }
 
     public Pointer getAllocationMarkSnapshot() {
-        return _prevAllocationMark.asPointer();
+        return prevAllocationMark.asPointer();
     }
 
     public final boolean checkNotExceedUsable(Size size) {
@@ -334,11 +334,11 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
 
     public Size calculateUsedMemory() {
         Size usableMemory = Size.zero();
-        if (_mark.lessThan(_usableMemoryStart)) {
-            usableMemory = usableMemory.plus(_usableMemoryStart.plus(end())).asSize();
-            usableMemory = usableMemory.plus(start().plus(_mark)).asSize();
+        if (mark.lessThan(this.usableMemoryStart)) {
+            usableMemory = usableMemory.plus(this.usableMemoryStart.plus(end())).asSize();
+            usableMemory = usableMemory.plus(start().plus(mark)).asSize();
         } else {
-            usableMemory = _mark.minus(_usableMemoryStart).asSize();
+            usableMemory = mark.minus(this.usableMemoryStart).asSize();
         }
         return usableMemory;
     }
@@ -346,7 +346,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
     public void printInfo() {
         Log.println();
         Log.print("Belt index: ");
-        Log.println(_index);
+        Log.println(index);
         Log.print("Belt start address: ");
         Log.println(start());
         Log.print("Belt stop address:  ");
@@ -356,7 +356,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
         Log.print("Belt size: ");
         Log.println(size().toLong());
         Log.print("Frame percentage of usable memory: ");
-        Log.println(_framePercentageOfUsableMemory);
+        Log.println(framePercentageOfUsableMemory);
         if (start().isAligned(BeltwayHeapSchemeConfiguration.ALLIGNMENT)) {
             Log.println("true");
         }

@@ -35,10 +35,10 @@ import com.sun.max.vm.compiler.snippet.*;
 public final class CirBuiltinCheck extends CirVisitor {
 
     private CirBuiltinCheck(Snippet snippet) {
-        _snippet = snippet;
+        this.snippet = snippet;
     }
 
-    private final Snippet _snippet;
+    private final Snippet snippet;
 
     public static void apply(CirClosure closure, Snippet snippet) {
         CirVisitingTraversal.apply(closure, new CirBuiltinCheck(snippet));
@@ -55,7 +55,7 @@ public final class CirBuiltinCheck extends CirVisitor {
     }
 
     private String errorMessagePrefix() {
-        return "checking for CIR reduction of " + _snippet + " to mere builtins - ";
+        return "checking for CIR reduction of " + snippet + " to mere builtins - ";
     }
 
 }

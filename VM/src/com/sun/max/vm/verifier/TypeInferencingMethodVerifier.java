@@ -27,7 +27,7 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.program.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
@@ -74,7 +74,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
     public TypeInferencingMethodVerifier(ClassVerifier classVerifier, ClassMethodActor classMethodActor, CodeAttribute codeAttribute) {
         super(classVerifier, classMethodActor, codeAttribute);
         _instructionMap = new Instruction[codeAttribute.code().length];
-        _scanner = new BytecodeScanner(_interpreter);
+        _scanner = new BytecodeScanner(interpreter);
     }
 
     @Override
@@ -90,7 +90,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
     }
 
     protected TypeState[] typeStateMap() {
-        return (TypeState[]) _frameMap;
+        return (TypeState[]) frameMap;
     }
 
     @Override
@@ -148,12 +148,11 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
     @Override
     public void verify() {
-        if (classVerifier().verbose()) {
-            final PrintStream out = Trace.stream();
-            out.println();
-            out.println("Verifying " + classMethodActor().format("%H.%n(%p)"));
-            out.println();
-            out.println("Interpreting bytecode:");
+        if (verbose) {
+            Log.println();
+            Log.println("Verifying " + classMethodActor().format("%H.%n(%p)"));
+            Log.println();
+            Log.println("Interpreting bytecode:");
         }
 
         final TypeState[] typeStateMap = typeStateMap();
@@ -181,7 +180,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
             final TypeState typeState = _targetQueue.remove();
             assert typeState.visited();
             Instruction instruction = typeState.targetedInstruction();
-            _fallsThrough = false;
+            fallsThrough = false;
 
             while (true) {
                 instruction.interpret();
@@ -222,7 +221,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
      * Gets the current interpreter frame type state.
      */
     public TypeState typeState() {
-        return (TypeState) _frame;
+        return (TypeState) frame;
     }
 
     TypeState makeTypeState(int position) {
@@ -578,75 +577,51 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         /**
          * The type state at the target of a branch.
          */
-        private final TypeState _target;
+        final TypeState target;
 
         public Branch(Bytecode opcode, int position, int endPosition, TypeState target, Instruction previous) {
             super(opcode, position, endPosition, previous);
-            _target = target;
-        }
-
-        public TypeState target() {
-            return _target;
+            this.target = target;
         }
     }
 
     public abstract class Select extends Instruction {
 
-        private final TypeState _defaultTarget;
-        private final TypeState[] _caseTargets;
+        final TypeState defaultTarget;
+        final TypeState[] caseTargets;
 
         public Select(Bytecode opcode, int position, int endPosition, TypeState defaultTarget, TypeState[] caseTargets, Instruction previous) {
             super(opcode, position, endPosition, previous);
-            _defaultTarget = defaultTarget;
-            _caseTargets = caseTargets;
-        }
-
-        public TypeState defaultTarget() {
-            return _defaultTarget;
-        }
-
-        public TypeState[] caseTargets() {
-            return _caseTargets;
+            this.defaultTarget = defaultTarget;
+            this.caseTargets = caseTargets;
         }
     }
 
     public class Tableswitch extends Select {
 
-        private final int _low;
-        private final int _high;
+        final int low;
+        final int high;
 
         public Tableswitch(Bytecode opcode, int position, int size, TypeState defaultTarget, int low, int high, TypeState[] caseTargets, Instruction previous) {
             super(opcode, position, size, defaultTarget, caseTargets, previous);
-            _low = low;
-            _high = high;
-        }
-
-        public int high() {
-            return _high;
-        }
-
-        public int low() {
-            return _low;
+            this.low = low;
+            this.high = high;
         }
     }
 
     public class Lookupswitch extends Select {
 
-        private final int[] _matches;
+        final int[] matches;
 
         public Lookupswitch(Bytecode opcode, int position, int size, TypeState defaultTarget, int[] matches, TypeState[] caseTargets, Instruction previous) {
             super(opcode, position, size, defaultTarget, caseTargets, previous);
-            _matches = matches;
-        }
-
-        public int[] matches() {
-            return _matches;
+            this.matches = matches;
         }
     }
 
     public class Jsr extends Branch {
 
-        private Instruction _ret;
+        private Instruction ret;
 
         public Jsr(Bytecode opcode, int position, int size, TypeState branchTarget, Instruction previous) {
             super(opcode, position, size, branchTarget, previous);
@@ -654,35 +629,35 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
         public void verifyRet(Instruction ret) {
             assert ret.opcode() == Bytecode.RET;
-            if (_ret == null) {
-                _ret = ret;
+            if (this.ret == null) {
+                this.ret = ret;
             } else {
-                if (_ret != ret) {
+                if (this.ret != ret) {
                     throw verifyError("Multiple returns to single JSR");
                 }
             }
         }
 
         public Instruction ret() {
-            return _ret;
+            return ret;
         }
     }
 
     public class Ret extends Instruction {
 
-        private int _numberOfFramesPopped = -1;
+        private int numberOfFramesPopped = -1;
 
         public Ret(Bytecode opcode, int position, int endPosition, Instruction previous) {
             super(opcode, position, endPosition, previous);
         }
 
         public int numberOfFramesPopped() {
-            return _numberOfFramesPopped;
+            return numberOfFramesPopped;
         }
 
         public void setNumberOfFramesPopped(int count) {
-            assert _numberOfFramesPopped == -1 || _numberOfFramesPopped == count;
-            _numberOfFramesPopped = count;
+            assert numberOfFramesPopped == -1 || numberOfFramesPopped == count;
+            numberOfFramesPopped = count;
         }
     }
 }

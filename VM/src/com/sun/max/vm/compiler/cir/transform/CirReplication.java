@@ -36,42 +36,42 @@ public final class CirReplication {
         NONE, ALL;
     }
 
-    private final BlockReplicationPolicy _blockReplicationPolicy;
+    private final BlockReplicationPolicy blockReplicationPolicy;
 
     protected CirReplication(BlockReplicationPolicy blockReplicationPolicy) {
-        _blockReplicationPolicy = blockReplicationPolicy;
+        this.blockReplicationPolicy = blockReplicationPolicy;
     }
 
-    private CirNode _result = null;
+    private CirNode result;
 
     private class Replication {
-        private CirNode _original;
+        private CirNode original;
 
         protected Replication(CirNode original) {
             assert original != null;
-            _original = original;
+            this.original = original;
         }
 
         protected void assign(CirNode replica) {
             assert replica != null;
-            _result = replica;
+            result = replica;
         }
     }
 
     private final class ArrayValueReplication extends Replication {
-        private final CirValue[] _array;
-        private final int _index;
+        private final CirValue[] array;
+        private final int index;
 
         private ArrayValueReplication(CirValue[] array, int index, CirValue originalArgument) {
             super(originalArgument);
-            _array = array;
-            _index = index;
+            this.array = array;
+            this.index = index;
         }
 
         @Override
         protected void assign(CirNode argumentReplica) {
             assert argumentReplica != null;
-            _array[_index] = (CirValue) argumentReplica;
+            array[index] = (CirValue) argumentReplica;
         }
     }
 
@@ -92,55 +92,55 @@ public final class CirReplication {
     }
 
     private final class CallProcedureReplication extends Replication {
-        private final CirCall _call;
+        private final CirCall call;
 
         private CallProcedureReplication(CirCall call, CirValue originalProcedure) {
             super(originalProcedure);
-            _call = call;
+            this.call = call;
         }
 
         @Override
         protected void assign(CirNode procedureReplica) {
-            _call.setProcedure((CirValue) procedureReplica);
+            call.setProcedure((CirValue) procedureReplica);
         }
     }
 
     private final class ClosureBodyReplication extends Replication {
-        private final CirClosure _closure;
+        private final CirClosure closure;
 
         private ClosureBodyReplication(CirClosure closure, CirCall originalBody) {
             super(originalBody);
-            _closure = closure;
+            this.closure = closure;
         }
 
         @Override
         protected void assign(CirNode bodyReplica) {
-            _closure.setBody((CirCall) bodyReplica);
+            closure.setBody((CirCall) bodyReplica);
         }
     }
 
     private final class BlockClosureReplication extends Replication {
-        private final CirBlock _block;
+        private final CirBlock block;
 
         private BlockClosureReplication(CirBlock block, CirClosure originalClosure) {
             super(originalClosure);
-            _block = block;
+            this.block = block;
         }
 
         @Override
         protected void assign(CirNode closureReplica) {
-            _block.setClosure((CirClosure) closureReplica);
+            this.block.setClosure((CirClosure) closureReplica);
         }
     }
 
-    private final Map<CirVariable, CirVariable> _variableMap = new IdentityHashMap<CirVariable, CirVariable>();
-    private final CirVariableFactory _variableFactory = new CirVariableFactory();
+    private final Map<CirVariable, CirVariable> variableMap = new IdentityHashMap<CirVariable, CirVariable>();
+    private final CirVariableFactory variableFactory = new CirVariableFactory();
 
     private CirVariable replicateVariable(CirVariable original) {
-        CirVariable replica = _variableMap.get(original);
+        CirVariable replica = variableMap.get(original);
         if (replica == null) {
-            replica = _variableFactory.createFresh(original);
-            _variableMap.put(original, replica);
+            replica = variableFactory.createFresh(original);
+            variableMap.put(original, replica);
         }
         return replica;
     }
@@ -156,14 +156,14 @@ public final class CirReplication {
         return replica;
     }
 
-    private final Map<CirBlock, CirBlock> _blockMap = new IdentityHashMap<CirBlock, CirBlock>();
+    private final Map<CirBlock, CirBlock> blockMap = new IdentityHashMap<CirBlock, CirBlock>();
 
     private CirNode run(CirNode node) {
         final LinkedList<Replication> toDo = new LinkedList<Replication>();
         Replication replication = new Replication(node);
         while (true) {
-            if (replication._original instanceof CirCall) {
-                final CirCall originalCall = (CirCall) replication._original;
+            if (replication.original instanceof CirCall) {
+                final CirCall originalCall = (CirCall) replication.original;
                 final CirCall callReplica = (CirCall) originalCall.clone();
                 replication.assign(callReplica);
                 callReplica.setArguments(replicateValues(originalCall.arguments(), toDo));
@@ -172,11 +172,11 @@ public final class CirReplication {
                     callReplica.setJavaFrameDescriptor(replicateJavaFrameDescriptor(originalCall.javaFrameDescriptor(), toDo));
                 }
             } else {
-                assert replication._original instanceof CirValue;
-                if (replication._original instanceof CirVariable) {
-                    replication.assign(replicateVariable((CirVariable) replication._original));
-                } else if (replication._original instanceof CirClosure) {
-                    final CirClosure originalClosure = (CirClosure) replication._original;
+                assert replication.original instanceof CirValue;
+                if (replication.original instanceof CirVariable) {
+                    replication.assign(replicateVariable((CirVariable) replication.original));
+                } else if (replication.original instanceof CirClosure) {
+                    final CirClosure originalClosure = (CirClosure) replication.original;
                     final CirClosure closureReplica = (CirClosure) originalClosure.clone();
                     final CirVariable[] originalParameters = originalClosure.parameters();
                     final int numberOfParameters = originalParameters.length;
@@ -188,26 +188,26 @@ public final class CirReplication {
                     }
                     toDo.add(new ClosureBodyReplication(closureReplica, originalClosure.body()));
                     replication.assign(closureReplica);
-                } else if (replication._original instanceof CirBlock) {
-                    if (_blockReplicationPolicy == BlockReplicationPolicy.ALL) {
-                        final CirBlock originalBlock = (CirBlock) replication._original;
-                        CirBlock blockReplica = _blockMap.get(originalBlock);
+                } else if (replication.original instanceof CirBlock) {
+                    if (blockReplicationPolicy == BlockReplicationPolicy.ALL) {
+                        final CirBlock originalBlock = (CirBlock) replication.original;
+                        CirBlock blockReplica = blockMap.get(originalBlock);
                         if (blockReplica == null) {
                             blockReplica = (CirBlock) originalBlock.clone();
-                            _blockMap.put(originalBlock, blockReplica);
+                            blockMap.put(originalBlock, blockReplica);
                             blockReplica.reset();
                             toDo.add(new BlockClosureReplication(blockReplica, originalBlock.closure()));
                         }
                         replication.assign(blockReplica);
                     } else {
-                        replication.assign(replication._original);
+                        replication.assign(replication.original);
                     }
                 } else {
-                    replication.assign(replication._original);
+                    replication.assign(replication.original);
                 }
             }
             if (toDo.isEmpty()) {
-                return _result;
+                return result;
             }
             replication = toDo.removeFirst();
         }

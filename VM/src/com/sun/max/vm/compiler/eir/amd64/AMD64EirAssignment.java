@@ -39,14 +39,14 @@ import com.sun.max.vm.value.*;
 public class AMD64EirAssignment extends AMD64EirBinaryOperation.Move implements EirAssignment {
 
     private final Kind _kind;
-    private Type _type = Type.NORMAL;
+    private Type type = Type.NORMAL;
 
     public Type type() {
-        return _type;
+        return type;
     }
 
     public void setType(Type type) {
-        _type = type;
+        this.type = type;
     }
 
     public Kind kind() {

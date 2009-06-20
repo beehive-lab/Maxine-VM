@@ -32,8 +32,8 @@ package com.sun.max.vm.classfile.create;
  */
 public class MillCode {
 
-    final int _numberOfLocals;
-    final int _numberOfMaxStackWords;
+    final int numberOfLocals;
+    final int numberOfMaxStackWords;
 
     /**
      * Create a new byte code sequence and set basic stack information.
@@ -49,12 +49,12 @@ public class MillCode {
      *            will (hopefully) never exceed.
      */
     public MillCode(int nLocals, int nMaxStackWords) {
-        this._numberOfLocals = nLocals;
-        this._numberOfMaxStackWords = nMaxStackWords;
+        this.numberOfLocals = nLocals;
+        this.numberOfMaxStackWords = nMaxStackWords;
     }
 
-    private Operation _operation = null;
-    private int _n = 0;
+    private Operation operation = null;
+    private int n = 0;
 
     /**
      * Determine the accumulated number of bytes in this code when generated.
@@ -62,28 +62,28 @@ public class MillCode {
      * @return The accumulated number of bytes in this code when generated.
      */
     public int nBytes() {
-        return _n;
+        return n;
     }
 
     private void append(int code) {
-        _operation = new Operation((byte) code, _operation);
-        _n++;
+        operation = new Operation((byte) code, operation);
+        n++;
     }
 
     private void appendRef(int code, MillConstant constant) {
-        _operation = new Operation((byte) code, constant, _operation);
-        _n += 3;
+        operation = new Operation((byte) code, constant, operation);
+        n += 3;
     }
 
     void assemble(byte[] b, int offset) {
-        int index = offset + _n;
-        while (_operation != null) {
-            if (_operation._constant != null) {
-                b[--index] = MillWord.byte0(_operation._constant._index);
-                b[--index] = MillWord.byte1(_operation._constant._index);
+        int index = offset + n;
+        while (operation != null) {
+            if (operation._constant != null) {
+                b[--index] = MillWord.byte0(operation._constant.index);
+                b[--index] = MillWord.byte1(operation._constant.index);
             }
-            b[--index] = _operation._code;
-            _operation = _operation._next;
+            b[--index] = operation._code;
+            operation = operation._next;
         }
     }
 
@@ -95,7 +95,7 @@ public class MillCode {
      * @return The stack index of the local.
      */
     public byte local(int i) {
-        if (i > _numberOfLocals) {
+        if (i > numberOfLocals) {
             throw new IllegalArgumentException();
         }
         return (byte) i;

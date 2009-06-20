@@ -29,26 +29,26 @@ package com.sun.max.vm.bytecode;
  */
 public class BytecodeBlock extends BytecodePositionRange {
 
-    private final byte[] _code;
+    private final byte[] code;
 
     public BytecodeBlock(byte[] bytecode, int startPosition, int endPosition) {
         super(startPosition, endPosition);
-        _code = bytecode;
+        code = bytecode;
         assert check();
     }
 
     public BytecodeBlock(byte[] bytecode) {
         super(0, bytecode.length - 1);
-        _code = bytecode;
+        code = bytecode;
         assert check();
     }
 
     private boolean check() {
-        assert _code != null;
-        assert _code.length > 0;
+        assert code != null;
+        assert code.length > 0;
         assert start() >= 0;
         assert end() >= start();
-        assert end() <= _code.length;
+        assert end() <= code.length;
         return true;
     }
 
@@ -56,7 +56,7 @@ public class BytecodeBlock extends BytecodePositionRange {
      * Gets the code to which the range of positions in this object refer.
      */
     public byte[] code() {
-        return _code;
+        return code;
     }
 
     /**

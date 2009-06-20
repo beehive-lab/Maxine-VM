@@ -46,25 +46,25 @@ import com.sun.max.vm.thread.*;
 public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements HeapScheme, Allocator {
 
     protected static Action _copyAction;
-    protected static Action _verifyAction = new VerifyActionImpl();
-    protected final BeltWayCellVisitor _beltwayCellVisitor = new BeltwayCellVisitorImpl();
+    protected static Action verifyAction = new VerifyActionImpl();
+    protected final BeltWayCellVisitor beltwayCellVisitor = new BeltwayCellVisitorImpl();
 
     static {
-        if (BeltwayConfiguration._parallelScavenging) {
+        if (BeltwayConfiguration.parallelScavenging) {
             _copyAction = new ParallelCopyActionImpl();
         } else {
             _copyAction = new CopyActionImpl();
         }
     }
 
-    private final BeltWayPointerOffsetVisitor _pointerOffsetGripVerifier = new PointerOffsetVisitorImpl(_verifyAction);
-    private final BeltWayPointerIndexVisitor _pointerIndexGripVerifier = new PointerIndexVisitorImpl(_verifyAction);
+    private final BeltWayPointerOffsetVisitor pointerOffsetGripVerifier = new PointerOffsetVisitorImpl(verifyAction);
+    private final BeltWayPointerIndexVisitor pointerIndexGripVerifier = new PointerIndexVisitorImpl(verifyAction);
 
     private final BeltWayPointerOffsetVisitor _pointerOffsetGripUpdater = new PointerOffsetVisitorImpl(_copyAction);
-    private final BeltWayPointerIndexVisitor _pointerIndexGripUpdater = new PointerIndexVisitorImpl(_copyAction);
+    private final BeltWayPointerIndexVisitor pointerIndexGripUpdater = new PointerIndexVisitorImpl(_copyAction);
 
     public BeltWayCellVisitor beltwayCellVisitor() {
-        return _beltwayCellVisitor;
+        return beltwayCellVisitor;
     }
 
     public Action getAction() {
@@ -72,15 +72,15 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     }
 
     public BeltWayPointerOffsetVisitor pointerOffsetGripVerifier() {
-        return _pointerOffsetGripVerifier;
+        return pointerOffsetGripVerifier;
     }
 
     public BeltWayPointerIndexVisitor pointerIndexGripVerifier() {
-        return _pointerIndexGripVerifier;
+        return pointerIndexGripVerifier;
     }
 
     public BeltWayPointerIndexVisitor pointerIndexGripUpdater() {
-        return _pointerIndexGripUpdater;
+        return pointerIndexGripUpdater;
     }
 
     public BeltWayPointerOffsetVisitor pointerOffsetGripUpdater() {
@@ -94,32 +94,32 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
         return BeltwayCardRegion.CARD_SHIFT;
     }
 
-    public static final SideTable _sideTable = new SideTable();
-    protected Address _adjustedCardTableAddress = Address.zero();
+    public static final SideTable sideTable = new SideTable();
+    protected Address adjustedCardTableAddress = Address.zero();
 
-    public static final BeltwayHeapVerifier _heapVerifier = new BeltwayHeapVerifier();
+    public static final BeltwayHeapVerifier heapVerifier = new BeltwayHeapVerifier();
 
-    private static final BeltwaySequentialHeapRootsScanner _heapRootsScanner = new BeltwaySequentialHeapRootsScanner();
-    public static final OutOfMemoryError _outOfMemoryError = new OutOfMemoryError();
+    private static final BeltwaySequentialHeapRootsScanner heapRootsScanner = new BeltwaySequentialHeapRootsScanner();
+    public static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
 
     protected static BeltwayConfiguration _beltwayConfiguration = new BeltwayConfiguration();
-    protected static BeltManager _beltManager = new BeltManager();
-    protected static BeltwayCollector _beltCollector = new BeltwayCollector();
-    protected static BeltwayStopTheWorldDaemon _collectorThread;
+    protected static BeltManager beltManager = new BeltManager();
+    protected static BeltwayCollector beltCollector = new BeltwayCollector();
+    protected static BeltwayStopTheWorldDaemon collectorThread;
 
-    public static boolean _outOfMemory = false;
+    public static boolean outOfMemory = false;
 
-    public static BeltwayCollectorThread[] _gcThreads = new BeltwayCollectorThread[BeltwayConfiguration._numberOfGCThreads];
-    public static int _lastThreadAllocated;
+    public static BeltwayCollectorThread[] gcThreads = new BeltwayCollectorThread[BeltwayConfiguration.numberOfGCThreads];
+    public static int lastThreadAllocated;
 
-    public static volatile long _allocatedTLABS = 0;
-    public static Object _tlabCounterMutex = new Object();
-    public static volatile long _retrievedTLABS = 0;
-    public static Object _tlabRetrieveMutex = new Object();
-    public static boolean _inGC = false;
-    public static boolean _inScavening = false;
+    public static volatile long allocatedTLABS = 0;
+    public static Object tlabCounterMutex = new Object();
+    public static volatile long retrievedTLABS = 0;
+    public static Object tlabRetrieveMutex = new Object();
+    public static boolean inGC = false;
+    public static boolean inScavening = false;
 
-    public static TLAB[] _scavengerTLABs = new TLAB[BeltwayConfiguration._numberOfGCThreads + 1];
+    public static TLAB[] scavengerTLABs = new TLAB[BeltwayConfiguration.numberOfGCThreads + 1];
 
     public BeltwayHeapScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -128,14 +128,14 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     @Override
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isPrototyping()) {
-            _beltManager.createBelts();
+            beltManager.createBelts();
 
-            for (int i = 0; i < BeltwayConfiguration._numberOfGCThreads; i++) {
-                JavaMonitorManager.prototypeBindStickyMonitor(BeltwayCollectorThread._tokens[i], new StandardJavaMonitor());
+            for (int i = 0; i < BeltwayConfiguration.numberOfGCThreads; i++) {
+                JavaMonitorManager.prototypeBindStickyMonitor(BeltwayCollectorThread.tokens[i], new StandardJavaMonitor());
             }
             JavaMonitorManager.prototypeBindStickyMonitor(BeltwayCollectorThread._callerToken, new StandardJavaMonitor());
         } else if (phase == MaxineVM.Phase.RUNNING) {
-            if (BeltwayConfiguration._parallelScavenging) {
+            if (BeltwayConfiguration.parallelScavenging) {
                 createGCThreads();
             }
         }
@@ -154,22 +154,22 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
 
     @INLINE
     public final BeltManager getBeltManager() {
-        return _beltManager;
+        return beltManager;
     }
 
     @INLINE
     public final BeltwaySequentialHeapRootsScanner getRootScannerVerifier() {
-        _heapRootsScanner.setBeltwayPointerIndexVisitor(pointerIndexGripVerifier());
-        return _heapRootsScanner;
+        heapRootsScanner.setBeltwayPointerIndexVisitor(pointerIndexGripVerifier());
+        return heapRootsScanner;
     }
 
     public final BeltwaySequentialHeapRootsScanner getRootScannerUpdater() {
-        _heapRootsScanner.setBeltwayPointerIndexVisitor(pointerIndexGripUpdater());
-        return _heapRootsScanner;
+        heapRootsScanner.setBeltwayPointerIndexVisitor(pointerIndexGripUpdater());
+        return heapRootsScanner;
     }
 
     public final BeltwayHeapVerifier getVerifier() {
-        return _heapVerifier;
+        return heapVerifier;
     }
 
     protected Size calculateHeapSize() {
@@ -190,45 +190,45 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
 
     @INLINE
     protected final void createGCThreads() {
-        for (int i = 0; i < BeltwayConfiguration._numberOfGCThreads; i++) {
-            _gcThreads[i] = new BeltwayCollectorThread(i);
+        for (int i = 0; i < BeltwayConfiguration.numberOfGCThreads; i++) {
+            gcThreads[i] = new BeltwayCollectorThread(i);
         }
 
     }
 
     public final void startGCThreads() {
-        for (int i = 0; i < _gcThreads.length; i++) {
-            _gcThreads[i].trigger();
+        for (int i = 0; i < gcThreads.length; i++) {
+            gcThreads[i].trigger();
         }
 
     }
 
     public void initializeGCThreads(BeltwayHeapScheme beltwayHeapScheme, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        for (int i = 0; i < _gcThreads.length; i++) {
-            _gcThreads[i].initialize(beltwayHeapScheme, from, to);
+        for (int i = 0; i < gcThreads.length; i++) {
+            gcThreads[i].initialize(beltwayHeapScheme, from, to);
         }
     }
 
     private class BootHeapCellVisitor implements CellVisitor {
-        RuntimeMemoryRegion _from;
+        RuntimeMemoryRegion from;
         RuntimeMemoryRegion _to;
 
         public Pointer visitCell(Pointer cell) {
-            return beltwayCellVisitor().visitCell(cell, _copyAction, _from, _to);
+            return beltwayCellVisitor().visitCell(cell, _copyAction, from, _to);
         }
     }
 
     private final BootHeapCellVisitor _cellVisitor = new BootHeapCellVisitor();
 
     public void scanBootHeap(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        _cellVisitor._from = from;
+        _cellVisitor.from = from;
         _cellVisitor._to = to;
         Heap.bootHeapRegion().visitCells(_cellVisitor);
     }
 
     public void printCardTable() {
         final int startCardIndex = _cardRegion.getCardIndexFromHeapAddress(Heap.bootHeapRegion().start());
-        final int endCardIndex = _cardRegion.getCardIndexFromHeapAddress(_beltManager.getEnd());
+        final int endCardIndex = _cardRegion.getCardIndexFromHeapAddress(beltManager.getEnd());
         for (int i = startCardIndex; i < endCardIndex; i++) {
             if (_cardRegion.isCardMarked(i)) {
                 Log.print("0");
@@ -300,24 +300,24 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     }
 
     public void scanCode(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        _cellVisitor._from = from;
+        _cellVisitor.from = from;
         _cellVisitor._to = to;
         Code.visitCells(_cellVisitor, true);
     }
 
     @INLINE
     public final Pointer gcBumpAllocate(RuntimeMemoryRegion belt, Size size) {
-        return _beltManager.gcBumpAllocate((Belt) belt, size);
+        return beltManager.gcBumpAllocate((Belt) belt, size);
     }
 
     @INLINE
     public final Pointer gcSynchAllocate(RuntimeMemoryRegion belt, Size size) {
-        return _beltManager.gcAllocate((Belt) belt, size);
+        return beltManager.gcAllocate((Belt) belt, size);
     }
 
     @INLINE
     public final Pointer gcAllocate(RuntimeMemoryRegion belt, Size size) {
-        if (BeltwayConfiguration._useGCTlabs) {
+        if (BeltwayConfiguration.useGCTlabs) {
             return gcTlabAllocate(belt, size);
         }
         return gcBumpAllocate(belt, size);
@@ -336,13 +336,13 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
      * @return the pointer to the address in which we can allocate. If null, a GC should be triggered.
      */
     private Pointer allocateSlowPath(Belt belt, Size size) {
-        return _beltManager.allocate(belt, size);
+        return beltManager.allocate(belt, size);
     }
 
     protected Pointer bumpAllocateSlowPath(Belt belt, Size size) {
-        final Pointer pointer = _beltManager.bumpAllocate(belt, size);
+        final Pointer pointer = beltManager.bumpAllocate(belt, size);
         if (pointer.isZero()) {
-            throw _outOfMemoryError;
+            throw outOfMemoryError;
         }
         return pointer;
     }
@@ -353,10 +353,10 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
         final Pointer pointer = allocateSlowPath(belt, size);
         if (pointer.equals(Pointer.zero())) {
             if (belt.getIndex() == (BeltwayConfiguration.getNumberOfBelts() - 1)) {
-                throw _outOfMemoryError;
+                throw outOfMemoryError;
             }
             if (!Heap.collectGarbage(size)) {
-                throw _outOfMemoryError;
+                throw outOfMemoryError;
             }
             return allocateSlowPath(belt, size);
         }
@@ -384,7 +384,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
                 if (newTLABAddress.isZero()) { // TLAB allocation failed, nursery is full, Trigger GC
                     //Debug.println("Nursery is full, trigger GC");
                     if (!Heap.collectGarbage(size)) {
-                        throw _outOfMemoryError;
+                        throw outOfMemoryError;
 
                     }
                     initializeFirstTLAB(belt, tlab, size);
@@ -406,7 +406,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     public Pointer gcTlabAllocate(RuntimeMemoryRegion gcRegion, Size size) {
         final VmThread thread = VmThread.current();
         final TLAB tlab = thread.getTLAB();
-        _lastThreadAllocated = thread.id();
+        lastThreadAllocated = thread.id();
         if (tlab.isSet()) { // If the TLABS has been set
             final Pointer pointer = tlab.allocate(size);
 
@@ -415,13 +415,13 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
                 final Size newSize = calculateTLABSize(size);
                 final Size allocSize = newSize.asPointer().minusWords(1).asSize();
                 final Pointer newTLABAddress = gcAllocateTLAB(gcRegion, allocSize);
-                _sideTable.markCreatingSideTable(newTLABAddress);
+                sideTable.markCreatingSideTable(newTLABAddress);
                 if (!SideTable.isScavenged(tlab.start())) {
                     SideTable.markStartSideTable(tlab.start());
                 }
                 if (newTLABAddress.isZero()) { // TLAB allocation failed, nursery is full, Trigger GC
-                    if (!Heap.collectGarbage(size) || BeltwayHeapScheme._outOfMemory) {
-                        throw _outOfMemoryError;
+                    if (!Heap.collectGarbage(size) || BeltwayHeapScheme.outOfMemory) {
+                        throw outOfMemoryError;
 
                     }
                     initializeFirstGCTLAB(gcRegion, tlab, size);
@@ -446,7 +446,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     public final Size calculateTLABSize(Size size) {
         Size defaultSize;
         defaultSize = BeltwayConfiguration.TLAB_SIZE;
-        if (_inGC) {
+        if (inGC) {
             defaultSize = BeltwayConfiguration.GC_TLAB_SIZE;
         }
         Size newSize = defaultSize;
@@ -475,7 +475,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
         final Size newSize = calculateTLABSize(size);
         final Size allocSize = newSize.asPointer().minusWords(1).asSize();
         final Pointer newTLABAddress = gcAllocateTLAB(gcRegion, allocSize);
-        _sideTable.markCreatingSideTable(newTLABAddress);
+        sideTable.markCreatingSideTable(newTLABAddress);
         if (newTLABAddress.isZero()) {
             FatalError.unexpected("Nursery is full, trigger GC in the First Allocation(?) Smth is wrong!");
         } else {
@@ -513,7 +513,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
                 pointer = pointer.minusWords(1);
             }
         } else {
-            throw BeltwayHeapScheme._outOfMemoryError;
+            throw BeltwayHeapScheme.outOfMemoryError;
         }
         return pointer;
     }
@@ -586,7 +586,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     }
 
     public Size reportFreeSpace() {
-        return _beltManager.reportFreeSpace();
+        return beltManager.reportFreeSpace();
     }
 
     public Size reportUsedSpace() {
@@ -627,12 +627,12 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void fillLastTLAB() {
-        final TLAB tlab = VmThreadMap.ACTIVE.getVmThreadForID(_lastThreadAllocated).getTLAB();
+        final TLAB tlab = VmThreadMap.ACTIVE.getVmThreadForID(lastThreadAllocated).getTLAB();
         tlab.fillTLAB();
     }
 
     public void markSideTableLastTLAB() {
-        final TLAB tlab = VmThreadMap.ACTIVE.getVmThreadForID(_lastThreadAllocated).getTLAB();
+        final TLAB tlab = VmThreadMap.ACTIVE.getVmThreadForID(lastThreadAllocated).getTLAB();
         SideTable.markStartSideTable(tlab.start());
     }
 
@@ -668,33 +668,33 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
 
     public Pointer getGCTLABEndFromStart(Address address) {
         int index = SideTable.getChunkIndexFromHeapAddress(address) + 1;
-        while (_sideTable.isMiddle(index)) {
+        while (sideTable.isMiddle(index)) {
             index++;
         }
-        return _sideTable.getHeapAddressFromChunkIndex(index).asPointer();
+        return sideTable.getHeapAddressFromChunkIndex(index).asPointer();
     }
 
     public Pointer getNextAvailableGCTask(int searchIndex, int stopSearchIndex) {
         int startSearchIndex = searchIndex;
         while (startSearchIndex < stopSearchIndex) {
             if (SideTable.isStart(startSearchIndex)) {
-                if (_sideTable.compareAndSwapStart(startSearchIndex) == SideTable.START) {
-                    return _sideTable.getHeapAddressFromChunkIndex(startSearchIndex).asPointer();
+                if (sideTable.compareAndSwapStart(startSearchIndex) == SideTable.START) {
+                    return sideTable.getHeapAddressFromChunkIndex(startSearchIndex).asPointer();
                 }
             }
             startSearchIndex++;
         }
         if (SideTable.isStart(startSearchIndex)) {
-            if (_sideTable.compareAndSwapStart(startSearchIndex) == SideTable.START) {
-                return _sideTable.getHeapAddressFromChunkIndex(startSearchIndex).asPointer();
+            if (sideTable.compareAndSwapStart(startSearchIndex) == SideTable.START) {
+                return sideTable.getHeapAddressFromChunkIndex(startSearchIndex).asPointer();
             }
         }
         return Pointer.zero();
     }
 
     private void createScavengerTLABs() {
-        for (int i = 0; i < BeltwayConfiguration._numberOfGCThreads + 1; i++) {
-            _scavengerTLABs[i] = new TLAB();
+        for (int i = 0; i < BeltwayConfiguration.numberOfGCThreads + 1; i++) {
+            scavengerTLABs[i] = new TLAB();
         }
     }
 }

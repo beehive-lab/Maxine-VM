@@ -36,6 +36,6 @@ public class StackVariableFactory extends SlotVariableFactory {
 
     @Override
     public CirVariable createSlotVariable(Kind kind, int slotIndex) {
-        return _cirVariableFactory.createStackVariable(kind, slotIndex);
+        return cirVariableFactory.createStackVariable(kind, slotIndex);
     }
 }

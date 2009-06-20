@@ -28,16 +28,16 @@ import com.sun.max.vm.type.*;
  * A {@code MillClass} assembles fields, code and constant pool entries
  * and produces Java(TM) class file data, i.e. this is practically a Java(TM)
  * byte code assembler.
- * 
+ *
  * This class acts as a factory for the constant pool entry classes named
  * {@code Mill...Constant} listed under "See Also".
- * 
+ *
  * @see MillClassConstant
  * @see MillFieldRefConstant
  * @see MillMethodRefConstant
  * @see MillUtf8Constant
  * @see MillCode
- * 
+ *
  * @author Bernd Mathiske
  * @version 1.0
  */
@@ -46,56 +46,53 @@ public class MillClass {
     /**
      * The modifiers of the class to be assembled.
      */
-    public final int _modifiers;
+    public final int modifiers;
 
     /**
      * The name of the class to be assembled.
      */
-    public final String _name;
+    public final String name;
 
-    private final int _thisClassIndex;
-    private final int _superClassIndex;
+    private final int thisClassIndex;
+    private final int superClassIndex;
 
     private static String slashified(String name) {
         return name.replace('.', '/');
     }
 
     /**
-     * Create a mill class as a handle for a subsequent incremental assembly.
-     * Set basic information about the class (file data) to be generated later.
-     * 
-     * @param modifiers
-     *            The modifiers of the class to be assembled.
-     * @param modifiers
-     *            The name of the class to be assembled.
-     * @param modifiers
-     *            The name of super class of the class to be assembled.
-     * 
+     * Create a mill class as a handle for a subsequent incremental assembly. Set basic information about the class
+     * (file data) to be generated later.
+     *
+     * @param modifiers The modifiers of the class to be assembled.
+     * @param modifiers The name of the class to be assembled.
+     * @param modifiers The name of super class of the class to be assembled.
+     *
      * @see java.lang.reflect.Modifier
      */
     public MillClass(int modifiers, String name, String superClassName) {
-        _modifiers = modifiers;
-        _name = slashified(name);
-        _thisClassIndex = makeClassConstant(_name)._index;
-        _superClassIndex = makeClassConstant(slashified(superClassName))._index;
+        this.modifiers = modifiers;
+        this.name = slashified(name);
+        this.thisClassIndex = makeClassConstant(this.name).index;
+        this.superClassIndex = makeClassConstant(slashified(superClassName)).index;
     }
 
-    private MillConstant _constantList = null;
-    private int _constantIndex = 0;
-    private int _numberOfConstantBytes = 0;
+    private MillConstant constantList = null;
+    private int constantIndex = 0;
+    private int numberOfConstantBytes = 0;
 
-    private final Map<MillConstant, MillConstant> _constants = new HashMap<MillConstant, MillConstant>();
+    private final Map<MillConstant, MillConstant> constants = new HashMap<MillConstant, MillConstant>();
 
     private MillConstant unique(MillConstant c) {
-        final MillConstant u =  _constants.get(c);
+        final MillConstant u =  constants.get(c);
         if (u != null) {
             return u;
         }
-        c._next = _constantList;
-        _constantList = c;
-        c._index = ++_constantIndex;
-        _numberOfConstantBytes += c._numberOfBytes;
-        _constants.put(c, c);
+        c.next = constantList;
+        constantList = c;
+        c.index = ++constantIndex;
+        numberOfConstantBytes += c.numberOfBytes;
+        constants.put(c, c);
         return c;
     }
 
@@ -104,13 +101,11 @@ public class MillClass {
     }
 
     /**
-     * Create a string constant that will be stored in the constant pool in Utf8
-     * format.
-     * 
-     * @param string
-     *            The string that the constant will represent.
+     * Create a string constant that will be stored in the constant pool in Utf8 format.
+     *
+     * @param string The string that the constant will represent.
      * @return A Utf8 constant handle.
-     * 
+     *
      * @see MillUtf8Constant
      */
     public MillUtf8Constant makeUtf8Constant(String string) {
@@ -119,32 +114,29 @@ public class MillClass {
 
     /**
      * Create a class constant in the constant pool.
-     * 
+     *
      * @param className
      *            The name of the class.
      * @return A class constant handle.
-     * 
+     *
      * @see MillClassConstant
      */
     public MillClassConstant makeClassConstant(String className) {
         return (MillClassConstant) unique(new MillClassConstant(makeUtf8Constant(className)));
     }
 
-    private MillNameAndTypeConstant makeNameAndTypeConstant(String name, String descriptor) {
-        return (MillNameAndTypeConstant) unique(new MillNameAndTypeConstant(makeUtf8Constant(name), makeUtf8Constant(descriptor)));
+    private MillNameAndTypeConstant makeNameAndTypeConstant(String n, String descriptor) {
+        return (MillNameAndTypeConstant) unique(new MillNameAndTypeConstant(makeUtf8Constant(n), makeUtf8Constant(descriptor)));
     }
 
     /**
      * Create a field reference constant in the constant pool.
-     * 
-     * @param className
-     *            The name of the class that contains the referenced field.
-     * @param fieldName
-     *            The name of the referenced field.
-     * @param fieldDescriptor
-     *            The type descriptor of the referenced field.
+     *
+     * @param className The name of the class that contains the referenced field.
+     * @param fieldName The name of the referenced field.
+     * @param fieldDescriptor The type descriptor of the referenced field.
      * @return A class constant handle.
-     * 
+     *
      * @see MillFieldRefConstant
      * @see org.opj.util.Descriptor
      */
@@ -154,15 +146,12 @@ public class MillClass {
 
     /**
      * Create a method reference constant in the constant pool.
-     * 
-     * @param className
-     *            The name of the class that contains the referenced method.
-     * @param methodName
-     *            The name of the referenced method.
-     * @param methodDescriptor
-     *            The type signature descriptor of the referenced method.
+     *
+     * @param className The name of the class that contains the referenced method.
+     * @param methodName The name of the referenced method.
+     * @param methodDescriptor The type signature descriptor of the referenced method.
      * @return A class constant handle.
-     * 
+     *
      * @see MillMethodRefConstant
      * @see org.opj.util.Descriptor
      */
@@ -170,75 +159,69 @@ public class MillClass {
         return (MillMethodRefConstant) unique(new MillMethodRefConstant(makeClassConstant(className), makeNameAndTypeConstant(methodName, methodDescriptor)));
     }
 
-    MillInterface _interfaceList = null;
-    private int _numberOfInterfaces = 0;
+    MillInterface interfaceList = null;
+    private int numberOfInterfaces = 0;
 
     /**
      * Add the name of an implemented interface to the class to be generated.
-     * 
+     *
      * @param name
      *            The name of the interface.
      */
     public void addInterface(String name) {
         new MillInterface(this, name);
-        _numberOfInterfaces++;
+        numberOfInterfaces++;
     }
 
     MillField _fieldList = null;
-    private int _numberOfFields = 0;
+    private int numberOfFields = 0;
 
     /**
      * Add a field to the class to be generated.
-     * 
+     *
      * @param modifiers
      *            The field's modifiers.
      * @param name
      *            The field name.
      * @param descriptor
      *            The type descriptor of the field.
-     * 
+     *
      * @see java.lang.reflect.Modifier
      */
     public void addField(int modifiers, String name, String descriptor) {
         new MillField(this, modifiers, name, descriptor);
-        _numberOfFields++;
+        numberOfFields++;
     }
 
-    MillMethod _methodList = null;
-    private int _numberOfMethods = 0;
-    private int _numberOfMethodBytes = 0;
-    private int _codeNameIndex = -1;
-    private int _exceptionsNameIndex = -1;
+    MillMethod methodList = null;
+    private int numberOfMethods = 0;
+    private int numberOfMethodBytes = 0;
+    private int codeNameIndex = -1;
+    private int exceptionsNameIndex = -1;
 
     /**
      * Add a method to the class to be generated.
-     * 
-     * @param modifiers
-     *            The method's modifiers.
-     * @param name
-     *            The method name.
-     * @param _descriptor
-     *            The type signature descriptor of the method.
-     * @param code
-     *            The byte code to be generated for the method.
-     * @param exceptions
-     *            An array with all the class names of the exceptions that the
-     *            method potentially throws.
-     * 
+     *
+     * @param modifiers The method's modifiers.
+     * @param name The method name.
+     * @param signatureDescriptor The type signature descriptor of the method.
+     * @param code The byte code to be generated for the method.
+     * @param exceptions An array with all the class names of the exceptions that the method potentially throws.
+     *
      * @see java.lang.reflect.Modifier
      * @see MillCode
      * @see MillClassConstant
      */
     public MillMethod addMethod(int modifiers, String name, SignatureDescriptor signatureDescriptor, MillCode code, MillClassConstant[] exceptions) {
-        if (_codeNameIndex <= 0) {
-            _codeNameIndex = makeUtf8Constant("Code")._index;
+        if (codeNameIndex <= 0) {
+            codeNameIndex = makeUtf8Constant("Code").index;
         }
-        if (exceptions.length > 0 && _exceptionsNameIndex <= 0) {
-            _exceptionsNameIndex = makeUtf8Constant("Exceptions")._index;
+        if (exceptions.length > 0 && exceptionsNameIndex <= 0) {
+            exceptionsNameIndex = makeUtf8Constant("Exceptions").index;
         }
         final MillMethod method = new MillMethod(this, modifiers, name, signatureDescriptor, code, exceptions);
-        _numberOfMethodBytes += method._numberOfBytes;
-        _numberOfMethods++;
+        numberOfMethodBytes += method.numberOfBytes;
+        numberOfMethods++;
         return method;
     }
 
@@ -246,23 +229,19 @@ public class MillClass {
      * An empty array of exceptions that is provided for convenience. It can be
      * passed as last argument to {@code addMethod} to indicate that a
      * method throws no exceptions.
-     * 
+     *
      * @see #addMethod
      */
     public static final MillClassConstant[] noExceptions = new MillClassConstant[0];
 
     /**
      * Add a method that throws no exceptions to the class to be generated.
-     * 
-     * @param modifiers
-     *            The method's modifiers.
-     * @param name
-     *            The method name.
-     * @param _descriptor
-     *            The type signature descriptor of the method.
-     * @param code
-     *            The byte code to be generated for the method.
-     * 
+     *
+     * @param modifiers The method's modifiers.
+     * @param name The method name.
+     * @param signatureDescriptor The type signature descriptor of the method.
+     * @param code The byte code to be generated for the method.
+     *
      * @see java.lang.reflect.Modifier
      * @see MillCode
      */
@@ -275,12 +254,12 @@ public class MillClass {
     /**
      * Generate class file data from the incremental specifications that have
      * been accumulated by other methods of this class.
-     * 
+     *
      * @return A byte array containing class file data.
      */
     public byte[] generate() {
         int i = 0;
-        final int nBytes = nBytesBeforeConstantPool + _numberOfConstantBytes + 8 + (2 * _numberOfInterfaces) + 2 + (8 * _numberOfFields) + 2 + _numberOfMethodBytes + 2;
+        final int nBytes = nBytesBeforeConstantPool + numberOfConstantBytes + 8 + (2 * numberOfInterfaces) + 2 + (8 * numberOfFields) + 2 + numberOfMethodBytes + 2;
         final byte[] b = new byte[nBytes];
         b[i++] = (byte) 0xca; // u4 magic
         b[i++] = (byte) 0xfe;
@@ -290,26 +269,26 @@ public class MillClass {
         b[i++] = (byte) 0x03;
         b[i++] = (byte) 0x00; // u2 major_version
         b[i++] = (byte) 0x2d;
-        final int nConstants = _constantIndex + 1;
+        final int nConstants = constantIndex + 1;
         b[i++] = (byte) (nConstants >> 8); // u2 constant_pool_count
         b[i++] = (byte) (nConstants & 0xff);
-        i = nBytesBeforeConstantPool + _numberOfConstantBytes;
-        MillConstant constant = _constantList;
+        i = nBytesBeforeConstantPool + numberOfConstantBytes;
+        MillConstant constant = constantList;
         while (constant != null) {
-            switch (constant._tag) {
+            switch (constant.tag) {
                 case MillConstant.CONSTANT_Integer: {
                     final MillIntConstant intConstant = (MillIntConstant) constant;
-                    b[--i] = MillWord.byte0(intConstant._value);
-                    b[--i] = MillWord.byte1(intConstant._value);
-                    b[--i] = MillWord.byte2(intConstant._value);
-                    b[--i] = MillWord.byte3(intConstant._value);
+                    b[--i] = MillWord.byte0(intConstant.value);
+                    b[--i] = MillWord.byte1(intConstant.value);
+                    b[--i] = MillWord.byte2(intConstant.value);
+                    b[--i] = MillWord.byte3(intConstant.value);
                     break;
                 }
                 case MillConstant.CONSTANT_Utf8: {
                     final MillUtf8Constant c = (MillUtf8Constant) constant;
-                    final int length = c._string.length();
+                    final int length = c.string.length();
                     for (int k = length - 1; k >= 0; k--) {
-                        b[--i] = (byte) c._string.charAt(k);
+                        b[--i] = (byte) c.string.charAt(k);
                     }
                     b[--i] = MillWord.byte0(length);
                     b[--i] = MillWord.byte1(length);
@@ -317,74 +296,74 @@ public class MillClass {
                 }
                 case MillConstant.CONSTANT_Class: {
                     final MillClassConstant c = (MillClassConstant) constant;
-                    b[--i] = MillWord.byte0(c._nameIndex);
-                    b[--i] = MillWord.byte1(c._nameIndex);
+                    b[--i] = MillWord.byte0(c.nameIndex);
+                    b[--i] = MillWord.byte1(c.nameIndex);
                     break;
                 }
                 case MillConstant.CONSTANT_FieldRef:
                 case MillConstant.CONSTANT_MethodRef: {
                     final MillRefConstant c = (MillRefConstant) constant;
-                    b[--i] = MillWord.byte0(c._nameAndTypeIndex);
-                    b[--i] = MillWord.byte1(c._nameAndTypeIndex);
+                    b[--i] = MillWord.byte0(c.nameAndTypeIndex);
+                    b[--i] = MillWord.byte1(c.nameAndTypeIndex);
                     b[--i] = MillWord.byte0(c._classIndex);
                     b[--i] = MillWord.byte1(c._classIndex);
                     break;
                 }
                 case MillConstant.CONSTANT_NameAndType: {
                     final MillNameAndTypeConstant c = (MillNameAndTypeConstant) constant;
-                    b[--i] = MillWord.byte0(c._descriptorIndex);
-                    b[--i] = MillWord.byte1(c._descriptorIndex);
-                    b[--i] = MillWord.byte0(c._nameIndex);
-                    b[--i] = MillWord.byte1(c._nameIndex);
+                    b[--i] = MillWord.byte0(c.descriptorIndex);
+                    b[--i] = MillWord.byte1(c.descriptorIndex);
+                    b[--i] = MillWord.byte0(c.nameIndex);
+                    b[--i] = MillWord.byte1(c.nameIndex);
                     break;
                 }
                 default:
                     throw new Error();
             }
-            b[--i] = constant._tag;
-            constant = constant._next;
+            b[--i] = constant.tag;
+            constant = constant.next;
         }
-        i = nBytesBeforeConstantPool + _numberOfConstantBytes;
-        b[i++] = MillWord.byte1(_modifiers);
-        b[i++] = MillWord.byte0(_modifiers);
-        b[i++] = MillWord.byte1(_thisClassIndex);
-        b[i++] = MillWord.byte0(_thisClassIndex);
-        b[i++] = MillWord.byte1(_superClassIndex);
-        b[i++] = MillWord.byte0(_superClassIndex);
-        b[i++] = MillWord.byte1(_numberOfInterfaces);
-        b[i++] = MillWord.byte0(_numberOfInterfaces);
-        MillInterface millInterface = _interfaceList;
+        i = nBytesBeforeConstantPool + numberOfConstantBytes;
+        b[i++] = MillWord.byte1(modifiers);
+        b[i++] = MillWord.byte0(modifiers);
+        b[i++] = MillWord.byte1(thisClassIndex);
+        b[i++] = MillWord.byte0(thisClassIndex);
+        b[i++] = MillWord.byte1(superClassIndex);
+        b[i++] = MillWord.byte0(superClassIndex);
+        b[i++] = MillWord.byte1(numberOfInterfaces);
+        b[i++] = MillWord.byte0(numberOfInterfaces);
+        MillInterface millInterface = interfaceList;
         while (millInterface != null) {
-            b[i++] = MillWord.byte1(millInterface._classIndex);
-            b[i++] = MillWord.byte0(millInterface._classIndex);
-            millInterface = millInterface._next;
+            b[i++] = MillWord.byte1(millInterface.classIndex);
+            b[i++] = MillWord.byte0(millInterface.classIndex);
+            millInterface = millInterface.next;
         }
-        b[i++] = MillWord.byte1(_numberOfFields);
-        b[i++] = MillWord.byte0(_numberOfFields);
+        b[i++] = MillWord.byte1(numberOfFields);
+        b[i++] = MillWord.byte0(numberOfFields);
         MillField field = _fieldList;
         while (field != null) {
-            b[i++] = MillWord.byte1(field._modifiers);
-            b[i++] = MillWord.byte0(field._modifiers);
-            b[i++] = MillWord.byte1(field._nameIndex);
-            b[i++] = MillWord.byte0(field._nameIndex);
-            b[i++] = MillWord.byte1(field._descriptorIndex);
-            b[i++] = MillWord.byte0(field._descriptorIndex);
+            b[i++] = MillWord.byte1(field.modifiers);
+            b[i++] = MillWord.byte0(field.modifiers);
+            b[i++] = MillWord.byte1(field.nameIndex);
+            b[i++] = MillWord.byte0(field.nameIndex);
+            b[i++] = MillWord.byte1(field.descriptorIndex);
+            b[i++] = MillWord.byte0(field.descriptorIndex);
             b[i++] = 0x00; // u2 attributes_count
             b[i++] = 0x00;
-            field = field._next;
+            field = field.next;
         }
-        b[i++] = MillWord.byte1(_numberOfMethods);
-        b[i++] = MillWord.byte0(_numberOfMethods);
-        MillMethod method = _methodList;
+        b[i++] = MillWord.byte1(numberOfMethods);
+        b[i++] = MillWord.byte0(numberOfMethods);
+        MillMethod method = methodList;
         while (method != null) {
-            b[i++] = MillWord.byte1(method._modifiers);
-            b[i++] = MillWord.byte0(method._modifiers);
-            b[i++] = MillWord.byte1(method._nameIndex);
-            b[i++] = MillWord.byte0(method._nameIndex);
-            b[i++] = MillWord.byte1(method._descriptorIndex);
-            b[i++] = MillWord.byte0(method._descriptorIndex);
+            b[i++] = MillWord.byte1(method.modifiers);
+            b[i++] = MillWord.byte0(method.modifiers);
+            b[i++] = MillWord.byte1(method.nameIndex);
+            b[i++] = MillWord.byte0(method.nameIndex);
+            b[i++] = MillWord.byte1(method.descriptorIndex);
+            b[i++] = MillWord.byte0(method.descriptorIndex);
             b[i++] = 0x00; // u2 attributes_count
-            final int nExceptions = method._exceptions.length;
+            final int nExceptions = method.exceptions.length;
             if (nExceptions > 0) {
                 b[i++] = 0x02;
             } else {
@@ -392,32 +371,32 @@ public class MillClass {
             }
 
             // code attribute:
-            b[i++] = MillWord.byte1(_codeNameIndex);
-            b[i++] = MillWord.byte0(_codeNameIndex);
-            int nAttributeBytes = 8 + method._code.nBytes() + 4;
+            b[i++] = MillWord.byte1(codeNameIndex);
+            b[i++] = MillWord.byte0(codeNameIndex);
+            int nAttributeBytes = 8 + method.code.nBytes() + 4;
             b[i++] = MillWord.byte3(nAttributeBytes);
             b[i++] = MillWord.byte2(nAttributeBytes);
             b[i++] = MillWord.byte1(nAttributeBytes);
             b[i++] = MillWord.byte0(nAttributeBytes);
-            b[i++] = MillWord.byte1(method._code._numberOfMaxStackWords);
-            b[i++] = MillWord.byte0(method._code._numberOfMaxStackWords);
-            final int nMaxLocals = 1 + method._code._numberOfLocals;
+            b[i++] = MillWord.byte1(method.code.numberOfMaxStackWords);
+            b[i++] = MillWord.byte0(method.code.numberOfMaxStackWords);
+            final int nMaxLocals = 1 + method.code.numberOfLocals;
             b[i++] = MillWord.byte1(nMaxLocals);
             b[i++] = MillWord.byte0(nMaxLocals);
-            final int codeLength = method._code.nBytes();
+            final int codeLength = method.code.nBytes();
             b[i++] = MillWord.byte3(codeLength);
             b[i++] = MillWord.byte2(codeLength);
             b[i++] = MillWord.byte1(codeLength);
             b[i++] = MillWord.byte0(codeLength);
-            method._code.assemble(b, i);
-            i += method._code.nBytes();
+            method.code.assemble(b, i);
+            i += method.code.nBytes();
             b[i++] = 0x00; // u2 exception_table_length
             b[i++] = 0x00;
             b[i++] = 0x00; // u2 attributes_count
             b[i++] = 0x00;
             if (nExceptions > 0) { // exceptions attribute:
-                b[i++] = MillWord.byte1(_exceptionsNameIndex);
-                b[i++] = MillWord.byte0(_exceptionsNameIndex);
+                b[i++] = MillWord.byte1(exceptionsNameIndex);
+                b[i++] = MillWord.byte0(exceptionsNameIndex);
                 nAttributeBytes = 2 + (2 * nExceptions);
                 b[i++] = MillWord.byte3(nAttributeBytes);
                 b[i++] = MillWord.byte2(nAttributeBytes);
@@ -426,11 +405,11 @@ public class MillClass {
                 b[i++] = MillWord.byte1(nExceptions);
                 b[i++] = MillWord.byte0(nExceptions);
                 for (int j = 0; j < nExceptions; j++) {
-                    b[i++] = MillWord.byte1(method._exceptions[j]._index);
-                    b[i++] = MillWord.byte0(method._exceptions[j]._index);
+                    b[i++] = MillWord.byte1(method.exceptions[j].index);
+                    b[i++] = MillWord.byte0(method.exceptions[j].index);
                 }
             }
-            method = method._next;
+            method = method.next;
         }
         b[i++] = 0x00; // u2 attributes_count
         b[i++] = 0x00;

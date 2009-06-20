@@ -34,87 +34,87 @@ import com.sun.max.lang.*;
 public abstract class EirEpilogue<EirInstructionVisitor_Type extends EirInstructionVisitor, EirTargetEmitter_Type extends EirTargetEmitter>
                       extends EirInstruction<EirInstructionVisitor_Type, EirTargetEmitter_Type> {
 
-    private final EirMethod _eirMethod;
+    private final EirMethod eirMethod;
 
     public EirMethod eirMethod() {
-        return _eirMethod;
+        return eirMethod;
     }
 
-    private final EirOperand[] _calleeSavedOperands;
+    private final EirOperand[] calleeSavedOperands;
 
-    private final AppendableSequence<EirOperand> _resultOperands = new LinkSequence<EirOperand>();
+    private final AppendableSequence<EirOperand> resultOperands = new LinkSequence<EirOperand>();
 
-    private final EirLocation _returnResultLocation;
+    private final EirLocation returnResultLocation;
 
     public void addResultValue(EirValue resultValue) {
-        for (EirOperand operand : _resultOperands) {
+        for (EirOperand operand : resultOperands) {
             if (operand.eirValue() == resultValue) {
                 return;
             }
         }
-        final EirOperand resultOperand = new EirOperand(this, EirOperand.Effect.USE, _returnResultLocation.category().asSet());
-        resultOperand.setRequiredLocation(_returnResultLocation);
+        final EirOperand resultOperand = new EirOperand(this, EirOperand.Effect.USE, returnResultLocation.category().asSet());
+        resultOperand.setRequiredLocation(returnResultLocation);
         resultOperand.setEirValue(resultValue);
-        _resultOperands.append(resultOperand);
+        resultOperands.append(resultOperand);
     }
 
-    private final AppendableSequence<EirOperand> _useOperands = new LinkSequence<EirOperand>();
+    private final AppendableSequence<EirOperand> useOperands = new LinkSequence<EirOperand>();
 
     public void addUse(EirValue usedValue) {
         final EirOperand operand = new EirOperand(this, EirOperand.Effect.USE, usedValue.location().category().asSet());
         operand.setEirValue(usedValue);
-        _useOperands.append(operand);
+        useOperands.append(operand);
     }
 
     public void addStackSlotUse(EirValue usedValue) {
         final EirOperand operand = new EirOperand(this, EirOperand.Effect.USE, EirLocationCategory.S);
         operand.setEirValue(usedValue);
-        _useOperands.append(operand);
+        useOperands.append(operand);
     }
 
     public EirEpilogue(EirBlock block, EirMethod eirMethod,
                        EirValue[] calleeSavedValues, EirLocation[] calleeSavedRegisters,
                        EirLocation returnResultLocation) {
         super(block);
-        _eirMethod = eirMethod;
+        this.eirMethod = eirMethod;
 
-        _calleeSavedOperands = new EirOperand[calleeSavedValues.length];
+        this.calleeSavedOperands = new EirOperand[calleeSavedValues.length];
         for (int i = 0; i < calleeSavedValues.length; i++) {
             final EirLocation register = calleeSavedRegisters[i];
-            _calleeSavedOperands[i] = new EirOperand(this, EirOperand.Effect.USE, register.category().asSet());
-            _calleeSavedOperands[i].setRequiredLocation(register);
-            _calleeSavedOperands[i].setEirValue(calleeSavedValues[i]);
+            calleeSavedOperands[i] = new EirOperand(this, EirOperand.Effect.USE, register.category().asSet());
+            calleeSavedOperands[i].setRequiredLocation(register);
+            calleeSavedOperands[i].setEirValue(calleeSavedValues[i]);
         }
 
-        _returnResultLocation = returnResultLocation;
+        this.returnResultLocation = returnResultLocation;
     }
 
     @Override
     public void visitOperands(EirOperand.Procedure visitor) {
-        if (_calleeSavedOperands != null) {
-            for (EirOperand operand : _calleeSavedOperands) {
+        if (calleeSavedOperands != null) {
+            for (EirOperand operand : calleeSavedOperands) {
                 visitor.run(operand);
             }
         }
-        for (EirOperand operand : _resultOperands) {
+        for (EirOperand operand : resultOperands) {
             visitor.run(operand);
         }
-        for (EirOperand operand : _useOperands) {
+        for (EirOperand operand : useOperands) {
             visitor.run(operand);
         }
     }
 
     @Override
     public String toString() {
-        String s = "epilogue (" + _resultOperands + ")";
-        if (_calleeSavedOperands.length != 0) {
-            s += "[Callee saved: " + Arrays.toString(_calleeSavedOperands) + "]";
+        String s = "epilogue (" + resultOperands + ")";
+        if (calleeSavedOperands.length != 0) {
+            s += "[Callee saved: " + Arrays.toString(calleeSavedOperands) + "]";
         }
-        if (!_useOperands.isEmpty()) {
-            s += "[Used: " + _useOperands + "]";
+        if (!useOperands.isEmpty()) {
+            s += "[Used: " + useOperands + "]";
         }
-        if (_eirMethod.isGenerated()) {
-            s += " frameSize:" + _eirMethod.frameSize();
+        if (eirMethod.isGenerated()) {
+            s += " frameSize:" + eirMethod.frameSize();
         }
         return s;
     }

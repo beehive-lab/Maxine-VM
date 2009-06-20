@@ -33,7 +33,7 @@ import com.sun.max.vm.MaxineVM.*;
  */
 public class VMBooleanXXOption extends VMOption {
 
-    protected final String _inversePrefix;
+    protected final String inversePrefix;
 
     /**
      * Creates a new boolean option whose prefix starts with "-XX:+" or "-XX:-".
@@ -51,9 +51,9 @@ public class VMBooleanXXOption extends VMOption {
     public VMBooleanXXOption(String prefix, String help) {
         super(prefix, help);
         if (prefix.startsWith("-XX:+")) {
-            _inversePrefix = "-XX:-" + prefix.substring(5);
+            inversePrefix = "-XX:-" + prefix.substring(5);
         } else if (prefix.startsWith("-XX:-")) {
-            _inversePrefix = "-XX:+" + prefix.substring(5);
+            inversePrefix = "-XX:+" + prefix.substring(5);
         } else {
             throw ProgramError.unexpected("Instances of " + getClass() + " must have a prefix starting with '-XX:+' or '-XX:-'");
         }
@@ -68,14 +68,14 @@ public class VMBooleanXXOption extends VMOption {
      * Gets the value of this boolean option.
      */
     public boolean getValue() {
-        if (!_optionStart.isZero()) {
-            return ((char) _optionStart.readByte(4)) == '+';
+        if (!optionStart.isZero()) {
+            return ((char) optionStart.readByte(4)) == '+';
         }
-        return _prefix.charAt(4) == '+';
+        return prefix.charAt(4) == '+';
     }
 
     @Override
     public boolean matches(Pointer arg) {
-        return CString.equals(arg, _prefix) || CString.equals(arg, _inversePrefix);
+        return CString.equals(arg, prefix) || CString.equals(arg, inversePrefix);
     }
 }

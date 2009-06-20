@@ -37,30 +37,30 @@ public final class AMD64EirSomeAllocator extends EirSomeAllocator<AMD64EirRegist
         return _noRegisters;
     }
 
-    private final PoolSet<AMD64EirRegister> _allocatableIntegerRegisters;
+    private final PoolSet<AMD64EirRegister> allocatableIntegerRegisters;
 
     @Override
     protected PoolSet<AMD64EirRegister> allocatableIntegerRegisters() {
-        return _allocatableIntegerRegisters;
+        return allocatableIntegerRegisters;
     }
 
-    private final PoolSet<AMD64EirRegister> _allocatableFloatingPointRegisters;
+    private final PoolSet<AMD64EirRegister> allocatableFloatingPointRegisters;
 
     @Override
     protected PoolSet<AMD64EirRegister> allocatableFloatingPointRegisters() {
-        return _allocatableFloatingPointRegisters;
+        return allocatableFloatingPointRegisters;
     }
 
     public AMD64EirSomeAllocator(EirMethodGeneration methodGeneration) {
         super(methodGeneration);
         final AMD64EirABI abi = (AMD64EirABI) methodGeneration.abi();
 
-        _allocatableIntegerRegisters = PoolSet.allOf(AMD64EirRegister.pool());
-        _allocatableIntegerRegisters.and(AMD64EirRegister.General.poolSet());
-        _allocatableIntegerRegisters.and(abi.allocatableRegisters());
+        allocatableIntegerRegisters = PoolSet.allOf(AMD64EirRegister.pool());
+        allocatableIntegerRegisters.and(AMD64EirRegister.General.poolSet());
+        allocatableIntegerRegisters.and(abi.allocatableRegisters());
 
-        _allocatableFloatingPointRegisters = PoolSet.allOf(AMD64EirRegister.pool());
-        _allocatableFloatingPointRegisters.and(AMD64EirRegister.XMM.poolSet());
-        _allocatableFloatingPointRegisters.and(abi.allocatableRegisters());
+        allocatableFloatingPointRegisters = PoolSet.allOf(AMD64EirRegister.pool());
+        allocatableFloatingPointRegisters.and(AMD64EirRegister.XMM.poolSet());
+        allocatableFloatingPointRegisters.and(abi.allocatableRegisters());
     }
 }

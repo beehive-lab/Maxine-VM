@@ -25,13 +25,13 @@ import com.sun.max.vm.type.*;
 
 
 public class ArrayStore extends JavaOperator {
-    private Kind _elementKind;
+    private Kind elementKind;
     public ArrayStore(Kind elementKind) {
         super(CALL | NULL_POINTER_CHECK | ARRAY_BOUNDS_CHECK | (elementKind == Kind.REFERENCE ? ARRAY_STORE_CHECK : 0));
-        _elementKind = elementKind;
+        this.elementKind = elementKind;
     }
     public Kind elementKind() {
-        return _elementKind;
+        return elementKind;
     }
 
     public Kind resultKind() {
@@ -45,11 +45,11 @@ public class ArrayStore extends JavaOperator {
 
     @Override
     public Kind[] parameterKinds() {
-        return new Kind[] {Kind.REFERENCE, Kind.INT, _elementKind};
+        return new Kind[] {Kind.REFERENCE, Kind.INT, elementKind};
     }
 
     @Override
     public String toString() {
-        return "ArrayStore:" + _elementKind;
+        return "ArrayStore:" + elementKind;
     }
 }

@@ -60,16 +60,16 @@ public class RandomAccessWordBuffer {
         }
     }
 
-    private int _position;
+    private int position;
 
     public void setPosition(int position) {
         assert position % Word.size() == 0;
-        _position = position;
+        this.position = position;
     }
 
     public void writeWord(Word value) {
-        extend(_position + Word.size());
-        final int index = Unsigned.idiv(_position, Word.size());
+        extend(position + Word.size());
+        final int index = Unsigned.idiv(position, Word.size());
         WordArray.set(_words, index, value);
     }
 

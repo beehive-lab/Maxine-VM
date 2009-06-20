@@ -55,11 +55,11 @@ import com.sun.max.vm.thread.*;
  */
 public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements TargetGeneratorScheme {
 
-    private final SPARCEirToTargetTranslator _eirToTargetTranslator;
+    private final SPARCEirToTargetTranslator eirToTargetTranslator;
     /**
      * Shortcut to the jit frame pointer. Used for walking adapter frames.
      */
-    private final GPR _jitFramePointer;
+    private final GPR jitFramePointer;
 
     protected SPARCEirToTargetTranslator createTargetTranslator() {
         return new SPARCEirToTargetTranslator(this);
@@ -67,17 +67,17 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
 
     public BcdeTargetSPARCCompiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        _jitFramePointer = (GPR) vmConfiguration.targetABIsScheme().jitABI().framePointer();
-        _eirToTargetTranslator = new SPARCEirToTargetTranslator(this);
+        jitFramePointer = (GPR) vmConfiguration.targetABIsScheme().jitABI().framePointer();
+        eirToTargetTranslator = new SPARCEirToTargetTranslator(this);
     }
 
     public TargetGenerator targetGenerator() {
-        return _eirToTargetTranslator;
+        return eirToTargetTranslator;
     }
 
     @Override
     public IrGenerator irGenerator() {
-        return _eirToTargetTranslator;
+        return eirToTargetTranslator;
     }
 
     @Override
@@ -222,7 +222,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         // Thus, when in the entry point, the return address can be found in %o7, and when in the adapter it can be found
         // in SAVED_CALLER_ADDRESS. The caller frame pointer is always in the local register defined by the JIT abi (_jitFramePointer).
         final Pointer optimizedEntryPoint = OPTIMIZED_ENTRY_POINT.in(targetMethod);
-        final Pointer callerFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(stackFrameWalker, _jitFramePointer).asPointer();
+        final Pointer callerFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(stackFrameWalker, jitFramePointer).asPointer();
         final Pointer callerStackPointer;
         final Pointer callerInstructionPointer;
         if (instructionPointer.greaterThan(optimizedEntryPoint)) {

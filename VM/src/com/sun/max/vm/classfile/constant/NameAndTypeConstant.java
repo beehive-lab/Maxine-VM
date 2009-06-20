@@ -32,9 +32,9 @@ import com.sun.max.vm.type.*;
  */
 public final class NameAndTypeConstant extends AbstractPoolConstant<NameAndTypeConstant> implements PoolConstantKey<NameAndTypeConstant> {
 
-    private final Utf8Constant _name;
+    private final Utf8Constant name;
 
-    private Object _descriptor;
+    private Object descriptor;
 
     @Override
     public Tag tag() {
@@ -42,27 +42,27 @@ public final class NameAndTypeConstant extends AbstractPoolConstant<NameAndTypeC
     }
 
     NameAndTypeConstant(Utf8Constant name, Utf8Constant descriptor) {
-        _name = name;
-        _descriptor = descriptor;
+        this.name = name;
+        this.descriptor = descriptor;
     }
 
     public NameAndTypeConstant(Utf8Constant name, Descriptor descriptor) {
-        _name = name;
-        _descriptor = descriptor;
+        this.name = name;
+        this.descriptor = descriptor;
     }
 
     public Utf8Constant name() {
-        return _name;
+        return name;
     }
 
     public String descriptorString() {
-        return _descriptor.toString();
+        return descriptor.toString();
     }
 
     public TypeDescriptor type() {
-        if (_descriptor instanceof Utf8Constant) {
+        if (descriptor instanceof Utf8Constant) {
             try {
-                _descriptor = JavaTypeDescriptor.parseTypeDescriptor(((Utf8Constant) _descriptor).toString());
+                descriptor = JavaTypeDescriptor.parseTypeDescriptor(((Utf8Constant) descriptor).toString());
             } catch (ClassCastException e) {
                 // This just means another thread beats us in the race to convert _descriptor to a real Descriptor object.
                 // If _descriptor still has the wrong Descriptor type, then the cast in the return statement will catch it.
@@ -70,16 +70,16 @@ public final class NameAndTypeConstant extends AbstractPoolConstant<NameAndTypeC
             }
         }
         try {
-            return (TypeDescriptor) _descriptor;
+            return (TypeDescriptor) descriptor;
         } catch (ClassCastException e) {
-            throw classFormatError(_descriptor + " is not a valid field type descriptor");
+            throw classFormatError(descriptor + " is not a valid field type descriptor");
         }
     }
 
     public SignatureDescriptor signature() {
-        if (_descriptor instanceof Utf8Constant) {
+        if (descriptor instanceof Utf8Constant) {
             try {
-                _descriptor = SignatureDescriptor.create(((Utf8Constant) _descriptor).toString());
+                descriptor = SignatureDescriptor.create(((Utf8Constant) descriptor).toString());
             } catch (ClassCastException e) {
                 // This just means another thread beats us in the race to convert _descriptor to a real Descriptor object.
                 // If _descriptor still has the wrong Descriptor type, then the following cast will catch it.
@@ -88,16 +88,16 @@ public final class NameAndTypeConstant extends AbstractPoolConstant<NameAndTypeC
 
         }
         try {
-            return (SignatureDescriptor) _descriptor;
+            return (SignatureDescriptor) descriptor;
         } catch (ClassCastException e) {
-            throw classFormatError(_descriptor + " is not a valid method signature descriptor");
+            throw classFormatError(descriptor + " is not a valid method signature descriptor");
         }
     }
 
 
     public Descriptor descriptor() {
-        if (_descriptor instanceof Descriptor) {
-            return (Descriptor) _descriptor;
+        if (descriptor instanceof Descriptor) {
+            return (Descriptor) descriptor;
         }
         if (descriptorString().charAt(0) == '(') {
             return signature();
@@ -109,14 +109,14 @@ public final class NameAndTypeConstant extends AbstractPoolConstant<NameAndTypeC
     public boolean equals(Object object) {
         if (object instanceof NameAndTypeConstant) {
             final NameAndTypeConstant nameAndType = (NameAndTypeConstant) object;
-            return _name.equals(nameAndType._name) && (_descriptor == nameAndType._descriptor || descriptorString().equals(nameAndType.descriptorString()));
+            return name.equals(nameAndType.name) && (descriptor == nameAndType.descriptor || descriptorString().equals(nameAndType.descriptorString()));
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return _name.hashCode() ^ descriptorString().hashCode();
+        return name.hashCode() ^ descriptorString().hashCode();
     }
 
     @Override
@@ -125,6 +125,6 @@ public final class NameAndTypeConstant extends AbstractPoolConstant<NameAndTypeC
     }
 
     public String valueString(ConstantPool pool) {
-        return "name=\"" + name() + "\",descriptor=\"" + _descriptor + "\"";
+        return "name=\"" + name() + "\",descriptor=\"" + descriptor + "\"";
     }
 }

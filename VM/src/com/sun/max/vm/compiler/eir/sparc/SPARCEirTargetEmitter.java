@@ -34,22 +34,22 @@ import com.sun.max.vm.stack.sparc.*;
  * @author Laurent Daynes
  */
 public final class SPARCEirTargetEmitter extends EirTargetEmitter<SPARCAssembler> {
-    private Label _literalBaseLabel;
+    private Label literalBaseLabel;
 
     public Label literalBaseLabel() {
-        return _literalBaseLabel;
+        return literalBaseLabel;
     }
 
-    private GPR _stackPointer;
+    private GPR stackPointer;
 
     public GPR stackPointer() {
-        return _stackPointer;
+        return stackPointer;
     }
 
-    private GPR _framePointer;
+    private GPR framePointer;
 
     public GPR framePointer() {
-        return _framePointer;
+        return framePointer;
     }
 
     /**
@@ -73,34 +73,34 @@ public final class SPARCEirTargetEmitter extends EirTargetEmitter<SPARCAssembler
     }
 
     public static final class StackAddress {
-        private final int _offset;
+        private final int offset;
         private final GPR _base;
 
         StackAddress(int offset, GPR base) {
-            _offset = offset;
-            _base = base;
+            this.offset = offset;
+            this._base = base;
         }
         public int offset() {
-            return _offset;
+            return offset;
         }
         public GPR base() {
             return _base;
         }
     }
 
-    private final boolean _is32Bit;
+    private final boolean is32Bit;
 
     public SPARCEirTargetEmitter(SPARCEirABI abi, int frameSize, Safepoint safepoint, AdapterFrameGenerator<SPARCAssembler> adapterFrameGenerator) {
         super(abi.createAssembler(), abi, frameSize, safepoint, abi.vmConfiguration().platform().processorKind().dataModel().wordWidth(), adapterFrameGenerator);
-        _is32Bit = abi.vmConfiguration().platform().processorKind().dataModel().wordWidth() == WordWidth.BITS_32;
-        _stackPointer = abi.targetABI().stackPointer();
-        _framePointer = abi.targetABI().framePointer();
-        _literalBaseLabel = new Label();
+        is32Bit = abi.vmConfiguration().platform().processorKind().dataModel().wordWidth() == WordWidth.BITS_32;
+        stackPointer = abi.targetABI().stackPointer();
+        framePointer = abi.targetABI().framePointer();
+        literalBaseLabel = new Label();
     }
 
     @Override
     protected void setStartAddress(Address address) {
-        if (_is32Bit) {
+        if (is32Bit) {
             final SPARC32Assembler assembler32 = (SPARC32Assembler) assembler();
             assembler32.setStartAddress(address.toInt());
             //assembler32.fixLabel(_literalBaseLabel, address.toInt());
@@ -113,7 +113,7 @@ public final class SPARCEirTargetEmitter extends EirTargetEmitter<SPARCAssembler
 
     @Override
     protected void fixLabel(Label label, Address address) {
-        if (_is32Bit) {
+        if (is32Bit) {
             final SPARC32Assembler assembler32 = (SPARC32Assembler) assembler();
             assembler32.fixLabel(label, address.toInt());
         } else {

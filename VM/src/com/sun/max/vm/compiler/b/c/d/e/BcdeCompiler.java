@@ -53,11 +53,11 @@ public abstract class BcdeCompiler<EirGenerator_Type extends EirGenerator> exten
         return Sequence.Static.appended(super.irGenerators(), eirGenerator());
     }
 
-    private boolean[] _isBuiltinImplemented;
+    private boolean[] isBuiltinImplemented;
 
     @Override
     public boolean isBuiltinImplemented(Builtin builtin) {
-        return _isBuiltinImplemented[builtin.serial()];
+        return isBuiltinImplemented[builtin.serial()];
     }
 
     protected abstract Class<? extends BuiltinVisitor> builtinTranslationClass();
@@ -74,10 +74,10 @@ public abstract class BcdeCompiler<EirGenerator_Type extends EirGenerator> exten
                 }
             }));
 
-        _isBuiltinImplemented = new boolean[Builtin.builtins().length()];
+        isBuiltinImplemented = new boolean[Builtin.builtins().length()];
         for (int i = 0; i < Builtin.builtins().length(); i++) {
             final Builtin builtin = Builtin.builtins().get(i);
-            _isBuiltinImplemented[i] = methodNames.contains("visit" + Naming.toClassName(builtin.name()));
+            isBuiltinImplemented[i] = methodNames.contains("visit" + Naming.toClassName(builtin.name()));
         }
     }
 }

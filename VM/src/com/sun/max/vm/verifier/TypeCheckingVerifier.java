@@ -49,7 +49,6 @@ public class TypeCheckingVerifier extends ClassVerifier {
         } catch (VerifyError verifyError) {
             if (classActor().majorVersion() == 50 && _failOverToTypeInferencing.getValue()) {
                 final TypeInferencingVerifier typeInferencingVerifier = new TypeInferencingVerifier(classActor());
-                typeInferencingVerifier.setVerbose(verbose());
                 typeInferencingVerifier.verify();
             }
         }

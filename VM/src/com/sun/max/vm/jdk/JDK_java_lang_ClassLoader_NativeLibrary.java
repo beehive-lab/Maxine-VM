@@ -42,7 +42,7 @@ class JDK_java_lang_ClassLoader_NativeLibrary {
      * library. The {@code FieldActor} for that field is used here to gain access.
      */
     @CONSTANT_WHEN_NOT_ZERO
-    private static LongFieldActor _handleFieldActor;
+    private static LongFieldActor handleFieldActor;
 
     /**
      * Apparently the body of this method is bootstrap-sensitive depending on your write barrier.
@@ -50,10 +50,10 @@ class JDK_java_lang_ClassLoader_NativeLibrary {
      */
     @NEVER_INLINE
     private static LongFieldActor getHandleFieldActor(Class javaClass) {
-        if (_handleFieldActor == null) {
-            _handleFieldActor =  (LongFieldActor) FieldActor.fromJava(Classes.getDeclaredField(javaClass, "handle", long.class));
+        if (handleFieldActor == null) {
+            handleFieldActor =  (LongFieldActor) FieldActor.fromJava(Classes.getDeclaredField(javaClass, "handle", long.class));
         }
-        return _handleFieldActor;
+        return handleFieldActor;
     }
 
     /**

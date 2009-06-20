@@ -30,15 +30,15 @@ import com.sun.max.vm.type.*;
  */
 public abstract class CirVariable extends CirValue {
 
-    private int _serial;
+    private int serial;
 
     public int serial() {
-        return _serial;
+        return serial;
     }
 
     protected CirVariable(int serial, Kind kind) {
         super(kind.toStackKind());
-        _serial = serial;
+        this.serial = serial;
     }
 
     CirVariable createFresh(int newSerial) {
@@ -46,7 +46,7 @@ public abstract class CirVariable extends CirValue {
             // HotSpot randomly cannot invoke clone() reflectively.
             // This bug in HotSpot prevents us from using Objects.clone(), so we try this:
             final CirVariable result = (CirVariable) clone();
-            result._serial = newSerial;
+            result.serial = newSerial;
             return result;
         } catch (Throwable throwable) {
             throw ProgramError.unexpected("clone() failed for: " + this);

@@ -93,14 +93,14 @@ public interface Stoppable {
 
     public static final class Static {
 
-        private static final Map<Integer, String> _reasonToNameMap = new TreeMap<Integer, String>();
+        private static final Map<Integer, String> reasonToNameMap = new TreeMap<Integer, String>();
         static {
             for (Field field : Stoppable.class.getFields()) {
                 if (field.getType().equals(int.class)) {
                     try {
                         final int reasonValue = field.getInt(null);
                         final String reasonName = field.getName();
-                        _reasonToNameMap.put(reasonValue, reasonName);
+                        reasonToNameMap.put(reasonValue, reasonName);
                     } catch (Exception exception) {
                         throw ProgramError.unexpected(exception);
                     }
@@ -122,7 +122,7 @@ public interface Stoppable {
 
         public static String reasonsMayStopToString(final int reasonsMayStop) {
             final StringBuilder sb = new StringBuilder();
-            for (Map.Entry<Integer, String> entry : _reasonToNameMap.entrySet()) {
+            for (Map.Entry<Integer, String> entry : reasonToNameMap.entrySet()) {
                 final int reason = entry.getKey();
                 if ((reasonsMayStop & reason) != 0) {
                     sb.append(entry.getValue().toLowerCase() + " ");

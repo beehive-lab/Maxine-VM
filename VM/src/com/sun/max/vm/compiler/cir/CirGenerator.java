@@ -47,9 +47,9 @@ public abstract class CirGenerator extends IrGenerator<CirGeneratorScheme, CirMe
      */
     public static final String CIR_VERIFY_PROPERTY = "max.cir.verify";
 
-    private static final Map<ClassMethodActor, CirMethod> _cirCache = new HashMap<ClassMethodActor, CirMethod>();
+    private static final Map<ClassMethodActor, CirMethod> cirCache = new HashMap<ClassMethodActor, CirMethod>();
 
-    private CirVerifyingObserver _cirVerifyingObserver;
+    private CirVerifyingObserver cirVerifyingObserver;
 
     public CirGenerator(CirGeneratorScheme cirGeneratorScheme) {
         super(cirGeneratorScheme, "CIR");
@@ -73,10 +73,10 @@ public abstract class CirGenerator extends IrGenerator<CirGeneratorScheme, CirMe
 
         final String cirVerify = System.getProperty(CIR_VERIFY_PROPERTY);
         if (cirVerify != null) {
-            final CirVerifyingObserver cirVerifyingObserver = new CirVerifyingObserver();
-            if (cirVerifyingObserver.attach(this)) {
-                addIrObserver(cirVerifyingObserver);
-                _cirVerifyingObserver = cirVerifyingObserver;
+            final CirVerifyingObserver observer = new CirVerifyingObserver();
+            if (observer.attach(this)) {
+                addIrObserver(observer);
+                this.cirVerifyingObserver = observer;
             }
         }
         return;
@@ -89,30 +89,30 @@ public abstract class CirGenerator extends IrGenerator<CirGeneratorScheme, CirMe
      */
     @Override
     public synchronized void addIrObserver(IrObserver observer) {
-        if (_cirVerifyingObserver != null && _irObservers.contains(_cirVerifyingObserver)) {
-            removeIrObserver(_cirVerifyingObserver);
+        if (cirVerifyingObserver != null && irObservers.contains(cirVerifyingObserver)) {
+            removeIrObserver(cirVerifyingObserver);
             super.addIrObserver(observer);
-            super.addIrObserver(_cirVerifyingObserver);
+            super.addIrObserver(cirVerifyingObserver);
         } else {
             super.addIrObserver(observer);
         }
     }
 
     public void removeCirMethod(ClassMethodActor classMethodActor) {
-        synchronized (_cirCache) {
-            _cirCache.remove(classMethodActor);
+        synchronized (cirCache) {
+            cirCache.remove(classMethodActor);
         }
     }
 
     public void setCirMethod(ClassMethodActor classMethodActor, CirMethod cirMethod) {
-        synchronized (_cirCache) {
-            _cirCache.put(classMethodActor, cirMethod);
+        synchronized (cirCache) {
+            cirCache.put(classMethodActor, cirMethod);
         }
     }
 
     public CirMethod getCirMethod(ClassMethodActor classMethodActor) {
-        synchronized (_cirCache) {
-            return _cirCache.get(classMethodActor);
+        synchronized (cirCache) {
+            return cirCache.get(classMethodActor);
         }
     }
 
@@ -129,10 +129,10 @@ public abstract class CirGenerator extends IrGenerator<CirGeneratorScheme, CirMe
         }
     }
 
-    final CirVariableFactory _postTranslationVariableFactory = new CirVariableFactory(-1);
+    final CirVariableFactory postTranslationVariableFactory = new CirVariableFactory(-1);
 
     public final CirVariableFactory postTranslationVariableFactory() {
-        return _postTranslationVariableFactory;
+        return postTranslationVariableFactory;
     }
 
 }

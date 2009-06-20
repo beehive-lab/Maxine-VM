@@ -33,7 +33,7 @@ import com.sun.max.vm.interpret.*;
 public abstract class DtInterpreterScheme extends AbstractInterpreterScheme {
 
     @CONSTANT_WHEN_NOT_ZERO
-    private DtInterpreter _interpreter;
+    private DtInterpreter interpreter;
 
     protected DtInterpreterScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -48,7 +48,7 @@ public abstract class DtInterpreterScheme extends AbstractInterpreterScheme {
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (phase == MaxineVM.Phase.STARTING) {
-            _interpreter = generateInterpreter();
+            interpreter = generateInterpreter();
         }
     }
 
@@ -56,6 +56,6 @@ public abstract class DtInterpreterScheme extends AbstractInterpreterScheme {
      * Returns the singleton, runtime generated interpreter.
      */
     public DtInterpreter interpreter() {
-        return _interpreter;
+        return interpreter;
     }
 }

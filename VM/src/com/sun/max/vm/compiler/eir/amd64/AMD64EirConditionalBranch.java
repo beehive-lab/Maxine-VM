@@ -28,38 +28,38 @@ import com.sun.max.vm.compiler.eir.*;
  */
 public abstract class AMD64EirConditionalBranch extends AMD64EirLocalControlTransfer {
 
-    private EirBlock _next;
+    private EirBlock next;
 
     public EirBlock next() {
-        return _next;
+        return next;
     }
 
     AMD64EirConditionalBranch(EirBlock block, EirBlock target, EirBlock next) {
         super(block, target);
-        _next = next;
+        this.next = next;
         next.addPredecessor(block);
     }
 
     @Override
     public void visitSuccessorBlocks(EirBlock.Procedure procedure) {
         super.visitSuccessorBlocks(procedure);
-        if (_next != null) {
-            procedure.run(_next);
+        if (next != null) {
+            procedure.run(next);
         }
     }
 
     @Override
     public void substituteSuccessorBlocks(Mapping<EirBlock, EirBlock> map) {
         super.substituteSuccessorBlocks(map);
-        if (map.containsKey(_next)) {
-            _next = map.get(_next);
+        if (map.containsKey(next)) {
+            next = map.get(next);
         }
     }
 
     @Override
     public EirBlock selectSuccessorBlock(PoolSet<EirBlock> eligibleBlocks) {
-        if (eligibleBlocks.contains(_next)) {
-            return _next;
+        if (eligibleBlocks.contains(next)) {
+            return next;
         }
         return super.selectSuccessorBlock(eligibleBlocks);
     }
@@ -67,8 +67,8 @@ public abstract class AMD64EirConditionalBranch extends AMD64EirLocalControlTran
     @Override
     public String toString() {
         String s = super.toString();
-        if (_next != null) {
-            s += " | #" + _next.serial();
+        if (next != null) {
+            s += " | #" + next.serial();
         }
         return s;
     }

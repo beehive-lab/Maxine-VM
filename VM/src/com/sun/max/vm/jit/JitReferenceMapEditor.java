@@ -34,11 +34,11 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.stack.*;
 
 public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, ReferenceSlotVisitor {
-    private final JitTargetMethod _targetMethod;
-    private final JitStackFrameLayout _stackFrameLayout;
-    private final Object _blockFrames;
-    private final ExceptionHandler[] _exceptionHandlerMap;
-    private final BytecodeStopsIterator _bytecodeStopsIterator;
+    private final JitTargetMethod targetMethod;
+    private final JitStackFrameLayout stackFrameLayout;
+    private final Object blockFrames;
+    private final ExceptionHandler[] exceptionHandlerMap;
+    private final BytecodeStopsIterator bytecodeStopsIterator;
 
     /**
      * The sorted list of basic block starting positions.
@@ -46,28 +46,28 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
      * Using a char array (as opposed to a short array) means that {@linkplain Arrays#binarySearch(char[], char) binary search} can be used to
      * find the basic block enclosing a given bytecode position.
      */
-    private final char[] _blockStartBytecodePositions;
+    private final char[] blockStartBytecodePositions;
 
     public JitReferenceMapEditor(JitTargetMethod targetMethod, int numberOfBlocks, boolean[] blockStarts, BytecodeStopsIterator bytecodeStopsIterator, JitStackFrameLayout jitStackFrameLayout) {
         assert targetMethod.numberOfStopPositions() != 0;
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
-        _targetMethod = targetMethod;
-        _exceptionHandlerMap = ExceptionHandler.createHandlerMap(classMethodActor.rawCodeAttribute());
-        _stackFrameLayout = jitStackFrameLayout;
-        _blockStartBytecodePositions = new char[numberOfBlocks];
+        this.targetMethod = targetMethod;
+        this.exceptionHandlerMap = ExceptionHandler.createHandlerMap(classMethodActor.rawCodeAttribute());
+        this.stackFrameLayout = jitStackFrameLayout;
+        this.blockStartBytecodePositions = new char[numberOfBlocks];
         int blockIndex = 0;
         for (int i = 0; i != blockStarts.length; ++i) {
             if (blockStarts[i]) {
-                _blockStartBytecodePositions[blockIndex++] = (char) i;
+                blockStartBytecodePositions[blockIndex++] = (char) i;
             }
         }
         assert blockIndex == numberOfBlocks;
-        _blockFrames = ReferenceMapInterpreter.createFrames(this);
-        _bytecodeStopsIterator = bytecodeStopsIterator;
+        this.blockFrames = ReferenceMapInterpreter.createFrames(this);
+        this.bytecodeStopsIterator = bytecodeStopsIterator;
     }
 
     public int blockIndexFor(int bytecodePosition) {
-        final int blockIndex = Arrays.binarySearch(_blockStartBytecodePositions, (char) bytecodePosition);
+        final int blockIndex = Arrays.binarySearch(blockStartBytecodePositions, (char) bytecodePosition);
         if (blockIndex >= 0) {
             return blockIndex;
         }
@@ -75,51 +75,51 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
     }
 
     public Object blockFrames() {
-        return _blockFrames;
+        return blockFrames;
     }
 
     public void visitReferenceInLocalVariable(int localVariableIndex) {
-        for (int stopIndex = _bytecodeStopsIterator.nextStopIndex(true); stopIndex != -1; stopIndex = _bytecodeStopsIterator.nextStopIndex(false)) {
-            final int offset = stopIndex * _targetMethod.frameReferenceMapSize();
-            final int fpRelativeIndex = _stackFrameLayout.localVariableReferenceMapIndex(localVariableIndex);
-            ByteArrayBitMap.set(_targetMethod.referenceMaps(), offset, _targetMethod.frameReferenceMapSize(), fpRelativeIndex);
+        for (int stopIndex = bytecodeStopsIterator.nextStopIndex(true); stopIndex != -1; stopIndex = bytecodeStopsIterator.nextStopIndex(false)) {
+            final int offset = stopIndex * targetMethod.frameReferenceMapSize();
+            final int fpRelativeIndex = stackFrameLayout.localVariableReferenceMapIndex(localVariableIndex);
+            ByteArrayBitMap.set(targetMethod.referenceMaps(), offset, targetMethod.frameReferenceMapSize(), fpRelativeIndex);
         }
     }
 
     public void visitReferenceOnOperandStack(int operandStackIndex, boolean parametersPopped) {
-        for (int stopIndex = _bytecodeStopsIterator.nextStopIndex(true); stopIndex != -1; stopIndex = _bytecodeStopsIterator.nextStopIndex(false)) {
-            if (parametersPopped != _bytecodeStopsIterator.isDirectRuntimeCall()) {
-                final int offset = stopIndex * _targetMethod.frameReferenceMapSize();
-                final int fpRelativeIndex = _stackFrameLayout.operandStackReferenceMapIndex(operandStackIndex);
-                ByteArrayBitMap.set(_targetMethod.referenceMaps(), offset, _targetMethod.frameReferenceMapSize(), fpRelativeIndex);
+        for (int stopIndex = bytecodeStopsIterator.nextStopIndex(true); stopIndex != -1; stopIndex = bytecodeStopsIterator.nextStopIndex(false)) {
+            if (parametersPopped != bytecodeStopsIterator.isDirectRuntimeCall()) {
+                final int offset = stopIndex * targetMethod.frameReferenceMapSize();
+                final int fpRelativeIndex = stackFrameLayout.operandStackReferenceMapIndex(operandStackIndex);
+                ByteArrayBitMap.set(targetMethod.referenceMaps(), offset, targetMethod.frameReferenceMapSize(), fpRelativeIndex);
             }
         }
     }
 
     public int blockStartBytecodePosition(int blockIndex) {
-        if (blockIndex == _blockStartBytecodePositions.length) {
+        if (blockIndex == blockStartBytecodePositions.length) {
             return classMethodActor().rawCodeAttribute().code().length;
         }
-        return _blockStartBytecodePositions[blockIndex];
+        return blockStartBytecodePositions[blockIndex];
     }
 
     public ClassMethodActor classMethodActor() {
-        return _targetMethod.classMethodActor();
+        return targetMethod.classMethodActor();
     }
 
     public ExceptionHandler exceptionHandlersActiveAt(int bytecodePosition) {
-        if (_exceptionHandlerMap == null) {
+        if (exceptionHandlerMap == null) {
             return null;
         }
-        return _exceptionHandlerMap[bytecodePosition];
+        return exceptionHandlerMap[bytecodePosition];
     }
 
     public int numberOfBlocks() {
-        return _blockStartBytecodePositions.length;
+        return blockStartBytecodePositions.length;
     }
 
     public JitStackFrameLayout stackFrameLayout() {
-        return _stackFrameLayout;
+        return stackFrameLayout;
     }
 
     public void fillInMaps(int[] bytecodeToTargetCodePositionMap) {
@@ -130,17 +130,17 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
             Log.unlock(lockDisabledSafepoints);
         }
 
-        final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(_blockFrames);
+        final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(blockFrames);
         interpreter.finalizeFrames(this);
-        interpreter.interpretReferenceSlots(this, this, _bytecodeStopsIterator);
+        interpreter.interpretReferenceSlots(this, this, bytecodeStopsIterator);
 
         if (Heap.traceGCRootScanning()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            _bytecodeStopsIterator.reset();
-            final CodeAttribute codeAttribute = _targetMethod.classMethodActor().codeAttribute();
-            for (int bcp = _bytecodeStopsIterator.bytecodePosition(); bcp != -1; bcp = _bytecodeStopsIterator.next()) {
-                for (int stopIndex = _bytecodeStopsIterator.nextStopIndex(true); stopIndex != -1; stopIndex = _bytecodeStopsIterator.nextStopIndex(false)) {
-                    final int offset = stopIndex * _targetMethod.frameReferenceMapSize();
+            bytecodeStopsIterator.reset();
+            final CodeAttribute codeAttribute = targetMethod.classMethodActor().codeAttribute();
+            for (int bcp = bytecodeStopsIterator.bytecodePosition(); bcp != -1; bcp = bytecodeStopsIterator.next()) {
+                for (int stopIndex = bytecodeStopsIterator.nextStopIndex(true); stopIndex != -1; stopIndex = bytecodeStopsIterator.nextStopIndex(false)) {
+                    final int offset = stopIndex * targetMethod.frameReferenceMapSize();
                     Log.print(bcp);
                     Log.print(":");
                     final String opcode = Bytecode.from(codeAttribute.code()[bcp]).name();
@@ -152,14 +152,14 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
                     Log.print(" stop[");
                     Log.print(stopIndex);
                     Log.print("]@");
-                    Log.print(_targetMethod.stopPosition(stopIndex));
-                    if (_bytecodeStopsIterator.isDirectRuntimeCall()) {
+                    Log.print(targetMethod.stopPosition(stopIndex));
+                    if (bytecodeStopsIterator.isDirectRuntimeCall()) {
                         Log.print('*');
                     }
                     Log.print(", locals={");
                     for (int localVariableIndex = 0; localVariableIndex < codeAttribute.maxLocals(); ++localVariableIndex) {
-                        final int fpRelativeIndex = _stackFrameLayout.localVariableReferenceMapIndex(localVariableIndex);
-                        if (ByteArrayBitMap.isSet(_targetMethod.referenceMaps(), offset, _targetMethod.frameReferenceMapSize(), fpRelativeIndex)) {
+                        final int fpRelativeIndex = stackFrameLayout.localVariableReferenceMapIndex(localVariableIndex);
+                        if (ByteArrayBitMap.isSet(targetMethod.referenceMaps(), offset, targetMethod.frameReferenceMapSize(), fpRelativeIndex)) {
                             Log.print(' ');
                             Log.print(localVariableIndex);
                             Log.print("[fp+");
@@ -170,8 +170,8 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
                     Log.print(" }");
                     Log.print(", stack={");
                     for (int operandStackIndex = 0; operandStackIndex < codeAttribute.maxStack(); ++operandStackIndex) {
-                        final int fpRelativeIndex = _stackFrameLayout.operandStackReferenceMapIndex(operandStackIndex);
-                        if (ByteArrayBitMap.isSet(_targetMethod.referenceMaps(), offset, _targetMethod.frameReferenceMapSize(), fpRelativeIndex)) {
+                        final int fpRelativeIndex = stackFrameLayout.operandStackReferenceMapIndex(operandStackIndex);
+                        if (ByteArrayBitMap.isSet(targetMethod.referenceMaps(), offset, targetMethod.frameReferenceMapSize(), fpRelativeIndex)) {
                             Log.print(' ');
                             Log.print(operandStackIndex);
                             Log.print("[fp+");

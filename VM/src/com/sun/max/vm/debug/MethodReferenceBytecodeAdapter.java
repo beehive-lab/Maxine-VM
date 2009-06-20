@@ -35,50 +35,50 @@ import com.sun.max.vm.runtime.*;
  */
 class MethodReferenceBytecodeAdapter extends BytecodeAdapter {
 
-    private final ConstantPool _constantPool;
-    private final LinkedList<MethodActor> _staticAndSpecialMethodActors;
-    private final LinkedList<MethodActor> _virtualMethodActors;
-    private final LinkedList<MethodActor> _interfaceMethodActors;
+    private final ConstantPool constantPool;
+    private final LinkedList<MethodActor> staticAndSpecialMethodActors;
+    private final LinkedList<MethodActor> virtualMethodActors;
+    private final LinkedList<MethodActor> interfaceMethodActors;
 
     MethodReferenceBytecodeAdapter(ConstantPool constantPool, LinkedList<MethodActor> staticAndSpecialMethodActors,
                     final LinkedList<MethodActor> virtualMethodActors, LinkedList<MethodActor> interfaceMethodActors) {
-        _constantPool = constantPool;
-        _staticAndSpecialMethodActors = staticAndSpecialMethodActors;
-        _virtualMethodActors = virtualMethodActors;
-        _interfaceMethodActors = interfaceMethodActors;
+        this.constantPool = constantPool;
+        this.staticAndSpecialMethodActors = staticAndSpecialMethodActors;
+        this.virtualMethodActors = virtualMethodActors;
+        this.interfaceMethodActors = interfaceMethodActors;
     }
 
     @Override
     protected void invokevirtual(int index) {
-        final ClassMethodRefConstant methodRef = _constantPool.classMethodAt(index);
-        if (methodRef.isResolvableWithoutClassLoading(_constantPool)) {
-            _virtualMethodActors.add(methodRef.resolve(_constantPool, index));
+        final ClassMethodRefConstant methodRef = constantPool.classMethodAt(index);
+        if (methodRef.isResolvableWithoutClassLoading(constantPool)) {
+            virtualMethodActors.add(methodRef.resolve(constantPool, index));
         }
     }
 
     @Override
     protected void invokespecial(int index) {
-        final ClassMethodRefConstant methodRef = _constantPool.classMethodAt(index);
-        if (methodRef.isResolvableWithoutClassLoading(_constantPool)) {
-            final ResolutionGuard guard = _constantPool.makeResolutionGuard(index, ResolveSpecialMethod.SNIPPET);
-            _staticAndSpecialMethodActors.add(ResolveSpecialMethod.resolveSpecialMethod(guard));
+        final ClassMethodRefConstant methodRef = constantPool.classMethodAt(index);
+        if (methodRef.isResolvableWithoutClassLoading(constantPool)) {
+            final ResolutionGuard guard = constantPool.makeResolutionGuard(index, ResolveSpecialMethod.SNIPPET);
+            staticAndSpecialMethodActors.add(ResolveSpecialMethod.resolveSpecialMethod(guard));
         }
     }
 
     @Override
     protected void invokestatic(int index) {
-        final ClassMethodRefConstant methodRef = _constantPool.classMethodAt(index);
-        if (methodRef.isResolvableWithoutClassLoading(_constantPool)) {
-            final ResolutionGuard guard = _constantPool.makeResolutionGuard(index, ResolveStaticMethod.SNIPPET);
-            _staticAndSpecialMethodActors.add(ResolveStaticMethod.resolveStaticMethod(guard));
+        final ClassMethodRefConstant methodRef = constantPool.classMethodAt(index);
+        if (methodRef.isResolvableWithoutClassLoading(constantPool)) {
+            final ResolutionGuard guard = constantPool.makeResolutionGuard(index, ResolveStaticMethod.SNIPPET);
+            staticAndSpecialMethodActors.add(ResolveStaticMethod.resolveStaticMethod(guard));
         }
     }
 
     @Override
     protected void invokeinterface(int index, int count) {
-        final InterfaceMethodRefConstant methodRef = _constantPool.interfaceMethodAt(index);
-        if (methodRef.isResolvableWithoutClassLoading(_constantPool)) {
-            _interfaceMethodActors.add(methodRef.resolve(_constantPool, index));
+        final InterfaceMethodRefConstant methodRef = constantPool.interfaceMethodAt(index);
+        if (methodRef.isResolvableWithoutClassLoading(constantPool)) {
+            interfaceMethodActors.add(methodRef.resolve(constantPool, index));
         }
     }
 }

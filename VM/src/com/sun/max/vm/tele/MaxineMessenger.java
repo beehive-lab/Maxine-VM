@@ -33,24 +33,24 @@ import com.sun.max.unsafe.*;
  */
 public final class MaxineMessenger {
 
-    private static MaxineMessenger _messenger = new MaxineMessenger();
+    private static MaxineMessenger messenger = new MaxineMessenger();
 
     public static MaxineMessenger messenger() {
-        return _messenger;
+        return messenger;
     }
 
-    private DataInputStream _dataInputStream;
-    private DataOutputStream _dataOutputStream;
+    private DataInputStream dataInputStream;
+    private DataOutputStream dataOutputStream;
 
     public boolean isActivated() {
-        return _dataInputStream != null && _dataOutputStream != null;
+        return dataInputStream != null && dataOutputStream != null;
     }
 
     public void activate(DataAccess dataAccess, Pointer inData, Pointer outData, int dataSize) {
         final RingBufferPipe in = new RingBufferPipe(dataAccess, inData, dataSize);
         final RingBufferPipe out = new RingBufferPipe(dataAccess, outData, dataSize);
-        _dataInputStream = new DataInputStream(in.createInputStream());
-        _dataOutputStream = new DataOutputStream(out.createOutputStream());
+        dataInputStream = new DataInputStream(in.createInputStream());
+        dataOutputStream = new DataOutputStream(out.createOutputStream());
     }
 
     /**
@@ -60,10 +60,10 @@ public final class MaxineMessenger {
      * Otherwise it remains zero and there is no messenger traffic.
      */
     @INSPECTED
-    private static Pointer _info = Pointer.zero();
+    private static Pointer info = Pointer.zero();
 
     public static boolean isVmInspected() {
-        return !_info.isZero();
+        return !info.isZero();
     }
 
     /**
@@ -71,20 +71,20 @@ public final class MaxineMessenger {
      */
     public static void initialize() {
         if (isVmInspected()) {
-            final Size dataSize = _info.getWord(0).asSize();
-            final Pointer inData = _info.getWord(1).asPointer();
-            final Pointer outData = _info.getWord(2).asPointer();
-            _messenger.activate(MemoryDataAccess.POINTER_DATA_ACCESS, inData, outData, dataSize.toInt());
-            _messenger.flush();
+            final Size dataSize = info.getWord(0).asSize();
+            final Pointer inData = info.getWord(1).asPointer();
+            final Pointer outData = info.getWord(2).asPointer();
+            messenger.activate(MemoryDataAccess.POINTER_DATA_ACCESS, inData, outData, dataSize.toInt());
+            messenger.flush();
         }
     }
 
     private MaxineMessage receive() {
         try {
-            if (_dataInputStream == null || _dataInputStream.available() <= 0) {
+            if (dataInputStream == null || dataInputStream.available() <= 0) {
                 return null;
             }
-            return MaxineMessage.read(_dataInputStream);
+            return MaxineMessage.read(dataInputStream);
         } catch (IOException ioException) {
             throw ProgramError.unexpected(ioException);
         }
@@ -92,23 +92,23 @@ public final class MaxineMessenger {
 
     public void send(MaxineMessage message) {
         try {
-            if (_dataOutputStream != null) {
-                message.write(_dataOutputStream);
+            if (dataOutputStream != null) {
+                message.write(dataOutputStream);
             }
         } catch (IOException ioException) {
             throw ProgramError.unexpected(ioException);
         }
     }
 
-    private final VariableMapping<MaxineMessage.Tag, MaxineMessage.Receiver> _messageTagToReceiver = HashMapping.createVariableIdentityMapping();
+    private final VariableMapping<MaxineMessage.Tag, MaxineMessage.Receiver> messageTagToReceiver = HashMapping.createVariableIdentityMapping();
 
     public static void subscribe(MaxineMessage.Tag tag, MaxineMessage.Receiver receiver) {
-        _messenger._messageTagToReceiver.put(tag, receiver);
+        messenger.messageTagToReceiver.put(tag, receiver);
     }
 
     private <Message_Type extends MaxineMessage> void consume(Message_Type message) {
         final Class<MaxineMessage.Receiver<Message_Type>> type = null;
-        final MaxineMessage.Receiver<Message_Type> receiver = StaticLoophole.cast(type, _messageTagToReceiver.get(message.tag()));
+        final MaxineMessage.Receiver<Message_Type> receiver = StaticLoophole.cast(type, messageTagToReceiver.get(message.tag()));
         assert receiver != null;
         receiver.consume(message);
     }

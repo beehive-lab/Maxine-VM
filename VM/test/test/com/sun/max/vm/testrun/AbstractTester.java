@@ -152,10 +152,10 @@ public abstract class AbstractTester extends JavaRunScheme {
         if (actor == null) {
             return;
         }
-        if (BinaryImageGenerator._calleeJit) {
+        if (BinaryImageGenerator.calleeJit) {
             CompiledPrototype.registerJitClass(javaClass);
         }
-        if (BinaryImageGenerator._unlinked) {
+        if (BinaryImageGenerator.unlinked) {
             CompiledPrototype.registerClassUnlinked(actor);
         }
         if (COMPILE_ALL_TEST_METHODS) {
@@ -187,14 +187,14 @@ public abstract class AbstractTester extends JavaRunScheme {
     @PROTOTYPE_ONLY
     private void addMethodToImage(ClassMethodActor method) {
         CompiledPrototype.registerImageMethod(method);
-        if (BinaryImageGenerator._unlinked) {
+        if (BinaryImageGenerator.unlinked) {
             CompiledPrototype.registerMethodUnlinked(method);
         }
     }
 
     @PROTOTYPE_ONLY
     private void registerClasses() {
-        if (BinaryImageGenerator._callerJit) {
+        if (BinaryImageGenerator.callerJit) {
             CompiledPrototype.registerJitClass(JavaTesterTests.class);
         }
         for (Class<?> testClass : getClassList()) {
@@ -240,7 +240,7 @@ public abstract class AbstractTester extends JavaRunScheme {
         _verbose = 3;
         if (MaxineVM.isPrototyping()) {
             registerClasses();
-            _nativeTests = BinaryImageGenerator._nativeTests;
+            _nativeTests = BinaryImageGenerator.nativeTests;
             _testCount = getClassList().length;
             super.initialize(phase);
         }

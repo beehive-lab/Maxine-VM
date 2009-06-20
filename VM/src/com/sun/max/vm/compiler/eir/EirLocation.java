@@ -56,14 +56,14 @@ public abstract class EirLocation {
     public abstract TargetLocation toTargetLocation();
 
     public abstract static class Constant extends EirLocation {
-        private Value _value;
+        private Value value;
 
         public Value value() {
-            return _value;
+            return value;
         }
 
         protected Constant(Value value) {
-            _value = value;
+            this.value = value;
         }
     }
 
@@ -78,7 +78,7 @@ public abstract class EirLocation {
 
         @Override
         public TargetLocation toTargetLocation() {
-            return TargetLocation._undefined;
+            return TargetLocation.undefined;
         }
     }
 

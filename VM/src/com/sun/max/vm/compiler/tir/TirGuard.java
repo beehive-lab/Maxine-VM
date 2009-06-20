@@ -29,21 +29,21 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 public class TirGuard extends TirInstruction {
-    private TraceAnchor _anchor;
-    private TirTrace _trace;
-    private final TirState _state;
-    private final TirInstruction _operand0;
-    private final TirInstruction _operand1;
-    private final ValueComparator _valueComparator;
-    private final Class<? extends Throwable> _throwable;
+    private TraceAnchor anchor;
+    private TirTrace trace;
+    private final TirState state;
+    private final TirInstruction operand0;
+    private final TirInstruction operand1;
+    private final ValueComparator valueComparator;
+    private final Class<? extends Throwable> throwable;
 
     public TirGuard(TirInstruction operand0, TirInstruction opearnd1, ValueComparator valueComparator, TirState state, TirTrace trace, Class<? extends Throwable> throwable) {
-        _operand0 = operand0;
-        _operand1 = opearnd1;
-        _valueComparator = valueComparator;
-        _state = state;
-        _throwable = throwable;
-        _trace = trace;
+        this.operand0 = operand0;
+        this.operand1 = opearnd1;
+        this.valueComparator = valueComparator;
+        this.state = state;
+        this.throwable = throwable;
+        this.trace = trace;
     }
 
     @Override
@@ -53,55 +53,55 @@ public class TirGuard extends TirInstruction {
 
     @Override
     public void visitOperands(TirInstructionVisitor visitor) {
-        _operand0.accept(visitor);
-        _operand1.accept(visitor);
+        operand0.accept(visitor);
+        operand1.accept(visitor);
     }
 
     @Override
     public String toString() {
-        return "GUARD " + _valueComparator.toString();
+        return "GUARD " + valueComparator.toString();
     }
 
     @Override
     public Kind kind() {
-        ProgramError.check(_operand0.kind() == _operand1.kind());
-        return _operand0.kind();
+        ProgramError.check(operand0.kind() == operand1.kind());
+        return operand0.kind();
     }
 
     public TirState state() {
-        return _state;
+        return state;
     }
 
     public TirTrace trace() {
-        return _trace;
+        return trace;
     }
 
     public TirInstruction operand0() {
-        return _operand0;
+        return operand0;
     }
 
     public TirInstruction operand1() {
-        return _operand1;
+        return operand1;
     }
 
     public Class<? extends Throwable> thorwable() {
-        return _throwable;
+        return throwable;
     }
 
     public ValueComparator valueComparator() {
-        return _valueComparator;
+        return valueComparator;
     }
 
     public TraceAnchor anchor() {
-        return _anchor;
+        return anchor;
     }
 
     public void setAnchor(TraceAnchor anchor) {
-        _anchor = anchor;
+        this.anchor = anchor;
     }
 
     public BytecodeLocation location() {
-        return _state.last().location();
+        return state.last().location();
     }
 
     @Override

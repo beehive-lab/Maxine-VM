@@ -33,43 +33,43 @@ import com.sun.max.vm.*;
 
 public class HeapStatistics {
 
-    private static volatile long _mutatorCycles = 0;
-    private static volatile long _totalCollections = 0;
-    private static volatile int _edenCollections = 0;
+    private static volatile long mutatorCycles = 0;
+    private static volatile long totalCollections = 0;
+    private static volatile int edenCollections = 0;
     private static volatile int _toSpaceCollections = 0;
-    private static volatile int _matureCollections = 0;
+    private static volatile int matureCollections = 0;
 
     private static volatile long _heapAllocations = 0;
     private static AppendableSequence<Long> _totalHeapAllocations = new ArrayListSequence<Long>();
 
-    private static volatile long _mutatorTlabAllocations = 0;
-    private static AppendableSequence<Long> _totalMutatorTlabAllocations = new ArrayListSequence<Long>();
+    private static volatile long mutatorTlabAllocations = 0;
+    private static AppendableSequence<Long> totalMutatorTlabAllocations = new ArrayListSequence<Long>();
 
     private static volatile long _edenAllocations = 0;
-    private static AppendableSequence<Long> _totalEdenAllocations = new ArrayListSequence<Long>();
+    private static AppendableSequence<Long> totalEdenAllocations = new ArrayListSequence<Long>();
 
-    private static volatile long _toSpaceAllocations = 0;
+    private static volatile long toSpaceAllocations = 0;
     private static AppendableSequence<Long> _totalToSpaceAllocations = new ArrayListSequence<Long>();
 
-    private static volatile long _matureAllocations = 0;
-    private static AppendableSequence<Long> _totalMatureAllocations = new ArrayListSequence<Long>();
+    private static volatile long matureAllocations = 0;
+    private static AppendableSequence<Long> totalMatureAllocations = new ArrayListSequence<Long>();
 
     private static volatile long _edenSurvivors = 0;
-    private static AppendableSequence<Long> _totalEdenSurvivors = new ArrayListSequence<Long>();
+    private static AppendableSequence<Long> totalEdenSurvivors = new ArrayListSequence<Long>();
 
-    private static volatile long _toSpaceSurvivors = 0;
-    private static AppendableSequence<Long> _totalToSpaceSurvivors = new ArrayListSequence<Long>();
+    private static volatile long toSpaceSurvivors = 0;
+    private static AppendableSequence<Long> totalToSpaceSurvivors = new ArrayListSequence<Long>();
 
-    private static volatile long _matureSpaceSurvivors = 0;
-    private static AppendableSequence<Long> _totalMatureSpaceSurvivors = new ArrayListSequence<Long>();
+    private static volatile long matureSpaceSurvivors = 0;
+    private static AppendableSequence<Long> totalMatureSpaceSurvivors = new ArrayListSequence<Long>();
 
-    private static volatile long _sumSurvivors = 0;
-    private static AppendableSequence<Long> _totalSumSurvivors = new ArrayListSequence<Long>();
+    private static volatile long sumSurvivors = 0;
+    private static AppendableSequence<Long> totalSumSurvivors = new ArrayListSequence<Long>();
 
-    private static volatile long _minObjectSize = 0;
-    private static AppendableSequence<Long> _minObjectSizePerMutation = new ArrayListSequence<Long>();
+    private static volatile long minObjectSize = 0;
+    private static AppendableSequence<Long> minObjectSizePerMutation = new ArrayListSequence<Long>();
 
-    private static volatile long _maxObjectSize = 0;
+    private static volatile long maxObjectSize = 0;
     private static AppendableSequence<Long> _maxObjectSizePerMutation = new ArrayListSequence<Long>();
 
 
@@ -78,80 +78,80 @@ public class HeapStatistics {
         _totalHeapAllocations.append(_heapAllocations);
         _heapAllocations = 0;
 
-        _totalMutatorTlabAllocations.append(_mutatorTlabAllocations);
-        _mutatorTlabAllocations = 0;
+        totalMutatorTlabAllocations.append(mutatorTlabAllocations);
+        mutatorTlabAllocations = 0;
 
-        _totalEdenAllocations.append(_edenAllocations);
+        totalEdenAllocations.append(_edenAllocations);
         _edenAllocations = 0;
 
-        _minObjectSizePerMutation.append(_minObjectSize);
-        _minObjectSize = 0;
+        minObjectSizePerMutation.append(minObjectSize);
+        minObjectSize = 0;
 
-        _maxObjectSizePerMutation.append(_maxObjectSize);
-        _maxObjectSize = 0;
+        _maxObjectSizePerMutation.append(maxObjectSize);
+        maxObjectSize = 0;
 
-        _mutatorCycles++;
+        mutatorCycles++;
 
     }
 
     public static  void setMinObjectSize(long objectSize) {
-        if (objectSize < _minObjectSize) {
-            _minObjectSize = objectSize;
+        if (objectSize < minObjectSize) {
+            minObjectSize = objectSize;
         }
 
-        if (_minObjectSize == 0) {
-            _minObjectSize = objectSize;
+        if (minObjectSize == 0) {
+            minObjectSize = objectSize;
         }
     }
 
     public static  void setMaxObjectSize(long objectSize) {
-        if (objectSize > _maxObjectSize) {
-            _maxObjectSize = objectSize;
+        if (objectSize > maxObjectSize) {
+            maxObjectSize = objectSize;
         }
 
-        if (_maxObjectSize == 0) {
-            _maxObjectSize = objectSize;
+        if (maxObjectSize == 0) {
+            maxObjectSize = objectSize;
         }
     }
 
     public static  void flushGCStatsToBuffers() {
-        _totalToSpaceAllocations.append(_toSpaceAllocations);
-        _toSpaceAllocations = 0;
+        _totalToSpaceAllocations.append(toSpaceAllocations);
+        toSpaceAllocations = 0;
 
-        _totalMatureAllocations.append(_matureAllocations);
-        _matureAllocations = 0;
+        totalMatureAllocations.append(matureAllocations);
+        matureAllocations = 0;
 
-        _totalEdenSurvivors.append(_edenSurvivors);
+        totalEdenSurvivors.append(_edenSurvivors);
         _edenSurvivors = 0;
 
-        _totalToSpaceSurvivors.append(_toSpaceSurvivors);
-        _toSpaceSurvivors = 0;
+        totalToSpaceSurvivors.append(toSpaceSurvivors);
+        toSpaceSurvivors = 0;
 
-        _totalMatureSpaceSurvivors.append(_matureSpaceSurvivors);
-        _matureSpaceSurvivors = 0;
+        totalMatureSpaceSurvivors.append(matureSpaceSurvivors);
+        matureSpaceSurvivors = 0;
 
-        _totalSumSurvivors.append(_sumSurvivors);
-        _sumSurvivors = 0;
+        totalSumSurvivors.append(sumSurvivors);
+        sumSurvivors = 0;
 
     }
 
     public static  void incrementSumSurvivors() {
-        _sumSurvivors++;
+        sumSurvivors++;
     }
 
     public static  void incrementEdenSurvivors() {
         _edenSurvivors++;
-        _sumSurvivors++;
+        sumSurvivors++;
     }
 
     public static  void incrementToSpaceSurvivors() {
-        _toSpaceSurvivors++;
-        _sumSurvivors++;
+        toSpaceSurvivors++;
+        sumSurvivors++;
     }
 
     public static  void incrementMatureSpaceSurvivors() {
-        _matureSpaceSurvivors++;
-        _sumSurvivors++;
+        matureSpaceSurvivors++;
+        sumSurvivors++;
     }
 
     public static  void incrementHeapAllocations() {
@@ -159,7 +159,7 @@ public class HeapStatistics {
     }
 
     public static  void incrementMutatorTlabAllocations() {
-        _mutatorTlabAllocations++;
+        mutatorTlabAllocations++;
     }
 
     public static  void incrementEdenAllocations() {
@@ -168,72 +168,72 @@ public class HeapStatistics {
     }
 
     public static  void incrementToSpaceAllocations() {
-        _toSpaceAllocations++;
+        toSpaceAllocations++;
         _heapAllocations++;
     }
 
     public static  void matureAllocations() {
-        _matureAllocations++;
+        matureAllocations++;
         _heapAllocations++;
     }
 
     public static  void incrementTotalCollections() {
-        _totalCollections++;
+        totalCollections++;
     }
 
     public static  void incrementEdenCollections() {
-        _edenCollections++;
-        _totalCollections++;
+        edenCollections++;
+        totalCollections++;
     }
 
     public static  void incrementToSpaceCollections() {
         _toSpaceCollections++;
-        _totalCollections++;
+        totalCollections++;
     }
 
     public static  void incrementMatureCollections() {
-        _matureCollections++;
-        _totalCollections++;
+        matureCollections++;
+        totalCollections++;
     }
 
     public static void printMutatorStats() {
         Log.print(" Mutator Cycle: ");
-        Log.println(_mutatorCycles);
+        Log.println(mutatorCycles);
         Log.print(" Total objects allocated on heap: ");
         Log.println(_heapAllocations);
         Log.print(" Total eden allocated on heap: ");
         Log.println(_edenAllocations);
         Log.print(" Total TLABS allocated: ");
-        Log.println(_mutatorTlabAllocations);
+        Log.println(mutatorTlabAllocations);
     }
 
     public static void printGCStats() {
         Log.print(" Total Collections: ");
-        Log.println(_totalCollections);
+        Log.println(totalCollections);
         Log.print("Eden Collections: ");
-        Log.println(_edenCollections);
+        Log.println(edenCollections);
         Log.print("To Space Collections: ");
         Log.println(_toSpaceCollections);
         Log.print("Mature Collections: ");
-        Log.println(_matureCollections);
+        Log.println(matureCollections);
         Log.print("Eden Survivors: ");
         Log.println(_edenSurvivors);
         Log.print("ToSpace Survivors: ");
-        Log.println(_toSpaceSurvivors);
+        Log.println(toSpaceSurvivors);
         Log.print("Mature Survivors: ");
-        Log.println(_matureSpaceSurvivors);
+        Log.println(matureSpaceSurvivors);
 
 
         Log.print("Percentage of eden survivors: ");
-        final double edenSurvivorPercentage = _edenSurvivors / _sumSurvivors;
+        final double edenSurvivorPercentage = _edenSurvivors / sumSurvivors;
         Log.println(edenSurvivorPercentage);
 
         Log.print("Percentage of toSpace survivors: ");
-        final double toSpaceSurvivorPercentage = _toSpaceSurvivors / _sumSurvivors;
+        final double toSpaceSurvivorPercentage = toSpaceSurvivors / sumSurvivors;
         Log.println(toSpaceSurvivorPercentage);
 
         Log.print("Percentage of mature survivors: ");
-        final double matureSurvivorPercentage = _matureSpaceSurvivors / _sumSurvivors;
+        final double matureSurvivorPercentage = matureSpaceSurvivors / sumSurvivors;
         Log.println(matureSurvivorPercentage);
 
 

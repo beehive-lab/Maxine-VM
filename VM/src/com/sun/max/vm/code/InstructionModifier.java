@@ -30,7 +30,7 @@ import com.sun.max.vm.asm.amd64.*;
  * <p>
  * Modifiers are currently used for template-based JIT compilation, where in a template is copied into a
  * code buffer, then the copy is modified to adjust the template.
- * 
+ *
  * @author Laurent Daynes
  */
 public class InstructionModifier {
@@ -38,39 +38,39 @@ public class InstructionModifier {
     /**
      * Position of the instruction.
      */
-    private final int _startPosition;
+    private final int startPosition;
 
     /**
      * Size of the instruction.
      */
-    private final int _size;
+    private final int size;
 
     public InstructionModifier(int position, int size) {
-        _startPosition = position;
-        _size = size;
+        startPosition = position;
+        this.size = size;
     }
 
     /**
      * Gets the position of the first byte of the instruction that depends on the resolved link.
      */
     public final int startPosition() {
-        return _startPosition;
+        return startPosition;
     }
 
     public final int endPosition() {
-        return _startPosition + _size;
+        return startPosition + size;
     }
 
     /**
      * Return length of the instruction of target code that depends on the resolved link.
      */
     public final int size() {
-        return _size;
+        return size;
     }
 
     // FIXME: there a platform-dependence here. This need to go via a VM configuration for a factory of instruction editor!
-    protected AssemblyInstructionEditor createAssemblyInstructionEditor(byte[] code, int position, int size) {
-        return new AMD64InstructionEditor(code, position, size);
+    protected AssemblyInstructionEditor createAssemblyInstructionEditor(byte[] code, int position, int sz) {
+        return new AMD64InstructionEditor(code, position, sz);
     }
 }
 

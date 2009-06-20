@@ -241,27 +241,27 @@ public abstract class TargetLocation {
             if (lastUnderscoreIndex != -1) {
                 final String suffix = name.substring(lastUnderscoreIndex + 1).replace('M', '-');
                 if (suffix.matches("-?\\d+")) {
-                    _implicitOperand = Integer.parseInt(suffix);
+                    implicitOperand = Integer.parseInt(suffix);
                 } else {
-                    _implicitOperand = INVALID_IMPLICIT_NUMERIC_OPERAND;
+                    implicitOperand = INVALID_IMPLICIT_NUMERIC_OPERAND;
                 }
             } else {
-                _implicitOperand = INVALID_IMPLICIT_NUMERIC_OPERAND;
+                implicitOperand = INVALID_IMPLICIT_NUMERIC_OPERAND;
             }
-            _implicitOperandTagsRange = implicitOperandTagsRange;
+            this.implicitOperandTagsRange = implicitOperandTagsRange;
             if (implicitOperandTagsRange != null) {
-                _implicitOperandTags = new Tag[(int) implicitOperandTagsRange.length()];
+                implicitOperandTags = new Tag[(int) implicitOperandTagsRange.length()];
             } else {
-                _implicitOperandTags = null;
+                implicitOperandTags = null;
             }
         }
 
-        private final int _implicitOperand;
+        private final int implicitOperand;
 
         private Tag _wideOperandTag;
 
-        private final Range _implicitOperandTagsRange;
-        private final Tag[] _implicitOperandTags;
+        private final Range implicitOperandTagsRange;
+        private final Tag[] implicitOperandTags;
 
         /**
          * Gets the numeric operand implied by this tag's name.
@@ -269,7 +269,7 @@ public abstract class TargetLocation {
          * @return {@value #INVALID_IMPLICIT_NUMERIC_OPERAND} if this tag's name does not imply a numeric operand
          */
         public int implicitOperand() {
-            return _implicitOperand;
+            return implicitOperand;
         }
 
         public static final int INVALID_IMPLICIT_NUMERIC_OPERAND = 0x10101010;
@@ -283,9 +283,9 @@ public abstract class TargetLocation {
          *         {@code null} is returned.
          */
         public Tag implicitOperandTag(int operand) {
-            if (_implicitOperandTagsRange != null && _implicitOperandTagsRange.contains(operand)) {
-                assert _implicitOperandTags != null;
-                return _implicitOperandTags[operand - _implicitOperandTagsRange.start()];
+            if (implicitOperandTagsRange != null && implicitOperandTagsRange.contains(operand)) {
+                assert implicitOperandTags != null;
+                return implicitOperandTags[operand - implicitOperandTagsRange.start()];
             }
             return null;
         }
@@ -302,13 +302,13 @@ public abstract class TargetLocation {
 
         @PROTOTYPE_ONLY
         private void initializeImplicitOperandTags() {
-            final Range range = _implicitOperandTagsRange;
+            final Range range = implicitOperandTagsRange;
             if (range != null) {
                 for (int operand = range.start(); operand < range.end(); ++operand) {
                     final String suffix = operand < 0 ? "_M" + (-operand) : "_" + operand;
                     final Tag implicitOperandTag = Tag.valueOf(name() + suffix);
                     assert implicitOperandTag != null;
-                    _implicitOperandTags[operand - range.start()] = implicitOperandTag;
+                    implicitOperandTags[operand - range.start()] = implicitOperandTag;
                 }
             }
         }
@@ -384,7 +384,7 @@ public abstract class TargetLocation {
         final int implicitOperand = tag.implicitOperand();
         switch (tag) {
             case UNDEFINED: {
-                return _undefined;
+                return undefined;
             }
             case IMMEDIATE_M2:
             case IMMEDIATE_M1:
@@ -658,7 +658,7 @@ public abstract class TargetLocation {
         }
     }
 
-    public static final Undefined _undefined = new Undefined();
+    public static final Undefined undefined = new Undefined();
 
     public static final class Immediate extends TargetLocation {
         @Override
@@ -727,28 +727,28 @@ public abstract class TargetLocation {
 
     public abstract static class Index extends TargetLocation {
 
-        private final int _index;
+        private final int index;
 
         public int index() {
-            return _index;
+            return index;
         }
 
         public Index(int index) {
-            _index = index;
+            this.index = index;
         }
 
         @Override
         public boolean equals(Object other) {
             if (other.getClass().equals(getClass())) {
-                final Index index = (Index) other;
-                return tag() == index.tag() && _index == index._index;
+                final Index otherIndex = (Index) other;
+                return tag() == otherIndex.tag() && this.index == otherIndex.index;
             }
             return false;
         }
 
         @Override
         public int hashCode() {
-            return _index;
+            return index;
         }
 
         @Override
@@ -758,10 +758,10 @@ public abstract class TargetLocation {
 
         @Override
         public void write(DataOutput stream) throws IOException {
-            final Tag implicitOperandTag = tag().implicitOperandTag(_index);
+            final Tag implicitOperandTag = tag().implicitOperandTag(index);
             if (implicitOperandTag != null) {
                 stream.write(implicitOperandTag.ordinal());
-            } else if (_index <= 0xFF) {
+            } else if (index <= 0xFF) {
                 stream.write(tag().ordinal());
                 stream.writeByte(index());
             } else {
@@ -886,20 +886,20 @@ public abstract class TargetLocation {
             return Tag.BLOCK;
         }
 
-        private int _position;
+        private int position;
 
         public int position() {
-            return _position;
+            return position;
         }
 
         public Block(int position) {
-            _position = position;
+            this.position = position;
         }
 
         @Override
         public void write(DataOutput stream) throws IOException {
             stream.write(tag().ordinal());
-            stream.writeInt(_position);
+            stream.writeInt(position);
         }
 
         @Override
@@ -909,12 +909,12 @@ public abstract class TargetLocation {
 
         @Override
         public int hashCode() {
-            return _position;
+            return position;
         }
 
         @Override
         public String toString() {
-            return "block@" + _position;
+            return "block@" + position;
         }
 
         @Override
@@ -929,14 +929,14 @@ public abstract class TargetLocation {
             return Tag.METHOD;
         }
 
-        final ClassMethodActor _classMethodActor;
+        final ClassMethodActor classMethodActor;
 
         public MethodActor classMethodActor() {
-            return _classMethodActor;
+            return classMethodActor;
         }
 
         public Method(ClassMethodActor classMethodActor) {
-            _classMethodActor = classMethodActor;
+            this.classMethodActor = classMethodActor;
         }
 
         @Override
@@ -949,19 +949,19 @@ public abstract class TargetLocation {
         public boolean equals(Object other) {
             if (other instanceof Method) {
                 final Method method = (Method) other;
-                return _classMethodActor == method._classMethodActor;
+                return classMethodActor == method.classMethodActor;
             }
             return false;
         }
 
         @Override
         public int hashCode() {
-            return _classMethodActor.hashCode();
+            return classMethodActor.hashCode();
         }
 
         @Override
         public String toString() {
-            return _classMethodActor.toString();
+            return classMethodActor.toString();
         }
 
         @Override

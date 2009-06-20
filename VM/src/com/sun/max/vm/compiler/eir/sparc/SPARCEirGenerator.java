@@ -33,11 +33,11 @@ public abstract class SPARCEirGenerator extends EirGenerator<SPARCEirGeneratorSc
         super(eirGeneratorScheme);
     }
 
-    private final EirLocation _eirCatchParameterLocation = eirABIsScheme().javaABI().getResultLocation(Kind.REFERENCE);
+    private final EirLocation eirCatchParameterLocation = eirABIsScheme().javaABI().getResultLocation(Kind.REFERENCE);
 
     @Override
     public EirLocation catchParameterLocation() {
-        return _eirCatchParameterLocation;
+        return eirCatchParameterLocation;
     }
 
     /**

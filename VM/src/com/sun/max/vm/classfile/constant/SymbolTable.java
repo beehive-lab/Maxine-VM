@@ -48,14 +48,14 @@ public final class SymbolTable {
             return toString();
         }
 
-        private Entry<String, Utf8ConstantEntry> _next;
+        private Entry<String, Utf8ConstantEntry> next;
 
         public Entry<String, Utf8ConstantEntry> next() {
-            return _next;
+            return next;
         }
 
         public void setNext(Entry<String, Utf8ConstantEntry> next) {
-            _next = next;
+            this.next = next;
         }
 
         public void setValue(Utf8ConstantEntry value) {
@@ -71,22 +71,22 @@ public final class SymbolTable {
      * Searching and adding entries to this map is only performed by {@linkplain #makeSymbol(String) one method} which
      * is synchronized.
      */
-    private static final GrowableMapping<String, Utf8ConstantEntry> _symbolTable = new ChainingValueChainedHashMapping<String, Utf8ConstantEntry>(40000);
+    private static final GrowableMapping<String, Utf8ConstantEntry> symbolTable = new ChainingValueChainedHashMapping<String, Utf8ConstantEntry>(40000);
 
     public static final Utf8Constant INIT = makeSymbol("<init>");
     public static final Utf8Constant CLINIT = makeSymbol("<clinit>");
     public static final Utf8Constant FINALIZE = makeSymbol("finalize");
 
     public static int length() {
-        return _symbolTable.length();
+        return symbolTable.length();
     }
 
     public static synchronized Utf8Constant lookupSymbol(String value) {
-        return _symbolTable.get(value);
+        return symbolTable.get(value);
     }
 
     public static synchronized Utf8Constant makeSymbol(String value) {
-        Utf8ConstantEntry utf8 = _symbolTable.get(value);
+        Utf8ConstantEntry utf8 = symbolTable.get(value);
         if (utf8 == null) {
             if (MaxineVM.isPrototyping()) {
                 // String interning is implemented with another data structure when running hosted
@@ -94,7 +94,7 @@ public final class SymbolTable {
             } else {
                 utf8 = new Utf8ConstantEntry(value);
             }
-            _symbolTable.put(value, utf8);
+            symbolTable.put(value, utf8);
         }
         return utf8;
     }

@@ -28,9 +28,9 @@ import com.sun.max.vm.type.*;
 public class TirLocal extends TirInstruction {
     public static final class Flags {
         private Kind _kind = Kind.VOID;
-        private boolean _isRead;
+        private boolean isRead;
         private boolean _isWritten;
-        private boolean _isUndefined;
+        private boolean isUndefined;
 
         private Flags() {
 
@@ -38,13 +38,13 @@ public class TirLocal extends TirInstruction {
 
         private Flags(Flags flags) {
             _kind = flags._kind;
-            _isRead = flags._isRead;
+            isRead = flags.isRead;
             _isWritten = flags._isWritten;
-            _isUndefined = flags._isUndefined;
+            isUndefined = flags.isUndefined;
         }
 
         public boolean isRead() {
-            return _isRead;
+            return isRead;
         }
 
         public boolean isWritten() {
@@ -52,19 +52,19 @@ public class TirLocal extends TirInstruction {
         }
 
         public boolean isUndefined() {
-            return _isUndefined;
+            return isUndefined;
         }
 
         @Override
         public String toString() {
             String flags = "flags: " + _kind;
-            if (_isRead) {
+            if (isRead) {
                 flags += ", read";
             }
             if (_isWritten) {
                 flags += ", written";
             }
-            if (_isUndefined) {
+            if (isUndefined) {
                 flags += ", undefined";
             }
             return flags;
@@ -75,7 +75,7 @@ public class TirLocal extends TirInstruction {
         }
 
         public void setRead(boolean read) {
-            _isRead = read;
+            isRead = read;
         }
     }
 
@@ -86,13 +86,13 @@ public class TirLocal extends TirInstruction {
         }
     };
 
-    private Flags _flags;
-    private Flags _temporaryFlags = new Flags();
+    private Flags flags;
+    private Flags temporaryFlags = new Flags();
 
-    private final int _slot;
+    private final int slot;
 
     public TirLocal(int slot) {
-        _slot = slot;
+        this.slot = slot;
     }
 
     @Override
@@ -103,16 +103,17 @@ public class TirLocal extends TirInstruction {
     // Checkstyle: stop
     @Override
     public void setKind(Kind kind) {
-        flags()._isRead = true;
+        flags().isRead = true;
         if (flags()._kind == Kind.VOID) {
             flags()._kind = kind;
         } else {
             if (flags()._kind != kind) {
                 ProgramError.unexpected("I don't remember what to do here!");
-                flags()._isUndefined = true;
+                flags().isUndefined = true;
             }
         }
     }
+    // Checkstyle: resume
 
     @Override
     public void accept(TirInstructionVisitor visitor) {
@@ -121,42 +122,42 @@ public class TirLocal extends TirInstruction {
 
     @Override
     public String toString() {
-        return "LOCAL slot: " + _slot;
+        return "LOCAL slot: " + slot;
     }
 
     public int slot() {
-        return _slot;
+        return slot;
     }
 
     public Flags flags() {
-        if (_temporaryFlags != null) {
-            return _temporaryFlags;
+        if (temporaryFlags != null) {
+            return temporaryFlags;
         }
-        return _flags;
+        return flags;
     }
 
     public void createFlags() {
-        _temporaryFlags = new Flags(_flags);
+        temporaryFlags = new Flags(flags);
     }
 
     public void commitFlags() {
-        _flags = _temporaryFlags;
-        _temporaryFlags = new Flags(_temporaryFlags);
+        flags = temporaryFlags;
+        temporaryFlags = new Flags(temporaryFlags);
     }
 
     public void discardFlags() {
-        _temporaryFlags = null;
+        temporaryFlags = null;
     }
 
     public void complete(TirInstruction tail) {
         if (this != tail) {
             flags().setWritten(true);
-            if (flags()._isUndefined == false) {
+            if (flags().isUndefined == false) {
                 if (flags()._kind == Kind.VOID) {
                     flags()._kind = tail.kind();
                 } else {
                     if (flags()._kind != tail.kind()) {
-                        flags()._isUndefined = true;
+                        flags().isUndefined = true;
                     }
                 }
             }

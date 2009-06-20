@@ -62,26 +62,26 @@ import com.sun.max.vm.value.*;
  */
 public class CirSwitch extends CirProcedure implements CirFoldable, CirReducible {
 
-    private final Kind _comparisonKind;
-    private final ValueComparator _valueComparator;
-    private final int _numberOfMatches;
+    private final Kind comparisonKind;
+    private final ValueComparator valueComparator;
+    private final int numberOfMatches;
 
     public CirSwitch(Kind comparisonKind, ValueComparator valueComparator, int numberOfMatches) {
-        _comparisonKind = comparisonKind;
-        _valueComparator = valueComparator;
-        _numberOfMatches = numberOfMatches;
+        this.comparisonKind = comparisonKind;
+        this.valueComparator = valueComparator;
+        this.numberOfMatches = numberOfMatches;
     }
 
     public ValueComparator valueComparator() {
-        return _valueComparator;
+        return valueComparator;
     }
 
     public Kind comparisonKind() {
-        return _comparisonKind;
+        return comparisonKind;
     }
 
     public int numberOfMatches() {
-        return _numberOfMatches;
+        return numberOfMatches;
     }
 
     public Kind resultKind() {
@@ -93,7 +93,7 @@ public class CirSwitch extends CirProcedure implements CirFoldable, CirReducible
         final Kind[] parameterKinds = new Kind[numberOfMatches() * 2];
         int i = 0;
         for (; i <= numberOfMatches(); i++) {
-            parameterKinds[i] = _comparisonKind;
+            parameterKinds[i] = comparisonKind;
         }
         for (; i < parameterKinds.length; i++) {
             parameterKinds[i] = Kind.WORD;
@@ -102,7 +102,7 @@ public class CirSwitch extends CirProcedure implements CirFoldable, CirReducible
     }
 
     public String name() {
-        return "<" + _comparisonKind.name() + "_" + _valueComparator.name() + "_" + numberOfMatches() + ">";
+        return "<" + comparisonKind.name() + "_" + valueComparator.name() + "_" + numberOfMatches() + ">";
     }
 
     @Override
@@ -132,13 +132,13 @@ public class CirSwitch extends CirProcedure implements CirFoldable, CirReducible
 
     public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
         final CirConstant tag = (CirConstant) arguments[0];
-        final Value tagValue = _comparisonKind.convert(tag.toStackValue());
+        final Value tagValue = comparisonKind.convert(tag.toStackValue());
         final int n = numberOfMatches();
         assert n == (arguments.length - 2) >> 1;
         for (int i = 1; i <= n; i++) {
             final CirConstant match = (CirConstant) arguments[i];
-            final Value matchValue = _comparisonKind.convert(match.toStackValue());
-            if (_valueComparator.evaluate(tagValue, matchValue)) {
+            final Value matchValue = comparisonKind.convert(match.toStackValue());
+            if (valueComparator.evaluate(tagValue, matchValue)) {
                 final CirValue branchContinuation = arguments[n + i];
                 return new CirCall(branchContinuation, CirCall.NO_ARGUMENTS);
             }

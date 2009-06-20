@@ -25,13 +25,13 @@ package com.sun.max.vm.classfile.create;
  */
 class MillNameAndTypeConstant extends MillConstant {
 
-    final int _nameIndex;
-    final int _descriptorIndex;
+    final int nameIndex;
+    final int descriptorIndex;
 
     MillNameAndTypeConstant(MillUtf8Constant name, MillUtf8Constant descriptor) {
-        super(CONSTANT_NameAndType, 5, name._hashValue ^ descriptor._hashValue);
-        this._nameIndex = name._index;
-        this._descriptorIndex = descriptor._index;
+        super(CONSTANT_NameAndType, 5, name.hashValue ^ descriptor.hashValue);
+        this.nameIndex = name.index;
+        this.descriptorIndex = descriptor.index;
     }
 
     @Override
@@ -40,7 +40,7 @@ class MillNameAndTypeConstant extends MillConstant {
             return false;
         }
         final MillNameAndTypeConstant c = (MillNameAndTypeConstant) x;
-        return _nameIndex == c._nameIndex && _descriptorIndex == c._descriptorIndex;
+        return nameIndex == c.nameIndex && descriptorIndex == c.descriptorIndex;
     }
 
 }

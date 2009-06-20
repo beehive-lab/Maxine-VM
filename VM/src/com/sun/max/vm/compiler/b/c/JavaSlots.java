@@ -35,8 +35,8 @@ import com.sun.max.vm.compiler.cir.variable.*;
  */
 abstract class JavaSlots implements Cloneable {
 
-    protected final SlotVariableFactory _variableFactory;
-    protected JavaStackSlot[] _slots;
+    protected final SlotVariableFactory variableFactory;
+    protected JavaStackSlot[] slots;
 
     public abstract static class JavaStackSlot {
     }
@@ -45,24 +45,24 @@ abstract class JavaSlots implements Cloneable {
     }
 
     public static class VariableJavaStackSlot extends JavaStackSlot {
-        private final CirVariable _cirVariable;
+        private final CirVariable cirVariable;
         public VariableJavaStackSlot(CirVariable variable) {
-            _cirVariable = variable;
+            cirVariable = variable;
         }
         public CirVariable cirVariable() {
-            return _cirVariable;
+            return cirVariable;
         }
     }
 
     protected JavaSlots(SlotVariableFactory variableFactory) {
-        _variableFactory = variableFactory;
-        _slots = new JavaStackSlot[_variableFactory.getMaxSlotCount()];
+        this.variableFactory = variableFactory;
+        this.slots = new JavaStackSlot[variableFactory.getMaxSlotCount()];
     }
 
     public JavaSlots copy() {
         try {
             final JavaSlots result = (JavaSlots) clone();
-            result._slots = Arrays.copy(_slots, new JavaStackSlot[_slots.length]);
+            result.slots = Arrays.copy(slots, new JavaStackSlot[slots.length]);
             return result;
         } catch (CloneNotSupportedException e) {
             throw ProgramError.unexpected(e);
@@ -74,11 +74,11 @@ abstract class JavaSlots implements Cloneable {
     public final CirValue[] makeDescriptor() {
         final CirValue[] descriptor = CirCall.newArguments(effectiveLength());
         for (int i = 0; i < descriptor.length; i++) {
-            if (_slots[i] == null || _slots[i] instanceof FillerJavaStackSlot) {
+            if (slots[i] == null || slots[i] instanceof FillerJavaStackSlot) {
                 descriptor[i] = CirValue.UNDEFINED;
             } else {
-                assert _slots[i] instanceof VariableJavaStackSlot;
-                descriptor[i] = ((VariableJavaStackSlot) (_slots[i])).cirVariable();
+                assert slots[i] instanceof VariableJavaStackSlot;
+                descriptor[i] = ((VariableJavaStackSlot) (slots[i])).cirVariable();
             }
         }
         return descriptor;

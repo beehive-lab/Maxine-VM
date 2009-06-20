@@ -59,34 +59,34 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * Stores the default threshold at which a recompilation is triggered from the baseline compiler to the next level
      * of optimization. This is typically the number of invocations of the method.
      */
-    public static int _defaultRecompilationThreshold0 = DEFAULT_RECOMPILATION_THRESHOLD;
+    public static int defaultRecompilationThreshold0 = DEFAULT_RECOMPILATION_THRESHOLD;
 
     /**
      * Stores the default threshold at which a recompilation is triggered from optimized code to more highly optimized
      * code.
      */
-    public static int _defaultRecompilationThreshold1 = DEFAULT_RECOMPILATION_THRESHOLD;
+    public static int defaultRecompilationThreshold1 = DEFAULT_RECOMPILATION_THRESHOLD;
 
     /**
      * A queue of pending compilations.
      */
-    protected final LinkedList<Compilation> _pending = new LinkedList<Compilation>();
+    protected final LinkedList<Compilation> pending = new LinkedList<Compilation>();
 
     /**
      * The number of submitted compilations.
      */
-    protected int _submitted;
+    protected int submitted;
 
     /**
-     * A lock to synchronize access to {@link #_completed}.
+     * A lock to synchronize access to {@link #completed}.
      */
-    protected final Object _completionLock = new Object();
+    protected final Object completionLock = new Object();
 
     /**
      * The number of completed compilations. If {@code _completed < _submitted}, then there is currently a compilation
      * pending or being performed.
      */
-    protected int _completed;
+    protected int completed;
 
     /**
      * The compiler that is used as the default at prototyping time.
@@ -97,46 +97,46 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     /**
      * The baseline (JIT) compiler.
      */
-    protected final DynamicCompilerScheme _jitCompiler;
+    protected final DynamicCompilerScheme jitCompiler;
 
     /**
      * The optimizing compiler, if any.
      */
-    protected final CompilerScheme _optimizingCompiler;
+    protected final CompilerScheme optimizingCompiler;
 
     /**
      * List of attached Compilation observers.
      */
     @RESET
-    protected LinkedList<CompilationObserver> _observers;
+    protected LinkedList<CompilationObserver> observers;
 
-    private static final VMOption _jitOption = register(new VMOption("-Xjit",
+    private static final VMOption jitOption = register(new VMOption("-Xjit",
                     "Selects JIT only mode, with no recompilation."), MaxineVM.Phase.STARTING);
-    private static final VMOption _optOption = register(new VMOption("-Xopt",
+    private static final VMOption optOption = register(new VMOption("-Xopt",
                     "Selects optimized only mode."), MaxineVM.Phase.STARTING);
-    private static final VMIntOption _thresholdOption = register(new VMIntOption("-XX:RCT=", DEFAULT_RECOMPILATION_THRESHOLD,
+    private static final VMIntOption thresholdOption = register(new VMIntOption("-XX:RCT=", DEFAULT_RECOMPILATION_THRESHOLD,
                     "In mixed mode, sets the recompilation threshold for methods."), MaxineVM.Phase.STARTING);
-    static final VMBooleanXXOption _gcOnCompileOption = register(new VMBooleanXXOption("-XX:-GCOnCompilation",
+    static final VMBooleanXXOption gcOnCompileOption = register(new VMBooleanXXOption("-XX:-GCOnCompilation",
                     "When specified, the compiler will request GC before every compilation operation, " +
                     "which is useful for testing corner cases in the compiler/GC interactions."), MaxineVM.Phase.STARTING);
-    private static final VMBooleanXXOption _gcOnRecompileOption = register(new VMBooleanXXOption("-XX:-GCOnRecompilation",
+    private static final VMBooleanXXOption gcOnRecompileOption = register(new VMBooleanXXOption("-XX:-GCOnRecompilation",
                     "When specified, the compiler will request GC before every re-compilation operation, " +
                     "which is useful for testing corner cases in the compiler/GC interactions."), MaxineVM.Phase.STARTING);
 
     /**
      * The (dynamically selected) compilation mode.
      */
-    private Mode _mode = Mode.JIT;
+    private Mode mode = Mode.JIT;
 
     public Mode mode() {
-        return _mode;
+        return mode;
     }
 
     /**
      * Set the compilation mode of this compilation scheme, which determines which compilers to select at runtime.
      */
     public void setMode(Mode mode) {
-        _mode = mode;
+        this.mode = mode;
     }
 
     /**
@@ -161,8 +161,8 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     public AdaptiveCompilationScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
         _prototypeCompiler = vmConfiguration.compilerScheme();
-        _optimizingCompiler = _prototypeCompiler;
-        _jitCompiler = vmConfiguration.jitScheme();
+        optimizingCompiler = _prototypeCompiler;
+        jitCompiler = vmConfiguration.jitScheme();
     }
 
     /**
@@ -180,16 +180,16 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             compilationThread.setDaemon(true);
             compilationThread.start();
         } else if (phase == MaxineVM.Phase.STARTING) {
-            if (_jitOption.isPresent()) {
-                _defaultRecompilationThreshold0 = RECOMPILATION_DISABLED;
-                _defaultRecompilationThreshold1 = RECOMPILATION_DISABLED;
+            if (jitOption.isPresent()) {
+                defaultRecompilationThreshold0 = RECOMPILATION_DISABLED;
+                defaultRecompilationThreshold1 = RECOMPILATION_DISABLED;
                 setMode(Mode.JIT);
-            } else if (_optOption.isPresent()) {
-                _defaultRecompilationThreshold0 = RECOMPILATION_DISABLED;
-                _defaultRecompilationThreshold1 = RECOMPILATION_DISABLED;
+            } else if (optOption.isPresent()) {
+                defaultRecompilationThreshold0 = RECOMPILATION_DISABLED;
+                defaultRecompilationThreshold1 = RECOMPILATION_DISABLED;
                 setMode(Mode.OPTIMIZED);
             } else {
-                _defaultRecompilationThreshold0 = _thresholdOption.getValue();
+                defaultRecompilationThreshold0 = thresholdOption.getValue();
                 setMode(Mode.MIXED);
             }
 
@@ -302,7 +302,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             }
             if (methodState.currentTargetMethod(compilationDirective) != null) {
                 compilation = new Compilation(this, methodState, compilationDirective);
-                compilation._done = true;
+                compilation.done = true;
                 return compilation;
             }
             compilation = new Compilation(this, methodState, compilationDirective);
@@ -319,10 +319,10 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * @param compiler the compiler performing the compilation
      */
     public synchronized void addObserver(CompilationObserver observer) {
-        if (_observers == null) {
-            _observers = new LinkedList<CompilationObserver>();
+        if (observers == null) {
+            observers = new LinkedList<CompilationObserver>();
         }
-        _observers.add(observer);
+        observers.add(observer);
     }
 
     /**
@@ -334,26 +334,26 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * was aborted or failed to produce a target method
      */
     public synchronized void removeObserver(CompilationObserver observer) {
-        if (_observers != null) {
-            _observers.remove(observer);
-            if (_observers.size() == 0) {
-                _observers = null;
+        if (observers != null) {
+            observers.remove(observer);
+            if (observers.size() == 0) {
+                observers = null;
             }
         }
     }
 
     synchronized void observeBeforeCompilation(Compilation compilation, DynamicCompilerScheme compiler) {
-        if (_observers != null) {
-            for (CompilationObserver observer : _observers) {
-                observer.observeBeforeCompilation(compilation._methodState.classMethodActor(), compilation._compilationDirective, compiler);
+        if (observers != null) {
+            for (CompilationObserver observer : observers) {
+                observer.observeBeforeCompilation(compilation.methodState.classMethodActor(), compilation.compilationDirective, compiler);
             }
         }
     }
 
     synchronized void observeAfterCompilation(Compilation compilation, DynamicCompilerScheme compiler, TargetMethod targetMethod) {
-        if (_observers != null) {
-            for (CompilationObserver observer : _observers) {
-                observer.observeAfterCompilation(compilation._methodState.classMethodActor(), compilation._compilationDirective, compiler, targetMethod);
+        if (observers != null) {
+            for (CompilationObserver observer : observers) {
+                observer.observeAfterCompilation(compilation.methodState.classMethodActor(), compilation.compilationDirective, compiler, targetMethod);
             }
         }
     }
@@ -368,16 +368,16 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      */
     @INLINE
     private Compilation perform(Compilation compilation, boolean synchronous) {
-        synchronized (_pending) {
+        synchronized (pending) {
             // a compilation is required.
-            _submitted++;
+            submitted++;
             if (!synchronous) {
-                _pending.offer(compilation);
-                _pending.notify();
+                pending.offer(compilation);
+                pending.notify();
             }
         }
         if (synchronous) {
-            compilation.compile(compilation._compilationDirective);
+            compilation.compile(compilation.compilationDirective);
         }
         return compilation;
     }
@@ -388,9 +388,9 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * @return {@code true} if there is currently a compilation pending or being performed; {@code false} otherwise
      */
     public boolean isCompiling() {
-        synchronized (_pending) {
-            synchronized (_completionLock) {
-                return _submitted > _completed;
+        synchronized (pending) {
+            synchronized (completionLock) {
+                return submitted > completed;
             }
         }
     }
@@ -405,13 +405,13 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         final ClassMethodActor classMethodActor = methodState.classMethodActor();
         if (classMethodActor.isUnsafe()) {
             // for unsafe methods there is no other choice no matter what, since the JIT cannot handle unsafe features
-            return _optimizingCompiler;
+            return optimizingCompiler;
         }
         if (MaxineVM.isPrototyping()) {
             // if we are prototyping, then always use the prototype compiler
             // unless forced to use the JIT (e.g. for testing purposes)
             if (CompiledPrototype.jitCompile(classMethodActor)) {
-                return _jitCompiler;
+                return jitCompiler;
             }
             return _prototypeCompiler;
         }
@@ -423,15 +423,15 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             if (classMethodActor.isSynthetic() && !classMethodActor.isNative()) {
                 // we must at first use the JIT for reflective invocation stubs, otherwise meta-evaluation may not
                 // terminate
-                return _jitCompiler;
+                return jitCompiler;
             }
-            if (_mode == Mode.OPTIMIZED) {
-                return _optimizingCompiler;
+            if (mode == Mode.OPTIMIZED) {
+                return optimizingCompiler;
             }
-        } else if (_mode != Mode.JIT) {
-            return _optimizingCompiler;
+        } else if (mode != Mode.JIT) {
+            return optimizingCompiler;
         }
-        return _jitCompiler;
+        return jitCompiler;
     }
 
     /**
@@ -460,7 +460,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      *            later
      */
     public void reoptimize(ClassMethodActor classMethodActor, boolean synchronous, CompilationDirective compilationDirective) {
-        if (_gcOnRecompileOption.getValue()) {
+        if (gcOnRecompileOption.getValue()) {
             System.gc();
         }
         final AdaptiveMethodState methodState = makeMethodState(classMethodActor);
@@ -478,13 +478,13 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 }
                 return;
             }
-            if (targetMethod != null && targetMethod.compilerScheme() == _optimizingCompiler) {
+            if (targetMethod != null && targetMethod.compilerScheme() == optimizingCompiler) {
                 // method is already optimized.
                 return;
             }
             // start a new compilation with the optimizing compiler
             compilation = new Compilation(this, methodState, compilationDirective);
-            compilation._compiler = _optimizingCompiler;
+            compilation.compiler = optimizingCompiler;
             methodState.setCurrentCompilation(compilation, compilationDirective);
         }
         perform(compilation, synchronous);
@@ -506,7 +506,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         /**
          * The current compilation being performed by this thread.
          */
-        Compilation _compilation;
+        Compilation compilation;
 
         /**
          * Continuously polls the compilation queue for work, performing compilations as they are removed from the
@@ -520,7 +520,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 } catch (InterruptedException e) {
                     // do nothing.
                 } catch (Throwable t) {
-                    Log.print("Exception during compilation of " + _compilation._methodState.classMethodActor() + " " + t.getClass());
+                    Log.print("Exception during compilation of " + compilation.methodState.classMethodActor() + " " + t.getClass());
                     t.printStackTrace();
                 }
             }
@@ -532,17 +532,17 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
          * @throws InterruptedException if the thread was interrupted waiting on the queue
          */
         void compileOne() throws InterruptedException {
-            _compilation = null;
-            synchronized (_pending) {
-                while (_compilation == null) {
-                    _compilation = _pending.poll();
-                    if (_compilation == null) {
-                        _pending.wait();
+            compilation = null;
+            synchronized (pending) {
+                while (compilation == null) {
+                    compilation = pending.poll();
+                    if (compilation == null) {
+                        pending.wait();
                     }
                 }
             }
-            _compilation.compile(_compilation._compilationDirective);
-            _compilation = null;
+            compilation.compile(compilation.compilationDirective);
+            compilation = null;
         }
     }
 }

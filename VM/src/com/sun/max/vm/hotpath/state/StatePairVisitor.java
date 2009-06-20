@@ -21,9 +21,9 @@
 package com.sun.max.vm.hotpath.state;
 
 public class StatePairVisitor<First_Element_Type, Second_Element_Type> {
-    protected int _index;
+    protected int index;
     public void setIndex(int index) {
-        _index = index;
+        this.index = index;
     }
     public void visit(First_Element_Type first, Second_Element_Type second) {
 

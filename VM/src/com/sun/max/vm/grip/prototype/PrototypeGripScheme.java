@@ -42,21 +42,21 @@ import com.sun.max.vm.value.*;
  */
 public final class PrototypeGripScheme extends AbstractVMScheme implements GripScheme {
 
-    private final DataModel _dataModel;
-    private final WordWidth _gripWidth;
+    private final DataModel dataModel;
+    private final WordWidth gripWidth;
 
     public PrototypeGripScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        _dataModel = vmConfiguration.platform().processorKind().dataModel();
-        _gripWidth = _dataModel.wordWidth();
+        dataModel = vmConfiguration.platform().processorKind().dataModel();
+        gripWidth = dataModel.wordWidth();
     }
 
     public DataModel dataModel() {
-        return _dataModel;
+        return dataModel;
     }
 
     public WordWidth gripWidth() {
-        return _dataModel.wordWidth();
+        return dataModel.wordWidth();
     }
 
     public boolean isConstant() {

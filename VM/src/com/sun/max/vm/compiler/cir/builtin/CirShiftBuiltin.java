@@ -30,11 +30,11 @@ import com.sun.max.vm.compiler.cir.optimize.*;
  */
 public abstract class CirShiftBuiltin extends CirStrengthReducible {
 
-    private final int _width;
+    private final int width;
 
     protected CirShiftBuiltin(Builtin builtin, int width) {
         super(builtin);
-        _width = width;
+        this.width = width;
     }
 
     @Override
@@ -47,7 +47,7 @@ public abstract class CirShiftBuiltin extends CirStrengthReducible {
         }
         if (arguments[1].isScalarConstant()) {
             final int shift = arguments[1].value().toInt();
-            return (shift % _width) == 0;
+            return (shift % width) == 0;
         }
         return false;
     }

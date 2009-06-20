@@ -34,7 +34,7 @@ abstract class SynchronizedMethodTransformer extends BytecodeTransformer {
      * This field is only constructed if needed. That is, if the bytecode being transformed does not contain any return
      * instructions (e.g. method that sits in an infinite loop), it will never be constructed.
      */
-    protected Label _returnBlockLabel;
+    protected Label returnBlockLabel;
 
     SynchronizedMethodTransformer(BytecodeAssembler assembler) {
         super(assembler);
@@ -45,10 +45,10 @@ abstract class SynchronizedMethodTransformer extends BytecodeTransformer {
     abstract void releaseMonitorAndRethrow();
 
     private void convertReturnToGoto() {
-        if (_returnBlockLabel == null) {
-            _returnBlockLabel = asm().newLabel();
+        if (returnBlockLabel == null) {
+            returnBlockLabel = asm().newLabel();
         }
-        asm().goto_(_returnBlockLabel);
+        asm().goto_(returnBlockLabel);
         ignoreCurrentInstruction();
     }
 

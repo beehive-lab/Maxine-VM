@@ -44,29 +44,29 @@ public class TirToDirTranslator extends TirPipelineFilter  {
             CLEAN, DIRTY
         }
 
-        private int _serial = 0;
-        private VariableSequence<DirVariable> [] _dirtyStacks = UnsafeLoophole.cast(Arrays.newInstance(VariableSequence.class, KindEnum.VALUES.length()));
+        private int serial = 0;
+        private VariableSequence<DirVariable> [] dirtyStacks = UnsafeLoophole.cast(Arrays.newInstance(VariableSequence.class, KindEnum.VALUES.length()));
         private VariableSequence<DirVariable> dirtyStack(Kind kind) {
-            return _dirtyStacks[kind.asEnum().ordinal()];
+            return dirtyStacks[kind.asEnum().ordinal()];
         }
 
-        private VariableMapping<TirInstruction, DirVariable> _bindings = new IdentityHashMapping<TirInstruction, DirVariable>();
+        private VariableMapping<TirInstruction, DirVariable> bindings = new IdentityHashMapping<TirInstruction, DirVariable>();
 
         public VariableAllocator() {
             for (Kind kind : new Kind[] {Kind.INT, Kind.FLOAT, Kind.LONG, Kind.DOUBLE, Kind.REFERENCE, Kind.VOID}) {
-                _dirtyStacks[kind.asEnum().ordinal()] = new ArrayListSequence<DirVariable>();
+                dirtyStacks[kind.asEnum().ordinal()] = new ArrayListSequence<DirVariable>();
             }
         }
 
         public DirVariable allocate(Kind kind, VariableType type) {
             if (type == VariableType.CLEAN || dirtyStack(kind).isEmpty()) {
-                return new DirVariable(kind, _serial++);
+                return new DirVariable(kind, serial++);
             }
             return dirtyStack(kind).removeLast();
         }
 
         public void bind(TirInstruction instruction, DirVariable variable) {
-            _bindings.put(instruction, variable);
+            bindings.put(instruction, variable);
         }
 
         public DirVariable allocate(TirInstruction instruction, VariableType type) {
@@ -79,7 +79,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
         }
 
         public DirVariable variable(TirInstruction instruction) {
-            return _bindings.get(instruction);
+            return bindings.get(instruction);
         }
 
         public boolean isLive(TirInstruction instruction) {
@@ -87,20 +87,20 @@ public class TirToDirTranslator extends TirPipelineFilter  {
         }
 
         public void free(TirInstruction instruction) {
-            final DirVariable variable = _bindings.remove(instruction);
+            final DirVariable variable = bindings.remove(instruction);
             ProgramError.check(variable != null);
             dirtyStack(variable.kind()).append(variable);
         }
     }
 
-    private static final ClassMethodActor _bailoutMethod = HotpathSnippet.CallBailout.SNIPPET.classMethodActor();
-    private static final ClassMethodActor _saveRegistersMethod = HotpathSnippet.SaveRegisters.SNIPPET.classMethodActor();
+    private static final ClassMethodActor bailoutMethod = HotpathSnippet.CallBailout.SNIPPET.classMethodActor();
+    private static final ClassMethodActor saveRegistersMethod = HotpathSnippet.SaveRegisters.SNIPPET.classMethodActor();
 
-    private DirTree _dirTree;
-    private DirVariable[] _parameters;
-    private VariableSequence<DirBlock> _blocks = new ArrayListSequence<DirBlock>();
-    private GrowableDeterministicSet<DirGoto> _loopPatchList = new LinkedIdentityHashSet<DirGoto>();
-    private VariableAllocator _allocator = new VariableAllocator();
+    private DirTree dirTree;
+    private DirVariable[] parameters;
+    private VariableSequence<DirBlock> blocks = new ArrayListSequence<DirBlock>();
+    private GrowableDeterministicSet<DirGoto> loopPatchList = new LinkedIdentityHashSet<DirGoto>();
+    private VariableAllocator allocator = new VariableAllocator();
 
     /*
      * === LOCAL =================
@@ -120,8 +120,8 @@ public class TirToDirTranslator extends TirPipelineFilter  {
 
     private DirBlock _localBlock = new DirBlock(Role.NORMAL);
     private DirBlock _prologueBlock = new DirBlock(Role.NORMAL);
-    private DirBlock _bailoutBlock = new DirBlock(Role.NORMAL);
-    private DirVariable _bailoutGuard = _allocator.allocate(Kind.REFERENCE, VariableType.CLEAN);
+    private DirBlock bailoutBlock = new DirBlock(Role.NORMAL);
+    private DirVariable bailoutGuard = allocator.allocate(Kind.REFERENCE, VariableType.CLEAN);
 
     private int _serial;
 
@@ -130,12 +130,12 @@ public class TirToDirTranslator extends TirPipelineFilter  {
     }
 
     public DirTree method() {
-        ProgramError.check(_dirTree.isGenerated());
-        return _dirTree;
+        ProgramError.check(dirTree.isGenerated());
+        return dirTree;
     }
 
     private DirBlock current() {
-        return _blocks.first();
+        return blocks.first();
     }
 
     private void emitBlockIfNotEmpty(DirBlock block) {
@@ -145,11 +145,11 @@ public class TirToDirTranslator extends TirPipelineFilter  {
     }
 
     private void emitBlock(DirBlock block) {
-        block.setSerial(_blocks.length());
-        if (_blocks.isEmpty() == false) {
+        block.setSerial(blocks.length());
+        if (blocks.isEmpty() == false) {
             link(block, current());
         }
-        _blocks.prepend(block);
+        blocks.prepend(block);
     }
 
     private void link(DirBlock a, DirBlock b) {
@@ -174,7 +174,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
         } else if (instruction instanceof Placeholder) {
             return DirValue.UNDEFINED;
         }
-        return _allocator.allocate(instruction, variableType(instruction));
+        return allocator.allocate(instruction, variableType(instruction));
     }
 
     private DirValue[] useMany(TirInstruction... instruction) {
@@ -195,7 +195,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
     private void emitCall(ClassMethodActor method, TirState state, DirValue... arguments) {
         final DirVariable result;
         if (method.resultKind() != Kind.VOID) {
-            result = _allocator.allocate(method.resultKind(), VariableType.DIRTY);
+            result = allocator.allocate(method.resultKind(), VariableType.DIRTY);
         } else {
             result = null;
         }
@@ -219,34 +219,34 @@ public class TirToDirTranslator extends TirPipelineFilter  {
 
     @Override
     public void beginTree() {
-        _dirTree = new DirTree(tree(), tree().anchor().method());
-        _parameters = new DirVariable[tree().entryState().length()];
+        dirTree = new DirTree(tree(), tree().anchor().method());
+        parameters = new DirVariable[tree().entryState().length()];
         tree().entryState().visit(new StateVisitor<TirInstruction>() {
             @Override
             public void visit(TirInstruction entry) {
                 final TirLocal local = (TirLocal) entry;
                 if (local.flags().isRead()) {
-                    _parameters[_index] = (DirVariable) use(entry);
+                    parameters[index] = (DirVariable) use(entry);
                 } else {
-                    _parameters[_index] = _allocator.allocate(Kind.VOID, VariableType.DIRTY);
+                    parameters[index] = allocator.allocate(Kind.VOID, VariableType.DIRTY);
                 }
                 if (local.kind().isCategory2()) {
-                    _parameters[_index + 1] = _allocator.allocate(Kind.VOID, VariableType.DIRTY);
+                    parameters[index + 1] = allocator.allocate(Kind.VOID, VariableType.DIRTY);
                 }
             }
         });
 
-        emitBlock(_bailoutBlock);
-        emitInstruction(new DirReturn(_bailoutGuard));
-        emitCall(_bailoutMethod, null, _bailoutGuard);
-        emitCall(_saveRegistersMethod, null);
+        emitBlock(bailoutBlock);
+        emitInstruction(new DirReturn(bailoutGuard));
+        emitCall(bailoutMethod, null, bailoutGuard);
+        emitCall(saveRegistersMethod, null);
     }
 
     @Override
     public void beginTrace() {
         emitBlock(new DirBlock(Role.NORMAL));
         final DirGoto dirGoto = new DirGoto(null);
-        _loopPatchList.add(dirGoto);
+        loopPatchList.add(dirGoto);
         emitInstruction(dirGoto);
         emitLoopbacks(tree().entryState(), trace().tailState());
     }
@@ -256,12 +256,12 @@ public class TirToDirTranslator extends TirPipelineFilter  {
         patchLoops();
         emitBlockIfNotEmpty(_prologueBlock);
         emitBlockIfNotEmpty(_localBlock);
-        _dirTree.setGenerated(_parameters, new ArrayListSequence<DirBlock>(_blocks));
+        dirTree.setGenerated(parameters, new ArrayListSequence<DirBlock>(blocks));
     }
 
     @Override
     public void visit(TirBuiltinCall call) {
-        final DirVariable result = _allocator.variable(call);
+        final DirVariable result = allocator.variable(call);
         final DirBuiltinCall dirCall = new DirBuiltinCall(result, call.builtin(), useMany(call.operands()), null, null);
         emitInstruction(dirCall);
     }
@@ -278,7 +278,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
                                                   guard.valueComparator().complement(),
                                                   use(guard.operand0()),
                                                   Arrays.fromElements(use(guard.operand1())),
-                                                  Arrays.fromElements(_bailoutBlock), current());
+                                                  Arrays.fromElements(bailoutBlock), current());
         emitBlock(new DirBlock(Role.NORMAL));
         emitInstruction(dirSwitch);
 
@@ -287,7 +287,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
         emitInstruction(dirGuardpoint);
 
         // Assign guard constant to the bail-out guard variable.
-        final DirAssign dirAssignment = new DirAssign(_bailoutGuard, createConstant(guard));
+        final DirAssign dirAssignment = new DirAssign(bailoutGuard, createConstant(guard));
         emitInstruction(dirAssignment);
     }
 
@@ -301,7 +301,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
     }
 
     private void patchLoops() {
-        for (DirGoto dirGoto : _loopPatchList) {
+        for (DirGoto dirGoto : loopPatchList) {
             dirGoto.setTargetBlock(current());
         }
     }

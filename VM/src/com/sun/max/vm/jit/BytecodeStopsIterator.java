@@ -36,18 +36,18 @@ import com.sun.max.vm.compiler.target.*;
 public class BytecodeStopsIterator implements BytecodePositionIterator {
 
     /**
-     * Tag for elements in {@link #_map} denoting opcode positions.
+     * Tag for elements in {@link #map} denoting opcode positions.
      */
     public static final int BCP_BIT = 0x80000000;
 
     /**
-     * Tag for elements in {@link #_map} denoting a stop associated with a direct runtime call.
+     * Tag for elements in {@link #map} denoting a stop associated with a direct runtime call.
      */
     public static final int DIRECT_RUNTIME_CALL_BIT = 0x40000000;
 
-    private final int[] _map;
-    private int _cursor = 1;
-    private int _bytecodePositionCursor;
+    private final int[] map;
+    private int cursor = 1;
+    private int bytecodePositionCursor;
 
     /**
      * Creates an iterator over a mapping from bytecode positions to {@linkplain StopType stops}.
@@ -60,7 +60,7 @@ public class BytecodeStopsIterator implements BytecodePositionIterator {
      */
     public BytecodeStopsIterator(int[] map) {
         assert assertIsValidMap(map);
-        _map = map;
+        this.map = map;
     }
 
     /**
@@ -69,8 +69,8 @@ public class BytecodeStopsIterator implements BytecodePositionIterator {
      * @see #next()
      */
     public void reset() {
-        _cursor = 1;
-        _bytecodePositionCursor = 0;
+        cursor = 1;
+        bytecodePositionCursor = 0;
     }
 
     /**
@@ -80,11 +80,11 @@ public class BytecodeStopsIterator implements BytecodePositionIterator {
      * @see #next()
      */
     public int bytecodePosition() {
-        if (_bytecodePositionCursor < _map.length) {
-            assert (_map[_bytecodePositionCursor] & BCP_BIT) != 0;
-            return _map[_bytecodePositionCursor] & ~BCP_BIT;
+        if (bytecodePositionCursor < map.length) {
+            assert (map[bytecodePositionCursor] & BCP_BIT) != 0;
+            return map[bytecodePositionCursor] & ~BCP_BIT;
         }
-        assert _bytecodePositionCursor == _map.length;
+        assert bytecodePositionCursor == map.length;
         return -1;
     }
 
@@ -109,14 +109,14 @@ public class BytecodeStopsIterator implements BytecodePositionIterator {
      *         already at the end of the map
      */
     public int next() {
-        while (_cursor < _map.length) {
-            final int value = _map[_cursor++];
+        while (cursor < map.length) {
+            final int value = map[cursor++];
             if ((value & BCP_BIT) != 0) {
-                _bytecodePositionCursor = _cursor - 1;
+                bytecodePositionCursor = cursor - 1;
                 return value & ~BCP_BIT;
             }
         }
-        _bytecodePositionCursor = _cursor;
+        bytecodePositionCursor = cursor;
         return -1;
     }
 
@@ -139,13 +139,13 @@ public class BytecodeStopsIterator implements BytecodePositionIterator {
      */
     public int nextStopIndex(boolean reset) {
         if (reset) {
-            _cursor = _bytecodePositionCursor + 1;
+            cursor = bytecodePositionCursor + 1;
         }
-        if (_cursor < _map.length) {
-            assert _bytecodePositionCursor < _cursor;
-            final int value = _map[_cursor];
+        if (cursor < map.length) {
+            assert bytecodePositionCursor < cursor;
+            final int value = map[cursor];
             if ((value & BCP_BIT) == 0) {
-                _cursor++;
+                cursor++;
                 return value & ~DIRECT_RUNTIME_CALL_BIT;
             }
         }
@@ -157,8 +157,8 @@ public class BytecodeStopsIterator implements BytecodePositionIterator {
      * call to the runtime.
      */
     public boolean isDirectRuntimeCall() {
-        if (_cursor > 0 && _cursor < _map.length) {
-            final int value = _map[_cursor - 1];
+        if (cursor > 0 && cursor < map.length) {
+            final int value = map[cursor - 1];
             if ((value & BCP_BIT) == 0) {
                 return (value & DIRECT_RUNTIME_CALL_BIT) != 0;
             }
@@ -168,7 +168,7 @@ public class BytecodeStopsIterator implements BytecodePositionIterator {
 
     @Override
     public String toString() {
-        final BytecodeStopsIterator copy = new BytecodeStopsIterator(_map);
+        final BytecodeStopsIterator copy = new BytecodeStopsIterator(map);
         final StringBuilder sb = new StringBuilder();
         for (int bytecodePosition = copy.bytecodePosition(); bytecodePosition != -1; bytecodePosition = copy.next()) {
             if (sb.length() != 0) {

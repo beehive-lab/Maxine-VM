@@ -32,7 +32,7 @@ import com.sun.max.unsafe.*;
  */
 public final class BoxedAddress extends Address implements UnsafeBox {
 
-    private long _nativeWord;
+    private long nativeWord;
 
     public static final BoxedAddress ZERO = new BoxedAddress(0);
     public static final BoxedAddress MAX = new BoxedAddress(-1L);
@@ -43,11 +43,11 @@ public final class BoxedAddress extends Address implements UnsafeBox {
 
         static final int HIGHEST_VALUE = 1000;
 
-        static final BoxedAddress[] _cache = new BoxedAddress[HIGHEST_VALUE + 1];
+        static final BoxedAddress[] cache = new BoxedAddress[HIGHEST_VALUE + 1];
 
         static {
-            for (int i = 0; i < _cache.length; i++) {
-                _cache[i] = new BoxedAddress(i);
+            for (int i = 0; i < cache.length; i++) {
+                cache[i] = new BoxedAddress(i);
             }
         }
     }
@@ -57,7 +57,7 @@ public final class BoxedAddress extends Address implements UnsafeBox {
             return ZERO;
         }
         if (value >= 0 && value <= Cache.HIGHEST_VALUE) {
-            return Cache._cache[(int) value];
+            return Cache.cache[(int) value];
         }
         if (value == -1L) {
             return MAX;
@@ -71,14 +71,14 @@ public final class BoxedAddress extends Address implements UnsafeBox {
 
     private BoxedAddress(long value) {
         if (Word.width() == WordWidth.BITS_64) {
-            _nativeWord = value;
+            nativeWord = value;
         } else {
-            _nativeWord = value & BoxedWord.INT_MASK;
+            nativeWord = value & BoxedWord.INT_MASK;
         }
     }
 
     public long nativeWord() {
-        return _nativeWord;
+        return nativeWord;
     }
 
     private static native long nativeDivide(long dividend, long divisor);
@@ -86,10 +86,10 @@ public final class BoxedAddress extends Address implements UnsafeBox {
     @Override
     public Address dividedByAddress(Address divisor) {
         final BoxedAddress box = (BoxedAddress) divisor.asAddress();
-        if (box._nativeWord == 0L) {
+        if (box.nativeWord == 0L) {
             throw new ArithmeticException();
         }
-        return new BoxedAddress(nativeDivide(_nativeWord, box._nativeWord));
+        return new BoxedAddress(nativeDivide(nativeWord, box.nativeWord));
     }
 
     @Override
@@ -97,7 +97,7 @@ public final class BoxedAddress extends Address implements UnsafeBox {
         if (divisor == 0) {
             throw new ArithmeticException();
         }
-        return new BoxedAddress(nativeDivide(_nativeWord, divisor & BoxedWord.INT_MASK));
+        return new BoxedAddress(nativeDivide(nativeWord, divisor & BoxedWord.INT_MASK));
     }
 
     private static native long nativeRemainder(long dividend, long divisor);
@@ -105,10 +105,10 @@ public final class BoxedAddress extends Address implements UnsafeBox {
     @Override
     public Address remainderByAddress(Address divisor) {
         final BoxedAddress box = (BoxedAddress) divisor.asAddress();
-        if (box._nativeWord == 0L) {
+        if (box.nativeWord == 0L) {
             throw new ArithmeticException();
         }
-        return new BoxedAddress(nativeRemainder(_nativeWord, box._nativeWord));
+        return new BoxedAddress(nativeRemainder(nativeWord, box.nativeWord));
     }
 
     @Override
@@ -116,6 +116,6 @@ public final class BoxedAddress extends Address implements UnsafeBox {
         if (divisor == 0) {
             throw new ArithmeticException();
         }
-        return (int) nativeRemainder(_nativeWord, divisor & BoxedWord.INT_MASK);
+        return (int) nativeRemainder(nativeWord, divisor & BoxedWord.INT_MASK);
     }
 }

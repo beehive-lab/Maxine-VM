@@ -35,12 +35,12 @@ public class LocationCounter extends Counter {
     /**
      * The starting location in the original code (e.g. bytecode) that this counter corresponds to.
      */
-    protected final int _start;
+    protected final int start;
 
     /**
      * The ending location in the original code that this counter corresponds to.
      */
-    protected final int _end;
+    protected final int end;
 
     /**
      * Constructs a new location counter corresponding to the specified source range.
@@ -48,8 +48,8 @@ public class LocationCounter extends Counter {
      * @param end the ending location in the original code
      */
     public LocationCounter(int start, int end) {
-        _start = start;
-        _end = end;
+        this.start = start;
+        this.end = end;
     }
 
     public LocationCounter(int pos) {

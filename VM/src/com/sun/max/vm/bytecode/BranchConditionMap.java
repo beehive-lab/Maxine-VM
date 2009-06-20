@@ -40,10 +40,10 @@ public class BranchConditionMap<Value_Type> implements Cloneable {
      * The values for the {@link BranchCondition} keys. The value corresponding to a given key is at index {@code i} in
      * this array where {@code i} is the ordinal of the key.
      */
-    protected final Value_Type[] _values;
+    protected final Value_Type[] values;
 
     public BranchConditionMap() {
-        _values = StaticLoophole.cast(VALUES_PROTOTYPE.clone());
+        values = StaticLoophole.cast(VALUES_PROTOTYPE.clone());
     }
 
     /**
@@ -51,7 +51,7 @@ public class BranchConditionMap<Value_Type> implements Cloneable {
      * or {@code null} if this map contains no mapping for the key.
      */
     public Value_Type get(BranchCondition branchCondition) {
-        return _values[branchCondition.ordinal()];
+        return values[branchCondition.ordinal()];
     }
 
     /**
@@ -64,6 +64,6 @@ public class BranchConditionMap<Value_Type> implements Cloneable {
      * @throws NullPointerException if {@code branchCondition} is null
      */
     public void put(BranchCondition branchCondition, Value_Type value) {
-        _values[branchCondition.ordinal()] = value;
+        values[branchCondition.ordinal()] = value;
     }
 }

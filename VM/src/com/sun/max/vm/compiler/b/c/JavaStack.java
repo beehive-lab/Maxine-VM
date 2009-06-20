@@ -34,33 +34,33 @@ final class JavaStack extends JavaSlots {
         super(variableFactory);
     }
 
-    private int _stackPointer = 0;
+    private int stackPointer = 0;
 
     public CirVariable push(Kind kind) {
-        final CirVariable variable = _variableFactory.makeVariable(kind, _stackPointer);
+        final CirVariable variable = variableFactory.makeVariable(kind, stackPointer);
         final VariableJavaStackSlot slot = new VariableJavaStackSlot(variable);
-        _slots[_stackPointer] = slot;
-        _stackPointer++;
+        slots[stackPointer] = slot;
+        stackPointer++;
         if (kind == Kind.LONG || kind == Kind.DOUBLE) {
-            _slots[_stackPointer] = new FillerJavaStackSlot();
-            _stackPointer++;
+            slots[stackPointer] = new FillerJavaStackSlot();
+            stackPointer++;
         }
         return variable;
     }
 
     CirVariable get(Kind kind, int nSlotsDown) {
-        final int slotIndex = _stackPointer - nSlotsDown;
-        final JavaStackSlot slot = _slots[slotIndex];
+        final int slotIndex = stackPointer - nSlotsDown;
+        final JavaStackSlot slot = slots[slotIndex];
         assert slot instanceof VariableJavaStackSlot;
         final CirVariable variable = ((VariableJavaStackSlot) slot).cirVariable();
-        assert variable == _variableFactory.makeVariable(kind, slotIndex);
+        assert variable == variableFactory.makeVariable(kind, slotIndex);
         return variable;
     }
 
     public CirVariable getTop() {
-        final JavaStackSlot top = _slots[_stackPointer - 1];
+        final JavaStackSlot top = slots[stackPointer - 1];
         if (top instanceof FillerJavaStackSlot) {
-            final JavaStackSlot slot = _slots[_stackPointer - 2];
+            final JavaStackSlot slot = slots[stackPointer - 2];
             assert slot instanceof VariableJavaStackSlot;
             return ((VariableJavaStackSlot) slot).cirVariable();
         }
@@ -69,11 +69,11 @@ final class JavaStack extends JavaSlots {
     }
 
     public CirVariable pop() {
-        --_stackPointer;
-        final JavaStackSlot slot = _slots[_stackPointer];
+        --stackPointer;
+        final JavaStackSlot slot = slots[stackPointer];
         if (slot instanceof FillerJavaStackSlot) {
-            --_stackPointer;
-            final JavaStackSlot slot2 = _slots[_stackPointer];
+            --stackPointer;
+            final JavaStackSlot slot2 = slots[stackPointer];
             assert slot2 instanceof VariableJavaStackSlot;
             return ((VariableJavaStackSlot) slot2).cirVariable();
         }
@@ -88,8 +88,8 @@ final class JavaStack extends JavaSlots {
 
     @Override
     protected int effectiveLength() {
-        int result = _stackPointer;
-        while (result > 0 && _slots[_stackPointer - 1] instanceof FillerJavaStackSlot) {
+        int result = stackPointer;
+        while (result > 0 && slots[stackPointer - 1] instanceof FillerJavaStackSlot) {
             result--;
         }
         return result;

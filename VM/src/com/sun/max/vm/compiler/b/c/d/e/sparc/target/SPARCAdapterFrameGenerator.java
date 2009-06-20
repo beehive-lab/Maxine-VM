@@ -60,29 +60,29 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
 
     public static final GPR SAVED_CALLER_ADDRESS = GPR.L5;
 
-    protected final GPR _intScratchRegister;
+    protected final GPR intScratchRegister;
     protected final GPR _longScratchRegister;
-    protected final GPR _optimizedCodeStackPointer;
-    protected final GPR _optimizedCodeFramePointer;
-    protected final GPR _jitedCodeFramePointer;
-    protected final GPR _literalBaseRegister;
-    protected int _jitedCodeFrameSize = 0;
-    protected final GPR _jitScratchRegister;
+    protected final GPR optimizedCodeStackPointer;
+    protected final GPR optimizedCodeFramePointer;
+    protected final GPR jitedCodeFramePointer;
+    protected final GPR literalBaseRegister;
+    protected int jitedCodeFrameSize = 0;
+    protected final GPR jitScratchRegister;
 
     public void setJitedCodeFrameSize(int size) {
-        _jitedCodeFrameSize = size;
+        jitedCodeFrameSize = size;
     }
 
     protected SPARCAdapterFrameGenerator(MethodActor classMethodActor, EirABI optimizedAbi) {
         super(classMethodActor, optimizedAbi);
-        _intScratchRegister = ((SPARCEirRegister.GeneralPurpose) optimizedAbi.getScratchRegister(Kind.INT)).as();
+        intScratchRegister = ((SPARCEirRegister.GeneralPurpose) optimizedAbi.getScratchRegister(Kind.INT)).as();
         _longScratchRegister = ((SPARCEirRegister.GeneralPurpose) optimizedAbi.getScratchRegister(Kind.LONG)).as();
-        _optimizedCodeStackPointer = ((SPARCEirRegister.GeneralPurpose) optimizedAbi.stackPointer()).as();
-        _optimizedCodeFramePointer = ((SPARCEirRegister.GeneralPurpose) optimizedAbi.framePointer()).as();
+        optimizedCodeStackPointer = ((SPARCEirRegister.GeneralPurpose) optimizedAbi.stackPointer()).as();
+        optimizedCodeFramePointer = ((SPARCEirRegister.GeneralPurpose) optimizedAbi.framePointer()).as();
         final TargetABI jitABI = VMConfiguration.target().targetABIsScheme().jitABI();
-        _jitedCodeFramePointer = (GPR) jitABI.framePointer();
-        _jitScratchRegister = (GPR) jitABI.scratchRegister();
-        _literalBaseRegister = (GPR) jitABI.literalBaseRegister();
+        jitedCodeFramePointer = (GPR) jitABI.framePointer();
+        jitScratchRegister = (GPR) jitABI.scratchRegister();
+        literalBaseRegister = (GPR) jitABI.literalBaseRegister();
     }
 
     public static SPARCAdapterFrameGenerator  jitToOptimizedCompilerAdapterFrameGenerator(MethodActor classMethodActor, EirABI optimizingCompilerAbi) {
@@ -220,10 +220,10 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
 
             if (jitToOptimizedCallNeedsAdapterFrame(classMethodActor())) {
                 // Branch to frame adapter code, and save the caller's address in local register in the delay slot.
-                assembler.ba(AnnulBit.NO_A, BranchPredictionBit.PT, ICCOperand.ICC, _adapterStart);
+                assembler.ba(AnnulBit.NO_A, BranchPredictionBit.PT, ICCOperand.ICC, adapterStart);
                 assembler.mov(GPR.O7, SAVED_CALLER_ADDRESS);
             } else {
-                assembler.stx(_literalBaseRegister, _jitedCodeFramePointer, -STACK_SLOT_SIZE);
+                assembler.stx(literalBaseRegister, jitedCodeFramePointer, -STACK_SLOT_SIZE);
                 assembler.nop();
             }
             assembler.bindLabel(_methodEntryPoint);
@@ -252,7 +252,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
 
             if (adapterFrameSize > 0) {
                 assert SPARCAssembler.isSimm13(adapterFrameSize);
-                assembler().sub(_optimizedCodeStackPointer, adapterFrameSize, _optimizedCodeStackPointer);
+                assembler().sub(optimizedCodeStackPointer, adapterFrameSize, optimizedCodeStackPointer);
             }
 
             // On entry to the adapter, the top of the stack points to the last arguments of the JITed caller.
@@ -282,18 +282,18 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             // Return to the JITed caller. The frame adapter saved the call address in local register SAVED_CALLER_ADDRESS.
             assembler().bindLabel(adapterReturnPoint);
             assembler().jmpl(SAVED_CALLER_ADDRESS, 8, GPR.G0);
-            assembler().add(_optimizedCodeStackPointer, stackAmountInBytes, _optimizedCodeStackPointer);
+            assembler().add(optimizedCodeStackPointer, stackAmountInBytes, optimizedCodeStackPointer);
         }
 
         @Override
         void adapt(Kind kind, int optoCompilerStackOffset32, int jitStackOffset32) {
             final int biasedOptToStackOffset32 = optoCompilerStackOffset32 + SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
             if (kind.isCategory2() || kind == Kind.WORD || kind == Kind.REFERENCE) {
-                assembler().ldx(_optimizedCodeFramePointer, jitStackOffset32, _longScratchRegister);
-                assembler().stx(_longScratchRegister, _optimizedCodeStackPointer, biasedOptToStackOffset32);
+                assembler().ldx(optimizedCodeFramePointer, jitStackOffset32, _longScratchRegister);
+                assembler().stx(_longScratchRegister, optimizedCodeStackPointer, biasedOptToStackOffset32);
             } else {
-                assembler().lduw(_optimizedCodeFramePointer, jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind), _intScratchRegister);
-                assembler().stw(_intScratchRegister, _optimizedCodeStackPointer, biasedOptToStackOffset32);
+                assembler().lduw(optimizedCodeFramePointer, jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind), intScratchRegister);
+                assembler().stw(intScratchRegister, optimizedCodeStackPointer, biasedOptToStackOffset32);
             }
         }
 
@@ -303,19 +303,19 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             switch (kind.asEnum()) {
                 case BYTE:
                 case BOOLEAN:
-                    assembler().ldsb(_optimizedCodeStackPointer, offset, parameterRegister.as());
+                    assembler().ldsb(optimizedCodeStackPointer, offset, parameterRegister.as());
                     break;
                 case SHORT:
                 case CHAR:
-                    assembler().ldsh(_optimizedCodeStackPointer, offset, parameterRegister.as());
+                    assembler().ldsh(optimizedCodeStackPointer, offset, parameterRegister.as());
                     break;
                 case INT:
-                    assembler().ldsw(_optimizedCodeStackPointer, offset, parameterRegister.as());
+                    assembler().ldsw(optimizedCodeStackPointer, offset, parameterRegister.as());
                     break;
                 case LONG:
                 case WORD:
                 case REFERENCE:
-                    assembler().ldx(_optimizedCodeStackPointer, offset, parameterRegister.as());
+                    assembler().ldx(optimizedCodeStackPointer, offset, parameterRegister.as());
                     break;
                 default: {
                     ProgramError.unexpected();
@@ -328,10 +328,10 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             final int offset = jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind);
             switch (kind.asEnum()) {
                 case FLOAT:
-                    assembler().ld(_optimizedCodeStackPointer, offset, parameterRegister.asSinglePrecision());
+                    assembler().ld(optimizedCodeStackPointer, offset, parameterRegister.asSinglePrecision());
                     break;
                 case DOUBLE:
-                    assembler().ldd(_optimizedCodeStackPointer, offset, parameterRegister.asDoublePrecision());
+                    assembler().ldd(optimizedCodeStackPointer, offset, parameterRegister.asDoublePrecision());
                     break;
                 default: {
                     ProgramError.unexpected();
@@ -367,7 +367,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
          *
          */
         static class OptimizedToJitFrameAdapterGenerator extends SPARCAdapterFrameGenerator {
-            private Label _jitEntryPoint;
+            private Label jitEntryPoint;
 
             OptimizedToJitFrameAdapterGenerator(MethodActor classMethodActor, EirABI optimizingCompilerAbi) {
                 super(classMethodActor, optimizingCompilerAbi);
@@ -375,7 +375,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
 
             @Override
             public void setJitEntryPoint(Label jitEntryPoint) {
-                _jitEntryPoint = jitEntryPoint;
+                this.jitEntryPoint = jitEntryPoint;
             }
 
             @Override
@@ -390,11 +390,11 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             @Override
             void adapt(Kind kind, int optoCompilerStackOffset32, int jitStackOffset32) {
                 if (kind.isCategory2() || kind == Kind.WORD || kind == Kind.REFERENCE) {
-                    assembler().ldx(_optimizedCodeFramePointer, optoCompilerStackOffset32, _longScratchRegister);
-                    assembler().stx(_longScratchRegister, _optimizedCodeStackPointer, jitStackOffset32);
+                    assembler().ldx(optimizedCodeFramePointer, optoCompilerStackOffset32, _longScratchRegister);
+                    assembler().stx(_longScratchRegister, optimizedCodeStackPointer, jitStackOffset32);
                 } else {
-                    assembler().lduw(_optimizedCodeFramePointer, optoCompilerStackOffset32, _intScratchRegister);
-                    assembler().stw(_intScratchRegister, _optimizedCodeStackPointer, jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind));
+                    assembler().lduw(optimizedCodeFramePointer, optoCompilerStackOffset32, intScratchRegister);
+                    assembler().stw(intScratchRegister, optimizedCodeStackPointer, jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind));
                 }
             }
 
@@ -404,19 +404,19 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
                 switch (kind.asEnum()) {
                     case BYTE:
                     case BOOLEAN:
-                        assembler().stb(parameterRegister.as(), _optimizedCodeStackPointer, offset);
+                        assembler().stb(parameterRegister.as(), optimizedCodeStackPointer, offset);
                         break;
                     case SHORT:
                     case CHAR:
-                        assembler().sth(parameterRegister.as(), _optimizedCodeStackPointer, offset);
+                        assembler().sth(parameterRegister.as(), optimizedCodeStackPointer, offset);
                         break;
                     case INT:
-                        assembler().stw(parameterRegister.as(), _optimizedCodeStackPointer, offset);
+                        assembler().stw(parameterRegister.as(), optimizedCodeStackPointer, offset);
                         break;
                     case LONG:
                     case WORD:
                     case REFERENCE:
-                        assembler().stx(parameterRegister.as(), _optimizedCodeStackPointer, offset);
+                        assembler().stx(parameterRegister.as(), optimizedCodeStackPointer, offset);
                         break;
                     default: {
                         ProgramError.unexpected();
@@ -429,10 +429,10 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
                 final int offset = jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind);
                 switch (kind.asEnum()) {
                     case FLOAT:
-                        assembler().st(parameterRegister.asSinglePrecision(), _optimizedCodeStackPointer, offset);
+                        assembler().st(parameterRegister.asSinglePrecision(), optimizedCodeStackPointer, offset);
                         break;
                     case DOUBLE:
-                        assembler().std(parameterRegister.asDoublePrecision(), _optimizedCodeStackPointer, offset);
+                        assembler().std(parameterRegister.asDoublePrecision(), optimizedCodeStackPointer, offset);
                         break;
                     default: {
                         ProgramError.unexpected();
@@ -466,8 +466,8 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
                 assert SPARCAssembler.isSimm13(adapterFrameSize);
                 assert SPARCAssembler.isSimm13(stackOffset + adapterFrameSize);
 
-                SPARCEirPrologue.emitFrameBuilder(assembler(), adapterFrameSize, _optimizedCodeStackPointer, _intScratchRegister);
-                assembler().stx(GPR.I7, _optimizedCodeFramePointer, ripSaveAreaOffset);
+                SPARCEirPrologue.emitFrameBuilder(assembler(), adapterFrameSize, optimizedCodeStackPointer, intScratchRegister);
+                assembler().stx(GPR.I7, optimizedCodeFramePointer, ripSaveAreaOffset);
 
                 // emit the parameters in reverse order.
                 for (int i = parameterLocations.length - 1; i >= 0; i--) {
@@ -481,15 +481,15 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
                 // This allow JITed code return template to avoid checking whether the caller is an adapter frame when restoring the
                 // their literal base. Instead, they can blindly load at  FP - 8. When the caller is an adapter, this is harmless (it loads
                 // an arbitrary value off the floating point temp area).
-                assembler().add(_optimizedCodeFramePointer, STACK_BIAS.SPARC_V9.stackBias(), _jitedCodeFramePointer);
+                assembler().add(optimizedCodeFramePointer, STACK_BIAS.SPARC_V9.stackBias(), jitedCodeFramePointer);
 
-                final boolean largeFrame = !SPARCAssembler.isSimm13(_jitedCodeFrameSize);
+                final boolean largeFrame = !SPARCAssembler.isSimm13(jitedCodeFrameSize);
                 assembler().call(methodEntryPoint);
-                if (_jitedCodeFrameSize > 0) {
+                if (jitedCodeFrameSize > 0) {
                     if (largeFrame) {
-                        assembler().sethi(assembler().hi(_jitedCodeFrameSize), _jitScratchRegister);
+                        assembler().sethi(assembler().hi(jitedCodeFrameSize), jitScratchRegister);
                     } else {
-                        assembler().sub(_optimizedCodeStackPointer, _jitedCodeFrameSize, _optimizedCodeStackPointer);
+                        assembler().sub(optimizedCodeStackPointer, jitedCodeFrameSize, optimizedCodeStackPointer);
                     }
                 } else {
                     assembler().nop();
@@ -501,9 +501,9 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
                 // We need to move %o0 in the %o0 of the caller's window.
                 assembler().ret();
                 assembler().restore(GPR.O0, GPR.G0, GPR.O0);
-                assembler().bindLabel(_jitEntryPoint);
+                assembler().bindLabel(jitEntryPoint);
                 // Save the caller's literal base. It's saving area for the literal base is immediately below its frame pointer.
-                assembler().stx(_literalBaseRegister, _jitedCodeFramePointer, -STACK_SLOT_SIZE);
+                assembler().stx(literalBaseRegister, jitedCodeFramePointer, -STACK_SLOT_SIZE);
                 assembler().bindLabel(methodEntryPoint);
             }
         }

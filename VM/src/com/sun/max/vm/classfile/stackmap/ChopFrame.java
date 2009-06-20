@@ -38,18 +38,18 @@ import com.sun.max.vm.classfile.constant.*;
  *          u2 offset_delta;
  *      }
  * </pre>
- * 
+ *
  * @author David Liu
  * @author Doug Simon
  */
 public class ChopFrame extends StackMapFrame {
 
-    private final int _chop;
+    private final int chop;
 
     public ChopFrame(int positionDelta, int chop) {
         super(positionDelta);
         assert chop >= 1 && chop <= 3;
-        _chop = chop;
+        this.chop = chop;
     }
 
     public ChopFrame(int frameType, ClassfileStream classfileStream) {
@@ -58,7 +58,7 @@ public class ChopFrame extends StackMapFrame {
 
     @Override
     public void applyTo(FrameModel frameModel) {
-        frameModel.chopLocals(_chop);
+        frameModel.chopLocals(chop);
         frameModel.clearStack();
     }
 
@@ -70,13 +70,13 @@ public class ChopFrame extends StackMapFrame {
 
     @Override
     public int frameType() {
-        return SAME_FRAME_EXTENDED - _chop;
+        return SAME_FRAME_EXTENDED - chop;
     }
 
     @Override
     public String toString() {
         return "frame_type = " + frameType() + " /* chop_frame */\n" +
-               "  chop = " + _chop + " /* implicit */\n" +
+               "  chop = " + chop + " /* implicit */\n" +
                "  offset_delta = " + positionDelta();
     }
 }

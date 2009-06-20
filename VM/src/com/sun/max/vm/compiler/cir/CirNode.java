@@ -35,10 +35,10 @@ import com.sun.max.vm.compiler.cir.transform.*;
 public abstract class CirNode implements Cloneable {
 
     protected CirNode() {
-        _id = _serial++;
+        id = serial++;
     }
 
-    private static int _serial = 0;
+    private static int serial = 0;
 
     /**
      * This is used to give all CIR nodes a deterministic hash code so that hash-based
@@ -48,10 +48,10 @@ public abstract class CirNode implements Cloneable {
      * Unfortunately, it cannot be {@code final} as it needs to be set in {@link #clone()}.
      */
     @CONSTANT
-    private int _id;
+    private int id;
 
     public int id() {
-        return _id;
+        return id;
     }
 
     public boolean equals(Object other, CirVariableRenaming renaming) {
@@ -65,14 +65,14 @@ public abstract class CirNode implements Cloneable {
 
     @Override
     public int hashCode() {
-        return _id;
+        return id;
     }
 
     @Override
     public Object clone() {
         try {
             final CirNode result = (CirNode) super.clone();
-            result._id = _serial++;
+            result.id = serial++;
             return result;
         } catch (CloneNotSupportedException cloneNotSupportedException) {
             throw ProgramError.unexpected("could not clone CirNode: " + this, cloneNotSupportedException);
@@ -99,10 +99,10 @@ public abstract class CirNode implements Cloneable {
         return predicate.evaluateNode(this);
     }
 
-    private static final boolean _printingIds = false;
+    private static final boolean printingIds = false;
 
     public static boolean printingIds() {
-        return _printingIds;
+        return printingIds;
     }
 
     public void trace(int level) {
@@ -112,7 +112,7 @@ public abstract class CirNode implements Cloneable {
     }
 
     public final String traceToString(boolean showBir) {
-        return traceToString(showBir, _printingIds, Integer.MAX_VALUE);
+        return traceToString(showBir, printingIds, Integer.MAX_VALUE);
     }
 
     /**

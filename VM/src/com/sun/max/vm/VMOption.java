@@ -75,12 +75,12 @@ public class VMOption {
         }
     }
 
-    protected final String _prefix;
-    protected final boolean _exactPrefix;
-    protected final String _help;
+    protected final String prefix;
+    protected final boolean exactPrefix;
+    protected final String help;
 
     @RESET
-    protected Pointer _optionStart = Pointer.zero();
+    protected Pointer optionStart = Pointer.zero();
 
     /**
      * Creates a new VM option with the specified string prefix (which includes the '-') and the specified help text.
@@ -94,26 +94,26 @@ public class VMOption {
      * @param help the help text to be printed for this option on the command line
      */
     public VMOption(String prefix, String help) {
-        _exactPrefix = prefix.endsWith(" ");
-        if (_exactPrefix) {
-            _prefix = prefix.substring(0, prefix.length() - 1);
+        exactPrefix = prefix.endsWith(" ");
+        if (exactPrefix) {
+            this.prefix = prefix.substring(0, prefix.length() - 1);
         } else {
-            _prefix = prefix;
+            this.prefix = prefix;
         }
-        _help = help;
+        this.help = help;
     }
 
-    private VMOption _parentOption;
+    private VMOption parentOption;
 
-    private VMOption[] _suboptions = {};
+    private VMOption[] suboptions = {};
 
     @PROTOTYPE_ONLY
     void addSuboption(VMOption suboption) {
-        assert suboption._prefix.startsWith(_prefix) && !suboption._prefix.equals(_prefix);
-        assert suboption._parentOption == null : "Cannot re-parent suboption from " + suboption._parentOption + " to " + this;
-        _suboptions = java.util.Arrays.copyOf(_suboptions, _suboptions.length + 1);
-        _suboptions[_suboptions.length - 1] = suboption;
-        suboption._parentOption = this;
+        assert suboption.prefix.startsWith(prefix) && !suboption.prefix.equals(prefix);
+        assert suboption.parentOption == null : "Cannot re-parent suboption from " + suboption.parentOption + " to " + this;
+        suboptions = java.util.Arrays.copyOf(suboptions, suboptions.length + 1);
+        suboptions[suboptions.length - 1] = suboption;
+        suboption.parentOption = this;
     }
 
     /**
@@ -123,7 +123,7 @@ public class VMOption {
      * @return {@code true} if this option matches {@code arg}; otherwise {@code false}
      */
     public boolean matches(Pointer arg) {
-        return _exactPrefix ? CString.equals(arg, _prefix) : CString.startsWith(arg, _prefix);
+        return exactPrefix ? CString.equals(arg, prefix) : CString.startsWith(arg, prefix);
     }
 
     /**
@@ -132,16 +132,16 @@ public class VMOption {
      * behavior is to simply remove the prefix (i.e. the name of this option) and pass
      * the result on to the {@code parseValue()} method, which is typically overridden
      * in subclasses.
-     * @param optionStart a pointer to a C-style string representing the entire option
+     * @param start a pointer to a C-style string representing the entire option
      * @return {@code true} if the option's value was parsed successfully, {@code false} otherwise
      */
-    public boolean parse(Pointer optionStart) {
-        _optionStart = optionStart;
-        if (_suboptions.length == 0) {
-            return parseValue(optionStart.plus(_prefix.length()));
+    public boolean parse(Pointer start) {
+        this.optionStart = start;
+        if (suboptions.length == 0) {
+            return parseValue(start.plus(prefix.length()));
         }
-        for (VMOption suboption : _suboptions) {
-            if (!suboption.parse(optionStart)) {
+        for (VMOption suboption : suboptions) {
+            if (!suboption.parse(start)) {
                 return false;
             }
         }
@@ -162,7 +162,7 @@ public class VMOption {
      * Prints out help onto the console.
      */
     public void printHelp() {
-        VMOptions.printHelpForOption(_prefix, "", _help);
+        VMOptions.printHelpForOption(prefix, "", help);
     }
 
     /**
@@ -171,7 +171,7 @@ public class VMOption {
      * @return {@code true} if this option was present on the command line; {@code false} otherwise
      */
     public boolean isPresent() {
-        return !_optionStart.isZero() || (_parentOption != null && _parentOption.isPresent());
+        return !optionStart.isZero() || (parentOption != null && parentOption.isPresent());
     }
 
     /**
@@ -213,7 +213,7 @@ public class VMOption {
 
     @Override
     public String toString() {
-        return _prefix;
+        return prefix;
     }
 
     /**
@@ -222,18 +222,18 @@ public class VMOption {
      * @return the category to which this option belongs
      */
     public Category category() {
-        return Category.from(_prefix);
+        return Category.from(prefix);
     }
 
 
     // Prototype-time support for setting VM options
 
     @PROTOTYPE_ONLY
-    static String[] _vmArguments = null;
+    static String[] vmArguments = null;
     @PROTOTYPE_ONLY
-    static Pointer _vmArgumentPointers = null;
+    static Pointer vmArgumentPointers = null;
     @PROTOTYPE_ONLY
-    static String[] _matchedVmArguments = null;
+    static String[] matchedVmArguments = null;
 
     /**
      * Sets the VM command line arguments that will be parsed for each {@link VMOption} created.
@@ -242,16 +242,16 @@ public class VMOption {
      *
      * Note: Any option values set at prototype time while building the boot image are persisted in the boot image.
      *
-     * @param vmArguments a set of command line arguments used to enable VM options at prototype time
+     * @param vmArgs a set of command line arguments used to enable VM options at prototype time
      */
     @PROTOTYPE_ONLY
-    public static void setVMArguments(String[] vmArguments) {
-        _vmArguments = vmArguments;
-        if (_vmArgumentPointers != null) {
-            Memory.deallocate(_vmArgumentPointers);
-            _vmArgumentPointers = null;
+    public static void setVMArguments(String[] vmArgs) {
+        vmArguments = vmArgs;
+        if (vmArgumentPointers != null) {
+            Memory.deallocate(vmArgumentPointers);
+            vmArgumentPointers = null;
         }
-        _matchedVmArguments = new String[vmArguments.length];
+        matchedVmArguments = new String[vmArguments.length];
     }
 
     /**
@@ -260,11 +260,11 @@ public class VMOption {
      */
     @PROTOTYPE_ONLY
     public static List<String> unmatchedVMArguments() {
-        if (_vmArguments != null) {
-            final List<String> unmatched = new ArrayList<String>(_vmArguments.length);
-            for (int i = 0; i < _vmArguments.length; ++i) {
-                if (_matchedVmArguments[i] == null) {
-                    unmatched.add(_vmArguments[i]);
+        if (vmArguments != null) {
+            final List<String> unmatched = new ArrayList<String>(vmArguments.length);
+            for (int i = 0; i < vmArguments.length; ++i) {
+                if (matchedVmArguments[i] == null) {
+                    unmatched.add(vmArguments[i]);
                 }
             }
             return unmatched;
@@ -274,7 +274,7 @@ public class VMOption {
 
     @PROTOTYPE_ONLY
     private static ProgramError parseError(String message, int index) {
-        final StringBuilder sb = new StringBuilder(String.format("Error parsing VM option: %s:%n%s%n", message, Arrays.toString(_vmArguments, " ")));
+        final StringBuilder sb = new StringBuilder(String.format("Error parsing VM option: %s:%n%s%n", message, Arrays.toString(vmArguments, " ")));
         for (int i = 0; i < index; ++i) {
             sb.append(' ');
         }
@@ -288,22 +288,22 @@ public class VMOption {
      */
     @PROTOTYPE_ONLY
     public void findMatchingArgumentAndParse() {
-        if (_vmArguments != null) {
-            if (_vmArgumentPointers == null) {
-                _vmArgumentPointers = CString.utf8ArrayFromStringArray(_vmArguments, false);
+        if (vmArguments != null) {
+            if (vmArgumentPointers == null) {
+                vmArgumentPointers = CString.utf8ArrayFromStringArray(vmArguments, false);
             }
-            for (int i = 0; i < _vmArguments.length; ++i) {
-                final String argument = _vmArguments[i];
-                final Pointer argumentPointer = _vmArgumentPointers.getWord(i).asPointer();
+            for (int i = 0; i < vmArguments.length; ++i) {
+                final String argument = vmArguments[i];
+                final Pointer argumentPointer = vmArgumentPointers.getWord(i).asPointer();
                 if (argument != null && (matches(argumentPointer))) {
-                    _matchedVmArguments[i] = argument;
+                    matchedVmArguments[i] = argument;
                     if (consumesNext()) {
                         // this option expects a space and then its value (e.g. -classpath)
-                        if (i + 1 >= _vmArguments.length) {
+                        if (i + 1 >= vmArguments.length) {
                             parseError("Could not find argument for " + this, i);
                         }
-                        final Pointer optionValue = _vmArgumentPointers.getWord(i + 1).asPointer();
-                        _vmArguments[i + 1] = null;
+                        final Pointer optionValue = vmArgumentPointers.getWord(i + 1).asPointer();
+                        vmArguments[i + 1] = null;
                         final boolean ok = parseValue(optionValue);
                         if (!ok) {
                             parseError("Error parsing " + this, i);

@@ -53,7 +53,7 @@ final class JDK_sun_reflect_Reflection {
      * position in the stack.
      */
     private static class Context implements StackFrameVisitor {
-        MethodActor _result;
+        MethodActor result;
         int _realFramesToSkip;
 
         Context(int realFramesToSkip) {
@@ -83,7 +83,7 @@ final class JDK_sun_reflect_Reflection {
             final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer());
             if (bytecodeLocations == null) {
                 if (_realFramesToSkip == 0) {
-                    _result = targetMethod.classMethodActor();
+                    result = targetMethod.classMethodActor();
                     return false;
                 }
                 _realFramesToSkip--;
@@ -93,7 +93,7 @@ final class JDK_sun_reflect_Reflection {
                     final MethodActor classMethodActor = bytecodeLocation.classMethodActor().original();
                     if (!classMethodActor.isWrapper() && !classMethodActor.holder().isGenerated()) {
                         if (_realFramesToSkip == 0) {
-                            _result = classMethodActor;
+                            result = classMethodActor;
                             return false;
                         }
                         _realFramesToSkip--;
@@ -121,7 +121,7 @@ final class JDK_sun_reflect_Reflection {
                                                        VMRegister.getCpuStackPointer(),
                                                        VMRegister.getCpuFramePointer(),
                                                        context);
-        return context._result;
+        return context.result;
     }
 
     /**

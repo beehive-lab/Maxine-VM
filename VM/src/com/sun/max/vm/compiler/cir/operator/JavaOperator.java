@@ -49,7 +49,7 @@ import com.sun.max.vm.type.*;
  */
 public abstract class JavaOperator extends CirOperator {
 
-    protected int _reasonsMayStop;
+    protected int reasonsMayStop;
 
     /**
      * Creates an object for the application of an operator.
@@ -58,11 +58,11 @@ public abstract class JavaOperator extends CirOperator {
      *            {@linkplain Stoppable stops}
      */
     protected JavaOperator(int reasonsMayStop) {
-        _reasonsMayStop = reasonsMayStop;
+        this.reasonsMayStop = reasonsMayStop;
     }
 
     public final int reasonsMayStop() {
-        return _reasonsMayStop;
+        return reasonsMayStop;
     }
 
     /**
@@ -72,7 +72,7 @@ public abstract class JavaOperator extends CirOperator {
      */
     public final void removeReasonMayStop(int reasonMayStop) {
         assert reasonMayStop != 0 && Ints.isPowerOfTwoOrZero(reasonMayStop & Stoppable.Static.ALL_REASONS) : "Exactly one reason for stopping must be removed at a time";
-        _reasonsMayStop &= ~reasonMayStop;
+        reasonsMayStop &= ~reasonMayStop;
     }
 
     public MethodActor foldingMethodActor() {
@@ -104,23 +104,23 @@ public abstract class JavaOperator extends CirOperator {
         /**
          * The constant pool entry index.
          */
-        protected final int _index;
+        protected final int index;
 
         /**
          * The constant pool.
          */
-        protected final ConstantPool _constantPool;
+        protected final ConstantPool constantPool;
 
-        protected final Kind _resultKind;
+        protected final Kind resultKind;
 
-        protected Actor_Type _actor;
+        protected Actor_Type actor;
 
         public JavaResolvableOperator(int reasonsMayStop, ConstantPool constantPool, int index, Kind resultKind) {
             super(reasonsMayStop);
             assert (reasonsMayStop & CALL) != 0 : "operator translated by one more snippets must indicate CALL as a stop reason";
-            _constantPool = constantPool;
-            _index = index;
-            _resultKind = resultKind;
+            this.constantPool = constantPool;
+            this.index = index;
+            this.resultKind = resultKind;
             if (constantPool != null) {
                 final ResolvableConstant constant = constantPool.resolvableAt(index);
                 if (constant.isResolved() || constant.isResolvableWithoutClassLoading(constantPool)) {
@@ -139,21 +139,21 @@ public abstract class JavaOperator extends CirOperator {
          * Gets the constant pool containing the entry referenced by this operator.
          */
         public final ConstantPool constantPool() {
-            return _constantPool;
+            return constantPool;
         }
 
         /**
          * Gets the constant pool entry referenced by this operator.
          */
         public final ResolvableConstant constant() {
-            return _constantPool.resolvableAt(_index);
+            return constantPool.resolvableAt(index);
         }
 
         /**
          * Gets the index of the constant pool entry referenced by this operator.
          */
         public final int index() {
-            return _index;
+            return index;
         }
 
         /**
@@ -161,14 +161,14 @@ public abstract class JavaOperator extends CirOperator {
          * This method will return {@code null} if the entry has not been {@linkplain #isResolved() resolved}.
          */
         public final Actor_Type actor() {
-            return _actor;
+            return actor;
         }
 
         /**
          * Determines if the constant pool entry referenced by this operator has been resolved.
          */
         public final boolean isResolved() {
-            return _actor != null;
+            return actor != null;
         }
 
         /**
@@ -176,11 +176,11 @@ public abstract class JavaOperator extends CirOperator {
          */
         public void resolve() {
             final Class<Actor_Type> type = null;
-            _actor = StaticLoophole.cast(type, _constantPool.resolvableAt(_index).resolve(_constantPool, _index));
+            actor = StaticLoophole.cast(type, constantPool.resolvableAt(index).resolve(constantPool, index));
         }
 
         public final Kind resultKind() {
-            return _resultKind;
+            return resultKind;
         }
 
         /**
@@ -189,7 +189,7 @@ public abstract class JavaOperator extends CirOperator {
          * @throws VerifyError if this operator does not operate on a field
          */
         public final Kind fieldKind() {
-            return _constantPool.fieldAt(_index).type(_constantPool).toKind();
+            return constantPool.fieldAt(index).type(constantPool).toKind();
         }
 
         /**
@@ -203,11 +203,11 @@ public abstract class JavaOperator extends CirOperator {
          * Gets the class that must be initialized as a side effect of executing this operator.
          */
         private ClassActor classToBeInitialized() {
-            assert requiresClassInitialization() && _actor != null;
-            if (_actor instanceof MemberActor) {
-                return ((MemberActor) _actor).holder();
+            assert requiresClassInitialization() && actor != null;
+            if (actor instanceof MemberActor) {
+                return ((MemberActor) actor).holder();
             }
-            return (ClassActor) _actor;
+            return (ClassActor) actor;
         }
 
         /**
@@ -238,7 +238,7 @@ public abstract class JavaOperator extends CirOperator {
 
         @Override
         public String toString() {
-            return getClass().getSimpleName() + ":" + _constantPool.at(_index).valueString(_constantPool);
+            return getClass().getSimpleName() + ":" + constantPool.at(index).valueString(constantPool);
         }
     }
 
@@ -252,24 +252,24 @@ public abstract class JavaOperator extends CirOperator {
      */
     private static final class JavaBuiltinOperator extends JavaOperator implements Lowerable {
 
-        private final CirBuiltin _cirBuiltin;
+        private final CirBuiltin cirBuiltin;
 
         private JavaBuiltinOperator(Builtin builtin) {
             super(builtin.reasonsMayStop());
-            _cirBuiltin = CirBuiltin.get(builtin);
+            cirBuiltin = CirBuiltin.get(builtin);
         }
 
         public CirBuiltin builtin() {
-            return _cirBuiltin;
+            return cirBuiltin;
         }
 
         public Kind resultKind() {
-            return _cirBuiltin.resultKind();
+            return cirBuiltin.resultKind();
         }
 
         @Override
         public Kind[] parameterKinds() {
-            return _cirBuiltin.parameterKinds();
+            return cirBuiltin.parameterKinds();
         }
 
         @Override
@@ -283,12 +283,12 @@ public abstract class JavaOperator extends CirOperator {
         }
 
         public void toLCir(Lowerable op, CirCall call, CompilerScheme compilerScheme) {
-            call.setProcedure(_cirBuiltin);
+            call.setProcedure(cirBuiltin);
         }
 
         @Override
         public String toString() {
-            return _cirBuiltin.name();
+            return cirBuiltin.name();
         }
     }
 
@@ -300,24 +300,24 @@ public abstract class JavaOperator extends CirOperator {
      * @author Aziz Ghuloum
      */
     static final class JavaSnippetOperator extends JavaOperator implements Lowerable {
-        private final CirSnippet _snippet;
+        private final CirSnippet snippet;
 
         JavaSnippetOperator(Snippet snippet) {
             super(CALL);
-            _snippet = CirSnippet.get(snippet);
+            this.snippet = CirSnippet.get(snippet);
         }
 
         public CirSnippet snippet() {
-            return _snippet;
+            return snippet;
         }
 
         public Kind resultKind() {
-            return _snippet.resultKind();
+            return snippet.resultKind();
         }
 
         @Override
         public Kind[] parameterKinds() {
-            return _snippet.parameterKinds();
+            return snippet.parameterKinds();
         }
 
         @Override
@@ -331,12 +331,12 @@ public abstract class JavaOperator extends CirOperator {
         }
 
         public void toLCir(Lowerable op, CirCall call, CompilerScheme compilerScheme) {
-            call.setProcedure(_snippet);
+            call.setProcedure(snippet);
         }
 
         @Override
         public String toString() {
-            return _snippet.name();
+            return snippet.name();
         }
     }
 
@@ -347,28 +347,28 @@ public abstract class JavaOperator extends CirOperator {
      * @author Aziz Ghuloum
      */
     private static final class JavaBuiltinOrSnippetOperator extends JavaOperator implements Lowerable {
-        private final Builtin _builtin;
-        private final Snippet _snippet;
+        private final Builtin builtin;
+        private final Snippet snippet;
         private JavaBuiltinOrSnippetOperator(Builtin builtin, Snippet snippet) {
             super(VMConfiguration.target().compilerScheme().isBuiltinImplemented(builtin) ? builtin.reasonsMayStop() : CALL);
-            _builtin = builtin;
-            _snippet = snippet;
+            this.builtin = builtin;
+            this.snippet = snippet;
         }
         public void toLCir(Lowerable op, CirCall call, CompilerScheme compilerScheme) {
-            if (compilerScheme.isBuiltinImplemented(_builtin)) {
-                call.setProcedure(CirBuiltin.get(_builtin));
+            if (compilerScheme.isBuiltinImplemented(builtin)) {
+                call.setProcedure(CirBuiltin.get(builtin));
             } else {
-                call.setProcedure(CirSnippet.get(_snippet));
+                call.setProcedure(CirSnippet.get(snippet));
             }
         }
 
         public Kind resultKind() {
-            return CirBuiltin.get(_builtin).resultKind();
+            return CirBuiltin.get(builtin).resultKind();
         }
 
         @Override
         public Kind[] parameterKinds() {
-            return CirBuiltin.get(_builtin).parameterKinds();
+            return CirBuiltin.get(builtin).parameterKinds();
         }
 
         @Override
@@ -383,7 +383,7 @@ public abstract class JavaOperator extends CirOperator {
 
         @Override
         public String toString() {
-            return _builtin.name();
+            return builtin.name();
         }
     }
 

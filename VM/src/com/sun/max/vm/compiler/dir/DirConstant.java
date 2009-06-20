@@ -25,24 +25,24 @@ import com.sun.max.vm.value.*;
 
 /**
  * A value that is constant at compile time.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class DirConstant extends DirValue {
 
-    private final Value _value;
+    private final Value value;
 
     public DirConstant(Value value) {
-        _value = value;
+        this.value = value;
     }
 
     public Kind kind() {
-        return _value.kind();
+        return value.kind();
     }
 
     @Override
     public Value value() {
-        return _value;
+        return value;
     }
 
     public boolean isConstant() {
@@ -53,22 +53,22 @@ public class DirConstant extends DirValue {
     public boolean equals(Object other) {
         if (other instanceof DirConstant) {
             final DirConstant dirConstant = (DirConstant) other;
-            return _value.equals(dirConstant._value);
+            return value.equals(dirConstant.value);
         }
         return false;
     }
 
     @Override
     public int hashCodeForBlock() {
-        if (_value.kind() == Kind.REFERENCE) {
+        if (value.kind() == Kind.REFERENCE) {
             return super.hashCodeForBlock();
         }
-        return super.hashCodeForBlock() ^ _value.hashCode();
+        return super.hashCodeForBlock() ^ value.hashCode();
     }
 
     @Override
     public String toString() {
-        return _value.toString();
+        return value.toString();
     }
 
     public static final DirConstant VOID = new DirConstant(VoidValue.VOID);

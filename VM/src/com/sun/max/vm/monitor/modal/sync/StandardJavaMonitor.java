@@ -38,11 +38,11 @@ import com.sun.max.vm.thread.*;
  */
 public class StandardJavaMonitor extends AbstractJavaMonitor {
 
-    protected final Mutex _mutex;
-    private VmThread _waitingThreads;
+    protected final Mutex mutex;
+    private VmThread waitingThreads;
 
     public StandardJavaMonitor() {
-        _mutex = MutexFactory.create();
+        mutex = MutexFactory.create();
     }
 
     private static void raiseIllegalMonitorStateException(VmThread owner) {
@@ -56,17 +56,17 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
     public void monitorEnter() {
         final VmThread currentThread = VmThread.current();
         traceStartMonitorEnter(currentThread);
-        if (_ownerThread == currentThread) {
-            _recursionCount++;
+        if (ownerThread == currentThread) {
+            recursionCount++;
             traceEndMonitorEnter(currentThread);
             return;
         }
         currentThread.setState(Thread.State.BLOCKED);
-        _mutex.lock();
+        mutex.lock();
         currentThread.setState(Thread.State.RUNNABLE);
-        _bindingProtection = BindingProtection.PROTECTED;
-        _ownerThread = currentThread;
-        _recursionCount = 1;
+        bindingProtection = BindingProtection.PROTECTED;
+        ownerThread = currentThread;
+        recursionCount = 1;
         traceEndMonitorEnter(currentThread);
     }
 
@@ -74,14 +74,14 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
     public void monitorExit() {
         final VmThread currentThread = VmThread.current();
         traceStartMonitorExit(currentThread);
-        if (_ownerThread != currentThread) {
-            raiseIllegalMonitorStateException(_ownerThread);
+        if (ownerThread != currentThread) {
+            raiseIllegalMonitorStateException(ownerThread);
         }
-        if (--_recursionCount == 0) {
-            _bindingProtection = BindingProtection.UNPROTECTED;
-            _ownerThread = null;
+        if (--recursionCount == 0) {
+            bindingProtection = BindingProtection.UNPROTECTED;
+            ownerThread = null;
             traceEndMonitorExit(currentThread);
-            _mutex.unlock();
+            mutex.unlock();
         }
     }
 
@@ -89,25 +89,25 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
     public void monitorWait(long timeoutMilliSeconds) throws InterruptedException {
         final VmThread currentThread = VmThread.current();
         traceStartMonitorWait(currentThread);
-        if (_ownerThread != currentThread) {
-            raiseIllegalMonitorStateException(_ownerThread);
+        if (ownerThread != currentThread) {
+            raiseIllegalMonitorStateException(ownerThread);
         }
-        final int recursionCount = _recursionCount;
-        final VmThread ownerThread = _ownerThread;
+        final int recursionCount = this.recursionCount;
+        final VmThread ownerThread = this.ownerThread;
         if (timeoutMilliSeconds == 0L) {
             ownerThread.setState(Thread.State.WAITING);
         } else {
             ownerThread.setState(Thread.State.TIMED_WAITING);
         }
 
-        final ConditionVariable waitingCondition  = _ownerThread.waitingCondition().init();
-        ownerThread.setNextWaitingThread(_waitingThreads);
-        _waitingThreads = ownerThread;
-        _ownerThread = null;
-        final boolean interrupted = !waitingCondition.threadWait(_mutex, timeoutMilliSeconds);
-        _ownerThread = ownerThread;
+        final ConditionVariable waitingCondition  = this.ownerThread.waitingCondition().init();
+        ownerThread.setNextWaitingThread(waitingThreads);
+        waitingThreads = ownerThread;
+        this.ownerThread = null;
+        final boolean interrupted = !waitingCondition.threadWait(mutex, timeoutMilliSeconds);
+        this.ownerThread = ownerThread;
         ownerThread.setState(Thread.State.RUNNABLE);
-        _recursionCount = recursionCount;
+        this.recursionCount = recursionCount;
 
         boolean timedOut = false;
         if (!interrupted) {
@@ -115,16 +115,16 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
                 // The thread is still on the _waitingThreads list: remove it
                 timedOut = true;
 
-                if (ownerThread == _waitingThreads) {
+                if (ownerThread == waitingThreads) {
                     // Common case: owner is at the head of the list
-                    _waitingThreads = ownerThread.nextWaitingThread();
+                    waitingThreads = ownerThread.nextWaitingThread();
                     ownerThread.setNextWaitingThread(ownerThread);
                 } else {
-                    if (_waitingThreads == null) {
+                    if (waitingThreads == null) {
                         FatalError.unexpected("Thread woken from wait by timeout not in waiting threads list");
                     }
                     // Must now search the list and remove ownerThread
-                    VmThread previous = _waitingThreads;
+                    VmThread previous = waitingThreads;
                     VmThread waiter = previous.nextWaitingThread();
                     while (waiter != ownerThread) {
                         if (waiter == null) {
@@ -142,7 +142,7 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
 
         traceEndMonitorWait(currentThread, interrupted, timedOut);
 
-        if (interrupted || _ownerThread.isInterrupted(true)) {
+        if (interrupted || this.ownerThread.isInterrupted(true)) {
             throw new InterruptedException();
         }
     }
@@ -151,11 +151,11 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
     public void monitorNotify(boolean all) {
         final VmThread currentThread = VmThread.current();
         traceStartMonitorNotify(currentThread);
-        if (_ownerThread != currentThread) {
-            raiseIllegalMonitorStateException(_ownerThread);
+        if (ownerThread != currentThread) {
+            raiseIllegalMonitorStateException(ownerThread);
         }
         if (all) {
-            VmThread waiter = _waitingThreads;
+            VmThread waiter = waitingThreads;
             while (waiter != null) {
                 waiter.setState(Thread.State.BLOCKED);
                 waiter.waitingCondition().threadNotify(false);
@@ -167,13 +167,13 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
                 // notified or woke up because the timeout expired.
                 previous.setNextWaitingThread(previous);
             }
-            _waitingThreads = null;
+            waitingThreads = null;
         } else {
-            final VmThread waiter = _waitingThreads;
+            final VmThread waiter = waitingThreads;
             if (waiter != null) {
                 waiter.setState(Thread.State.BLOCKED);
                 waiter.waitingCondition().threadNotify(false);
-                _waitingThreads = waiter.nextWaitingThread();
+                waitingThreads = waiter.nextWaitingThread();
 
                 // See comment above.
                 waiter.setNextWaitingThread(waiter);
@@ -194,16 +194,16 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
 
     @Override
     public void allocate() {
-        _mutex.init();
+        mutex.init();
     }
 
     @Override
     public void dump() {
         super.dump();
         Log.print(" mutex=");
-        Log.print(_mutex.logId());
+        Log.print(mutex.logId());
         Log.print(" waiters={");
-        VmThread waiter = _waitingThreads;
+        VmThread waiter = waitingThreads;
         while (waiter != null) {
             Log.print(waiter.getName());
             Log.print(" ");
@@ -228,12 +228,12 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         public void monitorEnter() {
             final VmThread currentThread = VmThread.current();
             if (currentThread.state() == Thread.State.TERMINATED) {
-                if (_ownerThread != currentThread) {
-                    _mutex.lock();
-                    _ownerThread = currentThread;
-                    _recursionCount = 1;
+                if (ownerThread != currentThread) {
+                    mutex.lock();
+                    ownerThread = currentThread;
+                    recursionCount = 1;
                 } else {
-                    _recursionCount++;
+                    recursionCount++;
                 }
             } else {
                 super.monitorEnter();

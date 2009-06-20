@@ -49,11 +49,11 @@ import com.sun.max.vm.tele.*;
  */
 public abstract class EirToTargetTranslator extends TargetGenerator {
 
-    private final int _registerReferenceMapSize;
+    private final int registerReferenceMapSize;
 
     protected EirToTargetTranslator(TargetGeneratorScheme targetGeneratorScheme, InstructionSet instructionSet, int registerReferenceMapSize) {
         super(targetGeneratorScheme, instructionSet);
-        _registerReferenceMapSize = registerReferenceMapSize;
+        this.registerReferenceMapSize = registerReferenceMapSize;
     }
 
     private Address fixLiteralLabels(EirTargetEmitter emitter, Sequence<EirLiteral> literals, Address address) {
@@ -173,7 +173,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         }
     }
 
-    private byte[] packReferenceMaps(TargetBundleLayout targetBundleLayout, EirTargetEmitter<?> emitter, int frameReferenceMapSize, int registerReferenceMapSize) {
+    private byte[] packReferenceMaps(TargetBundleLayout targetBundleLayout, EirTargetEmitter<?> emitter, int frameReferenceMapSize, int regReferenceMapSize) {
         if (targetBundleLayout.cellSize(ArrayField.referenceMaps).isZero()) {
             return null;
         }
@@ -185,7 +185,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
             addStackReferenceMaps(emitter.indirectCalls(), stackSlotWidth, bitMap);
             addStackReferenceMaps(emitter.safepoints(), stackSlotWidth, bitMap);
         }
-        bitMap.setSize(_registerReferenceMapSize);
+        bitMap.setSize(regReferenceMapSize);
         for (EirSafepoint safepoint : emitter.safepoints()) {
             safepoint.addRegisterReferenceMap(bitMap);
             bitMap.next();

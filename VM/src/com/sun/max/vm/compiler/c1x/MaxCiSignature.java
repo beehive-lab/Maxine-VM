@@ -32,12 +32,12 @@ import com.sun.max.vm.type.*;
  */
 public class MaxCiSignature implements CiSignature {
 
-    final MaxCiConstantPool _constantPool;
-    final SignatureDescriptor _descriptor;
-    BasicType[] _basicTypes;
-    BasicType _basicReturnType;
-    MaxCiType[] _ciTypes;
-    MaxCiType _ciReturnType;
+    final MaxCiConstantPool constantPool;
+    final SignatureDescriptor descriptor;
+    BasicType[] basicTypes;
+    BasicType basicReturnType;
+    MaxCiType[] ciTypes;
+    MaxCiType ciReturnType;
 
     /**
      * Creates a new signature within the specified constant pool from the specified signature descriptor.
@@ -45,8 +45,8 @@ public class MaxCiSignature implements CiSignature {
      * @param descriptor the signature descriptor
      */
     public MaxCiSignature(MaxCiConstantPool constantPool, SignatureDescriptor descriptor) {
-        _constantPool = constantPool;
-        _descriptor = descriptor;
+        this.constantPool = constantPool;
+        this.descriptor = descriptor;
     }
 
     /**
@@ -54,7 +54,7 @@ public class MaxCiSignature implements CiSignature {
      * @return the number of arguments
      */
     public int arguments() {
-        return _descriptor.numberOfParameters();
+        return descriptor.numberOfParameters();
     }
 
     /**
@@ -63,15 +63,15 @@ public class MaxCiSignature implements CiSignature {
      * @return the type of the specified argument
      */
     public CiType argumentTypeAt(int index) {
-        if (_ciTypes == null) {
-            final int max = _descriptor.numberOfParameters();
-            _ciTypes = new MaxCiType[max];
+        if (ciTypes == null) {
+            final int max = descriptor.numberOfParameters();
+            ciTypes = new MaxCiType[max];
             for (int i = 0; i < max; i++) {
-                _ciTypes[i] = descriptorToCiType(_descriptor.parameterDescriptorAt(i));
+                ciTypes[i] = descriptorToCiType(descriptor.parameterDescriptorAt(i));
             }
 
         }
-        return _ciTypes[index];
+        return ciTypes[index];
     }
 
     /**
@@ -81,14 +81,14 @@ public class MaxCiSignature implements CiSignature {
      * @return the basic type of the argument
      */
     public BasicType argumentBasicTypeAt(int index) {
-        if (_basicTypes == null) {
-            final int max = _descriptor.numberOfParameters();
-            _basicTypes = new BasicType[max];
+        if (basicTypes == null) {
+            final int max = descriptor.numberOfParameters();
+            basicTypes = new BasicType[max];
             for (int i = 0; i < max; i++) {
-                _basicTypes[i] = descriptorToBasicType(_descriptor.parameterDescriptorAt(i));
+                basicTypes[i] = descriptorToBasicType(descriptor.parameterDescriptorAt(i));
             }
         }
-        return _basicTypes[index];
+        return basicTypes[index];
     }
 
     /**
@@ -96,10 +96,10 @@ public class MaxCiSignature implements CiSignature {
      * @return the return type
      */
     public CiType returnType() {
-        if (_ciReturnType == null) {
-            _ciReturnType = descriptorToCiType(_descriptor.resultDescriptor());
+        if (ciReturnType == null) {
+            ciReturnType = descriptorToCiType(descriptor.resultDescriptor());
         }
-        return _ciReturnType;
+        return ciReturnType;
     }
 
     /**
@@ -108,10 +108,10 @@ public class MaxCiSignature implements CiSignature {
      * @return the basic return type
      */
     public BasicType returnBasicType() {
-        if (_basicReturnType == null) {
-            _basicReturnType = descriptorToBasicType(_descriptor.resultDescriptor());
+        if (basicReturnType == null) {
+            basicReturnType = descriptorToBasicType(descriptor.resultDescriptor());
         }
-        return _basicReturnType;
+        return basicReturnType;
     }
 
     /**
@@ -119,7 +119,7 @@ public class MaxCiSignature implements CiSignature {
      * @return the string representation of this signature
      */
     public String asString() {
-        return _descriptor.toString();
+        return descriptor.toString();
     }
 
     @Override
@@ -134,16 +134,16 @@ public class MaxCiSignature implements CiSignature {
      */
     public int argumentSize(boolean withReceiver) {
         // XXX: cache the argument size
-        return _descriptor.computeNumberOfSlots() + (withReceiver ? 1 : 0);
+        return descriptor.computeNumberOfSlots() + (withReceiver ? 1 : 0);
     }
 
-    private BasicType descriptorToBasicType(TypeDescriptor descriptor) {
-        return MaxCiType.kindToBasicType(descriptor.toKind());
+    private BasicType descriptorToBasicType(TypeDescriptor typeDescriptor) {
+        return MaxCiType.kindToBasicType(typeDescriptor.toKind());
     }
 
-    private MaxCiType descriptorToCiType(TypeDescriptor descriptor) {
+    private MaxCiType descriptorToCiType(TypeDescriptor typeDescriptor) {
          // TODO: resolve the descriptor if possible in the constant pool
-        return new MaxCiType(_constantPool, descriptor);
+        return new MaxCiType(constantPool, typeDescriptor);
     }
 
 }

@@ -30,22 +30,22 @@ import com.sun.max.vm.compiler.eir.*;
  */
 public abstract class SPARCEirConditionalBranch extends SPARCEirLocalControlTransfer {
 
-    private EirBlock _next;
+    private EirBlock next;
 
     public EirBlock next() {
-        return _next;
+        return next;
     }
 
     public SPARCEirConditionalBranch(EirBlock block, EirBlock target, EirBlock next) {
         super(block, target);
-        _next = next;
-        next.addPredecessor(block);
+        this.next = next;
+        this.next.addPredecessor(block);
     }
 
     @Override
     public EirBlock selectSuccessorBlock(PoolSet<EirBlock> eligibleBlocks) {
-        if (eligibleBlocks.contains(_next)) {
-            return _next;
+        if (eligibleBlocks.contains(next)) {
+            return next;
         }
         return super.selectSuccessorBlock(eligibleBlocks);
     }
@@ -59,8 +59,8 @@ public abstract class SPARCEirConditionalBranch extends SPARCEirLocalControlTran
     @Override
     public void substituteSuccessorBlocks(Mapping<EirBlock, EirBlock> map) {
         super.substituteSuccessorBlocks(map);
-        if (map.containsKey(_next)) {
-            _next = map.get(_next);
+        if (map.containsKey(next)) {
+            next = map.get(next);
         }
     }
 
@@ -70,8 +70,8 @@ public abstract class SPARCEirConditionalBranch extends SPARCEirLocalControlTran
      * @param emitter
      */
     public void emitJumpToNext(SPARCEirTargetEmitter emitter) {
-        if (!_next.isAdjacentSuccessorOf(emitter.currentEirBlock())) {
-            emitter.assembler().ba(AnnulBit.A, _next.asLabel());
+        if (!next.isAdjacentSuccessorOf(emitter.currentEirBlock())) {
+            emitter.assembler().ba(AnnulBit.A, next.asLabel());
             emitter.assembler().nop();
         }
     }
@@ -94,8 +94,8 @@ public abstract class SPARCEirConditionalBranch extends SPARCEirLocalControlTran
     @Override
     public String toString() {
         String s = super.toString();
-        if (_next != null) {
-            s += " | #" + _next.serial();
+        if (next != null) {
+            s += " | #" + next.serial();
         }
         return s;
     }

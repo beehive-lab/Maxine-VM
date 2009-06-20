@@ -30,7 +30,7 @@ import com.sun.max.vm.compiler.dir.transform.*;
  */
 public class DirBuiltinCall extends DirCall<Builtin> {
 
-    private final Builtin _builtin;
+    private final Builtin builtin;
 
     /**
      * @param result the variable which will hold the result of the builtin execution
@@ -40,21 +40,21 @@ public class DirBuiltinCall extends DirCall<Builtin> {
      */
     public DirBuiltinCall(DirVariable result, Builtin builtin, DirValue[] arguments, DirCatchBlock catchBlock, DirJavaFrameDescriptor javaFrameDescriptor) {
         super(result, arguments, catchBlock, javaFrameDescriptor);
-        _builtin = builtin;
+        this.builtin = builtin;
     }
 
     public Builtin builtin() {
-        return _builtin;
+        return builtin;
     }
 
     @Override
     protected Builtin procedure() {
-        return _builtin;
+        return builtin;
     }
 
     @Override
     public int hashCodeForBlock() {
-        return super.hashCodeForBlock() ^ _builtin.serial();
+        return super.hashCodeForBlock() ^ builtin.serial();
     }
 
     @Override

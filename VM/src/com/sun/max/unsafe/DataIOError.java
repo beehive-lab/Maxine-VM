@@ -26,19 +26,19 @@ package com.sun.max.unsafe;
  * @author Aritra Bandyopadhyay
  */
 public class DataIOError extends Error {
-    private final Address _faultAddress;
+    private final Address faultAddress;
 
     public DataIOError(Address address, String message) {
         super("data access error at ^" + address.toPaddedHexString('0') + " (" + message + " )");
-        _faultAddress = address;
+        faultAddress = address;
     }
 
     public DataIOError(Address address) {
         super("data access error at ^" + address.toPaddedHexString('0'));
-        _faultAddress = address;
+        faultAddress = address;
     }
 
     public Address getFaultAddress() {
-        return _faultAddress;
+        return faultAddress;
     }
 }

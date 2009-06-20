@@ -36,7 +36,7 @@ public class TirDeadCodeElimination extends TirPipelineFilter {
         super(TirPipelineOrder.REVERSE, receiver);
     }
 
-    private VariableDeterministicSet<TirInstruction> _live = new LinkedIdentityHashSet<TirInstruction>();
+    private VariableDeterministicSet<TirInstruction> live = new LinkedIdentityHashSet<TirInstruction>();
 
     /**
      * Ignore dead instructions.
@@ -46,10 +46,10 @@ public class TirDeadCodeElimination extends TirPipelineFilter {
         return isLive(instruction);
     }
 
-    private TirInstructionVisitor _operandVisitor = new TirInstructionAdapter() {
+    private TirInstructionVisitor operandVisitor = new TirInstructionAdapter() {
         @Override
         public void visit(TirInstruction operand) {
-            _live.add(operand);
+            live.add(operand);
         }
     };
 
@@ -58,13 +58,13 @@ public class TirDeadCodeElimination extends TirPipelineFilter {
      */
     @Override
     public void visit(TirInstruction instruction) {
-        instruction.visitOperands(_operandVisitor);
-        _live.remove(instruction);
+        instruction.visitOperands(operandVisitor);
+        live.remove(instruction);
         forward(instruction);
     }
 
     private boolean isLive(TirInstruction instruction) {
-        return instruction.isLiveIfUnused() || _live.contains(instruction);
+        return instruction.isLiveIfUnused() || live.contains(instruction);
     }
 
     @Override
@@ -74,7 +74,7 @@ public class TirDeadCodeElimination extends TirPipelineFilter {
             public void visit(TirInstruction entry, TirInstruction tail) {
                 final TirLocal local = (TirLocal) entry;
                 if (local.flags().isRead() && local != tail) {
-                    _live.add(tail);
+                    live.add(tail);
                 }
             }
         });

@@ -38,11 +38,11 @@ import java.io.*;
  */
 public final class ConstantPoolEditor {
 
-    private ConstantPool _pool;
-    private GrowableMapping<PoolConstantKey, Integer> _constantsToIndices;
-    private final Thread _owner;
-    private final boolean _allowAppending;
-    private int _acquistionCount;
+    private ConstantPool pool;
+    private GrowableMapping<PoolConstantKey, Integer> constantsToIndices;
+    private final Thread owner;
+    private final boolean allowAppending;
+    private int acquistionCount;
 
     /**
      * The amount by which the pool expands if extra capacity is needed when {@linkplain ConstantPoolEditor#append(PoolConstant) appending} new entries to the pool.
@@ -53,10 +53,10 @@ public final class ConstantPoolEditor {
      * This must only be called from {@link ConstantPool#edit()}.
      */
     ConstantPoolEditor(ConstantPool pool, boolean allowAppending) {
-        _pool = pool;
-        _owner = Thread.currentThread();
-        _pool._editor = this;
-        _allowAppending = allowAppending;
+        this.pool = pool;
+        this.owner = Thread.currentThread();
+        pool.editor = this;
+        this.allowAppending = allowAppending;
         acquire();
     }
 
@@ -67,22 +67,22 @@ public final class ConstantPoolEditor {
      * the first modification or search of the pool is a significant cost paid.
      */
     private GrowableMapping<PoolConstantKey, Integer> constantsToIndices() {
-        if (_constantsToIndices == null) {
-            _constantsToIndices = new HashEntryChainedHashMapping<PoolConstantKey, Integer>(_pool.constants().length);
+        if (constantsToIndices == null) {
+            constantsToIndices = new HashEntryChainedHashMapping<PoolConstantKey, Integer>(pool.constants().length);
 
             // The pool is traversed in reverse so that the canonical index for a duplicated
             // constant is the lowest one. Most constant pools do not contain duplicate
             // entries but it is not illegal for them to do so. Not surprisingly, at least
             // one of the JCK tests contains such a constant pool.
-            for (int index = _pool._length - 1; index >= 1; --index) {
-                final PoolConstant constant = _pool.constants()[index];
+            for (int index = pool.length - 1; index >= 1; --index) {
+                final PoolConstant constant = pool.constants()[index];
                 if (constant.tag() != INVALID) {
-                    final PoolConstantKey key = constant.key(_pool);
-                    _constantsToIndices.put(key, index);
+                    final PoolConstantKey key = constant.key(pool);
+                    constantsToIndices.put(key, index);
                 }
             }
         }
-        return _constantsToIndices;
+        return constantsToIndices;
     }
 
     /**
@@ -91,53 +91,53 @@ public final class ConstantPoolEditor {
      * prevents extra clutter from being added to the runtime version of a pool.
      */
     public ConstantPoolEditor copy() {
-        final ConstantPool pool = new ConstantPool(_pool.classLoader(), _pool.constants().clone(), _pool._length);
-        pool.setHolder(_pool.holder());
-        return new ConstantPoolEditor(pool, true);
+        final ConstantPool poolCopy = new ConstantPool(pool.classLoader(), pool.constants().clone(), pool.length);
+        poolCopy.setHolder(poolCopy.holder());
+        return new ConstantPoolEditor(poolCopy, true);
     }
 
     public ConstantPool pool() {
-        return _pool;
+        return pool;
     }
 
     void acquire() {
-        assert Thread.currentThread() == _owner;
-        ++_acquistionCount;
+        assert Thread.currentThread() == owner;
+        ++acquistionCount;
         //if (_pool.holder() != null) System.err.printAddress(_owner + ": " + _acquistionCount + " acquired " + _pool);
     }
 
     public void release() {
-        assert Thread.currentThread() == _owner;
-        assert _pool != null && _pool._editor == this;
+        assert Thread.currentThread() == owner;
+        assert pool != null && pool.editor == this;
         //if (_pool.holder() != null) System.err.printAddress(_owner + ": " + _acquistionCount + " releasing " + _pool);
-        if (--_acquistionCount <= 0) {
-            synchronized (_pool) {
-                _pool.notifyAll();
-                _pool._editor = null;
-                _pool = null;
+        if (--acquistionCount <= 0) {
+            synchronized (pool) {
+                pool.notifyAll();
+                pool.editor = null;
+                pool = null;
             }
         }
     }
 
     public Thread owner() {
-        return _owner;
+        return owner;
     }
 
     public int append(PoolConstant constant) {
-        if (!_allowAppending) {
+        if (!allowAppending) {
             throw new IllegalStateException("Attempting to add an entry to " + pool());
         }
-        if (_pool._length == _pool.constants().length) {
-            final int newCapacity = _pool.constants().length + ConstantPoolEditor.EXPANSION_AMOUNT;
+        if (pool.length == pool.constants().length) {
+            final int newCapacity = pool.constants().length + ConstantPoolEditor.EXPANSION_AMOUNT;
             final PoolConstant[] newConstants = new PoolConstant[newCapacity];
-            System.arraycopy(_pool.constants(), 0, newConstants, 0, _pool._length);
-            _pool.setConstants(newConstants);
+            System.arraycopy(pool.constants(), 0, newConstants, 0, pool.length);
+            pool.setConstants(newConstants);
         }
 
-        final int index = _pool._length;
-        assert _pool.constants()[index] == null;
-        _pool.setConstant(index, constant);
-        ++_pool._length;
+        final int index = pool.length;
+        assert pool.constants()[index] == null;
+        pool.setConstant(index, constant);
+        ++pool.length;
         return index;
     }
 
@@ -148,7 +148,7 @@ public final class ConstantPoolEditor {
      * @return the index of {@code constant} in the pool or -1 if it's not in the pool and {@code appendIfAbsent == false}
      */
     public int indexOf(PoolConstant constant, boolean appendIfAbsent) {
-        final PoolConstantKey key = constant instanceof PoolConstantKey ? (PoolConstantKey) constant : constant.key(_pool);
+        final PoolConstantKey key = constant instanceof PoolConstantKey ? (PoolConstantKey) constant : constant.key(pool);
         return find(key, constant, appendIfAbsent);
     }
 
@@ -161,14 +161,14 @@ public final class ConstantPoolEditor {
     }
 
     private int find(PoolConstantKey key, PoolConstant constant, boolean appendIfAbsent) {
-        final GrowableMapping<PoolConstantKey, Integer> constantsToIndices = constantsToIndices();
-        Integer index = constantsToIndices.get(key);
+        final GrowableMapping<PoolConstantKey, Integer> map = constantsToIndices();
+        Integer index = map.get(key);
         if (index == null) {
             if (!appendIfAbsent) {
                 return -1;
             }
             index = append(constant);
-            constantsToIndices.put(key, index);
+            map.put(key, index);
         }
         return index.intValue();
     }
@@ -180,20 +180,20 @@ public final class ConstantPoolEditor {
      */
     public void write(DataOutputStream stream) throws IOException {
         makeComplete();
-        stream.writeShort(_pool.numberOfConstants());
-        for (int index = 1; index != _pool.numberOfConstants(); ++index) {
-            final PoolConstant constant = _pool.at(index);
+        stream.writeShort(pool.numberOfConstants());
+        for (int index = 1; index != pool.numberOfConstants(); ++index) {
+            final PoolConstant constant = pool.at(index);
             final Tag tag = constant.tag();
             if (tag != INVALID) {
                 stream.writeByte(tag.classfileTag());
                 switch (tag) {
                     case UTF8: {
-                        stream.writeUTF(_pool.utf8At(index, null).toString());
+                        stream.writeUTF(pool.utf8At(index, null).toString());
                         break;
                     }
                     case CLASS: {
                         final String classDescriptor;
-                        final String string = _pool.classAt(index).typeDescriptor().toString();
+                        final String string = pool.classAt(index).typeDescriptor().toString();
                         if (string.charAt(0) == 'L') {
                             // Strip 'L' and ';' surrounding class name
                             classDescriptor = string.substring(1, string.length() - 1);
@@ -205,23 +205,23 @@ public final class ConstantPoolEditor {
                         break;
                     }
                     case DOUBLE: {
-                        stream.writeDouble(_pool.doubleAt(index));
+                        stream.writeDouble(pool.doubleAt(index));
                         break;
                     }
                     case INTEGER: {
-                        stream.writeInt(_pool.intAt(index));
+                        stream.writeInt(pool.intAt(index));
                         break;
                     }
                     case FLOAT: {
-                        stream.writeFloat(_pool.floatAt(index));
+                        stream.writeFloat(pool.floatAt(index));
                         break;
                     }
                     case LONG: {
-                        stream.writeLong(_pool.longAt(index));
+                        stream.writeLong(pool.longAt(index));
                         break;
                     }
                     case NAME_AND_TYPE: {
-                        final NameAndTypeConstant nameAndType = _pool.nameAndTypeAt(index);
+                        final NameAndTypeConstant nameAndType = pool.nameAndTypeAt(index);
                         stream.writeShort(indexOf(nameAndType.name()));
                         stream.writeShort(indexOf(makeUtf8Constant(nameAndType.descriptorString())));
                         break;
@@ -229,15 +229,15 @@ public final class ConstantPoolEditor {
                     case INTERFACE_METHOD_REF:
                     case METHOD_REF:
                     case FIELD_REF: {
-                        final MemberRefConstant field = _pool.memberAt(index);
-                        final int classIndex = indexOf(createClassConstant(field.holder(_pool)));
-                        final int nameAndTypeIndex = indexOf(createNameAndTypeConstant(field.name(_pool), field.descriptor(_pool)));
+                        final MemberRefConstant field = pool.memberAt(index);
+                        final int classIndex = indexOf(createClassConstant(field.holder(pool)));
+                        final int nameAndTypeIndex = indexOf(createNameAndTypeConstant(field.name(pool), field.descriptor(pool)));
                         stream.writeShort(classIndex);
                         stream.writeShort(nameAndTypeIndex);
                         break;
                     }
                     case STRING: {
-                        final String string = _pool.stringAt(index);
+                        final String string = pool.stringAt(index);
                         stream.writeShort(indexOf(makeUtf8Constant(string)));
                         break;
                     }
@@ -253,14 +253,14 @@ public final class ConstantPoolEditor {
      * Creates any entries required for {@linkplain #write(DataOutputStream) writing out} a JVM specification compliant constant pool.
      */
     public void makeComplete() {
-        for (int index = 1; index != _pool.numberOfConstants(); ++index) {
-            final PoolConstant constant = _pool.at(index);
+        for (int index = 1; index != pool.numberOfConstants(); ++index) {
+            final PoolConstant constant = pool.at(index);
             final Tag tag = constant.tag();
             if (tag != INVALID) {
                 switch (tag) {
                     case CLASS: {
                         final String classDescriptor;
-                        final String string = _pool.classAt(index).typeDescriptor().toString();
+                        final String string = pool.classAt(index).typeDescriptor().toString();
                         if (string.charAt(0) == 'L') {
                             // Strip 'L' and ';' surrounding class name
                             classDescriptor = string.substring(1, string.length() - 1);
@@ -271,7 +271,7 @@ public final class ConstantPoolEditor {
                         break;
                     }
                     case NAME_AND_TYPE: {
-                        final NameAndTypeConstant nameAndType = _pool.nameAndTypeAt(index);
+                        final NameAndTypeConstant nameAndType = pool.nameAndTypeAt(index);
                         indexOf(nameAndType.name());
                         indexOf(makeUtf8Constant(nameAndType.descriptorString()));
                         break;
@@ -279,13 +279,13 @@ public final class ConstantPoolEditor {
                     case INTERFACE_METHOD_REF:
                     case METHOD_REF:
                     case FIELD_REF: {
-                        final MemberRefConstant field = _pool.memberAt(index);
-                        indexOf(createClassConstant(field.holder(_pool)));
-                        indexOf(createNameAndTypeConstant(field.name(_pool), field.descriptor(_pool)));
+                        final MemberRefConstant field = pool.memberAt(index);
+                        indexOf(createClassConstant(field.holder(pool)));
+                        indexOf(createNameAndTypeConstant(field.name(pool), field.descriptor(pool)));
                         break;
                     }
                     case STRING: {
-                        final String string = _pool.stringAt(index);
+                        final String string = pool.stringAt(index);
                         indexOf(makeUtf8Constant(string));
                         break;
                     }

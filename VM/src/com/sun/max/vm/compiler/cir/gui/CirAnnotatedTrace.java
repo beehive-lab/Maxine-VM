@@ -36,27 +36,27 @@ import com.sun.max.vm.compiler.cir.*;
  */
 class CirAnnotatedTrace implements Iterable<CirAnnotatedTrace.Element> {
 
-    private final String _trace;
+    private final String trace;
 
-    private final Sequence<Element> _elements;
+    private final Sequence<Element> elements;
 
-    private final ClassMethodActor _classMethodActor;
+    private final ClassMethodActor classMethodActor;
 
-    private final String _description;
+    private final String description;
 
     /**
      * Describes the {@linkplain Range range(s)} in the trace of a single CIR node.
      */
     public abstract static class Element {
 
-        private final CirNode _node;
+        private final CirNode node;
 
         protected Element(CirNode node) {
-            _node = node;
+            this.node = node;
         }
 
         public CirNode node() {
-            return _node;
+            return node;
         }
 
         /**
@@ -80,10 +80,10 @@ class CirAnnotatedTrace implements Iterable<CirAnnotatedTrace.Element> {
          * @return {@code ""} if {@code node() == null}
          */
         public final String nodeType() {
-            if (_node == null) {
+            if (node == null) {
                 return "";
             }
-            return _node.getClass().getSimpleName();
+            return node.getClass().getSimpleName();
         }
 
         @Override
@@ -95,25 +95,25 @@ class CirAnnotatedTrace implements Iterable<CirAnnotatedTrace.Element> {
      */
     public static class SimpleElement extends CirAnnotatedTrace.Element {
 
-        private Range _range;
+        private Range range;
 
         public SimpleElement(CirNode node, Range range) {
             super(node);
-            _range = range;
+            this.range = range;
         }
 
         public Range range() {
-            return _range;
+            return range;
         }
 
         @Override
         public void visitRanges(RangeVisitor visitor) {
-            visitor.visitRange(_range);
+            visitor.visitRange(range);
         }
 
         @Override
         public String toString() {
-            return nodeType() + _range;
+            return nodeType() + range;
         }
 
         @Override
@@ -133,32 +133,32 @@ class CirAnnotatedTrace implements Iterable<CirAnnotatedTrace.Element> {
      */
     public static class ParenthesisElement extends CirAnnotatedTrace.Element {
 
-        private Range _open;
-        private Range _close;
+        private Range open;
+        private Range close;
 
         public ParenthesisElement(Range open, Range close) {
             super(null);
-            _open = open;
-            _close = close;
+            this.open = open;
+            this.close = close;
         }
 
         @Override
         public void visitRanges(RangeVisitor visitor) {
-            visitor.visitRange(_open);
-            visitor.visitRange(_close);
+            visitor.visitRange(open);
+            visitor.visitRange(close);
         }
 
         @Override
         public String toString() {
-            return nodeType() + '{' + _open + ',' + _close + '}';
+            return nodeType() + '{' + open + ',' + close + '}';
         }
 
         public Range firstRange() {
-            return _open;
+            return open;
         }
 
         public Range secondRange() {
-            return _close;
+            return close;
         }
     }
 
@@ -167,51 +167,51 @@ class CirAnnotatedTrace implements Iterable<CirAnnotatedTrace.Element> {
      */
     public static class MultiRangeElement extends CirAnnotatedTrace.Element {
 
-        private final Sequence<Range> _ranges;
+        private final Sequence<Range> ranges;
 
         public MultiRangeElement(CirNode node, Sequence<Range> ranges) {
             super(node);
             assert !ranges.isEmpty();
-            _ranges = ranges;
+            this.ranges = ranges;
         }
 
         @Override
         public void visitRanges(RangeVisitor visitor) {
-            for (Range range : _ranges) {
+            for (Range range : ranges) {
                 visitor.visitRange(range);
             }
         }
 
         @Override
         public String toString() {
-            return nodeType() + '{' + Sequence.Static.toString(_ranges, null, ",") + '}';
+            return nodeType() + '{' + Sequence.Static.toString(ranges, null, ",") + '}';
         }
     }
 
     public CirAnnotatedTrace(String trace, Sequence<Element> elements, ClassMethodActor classMethodActor, String description) {
-        _trace = trace;
-        _elements = elements;
-        _classMethodActor = classMethodActor;
-        _description = description == null ? "" : description;
+        this.trace = trace;
+        this.elements = elements;
+        this.classMethodActor = classMethodActor;
+        this.description = description == null ? "" : description;
     }
 
     public String trace() {
-        return _trace;
+        return trace;
     }
 
     public Sequence<Element> elements() {
-        return _elements;
+        return elements;
     }
 
     public ClassMethodActor classMethodActor() {
-        return _classMethodActor;
+        return classMethodActor;
     }
 
     public String description() {
-        return _description;
+        return description;
     }
 
     public Iterator<Element> iterator() {
-        return _elements.iterator();
+        return elements.iterator();
     }
 }

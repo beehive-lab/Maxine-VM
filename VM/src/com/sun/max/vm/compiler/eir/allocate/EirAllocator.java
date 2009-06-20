@@ -35,14 +35,14 @@ public abstract class EirAllocator<EirRegister_Type extends EirRegister> {
     protected abstract PoolSet<EirRegister_Type> allocatableIntegerRegisters();
     protected abstract PoolSet<EirRegister_Type> allocatableFloatingPointRegisters();
 
-    private final EirMethodGeneration _methodGeneration;
+    private final EirMethodGeneration methodGeneration;
 
     public EirMethodGeneration methodGeneration() {
-        return _methodGeneration;
+        return methodGeneration;
     }
 
     protected EirAllocator(EirMethodGeneration methodGeneration) {
-        _methodGeneration = methodGeneration;
+        this.methodGeneration = methodGeneration;
     }
 
     public abstract void run();

@@ -104,14 +104,14 @@ public class VmThread {
 
     @INLINE
     public static boolean traceThreads() {
-        return _traceThreadsOption.getValue();
+        return traceThreadsOption.getValue();
     }
 
-    private static final VMBooleanXXOption _traceThreadsOption = register(new VMBooleanXXOption("-XX:-TraceThreads", "Trace thread management activity for debugging purposes."), MaxineVM.Phase.PRISTINE);
+    private static final VMBooleanXXOption traceThreadsOption = register(new VMBooleanXXOption("-XX:-TraceThreads", "Trace thread management activity for debugging purposes."), MaxineVM.Phase.PRISTINE);
 
     private static final Size DEFAULT_STACK_SIZE = Size.M;
 
-    private static final VMSizeOption _stackSizeOption = register(new VMSizeOption("-Xss", DEFAULT_STACK_SIZE, "Stack size of new threads."), MaxineVM.Phase.PRISTINE);
+    private static final VMSizeOption stackSizeOption = register(new VMSizeOption("-Xss", DEFAULT_STACK_SIZE, "Stack size of new threads."), MaxineVM.Phase.PRISTINE);
 
     /**
      * The signature of {@link #run(int, Address, Pointer, Pointer, Pointer, Pointer, Pointer, Pointer, Pointer, Pointer)}.
@@ -131,27 +131,27 @@ public class VmThread {
 
 
     @CONSTANT_WHEN_NOT_ZERO
-    private Thread _javaThread;
-    private volatile Thread.State _state = Thread.State.NEW;
-    private volatile boolean _interrupted = false;
-    private Throwable _terminationCause;
-    private int _id;
-    private int _parkState;
+    private Thread javaThread;
+    private volatile Thread.State state = Thread.State.NEW;
+    private volatile boolean interrupted = false;
+    private Throwable terminationCause;
+    private int id;
+    private int parkState;
 
-    private  TLAB _tlab = new TLAB();
+    private  TLAB tlab = new TLAB();
 
-    private Address _guardPage = Address.zero();
+    private Address guardPage = Address.zero();
 
     @CONSTANT
-    private Pointer _vmThreadLocals = Pointer.zero();
+    private Pointer vmThreadLocals = Pointer.zero();
 
     @INSPECTED
-    private String _name;
+    private String name;
 
     @CONSTANT
-    protected Word _nativeThread = Word.zero();
+    protected Word nativeThread = Word.zero();
 
-    private final VmStackFrameWalker _stackFrameWalker = new VmStackFrameWalker(Pointer.zero());
+    private final VmStackFrameWalker stackFrameWalker = new VmStackFrameWalker(Pointer.zero());
 
     /**
      * Gets an object that can be used to walk the frames in this thread's stack.
@@ -161,23 +161,23 @@ public class VmThread {
      * allocation must not occur.</b> All other stack walks must create a new stack walker instance.
      */
     public VmStackFrameWalker stackFrameWalker() {
-        FatalError.check(_stackFrameWalker != null, "Thread-local stack frame walker cannot be null for a running thread");
-        return _stackFrameWalker;
+        FatalError.check(stackFrameWalker != null, "Thread-local stack frame walker cannot be null for a running thread");
+        return stackFrameWalker;
     }
 
-    private final StackReferenceMapPreparer _stackReferenceMapPreparer = new StackReferenceMapPreparer(this);
+    private final StackReferenceMapPreparer stackReferenceMapPreparer = new StackReferenceMapPreparer(this);
 
     /**
      * Gets the thread-local object used to prepare the reference map for this stack's thread during garbage collection.
      */
     public StackReferenceMapPreparer stackReferenceMapPreparer() {
-        return _stackReferenceMapPreparer;
+        return stackReferenceMapPreparer;
     }
 
-    private final CompactReferenceMapInterpreter _compactReferenceMapInterpreter = new CompactReferenceMapInterpreter();
+    private final CompactReferenceMapInterpreter compactReferenceMapInterpreter = new CompactReferenceMapInterpreter();
 
     @PROTOTYPE_ONLY
-    private static final ThreadLocal<CompactReferenceMapInterpreter> _prototypeCompactReferenceMapInterpreter = new ThreadLocal<CompactReferenceMapInterpreter>() {
+    private static final ThreadLocal<CompactReferenceMapInterpreter> prototypeCompactReferenceMapInterpreter = new ThreadLocal<CompactReferenceMapInterpreter>() {
 
         @Override
         protected CompactReferenceMapInterpreter initialValue() {
@@ -187,25 +187,25 @@ public class VmThread {
 
     public CompactReferenceMapInterpreter compactReferenceMapInterpreter() {
         if (MaxineVM.isPrototyping()) {
-            return _prototypeCompactReferenceMapInterpreter.get();
+            return prototypeCompactReferenceMapInterpreter.get();
         }
-        return _compactReferenceMapInterpreter;
+        return compactReferenceMapInterpreter;
     }
 
     public Thread.State state() {
-        return _state;
+        return state;
     }
 
     public void setState(Thread.State state) {
-        _state = state;
+        this.state = state;
     }
 
     public void setTLAB(TLAB tlab) {
-        _tlab = tlab;
+        this.tlab = tlab;
     }
 
     public Thread javaThread() {
-        return _javaThread;
+        return javaThread;
     }
 
     public static VmThread fromJava(Thread javaThread) {
@@ -213,7 +213,7 @@ public class VmThread {
     }
 
     public Word nativeThread() {
-        return _nativeThread;
+        return nativeThread;
     }
 
     /**
@@ -223,44 +223,44 @@ public class VmThread {
      * of -1.
      */
     public int id() {
-        return _id;
+        return id;
     }
 
     void setID(int id) {
-        _id = id;
+        this.id = id;
     }
 
     public String getName() {
-        return _name;
+        return name;
     }
 
     public void setName(String name) {
-        _name = name;
+        this.name = name;
     }
 
-    private JavaMonitor _protectedMonitor;
+    private JavaMonitor protectedMonitor;
 
     @INLINE
     public final JavaMonitor protectedMonitor() {
-        return _protectedMonitor;
+        return protectedMonitor;
     }
 
     @INLINE
     public final void setProtectedMonitor(JavaMonitor protectedMonitor) {
-        _protectedMonitor = protectedMonitor;
+        this.protectedMonitor = protectedMonitor;
     }
 
 
-    private ConditionVariable _waitingCondition;
+    private ConditionVariable waitingCondition;
 
     @INLINE
     public final ConditionVariable waitingCondition() {
-        return _waitingCondition;
+        return waitingCondition;
     }
 
     @INLINE
     public final void setWaitingCondition(ConditionVariable waitingCondition) {
-        _waitingCondition = waitingCondition;
+        this.waitingCondition = waitingCondition;
     }
 
     /**
@@ -270,36 +270,36 @@ public class VmThread {
      * @see StandardJavaMonitor#monitorWait(long)
      * @see StandardJavaMonitor#monitorNotify(boolean)
      */
-    private VmThread _nextWaitingThread = this;
+    private VmThread nextWaitingThread = this;
 
     @INLINE
     public final VmThread nextWaitingThread() {
-        return _nextWaitingThread;
+        return nextWaitingThread;
     }
 
     @INLINE
     public final void setNextWaitingThread(VmThread nextWaitingThread) {
-        _nextWaitingThread = nextWaitingThread;
+        this.nextWaitingThread = nextWaitingThread;
     }
 
     public void setInterrupted() {
-        _interrupted = true;
+        this.interrupted = true;
     }
 
     /**
      * The pool of JNI local references allocated for this thread.
      */
     @CONSTANT_WHEN_NOT_ZERO
-    private JniHandles _jniHandles;
+    private JniHandles jniHandles;
 
     @CONSTANT_WHEN_NOT_ZERO
-    private boolean _isGCThread;
+    private boolean isGCThread;
 
     /**
      * Determines if this thread is owned by the garbage collector.
      */
     public final boolean isGCThread() {
-        return _isGCThread;
+        return isGCThread;
     }
 
     /**
@@ -321,30 +321,30 @@ public class VmThread {
      * @param javaThread thread to be bound
      */
     public VmThread setJavaThread(Thread javaThread) {
-        _isGCThread = Heap.isGcThread(javaThread);
-        _waitingCondition = ConditionVariableFactory.create();
-        _javaThread = javaThread;
-        _name = javaThread.getName();
-        _jniHandles = new JniHandles();
+        this.isGCThread = Heap.isGcThread(javaThread);
+        this.waitingCondition = ConditionVariableFactory.create();
+        this.javaThread = javaThread;
+        this.name = javaThread.getName();
+        this.jniHandles = new JniHandles();
         return this;
     }
 
     protected void beTerminated() {
-        synchronized (_javaThread) {
+        synchronized (javaThread) {
             // Must set TERMINATED before the notify in case a joiner is already waiting
             // @see Thread.join()
-            _state = Thread.State.TERMINATED;
-            _javaThread.notifyAll();
+            state = Thread.State.TERMINATED;
+            javaThread.notifyAll();
         }
         terminationComplete();
         // It is the monitor scheme's responsibility to ensure that this thread isn't reset to RUNNABLE if it blocks
         // here.
-        VmThreadMap.ACTIVE.removeVmThreadLocals(_vmThreadLocals);
+        VmThreadMap.ACTIVE.removeVmThreadLocals(vmThreadLocals);
         // Monitor acquisition after point this MUST NOT HAPPEN as it may reset _state to RUNNABLE
-        _nativeThread = Address.zero();
-        _vmThreadLocals = Pointer.zero();
-        _id = -1;
-        _waitingCondition = null;
+        nativeThread = Address.zero();
+        vmThreadLocals = Pointer.zero();
+        id = -1;
+        waitingCondition = null;
     }
 
     /**
@@ -360,10 +360,10 @@ public class VmThread {
         return vmThread;
     }
 
-    private static final VmThread _mainVMThread = createMain();
+    private static final VmThread mainVMThread = createMain();
 
     public static VmThread main() {
-        return _mainVMThread;
+        return mainVMThread;
     }
 
     @PROTOTYPE_ONLY
@@ -380,9 +380,9 @@ public class VmThread {
      * Initializes the VM thread system and starts the main Java thread.
      */
     public static void createAndRunMainThread() {
-        final Size requestedStackSize = _stackSizeOption.getValue().aligned(Platform.host().pageSize()).asSize();
+        final Size requestedStackSize = stackSizeOption.getValue().aligned(Platform.host().pageSize()).asSize();
 
-        final Word nativeThread = nativeThreadCreate(_mainVMThread._id, requestedStackSize, Thread.NORM_PRIORITY);
+        final Word nativeThread = nativeThreadCreate(mainVMThread.id, requestedStackSize, Thread.NORM_PRIORITY);
         if (nativeThread.isZero()) {
             FatalError.unexpected("Could not start main native thread.");
         } else {
@@ -417,7 +417,7 @@ public class VmThread {
     @INLINE
     public static VmThread current() {
         if (MaxineVM.isPrototyping()) {
-            return _mainVMThread;
+            return mainVMThread;
         }
         return UnsafeLoophole.cast(VM_THREAD.getConstantReference().toJava());
     }
@@ -425,7 +425,7 @@ public class VmThread {
     @INLINE
     public static VmThread current(Pointer vmThreadLocals) {
         if (MaxineVM.isPrototyping()) {
-            return _mainVMThread;
+            return mainVMThread;
         }
         return UnsafeLoophole.cast(VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals).toJava());
     }
@@ -434,16 +434,16 @@ public class VmThread {
 
     private static void executeRunnable(VmThread vmThread) throws Throwable {
         try {
-            if (vmThread == _mainVMThread) {
+            if (vmThread == mainVMThread) {
                 VMConfiguration.hostOrTarget().runScheme().run();
             } else {
-                vmThread._javaThread.run();
+                vmThread.javaThread.run();
             }
         } finally {
             // 'stop0()' support.
-            if (vmThread._terminationCause != null) {
+            if (vmThread.terminationCause != null) {
                 // We arrive here because an uncatchable non-Throwable object has been propagated as an exception.
-                throw vmThread._terminationCause;
+                throw vmThread.terminationCause;
             }
         }
     }
@@ -503,15 +503,15 @@ public class VmThread {
 
         Heap.initializeVmThread(enabledVmThreadLocals);
 
-        vmThread._nativeThread = nativeThread;
-        vmThread._vmThreadLocals = enabledVmThreadLocals;
-        vmThread._stackFrameWalker.setVmThreadLocals(enabledVmThreadLocals);
+        vmThread.nativeThread = nativeThread;
+        vmThread.vmThreadLocals = enabledVmThreadLocals;
+        vmThread.stackFrameWalker.setVmThreadLocals(enabledVmThreadLocals);
 
         HIGHEST_STACK_SLOT_ADDRESS.setConstantWord(triggeredVmThreadLocals, stackEnd);
         LOWEST_STACK_SLOT_ADDRESS.setConstantWord(triggeredVmThreadLocals, triggeredVmThreadLocals.plus(Word.size()));
         STACK_REFERENCE_MAP.setConstantWord(triggeredVmThreadLocals, refMapArea);
 
-        vmThread._guardPage = stackYellowZone;
+        vmThread.guardPage = stackYellowZone;
 
         vmThread.initializationComplete();
 
@@ -533,10 +533,10 @@ public class VmThread {
                 javaThread.getUncaughtExceptionHandler().uncaughtException(javaThread, throwable);
             } catch (Throwable ignoreMe) {
             }
-            vmThread._terminationCause = throwable;
+            vmThread.terminationCause = throwable;
         } finally {
             // If this is the main thread terminating, initiate shutdown hooks
-            if (vmThread == _mainVMThread) {
+            if (vmThread == mainVMThread) {
                 invokeShutdownHooks();
             }
             vmThread.beTerminated();
@@ -551,14 +551,14 @@ public class VmThread {
             final Pointer disabledVmThreadLocals = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
             final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
             final Pointer refMapArea = STACK_REFERENCE_MAP.getConstantWord(vmThreadLocals).asPointer();
-            final Pointer stackYellowZone = _guardPage.asPointer();
+            final Pointer stackYellowZone = guardPage.asPointer();
             final Pointer stackRedZone = stackYellowZone.minus(guardPageSize());
             final Pointer stackEnd = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(enabledVmThreadLocals).asPointer();
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("Initialization completed for thread[id=");
-            Log.print(_id);
+            Log.print(id);
             Log.print(", name=\"");
-            Log.print(_name);
+            Log.print(name);
             Log.println("\"]:");
             Log.print("  Adjusted card table address: ");
             Log.println(ADJUSTED_CARDTABLE_BASE.getConstantWord());
@@ -624,9 +624,9 @@ public class VmThread {
         if (traceThreads()) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("VmThread[id=");
-            Log.print(_id);
+            Log.print(id);
             Log.print(", name=\"");
-            Log.print(_name);
+            Log.print(name);
             Log.print("] Uncaught exception of type ");
             Log.println(ObjectAccess.readClassActor(throwable).name());
             Log.unlock(lockDisabledSafepoints);
@@ -637,9 +637,9 @@ public class VmThread {
         if (traceThreads()) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("Thread terminated [id=");
-            Log.print(_id);
+            Log.print(id);
             Log.print(", name=\"");
-            Log.print(_name);
+            Log.print(name);
             Log.println("\"]");
             Log.unlock(lockDisabledSafepoints);
         }
@@ -687,14 +687,14 @@ public class VmThread {
     @INLINE
     public final boolean isInNative() {
         MemoryBarrier.storeLoad();
-        return !_vmThreadLocals.isZero() && LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(_vmThreadLocals).isZero();
+        return !vmThreadLocals.isZero() && LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).isZero();
     }
 
     @C_FUNCTION
     private static native boolean nativeJoin(Word nativeThread);
 
     public boolean join() {
-        return nativeJoin(_nativeThread);
+        return nativeJoin(nativeThread);
     }
 
     // Access to native thread locals (aka "thread specifics")
@@ -706,19 +706,19 @@ public class VmThread {
      * mechanisms (such as thread_db on Solaris and Linux or Mach APIs on Darwin) for debugging threads
      * across process boundaries.
      */
-    private static Pointer _threadSpecificsList = Pointer.zero();
+    private static Pointer threadSpecificsList = Pointer.zero();
 
     // Access to thread local variables
 
     // Only used by the EIR interpreter(s)
     @PROTOTYPE_ONLY
     public void setVmThreadLocals(Address address) {
-        _vmThreadLocals = address.asPointer();
+        vmThreadLocals = address.asPointer();
     }
 
     @INLINE
     public final Pointer vmThreadLocals() {
-        return _vmThreadLocals;
+        return vmThreadLocals;
     }
 
     // JNI support
@@ -729,14 +729,14 @@ public class VmThread {
     }
 
     public JniHandle createLocalHandle(Object object) {
-        return JniHandles.createLocalHandle(_jniHandles, object);
+        return JniHandles.createLocalHandle(jniHandles, object);
     }
 
     public JniHandles jniHandles() {
-        return _jniHandles;
+        return jniHandles;
     }
 
-    private Throwable _pendingException;
+    private Throwable pendingException;
 
     /**
      * Sets or clears the exception to be thrown once this thread returns from the native function most recently entered
@@ -747,7 +747,7 @@ public class VmThread {
      *            this thread's stack. Otherwise, the pending exception is cleared.
      */
     public void setPendingException(Throwable exception) {
-        _pendingException = exception;
+        this.pendingException = exception;
     }
 
     /**
@@ -758,7 +758,7 @@ public class VmThread {
      *         or null if there is no such pending exception
      */
     public Throwable pendingException() {
-        return _pendingException;
+        return pendingException;
     }
 
     /**
@@ -766,9 +766,9 @@ public class VmThread {
      * Called from a {@linkplain NativeStubGenerator JNI stub} after a native function returns.
      */
     public void throwPendingException() throws Throwable {
-        final Throwable pendingException = _pendingException;
+        final Throwable pendingException = this.pendingException;
         if (pendingException != null) {
-            _pendingException = null;
+            this.pendingException = null;
             throw pendingException;
         }
     }
@@ -785,14 +785,14 @@ public class VmThread {
      * Causes this thread to begin execution.
      */
     public void start0() {
-        _state = Thread.State.RUNNABLE;
-        VmThreadMap.ACTIVE.startVmThread(this, _stackSizeOption.getValue().aligned(Platform.host().pageSize()).asSize(), _javaThread.getPriority());
+        state = Thread.State.RUNNABLE;
+        VmThreadMap.ACTIVE.startVmThread(this, stackSizeOption.getValue().aligned(Platform.host().pageSize()).asSize(), javaThread.getPriority());
     }
 
     public boolean isInterrupted(boolean clearInterrupted) {
-        final boolean interrupted = _interrupted;
+        final boolean interrupted = this.interrupted;
         if (clearInterrupted) {
-            _interrupted = false;
+            this.interrupted = false;
         }
         return interrupted;
     }
@@ -823,10 +823,10 @@ public class VmThread {
      * @param newPriority the new thread priority
      */
     public void setPriority0(int newPriority) {
-        if (_nativeThread.isZero()) {
+        if (nativeThread.isZero()) {
             // native thread does not exist yet
         } else {
-            nativeSetPriority(_nativeThread, newPriority);
+            nativeSetPriority(nativeThread, newPriority);
         }
     }
 
@@ -863,7 +863,7 @@ public class VmThread {
     }
 
     public void stop0(Object throwable) {
-        _terminationCause = (Throwable) throwable;
+        terminationCause = (Throwable) throwable;
         FatalError.unimplemented();
         Throw.raise(this); // not a Throwable => uncatchable - see 'run()' above
     }
@@ -879,34 +879,34 @@ public class VmThread {
     public static native void nativeInterrupt(Word nativeThread);
 
     public void interrupt0() {
-        if (_nativeThread.isZero()) {
+        if (nativeThread.isZero()) {
             // Native thread does not exist yet
         } else {
             // Set to true as default. Will be cleared on this VmThread's
             // native thread if an InterruptedException is thrown after the
             // interruption.
-            _interrupted = true;
-            nativeInterrupt(_nativeThread);
+            interrupted = true;
+            nativeInterrupt(nativeThread);
         }
     }
 
     @Override
     public String toString() {
-        return "VM" + _javaThread;
+        return "VM" + javaThread;
     }
 
     // GC support:
 
     public TLAB getTLAB() {
-        return _tlab;
+        return tlab;
     }
 
     public  Address guardPage() {
-        return _guardPage;
+        return guardPage;
     }
 
     public Address guardPageEnd() {
-        return _guardPage.plus(guardPageSize());
+        return guardPage.plus(guardPageSize());
     }
 
     public static int guardPageSize() {
@@ -961,10 +961,10 @@ public class VmThread {
      */
     public void park() throws InterruptedException {
         synchronized (this) {
-            if (_parkState == 1) {
-                _parkState = 0;
+            if (parkState == 1) {
+                parkState = 0;
             } else {
-                _parkState = 2;
+                parkState = 2;
                 wait();
             }
         }
@@ -976,10 +976,10 @@ public class VmThread {
      */
     public void park(long wait) throws InterruptedException {
         synchronized (this) {
-            if (_parkState == 1) {
-                _parkState = 0;
+            if (parkState == 1) {
+                parkState = 0;
             } else {
-                _parkState = 2;
+                parkState = 2;
                 wait(wait / 1000000, (int) (wait % 1000000));
             }
         }
@@ -990,7 +990,7 @@ public class VmThread {
      */
     public void unpark() {
         synchronized (this) {
-            _parkState = 1;
+            parkState = 1;
             notifyAll();
         }
     }

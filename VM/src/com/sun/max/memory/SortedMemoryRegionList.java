@@ -35,18 +35,18 @@ public final class SortedMemoryRegionList<MemoryRegion_Type extends MemoryRegion
     public SortedMemoryRegionList() {
     }
 
-    private final List<MemoryRegion_Type> _memoryRegions = new ArrayList<MemoryRegion_Type>();
+    private final List<MemoryRegion_Type> memoryRegions = new ArrayList<MemoryRegion_Type>();
 
     public List<MemoryRegion_Type> memoryRegions() {
-        return _memoryRegions;
+        return memoryRegions;
     }
 
     public MemoryRegion_Type find(Address address) {
         int left = 0;
-        int right = _memoryRegions.size();
+        int right = memoryRegions.size();
         while (right > left) {
             final int middle = left + ((right - left) >> 1);
-            final MemoryRegion_Type middleRegion = _memoryRegions.get(middle);
+            final MemoryRegion_Type middleRegion = memoryRegions.get(middle);
             if (middleRegion.start().greaterThan(address)) {
                 right = middle;
             } else if (middleRegion.start().plus(middleRegion.size()).greaterThan(address)) {
@@ -59,7 +59,7 @@ public final class SortedMemoryRegionList<MemoryRegion_Type extends MemoryRegion
     }
 
     public int length() {
-        return _memoryRegions.size();
+        return memoryRegions.size();
     }
 
     /**
@@ -78,10 +78,10 @@ public final class SortedMemoryRegionList<MemoryRegion_Type extends MemoryRegion
      */
     public MemoryRegion_Type add(MemoryRegion_Type memoryRegion) {
         int left = 0;
-        int right = _memoryRegions.size();
+        int right = memoryRegions.size();
         while (right > left) {
             final int middle = left + ((right - left) >> 2);
-            final MemoryRegion_Type middleRegion = _memoryRegions.get(middle);
+            final MemoryRegion_Type middleRegion = memoryRegions.get(middle);
             if (middleRegion.start().greaterThan(memoryRegion.start())) {
                 right = middle;
             } else {
@@ -90,7 +90,7 @@ public final class SortedMemoryRegionList<MemoryRegion_Type extends MemoryRegion
         }
         assert left == right;
         if (left > 0) {
-            final MemoryRegion_Type leftRegion = _memoryRegions.get(left - 1);
+            final MemoryRegion_Type leftRegion = memoryRegions.get(left - 1);
             if (leftRegion.end().greaterThan(memoryRegion.start())) {
                 if (equals(leftRegion, memoryRegion)) {
                     return leftRegion;
@@ -98,8 +98,8 @@ public final class SortedMemoryRegionList<MemoryRegion_Type extends MemoryRegion
                 throw new IllegalArgumentException();
             }
         }
-        if (right < _memoryRegions.size()) {
-            final MemoryRegion_Type rightRegion = _memoryRegions.get(right);
+        if (right < memoryRegions.size()) {
+            final MemoryRegion_Type rightRegion = memoryRegions.get(right);
             if (memoryRegion.contains(rightRegion.start())) {
                 if (equals(rightRegion, memoryRegion)) {
                     return rightRegion;
@@ -107,11 +107,11 @@ public final class SortedMemoryRegionList<MemoryRegion_Type extends MemoryRegion
                 throw new IllegalArgumentException();
             }
         }
-        _memoryRegions.add(right, memoryRegion);
+        memoryRegions.add(right, memoryRegion);
         return memoryRegion;
     }
 
     public Iterator<MemoryRegion_Type> iterator() {
-        return _memoryRegions.iterator();
+        return memoryRegions.iterator();
     }
 }

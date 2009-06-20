@@ -25,7 +25,7 @@ import com.sun.max.vm.value.*;
 
 /**
  * #4.4.4.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
@@ -36,36 +36,36 @@ public final class FloatConstant extends AbstractPoolConstant<FloatConstant> imp
         return Tag.FLOAT;
     }
 
-    private final float _value;
+    private final float value;
 
     FloatConstant(float value) {
-        _value = value;
+        this.value = value;
     }
 
     public float value() {
-        return _value;
+        return value;
     }
 
     public String valueString(ConstantPool pool) {
-        return String.valueOf(_value);
+        return String.valueOf(value);
     }
 
     @Override
     public boolean equals(Object other) {
         if (other instanceof FloatConstant) {
             final FloatConstant key = (FloatConstant) other;
-            return _value == key._value;
+            return value == key.value;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return (int) _value;
+        return (int) value;
     }
 
     public Value value(ConstantPool pool, int index) {
-        return FloatValue.from(_value);
+        return FloatValue.from(value);
     }
 
     @Override

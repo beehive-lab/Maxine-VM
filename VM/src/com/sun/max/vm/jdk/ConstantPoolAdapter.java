@@ -30,26 +30,26 @@ import com.sun.max.vm.classfile.constant.*;
  */
 public final class ConstantPoolAdapter extends sun.reflect.ConstantPool {
 
-    private final com.sun.max.vm.classfile.constant.ConstantPool _constantPool;
+    private final com.sun.max.vm.classfile.constant.ConstantPool constantPool;
 
     ConstantPoolAdapter(com.sun.max.vm.classfile.constant.ConstantPool constantPool) {
-        _constantPool = constantPool;
+        this.constantPool = constantPool;
     }
 
     @Override
     public int getSize() {
-        return _constantPool.numberOfConstants();
+        return constantPool.numberOfConstants();
     }
 
     @Override
     public Class getClassAt(int index) {
-        return _constantPool.classAt(index).resolve(_constantPool, index).toJava();
+        return constantPool.classAt(index).resolve(constantPool, index).toJava();
     }
 
     @Override
     public Class getClassAtIfLoaded(int index) {
-        final ClassConstant classRef = _constantPool.classAt(index);
-        if (classRef.isResolvableWithoutClassLoading(_constantPool)) {
+        final ClassConstant classRef = constantPool.classAt(index);
+        if (classRef.isResolvableWithoutClassLoading(constantPool)) {
             return getClassAt(index);
         }
         return null;
@@ -57,7 +57,7 @@ public final class ConstantPoolAdapter extends sun.reflect.ConstantPool {
 
     @Override
     public Member getMethodAt(int index) {
-        final MethodActor methodActor = _constantPool.methodAt(index).resolve(_constantPool, index);
+        final MethodActor methodActor = constantPool.methodAt(index).resolve(constantPool, index);
         if (methodActor.isInstanceInitializer()) {
             return methodActor.toJavaConstructor();
         }
@@ -66,7 +66,7 @@ public final class ConstantPoolAdapter extends sun.reflect.ConstantPool {
 
     @Override
     public Member getMethodAtIfLoaded(int index) {
-        if (_constantPool.methodAt(index).isResolvableWithoutClassLoading(_constantPool)) {
+        if (constantPool.methodAt(index).isResolvableWithoutClassLoading(constantPool)) {
             return getMethodAt(index);
         }
         return null;
@@ -74,12 +74,12 @@ public final class ConstantPoolAdapter extends sun.reflect.ConstantPool {
 
     @Override
     public Field getFieldAt(int index) {
-        return _constantPool.fieldAt(index).resolve(_constantPool, index).toJava();
+        return constantPool.fieldAt(index).resolve(constantPool, index).toJava();
     }
 
     @Override
     public Field getFieldAtIfLoaded(int index) {
-        if (_constantPool.fieldAt(index).isResolvableWithoutClassLoading(_constantPool)) {
+        if (constantPool.fieldAt(index).isResolvableWithoutClassLoading(constantPool)) {
             getFieldAt(index);
         }
         return null;
@@ -90,40 +90,40 @@ public final class ConstantPoolAdapter extends sun.reflect.ConstantPool {
         final String holder;
         final String name;
         final String descriptor;
-        final MemberRefConstant member = _constantPool.memberAt(index);
-        holder = member.holder(_constantPool).toString();
-        name = member.name(_constantPool).toString();
-        descriptor = member.descriptor(_constantPool).toString();
+        final MemberRefConstant member = constantPool.memberAt(index);
+        holder = member.holder(constantPool).toString();
+        name = member.name(constantPool).toString();
+        descriptor = member.descriptor(constantPool).toString();
         return new String[]{holder, name, descriptor};
     }
 
     @Override
     public int getIntAt(int index) {
-        return _constantPool.intAt(index);
+        return constantPool.intAt(index);
     }
 
     @Override
     public long getLongAt(int index) {
-        return _constantPool.longAt(index);
+        return constantPool.longAt(index);
     }
 
     @Override
     public float getFloatAt(int index) {
-        return _constantPool.floatAt(index);
+        return constantPool.floatAt(index);
     }
 
     @Override
     public double getDoubleAt(int index) {
-        return _constantPool.doubleAt(index);
+        return constantPool.doubleAt(index);
     }
 
     @Override
     public String getStringAt(int index) {
-        return _constantPool.stringAt(index);
+        return constantPool.stringAt(index);
     }
 
     @Override
     public String getUTF8At(int index) {
-        return _constantPool.utf8At(index, null).toString();
+        return constantPool.utf8At(index, null).toString();
     }
 }

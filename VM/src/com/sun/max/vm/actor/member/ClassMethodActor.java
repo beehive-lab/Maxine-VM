@@ -50,12 +50,12 @@ import com.sun.org.apache.bcel.internal.generic.*;
 public abstract class ClassMethodActor extends MethodActor {
 
     @INSPECTED
-    private CodeAttribute _codeAttribute;
+    private CodeAttribute codeAttribute;
 
     public ClassMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, CodeAttribute codeAttribute) {
         super(name, descriptor, flags);
-        _codeAttribute = codeAttribute;
-        _nativeFunction = isNative() ? new NativeFunction(this) : null;
+        this.codeAttribute = codeAttribute;
+        this.nativeFunction = isNative() ? new NativeFunction(this) : null;
     }
 
     /**
@@ -66,7 +66,7 @@ public abstract class ClassMethodActor extends MethodActor {
     }
 
     @INSPECTED
-    private MethodState _methodState;
+    private MethodState methodState;
 
     /**
      * Gets the {@link MethodState} object that encapsulates the current runtime compilation state of the method.
@@ -74,22 +74,22 @@ public abstract class ClassMethodActor extends MethodActor {
      */
     @INLINE
     public final MethodState methodState() {
-        return _methodState;
+        return methodState;
     }
 
     @INLINE
     public final void setMethodState(MethodState methodState) {
-        assert _methodState == null;
-        _methodState = methodState;
+        assert this.methodState == null;
+        this.methodState = methodState;
     }
 
     public final void resetMethodState() {
-        _methodState = null;
+        methodState = null;
     }
 
-    private ClassMethodActor _compilee;
+    private ClassMethodActor compilee;
 
-    private final NativeFunction _nativeFunction;
+    private final NativeFunction nativeFunction;
 
     /**
      * Gets the object representing the linkage of this native method actor to a native machine code address.
@@ -97,7 +97,7 @@ public abstract class ClassMethodActor extends MethodActor {
      * @return {@code null} if this method is not {@linkplain #isNative() native}
      */
     public final NativeFunction nativeFunction() {
-        return _nativeFunction;
+        return nativeFunction;
     }
 
     /**
@@ -105,16 +105,16 @@ public abstract class ClassMethodActor extends MethodActor {
      */
     @INLINE
     public static boolean traceJNI() {
-        return _traceJNI;
+        return traceJNI;
     }
 
-    private static boolean _traceJNI;
+    private static boolean traceJNI;
 
     static {
         register(new VMBooleanXXOption("-XX:-TraceJNI", "Trace JNI activity for debugging purposes.") {
             @Override
             public boolean parseValue(Pointer optionValue) {
-                _traceJNI = getValue();
+                traceJNI = getValue();
                 return true;
             }
         }, MaxineVM.Phase.STARTING);
@@ -153,7 +153,7 @@ public abstract class ClassMethodActor extends MethodActor {
      * Note: This method must not be synchronized as it is called by a GC thread during stack walking.
      */
     public final CodeAttribute rawCodeAttribute() {
-        return _codeAttribute;
+        return codeAttribute;
     }
 
     /**
@@ -163,20 +163,20 @@ public abstract class ClassMethodActor extends MethodActor {
         // Ensure that any prerequisite substitution of the code to be compiled/executed is performed first
         compilee();
 
-        return _codeAttribute;
+        return codeAttribute;
     }
 
     /**
      * @return the actor for the method that will be compiled and/or executed in lieu of this method
      */
     public synchronized ClassMethodActor compilee() {
-        if (_compilee == null) {
-            _compilee = this;
+        if (compilee == null) {
+            compilee = this;
             if (!isHiddenToReflection()) {
                 final ClassMethodActor substitute = METHOD_SUBSTITUTIONS.Static.findSubstituteFor(this);
                 if (substitute != null) {
-                    _compilee = substitute;
-                    _codeAttribute = substitute._codeAttribute;
+                    compilee = substitute;
+                    codeAttribute = substitute.codeAttribute;
                 }
                 if (MaxineVM.isPrototyping()) {
                     validateInlineAnnotation();
@@ -185,11 +185,11 @@ public abstract class ClassMethodActor extends MethodActor {
 
             ClassVerifier verifier = null;
 
-            final CodeAttribute codeAttribute = Preprocessor.apply(_compilee, _codeAttribute);
-            final boolean modified = _codeAttribute != codeAttribute;
-            _codeAttribute = codeAttribute;
+            final CodeAttribute processCodeAttribute = Preprocessor.apply(compilee, codeAttribute);
+            final boolean modified = processCodeAttribute != codeAttribute;
+            codeAttribute = processCodeAttribute;
 
-            final ClassActor holder = _compilee.holder();
+            final ClassActor holder = compilee.holder();
             if (MaxineVM.isPrototyping()) {
                 if (holder.kind() != Kind.WORD) {
                     // We simply verify all methods during boot image build time as the overhead should be acceptable.
@@ -200,7 +200,7 @@ public abstract class ClassMethodActor extends MethodActor {
                     // The compiler/JIT/interpreter cannot handle JSR or RET instructions. However, these instructions
                     // can legally appear in class files whose version number is less than 50.0. So, we inline them
                     // with the type inferencing verifier if they appear in the bytecode of a pre-version-50.0 class file.
-                    if (containsSubroutines(_codeAttribute.code())) {
+                    if (containsSubroutines(codeAttribute.code())) {
                         verifier = new TypeInferencingVerifier(holder);
                     }
                 } else {
@@ -214,11 +214,11 @@ public abstract class ClassMethodActor extends MethodActor {
                 }
             }
 
-            if (verifier != null && _codeAttribute != null) {
-                _codeAttribute = verifier.verify(_compilee, codeAttribute);
+            if (verifier != null && codeAttribute != null) {
+                codeAttribute = verifier.verify(compilee, codeAttribute);
             }
         }
-        return _compilee;
+        return compilee;
     }
 
     /**
@@ -277,11 +277,11 @@ public abstract class ClassMethodActor extends MethodActor {
      */
     @PROTOTYPE_ONLY
     private void validateInlineAnnotation() {
-        if (!_compilee.holder().isGenerated()) {
+        if (!compilee.holder().isGenerated()) {
             try {
-                InliningAnnotationsValidator.apply(_compilee);
+                InliningAnnotationsValidator.apply(compilee);
             } catch (LinkageError linkageError) {
-                ProgramWarning.message("Error while validating INLINE annotation for " + _compilee + ": " + linkageError);
+                ProgramWarning.message("Error while validating INLINE annotation for " + compilee + ": " + linkageError);
             }
         }
     }
@@ -295,8 +295,8 @@ public abstract class ClassMethodActor extends MethodActor {
     }
 
     public synchronized void verify(ClassVerifier classVerifier) {
-        if (_codeAttribute != null) {
-            _codeAttribute = classVerifier.verify(this, _codeAttribute);
+        if (codeAttribute != null) {
+            codeAttribute = classVerifier.verify(this, codeAttribute);
         }
     }
 

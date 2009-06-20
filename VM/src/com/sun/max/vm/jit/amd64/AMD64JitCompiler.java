@@ -48,25 +48,25 @@ import com.sun.max.vm.thread.*;
  */
 public class AMD64JitCompiler extends JitCompiler {
 
-    private final AMD64TemplateBasedTargetGenerator _targetGenerator;
+    private final AMD64TemplateBasedTargetGenerator targetGenerator;
 
     public AMD64JitCompiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        _targetGenerator = new AMD64TemplateBasedTargetGenerator(this);
+        targetGenerator = new AMD64TemplateBasedTargetGenerator(this);
     }
 
     public AMD64JitCompiler(VMConfiguration vmConfiguration, TemplateTable templateTable) {
         this(vmConfiguration);
-        _targetGenerator.initializeTemplateTable(templateTable);
+        targetGenerator.initializeTemplateTable(templateTable);
     }
 
     @Override
     protected TemplateBasedTargetGenerator targetGenerator() {
-        return _targetGenerator;
+        return targetGenerator;
     }
 
     public TemplateTable peekTemplateTable() {
-        return _targetGenerator.templateTable();
+        return targetGenerator.templateTable();
     }
 
     private static final byte ENTER = (byte) 0xC8;
@@ -95,17 +95,17 @@ public class AMD64JitCompiler extends JitCompiler {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isPrototyping()) {
-            _unwindMethod = ClassActor.fromJava(AMD64JitCompiler.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwind"), null);
+            unwindMethod = ClassActor.fromJava(AMD64JitCompiler.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwind"), null);
         }
     }
 
-    private static ClassMethodActor _unwindMethod;
+    private static ClassMethodActor unwindMethod;
 
-    private static int _unwindFrameSize = -1;
+    private static int unwindFrameSize = -1;
 
     @NEVER_INLINE
     private static void getUnwindFrameSize() {
-        _unwindFrameSize = CompilationScheme.Static.getCurrentTargetMethod(_unwindMethod).frameSize();
+        unwindFrameSize = CompilationScheme.Static.getCurrentTargetMethod(unwindMethod).frameSize();
     }
 
     /**
@@ -129,11 +129,11 @@ public class AMD64JitCompiler extends JitCompiler {
         // function
         final Pointer returnAddressPointer = stackPointer.minus(Word.size());
         returnAddressPointer.setWord(catchAddress);
-        if (_unwindFrameSize == -1) {
+        if (unwindFrameSize == -1) {
             // we need to get the size of our own frame if it's not known yet.
             getUnwindFrameSize();
         }
-        VMRegister.setCpuStackPointer(returnAddressPointer.minus(_unwindFrameSize));
+        VMRegister.setCpuStackPointer(returnAddressPointer.minus(unwindFrameSize));
         VMRegister.setCpuFramePointer(framePointer);
     }
 

@@ -69,30 +69,30 @@ public class NameMap {
         }
     };
 
-    private static IdentityHashMapping<TirTree, String> _treeNameMap = new IdentityHashMapping<TirTree, String>();
+    private static IdentityHashMapping<TirTree, String> treeNameMap = new IdentityHashMapping<TirTree, String>();
 
     public static String nameOf(TirTree tree) {
-        String name = _treeNameMap.get(tree);
+        String name = treeNameMap.get(tree);
         if (name == null) {
-            final int number = _treeNameMap.length();
+            final int number = treeNameMap.length();
             if (number < 'Z' - 'A') {
                 name = String.valueOf((char) ('A' + number));
             } else {
                 name = "T:" + number;
             }
-            _treeNameMap.put(tree, name);
+            treeNameMap.put(tree, name);
         }
         return name;
     }
 
-    private static IdentityHashMapping<TirTree, MapFunction<TirInstruction, String>> _treeLabelMap = new IdentityHashMapping<TirTree, MapFunction<TirInstruction, String>>();
+    private static IdentityHashMapping<TirTree, MapFunction<TirInstruction, String>> treeLabelMap = new IdentityHashMapping<TirTree, MapFunction<TirInstruction, String>>();
 
     public static MapFunction<TirInstruction, String> labelMap(TirTree tree) {
-        return _treeLabelMap.get(tree);
+        return treeLabelMap.get(tree);
     }
 
     public static void updateLabelMap(TirTree tree, MapFunction<TirInstruction, String> labelMap) {
-        _treeLabelMap.put(tree, labelMap);
+        treeLabelMap.put(tree, labelMap);
     }
 
     public static String nameOf(TirTree tree, TirInstruction instruction) {

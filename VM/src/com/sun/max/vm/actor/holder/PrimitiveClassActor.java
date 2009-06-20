@@ -37,7 +37,7 @@ import com.sun.max.vm.value.*;
 public final class PrimitiveClassActor<Value_Type extends Value<Value_Type>> extends ClassActor {
 
 
-    private final Kind<Value_Type> _kind;
+    private final Kind<Value_Type> kind;
 
     @PROTOTYPE_ONLY
     PrimitiveClassActor(Kind<Value_Type> kind) {
@@ -60,11 +60,11 @@ public final class PrimitiveClassActor<Value_Type extends Value<Value_Type>> ext
               NO_INNER_CLASSES,
               NO_OUTER_CLASS,
               NO_ENCLOSING_METHOD_INFO);
-        _kind = kind;
+        this.kind = kind;
     }
 
     public TupleClassActor toWrapperClassActor() {
-        return (TupleClassActor) ClassActor.fromJava(_kind.boxedClass());
+        return (TupleClassActor) ClassActor.fromJava(kind.boxedClass());
     }
 
     @Override

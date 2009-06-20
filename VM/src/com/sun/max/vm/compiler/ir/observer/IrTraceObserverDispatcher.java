@@ -34,21 +34,21 @@ import com.sun.max.vm.compiler.ir.*;
  */
 public class IrTraceObserverDispatcher extends IrObserverAdapter {
 
-    private final Map<Class<? extends IrTraceObserver>, IrTraceObserver> _observersByType;
-    private final IrTraceObserver _defaultObserver = new IrTraceObserver();
+    private final Map<Class<? extends IrTraceObserver>, IrTraceObserver> observersByType;
+    private final IrTraceObserver defaultObserver = new IrTraceObserver();
 
     public IrTraceObserverDispatcher() {
-        _observersByType = new HashMap<Class<? extends IrTraceObserver>, IrTraceObserver>();
+        observersByType = new HashMap<Class<? extends IrTraceObserver>, IrTraceObserver>();
     }
 
     private IrTraceObserver observerFor(IrMethod irMethod) {
         final Class<? extends IrTraceObserver> irTraceObserverType = irMethod.irTraceObserverType();
-        if (irTraceObserverType != null && !irTraceObserverType.equals(_defaultObserver.getClass())) {
-            IrTraceObserver irTraceObserver = _observersByType.get(irTraceObserverType);
+        if (irTraceObserverType != null && !irTraceObserverType.equals(defaultObserver.getClass())) {
+            IrTraceObserver irTraceObserver = observersByType.get(irTraceObserverType);
             if (irTraceObserver == null) {
                 try {
                     irTraceObserver = irTraceObserverType.newInstance();
-                    _observersByType.put(irTraceObserverType, irTraceObserver);
+                    observersByType.put(irTraceObserverType, irTraceObserver);
                 } catch (InstantiationException e) {
                     throw ProgramError.unexpected("Could not initialize IR observer implemented by " + irTraceObserverType, e);
                 } catch (IllegalAccessException e) {
@@ -57,7 +57,7 @@ public class IrTraceObserverDispatcher extends IrObserverAdapter {
             }
             return irTraceObserver;
         }
-        return _defaultObserver;
+        return defaultObserver;
     }
 
     @Override

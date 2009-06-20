@@ -35,32 +35,32 @@ import com.sun.max.vm.type.*;
  * @author Ben L. Titzer
  */
 public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointRegister_Type extends Symbol> {
-    private final boolean _useRegisterWindows;
+    private final boolean useRegisterWindows;
 
     public boolean usesRegisterWindows() {
-        return _useRegisterWindows;
+        return useRegisterWindows;
     }
 
-    private final boolean _callPushesReturnAddress;
+    private final boolean callPushesReturnAddress;
 
     public boolean callPushesReturnAddress() {
-        return _callPushesReturnAddress;
+        return callPushesReturnAddress;
     }
 
-    private final int _stackBias;
+    private final int stackBias;
 
     public int stackBias() {
-        return _stackBias;
+        return stackBias;
     }
 
-    private final int _stackFrameAlignment;
+    private final int stackFrameAlignment;
 
     public int stackFrameAlignment() {
-        return _stackFrameAlignment;
+        return stackFrameAlignment;
     }
 
     public int alignFrameSize(int frameSize) {
-        final int n = _stackFrameAlignment - 1;
+        final int n = stackFrameAlignment - 1;
         if (callPushesReturnAddress()) {
             return ((frameSize + Word.size() + n) & ~n) - Word.size();
         }
@@ -98,16 +98,16 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
         return _registerRoleAssignment.integerRegisterActingAs(VMRegister.Role.LITERAL_BASE_POINTER);
     }
 
-    private final IndexedSequence<IntegerRegister_Type> _integerIncomingParameterRegisters;
+    private final IndexedSequence<IntegerRegister_Type> integerIncomingParameterRegisters;
 
     public IndexedSequence<IntegerRegister_Type> integerIncomingParameterRegisters() {
-        return _integerIncomingParameterRegisters;
+        return integerIncomingParameterRegisters;
     }
 
-    private final IndexedSequence<IntegerRegister_Type> _integerOutgoingParameterRegisters;
+    private final IndexedSequence<IntegerRegister_Type> integerOutgoingParameterRegisters;
 
     public IndexedSequence<IntegerRegister_Type> integerOutgoingParameterRegisters() {
-        return _integerOutgoingParameterRegisters;
+        return integerOutgoingParameterRegisters;
     }
 
     @FOLD
@@ -115,21 +115,21 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
         return _registerRoleAssignment.floatingPointRegisterActingAs(VMRegister.Role.ABI_RETURN);
     }
 
-    private final IndexedSequence<FloatingPointRegister_Type> _floatingPointParameterRegisters;
+    private final IndexedSequence<FloatingPointRegister_Type> floatingPointParameterRegisters;
 
     public IndexedSequence<FloatingPointRegister_Type> floatingPointParameterRegisters() {
-        return _floatingPointParameterRegisters;
+        return floatingPointParameterRegisters;
     }
 
     /**
      * The call entry point dedicated to the compiler that compiled methods associated with this TargetABI object.
      */
     @INSPECTED
-    private final CallEntryPoint _callEntryPoint;
+    private final CallEntryPoint callEntryPoint;
 
     @INLINE
     public CallEntryPoint callEntryPoint() {
-        return _callEntryPoint;
+        return callEntryPoint;
     }
 
     /**
@@ -144,29 +144,29 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
                     IndexedSequence<IntegerRegister_Type> integerIncomingParameterRegisters,
                     IndexedSequence<IntegerRegister_Type> integerOutgoingParameterRegisters,
                     IndexedSequence<FloatingPointRegister_Type> floatingPointParameterRegisters, boolean useRegisterWindows, boolean callPushesReturnAddress, int stackFrameAlignment, int stackBias) {
-        _registerRoleAssignment = registerRoleAssignment;
-        _callEntryPoint = callEntryPoint;
-        _integerIncomingParameterRegisters = integerIncomingParameterRegisters;
-        _integerOutgoingParameterRegisters = integerOutgoingParameterRegisters;
-        _floatingPointParameterRegisters = floatingPointParameterRegisters;
-        _useRegisterWindows = useRegisterWindows;
-        _callPushesReturnAddress = callPushesReturnAddress;
-        _stackFrameAlignment = stackFrameAlignment;
-        _stackBias = stackBias;
+        this._registerRoleAssignment = registerRoleAssignment;
+        this.callEntryPoint = callEntryPoint;
+        this.integerIncomingParameterRegisters = integerIncomingParameterRegisters;
+        this.integerOutgoingParameterRegisters = integerOutgoingParameterRegisters;
+        this.floatingPointParameterRegisters = floatingPointParameterRegisters;
+        this.useRegisterWindows = useRegisterWindows;
+        this.callPushesReturnAddress = callPushesReturnAddress;
+        this.stackFrameAlignment = stackFrameAlignment;
+        this.stackBias = stackBias;
     }
 
     public TargetABI(TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> original,
                     RegisterRoleAssignment<IntegerRegister_Type, FloatingPointRegister_Type> registerRoleAssignment,
                     CallEntryPoint callEntryPoint) {
-        _registerRoleAssignment = registerRoleAssignment;
-        _callEntryPoint = callEntryPoint;
-        _integerIncomingParameterRegisters = original._integerIncomingParameterRegisters;
-        _integerOutgoingParameterRegisters = original._integerOutgoingParameterRegisters;
-        _floatingPointParameterRegisters = original._floatingPointParameterRegisters;
-        _useRegisterWindows = original._useRegisterWindows;
-        _callPushesReturnAddress = original._callPushesReturnAddress;
-        _stackFrameAlignment = original._stackFrameAlignment;
-        _stackBias = original._stackBias;
+        this._registerRoleAssignment = registerRoleAssignment;
+        this.callEntryPoint = callEntryPoint;
+        this.integerIncomingParameterRegisters = original.integerIncomingParameterRegisters;
+        this.integerOutgoingParameterRegisters = original.integerOutgoingParameterRegisters;
+        this.floatingPointParameterRegisters = original.floatingPointParameterRegisters;
+        this.useRegisterWindows = original.useRegisterWindows;
+        this.callPushesReturnAddress = original.callPushesReturnAddress;
+        this.stackFrameAlignment = original.stackFrameAlignment;
+        this.stackBias = original.stackBias;
     }
 
     /**

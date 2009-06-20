@@ -41,7 +41,7 @@ public class CirToDirTranslator extends DirGenerator {
         super(dirGeneratorScheme);
     }
 
-    private static final TimerMetric _timer = GlobalMetrics.newTimer("Translate-CirToDir", Clock.SYSTEM_MILLISECONDS);
+    private static final TimerMetric timer = GlobalMetrics.newTimer("Translate-CirToDir", Clock.SYSTEM_MILLISECONDS);
 
     @Override
     protected void generateIrMethod(DirMethod dirMethod, CompilationDirective compilationDirective) {
@@ -51,7 +51,7 @@ public class CirToDirTranslator extends DirGenerator {
 
         Trace.begin(3, "CIR->DIR " + cirMethod.getQualifiedName());
 
-        _timer.start();
+        timer.start();
 
         final CirClosure closure = cirMethod.copyClosure();
         CirBlockUpdating.apply(closure);
@@ -72,7 +72,7 @@ public class CirToDirTranslator extends DirGenerator {
 
         dirMethod.setGenerated(dirParameters, dirBlocks);
 
-        _timer.stop();
+        timer.stop();
 
         Trace.end(3, "CIR->DIR " + cirMethod.getQualifiedName());
     }

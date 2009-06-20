@@ -45,23 +45,23 @@ public abstract class MethodState {
      * The method corresponding to this method state.
      */
     @INSPECTED
-    protected final ClassMethodActor _classMethodActor;
+    protected final ClassMethodActor classMethodActor;
 
     /**
-     * Compilations for this method, null beyond {@link #_numberOfCompilations} -1 .
+     * Compilations for this method, null beyond {@link #numberOfCompilations} -1 .
      */
     @INSPECTED
-    private TargetMethod[] _targetMethodHistory;
+    private TargetMethod[] targetMethodHistory;
 
     /**
      * Number of compilations of this method.
      */
     @INSPECTED
-    private int _numberOfCompilations = 0;
+    private int numberOfCompilations = 0;
 
     protected MethodState(ClassMethodActor classMethodActor, int initialHistoryLength) {
-        _classMethodActor = classMethodActor;
-        _targetMethodHistory = new TargetMethod[initialHistoryLength];
+        this.classMethodActor = classMethodActor;
+        this.targetMethodHistory = new TargetMethod[initialHistoryLength];
     }
 
     /**
@@ -70,7 +70,7 @@ public abstract class MethodState {
      */
     @INLINE
     public final ClassMethodActor classMethodActor() {
-        return _classMethodActor;
+        return classMethodActor;
     }
 
     /**
@@ -88,14 +88,14 @@ public abstract class MethodState {
      * The identity of the array may change as compilations are added.
      */
     protected final TargetMethod[] targetMethodHistory() {
-        return _targetMethodHistory;
+        return targetMethodHistory;
     }
 
     /**
      * @return number of times this method has been compiled.
      */
     protected final int numberOfCompilations() {
-        return _numberOfCompilations;
+        return numberOfCompilations;
     }
 
     /**
@@ -103,12 +103,12 @@ public abstract class MethodState {
      * Adds a new compilation to the history and make it the current compilation.
      */
     protected void addTargetMethod(TargetMethod newTargetMethod) {
-        if (_numberOfCompilations == _targetMethodHistory.length) {
+        if (numberOfCompilations == targetMethodHistory.length) {
             // History full; extend, even if length is 0.
-            _targetMethodHistory = Arrays.extend(_targetMethodHistory, _targetMethodHistory.length * 2 + 1);
+            targetMethodHistory = Arrays.extend(targetMethodHistory, targetMethodHistory.length * 2 + 1);
         }
-        _numberOfCompilations++;
-        _targetMethodHistory[_numberOfCompilations - 1 ] = newTargetMethod;
+        numberOfCompilations++;
+        targetMethodHistory[numberOfCompilations - 1 ] = newTargetMethod;
     }
 
 }

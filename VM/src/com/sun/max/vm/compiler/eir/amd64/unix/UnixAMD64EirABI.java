@@ -125,34 +125,34 @@ public abstract class UnixAMD64EirABI extends AMD64EirABI {
         return result;
     }
 
-    private final PoolSet<AMD64EirRegister> _unallocatableRegisters = createUnallocatableRegisterPoolSet();
+    private final PoolSet<AMD64EirRegister> unallocatableRegisters = createUnallocatableRegisterPoolSet();
 
     @Override
     public PoolSet<AMD64EirRegister> unallocatableRegisters() {
-        return _unallocatableRegisters;
+        return unallocatableRegisters;
     }
 
     private PoolSet<AMD64EirRegister> createAllocatableRegisterPoolSet() {
         final PoolSet<AMD64EirRegister> result = PoolSet.noneOf(AMD64EirRegister.pool());
         result.addAll();
-        for (AMD64EirRegister register : _unallocatableRegisters) {
+        for (AMD64EirRegister register : unallocatableRegisters) {
             result.remove(register);
         }
         return result;
     }
 
-    private final PoolSet<AMD64EirRegister> _allocatableRegisters = createAllocatableRegisterPoolSet();
+    private final PoolSet<AMD64EirRegister> allocatableRegisters = createAllocatableRegisterPoolSet();
 
     @Override
     public PoolSet<AMD64EirRegister> allocatableRegisters() {
-        return _allocatableRegisters;
+        return allocatableRegisters;
     }
 
-    private final PoolSet<AMD64EirRegister> _resultRegisters;
+    private final PoolSet<AMD64EirRegister> resultRegisters;
 
     @Override
     public PoolSet<AMD64EirRegister> resultRegisters() {
-        return _resultRegisters;
+        return resultRegisters;
     }
 
     private static AMD64GeneralRegister64[] getTargetIntegerParameterRegisters() {
@@ -174,8 +174,8 @@ public abstract class UnixAMD64EirABI extends AMD64EirABI {
     }
 
     protected void makeUnallocatable(AMD64EirRegister register) {
-        _unallocatableRegisters.add(register);
-        _allocatableRegisters.remove(register);
+        unallocatableRegisters.add(register);
+        allocatableRegisters.remove(register);
     }
 
     private static TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> targetABI(VMConfiguration vmConfiguration) {
@@ -185,9 +185,9 @@ public abstract class UnixAMD64EirABI extends AMD64EirABI {
 
     protected UnixAMD64EirABI(VMConfiguration vmConfiguration) {
         super(vmConfiguration, targetABI(vmConfiguration));
-        _resultRegisters = PoolSet.noneOf(AMD64EirRegister.pool());
-        _resultRegisters.add((AMD64EirRegister) getResultLocation(Kind.LONG));
-        _resultRegisters.add((AMD64EirRegister) getResultLocation(Kind.DOUBLE));
+        resultRegisters = PoolSet.noneOf(AMD64EirRegister.pool());
+        resultRegisters.add((AMD64EirRegister) getResultLocation(Kind.LONG));
+        resultRegisters.add((AMD64EirRegister) getResultLocation(Kind.DOUBLE));
     }
 
 }

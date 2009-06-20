@@ -250,14 +250,14 @@ final class JDK_java_lang_Thread {
     }
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static ReferenceFieldActor _nameFieldActor;
+    private static ReferenceFieldActor nameFieldActor;
 
     @INLINE
     private static ReferenceFieldActor nameFieldActor() {
-        if (_nameFieldActor == null) {
-            _nameFieldActor = (ReferenceFieldActor) ClassActor.fromJava(Thread.class).findFieldActor(SymbolTable.makeSymbol("name"));
+        if (nameFieldActor == null) {
+            nameFieldActor = (ReferenceFieldActor) ClassActor.fromJava(Thread.class).findFieldActor(SymbolTable.makeSymbol("name"));
         }
-        return _nameFieldActor;
+        return nameFieldActor;
     }
 
     /**

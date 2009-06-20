@@ -27,11 +27,11 @@ import com.sun.max.vm.compiler.eir.*;
  * SPARC Eir Unary Operation.
  * The location of the operand can only be a register.
  * Sub-classes of this class may specify a null operand.
- * 
+ *
  * @author Laurent Daynes
  */
 public abstract class SPARCEirUnaryOperation extends SPARCEirOperation {
-    private final EirOperand _operand;
+    private final EirOperand operand;
 
     /**
      * TODO: Unary operations can only have a register operand. We may want to change the signature of the constructor to reflect this constraint.
@@ -42,25 +42,25 @@ public abstract class SPARCEirUnaryOperation extends SPARCEirOperation {
      */
     protected SPARCEirUnaryOperation(EirBlock block, EirValue operand, EirOperand.Effect effect, PoolSet<EirLocationCategory> locationCategories) {
         super(block);
-        _operand = new EirOperand(this, effect, locationCategories);
-        _operand.setEirValue(operand);
+        this.operand = new EirOperand(this, effect, locationCategories);
+        this.operand.setEirValue(operand);
     }
 
     protected SPARCEirUnaryOperation(EirBlock block, EirOperand operand) {
         super(block);
-        _operand = operand;
+        this.operand = operand;
     }
 
     public EirOperand operand() {
-        return _operand;
+        return operand;
     }
 
     public EirValue operandValue() {
-        return _operand.eirValue();
+        return operand.eirValue();
     }
 
     public EirLocation operandLocation() {
-        return _operand.location();
+        return operand.location();
     }
 
     public SPARCEirRegister.GeneralPurpose operandGeneralRegister() {
@@ -73,13 +73,13 @@ public abstract class SPARCEirUnaryOperation extends SPARCEirOperation {
 
     @Override
     public void visitOperands(EirOperand.Procedure visitor) {
-        if (_operand != null) {
-            visitor.run(_operand);
+        if (operand != null) {
+            visitor.run(operand);
         }
     }
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "  " + _operand;
+        return getClass().getSimpleName() + "  " + operand;
     }
 }

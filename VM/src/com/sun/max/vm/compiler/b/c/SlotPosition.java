@@ -24,33 +24,33 @@ import com.sun.max.vm.type.*;
 
 /**
  * Position in a Java frame or stack.
- * 
+ *
  * If in the sense of the JVM spec, the same slot is occupied by items of different type, we instead reserve a separate
  * slot for each type. This disambiguation simplifies stack merging at basic block boundaries.
- * 
+ *
  * @author Bernd Mathiske
  */
 class SlotPosition {
 
-    private final Kind _kind;
-    private final int _slotIndex;
+    private final Kind kind;
+    private final int slotIndex;
 
     SlotPosition(Kind kind, int slotIndex) {
-        _kind = kind.toStackKind();
-        _slotIndex = slotIndex;
+        this.kind = kind.toStackKind();
+        this.slotIndex = slotIndex;
     }
 
     public Kind getKind() {
-        return _kind;
+        return kind;
     }
 
     public int getSlot() {
-        return _slotIndex;
+        return slotIndex;
     }
 
     @Override
     public int hashCode() {
-        return (_kind.hashCode() ^ _slotIndex) + _slotIndex;
+        return (kind.hashCode() ^ slotIndex) + slotIndex;
     }
 
     @Override
@@ -59,7 +59,7 @@ class SlotPosition {
             return false;
         }
         final SlotPosition position = (SlotPosition) other;
-        return _kind == position._kind && _slotIndex == position._slotIndex;
+        return kind == position.kind && slotIndex == position.slotIndex;
     }
 
 }

@@ -41,30 +41,30 @@ public class CirScopedBlockUpdating extends CirBlockScopedTraversal {
         super.visitBlock(block, scope);
     }
 
-    final LinkedList<CirCall> _blockCalls = new LinkedList<CirCall>();
+    final LinkedList<CirCall> blockCalls = new LinkedList<CirCall>();
 
     public LinkedList<CirCall> blockCalls() {
-        return _blockCalls;
+        return blockCalls;
     }
 
-    final Map<CirCall, CirBlock> _callToScope = new IdentityHashMap<CirCall, CirBlock>();
+    final Map<CirCall, CirBlock> callToScope = new IdentityHashMap<CirCall, CirBlock>();
 
     /**
      * @return the innermost block that contains the given call
      */
     public CirBlock scope(CirCall call) {
         assert call.javaFrameDescriptor() != null || call.procedure() instanceof CirBlock;
-        return _callToScope.get(call);
+        return callToScope.get(call);
     }
 
     @Override
     public void visitCall(CirCall call, CirBlock scope) {
         if (call.javaFrameDescriptor() != null) {
             assert !CirBlock.class.isInstance(call.procedure());
-            _callToScope.put(call, scope);
+            callToScope.put(call, scope);
         } else if (call.procedure() instanceof CirBlock) {
-            _callToScope.put(call, scope);
-            _blockCalls.add(call);
+            callToScope.put(call, scope);
+            blockCalls.add(call);
         }
         super.visitCall(call, scope);
     }
@@ -72,7 +72,7 @@ public class CirScopedBlockUpdating extends CirBlockScopedTraversal {
     @Override
     public void run() {
         super.run();
-        for (CirCall call : _blockCalls) {
+        for (CirCall call : blockCalls) {
             final CirBlock block = (CirBlock) call.procedure();
             block.addCall(call);
         }

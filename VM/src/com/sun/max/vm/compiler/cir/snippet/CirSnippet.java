@@ -35,20 +35,20 @@ import com.sun.max.vm.compiler.snippet.*;
  */
 public class CirSnippet extends CirMethod {
 
-    private final Snippet _snippet;
+    private final Snippet snippet;
 
     public Snippet snippet() {
-        return _snippet;
+        return snippet;
     }
 
     protected CirSnippet(Snippet snippet) {
         super((ClassMethodActor) snippet.foldingMethodActor());
-        _snippet = snippet;
+        this.snippet = snippet;
     }
 
     @Override
     public MethodActor foldingMethodActor() {
-        return _snippet.foldingMethodActor();
+        return snippet.foldingMethodActor();
     }
 
     @Override
@@ -63,24 +63,24 @@ public class CirSnippet extends CirMethod {
 
     private static CirSnippet[] createCirSnippets() {
         final int numberOfSnippets = Snippet.snippets().length();
-        final CirSnippet[] cirSnippets = new CirSnippet[numberOfSnippets];
+        final CirSnippet[] snippets = new CirSnippet[numberOfSnippets];
         for (int i = 0; i < numberOfSnippets; i++) {
-            cirSnippets[i] = new CirSnippet(Snippet.snippets().get(i));
+            snippets[i] = new CirSnippet(Snippet.snippets().get(i));
         }
-        return cirSnippets;
+        return snippets;
     }
 
-    private static CirSnippet[] _cirSnippets = createCirSnippets();
+    private static CirSnippet[] cirSnippets = createCirSnippets();
     /**
      * Used by subclass constructors to update the above array
      * to consistently contain entries of the respective subclass.
      */
     protected final void register() {
-        _cirSnippets[_snippet.serial()] = this;
+        cirSnippets[snippet.serial()] = this;
     }
 
     public static CirSnippet get(Snippet snippet) {
-        return _cirSnippets[snippet.serial()];
+        return cirSnippets[snippet.serial()];
     }
 
     @Override
@@ -91,6 +91,6 @@ public class CirSnippet extends CirMethod {
     @Override
     public boolean isFoldable(CirOptimizer cirOptimizer, CirValue[] arguments) {
         final CirValue[] a = Arrays.subArray(arguments, 0, arguments.length - 2); // exclude the continuations
-        return _snippet.isFoldable(a);
+        return snippet.isFoldable(a);
     }
 }

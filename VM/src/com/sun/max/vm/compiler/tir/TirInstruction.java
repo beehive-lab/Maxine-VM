@@ -31,18 +31,18 @@ public abstract class TirInstruction extends TirMessage implements Classifiable 
         public static final Placeholder FILLER = new Placeholder("%");
         public static final Placeholder UNDEFINED = new Placeholder("_");
 
-        private final String _name;
+        private final String name;
         public Placeholder(String name) {
-            _name = name;
+            this.name = name;
         }
 
         public Placeholder() {
-            _name = null;
+            name = null;
         }
 
         @Override
         public String toString() {
-            return _name;
+            return name;
         }
 
         @Override

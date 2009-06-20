@@ -39,9 +39,9 @@ import com.sun.max.vm.type.*;
  */
 public class HCirToLCirTranslation {
     public static final class Visitor extends CirVisitor {
-        private BirToCirMethodTranslation _methodTranslation;
+        private BirToCirMethodTranslation methodTranslation;
         Visitor(BirToCirMethodTranslation methodTranslation) {
-            _methodTranslation = methodTranslation;
+            this.methodTranslation = methodTranslation;
         }
 
         @Override
@@ -51,13 +51,13 @@ public class HCirToLCirTranslation {
                 final JavaOperator operator = (JavaOperator) procedure;
                 final Kind[] parameterKinds = operator.parameterKinds();
                 assert call.arguments().length == parameterKinds.length + 2;
-                final HCirOperatorLowering visitor = new HCirOperatorLowering(operator, call, _methodTranslation);
+                final HCirOperatorLowering visitor = new HCirOperatorLowering(operator, call, methodTranslation);
                 operator.acceptVisitor(visitor);
             }
         }
 
         public CirVariableFactory variableFactory() {
-            return _methodTranslation.variableFactory();
+            return methodTranslation.variableFactory();
         }
     }
 

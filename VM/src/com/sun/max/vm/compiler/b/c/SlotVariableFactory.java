@@ -32,28 +32,28 @@ import com.sun.max.vm.type.*;
  */
 abstract class SlotVariableFactory {
 
-    protected final CirVariableFactory _cirVariableFactory;
-    protected final Map<SlotPosition, CirVariable> _positionToCirVariable;
-    private final int _maxSlotCount;
+    protected final CirVariableFactory cirVariableFactory;
+    protected final Map<SlotPosition, CirVariable> positionToCirVariable;
+    private final int maxSlotCount;
 
     protected SlotVariableFactory(CirVariableFactory cirVariableFactory, int maxSlotCount) {
-        _cirVariableFactory = cirVariableFactory;
-        _positionToCirVariable = new Hashtable<SlotPosition, CirVariable>();
-        _maxSlotCount = maxSlotCount;
+        this.cirVariableFactory = cirVariableFactory;
+        this.positionToCirVariable = new Hashtable<SlotPosition, CirVariable>();
+        this.maxSlotCount = maxSlotCount;
     }
 
     public int getMaxSlotCount() {
-        return _maxSlotCount;
+        return maxSlotCount;
     }
 
     private boolean isValidIndex(Kind kind, int index) {
-        return kind.isCategory2() ? index < _maxSlotCount : index <= _maxSlotCount;
+        return kind.isCategory2() ? index < maxSlotCount : index <= maxSlotCount;
     }
 
     void setVariable(int index, CirVariable cirVariable) {
         assert isValidIndex(cirVariable.kind(), index);
         final SlotPosition position = new SlotPosition(cirVariable.kind(), index);
-        _positionToCirVariable.put(position, cirVariable);
+        positionToCirVariable.put(position, cirVariable);
     }
 
     protected abstract CirVariable createSlotVariable(Kind kind, int slotIndex);
@@ -61,10 +61,10 @@ abstract class SlotVariableFactory {
     public CirVariable makeVariable(Kind kind, int index) {
         assert isValidIndex(kind, index);
         final SlotPosition position = new SlotPosition(kind, index);
-        CirVariable cirVariable = _positionToCirVariable.get(position);
+        CirVariable cirVariable = positionToCirVariable.get(position);
         if (cirVariable == null) {
             cirVariable = createSlotVariable(position.getKind(), index);
-            _positionToCirVariable.put(position, cirVariable);
+            positionToCirVariable.put(position, cirVariable);
         }
         return cirVariable;
     }

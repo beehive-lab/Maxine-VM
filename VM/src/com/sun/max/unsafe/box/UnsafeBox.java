@@ -43,25 +43,25 @@ public interface UnsafeBox {
          * The initialization of this map need not be synchronized as the initialized map will be exactly
          * the same no matter how many times it is initialized.
          */
-        private static Map<Class<? extends Word>, Class<? extends Word>> _unboxedToBoxedTypes;
+        private static Map<Class<? extends Word>, Class<? extends Word>> unboxedToBoxedTypes;
 
         public static <Word_Type extends Word> Class<? extends Word_Type> getBoxedType(Class<Word_Type> wordType) {
             if (UnsafeBox.class.isAssignableFrom(wordType)) {
                 return wordType;
             }
-            if (_unboxedToBoxedTypes == null) {
+            if (unboxedToBoxedTypes == null) {
                 final Map<Class<? extends Word>, Class<? extends Word>> map = new HashMap<Class<? extends Word>, Class<? extends Word>>();
                 for (Class wordClass : Word.getSubclasses()) {
                     if (!UnsafeBox.class.isAssignableFrom(wordClass)) {
                         final Class result = Classes.forName(new com.sun.max.unsafe.box.Package().name() + ".Boxed" + wordClass.getSimpleName());
                         final Class<Class<? extends Word>> type = null;
                         map.put(StaticLoophole.cast(type, wordClass), StaticLoophole.cast(type, result));
-                        _unboxedToBoxedTypes = map;
+                        unboxedToBoxedTypes = map;
                     }
                 }
             }
             final Class<Class<? extends Word_Type>> type = null;
-            return StaticLoophole.cast(type, _unboxedToBoxedTypes.get(wordType));
+            return StaticLoophole.cast(type, unboxedToBoxedTypes.get(wordType));
         }
     }
 }

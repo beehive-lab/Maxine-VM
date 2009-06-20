@@ -35,12 +35,12 @@ import com.sun.max.vm.type.*;
 public final class AMD64EirCompareAndSwap extends AMD64EirPointerOperation {
 
     @CONSTANT
-    private EirOperand _comparableAndResultOperand;
+    private EirOperand comparableAndResultOperand;
 
     private void initialize(EirValue comparableAndResult) {
-        _comparableAndResultOperand = new EirOperand(this, EirOperand.Effect.UPDATE, G);
-        _comparableAndResultOperand.setRequiredRegister(AMD64EirRegister.General.RAX);
-        _comparableAndResultOperand.setEirValue(comparableAndResult);
+        comparableAndResultOperand = new EirOperand(this, EirOperand.Effect.UPDATE, G);
+        comparableAndResultOperand.setRequiredRegister(AMD64EirRegister.General.RAX);
+        comparableAndResultOperand.setEirValue(comparableAndResult);
     }
 
     public AMD64EirCompareAndSwap(EirBlock block, Kind kind, EirValue newValue, EirValue pointer, EirValue comparableAndResult) {
@@ -66,7 +66,7 @@ public final class AMD64EirCompareAndSwap extends AMD64EirPointerOperation {
     @Override
     public void visitOperands(EirOperand.Procedure visitor) {
         super.visitOperands(visitor);
-        visitor.run(_comparableAndResultOperand);
+        visitor.run(comparableAndResultOperand);
     }
 
     public AMD64GeneralRegister32 newValueRegister32() {

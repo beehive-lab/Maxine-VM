@@ -24,15 +24,15 @@ import com.sun.max.vm.type.*;
 
 public abstract class PointerStoreBuiltin extends PointerBuiltin {
 
-    private final Kind _kind;
+    private final Kind kind;
 
     public Kind kind() {
-        return _kind;
+        return kind;
     }
 
     private PointerStoreBuiltin() {
         final SignatureDescriptor signature = foldingMethodActor().descriptor();
-        _kind = signature.parameterDescriptorAt(signature.numberOfParameters() - 1).toKind();
+        kind = signature.parameterDescriptorAt(signature.numberOfParameters() - 1).toKind();
     }
 
     public static class WriteByteAtLongOffset extends PointerStoreBuiltin {

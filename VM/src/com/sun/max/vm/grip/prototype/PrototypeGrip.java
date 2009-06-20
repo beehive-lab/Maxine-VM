@@ -28,32 +28,31 @@ import com.sun.max.vm.grip.*;
  */
 public class PrototypeGrip extends Grip {
 
-    private final Object _object;
+    private final Object object;
 
     public PrototypeGrip(Object object) {
-        super();
-        _object = object;
+        this.object = object;
     }
 
     @Override
     public boolean equals(Object other) {
-        if (other == _object) {
+        if (other == object) {
             ProgramWarning.message("prototype grip bypassed");
             return true;
         }
         if (other instanceof PrototypeGrip) {
             final PrototypeGrip prototypeGrip = (PrototypeGrip) other;
-            return prototypeGrip._object == _object;
+            return prototypeGrip.object == object;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return _object.hashCode();
+        return object.hashCode();
     }
 
     public Object getObject() {
-        return _object;
+        return object;
     }
 }

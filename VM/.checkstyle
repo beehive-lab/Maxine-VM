@@ -6,6 +6,9 @@
     <fileset name="all" enabled="true" check-config-name="Maxine Checks" local="true">
         <file-match-pattern match-pattern="." include-pattern="true"/>
     </fileset>
+    <filter name="FileTypesFilter" enabled="true">
+        <filter-data value="java"/>
+    </filter>
     <filter name="FilesFromPackage" enabled="true">
         <filter-data value="test/test/bytecode"/>
         <filter-data value="test/test/except"/>

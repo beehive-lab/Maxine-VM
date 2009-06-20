@@ -30,8 +30,8 @@ public class TirReverse extends TirInstructionFilter {
         super(receiver);
     }
 
-    private VariableSequence<TirMessage> _prolog = new ArrayListSequence<TirMessage>();
-    private VariableSequence<TirMessage> _instructions = _prolog;
+    private VariableSequence<TirMessage> prolog = new ArrayListSequence<TirMessage>();
+    private VariableSequence<TirMessage> _instructions = prolog;
     private VariableSequence<Pair<TirTraceBegin, VariableSequence<TirMessage>>> _traces =
         new ArrayListSequence<Pair<TirTraceBegin, VariableSequence<TirMessage>>>();
 
@@ -53,7 +53,7 @@ public class TirReverse extends TirInstructionFilter {
     public void visit(TirTraceEnd traceEnd) {
         final Pair<TirTraceBegin, VariableSequence<TirMessage>> trace = new Pair<TirTraceBegin, VariableSequence<TirMessage>>(_traceBegin, _instructions);
         _traces.append(trace);
-        _instructions = _prolog;
+        _instructions = prolog;
     }
 
     @Override
@@ -63,7 +63,7 @@ public class TirReverse extends TirInstructionFilter {
         forward(treeBegin);
         if (order == TirPipelineOrder.FORWARD) {
             while (_instructions.isEmpty() == false) {
-                forward(_prolog.removeLast());
+                forward(prolog.removeLast());
             }
         }
         while (_traces.isEmpty() == false) {
@@ -76,7 +76,7 @@ public class TirReverse extends TirInstructionFilter {
         }
         if (order == TirPipelineOrder.REVERSE) {
             while (_instructions.isEmpty() == false) {
-                forward(_prolog.removeLast());
+                forward(prolog.removeLast());
             }
         }
         forward(new TirMessage.TirTreeEnd());

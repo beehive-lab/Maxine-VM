@@ -35,24 +35,24 @@ import com.sun.max.vm.actor.member.*;
  */
 public class IrCache<Method_Type extends IrMethod> {
 
-    protected final Map<ClassMethodActor, Method_Type> _cache = new HashMap<ClassMethodActor, Method_Type>();
+    protected final Map<ClassMethodActor, Method_Type> cache = new HashMap<ClassMethodActor, Method_Type>();
 
     public IrCache() {
     }
 
     public Method_Type get(ClassMethodActor key) {
-        return _cache.get(key);
+        return cache.get(key);
     }
 
     public void set(ClassMethodActor key, Method_Type value) {
-        _cache.put(key, value);
+        cache.put(key, value);
     }
 
     public void remove(ClassMethodActor key) {
-        _cache.remove(key);
+        cache.remove(key);
     }
 
     public void clear() {
-        _cache.clear();
+        cache.clear();
     }
 }

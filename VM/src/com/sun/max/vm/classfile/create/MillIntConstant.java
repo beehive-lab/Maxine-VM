@@ -27,18 +27,18 @@ package com.sun.max.vm.classfile.create;
  */
 public class MillIntConstant extends MillConstant {
 
-    final int _value;
+    final int value;
 
     MillIntConstant(int value) {
         super(CONSTANT_Integer, 5, value);
-        _value = value;
+        this.value = value;
     }
 
     @Override  public boolean equals(Object other) {
         if (!(other instanceof MillIntConstant)) {
             return false;
         }
-        return _value == ((MillIntConstant) other)._value;
+        return value == ((MillIntConstant) other).value;
     }
 
 }

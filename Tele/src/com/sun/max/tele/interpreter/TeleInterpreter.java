@@ -221,9 +221,6 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                     throw executionException;
                 }
             } catch (Throwable throwable) {
-                System.err.println("XXXXXXXXXXXXXXXX");
-                throwable.printStackTrace();
-                System.err.println("XXXXXXXXXXXXXXXX");
                 throw new TeleInterpreterException(throwable, _machine);
             } finally {
                 _instructionsExecuted++;

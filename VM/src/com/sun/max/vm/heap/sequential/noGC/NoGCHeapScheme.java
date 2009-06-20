@@ -63,7 +63,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
          * @param address sets an inspected field that can be used for debugging.
          */
         void setAllocationMark(Address address) {
-            _mark = address;
+            mark = address;
         }
     }
 
@@ -85,55 +85,55 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     public void initializeVmThread(Pointer vmThreadLocals) {
     }
 
-    private final Timer _clearTimer = GlobalMetrics.newTimer("Clear", Clock.SYSTEM_MILLISECONDS);
-    private final Timer _gcTimer = GlobalMetrics.newTimer("GC", Clock.SYSTEM_MILLISECONDS);
-    private final Timer _rootScanTimer = GlobalMetrics.newTimer("Roots scan", Clock.SYSTEM_MILLISECONDS);
-    private final Timer _bootHeapScanTimer = GlobalMetrics.newTimer("Boot heap scan", Clock.SYSTEM_MILLISECONDS);
-    private final Timer _codeScanTimer = GlobalMetrics.newTimer("Code scan", Clock.SYSTEM_MILLISECONDS);
-    private final Timer _copyTimer = GlobalMetrics.newTimer("Copy", Clock.SYSTEM_MILLISECONDS);
+    private final Timer clearTimer = GlobalMetrics.newTimer("Clear", Clock.SYSTEM_MILLISECONDS);
+    private final Timer gcTimer = GlobalMetrics.newTimer("GC", Clock.SYSTEM_MILLISECONDS);
+    private final Timer rootScanTimer = GlobalMetrics.newTimer("Roots scan", Clock.SYSTEM_MILLISECONDS);
+    private final Timer bootHeapScanTimer = GlobalMetrics.newTimer("Boot heap scan", Clock.SYSTEM_MILLISECONDS);
+    private final Timer codeScanTimer = GlobalMetrics.newTimer("Code scan", Clock.SYSTEM_MILLISECONDS);
+    private final Timer copyTimer = GlobalMetrics.newTimer("Copy", Clock.SYSTEM_MILLISECONDS);
 
-    private int _numberOfGarbageCollectionInvocations = 0;
+    private int numberOfGarbageCollectionInvocations = 0;
 
-    private final Runnable _collect = new Runnable() {
+    private final Runnable collect = new Runnable() {
         public void run() {
             if (Heap.verbose()) {
                 Log.print("-- no GC--   size: ");
-                Log.println(_allocationMark.minus(_space.start()).toInt());
+                Log.println(allocationMark.minus(space.start()).toInt());
             }
 
             verifyHeap();
 
-            ++_numberOfGarbageCollectionInvocations;
+            ++numberOfGarbageCollectionInvocations;
             TeleHeapInfo.beforeGarbageCollection();
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
-            _gcTimer.start();
+            gcTimer.start();
 
-            _clearTimer.start();
-            _clearTimer.stop();
+            clearTimer.start();
+            clearTimer.stop();
 
             if (Heap.traceGCRootScanning()) {
                 Log.println("Scanning roots...");
             }
-            _rootScanTimer.start();
-            _rootScanTimer.stop();
+            rootScanTimer.start();
+            rootScanTimer.stop();
 
             if (Heap.traceGC()) {
                 Log.println("Scanning boot heap...");
             }
-            _bootHeapScanTimer.start();
-            _bootHeapScanTimer.stop();
+            bootHeapScanTimer.start();
+            bootHeapScanTimer.stop();
 
-            _codeScanTimer.start();
-            _codeScanTimer.stop();
+            codeScanTimer.start();
+            codeScanTimer.stop();
 
             if (Heap.traceGC()) {
                 Log.println("Moving reachable...");
             }
 
-            _copyTimer.start();
-            _copyTimer.stop();
-            _gcTimer.stop();
+            copyTimer.start();
+            copyTimer.stop();
+            gcTimer.stop();
 
             VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
@@ -144,24 +144,24 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
             if (Heap.traceGC()) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("clear & initialize: ");
-                Log.print(TimerUtil.getLastElapsedMilliSeconds(_clearTimer));
+                Log.print(TimerUtil.getLastElapsedMilliSeconds(clearTimer));
                 Log.print("   root scan: ");
-                Log.print(TimerUtil.getLastElapsedMilliSeconds(_rootScanTimer));
+                Log.print(TimerUtil.getLastElapsedMilliSeconds(rootScanTimer));
                 Log.print("   boot heap scan: ");
-                Log.print(TimerUtil.getLastElapsedMilliSeconds(_bootHeapScanTimer));
+                Log.print(TimerUtil.getLastElapsedMilliSeconds(bootHeapScanTimer));
                 Log.print("   code scan: ");
-                Log.print(TimerUtil.getLastElapsedMilliSeconds(_codeScanTimer));
+                Log.print(TimerUtil.getLastElapsedMilliSeconds(codeScanTimer));
                 Log.print("   copy: ");
-                Log.print(TimerUtil.getLastElapsedMilliSeconds(_copyTimer));
+                Log.print(TimerUtil.getLastElapsedMilliSeconds(copyTimer));
                 Log.println();
                 Log.print("GC <");
-                Log.print(_numberOfGarbageCollectionInvocations);
+                Log.print(numberOfGarbageCollectionInvocations);
                 Log.print("> ");
-                Log.print(TimerUtil.getLastElapsedMilliSeconds(_gcTimer));
+                Log.print(TimerUtil.getLastElapsedMilliSeconds(gcTimer));
                 Log.println(" (ms)");
 
                 Log.print("--After GC--   bytes copied: ");
-                Log.print(_allocationMark.minus(_space.start()).toInt());
+                Log.print(allocationMark.minus(space.start()).toInt());
                 Log.println();
                 Log.unlock(lockDisabledSafepoints);
             }
@@ -172,35 +172,35 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
         }
     };
 
-    private StopTheWorldDaemon _collectorThread;
+    private StopTheWorldDaemon collectorThread;
 
-    private NoGCHeapMemoryRegion _space = new NoGCHeapMemoryRegion("Heap-NoGC");
-    private Address _top;
-    private volatile Address _allocationMark;
+    private NoGCHeapMemoryRegion space = new NoGCHeapMemoryRegion("Heap-NoGC");
+    private Address top;
+    private volatile Address allocationMark;
 
     @CONSTANT_WHEN_NOT_ZERO
-    private Pointer _allocationMarkPointer;
+    private Pointer allocationMarkPointer;
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         if (phase == MaxineVM.Phase.PRISTINE) {
             final Size size = Heap.initialSize();
 
-            _space.setSize(size);
-            _space.setStart(Memory.allocate(size));
-            _allocationMark = _space.start();
-            _top = _space.end();
+            space.setSize(size);
+            space.setStart(Memory.allocate(size));
+            allocationMark = space.start();
+            top = space.end();
 
-            _allocationMarkPointer = ClassActor.fromJava(NoGCHeapScheme.class).findLocalInstanceFieldActor("_allocationMark").pointer(this);
+            allocationMarkPointer = ClassActor.fromJava(NoGCHeapScheme.class).findLocalInstanceFieldActor("allocationMark").pointer(this);
 
             // From now on we can allocate
 
             // For debugging
-            _space.setAllocationMark(_allocationMark);
+            space.setAllocationMark(allocationMark);
 
-            TeleHeapInfo.registerMemoryRegions(_space);
+            TeleHeapInfo.registerMemoryRegions(space);
         } else if (phase == MaxineVM.Phase.STARTING) {
-            _collectorThread = new StopTheWorldDaemon("GC", _collect);
+            collectorThread = new StopTheWorldDaemon("GC", collect);
         }
     }
 
@@ -209,7 +209,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     }
 
     private Size immediateFreeSpace() {
-        return _top.minus(_allocationMark).asSize();
+        return top.minus(allocationMark).asSize();
     }
 
     private void checkCellTag(Pointer cell) {
@@ -233,17 +233,17 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
         }
     }
 
-    private boolean _outOfMemory;
+    private boolean outOfMemory;
 
     @INLINE
     private void executeCollectorThread() {
         if (!Heap.gcDisabled()) {
-            _collectorThread.execute();
+            collectorThread.execute();
         }
     }
 
     public synchronized boolean collectGarbage(Size requestedFreeSpace) {
-        if (_outOfMemory) {
+        if (outOfMemory) {
             return false;
         }
         executeCollectorThread();
@@ -255,32 +255,32 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     }
 
     public Size reportUsedSpace() {
-        return _allocationMark.minus(_space.start()).asSize();
+        return allocationMark.minus(space.start()).asSize();
     }
 
-    private static final OutOfMemoryError _outOfMemoryError = new OutOfMemoryError(); // TODO: create a new one each time
+    private static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError(); // TODO: create a new one each time
 
     @NEVER_INLINE
     private Pointer fail() {
-        throw _outOfMemoryError;
+        throw outOfMemoryError;
     }
 
     @INLINE
     @NO_SAFEPOINTS("TODO")
     public Pointer allocate(Size size) {
         Pointer cell;
-        final Pointer oldAllocationMark = _allocationMark.asPointer();
+        final Pointer oldAllocationMark = allocationMark.asPointer();
         if (VMConfiguration.hostOrTarget().debugging()) {
             cell = oldAllocationMark.plusWords(1);
         } else {
             cell = oldAllocationMark;
         }
         final Pointer end = cell.plus(size);
-        if (end.greaterThan(_top) || _allocationMarkPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark) {
+        if (end.greaterThan(top) || allocationMarkPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark) {
             return fail();
         }
         // For debugging
-        _space.setAllocationMark(_allocationMark);
+        space.setAllocationMark(allocationMark);
         return cell;
     }
 
@@ -321,7 +321,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     }
 
     public boolean contains(Address address) {
-        return _space.contains(address);
+        return space.contains(address);
     }
 
     public void runFinalization() {
@@ -347,7 +347,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
         }
         checkGripTag(grip);
         final Pointer origin = grip.toOrigin();
-        if (!(_space.contains(origin) || Heap.bootHeapRegion().contains(origin) || Code.contains(origin))) {
+        if (!(space.contains(origin) || Heap.bootHeapRegion().contains(origin) || Code.contains(origin))) {
             Log.print("invalid grip: ");
             Log.print(origin.asAddress());
             Log.print(" @ ");
@@ -383,28 +383,28 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
         return hub;
     }
 
-    private final PointerIndexVisitor _pointerIndexGripVerifier = new PointerIndexVisitor() {
+    private final PointerIndexVisitor pointerIndexGripVerifier = new PointerIndexVisitor() {
         @Override
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
             verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.size(), pointer.getGrip(wordIndex));
         }
     };
 
-    private final PointerOffsetVisitor _pointerOffsetGripVerifier = new PointerOffsetVisitor() {
+    private final PointerOffsetVisitor pointerOffsetGripVerifier = new PointerOffsetVisitor() {
         public void visitPointerOffset(Pointer pointer, int offset) {
             verifyGripAtIndex(pointer, offset, pointer.readGrip(offset));
         }
     };
 
-    private final SequentialHeapRootsScanner _heapRootsVerifier = new SequentialHeapRootsScanner(this, _pointerIndexGripVerifier);
+    private final SequentialHeapRootsScanner heapRootsVerifier = new SequentialHeapRootsScanner(this, pointerIndexGripVerifier);
 
     private void verifyHeap() {
         if (Heap.traceGC()) {
             Log.println("Verifying heap...");
         }
-        _heapRootsVerifier.run();
-        Pointer cell = _space.start().asPointer();
-        while (cell.lessThan(_allocationMark)) {
+        heapRootsVerifier.run();
+        Pointer cell = space.start().asPointer();
+        while (cell.lessThan(allocationMark)) {
             if (VMConfiguration.hostOrTarget().debugging()) {
                 cell = cell.plusWords(1);
                 checkCellTag(cell);
@@ -413,11 +413,11 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
             final Hub hub = checkHub(origin);
             final SpecificLayout specificLayout = hub.specificLayout();
             if (specificLayout.isTupleLayout()) {
-                TupleReferenceMap.visitOriginOffsets(hub, origin, _pointerOffsetGripVerifier);
+                TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetGripVerifier);
                 cell = cell.plus(hub.tupleSize());
             } else {
                 if (specificLayout.isHybridLayout()) {
-                    TupleReferenceMap.visitOriginOffsets(hub, origin, _pointerOffsetGripVerifier);
+                    TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetGripVerifier);
                 } else if (specificLayout.isReferenceArrayLayout()) {
                     final int length = Layout.readArrayLength(origin);
                     for (int index = 0; index < length; index++) {

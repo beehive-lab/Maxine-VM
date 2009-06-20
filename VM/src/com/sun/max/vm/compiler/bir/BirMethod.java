@@ -32,60 +32,60 @@ import com.sun.max.vm.compiler.ir.*;
 
 public class BirMethod extends AbstractIrMethod {
 
-    private int _maxStack;
-    private int _maxLocals;
-    private byte[] _code;
-    private IndexedSequence<BirBlock> _blocks;
-    private BirBlock[] _blockMap;
+    private int maxStack;
+    private int maxLocals;
+    private byte[] code;
+    private IndexedSequence<BirBlock> blocks;
+    private BirBlock[] blockMap;
 
-    private Sequence<ExceptionHandlerEntry> _exceptionDispatcherTable;
+    private Sequence<ExceptionHandlerEntry> exceptionDispatcherTable;
 
     public BirMethod(ClassMethodActor classMethodActor) {
         super(classMethodActor);
     }
 
     public boolean isGenerated() {
-        return _code != null;
+        return code != null;
     }
 
     public int maxLocals() {
-        return _maxLocals;
+        return maxLocals;
     }
 
     public int maxStack() {
-        return _maxStack;
+        return maxStack;
     }
 
     public byte[] code() {
-        return _code;
+        return code;
     }
 
     public Sequence<BirBlock> blocks() {
-        return _blocks;
+        return blocks;
     }
 
     public BirBlock[] blockMap() {
-        return _blockMap;
+        return blockMap;
     }
 
     public BirBlock getBlockAt(int bytecodeAddress) {
-        return _blockMap[bytecodeAddress];
+        return blockMap[bytecodeAddress];
     }
 
     public Sequence<ExceptionHandlerEntry> exceptionDispatcherTable() {
-        return _exceptionDispatcherTable;
+        return exceptionDispatcherTable;
     }
 
     public void setGenerated(byte[] code, int maxStack, int maxLocals, IndexedSequence<BirBlock> blocks, BirBlock[] blockMap, Sequence<ExceptionHandlerEntry> exceptionDispatcherTable) {
-        _code = code;
-        _maxStack = maxStack;
-        _maxLocals = maxLocals;
-        _blocks = blocks;
-        _blockMap = blockMap;
-        _exceptionDispatcherTable = exceptionDispatcherTable;
+        this.code = code;
+        this.maxStack = maxStack;
+        this.maxLocals = maxLocals;
+        this.blocks = blocks;
+        this.blockMap = blockMap;
+        this.exceptionDispatcherTable = exceptionDispatcherTable;
 
         for (ExceptionHandlerEntry exceptionDispatcherEntry : exceptionDispatcherTable()) {
-            final BirBlock birBlock = _blockMap[exceptionDispatcherEntry.handlerPosition()];
+            final BirBlock birBlock = blockMap[exceptionDispatcherEntry.handlerPosition()];
             birBlock.setRole(IrBlock.Role.EXCEPTION_DISPATCHER);
         }
     }
@@ -94,23 +94,23 @@ public class BirMethod extends AbstractIrMethod {
         final CharArrayWriter charArrayWriter = new CharArrayWriter();
         final IndentWriter writer = new IndentWriter(charArrayWriter);
         writer.println("BIR: " + name());
-        if (_blocks != null && !_blocks.isEmpty()) {
+        if (blocks != null && !blocks.isEmpty()) {
             writer.indent();
-            writer.println("maxStack: " + _maxStack);
-            writer.println("maxLocals: " + _maxLocals);
+            writer.println("maxStack: " + maxStack);
+            writer.println("maxLocals: " + maxLocals);
             writer.outdent();
-            if (_blocks != null) {
-                for (BirBlock block : _blocks) {
+            if (blocks != null) {
+                for (BirBlock block : blocks) {
                     final ConstantPool constantPool = classMethodActor().codeAttribute().constantPool();
                     writer.print(BytecodePrinter.toString(constantPool, block.bytecodeBlock()));
                 }
-                for (BirBlock block : _blocks) {
+                for (BirBlock block : blocks) {
                     writer.println(block.toString());
                 }
             }
-            if (!_exceptionDispatcherTable.isEmpty()) {
+            if (!exceptionDispatcherTable.isEmpty()) {
                 writer.println("Exception handlers:");
-                for (ExceptionHandlerEntry entry : _exceptionDispatcherTable) {
+                for (ExceptionHandlerEntry entry : exceptionDispatcherTable) {
                     writer.println(entry.toString());
                 }
             }

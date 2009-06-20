@@ -35,10 +35,10 @@ import com.sun.max.vm.compiler.eir.amd64.*;
  */
 public class BcdeAMD64Compiler extends BcdeCompiler<AMD64EirGenerator> implements AMD64EirGeneratorScheme {
 
-    private DirToAMD64EirTranslator _dirToEirTranslator;
+    private DirToAMD64EirTranslator dirToEirTranslator;
 
     public AMD64EirGenerator eirGenerator() {
-        return _dirToEirTranslator;
+        return dirToEirTranslator;
     }
 
     public BcdeAMD64Compiler(VMConfiguration vmConfiguration) {
@@ -70,7 +70,7 @@ public class BcdeAMD64Compiler extends BcdeCompiler<AMD64EirGenerator> implement
                 ProgramError.check(wordWidth == WordWidth.BITS_64, incompatibilityMessage(wordWidth + " word width"));
             }
         });
-        _dirToEirTranslator = new DirToAMD64EirTranslator(this);
+        dirToEirTranslator = new DirToAMD64EirTranslator(this);
     }
 
     @Override

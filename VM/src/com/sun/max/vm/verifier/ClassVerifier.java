@@ -26,7 +26,7 @@ import com.sun.max.vm.classfile.*;
 
 /**
  * An instance of {@code ClassVerifier} is created to verify the methods in a given class.
- * 
+ *
  * @author David Liu
  * @author Doug Simon
  */

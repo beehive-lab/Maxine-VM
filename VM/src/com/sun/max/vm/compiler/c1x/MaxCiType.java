@@ -40,10 +40,10 @@ import com.sun.max.vm.type.*;
  */
 public class MaxCiType implements CiType {
 
-    final MaxCiConstantPool _constantPool;
-    ClassActor _classActor;
-    TypeDescriptor _typeDescriptor;
-    final BasicType _basicType;
+    final MaxCiConstantPool constantPool;
+    ClassActor classActor;
+    TypeDescriptor typeDescriptor;
+    final BasicType basicType;
 
     /**
      * Creates a new resolved compiler interface type for the specified class actor.
@@ -51,10 +51,10 @@ public class MaxCiType implements CiType {
      * @param classActor the class actor
      */
     public MaxCiType(MaxCiConstantPool constantPool, ClassActor classActor) {
-        _constantPool = constantPool;
-        _classActor = classActor;
-        _typeDescriptor = classActor.typeDescriptor();
-        _basicType = kindToBasicType(_typeDescriptor.toKind());
+        this.constantPool = constantPool;
+        this.classActor = classActor;
+        this.typeDescriptor = classActor.typeDescriptor();
+        this.basicType = kindToBasicType(typeDescriptor.toKind());
     }
 
     /**
@@ -63,9 +63,9 @@ public class MaxCiType implements CiType {
      * @param classRef the class ref
      */
     public MaxCiType(MaxCiConstantPool constantPool, ClassConstant classRef) {
-        _constantPool = constantPool;
-        _typeDescriptor = classRef.typeDescriptor();
-        _basicType = kindToBasicType(_typeDescriptor.toKind());
+        this.constantPool = constantPool;
+        this.typeDescriptor = classRef.typeDescriptor();
+        this.basicType = kindToBasicType(typeDescriptor.toKind());
     }
 
     /**
@@ -74,13 +74,13 @@ public class MaxCiType implements CiType {
      * @param typeDescriptor the type descriptor
      */
     public MaxCiType(MaxCiConstantPool constantPool, TypeDescriptor typeDescriptor) {
-        _constantPool = constantPool;
+        this.constantPool = constantPool;
         if (typeDescriptor instanceof JavaTypeDescriptor.AtomicTypeDescriptor) {
             final JavaTypeDescriptor.AtomicTypeDescriptor atom = (JavaTypeDescriptor.AtomicTypeDescriptor) typeDescriptor;
-            _classActor = ClassActor.fromJava(atom.getJavaClass());
+            this.classActor = ClassActor.fromJava(atom.getJavaClass());
         }
-        _typeDescriptor = typeDescriptor;
-        _basicType = kindToBasicType(_typeDescriptor.toKind());
+        this.typeDescriptor = typeDescriptor;
+        this.basicType = kindToBasicType(typeDescriptor.toKind());
     }
 
     /**
@@ -88,7 +88,7 @@ public class MaxCiType implements CiType {
      * @return the name
      */
     public String name() {
-        return _typeDescriptor.toString();
+        return typeDescriptor.toString();
     }
 
     /**
@@ -170,7 +170,7 @@ public class MaxCiType implements CiType {
      * @return <code>true</code> if the type is loaded
      */
     public boolean isLoaded() {
-        return _classActor != null;
+        return classActor != null;
     }
 
     /**
@@ -207,12 +207,12 @@ public class MaxCiType implements CiType {
      * @throws MaxCiUnresolved if the class is not resolved
      */
     public CiType elementType() {
-        if (_classActor instanceof ArrayClassActor) {
+        if (classActor instanceof ArrayClassActor) {
             // the type is already resolved
-            return _constantPool.canonicalCiType(_classActor.elementClassActor());
+            return constantPool.canonicalCiType(classActor.elementClassActor());
         }
         // the type is not resolved, but we can get the type of the elements
-        return new MaxCiType(_constantPool, _typeDescriptor.elementTypeDescriptor());
+        return new MaxCiType(constantPool, typeDescriptor.elementTypeDescriptor());
     }
 
     /**
@@ -222,7 +222,6 @@ public class MaxCiType implements CiType {
      * @return the exact type of this type, if it is known; <code>null</code> otherwise
      */
     public CiType exactType() {
-        final ClassActor classActor = _classActor;
         if (classActor != null) {
             if (isFinalOrPrimitive(classActor)) {
                 return this;
@@ -239,10 +238,10 @@ public class MaxCiType implements CiType {
      * @return the compiler interface type representing an array with elements of this compiler interface type
      */
     public CiType arrayOf() {
-        if (_classActor != null) {
-            return _constantPool.canonicalCiType(ArrayClassActor.forComponentClassActor(_classActor));
+        if (classActor != null) {
+            return constantPool.canonicalCiType(ArrayClassActor.forComponentClassActor(classActor));
         }
-        return new MaxCiType(_constantPool, JavaTypeDescriptor.getArrayDescriptorForDescriptor(_typeDescriptor, 1));
+        return new MaxCiType(constantPool, JavaTypeDescriptor.getArrayDescriptorForDescriptor(typeDescriptor, 1));
     }
 
     /**
@@ -254,18 +253,18 @@ public class MaxCiType implements CiType {
      * @throws MaxCiUnresolved if this type or the method is unresolved
      */
     public CiMethod resolveMethodImpl(CiMethod method) {
-        final MethodActor methodActor = ((MaxCiMethod) method)._methodActor;
-        final ClassActor classActor = asClassActor("resolveMethod()");
+        final MethodActor methodActor = ((MaxCiMethod) method).methodActor;
+        final ClassActor resolvedClassActor = asClassActor("resolveMethod()");
         if (methodActor instanceof InterfaceMethodActor) {
             // resolve the actual method implementation in this class
             final int index = ((InterfaceMethodActor) methodActor).iIndexInInterface();
-            final VirtualMethodActor implementation = classActor.getVirtualMethodActorByIIndex(index);
-            return _constantPool.canonicalCiMethod(implementation);
+            final VirtualMethodActor implementation = resolvedClassActor.getVirtualMethodActorByIIndex(index);
+            return constantPool.canonicalCiMethod(implementation);
         } else if (methodActor instanceof VirtualMethodActor) {
             // resolve the actual method implementation in this class
             final int index = ((VirtualMethodActor) methodActor).vTableIndex();
-            final VirtualMethodActor implementation = classActor.getVirtualMethodActorByVTableIndex(index);
-            return _constantPool.canonicalCiMethod(implementation);
+            final VirtualMethodActor implementation = resolvedClassActor.getVirtualMethodActorByVTableIndex(index);
+            return constantPool.canonicalCiMethod(implementation);
         } else {
             assert methodActor.isFinal() || methodActor.isPrivate();
             return method;
@@ -278,12 +277,12 @@ public class MaxCiType implements CiType {
      * @return the basic type
      */
     public BasicType basicType() {
-        return _basicType;
+        return basicType;
     }
 
     ClassActor asClassActor(String operation) {
-        if (_classActor != null) {
-            return _classActor;
+        if (classActor != null) {
+            return classActor;
         }
         throw unresolved(operation);
     }
@@ -293,10 +292,10 @@ public class MaxCiType implements CiType {
     }
 
     private MaxCiUnresolved unresolved(String operation) {
-        throw new MaxCiUnresolved(operation + " not defined for unresolved class " + _typeDescriptor.toString());
+        throw new MaxCiUnresolved(operation + " not defined for unresolved class " + typeDescriptor.toString());
     }
 
-    private boolean isFinalOrPrimitive(ClassActor classActor) {
+    private static boolean isFinalOrPrimitive(ClassActor classActor) {
         return classActor.isFinal() || classActor.isPrimitiveClassActor();
     }
 
@@ -342,8 +341,8 @@ public class MaxCiType implements CiType {
      */
     @Override
     public int hashCode() {
-        if (_classActor != null) {
-            return System.identityHashCode(_classActor); // use the class actor's hashcode
+        if (classActor != null) {
+            return System.identityHashCode(classActor); // use the class actor's hashcode
         }
         return System.identityHashCode(this);
     }
@@ -358,8 +357,8 @@ public class MaxCiType implements CiType {
      */
     @Override
     public boolean equals(Object o) {
-        if (_classActor != null && o instanceof MaxCiType) {
-            return _classActor == ((MaxCiType) o)._classActor;
+        if (classActor != null && o instanceof MaxCiType) {
+            return classActor == ((MaxCiType) o).classActor;
         }
         return o == this;
     }
@@ -369,10 +368,10 @@ public class MaxCiType implements CiType {
      */
     @Override
     public String toString() {
-        if (_classActor != null) {
-            return _classActor.toString();
+        if (classActor != null) {
+            return classActor.toString();
         }
-        return _typeDescriptor.toString() + " [unresolved]";
+        return typeDescriptor.toString() + " [unresolved]";
     }
 
 }

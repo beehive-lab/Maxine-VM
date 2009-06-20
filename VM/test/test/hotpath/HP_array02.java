@@ -18,32 +18,31 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-// Checkstyle: stop
 package test.hotpath;
 /*
  * @Harness: java
  * @Runs: 40 = 5460;
  */
 public class HP_array02 {
-    public static byte[] _b = new byte[40];
-    public static char[] _c = new char[40];
-    public static short[] _s = new short[40];
-    public static int[] _i = new int[40];
-    public static long[] _l = new long[40];
-    public static float[] _f = new float[40];
-    public static double[] _d = new double[40];
+    public static byte[] b = new byte[40];
+    public static char[] c = new char[40];
+    public static short[] s = new short[40];
+    public static int[] iArray = new int[40];
+    public static long[] l = new long[40];
+    public static float[] f = new float[40];
+    public static double[] d = new double[40];
 
     public static int test(int count) {
         int sum = 0;
-        for (int i = 0; i < count; i++) {
-            _b[i] = (byte) i;
-            _c[i] = (char) i;
-            _s[i] = (short) i;
-            _i[i] = i;
-            _l[i] = i;
-            _f[i] = i;
-            _d[i] = i;
-            sum += _b[i] + _c[i] + _s[i] + _i[i] + _l[i] + _f[i] + _d[i];
+        for (int x = 0; x < count; x++) {
+            b[x] = (byte) x;
+            c[x] = (char) x;
+            s[x] = (short) x;
+            iArray[x] = x;
+            l[x] = x;
+            f[x] = x;
+            d[x] = x;
+            sum += b[x] + c[x] + s[x] + iArray[x] + l[x] + f[x] + d[x];
         }
         return sum;
     }

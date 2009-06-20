@@ -50,7 +50,7 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         super(block, eirMethod, calleeSavedValues, calleeSavedRegisters, isCalleeSavedParameter, parameters, parameterLocations);
     }
 
-    private static final SPARCAssembler _ASM = SPARCAssembler.createAssembler(WordWidth.BITS_64);
+    private static final SPARCAssembler ASM = SPARCAssembler.createAssembler(WordWidth.BITS_64);
 
     /**
      * The maximum imm13 offset we can get for a stack offset. It leaves about 4K
@@ -79,9 +79,9 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         }
         final int stackBangOffset = stackBangOffset(frameSize);
         if (SPARCAssembler.isSimm13(stackBangOffset)) {
-            return 2 + _ASM.setswNumberOfInstructions(stackBangOffset);
+            return 2 + ASM.setswNumberOfInstructions(stackBangOffset);
         }
-        return 3 + _ASM.setswNumberOfInstructions(stackBangOffset);
+        return 3 + ASM.setswNumberOfInstructions(stackBangOffset);
     }
 
     /**

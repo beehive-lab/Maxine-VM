@@ -45,12 +45,12 @@ import com.sun.max.vm.compiler.cir.variable.*;
 public class EnvBasedDFA <AV_Type extends AbstractValue<AV_Type>>{
 
     // Checkstyle: stop
-    private final AbstractValueDomain<AV_Type> _domain;
+    private final AbstractValueDomain<AV_Type> domain;
     // Checkstyle: resume
 
-    private final IdentityHashMapping<CirCall, AV_Type[]> _hashmap = new IdentityHashMapping<CirCall, AV_Type[]>();
+    private final IdentityHashMapping<CirCall, AV_Type[]> hashmap = new IdentityHashMapping<CirCall, AV_Type[]>();
 
-    private EnqueuedCall<AV_Type> _callQueue;
+    private EnqueuedCall<AV_Type> callQueue;
 
     /* Every time a block b is called with arguments a0, a1, a2, ..,
      * the mapping _blockParameters holds the types t0, t1, t2, ...,
@@ -58,21 +58,21 @@ public class EnvBasedDFA <AV_Type extends AbstractValue<AV_Type>>{
      * into the parameters p0, p1, p2, ....
      *
      */
-    private IdentityHashMapping<CirBlock, AV_Type[]> _blockParameters = new IdentityHashMapping<CirBlock, AV_Type[]>();
+    private IdentityHashMapping<CirBlock, AV_Type[]> blockParameters = new IdentityHashMapping<CirBlock, AV_Type[]>();
 
     /* the blockQueue holds the blocks that are reachable but have
      * not been analysed yet.  the types of the arguments supplied
      * to these blocks are in _blockParameters.
      */
-    private IdentitySet<CirBlock> _blockQueue = new IdentitySet<CirBlock>();
+    private IdentitySet<CirBlock> blockQueue = new IdentitySet<CirBlock>();
 
     /* map a continuation variable -> set of continuations that may
      * be called if the var is used as a continuation.
      */
-    IdentityHashMapping<CirContinuationVariable, IdentitySet<CirContinuation>> _continuationHash = new IdentityHashMapping<CirContinuationVariable, IdentitySet<CirContinuation>>();
+    IdentityHashMapping<CirContinuationVariable, IdentitySet<CirContinuation>> continuationHash = new IdentityHashMapping<CirContinuationVariable, IdentitySet<CirContinuation>>();
 
     public EnvBasedDFA(AbstractValueDomain<AV_Type> domain) {
-        _domain = domain;
+        this.domain = domain;
     }
 
     /** analyse(closure) is the main interface for the analysis.
@@ -92,7 +92,7 @@ public class EnvBasedDFA <AV_Type extends AbstractValue<AV_Type>>{
              * a method can be called from anywhere
              */
             if (env.lookup(var) == null) {
-                env = env.extend(var, _domain.getBottom());
+                env = env.extend(var, domain.getBottom());
             }
         }
         /* start it up */
@@ -100,7 +100,7 @@ public class EnvBasedDFA <AV_Type extends AbstractValue<AV_Type>>{
         /* do more */
         reachFixedPoint();
         /* and we're done */
-        return _hashmap;
+        return hashmap;
     }
 
     /** rememberMapping takes a CirCall and an array of abstract values
@@ -110,13 +110,13 @@ public class EnvBasedDFA <AV_Type extends AbstractValue<AV_Type>>{
      * resulting in the least-general abstract value that meets both sets.
      */
     protected void rememberMapping(CirCall call, AV_Type... t2) {
-        final AV_Type[] t1 = _hashmap.get(call);
+        final AV_Type[] t1 = hashmap.get(call);
         if (t1 == null) {
-            _hashmap.put(call, t2);
+            hashmap.put(call, t2);
         } else {
             assert t1.length == t2.length;
             for (int i = 0; i < t1.length; i++) {
-                t1[i] = _domain.meet(t1[i], t2[i]);
+                t1[i] = domain.meet(t1[i], t2[i]);
             }
         }
     }
@@ -145,7 +145,7 @@ public class EnvBasedDFA <AV_Type extends AbstractValue<AV_Type>>{
             final AV_Type[] types = lookupArgs(call.arguments(), closure.parameters(), env);
             enqueueCall(closure.body(), buildEnv(closure.parameters(), types, env));
         } else if (op instanceof CirContinuationVariable) {
-            final IdentitySet<CirContinuation> continuations = _continuationHash.get((CirContinuationVariable) op);
+            final IdentitySet<CirContinuation> continuations = continuationHash.get((CirContinuationVariable) op);
             if (continuations != null) {
                 for (CirContinuation k : continuations) {
                     final AV_Type[] types = lookupArgs(call.arguments(), k.parameters(), env);
@@ -217,7 +217,7 @@ public class EnvBasedDFA <AV_Type extends AbstractValue<AV_Type>>{
                 enqueueCall(k.body(), env);
             }
         } else if (kv instanceof CirContinuationVariable) {
-            final IdentitySet<CirContinuation> continuations = _continuationHash.get((CirContinuationVariable) kv);
+            final IdentitySet<CirContinuation> continuations = continuationHash.get((CirContinuationVariable) kv);
             if (continuations != null) {
                 for (CirContinuation k : continuations) {
                     final CirVariable[] params = k.parameters();
@@ -236,43 +236,43 @@ public class EnvBasedDFA <AV_Type extends AbstractValue<AV_Type>>{
     }
 
     protected void visitContinuation(CirValue kv, Environment<CirVariable, AV_Type> env) {
-        visitContinuation(kv, _domain.getBottom(), env);
+        visitContinuation(kv, domain.getBottom(), env);
     }
 
     private static class EnqueuedCall<Type>{
-        CirCall _call;
-        Environment<CirVariable, Type> _env;
-        EnqueuedCall<Type> _next;
+        CirCall call;
+        Environment<CirVariable, Type> env;
+        EnqueuedCall<Type> next;
         public EnqueuedCall(CirCall call, Environment<CirVariable, Type> env, EnqueuedCall<Type> queue) {
-            _call = call;
-            _env = env;
-            _next = queue;
+            this.call = call;
+            this.env = env;
+            this.next = queue;
         }
     }
 
 
     private void enqueueCall(CirCall call, Environment<CirVariable, AV_Type> env) {
-        _callQueue = new EnqueuedCall<AV_Type>(call, env, _callQueue);
+        callQueue = new EnqueuedCall<AV_Type>(call, env, callQueue);
     }
 
     private void enqueueBlockCall(CirBlock block, AV_Type[] ts) {
-        final AV_Type[] orig = _blockParameters.get(block);
+        final AV_Type[] orig = blockParameters.get(block);
         if (orig == null) {
-            _blockParameters.put(block, ts);
-            _blockQueue.add(block);
+            blockParameters.put(block, ts);
+            blockQueue.add(block);
             return;
         }
         boolean changed = false;
         for (int i = 0; i < orig.length; i++) {
             final AV_Type t0 = orig[i];
-            final AV_Type t1 = _domain.meet(t0, ts[i]);
-            if (!_domain.equal(t1, t0)) {
+            final AV_Type t1 = domain.meet(t0, ts[i]);
+            if (!domain.equal(t1, t0)) {
                 orig[i] = t1;
                 changed = true;
             }
         }
         if (changed) {
-            _blockQueue.add(block);
+            blockQueue.add(block);
         }
     }
 
@@ -282,7 +282,7 @@ public class EnvBasedDFA <AV_Type extends AbstractValue<AV_Type>>{
             assert t != null;
             return t;
         } else if (arg instanceof CirConstant) {
-            return _domain.fromConstant((CirConstant) arg);
+            return domain.fromConstant((CirConstant) arg);
         } else {
             ProgramError.unexpected("arg: " + arg);
         }
@@ -290,11 +290,11 @@ public class EnvBasedDFA <AV_Type extends AbstractValue<AV_Type>>{
     }
 
     private AV_Type[] lookupArgs(CirValue[] arguments, CirVariable[] params, Environment<CirVariable, AV_Type> env) {
-        final AV_Type[] ts = _domain.getBottom().createArray(arguments.length);
+        final AV_Type[] ts = domain.getBottom().createArray(arguments.length);
         for (int i = 0; i < ts.length; i++) {
             if (params[i] instanceof CirContinuationVariable) {
                 if (arguments[i] instanceof CirContinuationVariable) {
-                    recordContinuationFlow((CirContinuationVariable) params[i], _continuationHash.get((CirContinuationVariable) arguments[i]));
+                    recordContinuationFlow((CirContinuationVariable) params[i], continuationHash.get((CirContinuationVariable) arguments[i]));
                 } else if (arguments[i] instanceof CirContinuation) {
                     recordContinuationFlow((CirContinuationVariable) params[i], (CirContinuation) arguments[i]);
                 } else {
@@ -309,10 +309,10 @@ public class EnvBasedDFA <AV_Type extends AbstractValue<AV_Type>>{
 
     private void recordContinuationFlow(CirContinuationVariable var, IdentitySet<CirContinuation> ks) {
         if (ks != null) {
-            IdentitySet<CirContinuation> set = _continuationHash.get(var);
+            IdentitySet<CirContinuation> set = continuationHash.get(var);
             if (set == null) {
                 set = new IdentitySet<CirContinuation>();
-                _continuationHash.put(var, set);
+                continuationHash.put(var, set);
             }
             for (CirContinuation k : ks) {
                 set.add(k);
@@ -321,10 +321,10 @@ public class EnvBasedDFA <AV_Type extends AbstractValue<AV_Type>>{
     }
 
     private void recordContinuationFlow(CirContinuationVariable var, CirContinuation k) {
-        IdentitySet<CirContinuation> set = _continuationHash.get(var);
+        IdentitySet<CirContinuation> set = continuationHash.get(var);
         if (set == null) {
             set = new IdentitySet<CirContinuation>();
-            _continuationHash.put(var, set);
+            continuationHash.put(var, set);
         }
         set.add(k);
     }
@@ -333,21 +333,21 @@ public class EnvBasedDFA <AV_Type extends AbstractValue<AV_Type>>{
         boolean more;
         do {
             more = false;
-            while (_callQueue != null) {
+            while (callQueue != null) {
                 more = true;
-                final EnqueuedCall<AV_Type> q = _callQueue;
-                _callQueue = q._next;
-                analyzeCall(q._call, q._env);
+                final EnqueuedCall<AV_Type> q = callQueue;
+                callQueue = q.next;
+                analyzeCall(q.call, q.env);
             }
-            final IdentitySet<CirBlock> blockQueue = _blockQueue;
-            _blockQueue = new IdentitySet<CirBlock>();
-            for (CirBlock b : blockQueue) {
+            final IdentitySet<CirBlock> oldBlockQueue = this.blockQueue;
+            blockQueue = new IdentitySet<CirBlock>();
+            for (CirBlock b : oldBlockQueue) {
                 more = true;
-                analyzeCall(b.closure().body(), buildEnv(b.closure().parameters(), _blockParameters.get(b)));
+                analyzeCall(b.closure().body(), buildEnv(b.closure().parameters(), blockParameters.get(b)));
             }
         } while (more);
-        assert _callQueue == null;
-        assert _blockQueue.numberOfElements() == 0 : "remaining " + _blockQueue.numberOfElements();
+        assert callQueue == null;
+        assert blockQueue.numberOfElements() == 0 : "remaining " + blockQueue.numberOfElements();
     }
 
     private Environment<CirVariable, AV_Type> buildEnv(CirVariable[] parameters, AV_Type[] types) {

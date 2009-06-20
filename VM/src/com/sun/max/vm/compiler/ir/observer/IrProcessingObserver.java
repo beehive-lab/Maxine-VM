@@ -40,20 +40,20 @@ public class IrProcessingObserver extends IrObserverAdapter {
 
     protected static final IndentWriter _out = IndentWriter.traceStreamWriter();
 
-    private final int _traceLevel;
+    private final int traceLevel;
 
     public static final String PROPERTY_TRACE_LEVEL = "max.ir.trace.level";
 
     protected static final int DEFAULT_TRACE_LEVEL = 3;
 
     public IrProcessingObserver() {
-        int traceLevel = 3;
+        int traceLvl = 3;
         try {
-            traceLevel = Integer.parseInt(System.getProperty(PROPERTY_TRACE_LEVEL, String.valueOf(traceLevel)));
+            traceLvl = Integer.parseInt(System.getProperty(PROPERTY_TRACE_LEVEL, String.valueOf(traceLvl)));
         } catch (NumberFormatException e) {
             ProgramWarning.message("Value for system property \"" + PROPERTY_TRACE_LEVEL + "\" not a valid integer: " + System.getProperty(PROPERTY_TRACE_LEVEL));
         }
-        _traceLevel = traceLevel;
+        this.traceLevel = traceLvl;
     }
 
     protected String methodName(IrMethod irMethod) {
@@ -65,7 +65,7 @@ public class IrProcessingObserver extends IrObserverAdapter {
     }
 
     protected boolean hasLevel(int requiredLevel) {
-        return _traceLevel >= requiredLevel;
+        return traceLevel >= requiredLevel;
     }
 
     protected int allocationTraceLevel() {

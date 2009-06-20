@@ -41,26 +41,26 @@ import com.sun.max.vm.runtime.*;
  */
 public class BootHeapRegion extends LinearAllocatorHeapRegion implements PointerOffsetVisitor {
 
-    private byte[] _referenceMapBytes;
+    private byte[] referenceMapBytes;
 
-    private Pointer _referenceMap;
+    private Pointer referenceMap;
 
-    private Reference[] _specialReferences;
+    private Reference[] specialReferences;
 
     public BootHeapRegion(Address start, Size size, String description) {
         super(start, size, description);
     }
 
     @PROTOTYPE_ONLY
-    public void init(byte[] referenceMap, Reference[] specialReferences) {
-        ProgramError.check(Address.fromInt(referenceMap.length).isAligned(), "Boot heap reference map must have word-aligned size");
-        _referenceMapBytes = referenceMap;
-        _specialReferences = specialReferences;
+    public void init(byte[] refMap, Reference[] specialRefs) {
+        ProgramError.check(Address.fromInt(refMap.length).isAligned(), "Boot heap reference map must have word-aligned size");
+        this.referenceMapBytes = refMap;
+        this.specialReferences = specialRefs;
     }
 
     private void verifyCells() {
         Pointer cell = start().asPointer();
-        while (cell.lessThan(_mark)) {
+        while (cell.lessThan(mark)) {
             if (VMConfiguration.hostOrTarget().debugging()) {
                 cell = cell.plusWords(1);
                 if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {
@@ -84,9 +84,9 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
 
         final boolean isWordTagged;
         final int referenceMapWordIndex = Unsigned.idiv(heapWordIndex, bitsPerMapWord);
-        final Pointer referenceMapEnd = _referenceMap.plus(_referenceMapBytes.length);
-        if (_referenceMap.plus(referenceMapWordIndex * Word.size()).lessEqual(referenceMapEnd)) {
-            final Address referenceMapWord = _referenceMap.getWord(referenceMapWordIndex).asAddress();
+        final Pointer referenceMapEnd = referenceMap.plus(referenceMapBytes.length);
+        if (referenceMap.plus(referenceMapWordIndex * Word.size()).lessEqual(referenceMapEnd)) {
+            final Address referenceMapWord = referenceMap.getWord(referenceMapWordIndex).asAddress();
             final Address mask = Address.fromLong(1).shiftedLeft(heapWordIndex % bitsPerMapWord);
             isWordTagged = !referenceMapWord.and(mask).isZero();
         } else {
@@ -125,12 +125,12 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
     }
 
     public void visitPointers(PointerIndexVisitor pointerIndexVisitor) {
-        if (_referenceMap.isZero()) {
-            _referenceMap = Grip.fromJava(_referenceMapBytes).toOrigin().plus(Layout.byteArrayLayout().getElementOffsetFromOrigin(0));
+        if (referenceMap.isZero()) {
+            referenceMap = Grip.fromJava(referenceMapBytes).toOrigin().plus(Layout.byteArrayLayout().getElementOffsetFromOrigin(0));
         }
 
-        final Pointer referenceMap = _referenceMap;
-        final int referenceMapWords = Unsigned.idiv(_referenceMapBytes.length, Word.size());
+        final Pointer refMap = referenceMap;
+        final int referenceMapWords = Unsigned.idiv(referenceMapBytes.length, Word.size());
         if (Heap.traceGCRootScanning()) {
             Log.print("Scanning boot heap: start=");
             Log.print(start());
@@ -144,20 +144,20 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
         }
 
         if (Heap.traceGCRootScanning()) {
-            scanReferenceMap(pointerIndexVisitor, referenceMap, referenceMapWords, true);
+            scanReferenceMap(pointerIndexVisitor, refMap, referenceMapWords, true);
         } else {
-            scanReferenceMap(pointerIndexVisitor, referenceMap, referenceMapWords, false);
+            scanReferenceMap(pointerIndexVisitor, refMap, referenceMapWords, false);
         }
 
-        for (Reference specialReference : _specialReferences) {
+        for (Reference specialReference : specialReferences) {
             SpecialReferenceManager.discoverSpecialReference(Grip.fromJava(specialReference));
         }
     }
 
     @INLINE
-    private void scanReferenceMap(PointerIndexVisitor pointerIndexVisitor, Pointer referenceMap, int referenceMapWords, boolean tracing) {
-        for (int i = 0; i < referenceMapWords; ++i) {
-            Address refmapWord = referenceMap.getWord(i).asAddress();
+    private void scanReferenceMap(PointerIndexVisitor pointerIndexVisitor, Pointer refMap, int refMapWords, boolean tracing) {
+        for (int i = 0; i < refMapWords; ++i) {
+            Address refmapWord = refMap.getWord(i).asAddress();
             if (!refmapWord.isZero()) {
                 int bitIndex = 0;
                 while (!refmapWord.isZero()) {

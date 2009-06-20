@@ -35,21 +35,21 @@ import com.sun.max.vm.type.*;
  */
 final class BlockTranslator {
 
-    private final BirToCirMethodTranslation _translation;
+    private final BirToCirMethodTranslation translation;
 
     private BlockTranslator(BirToCirMethodTranslation translation) {
-        _translation = translation;
+        this.translation = translation;
     }
 
     private void scanBlock(BlockState blockState) {
-        final BytecodeTranslation visitor = new BytecodeTranslation(blockState, _translation);
+        final BytecodeTranslation visitor = new BytecodeTranslation(blockState, translation);
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(visitor);
         try {
             bytecodeScanner.scan(blockState.birBlock().bytecodeBlock());
         } catch (RuntimeException runtimeException) {
-            throw (InternalError) new InternalError("Error while translating " + bytecodeScanner.getCurrentLocationAsString(_translation.classMethodActor())).initCause(runtimeException);
+            throw (InternalError) new InternalError("Error while translating " + bytecodeScanner.getCurrentLocationAsString(translation.classMethodActor())).initCause(runtimeException);
         } catch (Error error) {
-            throw (InternalError) new InternalError("Error while translating " + bytecodeScanner.getCurrentLocationAsString(_translation.classMethodActor())).initCause(error);
+            throw (InternalError) new InternalError("Error while translating " + bytecodeScanner.getCurrentLocationAsString(translation.classMethodActor())).initCause(error);
         }
         visitor.terminateBlock();
     }
@@ -60,7 +60,7 @@ final class BlockTranslator {
         while (true) {
             scanBlock(state);
             for (BirBlock successorBirBlock : state.birBlock().successors()) {
-                final BlockState successor = _translation.getBlockStateAt(successorBirBlock.bytecodeBlock().start());
+                final BlockState successor = translation.getBlockStateAt(successorBirBlock.bytecodeBlock().start());
                 assert (successor.frame() == null) == (successor.stack() == null);
                 if (successor.frame() == null) {
                     successor.setFrame(state.frame().copy());
@@ -76,21 +76,21 @@ final class BlockTranslator {
     }
 
     private void scanNormalBlocks() {
-        final BlockState root = _translation.getBlockStateAt(0);
-        root.setFrame(_translation.createFrame());
-        root.setStack(_translation.createStack());
+        final BlockState root = translation.getBlockStateAt(0);
+        root.setFrame(translation.createFrame());
+        root.setStack(translation.createStack());
         scanReachableBlocks(root);
     }
 
     private Sequence<BirBlock> scanExceptionDispatchersWithKnownFrame(Sequence<BirBlock> exceptionDispatchers) {
         final AppendableSequence<BirBlock> remainingExceptionDispatchers = new LinkSequence<BirBlock>();
         for (BirBlock exceptionDispatcher : exceptionDispatchers) {
-            final BlockState blockState = _translation.getBlockStateAt(exceptionDispatcher.bytecodeBlock().start());
+            final BlockState blockState = translation.getBlockStateAt(exceptionDispatcher.bytecodeBlock().start());
             if (blockState.frame() == null) {
                 remainingExceptionDispatchers.append(exceptionDispatcher);
             } else {
                 assert blockState.stack() == null;
-                final JavaStack stack = _translation.createStack();
+                final JavaStack stack = translation.createStack();
                 // there must be exactly one object on the stack here: the throwable
                 stack.push(Kind.REFERENCE);
                 blockState.setStack(stack);
@@ -102,12 +102,12 @@ final class BlockTranslator {
     }
 
     private void scanExceptionDispatchers() {
-        Sequence<BirBlock> exceptionDispatchers = _translation.birExceptionDispatchers();
+        Sequence<BirBlock> exceptionDispatchers = translation.birExceptionDispatchers();
         while (true) {
             final Sequence<BirBlock> remainingExceptionDispatchers = scanExceptionDispatchersWithKnownFrame(exceptionDispatchers);
             if (remainingExceptionDispatchers.length() == exceptionDispatchers.length()) {
                 for (BirBlock exceptionDispatcher : remainingExceptionDispatchers) {
-                    assert !_translation.getBlockStateAt(exceptionDispatcher.bytecodeBlock().start()).hasCirBlock();
+                    assert !translation.getBlockStateAt(exceptionDispatcher.bytecodeBlock().start()).hasCirBlock();
                     ProgramWarning.message("unreachable exception dispatcher: " + exceptionDispatcher);
                 }
                 return;

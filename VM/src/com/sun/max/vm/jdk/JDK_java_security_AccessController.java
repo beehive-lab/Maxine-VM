@@ -116,16 +116,16 @@ final class JDK_java_security_AccessController {
      * replaced with utilities in StackFrameWalker.
      */
     private static class Context implements StackFrameVisitor {
-        final AppendableSequence<ProtectionDomain> _result = new LinkSequence<ProtectionDomain>();
-        boolean _isTopFrame = true;
+        final AppendableSequence<ProtectionDomain> result = new LinkSequence<ProtectionDomain>();
+        boolean isTopFrame = true;
 
         Context() {
         }
 
         public boolean visitFrame(StackFrame stackFrame) {
-            if (_isTopFrame) {
+            if (isTopFrame) {
                 // skip 'getCallerMethod()'
-                _isTopFrame = false;
+                isTopFrame = false;
                 return true;
             }
             if (stackFrame.isAdapter()) {
@@ -140,7 +140,7 @@ final class JDK_java_security_AccessController {
             if (bytecodeLocations == null) {
                 final ProtectionDomain protectionDomain = targetMethod.classMethodActor().holder().protectionDomain();
                 if (protectionDomain != null) {
-                    _result.append(protectionDomain);
+                    result.append(protectionDomain);
                 }
             } else {
                 while (bytecodeLocations.hasNext()) {
@@ -149,7 +149,7 @@ final class JDK_java_security_AccessController {
                     if (classMethodActor.isApplicationVisible()) {
                         final ProtectionDomain protectionDomain = bytecodeLocation.classMethodActor().holder().protectionDomain();
                         if (protectionDomain != null) {
-                            _result.append(protectionDomain);
+                            result.append(protectionDomain);
                         }
                     }
                 }
@@ -170,7 +170,7 @@ final class JDK_java_security_AccessController {
                                                        VMRegister.getCpuStackPointer(),
                                                        VMRegister.getCpuFramePointer(),
                                                        context);
-        return context._result;
+        return context.result;
     }
 
     /**

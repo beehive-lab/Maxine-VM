@@ -31,28 +31,28 @@ import com.sun.max.vm.compiler.cir.variable.*;
  * graph. The delegate visitor is signaled for <i>each edge to a node</i>. As implied by <i>depth first</i>, the
  * delegate visitor is called for a node once all of it's children have been traversed.
  * The delegate visitor must not alter the structure of the graph.
- * 
+ *
  * @author Doug Simon
  */
 public final class CirDepthFirstTraversal extends CirVisitor {
 
-    private TraversedNode _currentNode;
-    private final Stack<TraversedNode> _toDo = new Stack<TraversedNode>();
+    private TraversedNode currentNode;
+    private final Stack<TraversedNode> toDo = new Stack<TraversedNode>();
 
     public static class TraversedNode {
 
-        private final CirNode _node;
+        private final CirNode node;
 
-        private final int _depth;
+        private final int depth;
 
         /**
          * Set to true once all the children of the node have been traversed.
          */
-        boolean _done;
+        boolean done;
 
         TraversedNode(CirNode node, int depth) {
-            _node = node;
-            _depth = depth;
+            this.node = node;
+            this.depth = depth;
         }
 
         /**
@@ -66,11 +66,11 @@ public final class CirDepthFirstTraversal extends CirVisitor {
          * Gets the number of ancestors between the node and the root of the graph being traversed.
          */
         public int depth() {
-            return _depth;
+            return depth;
         }
 
         TraversedNode asSecondaryTraversedNode() {
-            return new TraversedNode(_node, _depth) {
+            return new TraversedNode(node, depth) {
                 @Override
                 public boolean isFirstTraversal() {
                     return false;
@@ -88,12 +88,12 @@ public final class CirDepthFirstTraversal extends CirVisitor {
 
     /**
      * Creates a traversing object for a CIR graph rooted by a given node.
-     * 
+     *
      * @param blocks
      *                a remembered set to prevent traversing the children of a CirBlock more than once
      */
     public CirDepthFirstTraversal(BlockSet blocks) {
-        _blocks = blocks;
+        this.blocks = blocks;
     }
 
     /**
@@ -120,29 +120,29 @@ public final class CirDepthFirstTraversal extends CirVisitor {
         }
     }
 
-    private final BlockSet _blocks;
+    private final BlockSet blocks;
 
     @Override
     public void visitBlock(CirBlock block) {
-        if (!_blocks.containsBlock(block)) {
-            _blocks.recordBlock(block);
-            _toDo.push(new TraversedNode(block.closure(), _currentNode._depth + 1));
+        if (!blocks.containsBlock(block)) {
+            blocks.recordBlock(block);
+            toDo.push(new TraversedNode(block.closure(), currentNode.depth + 1));
         } else {
-            assert _currentNode == _toDo.peek();
-            _currentNode = _currentNode.asSecondaryTraversedNode();
-            _toDo.set(_toDo.size() - 1, _currentNode);
+            assert currentNode == toDo.peek();
+            currentNode = currentNode.asSecondaryTraversedNode();
+            toDo.set(toDo.size() - 1, currentNode);
         }
     }
 
     private void traverseValues(CirValue[] values, int childDepth) {
         for (int i = values.length - 1; i >= 0; --i) {
-            _toDo.push(new TraversedNode(values[i], childDepth));
+            toDo.push(new TraversedNode(values[i], childDepth));
         }
     }
 
     @Override
     public void visitCall(CirCall call) {
-        final int childDepth = _currentNode._depth + 1;
+        final int childDepth = currentNode.depth + 1;
 
         traverseValues(call.arguments(), childDepth);
 
@@ -153,24 +153,24 @@ public final class CirDepthFirstTraversal extends CirVisitor {
             javaFrameDescriptor = javaFrameDescriptor.parent();
         }
 
-        _toDo.push(new TraversedNode(call.procedure(), childDepth));
+        toDo.push(new TraversedNode(call.procedure(), childDepth));
     }
 
     @Override
     public void visitClosure(CirClosure closure) {
         final CirVariable[] parameters = closure.parameters();
-        final int childDepth = _currentNode._depth + 1;
+        final int childDepth = currentNode.depth + 1;
         for (int i = parameters.length - 1; i >= 0; --i) {
-            _toDo.push(new TraversedNode(parameters[i], childDepth));
+            toDo.push(new TraversedNode(parameters[i], childDepth));
         }
-        _toDo.push(new TraversedNode(closure.body(), childDepth));
+        toDo.push(new TraversedNode(closure.body(), childDepth));
     }
 
     /**
      * Gets the traversal info of the node currently being visited by the delegate passed to {@link #run(CirVisitor)}.
      */
     public TraversedNode currentNode() {
-        return _currentNode;
+        return currentNode;
     }
 
     /**
@@ -179,15 +179,15 @@ public final class CirDepthFirstTraversal extends CirVisitor {
      * @param delegate
      */
     public void run(CirNode root, CirVisitor delegate) {
-        _toDo.push(new TraversedNode(root, 0));
-        while (!_toDo.isEmpty()) {
-            _currentNode = _toDo.peek();
-            if (_currentNode._done) {
-                _toDo.pop();
-                _currentNode._node.acceptVisitor(delegate);
+        toDo.push(new TraversedNode(root, 0));
+        while (!toDo.isEmpty()) {
+            currentNode = toDo.peek();
+            if (currentNode.done) {
+                toDo.pop();
+                currentNode.node.acceptVisitor(delegate);
             } else {
-                _currentNode._node.acceptVisitor(this);
-                _currentNode._done = true;
+                currentNode.node.acceptVisitor(this);
+                currentNode.done = true;
             }
         }
     }

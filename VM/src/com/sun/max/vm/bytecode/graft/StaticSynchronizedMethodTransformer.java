@@ -27,24 +27,24 @@ import com.sun.max.vm.type.*;
  */
 class StaticSynchronizedMethodTransformer extends SynchronizedMethodTransformer {
 
-    private final int _classConstantIndex;
+    private final int classConstantIndex;
 
     public StaticSynchronizedMethodTransformer(BytecodeAssembler assembler, int constantIndex) {
         super(assembler);
-        _classConstantIndex = constantIndex;
+        classConstantIndex = constantIndex;
     }
 
     @Override
     void acquireMonitor() {
-        asm().ldc(_classConstantIndex);
+        asm().ldc(classConstantIndex);
         asm().monitorenter();
     }
 
     @Override
     void releaseMonitorAndReturn(Kind resultKind) {
-        if (_returnBlockLabel != null) {
-            _returnBlockLabel.bind();
-            asm().ldc(_classConstantIndex);
+        if (returnBlockLabel != null) {
+            returnBlockLabel.bind();
+            asm().ldc(classConstantIndex);
             asm().monitorexit();
             asm().return_(resultKind);
         }
@@ -52,7 +52,7 @@ class StaticSynchronizedMethodTransformer extends SynchronizedMethodTransformer 
 
     @Override
     void releaseMonitorAndRethrow() {
-        asm().ldc(_classConstantIndex);
+        asm().ldc(classConstantIndex);
         asm().monitorexit();
         asm().athrow();
     }

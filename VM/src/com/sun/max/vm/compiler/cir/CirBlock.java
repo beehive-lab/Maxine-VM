@@ -54,24 +54,24 @@ public final class CirBlock extends CirProcedure implements IrBlock, CirInlineab
         return true;
     }
 
-    private final IrBlock.Role _role;
-    private CirClosure _closure;
+    private final IrBlock.Role role;
+    private CirClosure closure;
 
-    private LinkSequence<CirCall> _calls;
+    private LinkSequence<CirCall> calls;
 
     public CirBlock(IrBlock.Role role) {
-        _role = role;
-        _closure = new CirClosure(new CirCall(), CirClosure.NO_PARAMETERS);
+        this.role = role;
+        this.closure = new CirClosure(new CirCall(), CirClosure.NO_PARAMETERS);
     }
 
     public CirBlock(CirCall call) {
-        _role = IrBlock.Role.NORMAL;
-        _closure = new CirClosure(call, CirClosure.NO_PARAMETERS);
+        this.role = IrBlock.Role.NORMAL;
+        this.closure = new CirClosure(call, CirClosure.NO_PARAMETERS);
     }
 
     public CirBlock(CirClosure closure) {
-        _role = IrBlock.Role.NORMAL;
-        _closure = closure;
+        this.role = IrBlock.Role.NORMAL;
+        this.closure = closure;
     }
 
     @Override
@@ -87,7 +87,7 @@ public final class CirBlock extends CirProcedure implements IrBlock, CirInlineab
     }
 
     public IrBlock.Role role() {
-        return _role;
+        return role;
     }
 
     public int serial() {
@@ -95,27 +95,27 @@ public final class CirBlock extends CirProcedure implements IrBlock, CirInlineab
     }
 
     public CirClosure closure() {
-        return _closure;
+        return closure;
     }
 
     public void setClosure(CirClosure closure) {
-        _closure = closure;
+        this.closure = closure;
     }
 
     @Override
     public Kind[] parameterKinds() {
-        return _closure.parameterKinds();
+        return closure.parameterKinds();
     }
 
     @RESET
-    private transient boolean _isRecursionDetermined;
+    private transient boolean isRecursionDetermined;
 
     @RESET
-    private transient boolean _isRecursive;
+    private transient boolean isRecursive;
 
     public boolean isRecursive() {
-        if (_isRecursionDetermined) {
-            return _isRecursive;
+        if (isRecursionDetermined) {
+            return isRecursive;
         }
         final CirNode node = CirSearch.byPredicate(closure(), new CirPredicate() {
             @Override
@@ -124,23 +124,23 @@ public final class CirBlock extends CirProcedure implements IrBlock, CirInlineab
             }
         });
         assert node == null || node == this;
-        _isRecursive = node == this;
-        _isRecursionDetermined = true;
-        return _isRecursive;
+        isRecursive = node == this;
+        isRecursionDetermined = true;
+        return isRecursive;
     }
 
     public void reset() {
-        _calls = null;
-        _isRecursionDetermined = false;
+        calls = null;
+        isRecursionDetermined = false;
     }
 
     public void addCall(CirCall call) {
-        if (_calls == null) {
-            _calls = new LinkSequence<CirCall>();
+        if (calls == null) {
+            calls = new LinkSequence<CirCall>();
         }
         assert call.arguments().length == closure().parameters().length;
-        assert !Sequence.Static.containsIdentical(_calls, call);
-        _calls.append(call);
+        assert !Sequence.Static.containsIdentical(calls, call);
+        calls.append(call);
     }
 
     /**
@@ -150,11 +150,11 @@ public final class CirBlock extends CirProcedure implements IrBlock, CirInlineab
      * @return list of calls to this block or 'null' if none
      */
     public LinkSequence<CirCall> calls() {
-        return _calls;
+        return calls;
     }
 
     public int numberOfCalls() {
-        return _calls == null ? 0 : _calls.length();
+        return calls == null ? 0 : calls.length();
     }
 
     private int findIndex(CirVariable[] parameters, CirValue argument) {
@@ -167,17 +167,17 @@ public final class CirBlock extends CirProcedure implements IrBlock, CirInlineab
     }
 
     private boolean isFirstCallFoldableSwitch(CirOptimizer optimizer, CirValue[] arguments) {
-        final CirValue procedure = _closure.body().procedure();
+        final CirValue procedure = closure.body().procedure();
         if (procedure instanceof CirSwitch) {
             final CirFoldable foldable = (CirFoldable) procedure;
-            final CirValue[] bodyArguments = _closure.body().arguments();
+            final CirValue[] bodyArguments = closure.body().arguments();
             final int n = bodyArguments.length;
             final CirValue[] foldArguments = CirCall.newArguments(n);
             for (int i = 0; i < n; i++) {
                 if (bodyArguments[i].isConstant()) {
                     foldArguments[i] = bodyArguments[i];
                 } else {
-                    final int index = findIndex(_closure.parameters(), bodyArguments[i]);
+                    final int index = findIndex(closure.parameters(), bodyArguments[i]);
                     foldArguments[i] = arguments[index];
                 }
             }
@@ -187,8 +187,8 @@ public final class CirBlock extends CirProcedure implements IrBlock, CirInlineab
     }
 
     public boolean isInlineable(CirOptimizer optimizer, CirValue[] arguments) {
-        assert arguments.length == _closure.parameters().length;
-        return numberOfCalls() <= 1 || _closure.body().procedure() instanceof CirContinuationVariable ||
+        assert arguments.length == closure.parameters().length;
+        return numberOfCalls() <= 1 || closure.body().procedure() instanceof CirContinuationVariable ||
                (isFirstCallFoldableSwitch(optimizer, arguments) && !isRecursive());
     }
 
@@ -196,13 +196,13 @@ public final class CirBlock extends CirProcedure implements IrBlock, CirInlineab
         if (numberOfCalls() > 1) {
             CirSwitchEncapsulation.apply(this);
         }
-        final CirClosure closure = CirReplication.replicateLocalClosure(_closure);
-        return CirBetaReduction.applyMultiple(closure, arguments);
+        final CirClosure closureCopy = CirReplication.replicateLocalClosure(closure);
+        return CirBetaReduction.applyMultiple(closureCopy, arguments);
     }
 
     @Override
     public String toString() {
-        return _role.toString();
+        return role.toString();
     }
 
     @Override

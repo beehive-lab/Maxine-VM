@@ -35,11 +35,11 @@ public class CirBuiltinVariantOptimization extends CirDeflation {
         FOLDABLE, FOLDABLE_WHEN_NOT_ZERO;
     }
 
-    private final Variant _variant;
+    private final Variant variant;
 
     CirBuiltinVariantOptimization(CirOptimizer optimizer, CirNode node, Variant variant) {
         super(optimizer, node);
-        _variant = variant;
+        this.variant = variant;
     }
 
     public static void apply(CirGenerator cirGenerator, CirNode node, Variant variant, CirMethod cirMethod) {
@@ -55,7 +55,7 @@ public class CirBuiltinVariantOptimization extends CirDeflation {
         boolean result = super.updateCall(call);
         if (call.procedure() instanceof CirBuiltin) {
             final CirBuiltin cirBuiltin = (CirBuiltin) call.procedure();
-            switch (_variant) {
+            switch (variant) {
                 case FOLDABLE: {
                     if (cirBuiltin != cirBuiltin.foldableVariant()) {
                         call.setProcedure(cirBuiltin.foldableVariant());

@@ -26,15 +26,15 @@ import com.sun.max.vm.type.*;
 
 public class ArrayLoad extends JavaOperator {
 
-    private final Kind _kind;
+    private final Kind kind;
 
     public ArrayLoad(Kind kind) {
         super(CALL | NULL_POINTER_CHECK | ARRAY_BOUNDS_CHECK);
-        _kind = kind;
+        this.kind = kind;
     }
 
     public Kind resultKind() {
-        return _kind;
+        return kind;
     }
 
     @Override
@@ -42,11 +42,11 @@ public class ArrayLoad extends JavaOperator {
         visitor.visit(this);
     }
 
-    private static final Kind[] _parameterKinds = {Kind.REFERENCE, Kind.INT};
+    private static final Kind[] parameterKinds = {Kind.REFERENCE, Kind.INT};
 
     @Override
     public Kind[] parameterKinds() {
-        return _parameterKinds;
+        return parameterKinds;
     }
 
     @Override

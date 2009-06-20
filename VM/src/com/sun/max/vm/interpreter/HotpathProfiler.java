@@ -33,8 +33,8 @@ import com.sun.max.vm.value.*;
 
 public class HotpathProfiler implements Profiler {
 
-    public static OptionSet _optionSet = new OptionSet();
-    public static Option<Boolean> _printState = _optionSet.newBooleanOption("PP", false, "(P)rints the Profiler's Execution (S)tate.");
+    public static OptionSet optionSet = new OptionSet();
+    public static Option<Boolean> printState = optionSet.newBooleanOption("PP", false, "(P)rints the Profiler's Execution (S)tate.");
 
     private GrowableMapping<BytecodeLocation, TreeAnchor> _anchors = new OpenAddressingHashMapping<BytecodeLocation, TreeAnchor>();
 
@@ -50,7 +50,7 @@ public class HotpathProfiler implements Profiler {
     public void trace(BytecodeLocation location, BirState state) {
         if (_isTracing) {
             _isTracing = BirTracer.current().visitBytecode(location, state);
-            if (_printState.getValue()) {
+            if (printState.getValue()) {
                 Console.println(Color.LIGHTRED, "tracing loc: " + location.toString());
             }
         }
@@ -73,13 +73,13 @@ public class HotpathProfiler implements Profiler {
         final boolean isTracing = BirTracer.current().visitAnchor(hotpathAnchor, state);
         if (isTracing) {
             _isTracing = true;
-            if (_printState.getValue()) {
+            if (printState.getValue()) {
                 Console.println(Color.RED, "tracing starting at: " + hotpathAnchor);
             }
         } else {
             if (_isTracing == true) {
                 _isTracing = false;
-                if (_printState.getValue()) {
+                if (printState.getValue()) {
                     Console.println(Color.RED, "tracing stopping at: " + hotpathAnchor);
                 }
             }

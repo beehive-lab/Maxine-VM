@@ -33,35 +33,35 @@ import com.sun.max.vm.type.*;
  */
 public abstract class AMD64EirRegister extends EirRegister {
 
-    private static AMD64EirRegister[] _registers = new AMD64EirRegister[32];
+    private static AMD64EirRegister[] registers = new AMD64EirRegister[32];
 
-    private static Pool<AMD64EirRegister> _pool = new ArrayPool<AMD64EirRegister>(_registers);
+    private static Pool<AMD64EirRegister> pool = new ArrayPool<AMD64EirRegister>(registers);
 
     public static Pool<AMD64EirRegister> pool() {
-        return _pool;
+        return pool;
     }
 
-    private final int _ordinal;
+    private final int ordinal;
 
-    private final int _serial;
+    private final int serial;
 
-    private static int _nextSerial;
+    private static int nextSerial;
 
     protected AMD64EirRegister(int ordinal) {
-        _ordinal = ordinal;
-        _serial = _nextSerial++;
-        assert _registers[_serial] == null;
-        _registers[_serial] = this;
+        this.ordinal = ordinal;
+        this.serial = nextSerial++;
+        assert registers[serial] == null;
+        registers[serial] = this;
     }
 
     @Override
     public final int ordinal() {
-        return _ordinal;
+        return ordinal;
     }
 
     @Override
     public final int serial() {
-        return _serial;
+        return serial;
     }
 
     public static final class General extends AMD64EirRegister implements StaticFieldName, PoolObject {
@@ -92,14 +92,14 @@ public abstract class AMD64EirRegister extends EirRegister {
         public static final General R14 = new General(14);
         public static final General R15 = new General(15);
 
-        private static final General[] _values = {RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI, R8, R9, R10, R11, R12, R13, R14, R15};
+        private static final General[] values = {RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI, R8, R9, R10, R11, R12, R13, R14, R15};
 
-        public static final IndexedSequence<General> VALUES = new ArraySequence<General>(_values);
+        public static final IndexedSequence<General> VALUES = new ArraySequence<General>(values);
 
-        private static final PoolSet<AMD64EirRegister> _poolSet = PoolSet.of(_pool, _values);
+        private static final PoolSet<AMD64EirRegister> poolSet = PoolSet.of(pool, values);
 
         public static PoolSet<AMD64EirRegister> poolSet() {
-            return _poolSet;
+            return poolSet;
         }
 
         public AMD64GeneralRegister8 as8() {
@@ -119,7 +119,7 @@ public abstract class AMD64EirRegister extends EirRegister {
         }
 
         public static General from(GeneralRegister register) {
-            return _values[register.value()];
+            return values[register.value()];
         }
 
         @Override
@@ -127,14 +127,14 @@ public abstract class AMD64EirRegister extends EirRegister {
             return EirLocationCategory.INTEGER_REGISTER;
         }
 
-        private String _name;
+        private String name;
 
         public String name() {
-            return _name;
+            return name;
         }
 
         public void setName(String name) {
-            _name = name;
+            this.name = name;
         }
 
         static {
@@ -180,14 +180,14 @@ public abstract class AMD64EirRegister extends EirRegister {
         public static final XMM XMM14 = new XMM(14);
         public static final XMM XMM15 = new XMM(15);
 
-        private static final XMM[] _values = {XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15};
+        private static final XMM[] values = {XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15};
 
-        public static final IndexedSequence<XMM> VALUES = new ArraySequence<XMM>(_values);
+        public static final IndexedSequence<XMM> VALUES = new ArraySequence<XMM>(values);
 
-        private static final PoolSet<AMD64EirRegister> _poolSet = PoolSet.of(_pool, _values);
+        private static final PoolSet<AMD64EirRegister> poolSet = PoolSet.of(pool, values);
 
         public static PoolSet<AMD64EirRegister> poolSet() {
-            return _poolSet;
+            return poolSet;
         }
 
         public AMD64XMMRegister as() {
@@ -195,7 +195,7 @@ public abstract class AMD64EirRegister extends EirRegister {
         }
 
         public static XMM from(AMD64XMMRegister register) {
-            return _values[register.value()];
+            return values[register.value()];
         }
 
         @Override

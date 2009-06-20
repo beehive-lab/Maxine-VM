@@ -55,7 +55,7 @@ public class CodeRegion extends LinearAllocatorHeapRegion {
     /**
      * A sorted list of the memory regions allocated within this code region.
      */
-    private final SortedMemoryRegionList<RuntimeMemoryRegion> _sortedMemoryRegions = new SortedMemoryRegionList<RuntimeMemoryRegion>();
+    private final SortedMemoryRegionList<RuntimeMemoryRegion> sortedMemoryRegions = new SortedMemoryRegionList<RuntimeMemoryRegion>();
 
     /**
      * The byte array hub, which is necessary for allocating a byte array instance to encapsulate
@@ -70,8 +70,8 @@ public class CodeRegion extends LinearAllocatorHeapRegion {
      */
     @PROTOTYPE_ONLY
     public final Iterable<TargetMethod> targetMethods() {
-        final AppendableSequence<TargetMethod> result = new ArrayListSequence<TargetMethod>(_sortedMemoryRegions.length());
-        for (MemoryRegion memoryRegion : _sortedMemoryRegions) {
+        final AppendableSequence<TargetMethod> result = new ArrayListSequence<TargetMethod>(sortedMemoryRegions.length());
+        for (MemoryRegion memoryRegion : sortedMemoryRegions) {
             if (memoryRegion instanceof TargetMethod) {
                 result.append((TargetMethod) memoryRegion);
             }
@@ -103,7 +103,7 @@ public class CodeRegion extends LinearAllocatorHeapRegion {
             Log.unlock(lockDisabledSafepoints);
         }
         targetMethod.setStart(start);
-        _sortedMemoryRegions.add(targetMethod);
+        sortedMemoryRegions.add(targetMethod);
         return true;
     }
 
@@ -141,7 +141,7 @@ public class CodeRegion extends LinearAllocatorHeapRegion {
         DebugHeap.writeCellTag(cell);
         Cell.plantArray(cell, byteArrayHub, size);
         stub.setStart(cell.plus(byteArrayLayout.getElementOffsetInCell(0)));
-        _sortedMemoryRegions.add(stub);
+        sortedMemoryRegions.add(stub);
         return true;
     }
 
@@ -152,7 +152,7 @@ public class CodeRegion extends LinearAllocatorHeapRegion {
      * @return a reference to the target method containing the specified address, if it exists; {@code null} otherwise
      */
     public TargetMethod findTargetMethod(Address address) {
-        final MemoryRegion memoryRegion = _sortedMemoryRegions.find(address);
+        final MemoryRegion memoryRegion = sortedMemoryRegions.find(address);
         if (memoryRegion instanceof TargetMethod) {
             return (TargetMethod) memoryRegion;
         }
@@ -167,7 +167,7 @@ public class CodeRegion extends LinearAllocatorHeapRegion {
      *         otherwise
      */
     public RuntimeStub findRuntimeStub(Address address) {
-        final MemoryRegion memoryRegion = _sortedMemoryRegions.find(address);
+        final MemoryRegion memoryRegion = sortedMemoryRegions.find(address);
         if (memoryRegion instanceof RuntimeStub) {
             return (RuntimeStub) memoryRegion;
         }

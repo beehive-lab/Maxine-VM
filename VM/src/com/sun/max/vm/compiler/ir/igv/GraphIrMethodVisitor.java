@@ -32,14 +32,14 @@ import com.sun.max.vm.compiler.eir.*;
  */
 class GraphIrMethodVisitor implements IrMethodVisitor {
 
-    private final GraphWriter.Group _group;
-    private final Object _context;
-    private final String _stateName;
+    private final GraphWriter.Group group;
+    private final Object context;
+    private final String stateName;
 
     GraphIrMethodVisitor(GraphWriter.Group group, Object context, String stateName) {
-        _group = group;
-        _context = context;
-        _stateName = stateName;
+        this.group = group;
+        this.context = context;
+        this.stateName = stateName;
     }
 
     /**
@@ -48,7 +48,7 @@ class GraphIrMethodVisitor implements IrMethodVisitor {
      */
     public void visit(BirMethod method) {
         final String graphName = method.classMethodActor().format("%H.%n(%p)") + "BIR";
-        final GraphWriter.Graph graph = _group.createGraph(graphName);
+        final GraphWriter.Graph graph = group.createGraph(graphName);
 
         for (BirBlock block : method.blocks()) {
             final GraphWriter.Node node = graph.createNode(block.serial());
@@ -70,13 +70,12 @@ class GraphIrMethodVisitor implements IrMethodVisitor {
      * @param method the method for which the graph is generated
      */
     public void visit(CirMethod method) {
-        if (_context == null) {
+        if (context == null) {
             return;
         }
-        assert _context instanceof CirNode;
-        final GraphWriter.Group group = _group;
-        final GraphWriter.Graph graph = group.createGraph(_stateName);
-        final CirNode node = (CirNode) _context;
+        assert context instanceof CirNode;
+        final GraphWriter.Graph graph = this.group.createGraph(stateName);
+        final CirNode node = (CirNode) context;
         final CirTraversal traversal = new GraphCirNodeVisitor(graph, node);
         traversal.run();
     }

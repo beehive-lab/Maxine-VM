@@ -52,7 +52,7 @@ public class VariableAddressCodeManager extends CodeManager {
     /**
      * The number of code regions currently being used.
      */
-    private int _numberOfRuntimeCodeRegionsInUse = 0;
+    private int numberOfRuntimeCodeRegionsInUse = 0;
 
     /**
      * Get the next free code region.
@@ -61,7 +61,7 @@ public class VariableAddressCodeManager extends CodeManager {
      */
     @Override
     protected CodeRegion makeFreeCodeRegion() {
-        if (_numberOfRuntimeCodeRegionsInUse >= _runtimeCodeRegions.length) {
+        if (numberOfRuntimeCodeRegionsInUse >= runtimeCodeRegions.length) {
             FatalError.unexpected("cannot free code regions");
         }
 
@@ -91,25 +91,25 @@ public class VariableAddressCodeManager extends CodeManager {
 
         if (!codeRegion.size().isZero()) {
             // need to move down
-            for (int i = _numberOfRuntimeCodeRegionsInUse - 1; i >= index;  i--) {
-                _runtimeCodeRegions[i + 1] =  _runtimeCodeRegions[i];
+            for (int i = numberOfRuntimeCodeRegionsInUse - 1; i >= index;  i--) {
+                runtimeCodeRegions[i + 1] =  runtimeCodeRegions[i];
             }
         }
         codeRegion.setStart(address);
         codeRegion.setMark(address);
         codeRegion.setSize(Size.fromInt(RUNTIME_CODE_REGION_SIZE));
-        _runtimeCodeRegions[index] = codeRegion;
+        runtimeCodeRegions[index] = codeRegion;
 
-        if (_numberOfRuntimeCodeRegionsInUse == 0) {
+        if (numberOfRuntimeCodeRegionsInUse == 0) {
             setStart(codeRegion.start());
             setSize(codeRegion.size());
         } else {
             final CodeRegion firstRegion = getRuntimeCodeRegion(0);
-            final CodeRegion lastRegion = getRuntimeCodeRegion(_numberOfRuntimeCodeRegionsInUse);
+            final CodeRegion lastRegion = getRuntimeCodeRegion(numberOfRuntimeCodeRegionsInUse);
             setStart(firstRegion.start());
             setSize(lastRegion.end().minus(firstRegion.start()).asSize());
         }
-        _numberOfRuntimeCodeRegionsInUse++;
+        numberOfRuntimeCodeRegionsInUse++;
 
         return codeRegion;
     }
@@ -121,7 +121,7 @@ public class VariableAddressCodeManager extends CodeManager {
     @Override
     protected CodeRegion codePointerToRuntimeCodeRegion(Address codePointer) {
         // simple linear search, could do binary search if performance concern
-        for (int i = 0; i < _numberOfRuntimeCodeRegionsInUse; i++) {
+        for (int i = 0; i < numberOfRuntimeCodeRegionsInUse; i++) {
             final CodeRegion codeRegion = getRuntimeCodeRegion(i);
             if (codeRegion.contains(codePointer)) {
                 return codeRegion;

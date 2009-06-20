@@ -36,48 +36,48 @@ import com.sun.max.vm.compiler.cir.variable.*;
  */
 final class CirAnnotatedTraceBuilder extends CirVisitor {
 
-    private final StringBuilder _buffer;
-    private final AppendableSequence<Element> _elements = new ArrayListSequence<Element>();
+    private final StringBuilder buffer;
+    private final AppendableSequence<Element> elements = new ArrayListSequence<Element>();
 
-    private CirMethod _method;
-    private boolean _atStartOfLine = true;
-    private int _indentation;
+    private CirMethod method;
+    private boolean atStartOfLine = true;
+    private int indentation;
 
     public CirAnnotatedTraceBuilder(CirNode node) {
         if (node instanceof CirMethod) {
-            _method = (CirMethod) node;
+            method = (CirMethod) node;
         } else {
-            _method = null;
+            method = null;
         }
-        _buffer = new StringBuilder();
+        buffer = new StringBuilder();
         node.acceptVisitor(this);
     }
 
     private void append(final Element element) {
-        _elements.append(element);
+        elements.append(element);
     }
 
     private void append(String text) {
-        _buffer.append(text);
+        buffer.append(text);
     }
 
     private Range print(String string) {
-        if (_atStartOfLine) {
-            if (_indentation <= MAX_PRINTABLE_INDENTATION) {
-                for (int i = 0; i < _indentation; i++) {
+        if (atStartOfLine) {
+            if (indentation <= MAX_PRINTABLE_INDENTATION) {
+                for (int i = 0; i < indentation; i++) {
                     append(INDENTATION);
                 }
             } else {
-                final int actualIndentation = _indentation % MAX_PRINTABLE_INDENTATION;
-                final int elided = _indentation - actualIndentation;
+                final int actualIndentation = indentation % MAX_PRINTABLE_INDENTATION;
+                final int elided = indentation - actualIndentation;
                 append("[" + elided + " more +] ");
                 for (int i = 0; i < actualIndentation; i++) {
                     append(INDENTATION);
                 }
             }
-            _atStartOfLine = false;
+            atStartOfLine = false;
         }
-        final int start = _buffer.length();
+        final int start = buffer.length();
         append(string);
         return new Range(start, start + string.length());
     }
@@ -87,7 +87,7 @@ final class CirAnnotatedTraceBuilder extends CirVisitor {
 
     private void println() {
         append("\n");
-        _atStartOfLine = true;
+        atStartOfLine = true;
     }
 
     private void println(String string) {
@@ -96,12 +96,12 @@ final class CirAnnotatedTraceBuilder extends CirVisitor {
     }
 
     private void indent() {
-        _indentation++;
+        indentation++;
         println();
     }
 
     private void outdent() {
-        _indentation--;
+        indentation--;
         println();
     }
 
@@ -144,9 +144,9 @@ final class CirAnnotatedTraceBuilder extends CirVisitor {
         append(new SimpleElement(closure.body(), print(CALL_OPERATOR)));
         indent();
         print(""); // Prints the indentation
-        final int bodyStart = _buffer.length();
+        final int bodyStart = buffer.length();
         closure.body().acceptVisitor(this);
-        final int bodyEnd = _buffer.length();
+        final int bodyEnd = buffer.length();
         outdent();
         final Range bodyRange = new Range(bodyStart, bodyEnd);
         final Range close = print("}");
@@ -162,16 +162,16 @@ final class CirAnnotatedTraceBuilder extends CirVisitor {
     }
 
     @Override
-    public void visitMethod(CirMethod method) {
-        if (method == _method && method.isGenerated()) {
-            _method = null;
-            printClosure(method.name(), method, method.closure());
+    public void visitMethod(CirMethod m) {
+        if (method == m && method.isGenerated()) {
+            method = null;
+            printClosure(m.name(), m, m.closure());
         } else {
             append(new SimpleElement(method, print(method.name())));
         }
     }
 
-    private final Set<CirBlock> _blockIds = new HashSet<CirBlock>();
+    private final Set<CirBlock> blockIds = new HashSet<CirBlock>();
 
     /**
      * A solid raised dot.
@@ -181,7 +181,7 @@ final class CirAnnotatedTraceBuilder extends CirVisitor {
     @Override
     public void visitBlock(CirBlock block) {
         final CirClosure closure = block.closure();
-        if (_blockIds.contains(block)) {
+        if (blockIds.contains(block)) {
             final String label = block + "#" + block.id();
             final Range open = print("{");
             final Range blockRange = print(label);
@@ -189,7 +189,7 @@ final class CirAnnotatedTraceBuilder extends CirVisitor {
             final int bodyStart = parametersRange.end();
             append(new SimpleElement(closure.body(), print(CALL_OPERATOR)));
             print(" ...");
-            final Range bodyRange = new Range(bodyStart, _buffer.length());
+            final Range bodyRange = new Range(bodyStart, buffer.length());
             final Range close = print("}");
             append(new SimpleElement(block, blockRange) {
                 @Override
@@ -200,7 +200,7 @@ final class CirAnnotatedTraceBuilder extends CirVisitor {
             });
             append(new ParenthesisElement(open, close));
         } else {
-            _blockIds.add(block);
+            blockIds.add(block);
             final String label = block.role() + "#" + block.id();
             printClosure(label, block, closure);
         }
@@ -227,10 +227,10 @@ final class CirAnnotatedTraceBuilder extends CirVisitor {
     }
 
     public String trace() {
-        return _buffer.toString();
+        return buffer.toString();
     }
 
     public Sequence<Element> elements() {
-        return _elements;
+        return elements;
     }
 }

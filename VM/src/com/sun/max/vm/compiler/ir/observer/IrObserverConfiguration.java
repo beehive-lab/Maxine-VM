@@ -82,7 +82,7 @@ public class IrObserverConfiguration {
      */
     public static final String IR_TRACE_PROPERTY = "max.ir.trace";
 
-    static final String _packageName = Classes.getPackageName(IrObserverConfiguration.class.getName());
+    static final String packageName = Classes.getPackageName(IrObserverConfiguration.class.getName());
 
     /**
      * This method attaches all globally-defined observers to a new generator instance.
@@ -186,7 +186,7 @@ public class IrObserverConfiguration {
             return Class.forName(className);
         } catch (ClassNotFoundException e) {
             // try again by adding the default package name to the specified class
-            return Class.forName(_packageName + "." + className);
+            return Class.forName(packageName + "." + className);
         }
     }
 

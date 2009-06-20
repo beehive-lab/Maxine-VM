@@ -44,20 +44,20 @@ public class EirMethod extends AbstractIrMethod {
         return classMethodActor() instanceof TrampolineMethodActor;
     }
 
-    private final EirABI _abi;
+    private final EirABI abi;
 
     public EirABI abi() {
-        return _abi;
+        return abi;
     }
 
     public EirMethod(ClassMethodActor classMethodActor, EirABI eirABI) {
         super(classMethodActor);
-        _abi = eirABI;
+        abi = eirABI;
     }
 
     protected EirMethod(ClassMethodActor classMethodActor, EirABIsScheme eirABIsScheme) {
         super(classMethodActor);
-        _abi = eirABIsScheme.getABIFor(classMethodActor);
+        abi = eirABIsScheme.getABIFor(classMethodActor);
     }
 
     /**
@@ -76,14 +76,14 @@ public class EirMethod extends AbstractIrMethod {
     /**
      * Locations where this method's callers set up the method's parameters.
      */
-    private EirLocation[] _argumentLocations;
+    private EirLocation[] argumentLocations;
 
     public EirLocation[] argumentLocations() {
-        return _argumentLocations;
+        return argumentLocations;
     }
 
     public void setArgumentLocations(EirLocation[] argumentLocations) {
-        _argumentLocations = argumentLocations;
+        this.argumentLocations = argumentLocations;
     }
 
     private EirLocation _resultLocation;
@@ -96,7 +96,7 @@ public class EirMethod extends AbstractIrMethod {
         _resultLocation = resultLocation;
     }
 
-    private int _frameSize;
+    private int frameSize;
 
     /**
      * Gets the size of the stack frame used for the local variables in
@@ -105,19 +105,19 @@ public class EirMethod extends AbstractIrMethod {
      */
     public int frameSize() {
         assert isGenerated();
-        return _frameSize;
+        return frameSize;
     }
 
     /**
      * @see #frameSize()
      */
     public void setFrameSize(int numberOfBytes) {
-        _frameSize = numberOfBytes;
+        frameSize = numberOfBytes;
 
-        if (_frameSize < Word.size()) {
+        if (frameSize < Word.size()) {
             // To support deoptimization we need at least one word besides the return address on the stack
             // @see Deoptimizer
-            _frameSize = Word.size();
+            frameSize = Word.size();
         }
     }
 
@@ -127,22 +127,22 @@ public class EirMethod extends AbstractIrMethod {
         }
     }
 
-    private IndexedSequence<EirBlock> _blocks;
+    private IndexedSequence<EirBlock> blocks;
 
     public IndexedSequence<EirBlock> blocks() {
-        return _blocks;
+        return blocks;
     }
 
-    private EirLiteralPool _literalPool;
+    private EirLiteralPool literalPool;
 
     public EirLiteralPool literalPool() {
-        return _literalPool;
+        return literalPool;
     }
 
     public void setGenerated(IndexedSequence<EirBlock> blocks, EirLiteralPool literalPool, EirLocation[] parameterLocations,
                              final EirLocation resultLocation, int frameSize) {
-        _blocks = blocks;
-        _literalPool = literalPool;
+        this.blocks = blocks;
+        this.literalPool = literalPool;
         setParameterLocations(parameterLocations);
         setArgumentLocations(parameterLocations); // FIXME: this should be different for SPARC. An extra parameter is needed...
         setResultLocation(resultLocation);
@@ -150,7 +150,7 @@ public class EirMethod extends AbstractIrMethod {
     }
 
     public boolean isGenerated() {
-        return _blocks != null;
+        return blocks != null;
     }
 
     public String traceToString() {
@@ -159,22 +159,22 @@ public class EirMethod extends AbstractIrMethod {
         writer.println("EirCompiledMethod: " + classMethodActor().holder() + "." + name() + "(" + ((parameterLocations() == null) ? null : Arrays.toString(parameterLocations(), ", ")) + ") -> " + resultLocation());
         if (isGenerated()) {
             writer.indent();
-            for (EirBlock block : _blocks) {
+            for (EirBlock block : blocks) {
                 block.printTo(writer);
             }
 
-            if (!_literalPool.referenceLiterals().isEmpty()) {
+            if (!literalPool.referenceLiterals().isEmpty()) {
                 writer.println("reference literals: ");
                 writer.indent();
-                for (EirLiteral literal : _literalPool.referenceLiterals()) {
+                for (EirLiteral literal : literalPool.referenceLiterals()) {
                     writer.println(literal.toString());
                 }
                 writer.outdent();
             }
-            if (!_literalPool.scalarLiterals().isEmpty()) {
+            if (!literalPool.scalarLiterals().isEmpty()) {
                 writer.println("scalar literals: ");
                 writer.indent();
-                for (EirLiteral literal : _literalPool.scalarLiterals()) {
+                for (EirLiteral literal : literalPool.scalarLiterals()) {
                     writer.println(literal.toString());
                 }
                 writer.outdent();
@@ -191,13 +191,13 @@ public class EirMethod extends AbstractIrMethod {
 
     @Override
     public void cleanup() {
-        for (EirBlock block : _blocks) {
+        for (EirBlock block : blocks) {
             block.cleanup();
         }
     }
 
     public void cleanupAfterEmitting() {
-        for (EirBlock block : _blocks) {
+        for (EirBlock block : blocks) {
             block.cleanupAfterEmitting();
         }
     }

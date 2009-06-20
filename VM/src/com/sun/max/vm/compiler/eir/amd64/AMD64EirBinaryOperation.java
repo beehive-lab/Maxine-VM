@@ -255,11 +255,11 @@ public abstract class AMD64EirBinaryOperation extends AMD64EirUnaryOperation {
         }
 
         public abstract static class Shift extends Arithmetic {
-            private final Kind _kind;
+            private final Kind kind;
 
             protected Shift(EirBlock block, Kind kind, EirValue destination, EirValue source) {
                 super(block, destination, EirOperand.Effect.UPDATE, G_S, source, EirOperand.Effect.USE, G_I32_I64);
-                _kind = kind;
+                this.kind = kind;
                 sourceOperand().setRequiredRegister(RCX);
             }
 
@@ -304,7 +304,7 @@ public abstract class AMD64EirBinaryOperation extends AMD64EirUnaryOperation {
                     case IMMEDIATE_32:
                     case IMMEDIATE_64: {
                         final byte sourceImmediate = sourceLocation.asImmediate().value().unsignedToByte();
-                        if (sourceImmediate % _kind.width().numberOfBits() == 1) {
+                        if (sourceImmediate % kind.width().numberOfBits() == 1) {
                             switch (destinationLocation.category()) {
                                 case INTEGER_REGISTER: {
                                     emit_G_1(emitter, destinationGeneralRegister());

@@ -29,47 +29,47 @@ import com.sun.max.unsafe.*;
  */
 public class BeltwayHeapSchemeConfiguration {
 
-    protected static Address _applicationHeapStartAddress;
-    protected static Address _applicationHeapEndAddress;
+    protected static Address applicationHeapStartAddress;
+    protected static Address applicationHeapEndAddress;
 
-    protected static Size _applicationHeapMaxSize;
+    protected static Size applicationHeapMaxSize;
 
     public static final Size TLAB_SIZE = BeltwayCardRegion.cardSize().times(512).asSize();
     public static final Size GC_TLAB_SIZE = BeltwayCardRegion.cardSize().times(1).asSize();
     public static final int ALLIGNMENT = BeltwayCardRegion.cardSize().toInt();
 
     public BeltwayHeapSchemeConfiguration(Address applicationHeapStartAddress, Size applicationHeapMaxSize) {
-        _applicationHeapStartAddress = applicationHeapStartAddress;
-        _applicationHeapMaxSize = applicationHeapMaxSize;
+        BeltwayHeapSchemeConfiguration.applicationHeapStartAddress = applicationHeapStartAddress;
+        BeltwayHeapSchemeConfiguration.applicationHeapMaxSize = applicationHeapMaxSize;
     }
 
     @INLINE
     public static Address getApplicationHeapStartAddress() {
-        return _applicationHeapStartAddress;
+        return applicationHeapStartAddress;
     }
 
     @INLINE
     public static void setHeapStartStartAddress(Address address) {
-        _applicationHeapStartAddress = address;
+        applicationHeapStartAddress = address;
     }
 
     @INLINE
     public static Address getApplicationHeapEndAddress() {
-        return _applicationHeapStartAddress.plus(_applicationHeapMaxSize);
+        return applicationHeapStartAddress.plus(applicationHeapMaxSize);
     }
 
     @INLINE
     public static Size getUsableMemory() {
-        return _applicationHeapMaxSize.dividedBy(2);
+        return applicationHeapMaxSize.dividedBy(2);
     }
 
     @INLINE
     public static Size getCopyReserveMemory() {
-        return _applicationHeapMaxSize.minus(getUsableMemory());
+        return applicationHeapMaxSize.minus(getUsableMemory());
     }
 
     @INLINE
     public static Size getMaxHeapSize() {
-        return _applicationHeapMaxSize;
+        return applicationHeapMaxSize;
     }
 }

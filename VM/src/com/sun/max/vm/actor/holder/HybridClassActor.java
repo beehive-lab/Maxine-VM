@@ -29,13 +29,13 @@ import com.sun.max.vm.type.*;
 
 /**
  * Class actors for hybrid objects (currently only hubs).
- * 
+ *
  * @author Bernd Mathiske
  */
 public class HybridClassActor extends ReferenceClassActor {
 
     @INSPECTED
-    private final ConstantPool _constantPool;
+    private final ConstantPool constantPool;
 
     HybridClassActor(ConstantPool constantPool,
                      ClassLoader classLoader,
@@ -66,13 +66,13 @@ public class HybridClassActor extends ReferenceClassActor {
               NO_INNER_CLASSES,
               NO_OUTER_CLASS,
               NO_ENCLOSING_METHOD_INFO);
-        _constantPool = constantPool;
+        this.constantPool = constantPool;
         constantPool.setHolder(this);
     }
 
     @Override
     public final ConstantPool constantPool() {
-        return _constantPool;
+        return constantPool;
     }
 
     @Override

@@ -49,10 +49,10 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
 
     static {
         _optionSet.addOptions(BirInterpreter._optionSet);
-        _optionSet.addOptions(HotpathProfiler._optionSet);
-        _optionSet.addOptions(TirRecorder._optionSet);
-        _optionSet.addOptions(Tracer._optionSet);
-        _optionSet.addOptions(AsynchronousProfiler._optionSet);
+        _optionSet.addOptions(HotpathProfiler.optionSet);
+        _optionSet.addOptions(TirRecorder.optionSet);
+        _optionSet.addOptions(Tracer.optionSet);
+        _optionSet.addOptions(AsynchronousProfiler.optionSet);
         _optionSet.addOptions(IrInterpreter._options);
     }
 

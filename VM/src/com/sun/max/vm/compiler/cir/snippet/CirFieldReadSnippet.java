@@ -36,11 +36,11 @@ import com.sun.max.vm.value.*;
  */
 public abstract class CirFieldReadSnippet extends CirSpecialSnippet {
 
-    private final CirSnippet _cirTupleOffsetSnippet;
+    private final CirSnippet cirTupleOffsetSnippet;
 
     protected CirFieldReadSnippet(FieldReadSnippet fieldReadSnippet) {
         super(fieldReadSnippet);
-        _cirTupleOffsetSnippet = CirSnippet.get(fieldReadSnippet.tupleOffsetSnippet());
+        cirTupleOffsetSnippet = CirSnippet.get(fieldReadSnippet.tupleOffsetSnippet());
     }
 
     private enum FieldReadParameter {
@@ -70,7 +70,7 @@ public abstract class CirFieldReadSnippet extends CirSpecialSnippet {
     private CirCall foldWithConstantField(CirOptimizer cirOptimizer, CirValue[] arguments, FieldActor fieldActor, CirBuiltinVariantOptimization.Variant variant) {
         final CirValue[] a = getTupleOffsetArguments(arguments, fieldActor);
 
-        final CirClosure closure = _cirTupleOffsetSnippet.copyClosure();
+        final CirClosure closure = cirTupleOffsetSnippet.copyClosure();
 
         final CirGenerator cirGenerator = cirOptimizer.cirGenerator();
 
@@ -80,7 +80,7 @@ public abstract class CirFieldReadSnippet extends CirSpecialSnippet {
             // So here we first need to compile the tuple offset snippet down to builtin calls to reveal all its builtins.
             // Only then we can replace these builtins with their respective foldable variants.
             if (!cirGenerator.compilerScheme().areSnippetsCompiled() && cirGenerator.compilerScheme().optimizing()) {
-                CirOptimizer.apply(cirGenerator, _cirTupleOffsetSnippet, closure, CirInliningPolicy.STATIC);
+                CirOptimizer.apply(cirGenerator, cirTupleOffsetSnippet, closure, CirInliningPolicy.STATIC);
             }
         }
 
@@ -93,7 +93,7 @@ public abstract class CirFieldReadSnippet extends CirSpecialSnippet {
 
     private CirCall foldWithMutableField(CirValue[] arguments, FieldActor fieldActor) {
         final CirValue[] a = getTupleOffsetArguments(arguments, fieldActor);
-        return new CirCall(_cirTupleOffsetSnippet, a);
+        return new CirCall(cirTupleOffsetSnippet, a);
     }
 
     @Override

@@ -6,4 +6,7 @@
     <fileset name="all" enabled="true" check-config-name="Maxine Checks" local="true">
         <file-match-pattern match-pattern="." include-pattern="true"/>
     </fileset>
+    <filter name="FileTypesFilter" enabled="true">
+        <filter-data value="java"/>
+    </filter>
 </fileset-config>

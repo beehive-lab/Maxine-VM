@@ -46,6 +46,6 @@ public class PutField extends JavaResolvableOperator<FieldActor> {
 
     @Override
     public Kind[] parameterKinds() {
-        return new Kind[] {Kind.REFERENCE, _constantPool.fieldAt(_index).type(_constantPool).toKind()};
+        return new Kind[] {Kind.REFERENCE, constantPool.fieldAt(index).type(constantPool).toKind()};
     }
 }

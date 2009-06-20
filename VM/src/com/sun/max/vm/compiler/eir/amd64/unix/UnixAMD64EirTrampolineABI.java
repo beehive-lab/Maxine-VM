@@ -30,18 +30,18 @@ import com.sun.max.vm.compiler.eir.amd64.*;
  * @author Bernd Mathiske
  */
 public class UnixAMD64EirTrampolineABI extends UnixAMD64EirJavaABI {
-    private final PoolSet<AMD64EirRegister> _calleeSavedRegisters;
+    private final PoolSet<AMD64EirRegister> calleeSavedRegisters;
     public UnixAMD64EirTrampolineABI(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        _calleeSavedRegisters = PoolSet.noneOf(AMD64EirRegister.pool());
-        _calleeSavedRegisters.or(allocatableRegisters());
+        calleeSavedRegisters = PoolSet.noneOf(AMD64EirRegister.pool());
+        calleeSavedRegisters.or(allocatableRegisters());
 
         // Do not save the integer return register. Trampolines do use it.
-        _calleeSavedRegisters.remove(AMD64EirRegister.General.RAX);
+        calleeSavedRegisters.remove(AMD64EirRegister.General.RAX);
     }
 
     @Override
     public PoolSet<AMD64EirRegister> calleeSavedRegisters() {
-        return _calleeSavedRegisters;
+        return calleeSavedRegisters;
     }
 }

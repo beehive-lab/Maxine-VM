@@ -43,16 +43,16 @@ public class VirtualMethodActor extends ClassMethodActor {
     }
 
     @CONSTANT
-    private int _vTableIndex;
+    private int vTableIndex;
 
     @INLINE
     public final int vTableIndex() {
-        return _vTableIndex;
+        return vTableIndex;
     }
 
     public void setVTableIndex(int vTableIndex) {
-        assert _vTableIndex == 0;
-        _vTableIndex = vTableIndex;
+        assert this.vTableIndex == 0;
+        this.vTableIndex = vTableIndex;
     }
 
 

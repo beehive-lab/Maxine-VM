@@ -41,48 +41,48 @@ public class DirMethod extends AbstractIrMethod {
         super(classMethodActor);
     }
 
-    private DirVariable[] _parameters = null;
-    private IndexedSequence<DirBlock> _blocks = null;
+    private DirVariable[] parameters = null;
+    private IndexedSequence<DirBlock> blocks = null;
 
     public DirVariable[] parameters() {
-        return _parameters;
+        return parameters;
     }
 
     public IndexedSequence<DirBlock> blocks() {
-        return _blocks;
+        return blocks;
     }
 
     public void setGenerated(DirVariable[] parameters, IndexedSequence<DirBlock> blocks) {
-        _parameters = parameters;
-        _blocks = blocks;
+        this.parameters = parameters;
+        this.blocks = blocks;
     }
 
     @Override
     public void cleanup() {
-        for (DirBlock block : _blocks) {
+        for (DirBlock block : blocks) {
             block.cleanup();
         }
     }
 
     public boolean isGenerated() {
-        return _blocks != null;
+        return blocks != null;
     }
 
     public String traceToString() {
         String parametersAsString = " ";
-        if (_parameters == null) {
+        if (parameters == null) {
             parametersAsString = "null";
         } else {
-            for (DirVariable parameter : _parameters) {
+            for (DirVariable parameter : parameters) {
                 parametersAsString += parameter + " ";
             }
         }
         final CharArrayWriter charArrayWriter = new CharArrayWriter();
         final IndentWriter writer = new IndentWriter(charArrayWriter);
         writer.println("DIR(" + parametersAsString + ")");
-        if (_blocks != null) {
+        if (blocks != null) {
             writer.indent();
-            for (DirBlock block : _blocks) {
+            for (DirBlock block : blocks) {
                 block.printTo(writer);
             }
             writer.outdent();
@@ -97,7 +97,7 @@ public class DirMethod extends AbstractIrMethod {
 
     @Override
     public boolean contains(final Builtin builtin, boolean defaultResult) {
-        for (DirBlock block : _blocks) {
+        for (DirBlock block : blocks) {
             for (DirInstruction instruction : block.instructions()) {
                 if (instruction instanceof DirBuiltinCall) {
                     final DirBuiltinCall call = (DirBuiltinCall) instruction;

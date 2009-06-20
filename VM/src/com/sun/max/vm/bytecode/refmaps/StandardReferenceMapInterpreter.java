@@ -33,35 +33,35 @@ public class StandardReferenceMapInterpreter extends ReferenceMapInterpreter {
         /**
          * The reference map for the locals in this frame.
          */
-        final BitSet _locals;
+        final BitSet locals;
 
         /**
          * The reference map for the operand stack in this frame.
          */
-        final BitSet _stack;
-        final int _sp;
+        final BitSet stack;
+        final int sp;
 
         Frame(int maxLocals, int maxStack, int sp) {
-            _locals = new BitSet(maxLocals);
-            _stack = new BitSet(maxStack);
-            _sp = sp;
+            this.locals = new BitSet(maxLocals);
+            this.stack = new BitSet(maxStack);
+            this.sp = sp;
         }
 
         Frame(Frame other, int sp) {
-            _locals = (BitSet) other._locals.clone();
-            _stack = (BitSet) other._stack.clone();
-            final int stackDepth = _stack.length();
+            this.locals = (BitSet) other.locals.clone();
+            this.stack = (BitSet) other.stack.clone();
+            final int stackDepth = stack.length();
             if (stackDepth >= sp) {
-                _stack.clear(sp, stackDepth);
+                stack.clear(sp, stackDepth);
             }
-            _sp = sp;
+            this.sp = sp;
         }
 
         void resetFrom(Frame other) {
-            _locals.clear();
-            _stack.clear();
-            _locals.or(other._locals);
-            _stack.or(other._stack);
+            locals.clear();
+            stack.clear();
+            locals.or(other.locals);
+            stack.or(other.stack);
         }
 
         private static boolean merge(BitSet dst, BitSet src) {
@@ -71,52 +71,52 @@ public class StandardReferenceMapInterpreter extends ReferenceMapInterpreter {
         }
 
         boolean mergeFrom(Frame other, boolean ignoreStack) {
-            final boolean localsChanged = merge(_locals, other._locals);
+            final boolean localsChanged = merge(locals, other.locals);
             if (ignoreStack) {
                 return localsChanged;
             }
-            return merge(_stack, other._stack) || localsChanged;
+            return merge(stack, other.stack) || localsChanged;
         }
 
         @Override
         public String toString() {
-            return "locals = " + _locals + ", stack = " + _stack;
+            return "locals = " + locals + ", stack = " + stack;
         }
     }
 
-    private Frame[] _frames;
-    private Frame _currentFrame;
+    private Frame[] frames;
+    private Frame currentFrame;
 
     @Override
     protected Object frames() {
-        return _frames;
+        return frames;
     }
 
     @Override
     protected boolean mergeInto(int targetBlockIndex, int sp) {
         final boolean targetIsExceptionHandler = sp == -1;
-        if (_frames[targetBlockIndex] == null) {
+        if (frames[targetBlockIndex] == null) {
             final Frame targetFrame;
             if (targetIsExceptionHandler) {
-                targetFrame = new Frame(_currentFrame, 1);
+                targetFrame = new Frame(currentFrame, 1);
                 // Leave the exception object on the stack
-                targetFrame._stack.clear();
-                targetFrame._stack.set(0);
+                targetFrame.stack.clear();
+                targetFrame.stack.set(0);
             } else {
-                targetFrame = new Frame(_currentFrame, sp);
+                targetFrame = new Frame(currentFrame, sp);
             }
-            _frames[targetBlockIndex] = targetFrame;
+            frames[targetBlockIndex] = targetFrame;
             return true;
         }
 
-        final Frame targetFrame = _frames[targetBlockIndex];
-        if (targetFrame.mergeFrom(_currentFrame, targetIsExceptionHandler)) {
+        final Frame targetFrame = frames[targetBlockIndex];
+        if (targetFrame.mergeFrom(currentFrame, targetIsExceptionHandler)) {
             if (targetIsExceptionHandler) {
                 // Leave the exception object on the stack
-                assert targetFrame._sp == 1;
-                assert targetFrame._stack.get(0);
+                assert targetFrame.sp == 1;
+                assert targetFrame.stack.get(0);
             } else {
-                assert targetFrame._sp == sp;
+                assert targetFrame.sp == sp;
             }
             return true;
         }
@@ -125,18 +125,18 @@ public class StandardReferenceMapInterpreter extends ReferenceMapInterpreter {
 
     @Override
     boolean isFrameInitialized(int blockIndex) {
-        return _frames[blockIndex] != null;
+        return frames[blockIndex] != null;
     }
 
     @Override
     protected void resetInterpreter(ReferenceMapInterpreterContext context) {
         super.resetInterpreter(context);
         if (context.blockFrames() == null) {
-            _frames = new Frame[context.numberOfBlocks()];
-            _currentFrame = new Frame(maxLocals(), maxStack(), 0);
+            frames = new Frame[context.numberOfBlocks()];
+            currentFrame = new Frame(maxLocals(), maxStack(), 0);
         } else {
-            _frames = (Frame[]) context.blockFrames();
-            _currentFrame = new Frame(_frames[0], 0);
+            frames = (Frame[]) context.blockFrames();
+            currentFrame = new Frame(frames[0], 0);
         }
     }
 
@@ -147,28 +147,28 @@ public class StandardReferenceMapInterpreter extends ReferenceMapInterpreter {
 
     @Override
     int resetAtBlock(int blockIndex) {
-        final Frame blockFrame = _frames[blockIndex];
-        _currentFrame.resetFrom(blockFrame);
-        return blockFrame._sp;
+        final Frame blockFrame = frames[blockIndex];
+        currentFrame.resetFrom(blockFrame);
+        return blockFrame.sp;
     }
 
     @Override
     boolean isLocalRef(int index) {
-        return _currentFrame._locals.get(index);
+        return currentFrame.locals.get(index);
     }
 
     @Override
     boolean isStackRef(int index) {
-        return _currentFrame._stack.get(index);
+        return currentFrame.stack.get(index);
     }
 
     @Override
     void updateLocal(int index, boolean isRef) {
-        _currentFrame._locals.set(index, isRef);
+        currentFrame.locals.set(index, isRef);
     }
 
     @Override
     void updateStack(int index, boolean isRef) {
-        _currentFrame._stack.set(index, isRef);
+        currentFrame.stack.set(index, isRef);
     }
 }

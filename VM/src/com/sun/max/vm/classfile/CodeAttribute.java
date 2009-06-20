@@ -39,18 +39,18 @@ public final class CodeAttribute {
     public static final Sequence<ExceptionHandlerEntry> NO_EXCEPTION_HANDLER_TABLE = Sequence.Static.empty(ExceptionHandlerEntry.class);
 
     @INSPECTED
-    private final ConstantPool _constantPool;
+    private final ConstantPool constantPool;
 
     @INSPECTED
-    private final byte[] _code;
+    private final byte[] code;
 
-    private StackMapTable _stackMapTableAttribute;
-    private final byte[] _encodedData;
-    private final int _exceptionHandlerTableOffset;
-    private final int _lineNumberTableOffset;
-    private final int _localVariableTableOffset;
-    private final char _maxStack;
-    private final char _maxLocals;
+    private StackMapTable stackMapTableAttribute;
+    private final byte[] encodedData;
+    private final int exceptionHandlerTableOffset;
+    private final int lineNumberTableOffset;
+    private final int localVariableTableOffset;
+    private final char maxStack;
+    private final char maxLocals;
 
     public CodeAttribute(ConstantPool constantPool,
                     byte[] code,
@@ -60,41 +60,41 @@ public final class CodeAttribute {
                     LineNumberTable lineNumberTable,
                     LocalVariableTable localVariableTable,
                     StackMapTable stackMapTable) {
-        _constantPool = constantPool;
-        _code = code;
-        _maxStack = maxStack;
-        _maxLocals = maxLocals;
-        _stackMapTableAttribute = stackMapTable;
+        this.constantPool = constantPool;
+        this.code = code;
+        this.maxStack = maxStack;
+        this.maxLocals = maxLocals;
+        this.stackMapTableAttribute = stackMapTable;
 
         final ByteArrayOutputStream encodingStream = new ByteArrayOutputStream();
         final DataOutputStream dataOutputStream = new DataOutputStream(encodingStream);
 
-        int exceptionHandlerTableOffset = -1;
-        int lineNumberTableOffset = -1;
-        int localVariableTableOffset = -1;
+        int exceptionHandlerTableOff = -1;
+        int lineNumberTableOff = -1;
+        int localVariableTableOff = -1;
 
         try {
-            dataOutputStream.write(_code);
+            dataOutputStream.write(code);
             if (!exceptionHandlerTable.isEmpty()) {
-                exceptionHandlerTableOffset = encodingStream.size();
+                exceptionHandlerTableOff = encodingStream.size();
                 ExceptionHandlerEntry.encode(exceptionHandlerTable, dataOutputStream);
             }
             if (!lineNumberTable.isEmpty()) {
-                lineNumberTableOffset = encodingStream.size();
+                lineNumberTableOff = encodingStream.size();
                 lineNumberTable.encode(dataOutputStream);
             }
             if (!localVariableTable.isEmpty()) {
-                localVariableTableOffset = encodingStream.size();
+                localVariableTableOff = encodingStream.size();
                 localVariableTable.encode(dataOutputStream);
             }
         } catch (IOException e) {
             ProgramError.unexpected(e);
         }
 
-        _exceptionHandlerTableOffset = exceptionHandlerTableOffset;
-        _lineNumberTableOffset = lineNumberTableOffset;
-        _localVariableTableOffset = localVariableTableOffset;
-        _encodedData = encodingStream.toByteArray();
+        this.exceptionHandlerTableOffset = exceptionHandlerTableOff;
+        this.lineNumberTableOffset = lineNumberTableOff;
+        this.localVariableTableOffset = localVariableTableOff;
+        encodedData = encodingStream.toByteArray();
 
     }
 
@@ -121,22 +121,22 @@ public final class CodeAttribute {
      * CodeAttribute may replace another whenever {@linkplain METHOD_SUBSTITUTIONS method substitution} occurs.
      */
     public ConstantPool constantPool() {
-        return _constantPool;
+        return constantPool;
     }
 
     public byte[] code() {
-        return _code;
+        return code;
     }
 
     public byte[] encodedData() {
-        return _encodedData;
+        return encodedData;
     }
 
     /**
      * Gets the maximum depth of the operand stack of this method at any point during execution of the method.
      */
     public int maxStack() {
-        return _maxStack;
+        return maxStack;
     }
 
     /**
@@ -146,16 +146,16 @@ public final class CodeAttribute {
      * variable index for a value of any other type is {@code maxLocals() - 1}.
      */
     public int maxLocals() {
-        return _maxLocals;
+        return maxLocals;
     }
 
     private DataInputStream encodedData(int offset) {
-        return new DataInputStream(new ByteArrayInputStream(_encodedData, offset, _encodedData.length - offset));
+        return new DataInputStream(new ByteArrayInputStream(encodedData, offset, encodedData.length - offset));
     }
 
     public Sequence<ExceptionHandlerEntry> exceptionHandlerTable() {
         try {
-            return _exceptionHandlerTableOffset == -1 ? Sequence.Static.empty(ExceptionHandlerEntry.class) : ExceptionHandlerEntry.decode(encodedData(_exceptionHandlerTableOffset));
+            return exceptionHandlerTableOffset == -1 ? Sequence.Static.empty(ExceptionHandlerEntry.class) : ExceptionHandlerEntry.decode(encodedData(exceptionHandlerTableOffset));
         } catch (IOException e) {
             throw ProgramError.unexpected(e);
         }
@@ -163,7 +163,7 @@ public final class CodeAttribute {
 
     public LineNumberTable lineNumberTable() {
         try {
-            return _lineNumberTableOffset == -1 ? LineNumberTable.EMPTY : LineNumberTable.decode(encodedData(_lineNumberTableOffset));
+            return lineNumberTableOffset == -1 ? LineNumberTable.EMPTY : LineNumberTable.decode(encodedData(lineNumberTableOffset));
         } catch (IOException e) {
             throw ProgramError.unexpected(e);
         }
@@ -171,7 +171,7 @@ public final class CodeAttribute {
 
     public LocalVariableTable localVariableTable() {
         try {
-            return _localVariableTableOffset == -1 ? LocalVariableTable.EMPTY : LocalVariableTable.decode(encodedData(_localVariableTableOffset));
+            return localVariableTableOffset == -1 ? LocalVariableTable.EMPTY : LocalVariableTable.decode(encodedData(localVariableTableOffset));
         } catch (IOException e) {
             throw ProgramError.unexpected(e);
         }
@@ -181,10 +181,10 @@ public final class CodeAttribute {
      * @return null if there is no stack map table associated with this code attribute
      */
     public StackMapTable stackMapTable() {
-        return _stackMapTableAttribute;
+        return stackMapTableAttribute;
     }
 
     public void setStackMapTableAttribute(StackMapTable stackMapTable) {
-        _stackMapTableAttribute = stackMapTable;
+        stackMapTableAttribute = stackMapTable;
     }
 }

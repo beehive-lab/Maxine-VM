@@ -31,8 +31,8 @@ import com.sun.max.vm.compiler.eir.allocate.linearscan.*;
  */
 public class DetectLoops extends AlgorithmPart {
 
-    private AppendableIndexedSequence<Pair<EirBlock, EirBlock>> _loopEndBlocks;
-    private PoolSet<EirBlock> _loopHeaders;
+    private AppendableIndexedSequence<Pair<EirBlock, EirBlock>> loopEndBlocks;
+    private PoolSet<EirBlock> loopHeaders;
     private AppendableIndexedSequence<Loop> _loops;
     private VariableMapping<EirBlock, Loop> _blockToLoop;
 
@@ -42,13 +42,13 @@ public class DetectLoops extends AlgorithmPart {
 
     @Override
     protected void doit() {
-        _loopEndBlocks = new ArrayListSequence<Pair<EirBlock, EirBlock>>(10);
+        loopEndBlocks = new ArrayListSequence<Pair<EirBlock, EirBlock>>(10);
         _loops = new ArrayListSequence<Loop>(10);
         _blockToLoop = new ChainedHashMapping<EirBlock, Loop>();
 
         final PoolSet<EirBlock> visitedBlockPoolSet = PoolSet.noneOf(new ArrayPool<EirBlock>(Sequence.Static.toArray(generation().eirBlocks(), EirBlock.class)));
         final PoolSet<EirBlock> activeBlockPoolSet = visitedBlockPoolSet.clone();
-        _loopHeaders = visitedBlockPoolSet.clone();
+        loopHeaders = visitedBlockPoolSet.clone();
 
         final EirBlock startBlock = generation().eirBlocks().first();
         assert startBlock.predecessors().length() == 0 : "must be start block";
@@ -63,28 +63,28 @@ public class DetectLoops extends AlgorithmPart {
 
     private class Loop {
 
-        private int _index;
-        private PoolSet<EirBlock> _blocks;
+        private int index;
+        private PoolSet<EirBlock> blocks;
 
         public Loop(int index) {
-            this._index = index;
-            _blocks = PoolSet.noneOf(new ArrayPool<EirBlock>(Sequence.Static.toArray(generation().eirBlocks(), EirBlock.class)));
+            this.index = index;
+            blocks = PoolSet.noneOf(new ArrayPool<EirBlock>(Sequence.Static.toArray(generation().eirBlocks(), EirBlock.class)));
         }
 
         public int index() {
-            return _index;
+            return index;
         }
 
         public void addBlock(EirBlock block) {
-            _blocks.add(block);
+            blocks.add(block);
         }
 
         public boolean containsBlock(EirBlock block) {
-            return _blocks.contains(block);
+            return blocks.contains(block);
         }
 
         public void clear() {
-            _blocks.clear();
+            blocks.clear();
         }
     }
 
@@ -110,8 +110,8 @@ public class DetectLoops extends AlgorithmPart {
                 for (EirBlock succ : cur.allUniqueSuccessors()) {
                     if (active.contains(succ)) {
                         // We found a pair (parent, cur) of loop end block and loop header
-                        _loopEndBlocks.append(new Pair<EirBlock, EirBlock>(cur, succ));
-                        _loopHeaders.add(succ);
+                        loopEndBlocks.append(new Pair<EirBlock, EirBlock>(cur, succ));
+                        loopHeaders.add(succ);
                         final Loop loop = new Loop(_loops.length());
                         _loops.append(loop);
                         _blockToLoop.put(succ, loop);
@@ -127,13 +127,13 @@ public class DetectLoops extends AlgorithmPart {
 
         final VariableSequence<EirBlock> workList = new ArrayListSequence<EirBlock>();
 
-        for (int i = this._loopEndBlocks.length() - 1; i >= 0; i--) {
+        for (int i = this.loopEndBlocks.length() - 1; i >= 0; i--) {
 
-            final EirBlock loopEnd = _loopEndBlocks.get(i).first();
-            final EirBlock loopStart = _loopEndBlocks.get(i).second();
+            final EirBlock loopEnd = loopEndBlocks.get(i).first();
+            final EirBlock loopStart = loopEndBlocks.get(i).second();
             final Loop loop = _blockToLoop.get(loopStart);
 
-            assert _loopHeaders.contains(loopStart) : "must be loop header";
+            assert loopHeaders.contains(loopStart) : "must be loop header";
             assert loop != null : "loop start block must have associated loop in map";
             assert workList.isEmpty();
 

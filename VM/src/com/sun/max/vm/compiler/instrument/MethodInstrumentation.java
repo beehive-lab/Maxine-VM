@@ -42,33 +42,33 @@ public class MethodInstrumentation {
     /**
      * The method associated with this instrumentation.
      */
-    protected final ClassMethodActor _classMethodActor;
+    protected final ClassMethodActor classMethodActor;
 
     /**
      * Any recompilation alarms attached to the compiled code of this method.
      */
-    protected final AppendableSequence<RecompilationAlarm> _recompilationAlarms;
+    protected final AppendableSequence<RecompilationAlarm> recompilationAlarms;
 
     /**
      * Bytecode counters which have been used to instrument the machine code.
      */
-    protected final AppendableSequence<LocationCounter> _bytecodeCounters;
+    protected final AppendableSequence<LocationCounter> bytecodeCounters;
 
-    private final IntHashMap<CallCounterTable> _callCollection;
+    private final IntHashMap<CallCounterTable> callCollection;
 
     /**
      * Hotpath counters associated with loop headers.
      */
-    protected final IntHashMap<TreeAnchor> _hotpathCounters;
+    protected final IntHashMap<TreeAnchor> hotpathCounters;
 
     /**
      * @return the {@link TreeAnchor} associated with the specified bytecode location.
      */
     public TreeAnchor hotpathCounter(int position, int threshold) {
-        TreeAnchor counter = _hotpathCounters.get(position);
+        TreeAnchor counter = hotpathCounters.get(position);
         if (counter == null) {
-            counter = new TreeAnchor(new BytecodeLocation(_classMethodActor, position), threshold);
-            _hotpathCounters.put(position, counter);
+            counter = new TreeAnchor(new BytecodeLocation(classMethodActor, position), threshold);
+            hotpathCounters.put(position, counter);
         }
         return counter;
     }
@@ -79,24 +79,24 @@ public class MethodInstrumentation {
      * @param classMethodActor the class method actor
      */
     public MethodInstrumentation(ClassMethodActor classMethodActor) {
-        _classMethodActor = classMethodActor;
-        _bytecodeCounters = new ArrayListSequence<LocationCounter>();
-        _recompilationAlarms = new ArrayListSequence<RecompilationAlarm>();
-        _callCollection = new IntHashMap<CallCounterTable>();
-        _hotpathCounters = new IntHashMap<TreeAnchor>();
+        this.classMethodActor = classMethodActor;
+        this.bytecodeCounters = new ArrayListSequence<LocationCounter>();
+        this.recompilationAlarms = new ArrayListSequence<RecompilationAlarm>();
+        this.callCollection = new IntHashMap<CallCounterTable>();
+        this.hotpathCounters = new IntHashMap<TreeAnchor>();
     }
 
-    private RecompilationAlarm _recompilationAlarm;
-    private AlarmCounter _recompilationAlarmCounter;
+    private RecompilationAlarm recompilationAlarm;
+    private AlarmCounter recompilationAlarmCounter;
     public RecompilationAlarm recompilationAlarm() {
-        if (_recompilationAlarm == null) {
-            _recompilationAlarm = newRecompilationAlarm(0, true);
-            if (_recompilationAlarm != null) {
-                _recompilationAlarms.append(_recompilationAlarm);
-                _recompilationAlarmCounter = _recompilationAlarm.counter();
+        if (recompilationAlarm == null) {
+            recompilationAlarm = newRecompilationAlarm(0, true);
+            if (recompilationAlarm != null) {
+                recompilationAlarms.append(recompilationAlarm);
+                recompilationAlarmCounter = recompilationAlarm.counter();
             }
         }
-        return _recompilationAlarm;
+        return recompilationAlarm;
     }
 
     /**
@@ -114,11 +114,11 @@ public class MethodInstrumentation {
      * @return a new recompilation alarm; null if no recompilation alarm should be used
      */
     public RecompilationAlarm newRecompilationAlarm(int count, boolean entry) {
-        final int threshold = count == 0 ? AdaptiveCompilationScheme._defaultRecompilationThreshold0 : count;
+        final int threshold = count == 0 ? AdaptiveCompilationScheme.defaultRecompilationThreshold0 : count;
         if (threshold > 0) {
-            final RecompilationAlarm recompilationAlarm = new RecompilationAlarm(threshold, entry);
-            _recompilationAlarms.append(recompilationAlarm);
-            return recompilationAlarm;
+            final RecompilationAlarm newRecompilationAlarm = new RecompilationAlarm(threshold, entry);
+            recompilationAlarms.append(newRecompilationAlarm);
+            return newRecompilationAlarm;
         }
         // threshold <= 0 implies that no recompilation alarm should be used.
         return null;
@@ -135,7 +135,7 @@ public class MethodInstrumentation {
      */
     public LocationCounter newLocationCounter(int start, int end) {
         final LocationCounter bytecodeCounter = new LocationCounter(start, end);
-        _bytecodeCounters.append(bytecodeCounter);
+        bytecodeCounters.append(bytecodeCounter);
         return bytecodeCounter;
     }
 
@@ -153,9 +153,9 @@ public class MethodInstrumentation {
      */
     public int estimateInvocationCount() {
         int total = 0;
-        for (RecompilationAlarm alarm : _recompilationAlarms) {
+        for (RecompilationAlarm alarm : recompilationAlarms) {
             if (alarm._entryPoint) {
-                total += alarm._counter.getCount();
+                total += alarm.counter.getCount();
             }
         }
         return total;
@@ -178,11 +178,11 @@ public class MethodInstrumentation {
         /**
          * The alarm counter object which is used to trigger recompilation.
          */
-        private final AlarmCounter _counter;
+        private final AlarmCounter counter;
 
         public RecompilationAlarm(int executions, boolean entryPoint) {
             _entryPoint = entryPoint;
-            _counter = new AlarmCounter(executions, this);
+            counter = new AlarmCounter(executions, this);
         }
 
         /**
@@ -193,10 +193,10 @@ public class MethodInstrumentation {
             final Phase phase = MaxineVM.host().phase();
             if (phase == MaxineVM.Phase.RUNNING) {
                 // VM is started up completely, increase the optimization level
-                AdaptiveCompilationScheme.increaseOptimizationLevel(_classMethodActor, true, CompilationDirective.DEFAULT);
+                AdaptiveCompilationScheme.increaseOptimizationLevel(classMethodActor, true, CompilationDirective.DEFAULT);
             } else {
                 // if we are still starting the VM, reset the count and try later
-                _counter.reset();
+                counter.reset();
             }
         }
 
@@ -205,7 +205,7 @@ public class MethodInstrumentation {
          * @param count
          */
         public void reset(int count) {
-            _counter.reset(count);
+            counter.reset(count);
         }
 
         /**
@@ -213,7 +213,7 @@ public class MethodInstrumentation {
          * @return
          */
         public AlarmCounter counter() {
-            return _counter;
+            return counter;
         }
     }
 
@@ -224,8 +224,8 @@ public class MethodInstrumentation {
      * @author Aziz Ghuloum
      */
     private final class StaticCallCounter extends LocationCounter {
-        private String _type;
-        private StaticMethodActor _receiverMethodActor;
+        private String type;
+        private StaticMethodActor receiverMethodActor;
         /**
          * @param offset of the bytecode instruction
          * @param type of the invocation: static/special...
@@ -233,8 +233,8 @@ public class MethodInstrumentation {
          */
         public StaticCallCounter(int bytecodeOffset, String type, StaticMethodActor actor) {
             super(bytecodeOffset);
-            _type = type;
-            _receiverMethodActor = actor;
+            this.type = type;
+            this.receiverMethodActor = actor;
         }
     }
 
@@ -253,40 +253,40 @@ public class MethodInstrumentation {
          * @author Aziz Ghuloum
          */
         private final class CallEntry {
-            private Hub _hub;
-            private int _count = 1;
+            private Hub hub;
+            private int count = 1;
             private CallEntry(Hub hub, CallEntry next) {
-                _hub = hub;
-                _next = next;
+                this.hub = hub;
+                this.next = next;
             }
-            private CallEntry _next;
+            private CallEntry next;
         }
 
-        private int _bytecodeOffset;
-        private volatile CallEntry _history;
+        private int bytecodeOffset;
+        private volatile CallEntry history;
 
         private CallCounterTable(int bytecodeOffset) {
-            _bytecodeOffset = bytecodeOffset;
+            this.bytecodeOffset = bytecodeOffset;
         }
 
         public void record(Hub hub) {
-            CallEntry p = _history;
+            CallEntry p = history;
             while (p != null) {
-                if (p._hub == hub) {
-                    p._count++;
+                if (p.hub == hub) {
+                    p.count++;
                     return;
                 }
-                p = p._next;
+                p = p.next;
             }
 
-            p = _history;
-            _history = new CallEntry(hub, p);
+            p = history;
+            history = new CallEntry(hub, p);
         }
     }
 
     public CallCounterTable newCounterTable(int bytecodeOffset) {
         final CallCounterTable table = new CallCounterTable(bytecodeOffset);
-        _callCollection.put(bytecodeOffset, table);
+        callCollection.put(bytecodeOffset, table);
         return table;
     }
 
@@ -294,21 +294,21 @@ public class MethodInstrumentation {
     private static final double FREQUENT_HUB_THRESHOLD = 0.9;
 
     public Hub getMostFrequentlyUsedHub(int bytecodeOffset) {
-        final CallCounterTable table = _callCollection.get(bytecodeOffset);
-        if (table == null || table._history == null) {
+        final CallCounterTable table = callCollection.get(bytecodeOffset);
+        if (table == null || table.history == null) {
             return null;
         }
         int total = 0;
         int max = 0;
         Hub maxHub = null;
-        CallCounterTable.CallEntry entry = table._history;
+        CallCounterTable.CallEntry entry = table.history;
         while (entry != null) {
-            total += entry._count;
-            if (entry._count > max) {
-                max = entry._count;
-                maxHub = entry._hub;
+            total += entry.count;
+            if (entry.count > max) {
+                max = entry.count;
+                maxHub = entry.hub;
             }
-            entry = entry._next;
+            entry = entry.next;
         }
         if (total >= CALL_COUNT_THRESHOLD) {
             if (max > (total * FREQUENT_HUB_THRESHOLD)) {

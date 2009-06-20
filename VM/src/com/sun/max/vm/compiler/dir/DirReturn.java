@@ -29,34 +29,33 @@ import com.sun.max.vm.compiler.dir.transform.*;
  */
 public class DirReturn extends DirInstruction {
 
-    private final DirValue _returnValue;
+    private final DirValue returnValue;
 
     public DirReturn(DirValue returnValue) {
-        super();
-        _returnValue = (returnValue == null) ? DirConstant.VOID : returnValue;
+        this.returnValue = (returnValue == null) ? DirConstant.VOID : returnValue;
     }
 
     public DirValue returnValue() {
-        return _returnValue;
+        return returnValue;
     }
 
     @Override
     public int hashCodeForBlock() {
-        return super.hashCodeForBlock() ^ _returnValue.hashCodeForBlock();
+        return super.hashCodeForBlock() ^ returnValue.hashCodeForBlock();
     }
 
     @Override
     public boolean isEquivalentTo(DirInstruction other, DirBlockEquivalence dirBlockEquivalence) {
         if (other instanceof DirReturn) {
             final DirReturn dirReturn = (DirReturn) other;
-            return _returnValue.equals(dirReturn._returnValue);
+            return returnValue.equals(dirReturn.returnValue);
         }
         return false;
     }
 
     @Override
     public String toString() {
-        return "return " + _returnValue;
+        return "return " + returnValue;
     }
 
     @Override

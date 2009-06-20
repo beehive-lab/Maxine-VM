@@ -44,16 +44,16 @@ import com.sun.max.vm.value.*;
  */
 public final class CirBytecodeReader {
 
-    private final ByteArrayInputStream _stream;
-    private final Object[] _constantPool;
-    private final Stack<Object> _stack = new Stack<Object>();
-    private final CirBlock[] _blocks;
-    private final CirVariable[] _referencedVariables;
-    private final CirNode _node;
-    private final int _codeLength;
-    private final PrintStream _traceStream;
-    private String _detailedInstructionTrace;
-    private final boolean _traceStack;
+    private final ByteArrayInputStream stream;
+    private final Object[] constantPool;
+    private final Stack<Object> stack = new Stack<Object>();
+    private final CirBlock[] blocks;
+    private final CirVariable[] referencedVariables;
+    private final CirNode node;
+    private final int codeLength;
+    private final PrintStream traceStream;
+    private String detailedInstructionTrace;
+    private final boolean traceStack;
 
     public static CirNode read(CirBytecode bytecode) {
         return new CirBytecodeReader(bytecode, null, false).node();
@@ -69,34 +69,34 @@ public final class CirBytecodeReader {
     }
 
     private CirBytecodeReader(CirBytecode bytecode, PrintStream traceStream, boolean traceStack) {
-        _codeLength = bytecode.code().length;
-        _stream = new ByteArrayInputStream(bytecode.code());
-        _traceStream = traceStream;
-        _traceStack = traceStack;
-        _constantPool = bytecode.constantPool();
-        _blocks = new CirBlock[bytecode.numberOfBlocks()];
+        this.codeLength = bytecode.code().length;
+        this.stream = new ByteArrayInputStream(bytecode.code());
+        this.traceStream = traceStream;
+        this.traceStack = traceStack;
+        this.constantPool = bytecode.constantPool();
+        this.blocks = new CirBlock[bytecode.numberOfBlocks()];
 
         final int maxReferencedVariableSerial = bytecode.maxReferencedVariableSerial();
         if (maxReferencedVariableSerial == -1) {
-            _referencedVariables = null;
+            this.referencedVariables = null;
         } else {
-            _referencedVariables = new CirVariable[maxReferencedVariableSerial + 1];
+            this.referencedVariables = new CirVariable[maxReferencedVariableSerial + 1];
         }
-        if (_traceStream != null) {
-            _traceStream.println("NumberOfBlocks: " + bytecode.numberOfBlocks());
-            _traceStream.println("MaxVariableSerial: " + bytecode.maxReferencedVariableSerial());
-            _traceStream.println("ConstantPool[" + _constantPool.length + "]:");
-            for (int i = 0; i != _constantPool.length; ++i) {
-                final Object constant = _constantPool[i];
+        if (traceStream != null) {
+            traceStream.println("NumberOfBlocks: " + bytecode.numberOfBlocks());
+            traceStream.println("MaxVariableSerial: " + bytecode.maxReferencedVariableSerial());
+            traceStream.println("ConstantPool[" + constantPool.length + "]:");
+            for (int i = 0; i != constantPool.length; ++i) {
+                final Object constant = constantPool[i];
                 final String className = constant == null ? "null" : constant.getClass().getName();
-                _traceStream.println("    " + i + ": " + className + " // " + constant);
+                traceStream.println("    " + i + ": " + className + " // " + constant);
             }
         }
-        _node = read();
+        this.node = read();
     }
 
     public CirNode node() {
-        return _node;
+        return node;
     }
 
     /**
@@ -106,25 +106,25 @@ public final class CirBytecodeReader {
      * @see    CirBytecodeWriter#writeUnsignedInt(int)
      */
     private int readUnsignedInt0() {
-        int lo = _stream.read() & 0xFF;
+        int lo = stream.read() & 0xFF;
         if (lo < 128) {
             /* 0xxxxxxx */
             return lo;
         }
         lo &= 0x7f;
-        int mid = _stream.read() & 0xFF;
+        int mid = stream.read() & 0xFF;
         if (mid < 128) {
             /* 1xxxxxxx 0xxxxxxx */
             return (mid << 7) + lo;
         }
         mid &= 0x7f;
-        int hi = _stream.read() & 0xFF;
+        int hi = stream.read() & 0xFF;
         if (hi < 128) {
             /* 1xxxxxxx 1xxxxxxx 0xxxxxxx */
             return (hi << 14) + (mid << 7) + lo;
         }
         hi &= 0x7f;
-        final int last = _stream.read() & 0xFF;
+        final int last = stream.read() & 0xFF;
         if (last < 128) {
             /* 1xxxxxxx 1xxxxxxx 1xxxxxxx 0xxxxxxx */
             return (last << 21) + (hi << 14) + (mid << 7) + lo;
@@ -134,8 +134,8 @@ public final class CirBytecodeReader {
 
     private int readUnsignedInt() {
         final int value = readUnsignedInt0();
-        if (_traceStream != null) {
-            _traceStream.print(" " + value);
+        if (traceStream != null) {
+            traceStream.print(" " + value);
         }
         return value;
     }
@@ -143,9 +143,9 @@ public final class CirBytecodeReader {
     private <T> T readConstant() {
         final Class<T> type = null;
         final int index = readUnsignedInt();
-        final T constant = StaticLoophole.cast(type, _constantPool[index]);
-        if (_traceStream != null) {
-            _detailedInstructionTrace += " " + constant;
+        final T constant = StaticLoophole.cast(type, constantPool[index]);
+        if (traceStream != null) {
+            detailedInstructionTrace += " " + constant;
         }
         return constant;
     }
@@ -153,22 +153,22 @@ public final class CirBytecodeReader {
     private CirSnippet readSnippet() {
         final int serial = readUnsignedInt();
         final CirSnippet snippet = CirSnippet.get(Snippet.snippets().get(serial));
-        if (_traceStream != null) {
-            _detailedInstructionTrace += " " + snippet.name();
+        if (traceStream != null) {
+            detailedInstructionTrace += " " + snippet.name();
         }
         return snippet;
     }
 
     private Opcode readOpcode() {
-        return Opcode.VALUES.get(_stream.read());
+        return Opcode.VALUES.get(stream.read());
     }
 
     private Kind readKind() {
         final char c = (char) readUnsignedInt();
         final Kind kind = Kind.fromCharacter(c);
         assert kind != null;
-        if (_traceStream != null) {
-            _detailedInstructionTrace += " " + kind;
+        if (traceStream != null) {
+            detailedInstructionTrace += " " + kind;
         }
         return kind;
     }
@@ -186,36 +186,36 @@ public final class CirBytecodeReader {
 
     private <Node_Type extends CirNode> Node_Type pop() {
         final Class<Node_Type> type = null;
-        return StaticLoophole.cast(type, _stack.pop());
+        return StaticLoophole.cast(type, stack.pop());
     }
 
     private void push(Object object) {
-        _stack.push(object);
+        stack.push(object);
     }
 
     private void pushVariable(CirVariable variable) {
         final int serial = variable.serial();
-        if (serial < _referencedVariables.length) {
-            _referencedVariables[serial] = variable;
+        if (serial < referencedVariables.length) {
+            referencedVariables[serial] = variable;
         }
         push(variable);
     }
 
     private CirBlock readBlock(Role role, boolean isReference) {
         final int blockId = readUnsignedInt();
-        CirBlock block = _blocks[blockId];
+        CirBlock block = blocks[blockId];
 
         if (isReference) {
             if (block == null) {
                 block = new CirBlock(role);
-                _blocks[blockId] = block;
+                blocks[blockId] = block;
             }
         } else {
             final CirClosure closure = (CirClosure) pop();
 
             if (block == null) {
                 block = new CirBlock(role);
-                _blocks[blockId] = block;
+                blocks[blockId] = block;
             }
 
             block.setClosure(closure);
@@ -238,8 +238,8 @@ public final class CirBytecodeReader {
 
         final ClassMethodActor classMethodActor = readConstant();
         final int bytecodePosition = readUnsignedInt();
-        if (_traceStream != null) {
-            _detailedInstructionTrace += "@" + bytecodePosition;
+        if (traceStream != null) {
+            detailedInstructionTrace += "@" + bytecodePosition;
         }
         final CirValue[] locals = pop(CirCall.newArguments(readUnsignedInt()));
         final CirValue[] stackSlots = pop(CirCall.newArguments(readUnsignedInt()));
@@ -256,22 +256,22 @@ public final class CirBytecodeReader {
     }
 
     private <Node_Type extends CirNode> Node_Type read() {
-        while (_stream.available() != 0) {
+        while (stream.available() != 0) {
 
-            if (_traceStream != null && _traceStack) {
-                if (!_stack.isEmpty()) {
+            if (traceStream != null && traceStack) {
+                if (!stack.isEmpty()) {
                     int index = 0;
-                    for (Object object : _stack) {
-                        _traceStream.println("    " + (index++) + ": " + object);
+                    for (Object object : stack) {
+                        traceStream.println("    " + (index++) + ": " + object);
                     }
                 }
             }
 
-            final int address = _codeLength - _stream.available();
+            final int address = codeLength - stream.available();
             final Opcode opcode = readOpcode();
-            if (_traceStream != null) {
-                _traceStream.print(address + ": " + opcode);
-                _detailedInstructionTrace = "";
+            if (traceStream != null) {
+                traceStream.print(address + ": " + opcode);
+                detailedInstructionTrace = "";
             }
 
             switch (opcode) {
@@ -467,18 +467,18 @@ public final class CirBytecodeReader {
                     break;
                 case VARIABLE_REFERENCE: {
                     final int serial = readUnsignedInt();
-                    final CirVariable variable = _referencedVariables[serial];
+                    final CirVariable variable = referencedVariables[serial];
                     assert variable != null;
                     push(variable);
                     break;
                 }
             }
 
-            if (_traceStream != null) {
-                if (_detailedInstructionTrace.length() != 0) {
-                    _traceStream.println("  // " + _detailedInstructionTrace);
+            if (traceStream != null) {
+                if (detailedInstructionTrace.length() != 0) {
+                    traceStream.println("  // " + detailedInstructionTrace);
                 } else {
-                    _traceStream.println();
+                    traceStream.println();
                 }
             }
         }

@@ -43,30 +43,30 @@ import com.sun.max.vm.template.*;
  */
 public class AMD64DtInterpreterGenerator {
 
-    private static final TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> _targetABI;
+    private static final TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> targetABI;
 
     private static final int RIP_MOV_SIZE = 7;
 
-    private final AMD64DtInterpreterTemplateSet _templateSet;
+    private final AMD64DtInterpreterTemplateSet templateSet;
 
     static {
         final Class<TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>> type = null;
-        _targetABI = StaticLoophole.cast(type, VMConfiguration.target().targetABIsScheme().interpreterABI());
+        targetABI = StaticLoophole.cast(type, VMConfiguration.target().targetABIsScheme().interpreterABI());
     }
 
     AMD64DtInterpreterGenerator(AMD64DtInterpreterTemplateSet templateSet) {
-        _templateSet = templateSet;
+        this.templateSet = templateSet;
     }
 
     private int baseFrameSize() {
-        final int numberOfSlots = 1 + _templateSet.maxFrameSlots();
+        final int numberOfSlots = 1 + templateSet.maxFrameSlots();
         final int unalignedSize = numberOfSlots * JavaStackFrameLayout.STACK_SLOT_SIZE;
         return unalignedSize;
     }
 
     private int maxCompiledTemplateSize() {
         int maxCodeSize = 0;
-        for (CompiledBytecodeTemplate template : _templateSet.templates()) {
+        for (CompiledBytecodeTemplate template : templateSet.templates()) {
             final int codeSize = template.targetMethod().codeLength();
             if (codeSize > maxCodeSize) {
                 maxCodeSize = codeSize;
@@ -92,18 +92,18 @@ public class AMD64DtInterpreterGenerator {
         final int firstBytecodeArrayElementOffset = MaxineVM.target().configuration().layoutScheme().byteArrayLayout().getElementOffsetFromOrigin(0).toInt();
 
         // Load up the scratch reg with the next bytecode
-        asm.movzxb(_targetABI.scratchRegister(), firstBytecodeArrayElementOffset,
+        asm.movzxb(targetABI.scratchRegister(), firstBytecodeArrayElementOffset,
                         AMD64DtInterpreterABI.bytecodeArrayPointer().base(),
                         AMD64DtInterpreterABI.bytecodeIndex().index(), Scale.SCALE_1);
 
         // Work out the offset of the bytecode's template from the start of the template array
-        asm.shlq(_targetABI.scratchRegister(), logTemplateSlotSize);
+        asm.shlq(targetABI.scratchRegister(), logTemplateSlotSize);
 
         // Add the address of our template array to get the jump target
-        asm.add(_targetABI.scratchRegister(), AMD64DtInterpreterABI.firstTemplatePointer());
+        asm.add(targetABI.scratchRegister(), AMD64DtInterpreterABI.firstTemplatePointer());
 
         // Jump
-        asm.jmp(_targetABI.scratchRegister());
+        asm.jmp(targetABI.scratchRegister());
 
         try {
             return asm.toByteArray();
@@ -136,8 +136,8 @@ public class AMD64DtInterpreterGenerator {
         asm.enter((short) (baseFrameSize() - Word.size()), (byte) 0);
 
         // The caller has told us the size of the non-parameter locals
-        asm.mov(_targetABI.framePointer(), _targetABI.stackPointer());
-        asm.sub(_targetABI.stackPointer(), AMD64DtInterpreterABI.nonParameterlocalsSize());
+        asm.mov(targetABI.framePointer(), targetABI.stackPointer());
+        asm.sub(targetABI.stackPointer(), AMD64DtInterpreterABI.nonParameterlocalsSize());
 
         // Prepare for the first dispatch
         asm.rip_mov(AMD64DtInterpreterABI.firstTemplatePointer(), -(RIP_MOV_SIZE + asm.currentPosition()) + prologueToFirstLiteralOffset);
@@ -159,7 +159,7 @@ public class AMD64DtInterpreterGenerator {
 
         final AMD64Assembler asm = new AMD64Assembler();
 
-        asm.addq(_targetABI.framePointer(), baseFrameSize() - Word.size());
+        asm.addq(targetABI.framePointer(), baseFrameSize() - Word.size());
         asm.leave();
         asm.ret();
 
@@ -204,7 +204,7 @@ public class AMD64DtInterpreterGenerator {
 
         // Generate the template array
         final TemplateArrayCodeBuffer templateArrayCodeBuffer = new TemplateArrayCodeBuffer(templateSlotSize);
-        for (CompiledBytecodeTemplate template : _templateSet.templates()) {
+        for (CompiledBytecodeTemplate template : templateSet.templates()) {
             final Bytecode bytecode = template.bytecode();
             templateArrayCodeBuffer.setPositionToSlotStart(bytecode);
             templateArrayCodeBuffer.emit(template.targetMethod().code());
@@ -235,24 +235,24 @@ public class AMD64DtInterpreterGenerator {
     }
 
     private static class TemplateArrayCodeBuffer {
-        private final byte[] _templateArray;
-        private final int _slotSize;
+        private final byte[] templateArray;
+        private final int slotSize;
         private int _position = 0;
         public TemplateArrayCodeBuffer(int templateSlotSize) {
-            _slotSize = templateSlotSize;
-            _templateArray = new byte[_slotSize * Bytecode.BREAKPOINT.ordinal()];
-            for (int i = 0; i < _templateArray.length; i++) {
-                _templateArray[i] = (byte) 0x90; // Fill with NOPS so the inspector does not get too confused
+            slotSize = templateSlotSize;
+            templateArray = new byte[slotSize * Bytecode.BREAKPOINT.ordinal()];
+            for (int i = 0; i < templateArray.length; i++) {
+                templateArray[i] = (byte) 0x90; // Fill with NOPS so the inspector does not get too confused
             }
         }
         public byte[] toByteArray() {
-            return _templateArray;
+            return templateArray;
         }
         public void setPositionToSlotStart(Bytecode bytecode) {
-            _position = _slotSize * bytecode.ordinal();
+            _position = slotSize * bytecode.ordinal();
         }
         public void emit(byte[] code) {
-            System.arraycopy(code, 0, _templateArray, _position, code.length);
+            System.arraycopy(code, 0, templateArray, _position, code.length);
             _position += code.length;
         }
     }

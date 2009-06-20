@@ -57,12 +57,12 @@ public @interface METHOD_SUBSTITUTIONS {
         /**
          * A map from a method that is substituted to the method that substitutes it.
          */
-        private static final GrowableMapping<ClassMethodActor, ClassMethodActor> _originalToSubstitute = HashMapping.createIdentityMapping();
+        private static final GrowableMapping<ClassMethodActor, ClassMethodActor> originalToSubstitute = HashMapping.createIdentityMapping();
 
         /**
          * The converse mapping.
          */
-        private static final GrowableMapping<ClassMethodActor, ClassMethodActor> _substituteToOriginal = HashMapping.createIdentityMapping();
+        private static final GrowableMapping<ClassMethodActor, ClassMethodActor> substituteToOriginal = HashMapping.createIdentityMapping();
 
 
         /**
@@ -82,10 +82,10 @@ public @interface METHOD_SUBSTITUTIONS {
                     final Method originalMethod = findMethod(substitutee, substituteName, SignatureDescriptor.fromJava(substituteMethod));
                     ProgramError.check(originalMethod != null, "could not find method in " + substitutee + " substituted by " + substituteMethod);
                     final ClassMethodActor originalMethodActor = ClassMethodActor.fromJava(originalMethod);
-                    if (_originalToSubstitute.put(originalMethodActor, ClassMethodActor.fromJava(substituteMethod)) != null) {
+                    if (originalToSubstitute.put(originalMethodActor, ClassMethodActor.fromJava(substituteMethod)) != null) {
                         ProgramError.unexpected("a substitute has already been registered for " + originalMethod);
                     }
-                    if (_substituteToOriginal.put(ClassMethodActor.fromJava(substituteMethod), originalMethodActor) != null) {
+                    if (substituteToOriginal.put(ClassMethodActor.fromJava(substituteMethod), originalMethodActor) != null) {
                         ProgramError.unexpected("only one original method per substitute allowed - " + substituteMethod);
                     }
                     originalMethodActor.beUnsafe();
@@ -151,14 +151,14 @@ public @interface METHOD_SUBSTITUTIONS {
          * @return a substitute implementation for {@code javaMethod} or null if no substitution is found
          */
         public static ClassMethodActor findSubstituteFor(ClassMethodActor originalMethod) {
-            return _originalToSubstitute.get(originalMethod);
+            return originalToSubstitute.get(originalMethod);
         }
 
         /**
          * Searches for the method that is substituted by the given method.
          */
         public static ClassMethodActor findOriginal(ClassMethodActor substituteMethod) {
-            return _substituteToOriginal.get(substituteMethod);
+            return substituteToOriginal.get(substituteMethod);
         }
     }
 }

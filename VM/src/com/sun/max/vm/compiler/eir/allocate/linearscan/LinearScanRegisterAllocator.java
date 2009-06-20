@@ -44,7 +44,7 @@ public abstract class LinearScanRegisterAllocator<EirRegister_Type extends EirRe
     /**
      * The different phases of the algorithm.
      */
-    private final AlgorithmPart[] _phases = new AlgorithmPart[]{
+    private final AlgorithmPart[] phases = new AlgorithmPart[]{
 
         /**
          * Phase 1: Allocate constants and split variables when a fixed register is required.
@@ -151,7 +151,7 @@ public abstract class LinearScanRegisterAllocator<EirRegister_Type extends EirRe
 
         final AlgorithmData data = new AlgorithmData(methodGeneration(), convertToArray(this.allocatableIntegerRegisters()), convertToArray(this.allocatableFloatingPointRegisters()));
 
-        for (AlgorithmPart part : _phases) {
+        for (AlgorithmPart part : phases) {
             part.run(data);
         }
     }

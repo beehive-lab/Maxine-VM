@@ -52,13 +52,13 @@ public final class VMOptions {
 
     /**
      * A comparator for sorted a set of {@link VMOption}s in reverse lexicographic order of their
-     * {@linkplain VMOption#_prefix prefixes}. This means that suboptions precede their parent option
+     * {@linkplain VMOption#prefix prefixes}. This means that suboptions precede their parent option
      * where a suboption is an option whose prefix starts with but is not equal to the parent's prefix.
      */
     @PROTOTYPE_ONLY
     private static final Comparator<VMOption> VMOPTION_SORTER = new Comparator<VMOption>() {
         public int compare(VMOption o1, VMOption o2) {
-            return o2._prefix.compareTo(o1._prefix);
+            return o2.prefix.compareTo(o1.prefix);
         }
     };
 
@@ -66,18 +66,18 @@ public final class VMOptions {
      * Used to collect and sort VM options as they are declared.
      */
     @PROTOTYPE_ONLY
-    private static final SortedSet<VMOption> _pristinePhaseOptionsSet = new TreeSet<VMOption>(VMOPTION_SORTER);
+    private static final SortedSet<VMOption> pristinePhaseOptionsSet = new TreeSet<VMOption>(VMOPTION_SORTER);
 
     /**
      * Used to collect and sort VM options as they are declared.
      */
     @PROTOTYPE_ONLY
-    private static final SortedSet<VMOption> _startingPhaseOptionsSet = new TreeSet<VMOption>(VMOPTION_SORTER);
+    private static final SortedSet<VMOption> startingPhaseOptionsSet = new TreeSet<VMOption>(VMOPTION_SORTER);
 
-    private static VMOption[] _pristinePhaseOptions;
-    private static VMOption[] _startingPhaseOptions;
+    private static VMOption[] pristinePhaseOptions;
+    private static VMOption[] startingPhaseOptions;
 
-    private static final VMStringOption _jarOption = register(new VMStringOption("-jar", true, null, "Executes main class from jar file.") {
+    private static final VMStringOption jarOption = register(new VMStringOption("-jar", true, null, "Executes main class from jar file.") {
         @Override
         public boolean isLastOption() {
             return true;
@@ -88,7 +88,7 @@ public final class VMOptions {
      * An option to {@linkplain GlobalMetrics#report(java.io.PrintStream) report} on all global metrics gathered during execution.
      * TODO: If this option is not enabled, then the global metrics should not be gathered.
      */
-    private static final VMBooleanXXOption _printMetrics = register(new VMBooleanXXOption("-XX:-PrintMetrics", "Report random metrics gathered during execution.") {
+    private static final VMBooleanXXOption printMetrics = register(new VMBooleanXXOption("-XX:-PrintMetrics", "Report random metrics gathered during execution.") {
         @Override
         public boolean parseValue(Pointer optionValue) {
             if (getValue()) {
@@ -105,10 +105,10 @@ public final class VMOptions {
         }
     }, MaxineVM.Phase.STARTING);
 
-    private static final VMOption _verboseOption = register(new VMOption("-verbose ", "Enables all verbose options."), MaxineVM.Phase.PRISTINE);
-    private static final VMOption _timeOption = register(new VMOption("-XX:Time ", "Enables all timing options."), MaxineVM.Phase.PRISTINE);
+    private static final VMOption verboseOption = register(new VMOption("-verbose ", "Enables all verbose options."), MaxineVM.Phase.PRISTINE);
+    private static final VMOption timeOption = register(new VMOption("-XX:Time ", "Enables all timing options."), MaxineVM.Phase.PRISTINE);
 
-    private static final VMIntOption _traceLevelOption = register(new VMIntOption("-XX:TraceLevel=", 0, "Enables tracing output at the specified level.") {
+    private static final VMIntOption traceLevelOption = register(new VMIntOption("-XX:TraceLevel=", 0, "Enables tracing output at the specified level.") {
         @Override
         public boolean parseValue(Pointer optionValue) {
             Trace.on(getValue());
@@ -116,17 +116,17 @@ public final class VMOptions {
         }
     }, MaxineVM.Phase.PRISTINE);
 
-    private static final VMBooleanXXOption _printConfiguration = register(new VMBooleanXXOption("-XX:-PrintConfiguration", "Shows VM configuration details and exits."), MaxineVM.Phase.STARTING);
-    private static final VMBooleanXXOption _showConfiguration = register(new VMBooleanXXOption("-XX:-ShowConfiguration", "Shows VM configuration details and continues."), MaxineVM.Phase.STARTING);
+    private static final VMBooleanXXOption printConfiguration = register(new VMBooleanXXOption("-XX:-PrintConfiguration", "Shows VM configuration details and exits."), MaxineVM.Phase.STARTING);
+    private static final VMBooleanXXOption showConfiguration = register(new VMBooleanXXOption("-XX:-ShowConfiguration", "Shows VM configuration details and continues."), MaxineVM.Phase.STARTING);
 
-    private static Pointer _argv;
-    private static int _argc;
-    private static int _argumentStart;
+    private static Pointer argv;
+    private static int argc;
+    private static int argumentStart;
 
-    private static boolean _earlyVMExitRequested;
+    private static boolean earlyVMExitRequested;
 
-    private static String[] _mainClassArguments;
-    private static String _mainClassName;
+    private static String[] mainClassArguments;
+    private static String mainClassName;
 
     private VMOptions() {
     }
@@ -164,14 +164,14 @@ public final class VMOptions {
     private static VMOption[] addOption(SortedSet<VMOption> options, VMOption option, Iterable<VMOption> allOptions) {
         if (option.category() == VMOption.Category.IMPLEMENTATION_SPECIFIC) {
             final int prefixLength = option instanceof VMBooleanXXOption ? "-XX:+".length() : "-XX:".length();
-            final String name = option._prefix.substring(prefixLength);
+            final String name = option.prefix.substring(prefixLength);
             ProgramError.check(Character.isUpperCase(name.charAt(0)), "Option with \"-XX:\" prefix must start with an upper-case letter: " + option);
         }
         for (VMOption existingOption : allOptions) {
-            ProgramError.check(!existingOption._prefix.equals(option._prefix), "VM option prefix is not unique: " + option._prefix);
-            if (option._prefix.startsWith(existingOption._prefix)) {
+            ProgramError.check(!existingOption.prefix.equals(option.prefix), "VM option prefix is not unique: " + option.prefix);
+            if (option.prefix.startsWith(existingOption.prefix)) {
                 existingOption.addSuboption(option);
-            } else if (existingOption._prefix.startsWith(option._prefix)) {
+            } else if (existingOption.prefix.startsWith(option.prefix)) {
                 option.addSuboption(existingOption);
             }
         }
@@ -190,12 +190,12 @@ public final class VMOptions {
     @PROTOTYPE_ONLY
     public static <T extends VMOption> T register(VMOption option, MaxineVM.Phase phase) {
         assert phase != null;
-        final Iterable<VMOption> allOptions = Iterables.join(_pristinePhaseOptionsSet, _startingPhaseOptionsSet);
+        final Iterable<VMOption> allOptions = Iterables.join(pristinePhaseOptionsSet, startingPhaseOptionsSet);
         if (phase == MaxineVM.Phase.PRISTINE) {
-            _pristinePhaseOptions = addOption(_pristinePhaseOptionsSet, option, allOptions);
+            pristinePhaseOptions = addOption(pristinePhaseOptionsSet, option, allOptions);
         } else if (phase == MaxineVM.Phase.STARTING) {
             assert !option.consumesNext();
-            _startingPhaseOptions = addOption(_startingPhaseOptionsSet, option, allOptions);
+            startingPhaseOptions = addOption(startingPhaseOptionsSet, option, allOptions);
         } else {
             ProgramError.unexpected("VM options for the " + phase + " phase not (yet) supported");
         }
@@ -217,8 +217,8 @@ public final class VMOptions {
             Log.println();
             Log.println(label);
         }
-        printOptions(_pristinePhaseOptions, label, category);
-        printOptions(_startingPhaseOptions, label, category);
+        printOptions(pristinePhaseOptions, label, category);
+        printOptions(startingPhaseOptions, label, category);
     }
 
     public static void printUsage() {
@@ -236,11 +236,11 @@ public final class VMOptions {
      * exit the VM.
      */
     public static boolean earlyVMExitRequested() {
-        return _earlyVMExitRequested;
+        return earlyVMExitRequested;
     }
 
     protected static void error(String errorMessage) {
-        _earlyVMExitRequested = true;
+        earlyVMExitRequested = true;
         Log.print("VM program argument parsing error: ");
         Log.println(errorMessage);
         printUsage();
@@ -248,7 +248,7 @@ public final class VMOptions {
     }
 
     protected static void error(VMOption option) {
-        _earlyVMExitRequested = true;
+        earlyVMExitRequested = true;
         Log.print("Error while parsing ");
         Log.print(option.toString());
         Log.print(": ");
@@ -259,23 +259,23 @@ public final class VMOptions {
     }
 
     public static String jarFile() {
-        return _jarOption.getValue();
+        return jarOption.getValue();
     }
 
     /**
-     * Gets the index of the next non-empty {@linkplain #_argv command line argument} starting at a given index.
+     * Gets the index of the next non-empty {@linkplain #argv command line argument} starting at a given index.
      *
      * @param start the index of the first argument to consider
      * @return the index of the first word in {@link _argv} that points to a non-empty C string or -1 if there is no
      *         such command line argument at whose index is greater than or equal to {@code index} and less than
-     *         {@link #_argc}
+     *         {@link #argc}
      */
     private static int findArgument(int start) {
         if (start == -1) {
             return -1;
         }
-        for (int i = start; i < _argc; i++) {
-            final Pointer argument = _argv.getWord(0, i).asPointer();
+        for (int i = start; i < argc; i++) {
+            final Pointer argument = argv.getWord(0, i).asPointer();
             if (!argument.isZero() && !CString.length(argument).isZero()) {
                 return i;
             }
@@ -284,7 +284,7 @@ public final class VMOptions {
     }
 
     /**
-     * Parses a given option whose {@linkplain VMOption#_prefix prefix} is at a given index in the command line
+     * Parses a given option whose {@linkplain VMOption#prefix prefix} is at a given index in the command line
      * arguments.
      *
      * @param index the index of {@code option}'s prefix in the command line arguments
@@ -301,22 +301,22 @@ public final class VMOptions {
                 error(option.toString());
             }
             // parse the next argument as this option's value
-            if (!option.parseValue(_argv.getWord(index + 1).asPointer())) {
+            if (!option.parseValue(argv.getWord(index + 1).asPointer())) {
                 error(option.toString());
             }
-            _argv.setWord(index, Word.zero());
-            _argv.setWord(index + 1, Word.zero());
+            argv.setWord(index, Word.zero());
+            argv.setWord(index + 1, Word.zero());
             nextIndex = index + 2;
         } else {
             // otherwise ask the option to parse itself
             if (!option.parse(argument)) {
                 error(option.toString());
             }
-            _argv.setWord(index, Word.zero());
+            argv.setWord(index, Word.zero());
             nextIndex = index + 1;
         }
         if (option.isLastOption()) {
-            _argumentStart = nextIndex;
+            argumentStart = nextIndex;
             return -1;
         }
         return nextIndex;
@@ -337,18 +337,18 @@ public final class VMOptions {
      * @return all the registered VM options as an {@code IterableWithLength} object
      */
     public static IterableWithLength<VMOption> allOptions() {
-        return Iterables.join(Arrays.iterable(_pristinePhaseOptions), Arrays.iterable(_startingPhaseOptions));
+        return Iterables.join(Arrays.iterable(pristinePhaseOptions), Arrays.iterable(startingPhaseOptions));
     }
 
-    public static boolean parsePristine(int argc, Pointer argv) {
-        _argv = argv;
-        _argc = argc;
-        _argumentStart = argc;
+    public static boolean parsePristine(int initialArgc, Pointer initialArgv) {
+        argv = initialArgv;
+        argc = initialArgc;
+        argumentStart = initialArgc;
 
         int index = findArgument(1); // skip the first argument (the name of the executable)
         while (index >= 0) {
-            final Pointer argument = _argv.getWord(index).asPointer();
-            final VMOption option = findVMOption(argument, _pristinePhaseOptions);
+            final Pointer argument = argv.getWord(index).asPointer();
+            final VMOption option = findVMOption(argument, pristinePhaseOptions);
             if (option != null) {
                 // some option prefix matched. attempt to parse it.
                 index = parseOption(index, argument, option);
@@ -360,16 +360,16 @@ public final class VMOptions {
                 // an option to be handled later
             } else {
                 // the first non-option argument must be the main class, unless -jar
-                _argumentStart = index;
+                argumentStart = index;
                 break;
             }
             index = findArgument(index);
         }
-        return checkOptionsForErrors(_pristinePhaseOptions);
+        return checkOptionsForErrors(pristinePhaseOptions);
     }
 
     protected static String getArgumentString(int index) throws Utf8Exception {
-        final Pointer cArgument = _argv.getWord(index).asPointer();
+        final Pointer cArgument = argv.getWord(index).asPointer();
         if (cArgument.isZero()) {
             return null;
         }
@@ -381,7 +381,7 @@ public final class VMOptions {
     }
 
     private static boolean checkOptionsForErrors(VMOption[] options) {
-        if (_earlyVMExitRequested) {
+        if (earlyVMExitRequested) {
             return false;
         }
         for (VMOption option : options) {
@@ -400,28 +400,28 @@ public final class VMOptions {
      * The system properties parsed on the command line are stored in this map.
      * This is required so that they are available before the System class is initialized.
      */
-    public static final Properties _initialSystemProperties = System.getProperties();
+    public static final Properties initialSystemProperties = System.getProperties();
 
     public static boolean parseStarting() {
         try {
             int index = 1;
-            while (index < _argumentStart) {
+            while (index < argumentStart) {
                 final String argument = getArgumentString(index);
                 if (argument == null) {
                     index++;
                 } else {
                     if (argument.startsWith("-D")) {
-                        parseSystemProperty(_initialSystemProperties, argument);
-                        _argv.setWord(index, Word.zero());
+                        parseSystemProperty(initialSystemProperties, argument);
+                        argv.setWord(index, Word.zero());
                     } else {
-                        final Pointer nextArg = _argv.getWord(index).asPointer();
-                        final VMOption option = findVMOption(nextArg, _startingPhaseOptions);
+                        final Pointer nextArg = argv.getWord(index).asPointer();
+                        final VMOption option = findVMOption(nextArg, startingPhaseOptions);
                         if (option == null) {
                             error("unknown VM argument \"" + CString.utf8ToJava(nextArg) + "\"");
                         } else if (!option.parse(nextArg)) {
                             error("parsing of " + argument + " failed");
                         }
-                        _argv.setWord(index, Word.zero());
+                        argv.setWord(index, Word.zero());
                         index++;
                     }
                 }
@@ -429,9 +429,9 @@ public final class VMOptions {
         } catch (Utf8Exception utf8Exception) {
             error("UTF8 problem");
         }
-        final boolean noErrorFound = checkOptionsForErrors(_startingPhaseOptions);
+        final boolean noErrorFound = checkOptionsForErrors(startingPhaseOptions);
         if (noErrorFound) {
-            if (_printConfiguration.getValue() || _showConfiguration.getValue()) {
+            if (printConfiguration.getValue() || showConfiguration.getValue()) {
                 final VMConfiguration vm = VMConfiguration.target();
                 Log.println("VM Configuration:");
                 Log.println("  Build level: " + vm.buildLevel());
@@ -440,8 +440,8 @@ public final class VMOptions {
                     final String specification = vmScheme.specification().getSimpleName();
                     Log.println("  " + specification.replace("Scheme", " scheme") + ": " + vmScheme.getClass().getName());
                 }
-                if (_printConfiguration.getValue()) {
-                    _earlyVMExitRequested = true;
+                if (printConfiguration.getValue()) {
+                    earlyVMExitRequested = true;
                 }
             }
         }
@@ -456,7 +456,7 @@ public final class VMOptions {
      * @param properties the object to which the command line properties are added
      */
     public static void addParsedSystemProperties(Properties properties) {
-        for (Map.Entry<Object, Object> entry : _initialSystemProperties.entrySet()) {
+        for (Map.Entry<Object, Object> entry : initialSystemProperties.entrySet()) {
             properties.setProperty((String) entry.getKey(), (String) entry.getValue());
         }
     }
@@ -482,26 +482,26 @@ public final class VMOptions {
     }
 
     public static String mainClassName() {
-        return _mainClassName;
+        return mainClassName;
     }
 
     public static String[] mainClassArguments() {
-        return _mainClassArguments;
+        return mainClassArguments;
     }
 
-    private static void parseMainClassArguments(int argumentStart) throws Utf8Exception {
+    private static void parseMainClassArguments(int argStart) throws Utf8Exception {
         int argumentCount = 0;
 
-        for (int i = argumentStart; i < _argc; i++) {
+        for (int i = argStart; i < argc; i++) {
             if (findArgument(i) >= 0) {
                 argumentCount++;
             }
         }
-        _mainClassArguments = new String[argumentCount];
+        mainClassArguments = new String[argumentCount];
         int mainClassArgumentsIndex = 0;
-        for (int i = argumentStart; i < _argc; i++) {
+        for (int i = argStart; i < argc; i++) {
             if (findArgument(i) >= 0) {
-                _mainClassArguments[mainClassArgumentsIndex++] = getArgumentString(i);
+                mainClassArguments[mainClassArgumentsIndex++] = getArgumentString(i);
             }
         }
     }
@@ -517,16 +517,16 @@ public final class VMOptions {
      */
     public static boolean parseMain(boolean errorIfNotPresent) {
         try {
-            if (_jarOption.isPresent()) {
+            if (jarOption.isPresent()) {
                 // the first argument is the first argument to the program
-                parseMainClassArguments(_argumentStart);
+                parseMainClassArguments(argumentStart);
                 return true;
             }
-            if (_argumentStart < _argc) {
+            if (argumentStart < argc) {
                 // the first argument is the name of the main class
-                _mainClassName = getArgumentString(_argumentStart);
-                parseMainClassArguments(_argumentStart + 1);
-                return _mainClassName != null;
+                mainClassName = getArgumentString(argumentStart);
+                parseMainClassArguments(argumentStart + 1);
+                return mainClassName != null;
             }
             if (errorIfNotPresent) {
                 error("no main class specified");
@@ -633,10 +633,10 @@ public final class VMOptions {
      * Calls the {@link VMOption#beforeExit()} method of each registered VM option.
      */
     public static void beforeExit() {
-        for (VMOption option : _pristinePhaseOptions) {
+        for (VMOption option : pristinePhaseOptions) {
             option.beforeExit();
         }
-        for (VMOption option : _startingPhaseOptions) {
+        for (VMOption option : startingPhaseOptions) {
             option.beforeExit();
         }
         if (MaxineVM.isPrototyping()) {

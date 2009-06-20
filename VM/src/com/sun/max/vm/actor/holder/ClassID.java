@@ -34,9 +34,9 @@ public final class ClassID {
     private ClassID() {
     }
 
-    private static VariableSequence<ClassActor> _idToClassActor = new ArrayListSequence<ClassActor>();
+    private static VariableSequence<ClassActor> idToClassActor = new ArrayListSequence<ClassActor>();
 
-    private static BitSet _usedIDs = new BitSet();
+    private static BitSet usedIDs = new BitSet();
 
     /**
      * Inspector support.
@@ -47,42 +47,42 @@ public final class ClassID {
     }
 
     @PROTOTYPE_ONLY
-    private static Mapping _mapping;
+    private static Mapping mapping;
 
     @PROTOTYPE_ONLY
-    public static void setMapping(Mapping mapping) {
-        _mapping = mapping;
+    public static void setMapping(Mapping map) {
+        mapping = map;
     }
 
     public static synchronized ClassActor toClassActor(int id) {
         try {
-            if (MaxineVM.isPrototyping() && _mapping != null) {
-                final ClassActor classActor = _mapping.idToClassActor(id);
+            if (MaxineVM.isPrototyping() && mapping != null) {
+                final ClassActor classActor = mapping.idToClassActor(id);
                 if (classActor != null) {
                     return classActor;
                 }
             }
-            return _idToClassActor.get(id);
+            return idToClassActor.get(id);
         } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
             return null;
         }
     }
 
     static synchronized int create() {
-        final int id = _usedIDs.nextClearBit(0);
-        if (id == _idToClassActor.length()) {
-            _idToClassActor.append(null);
+        final int id = usedIDs.nextClearBit(0);
+        if (id == idToClassActor.length()) {
+            idToClassActor.append(null);
         }
-        _usedIDs.set(id);
+        usedIDs.set(id);
         return id;
     }
 
     static synchronized void register(int id, ClassActor classActor) {
-        _idToClassActor.set(id, classActor);
+        idToClassActor.set(id, classActor);
     }
 
     static synchronized void clear(int id) {
-        _idToClassActor.set(id, null);
-        _usedIDs.clear(id);
+        idToClassActor.set(id, null);
+        usedIDs.clear(id);
     }
 }

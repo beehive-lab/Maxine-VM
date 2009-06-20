@@ -47,15 +47,15 @@ import com.sun.max.vm.type.*;
  */
 public class BcCompiler extends BCompiler implements CirGeneratorScheme {
 
-    private final BirToCirTranslator _birToCirTranslator;
+    private final BirToCirTranslator birToCirTranslator;
 
     public BcCompiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        _birToCirTranslator = new BirToCirTranslator(this);
+        birToCirTranslator = new BirToCirTranslator(this);
     }
 
     public CirGenerator cirGenerator() {
-        return _birToCirTranslator;
+        return birToCirTranslator;
     }
 
     @Override
@@ -65,7 +65,7 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
 
     @Override
     public Sequence<IrGenerator> irGenerators() {
-        return Sequence.Static.appended(super.irGenerators(), _birToCirTranslator);
+        return Sequence.Static.appended(super.irGenerators(), birToCirTranslator);
     }
 
     @PROTOTYPE_ONLY
@@ -91,7 +91,7 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
                 cirGenerator().notifyBeforeGeneration(cirSnippet);
                 final ClassMethodActor classMethodActor = cirSnippet.classMethodActor();
                 final CirVariableFactory cirVariableFactory = new CirVariableFactory();
-                final CirClosure cirClosure = _birToCirTranslator.translateMethod(birGenerator().makeIrMethod(classMethodActor), cirSnippet, cirVariableFactory);
+                final CirClosure cirClosure = birToCirTranslator.translateMethod(birGenerator().makeIrMethod(classMethodActor), cirSnippet, cirVariableFactory);
                 cirSnippet.setGenerated(cirClosure);
                 cirGenerator().setCirMethod(classMethodActor, cirSnippet);
                 cirGenerator().notifyAfterGeneration(cirSnippet);
@@ -149,24 +149,24 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
         }
     }
 
-    private static boolean _optimizing = true;
+    private static boolean optimizing = true;
 
     public boolean optimizing() {
-        return _optimizing;
+        return optimizing;
     }
 
     /**
      * This allows us to test the CIR generator only without ever running the CIR optimizer.
      */
     public static void disableOptimizing() {
-        _optimizing = false;
+        optimizing = false;
     }
 
     @PROTOTYPE_ONLY
     @Override
     public void compileSnippets() {
         translateSnippets();
-        if (_optimizing) {
+        if (optimizing) {
             optimizeSnippets();
         }
         super.compileSnippets();

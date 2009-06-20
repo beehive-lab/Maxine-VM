@@ -103,8 +103,8 @@ class ProxyAcquirableJavaMonitor extends StandardJavaMonitor {
         final VmThread currentThread = VmThread.current();
         _proxyMutex.lock();
         if (!_ownerAcquired) {
-            if (currentThread == _ownerThread) {
-                _mutex.lock();
+            if (currentThread == ownerThread) {
+                mutex.lock();
                 _ownerAcquired = true;
                 _proxyVar.threadNotify(true);
             } else {
@@ -152,18 +152,18 @@ class ProxyAcquirableJavaMonitor extends StandardJavaMonitor {
 
     @Override
     public void monitorPrivateAcquire(VmThread owner, int lockQty) {
-        _ownerThread = owner;
-        _recursionCount = lockQty;
+        ownerThread = owner;
+        recursionCount = lockQty;
         _ownerAcquired = false;
-        _bindingProtection = BindingProtection.PROTECTED;
+        bindingProtection = BindingProtection.PROTECTED;
     }
 
     @Override
     public void monitorPrivateRelease() {
-        _ownerThread = null;
-        _recursionCount = 0;
+        ownerThread = null;
+        recursionCount = 0;
         _ownerAcquired = true;
-        _bindingProtection = BindingProtection.UNPROTECTED;
+        bindingProtection = BindingProtection.UNPROTECTED;
     }
 
     @Override

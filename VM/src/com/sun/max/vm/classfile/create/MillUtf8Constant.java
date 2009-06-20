@@ -31,11 +31,11 @@ package com.sun.max.vm.classfile.create;
  */
 public class MillUtf8Constant extends MillConstant {
 
-    final String _string;
+    final String string;
 
     MillUtf8Constant(String string) {
         super(CONSTANT_Utf8, 3 + string.length(), string.hashCode());
-        this._string = string;
+        this.string = string;
     }
 
     /**
@@ -50,7 +50,7 @@ public class MillUtf8Constant extends MillConstant {
         if (!(other instanceof MillUtf8Constant)) {
             return false;
         }
-        return _string.equals(((MillUtf8Constant) other)._string);
+        return string.equals(((MillUtf8Constant) other).string);
     }
 
 }

@@ -57,8 +57,8 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
     private final boolean _traceVariables;
 
     public DirInterpreter() {
-        _traceVariables = _traceCpuOption.getValue();
-        _trace = _traceVariables || _traceOption.getValue();
+        _traceVariables = traceCpuOption.getValue();
+        _trace = _traceVariables || traceOption.getValue();
     }
 
     private static DirValue[] valuesToDirValues(Value[] values) {
@@ -118,49 +118,49 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
     }
 
     private class Evaluator extends DirAdapter {
-        private final DirMethod _dirMethod;
-        private DirValue _throwable = null;
+        private final DirMethod dirMethod;
+        private DirValue throwable = null;
         private DirValue _result = null;
-        private int _instructionIndex = 0;
-        private DirBlock _block;
-        private final Environment _environment;
+        private int instructionIndex = 0;
+        private DirBlock block;
+        private final Environment environment;
 
         Evaluator(DirMethod dirMethod, DirValue[] arguments) {
-            _dirMethod = dirMethod;
-            _block = dirMethod.blocks().first();
-            _environment = new Environment(dirMethod.parameters(), arguments);
+            this.dirMethod = dirMethod;
+            block = dirMethod.blocks().first();
+            environment = new Environment(dirMethod.parameters(), arguments);
         }
 
-        private void jump(DirBlock block) {
-            _block = block;
-            _instructionIndex = 0;
+        private void jump(DirBlock b) {
+            this.block = b;
+            instructionIndex = 0;
         }
 
         public Value run() throws InvocationTargetException {
             if (Trace.hasLevel(3)) {
-                _dirMethod.traceToString();
+                dirMethod.traceToString();
             }
             while (_result == null) {
-                final DirInstruction instruction = _block.instructions().get(_instructionIndex);
+                final DirInstruction instruction = block.instructions().get(instructionIndex);
                 traceRun(instruction);
-                _instructionIndex++;
+                instructionIndex++;
                 instruction.acceptVisitor(this);
-                if (_throwable != null) {
-                    _throwable = _environment.lookup(_throwable);
+                if (throwable != null) {
+                    throwable = environment.lookup(throwable);
                     if (instruction.catchBlock() != null) {
-                        _environment.bind(instruction.catchBlock().catchParameter(), _throwable);
-                        _throwable = null;
+                        environment.bind(instruction.catchBlock().catchParameter(), throwable);
+                        throwable = null;
                         jump(instruction.catchBlock());
                     } else {
-                        final Throwable cause = (Throwable) _throwable.value().asObject();
-                        _throwable = null;
+                        final Throwable cause = (Throwable) throwable.value().asObject();
+                        throwable = null;
                         throw new InvocationTargetException(cause);
                     }
                 }
             }
             if (_result instanceof DirConstant) {
                 final DirConstant dirConstant = (DirConstant) _result;
-                return _dirMethod.classMethodActor().resultKind().convert(dirConstant.value());
+                return dirMethod.classMethodActor().resultKind().convert(dirConstant.value());
             }
             return ReferenceValue.from(_result);
         }
@@ -169,16 +169,16 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
             if (_trace) {
                 Trace.stream().println("------------------");
                 if (_traceVariables) {
-                    _environment.trace();
+                    environment.trace();
                 }
-                Trace.stream().println(_block.toString() + "[" + _instructionIndex + "]: " + instruction);
+                Trace.stream().println(block.toString() + "[" + instructionIndex + "]: " + instruction);
                 Trace.stream().flush();
             }
         }
 
         @Override
         public void visitAssign(DirAssign dirAssign) {
-            _environment.bind(dirAssign.destination(), _environment.lookup(dirAssign.source()));
+            environment.bind(dirAssign.destination(), environment.lookup(dirAssign.source()));
         }
 
         @Override
@@ -188,13 +188,13 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
 
         @Override
         public void visitJump(DirJump dirJump) {
-            jump((DirBlock) _environment.lookup(dirJump.parameter()));
+            jump((DirBlock) environment.lookup(dirJump.parameter()));
         }
 
         @Override
         public void visitBuiltinCall(DirBuiltinCall dirBuiltinCall) {
             final Builtin builtin = dirBuiltinCall.builtin();
-            final Value[] arguments = _environment.lookupValues(dirBuiltinCall.arguments());
+            final Value[] arguments = environment.lookupValues(dirBuiltinCall.arguments());
             Value result;
             try {
                 if (builtin instanceof PointerBuiltin) {
@@ -210,15 +210,15 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
                     try {
                         result = builtin.foldingMethodActor().invoke(arguments);
                     } catch (InvocationTargetException invocationTargetException) {
-                        _throwable = new DirConstant(ReferenceValue.from(invocationTargetException.getTargetException()));
+                        throwable = new DirConstant(ReferenceValue.from(invocationTargetException.getTargetException()));
                         return;
                     }
                 }
-            } catch (Throwable throwable) {
-                _throwable = new DirConstant(ReferenceValue.from(throwable));
+            } catch (Throwable t) {
+                throwable = new DirConstant(ReferenceValue.from(t));
                 return;
             }
-            _environment.bind(dirBuiltinCall.result(), new DirConstant(result));
+            environment.bind(dirBuiltinCall.result(), new DirConstant(result));
         }
 
         private ClassMethodActor unboxClassMethodActor(final DirValue value) {
@@ -236,18 +236,18 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
 
         @Override
         public void visitMethodCall(DirMethodCall dirMethodCall) {
-            final DirValue value = _environment.lookup(dirMethodCall.method());
+            final DirValue value = environment.lookup(dirMethodCall.method());
             final MethodActor classMethodActor = unboxClassMethodActor(value);
 
             if (classMethodActor.isInstanceInitializer()) {
                 visitConstructorCall(dirMethodCall, classMethodActor);
             } else {
                 try {
-                    final Value[] arguments = _environment.lookupValues(dirMethodCall.arguments());
+                    final Value[] arguments = environment.lookupValues(dirMethodCall.arguments());
                     final Value result = classMethodActor.invoke(arguments);
-                    _environment.bind(dirMethodCall.result(), new DirConstant(result));
+                    environment.bind(dirMethodCall.result(), new DirConstant(result));
                 } catch (InvocationTargetException invocationTargetException) {
-                    _throwable = new DirConstant(ReferenceValue.from(invocationTargetException.getTargetException()));
+                    throwable = new DirConstant(ReferenceValue.from(invocationTargetException.getTargetException()));
                     return;
                 } catch (IllegalAccessException illegalAccessException) {
                     ProgramError.unexpected("could not invoke method: " + classMethodActor);
@@ -258,13 +258,13 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
         public void visitConstructorCall(DirMethodCall dirMethodCall, MethodActor classMethodActor) {
             assert classMethodActor.isInstanceInitializer();
             final DirValue[] arguments = dirMethodCall.arguments();
-            final DirValue uninitializedObject = _environment.lookup(arguments[0]);
+            final DirValue uninitializedObject = environment.lookup(arguments[0]);
 
             try {
-                final Value[] valueArguments = _environment.lookupValues(com.sun.max.lang.Arrays.subArray(arguments, 1));
+                final Value[] valueArguments = environment.lookupValues(com.sun.max.lang.Arrays.subArray(arguments, 1));
                 final Value initializedObject = classMethodActor.invokeConstructor(valueArguments);
                 Objects.copy(initializedObject.asObject(), uninitializedObject.value().asObject());
-                _environment.bind(dirMethodCall.result(), new DirConstant(VoidValue.VOID));
+                environment.bind(dirMethodCall.result(), new DirConstant(VoidValue.VOID));
             } catch (InstantiationException e) {
                 ProgramError.unexpected("error calling " + classMethodActor, e);
             } catch (IllegalAccessException e) {
@@ -276,14 +276,14 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
 
         @Override
         public void visitReturn(DirReturn dirReturn) {
-            _result = _environment.lookup(dirReturn.returnValue());
+            _result = environment.lookup(dirReturn.returnValue());
         }
 
         @Override
         public void visitSwitch(DirSwitch dirSwitch) {
-            final Value tag = dirSwitch.comparisonKind().convert(_environment.lookup(dirSwitch.tag()).value());
+            final Value tag = dirSwitch.comparisonKind().convert(environment.lookup(dirSwitch.tag()).value());
             for (int i = 0; i < dirSwitch.matches().length; i++) {
-                final Value match = dirSwitch.comparisonKind().convert(_environment.lookup(dirSwitch.matches()[i]).value());
+                final Value match = dirSwitch.comparisonKind().convert(environment.lookup(dirSwitch.matches()[i]).value());
                 assert match.kind() == dirSwitch.comparisonKind();
                 if (dirSwitch.valueComparator().evaluate(tag, match)) {
                     jump(dirSwitch.targetBlocks()[i]);
@@ -295,7 +295,7 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
 
         @Override
         public void visitThrow(DirThrow dirThrow) {
-            _throwable = dirThrow.throwable();
+            throwable = dirThrow.throwable();
         }
     }
 

@@ -50,16 +50,16 @@ public class DirTraceObserver extends IrTraceObserver {
 
 
         Transformation(String description, int traceLevel) {
-            _description = description;
-            _traceLevel = traceLevel;
+            this.description = description;
+            this.traceLevel = traceLevel;
         }
 
-        private final int _traceLevel;
-        private final String _description;
+        private final int traceLevel;
+        private final String description;
 
         @Override
         public String toString() {
-            return _description;
+            return description;
         }
     }
 
@@ -69,10 +69,10 @@ public class DirTraceObserver extends IrTraceObserver {
             final int transformTraceLevel = transformTraceLevel(transform);
             if (hasLevel(transformTraceLevel)) {
                 if (irMethod instanceof DirMethod) {
-                    _out.println(traceString(irMethod, "before transformation: " + transform));
+                    out.println(traceString(irMethod, "before transformation: " + transform));
                     final DirMethod dirMethod = (DirMethod) irMethod;
                     if (dirMethod.isGenerated() || context == null) {
-                        _out.println(irMethod.traceToString());
+                        out.println(irMethod.traceToString());
                     } else {
                         traceDirBlocks(context);
                     }
@@ -85,9 +85,9 @@ public class DirTraceObserver extends IrTraceObserver {
         final Class<Iterable<DirBlock>> type = null;
         final Iterable<DirBlock> dirBlocks = StaticLoophole.cast(type, context);
         for (DirBlock block : dirBlocks) {
-            block.printTo(_out);
+            block.printTo(out);
         }
-        _out.flush();
+        out.flush();
     }
 
     @Override
@@ -96,10 +96,10 @@ public class DirTraceObserver extends IrTraceObserver {
             final int transformTraceLevel = transformTraceLevel(transform);
             if (Trace.hasLevel(transformTraceLevel)) {
                 if (irMethod instanceof DirMethod) {
-                    _out.println(traceString(irMethod, "after transformation: " + transform));
+                    out.println(traceString(irMethod, "after transformation: " + transform));
                     final DirMethod dirMethod = (DirMethod) irMethod;
                     if (dirMethod.isGenerated() || context == null) {
-                        _out.println(irMethod.traceToString());
+                        out.println(irMethod.traceToString());
                     } else {
                         traceDirBlocks(context);
                     }
@@ -110,6 +110,6 @@ public class DirTraceObserver extends IrTraceObserver {
 
     @Override
     protected int transformTraceLevel(Object transform) {
-        return ((Transformation) transform)._traceLevel;
+        return ((Transformation) transform).traceLevel;
     }
 }

@@ -29,35 +29,35 @@ import com.sun.max.vm.type.*;
  */
 public class CirVariableFactory {
 
-    private int _serial;
+    private int serial;
 
     public CirVariableFactory(int serial) {
-        _serial = serial;
+        this.serial = serial;
     }
 
     public CirVariableFactory() {
-        _serial = 0;
+        serial = 0;
     }
 
     private int makeSerial() {
-        if (_serial >= 0) {
-            _serial++;
-            return _serial;
+        if (serial >= 0) {
+            serial++;
+            return serial;
         }
-        _serial--;
-        return _serial;
+        serial--;
+        return serial;
     }
 
-    private final CirVariable _normalContinuationParameter = new CirNormalContinuationParameter(makeSerial());
+    private final CirVariable normalContinuationParameter = new CirNormalContinuationParameter(makeSerial());
 
     public CirVariable normalContinuationParameter() {
-        return _normalContinuationParameter;
+        return normalContinuationParameter;
     }
 
-    private final CirVariable _exceptionContinuationParameter = new CirExceptionContinuationParameter(makeSerial());
+    private final CirVariable exceptionContinuationParameter = new CirExceptionContinuationParameter(makeSerial());
 
     public CirVariable exceptionContinuationParameter() {
-        return _exceptionContinuationParameter;
+        return exceptionContinuationParameter;
     }
 
     public CirVariable createMethodParameter(Kind kind, int index) {
