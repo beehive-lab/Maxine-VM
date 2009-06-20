@@ -183,17 +183,17 @@ public class BootImageTable extends InspectorTable {
             final Pointer bootImageStart = maxVM().bootImageStart();
 
             final Pointer bootHeapStart = bootImageStart;
-            final Pointer bootHeapEnd = bootHeapStart.plus(header._bootHeapSize);
+            final Pointer bootHeapEnd = bootHeapStart.plus(header.bootHeapSize);
 
             addRow("boot heap start:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapStart, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootHeapStart));
-            addRow("boot heap size:", new DataLabel.IntAsHex(inspection(), header._bootHeapSize), null);
+            addRow("boot heap size:", new DataLabel.IntAsHex(inspection(), header.bootHeapSize), null);
             addRow("boot heap end:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapEnd, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootHeapEnd));
 
             final Pointer bootCodeStart = bootHeapEnd;
-            final Pointer bootCodeEnd = bootCodeStart.plus(header._bootCodeSize);
+            final Pointer bootCodeEnd = bootCodeStart.plus(header.bootCodeSize);
 
             addRow("boot code start:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeStart, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootCodeStart));
-            addRow("boot code size:", new DataLabel.IntAsHex(inspection(), header._bootCodeSize), null);
+            addRow("boot code size:", new DataLabel.IntAsHex(inspection(), header.bootCodeSize), null);
             addRow("boot code end:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeEnd, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootCodeEnd));
 
             addRow("code cache size:", new DataLabel.IntAsHex(inspection(), header._codeCacheSize), null);

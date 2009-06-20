@@ -38,8 +38,8 @@ import com.sun.max.vm.type.*;
  */
 public class ExceptionDispatcher {
 
-    private static final ClassMethodRefConstant _reprotectGuardPage = PoolConstantFactory.createClassMethodConstant(Classes.getDeclaredMethod(VmThread.class, "reprotectGuardPage", Throwable.class));
-    private final int _position;
+    private static final ClassMethodRefConstant reprotectGuardPage = PoolConstantFactory.createClassMethodConstant(Classes.getDeclaredMethod(VmThread.class, "reprotectGuardPage", Throwable.class));
+    private final int position;
 
     private boolean isThrowable(BytecodeAssembler assembler, int classConstantIndex) {
         try {
@@ -57,7 +57,7 @@ public class ExceptionDispatcher {
         assembler.dup();
         //Before dispatching the exception handler always re-protect the guard page. In case of
         //stack-overflow exception due to an access to the guard page, it has to be protected again.
-        assembler.invokestatic(_reprotectGuardPage, 1, 0);
+        assembler.invokestatic(reprotectGuardPage, 1, 0);
         ExceptionHandler h = handler;
         while (h != null) {
 
@@ -104,7 +104,7 @@ public class ExceptionDispatcher {
      *            the assembler used for synthesizing the dispatcher bytecode
      */
     ExceptionDispatcher(BytecodeAssembler assembler, ExceptionHandler handler) {
-        _position = assembler.currentAddress();
+        position = assembler.currentAddress();
 
         // Model the exception on the stack
         assert assembler.stack() == 0;
@@ -117,6 +117,6 @@ public class ExceptionDispatcher {
      * The byte code position of the dispatcher synthesized by this object.
      */
     int position() {
-        return _position;
+        return position;
     }
 }

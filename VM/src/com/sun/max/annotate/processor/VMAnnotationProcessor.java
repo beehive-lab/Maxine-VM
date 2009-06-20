@@ -37,14 +37,14 @@ import com.sun.max.annotate.*;
  */
 public class VMAnnotationProcessor extends BaseAnnotationProcessor {
 
-    private TypeElement _cFunctionAnnotationElement;
-    private CFunctionScanner _cFunctionScanner;
+    private TypeElement cFunctionAnnotationElement;
+    private CFunctionScanner cFunctionScanner;
 
     @Override
     public synchronized void init(ProcessingEnvironment environment) {
         super.init(environment);
-        _cFunctionAnnotationElement = elementUtils.getTypeElement(C_FUNCTION.class.getName());
-        _cFunctionScanner = new CFunctionScanner();
+        cFunctionAnnotationElement = elementUtils.getTypeElement(C_FUNCTION.class.getName());
+        cFunctionScanner = new CFunctionScanner();
     }
 
     @Override
@@ -52,7 +52,7 @@ public class VMAnnotationProcessor extends BaseAnnotationProcessor {
         super.process(annotations, roundEnv);
         if (!roundEnv.processingOver()) {
             for (Element element : roundEnv.getRootElements()) {
-                _cFunctionScanner.scan(element);
+                cFunctionScanner.scan(element);
             }
         }
         return false;
@@ -67,7 +67,7 @@ public class VMAnnotationProcessor extends BaseAnnotationProcessor {
         public Void visitExecutable(ExecutableElement e, Void p) {
             if (e.getKind() == ElementKind.METHOD) {
                 for (AnnotationMirror annotation : e.getAnnotationMirrors()) {
-                    if (annotation.getAnnotationType().equals(_cFunctionAnnotationElement.asType())) {
+                    if (annotation.getAnnotationType().equals(cFunctionAnnotationElement.asType())) {
                         if (!isPrivate(e)) {
                             warning(e, "Method annotated with @C_FUNCTION must be private");
                         }

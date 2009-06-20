@@ -48,7 +48,7 @@ public interface InjectedFieldActor<Value_Type extends Value<Value_Type>> {
 
     public static final class Static {
 
-        private static InjectedFieldActor[] _injectedFieldActors = new InjectedFieldActor[0];
+        private static InjectedFieldActor[] injectedFieldActors = new InjectedFieldActor[0];
 
         static {
             Classes.initialize(InjectedReferenceFieldActor.class);
@@ -62,9 +62,9 @@ public interface InjectedFieldActor<Value_Type extends Value<Value_Type>> {
         static void registerInjectedFieldActor(InjectedFieldActor injectedFieldActor) {
             assert ClassRegistry.vmClassRegistry().get(injectedFieldActor.holderTypeDescriptor()) == null :
                 "cannot inject field into pre-existing class " + injectedFieldActor.holderTypeDescriptor().toJavaString();
-            final int length = _injectedFieldActors.length;
-            _injectedFieldActors = java.util.Arrays.copyOf(_injectedFieldActors, length + 1);
-            _injectedFieldActors[length] = injectedFieldActor;
+            final int length = injectedFieldActors.length;
+            injectedFieldActors = java.util.Arrays.copyOf(injectedFieldActors, length + 1);
+            injectedFieldActors[length] = injectedFieldActor;
 
         }
 
@@ -80,7 +80,7 @@ public interface InjectedFieldActor<Value_Type extends Value<Value_Type>> {
          */
         public static FieldActor[] injectFieldActors(boolean staticFields, FieldActor[] fieldActors, TypeDescriptor holder) {
             FieldActor[] result = fieldActors;
-            for (InjectedFieldActor injectedFieldActor : _injectedFieldActors) {
+            for (InjectedFieldActor injectedFieldActor : injectedFieldActors) {
                 if (injectedFieldActor.holderTypeDescriptor().equals(holder)) {
                     final FieldActor fieldActor = (FieldActor) injectedFieldActor;
                     if (fieldActor.isStatic() == staticFields) {

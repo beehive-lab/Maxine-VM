@@ -35,33 +35,33 @@ public class AMD64DtInterpreter extends DtInterpreter {
     /**
      * Offset from start() to first prologue instruction.
      */
-    private final int _prologueOffset;
+    private final int prologueOffset;
 
     /**
      * Offset from start() to first template instruction.
      */
-    private final int _templatesOffset;
+    private final int templatesOffset;
 
     /**
      * Framesize needed by the interpreter before non-parameter locals specific to the
      * method are allocated on the stack.
      */
-    private final int _baseFrameSize;
+    private final int baseFrameSize;
 
     AMD64DtInterpreter(byte[] code, int prologueOffset, int templatesOffset, int baseFrameSize) {
         super(code);
-        _prologueOffset = prologueOffset;
-        _templatesOffset = templatesOffset;
-        _baseFrameSize = baseFrameSize;
+        this.prologueOffset = prologueOffset;
+        this.templatesOffset = templatesOffset;
+        this.baseFrameSize = baseFrameSize;
     }
 
     @Override
     public Address entryPoint() {
-        return start().plus(_prologueOffset);
+        return start().plus(prologueOffset);
     }
 
     Address templatesStart() {
-        return start().plus(_templatesOffset);
+        return start().plus(templatesOffset);
     }
 
     /**
@@ -69,7 +69,7 @@ public class AMD64DtInterpreter extends DtInterpreter {
      * method are allocated on the stack.
      */
     int baseFrameSize() {
-        return _baseFrameSize;
+        return baseFrameSize;
     }
 
     @Override
@@ -87,9 +87,9 @@ public class AMD64DtInterpreter extends DtInterpreter {
             return false;
         }
 
-        final Pointer callerInstructionPointer = stackFrameWalker.readWord(stackFrameWalker.framePointer(), _baseFrameSize).asPointer();
-        final Pointer callerStackPointer = stackFrameWalker.framePointer().plus(_baseFrameSize);
-        final Pointer callerFramePointer = stackFrameWalker.readWord(stackFrameWalker.framePointer(), _baseFrameSize - Word.size()).asPointer();
+        final Pointer callerInstructionPointer = stackFrameWalker.readWord(stackFrameWalker.framePointer(), baseFrameSize).asPointer();
+        final Pointer callerStackPointer = stackFrameWalker.framePointer().plus(baseFrameSize);
+        final Pointer callerFramePointer = stackFrameWalker.readWord(stackFrameWalker.framePointer(), baseFrameSize - Word.size()).asPointer();
 
         stackFrameWalker.advance(callerInstructionPointer, callerStackPointer, callerFramePointer);
         return true;

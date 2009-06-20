@@ -25,16 +25,16 @@ import com.sun.max.vm.compiler.instrument.*;
 
 
 public class Anchor {
-    protected final BytecodeLocation _location;
+    protected final BytecodeLocation location;
 
     /**
      * {@link BytecodeLocation} associated with this {@link TreeAnchor}.
      */
     public BytecodeLocation location() {
-        return _location;
+        return location;
     }
 
     public Anchor(BytecodeLocation location) {
-        _location = location;
+        this.location = location;
     }
 }

@@ -101,24 +101,24 @@ public class JDK {
 
     public static class ClassRef {
         @CONSTANT_WHEN_NOT_ZERO
-        protected Class _javaClass;
+        protected Class javaClass;
         @CONSTANT_WHEN_NOT_ZERO
         protected ClassActor _classActor;
 
         public ClassRef(Class javaClass) {
-            _javaClass = javaClass;
+            this.javaClass = javaClass;
         }
 
         public ClassRef(Class javaClass, String inner) {
-            _javaClass = Classes.forName(javaClass.getName() + "$" + inner);
+            this.javaClass = Classes.forName(javaClass.getName() + "$" + inner);
         }
 
         public ClassRef(String name) {
-            _javaClass = Classes.forName(name);
+            javaClass = Classes.forName(name);
         }
 
         public Class javaClass() {
-            return _javaClass;
+            return javaClass;
         }
 
         @INLINE
@@ -130,7 +130,7 @@ public class JDK {
         }
 
         public void resolveClassActor() {
-            if (_javaClass != null) {
+            if (javaClass != null) {
                 classActor();
             }
         }
@@ -147,21 +147,21 @@ public class JDK {
     }
 
     public static class LazyClassRef extends ClassRef {
-        private final String _className;
+        private final String className;
 
         public LazyClassRef(String className) {
             super((Class) null);
-            _className = className;
+            this.className = className;
         }
 
         public LazyClassRef(Class javaClass) {
             super((Class) null);
-            _className = javaClass.getName();
+            className = javaClass.getName();
         }
 
         @Override
         public final Class javaClass() {
-            return Classes.forName(_className);
+            return Classes.forName(className);
         }
     }
 }

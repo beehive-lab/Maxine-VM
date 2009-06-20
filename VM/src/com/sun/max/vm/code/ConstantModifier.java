@@ -37,22 +37,22 @@ public class ConstantModifier extends InstructionModifier {
     /**
      * Original value of the constant.
      */
-    private final Value _constantValue;
+    private final Value constantValue;
 
     public ConstantModifier(int position, int size, Value value) {
         super(position, size);
-        _constantValue = value;
+        constantValue = value;
     }
 
     public Kind kind() {
-        return _constantValue.kind();
+        return constantValue.kind();
     }
 
     public WordWidth signedEffectiveWidth() {
-        return _constantValue.signedEffectiveWidth();
+        return constantValue.signedEffectiveWidth();
     }
 
     public Value getConstantValue() {
-        return _constantValue;
+        return constantValue;
     }
 }

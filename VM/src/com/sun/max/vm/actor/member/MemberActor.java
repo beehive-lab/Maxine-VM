@@ -40,30 +40,30 @@ import com.sun.max.vm.type.*;
  */
 public abstract class MemberActor extends Actor {
 
-    private final Descriptor _descriptor;
+    private final Descriptor descriptor;
 
     protected MemberActor(Utf8Constant name, Descriptor descriptor, int flags) {
         super(name, flags);
-        _descriptor = descriptor;
+        this.descriptor = descriptor;
     }
 
     @INLINE(override = true)
     public Descriptor descriptor() {
-        return _descriptor;
+        return descriptor;
     }
 
     @CONSTANT
     @INSPECTED
-    private ClassActor _holder;
+    private ClassActor holder;
 
     @INLINE
     public final ClassActor holder() {
-        return _holder;
+        return holder;
     }
 
     @Override
     public String qualifiedName() {
-        if (_holder == null) {
+        if (holder == null) {
             return name().string();
         }
         return holder().qualifiedName() + "." + name();
@@ -76,21 +76,21 @@ public abstract class MemberActor extends Actor {
      */
     @Override
     public int hashCode() {
-        return name().hashCode() ^ _descriptor.hashCode();
+        return name().hashCode() ^ descriptor.hashCode();
     }
 
     @CONSTANT
     @INSPECTED
-    private int _memberIndex;
+    private int memberIndex;
 
     @INLINE
     public final int memberIndex() {
-        return _memberIndex;
+        return memberIndex;
     }
 
-    public final void assignHolder(ClassActor holder, int index) {
-        _holder = holder;
-        _memberIndex = index;
+    public final void assignHolder(ClassActor classActor, int index) {
+        this.holder = classActor;
+        this.memberIndex = index;
     }
 
     @Override
@@ -115,8 +115,8 @@ public abstract class MemberActor extends Actor {
 
     public abstract boolean isHiddenToReflection();
 
-    public final boolean matchesNameAndType(Utf8Constant name, Descriptor descriptor) {
-        return name() == name && _descriptor == descriptor;
+    public final boolean matchesNameAndType(Utf8Constant name, Descriptor desc) {
+        return name() == name && descriptor() == desc;
     }
 
     @Override

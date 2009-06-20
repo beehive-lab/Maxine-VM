@@ -47,6 +47,6 @@ public class InvokeStatic extends JavaResolvableOperator<StaticMethodActor> {
 
     @Override
     public Kind[] parameterKinds() {
-        return _constantPool.methodAt(_index).signature(_constantPool).copyParameterKinds(null, 0);
+        return constantPool.methodAt(index).signature(constantPool).copyParameterKinds(null, 0);
     }
 }

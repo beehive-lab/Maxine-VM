@@ -28,36 +28,36 @@ import com.sun.max.vm.compiler.cir.*;
  * @author Bernd Mathiske
  */
 public final class CirCount extends CirTraversal {
-    private boolean _enterBlock;
-    private int _numberOfOccurrences = 0;
+    private boolean enterBlock;
+    private int numberOfOccurrences = 0;
 
     private CirCount(CirNode graph, boolean enterBlock) {
         super(graph);
-        _enterBlock = enterBlock;
+        this.enterBlock = enterBlock;
     }
 
     @Override
     public void visitBlock(CirBlock block) {
-        if (_enterBlock) {
+        if (enterBlock) {
             super.visitBlock(block);
         }
     }
 
     private void run(CirNode countedNode) {
-        while (!_toDo.isEmpty()) {
-            final CirNode node = _toDo.removeFirst();
+        while (!toDo.isEmpty()) {
+            final CirNode node = toDo.removeFirst();
             if (node == countedNode) {
-                _numberOfOccurrences++;
+                numberOfOccurrences++;
             }
             node.acceptVisitor(this);
         }
     }
 
     private void run(CirPredicate predicate) {
-        while (!_toDo.isEmpty()) {
-            final CirNode node = _toDo.removeFirst();
+        while (!toDo.isEmpty()) {
+            final CirNode node = toDo.removeFirst();
             if (node.acceptPredicate(predicate)) {
-                _numberOfOccurrences++;
+                numberOfOccurrences++;
             }
             node.acceptVisitor(this);
         }
@@ -72,12 +72,12 @@ public final class CirCount extends CirTraversal {
     public static int apply(CirNode graph, CirNode countedNode) {
         final CirCount count = new CirCount(graph, false);
         count.run(countedNode);
-        return count._numberOfOccurrences;
+        return count.numberOfOccurrences;
     }
 
     public static int apply(CirNode graph, CirPredicate predicate) {
         final CirCount count = new CirCount(graph, true);
         count.run(predicate);
-        return count._numberOfOccurrences;
+        return count.numberOfOccurrences;
     }
 }

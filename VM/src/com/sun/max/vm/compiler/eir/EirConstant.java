@@ -33,25 +33,25 @@ public class EirConstant extends EirValue {
         return true;
     }
 
-    private Value _value;
+    private Value value;
 
     @Override
     public final Value value() {
-        return _value;
+        return value;
     }
 
     public EirConstant(Value value) {
-        _value = value;
+        this.value = value;
     }
 
     @Override
     public final Kind kind() {
-        return _value.kind();
+        return value.kind();
     }
 
     @Override
     public String toString() {
-        String s = "<" + _value.toString() + ">";
+        String s = "<" + value.toString() + ">";
         if (location() != null) {
             s += "@" + location();
         }
@@ -62,15 +62,15 @@ public class EirConstant extends EirValue {
         if (this == other) {
             return 0;
         }
-        return _value.compareTo(other.value());
+        return value.compareTo(other.value());
     }
 
     public static final class Reference extends EirConstant {
-        private int _serial;
+        private int serial;
 
         public Reference(Value value, int serial) {
             super(value);
-            _serial = serial;
+            this.serial = serial;
         }
 
         @Override
@@ -80,8 +80,8 @@ public class EirConstant extends EirValue {
             }
             if (other instanceof Reference) {
                 final Reference referenceConstant = (Reference) other;
-                assert _serial != referenceConstant._serial;
-                return _serial > referenceConstant._serial ? 1 : -1;
+                assert serial != referenceConstant.serial;
+                return serial > referenceConstant.serial ? 1 : -1;
             }
             return 1;
         }

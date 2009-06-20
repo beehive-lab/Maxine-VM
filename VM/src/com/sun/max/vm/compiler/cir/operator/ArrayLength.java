@@ -45,11 +45,11 @@ public class ArrayLength extends JavaOperator {
         visitor.visit(this);
     }
 
-    private static final Kind[] _parameterKinds = {Kind.REFERENCE};
+    private static final Kind[] parameterKinds = {Kind.REFERENCE};
 
     @Override
     public Kind[] parameterKinds() {
-        return _parameterKinds;
+        return parameterKinds;
     }
 
     @Override

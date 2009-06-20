@@ -30,20 +30,20 @@ import com.sun.max.vm.compiler.eir.*;
  */
 public abstract class SPARCEirLocalControlTransfer extends SPARCEirOperation implements EirControlTransfer {
 
-    private EirBlock _target;
+    private EirBlock target;
 
     public EirBlock target() {
-        return _target;
+        return target;
     }
 
-    private boolean _annulDelaySlot;
+    private boolean annulDelaySlot;
 
     public boolean annulDelaySlot() {
-        return _annulDelaySlot;
+        return annulDelaySlot;
     }
 
     public void setAnnulDelaySlot(boolean annulDelaySlot) {
-        _annulDelaySlot = annulDelaySlot;
+        this.annulDelaySlot = annulDelaySlot;
     }
 
     protected AnnulBit annulBit() {
@@ -52,22 +52,22 @@ public abstract class SPARCEirLocalControlTransfer extends SPARCEirOperation imp
 
     protected SPARCEirLocalControlTransfer(EirBlock block, EirBlock target) {
         super(block);
-        _target = target;
-        _target.addPredecessor(block);
-        _annulDelaySlot = true;
+        this.target = target;
+        this.target.addPredecessor(block);
+        this.annulDelaySlot = true;
     }
 
     @Override
     public void visitSuccessorBlocks(EirBlock.Procedure procedure) {
         super.visitSuccessorBlocks(procedure);
-        procedure.run(_target);
+        procedure.run(target);
     }
 
     @Override
     public void substituteSuccessorBlocks(Mapping<EirBlock, EirBlock> map) {
         super.substituteSuccessorBlocks(map);
-        if (map.containsKey(_target)) {
-            _target = map.get(_target);
+        if (map.containsKey(target)) {
+            target = map.get(target);
         }
     }
 
@@ -86,8 +86,8 @@ public abstract class SPARCEirLocalControlTransfer extends SPARCEirOperation imp
     @Override
     public String toString() {
         String s = getClass().getSimpleName();
-        if (_target != null) {
-            s += " -> #" + _target.serial();
+        if (target != null) {
+            s += " -> #" + target.serial();
         }
         return s;
     }

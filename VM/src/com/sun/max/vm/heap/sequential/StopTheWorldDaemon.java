@@ -52,7 +52,7 @@ import com.sun.max.util.timer.TimerUtil;
  */
 public class StopTheWorldDaemon extends BlockingServerDaemon {
 
-    private static Safepoint.Procedure _suspendProcedure = new Safepoint.Procedure() {
+    private static Safepoint.Procedure suspendProcedure = new Safepoint.Procedure() {
         public void run(Pointer trapState) {
             // note that this procedure always runs with safepoints disabled
             final Pointer vmThreadLocals = Safepoint.getLatchRegister();
@@ -70,11 +70,11 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
         }
     };
 
-    private Runnable _procedure = null;
+    private Runnable procedure = null;
 
     public StopTheWorldDaemon(String name, Runnable procedure) {
         super(name);
-        _procedure = procedure;
+        this.procedure = procedure;
 
     }
 
@@ -92,26 +92,26 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
         super.start();
     }
 
-    private final Pointer.Procedure _triggerSafepoint = new Pointer.Procedure() {
+    private final Pointer.Procedure triggerSafepoint = new Pointer.Procedure() {
         public void run(Pointer vmThreadLocals) {
             if (vmThreadLocals.isZero()) {
                 // Thread is still starting up.
                 // Do not need to do anything, because it will try to lock 'VmThreadMap.ACTIVE' and thus block.
             } else {
-                Safepoint.runProcedure(vmThreadLocals, _suspendProcedure);
+                Safepoint.runProcedure(vmThreadLocals, suspendProcedure);
             }
         }
     };
 
-    private final Pointer.Procedure _resetSafepoint = new Pointer.Procedure() {
+    private final Pointer.Procedure resetSafepoint = new Pointer.Procedure() {
         public void run(Pointer vmThreadLocals) {
-            Safepoint.cancelProcedure(vmThreadLocals, _suspendProcedure);
+            Safepoint.cancelProcedure(vmThreadLocals, suspendProcedure);
             Safepoint.reset(vmThreadLocals);
         }
     };
 
     static class WaitUntilNonMutating implements Pointer.Procedure {
-        long _stackReferenceMapPreparationTime;
+        long stackReferenceMapPreparationTime;
         public void run(Pointer vmThreadLocals) {
             while (VmThreadLocal.inJava(vmThreadLocals)) {
                 try {
@@ -123,7 +123,7 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
             if (VmThreadLocal.SAFEPOINT_VENUE.getVariableReference(vmThreadLocals).toJava() == Safepoint.Venue.NATIVE) {
                 // Since this thread is in native code it did not get an opportunity to prepare its stack maps,
                 // so we will take care of that for it now:
-                _stackReferenceMapPreparationTime += VmThreadLocal.prepareStackReferenceMap(vmThreadLocals);
+                stackReferenceMapPreparationTime += VmThreadLocal.prepareStackReferenceMap(vmThreadLocals);
             } else {
                 // Threads that hit a safepoint in Java code have prepared *most* of their stack reference map themselves.
                 // The part of the stack between suspendCurrentThread() and the JNI stub that enters into the
@@ -137,14 +137,14 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
                 final VmThread vmThread = UnsafeLoophole.cast(VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals));
                 final StackReferenceMapPreparer stackReferenceMapPreparer = vmThread.stackReferenceMapPreparer();
                 stackReferenceMapPreparer.completeStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer);
-                _stackReferenceMapPreparationTime += stackReferenceMapPreparer.preparationTime();
+                stackReferenceMapPreparationTime += stackReferenceMapPreparer.preparationTime();
             }
         }
     }
 
-    private final WaitUntilNonMutating _waitUntilNonMutating = new WaitUntilNonMutating();
+    private final WaitUntilNonMutating waitUntilNonMutating = new WaitUntilNonMutating();
 
-    private static final Pointer.Predicate _isNotGCOrCurrentThread = new Pointer.Predicate() {
+    private static final Pointer.Predicate isNotGCOrCurrentThread = new Pointer.Predicate() {
         public boolean evaluate(Pointer vmThreadLocals) {
             return vmThreadLocals != VmThread.current().vmThreadLocals() && !VmThread.current(vmThreadLocals).isGCThread();
         }
@@ -155,20 +155,20 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
             synchronized (SpecialReferenceManager.LOCK) {
                 // the lock for the special reference manager must be held before starting GC
                 synchronized (VmThreadMap.ACTIVE) {
-                    _waitUntilNonMutating._stackReferenceMapPreparationTime = 0;
-                    VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _triggerSafepoint);
-                    VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _waitUntilNonMutating);
+                    waitUntilNonMutating.stackReferenceMapPreparationTime = 0;
+                    VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCOrCurrentThread, triggerSafepoint);
+                    VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCOrCurrentThread, waitUntilNonMutating);
 
                     // The next 2 statements *must* be adjacent as the reference map for this frame must
                     // be the same at both calls. This is verified by StopTheWorldDaemon.checkInvariants().
                     final long time = VmThreadLocal.prepareCurrentStackReferenceMap();
-                    _procedure.run();
+                    procedure.run();
 
-                    VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _resetSafepoint);
+                    VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCOrCurrentThread, resetSafepoint);
                     if (Heap.traceGCTime()) {
                         final boolean lockDisabledSafepoints = Log.lock();
                         Log.print("Stack reference map preparation time: ");
-                        Log.print(time + _waitUntilNonMutating._stackReferenceMapPreparationTime);
+                        Log.print(time + waitUntilNonMutating.stackReferenceMapPreparationTime);
                         Log.println(TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK));
                         Log.unlock(lockDisabledSafepoints);
                     }
@@ -217,9 +217,9 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
         ProgramWarning.message("Could not find target method for " + classMethodActor);
     }
 
-    private final Runnable _gcRequest = new GCRequest();
+    private final Runnable gcRequest = new GCRequest();
 
     public void execute() {
-        execute(_gcRequest);
+        execute(gcRequest);
     }
 }

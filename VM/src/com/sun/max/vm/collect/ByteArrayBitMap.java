@@ -34,28 +34,28 @@ public final class ByteArrayBitMap implements Cloneable {
     /**
      * The byte array encoding the bit map.
      */
-    private byte[] _bytes;
+    private byte[] bytes;
 
     /**
      * The offset in {@link _bytes} at which this bit map's bits start.
      */
-    private int _offset;
+    private int offset;
 
     /**
      * The number of bytes in {@link _bytes} reserved for this bit map's bits start.
      */
-    private int _size;
+    private int size;
 
     public ByteArrayBitMap(int numberOfBits) {
-        _size = computeBitMapSize(numberOfBits);
-        _bytes = new byte[_size];
-        _offset = 0;
+        size = computeBitMapSize(numberOfBits);
+        bytes = new byte[size];
+        offset = 0;
     }
 
     public ByteArrayBitMap(byte[] bytes, int offset, int size) {
-        _bytes = bytes;
-        _offset = offset;
-        _size = size;
+        this.bytes = bytes;
+        this.offset = offset;
+        this.size = size;
     }
 
     public ByteArrayBitMap(byte[] bytes) {
@@ -72,8 +72,8 @@ public final class ByteArrayBitMap implements Cloneable {
     @Override
     public int hashCode() {
         long h = 1234;
-        for (int i = _size + _offset; --i >= 0;) {
-            h ^= _bytes[i] * (i + 1);
+        for (int i = size + offset; --i >= 0;) {
+            h ^= bytes[i] * (i + 1);
         }
         return (int) ((h >> 32) ^ h);
     }
@@ -89,9 +89,9 @@ public final class ByteArrayBitMap implements Cloneable {
     public boolean equals(Object other) {
         if (other instanceof ByteArrayBitMap) {
             final ByteArrayBitMap bm = (ByteArrayBitMap) other;
-            if (_size == bm._size) {
-                for (int i = 0; i < _size; ++i) {
-                    if (_bytes[_offset + i] != bm._bytes[bm._offset + i]) {
+            if (size == bm.size) {
+                for (int i = 0; i < size; ++i) {
+                    if (bytes[offset + i] != bm.bytes[bm.offset + i]) {
                         return false;
                     }
                 }
@@ -105,21 +105,21 @@ public final class ByteArrayBitMap implements Cloneable {
      * Gets the underlying bytes array storing the bits of this bit map.
      */
     public byte[] bytes() {
-        return _bytes;
+        return bytes;
     }
 
     /**
      * Gets the index in the underlying bytes array of the first byte used by this bit map.
      */
     public int offset() {
-        return _offset;
+        return offset;
     }
 
     /**
      * Gets the number of bytes used by this bit map.
      */
     public int size() {
-        return _size;
+        return size;
     }
 
     /**
@@ -127,9 +127,9 @@ public final class ByteArrayBitMap implements Cloneable {
      */
     public int cardinality() {
         int cardinality = 0;
-        final int end = _offset + _size;
-        for (int i = _offset; i < end; ++i) {
-            final byte b = _bytes[i];
+        final int end = offset + size;
+        for (int i = offset; i < end; ++i) {
+            final byte b = bytes[i];
             if (b != 0) {
                 cardinality += Integer.bitCount(b & 0xff);
             }
@@ -141,20 +141,20 @@ public final class ByteArrayBitMap implements Cloneable {
      * Gets the number of bits that can be encoded in this bit map.
      */
     public int width() {
-        return _size * Bytes.WIDTH;
+        return size * Bytes.WIDTH;
     }
 
     public void setBytes(byte[] bytes) {
-        _bytes = bytes;
+        this.bytes = bytes;
     }
 
     public void setOffset(int offset) {
-        assert offset < _bytes.length;
-        _offset = offset;
+        assert offset < bytes.length;
+        this.offset = offset;
     }
 
     public void setSize(int size) {
-        _size = size;
+        this.size = size;
     }
 
     /**
@@ -162,8 +162,8 @@ public final class ByteArrayBitMap implements Cloneable {
      * {@linkplain #offset() offset} is updated to {@code this.size() + this.offset()}.
      */
     public void next() {
-        final int newOffset = _offset + _size;
-        _offset = newOffset;
+        final int newOffset = offset + size;
+        offset = newOffset;
     }
 
     /**
@@ -172,7 +172,7 @@ public final class ByteArrayBitMap implements Cloneable {
      * @throws IndexOutOfBoundsException if {@code bitIndex < 0 || bitIndex >= this.size() * 8}
      */
     public void set(int bitIndex) throws IndexOutOfBoundsException {
-        set(_bytes, _offset, _size, bitIndex);
+        set(bytes, offset, size, bitIndex);
     }
 
     public static void set(byte[] bytes, int offset, int size, int bitIndex) throws IndexOutOfBoundsException {
@@ -185,7 +185,7 @@ public final class ByteArrayBitMap implements Cloneable {
 
     // calculate the index of the relevant byte in the map
     private int byteIndexFor(int bitIndex) throws IndexOutOfBoundsException {
-        return byteIndexFor(_offset, _size, bitIndex);
+        return byteIndexFor(offset, size, bitIndex);
     }
 
     // calculate the index of the relevant byte in the map
@@ -206,7 +206,7 @@ public final class ByteArrayBitMap implements Cloneable {
         final int byteIndex = byteIndexFor(bitIndex);
         // clear the relevant bit
         final byte bit = (byte) (1 << (bitIndex % Bytes.WIDTH));
-        _bytes[byteIndex] &= ~bit;
+        bytes[byteIndex] &= ~bit;
     }
 
     /**
@@ -216,7 +216,7 @@ public final class ByteArrayBitMap implements Cloneable {
      * @throws IndexOutOfBoundsException if {@code bitIndex < 0 || bitIndex >= this.size() * 8}
      */
     public boolean isSet(int bitIndex) throws IndexOutOfBoundsException {
-        return isSet(_bytes, _offset, _size, bitIndex);
+        return isSet(bytes, offset, size, bitIndex);
     }
 
     /**
@@ -255,30 +255,30 @@ public final class ByteArrayBitMap implements Cloneable {
             throw new IndexOutOfBoundsException("fromIndex < 0: " + fromIndex);
         }
 
-        int byteIndex = _offset + Unsigned.idiv(fromIndex, Bytes.WIDTH);
-        final int end = _offset + _size;
+        int byteIndex = offset + Unsigned.idiv(fromIndex, Bytes.WIDTH);
+        final int end = offset + size;
         if (byteIndex >= end) {
             return -1;
         }
 
         final int fromBitIndex = fromIndex % Bytes.WIDTH;
-        byte bite = (byte) (_bytes[byteIndex] & (0xFF << fromBitIndex));
+        byte bite = (byte) (bytes[byteIndex] & (0xFF << fromBitIndex));
 
         while (true) {
             if (bite != 0) {
-                final int result = ((byteIndex - _offset) * Bytes.WIDTH) + Bytes.numberOfTrailingZeros(bite);
+                final int result = ((byteIndex - offset) * Bytes.WIDTH) + Bytes.numberOfTrailingZeros(bite);
                 return result;
             }
             if (++byteIndex == end) {
                 return -1;
             }
-            bite = _bytes[byteIndex];
+            bite = bytes[byteIndex];
         }
     }
 
     @Override
     public String toString() {
-        final int numBits = _size * Bytes.WIDTH;
+        final int numBits = size * Bytes.WIDTH;
         final StringBuilder buffer = new StringBuilder(8 * numBits + 2);
         String separator = "";
         buffer.append('[');

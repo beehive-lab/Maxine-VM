@@ -28,15 +28,15 @@ import com.sun.max.vm.jni.*;
  */
 public final class BoxedFieldID extends FieldID implements UnsafeBox {
 
-    protected long _nativeWord;
+    protected long nativeWord;
 
     public BoxedFieldID(Word word) {
         final UnsafeBox unsafeBox = (UnsafeBox) word;
-        _nativeWord = unsafeBox.nativeWord();
+        nativeWord = unsafeBox.nativeWord();
     }
 
     public long nativeWord() {
-        return _nativeWord;
+        return nativeWord;
     }
 
 }

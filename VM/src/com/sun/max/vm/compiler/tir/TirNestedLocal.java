@@ -24,12 +24,12 @@ import com.sun.max.vm.compiler.tir.pipeline.*;
 import com.sun.max.vm.type.*;
 
 public class TirNestedLocal extends TirInstruction {
-    private final TirTreeCall _call;
-    private final int _slot;
+    private final TirTreeCall call;
+    private final int slot;
 
     public TirNestedLocal(TirTreeCall call, int slot) {
-        _call = call;
-        _slot = slot;
+        this.call = call;
+        this.slot = slot;
     }
 
     @Override
@@ -39,26 +39,26 @@ public class TirNestedLocal extends TirInstruction {
 
     @Override
     public String toString() {
-        return "NESTED LOCAL slot: " + _slot;
+        return "NESTED LOCAL slot: " + slot;
     }
 
-    private Kind _kind = Kind.VOID;
+    private Kind kind = Kind.VOID;
 
     @Override
     public Kind kind() {
-        return _kind;
+        return kind;
     }
 
     @Override
     public void setKind(Kind kind) {
-        _kind = kind;
+        this.kind = kind;
     }
 
     public int slot() {
-        return _slot;
+        return slot;
     }
 
     public TirTreeCall call() {
-        return _call;
+        return call;
     }
 }

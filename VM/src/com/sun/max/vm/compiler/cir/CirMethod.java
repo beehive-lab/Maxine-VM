@@ -43,29 +43,29 @@ import com.sun.max.vm.type.*;
  */
 public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, CirInlineable, IrMethod {
 
-    private final ClassMethodActor _classMethodActor;
-    private final Kind[] _parameterKinds;
+    private final ClassMethodActor classMethodActor;
+    private final Kind[] parameterKinds;
 
     public CirMethod(ClassMethodActor classMethodActor) {
-        _classMethodActor = classMethodActor;
-        _parameterKinds = classMethodActor.getParameterKinds();
+        this.classMethodActor = classMethodActor;
+        this.parameterKinds = classMethodActor.getParameterKinds();
     }
 
     public ClassMethodActor classMethodActor() {
-        return _classMethodActor;
+        return classMethodActor;
     }
 
     public MethodActor foldingMethodActor() {
-        return _classMethodActor.compilee();
+        return classMethodActor.compilee();
     }
 
     public Kind resultKind() {
-        return _classMethodActor.resultKind();
+        return classMethodActor.resultKind();
     }
 
     @Override
     public Kind[] parameterKinds() {
-        return _parameterKinds;
+        return parameterKinds;
     }
 
     @Override
@@ -74,15 +74,15 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     }
 
     public String name() {
-        return _classMethodActor.name().toString();
+        return classMethodActor.name().toString();
     }
 
     public Word getEntryPoint(CallEntryPoint callEntryPoint) {
-        return MethodID.fromMethodActor(_classMethodActor);
+        return MethodID.fromMethodActor(classMethodActor);
     }
 
     public String getQualifiedName() {
-        return _classMethodActor.holder().name() + "." + name();
+        return classMethodActor.holder().name() + "." + name();
     }
 
     public void cleanup() {
@@ -110,10 +110,10 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         }
 
         final CirGenerator cirGenerator = cirOptimizer.cirGenerator();
-        if (_classMethodActor.isUnsafeCast()) {
+        if (classMethodActor.isUnsafeCast()) {
             return foldUnsafeCast(arguments);
         }
-        if (_classMethodActor.isStatic() && arguments.length == 2) {
+        if (classMethodActor.isStatic() && arguments.length == 2) {
             // no application arguments, just the 2 continuations
             cirGenerator.makeIrMethod(this);
             return inline(cirOptimizer, arguments, NO_JAVA_FRAME_DESCRIPTOR);
@@ -122,11 +122,11 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     }
 
     public boolean isFoldable(CirOptimizer cirOptimizer, CirValue[] arguments) {
-        final ClassMethodActor compilee = _classMethodActor.compilee();
+        final ClassMethodActor compilee = classMethodActor.compilee();
         if (compilee.isHiddenToReflection()) {
             return false;
         }
-        if (_classMethodActor.isUnsafeCast()) {
+        if (classMethodActor.isUnsafeCast()) {
             return true;
         }
         if (!compilee.isDeclaredFoldable()) {
@@ -143,7 +143,7 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         return true;
     }
 
-    private CirBytecode _cirBytecode;
+    private CirBytecode cirBytecode;
 
     /**
      * Determines if this object represents a native stub generated for a native method.
@@ -153,20 +153,20 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     }
 
     @RESET
-    private CirClosure _cachedClosure;
+    private CirClosure cachedClosure;
 
     private void cache(CirClosure closure) {
         if (MaxineVM.isPrototyping()) {
             // So let's not fill the host VM's heap too much here.
         } else {
-            _cachedClosure = closure;
+            cachedClosure = closure;
         }
     }
 
     public final CirClosure copyClosure() {
-        assert _cirBytecode != null;
+        assert cirBytecode != null;
         traceBeforeDecoding();
-        final CirClosure closure = (CirClosure) CirBytecodeReader.read(_cirBytecode);
+        final CirClosure closure = (CirClosure) CirBytecodeReader.read(cirBytecode);
         traceAfterDecoding();
         cache(closure);
         return closure;
@@ -185,7 +185,7 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     }
 
     public final CirClosure closure() {
-        CirClosure closure = _cachedClosure;
+        CirClosure closure = cachedClosure;
         if (closure == null) {
             closure = copyClosure();
             cache(closure);
@@ -200,13 +200,13 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
 
         traceBeforeEncoding();
         final CirBytecodeWriter writer = new CirBytecodeWriter(closure, this);
-        _cirBytecode = writer.bytecode();
+        cirBytecode = writer.bytecode();
         traceAfterEncoding();
     }
 
     private void traceAfterEncoding() {
         if (Trace.hasLevel(6)) {
-            CirBytecodeReader.trace(_cirBytecode, Trace.stream(), false);
+            CirBytecodeReader.trace(cirBytecode, Trace.stream(), false);
             Trace.end(6, "Encoding CIR for " + this);
         }
     }
@@ -218,21 +218,21 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     }
 
     public final boolean isGenerated() {
-        return _cirBytecode != null;
+        return cirBytecode != null;
     }
 
-    protected boolean _makingIr;
+    protected boolean makingIr;
 
     public synchronized CirCall inline(CirOptimizer cirOptimizer, CirValue[] arguments, CirJavaFrameDescriptor javaFrameDescriptor) {
-        if (_cirBytecode == null) {
+        if (cirBytecode == null) {
             // This usually denotes a case where the code for a snippet includes
             // a section that is only executed if VM.isPrototyping() is true and
             // this section uses the snippet. The solution in this case is to
             // put the prototyping-only code in a separate method that will not be
             // inlined
-            ProgramError.check(!_makingIr, "cannot inline " + classMethodActor() + " while making its IR");
+            ProgramError.check(!makingIr, "cannot inline " + classMethodActor() + " while making its IR");
 
-            _makingIr = true;
+            makingIr = true;
             cirOptimizer.cirGenerator().makeIrMethod(this);
         }
         final CirClosure closure = copyClosure();

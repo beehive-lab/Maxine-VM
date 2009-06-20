@@ -49,8 +49,8 @@ public class CirClosure extends CirProcedure {
         return true;
     }
 
-    private CirVariable[] _parameters;
-    private CirCall _body;
+    private CirVariable[] parameters;
+    private CirCall body;
 
     /**
      * The value that must be used when passing a zero-length array as the value of {@code parameters} to
@@ -70,7 +70,7 @@ public class CirClosure extends CirProcedure {
      */
     public CirClosure(CirCall body, CirVariable... parameters) {
         setParameters(parameters);
-        _body = body;
+        this.body = body;
         assert verifyParameters();
     }
 
@@ -82,7 +82,7 @@ public class CirClosure extends CirProcedure {
     public boolean verifyParameters() {
         int nCC = 0;
         int nCE = 0;
-        for (CirVariable parameter : _parameters) {
+        for (CirVariable parameter : parameters) {
             if (parameter instanceof CirContinuationVariable) {
                 if (parameter instanceof CirNormalContinuationParameter) {
                     nCC++;
@@ -104,23 +104,23 @@ public class CirClosure extends CirProcedure {
      */
     public void setParameters(CirVariable... parameters) {
         assert parameters.length > 0 || parameters == CirClosure.NO_PARAMETERS;
-        _parameters = parameters;
+        this.parameters = parameters;
     }
 
     public CirVariable[] parameters() {
-        return _parameters;
+        return parameters;
     }
 
     public void removeParameter(int index) {
-        _parameters = Arrays.remove(CirVariable.class, _parameters, index);
+        parameters = Arrays.remove(CirVariable.class, parameters, index);
     }
 
     public boolean hasTheseParameters(CirValue[] values) {
-        if (values.length != _parameters.length) {
+        if (values.length != parameters.length) {
             return false;
         }
         for (int i = 0; i < values.length; i++) {
-            if (values[i] != _parameters[i]) {
+            if (values[i] != parameters[i]) {
                 return false;
             }
         }
@@ -129,19 +129,19 @@ public class CirClosure extends CirProcedure {
 
     @Override
     public Kind[] parameterKinds() {
-        final Kind[] kinds = new Kind[_parameters.length];
+        final Kind[] kinds = new Kind[parameters.length];
         for (int i = 0; i != kinds.length; ++i) {
-            kinds[i] = _parameters[i].kind();
+            kinds[i] = parameters[i].kind();
         }
         return kinds;
     }
 
     public void setBody(CirCall body) {
-        _body = body;
+        this.body = body;
     }
 
     public CirCall body() {
-        return _body;
+        return body;
     }
 
     /**

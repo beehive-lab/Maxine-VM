@@ -22,10 +22,8 @@ package com.sun.max.vm.verifier;
 
 import static com.sun.max.vm.verifier.types.VerificationType.*;
 
-import java.io.*;
-
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -47,65 +45,64 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
     public TypeCheckingMethodVerifier(ClassVerifier classVerifier, ClassMethodActor classMethodActor, CodeAttribute codeAttribute) {
         super(classVerifier, classMethodActor, codeAttribute);
         final int codeLength = codeAttribute.code().length;
-        _interpreter = new Interpreter();
-        _thisObjectType = classVerifier.getObjectType(classActor().typeDescriptor());
-        _frame = createInitialFrame(classMethodActor);
-        _frameMap = initializeFrameMap(codeAttribute, _frame.copy(), classVerifier);
-        _opcodeMap = new Bytecode[codeLength];
-        _exceptionHandlerMap = ExceptionHandler.createHandlerMap(codeLength, codeAttribute.exceptionHandlerTable());
+        this.interpreter = new Interpreter();
+        this.thisObjectType = classVerifier.getObjectType(classActor().typeDescriptor());
+        this.frame = createInitialFrame(classMethodActor);
+        this.frameMap = initializeFrameMap(codeAttribute, frame.copy(), classVerifier);
+        this.opcodeMap = new Bytecode[codeLength];
+        this.exceptionHandlerMap = ExceptionHandler.createHandlerMap(codeLength, codeAttribute.exceptionHandlerTable());
     }
 
     protected Frame createInitialFrame(MethodActor classMethodActor) {
         return new Frame(classMethodActor, this);
     }
 
-    protected final Interpreter _interpreter;
+    protected final Interpreter interpreter;
 
-    protected final ObjectType _thisObjectType;
+    protected final ObjectType thisObjectType;
 
-    protected boolean _fallsThrough;
+    protected boolean fallsThrough;
 
     /**
      * The current frame state derived during the abstract interpretation.
      */
-    protected final Frame _frame;
+    protected final Frame frame;
 
     /**
      * A map from each bytecode position to the {@linkplain Frame frame state} recorded (in a
      * {@link StackMapTable}) at that position. A null entry means that there is no recorded stack map frame at
      * that position.
      */
-    protected final Frame[] _frameMap;
+    protected final Frame[] frameMap;
 
-    protected final ExceptionHandler[] _exceptionHandlerMap;
+    protected final ExceptionHandler[] exceptionHandlerMap;
 
     /**
      * A map from each bytecode position to the instruction {@linkplain Bytecode opcode} at that position. A null entry
      * means that an instruction does not start at that position.
      */
-    private final Bytecode[] _opcodeMap;
+    private final Bytecode[] opcodeMap;
 
     @Override
     public void verify() {
-        if (classVerifier().verbose()) {
-            final PrintStream out = Trace.stream();
-            out.println();
-            out.println("Verifying " + classMethodActor().format("%H.%n(%p)"));
+        if (verbose) {
+            Log.println();
+            Log.println("Verifying " + classMethodActor().format("%H.%n(%p)"));
 
             String prefix = "StackMapTable frames:";
-            for (int i = 0; i != _frameMap.length; ++i) {
-                final Frame recordedFrame = _frameMap[i];
+            for (int i = 0; i != frameMap.length; ++i) {
+                final Frame recordedFrame = frameMap[i];
                 if (recordedFrame != null) {
                     if (prefix != null) {
-                        out.println(prefix);
+                        Log.println(prefix);
                         prefix = null;
                     }
-                    out.println(i + ": " + recordedFrame);
+                    Log.println(i + ": " + recordedFrame);
                 }
             }
 
-            out.println();
-            out.println("Interpreting bytecode:");
+            Log.println();
+            Log.println("Interpreting bytecode:");
         }
 
         verifyBytecodes();
@@ -140,9 +137,9 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
     }
 
     private void verifyBytecodes() {
-        final BytecodeScanner bytecodeScanner = new BytecodeScanner(_interpreter);
+        final BytecodeScanner bytecodeScanner = new BytecodeScanner(interpreter);
         bytecodeScanner.scan(new BytecodeBlock(codeAttribute().code()));
-        if (_fallsThrough) {
+        if (fallsThrough) {
             throw verifyError("Execution falls off end of method");
         }
     }
@@ -170,10 +167,10 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
     }
 
     private void verifyStackMapTable() {
-        for (int position = 0; position != _frameMap.length; ++position) {
-            final Frame recordedFrame = _frameMap[position];
+        for (int position = 0; position != frameMap.length; ++position) {
+            final Frame recordedFrame = frameMap[position];
             if (recordedFrame != null) {
-                if (_opcodeMap[position] == null) {
+                if (opcodeMap[position] == null) {
                     throw verifyError("Offset (" +  position + ") in a frame of the StackMapTable attribute does not point to an instruction");
                 }
             }
@@ -182,7 +179,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
     protected void verifyIsValidInstructionPosition(int position, String positionDescription) {
         try {
-            if (_opcodeMap[position] != null) {
+            if (opcodeMap[position] != null) {
                 return;
             }
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
@@ -199,7 +196,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
      */
     protected Frame frameAt(int position, String targetDescription) {
         try {
-            final Frame frame = _frameMap[position];
+            final Frame frame = frameMap[position];
             if (frame != null) {
                 return frame;
             }
@@ -210,7 +207,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
     @Override
     public int currentOpcodePosition() {
-        return _interpreter.currentOpcodePosition();
+        return interpreter.currentOpcodePosition();
     }
 
     /**
@@ -219,41 +216,40 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
     protected void preInstructionScan() {
         final int currentOpcodePosition = currentOpcodePosition();
 
-        if (!_fallsThrough) {
+        if (!fallsThrough) {
             final Frame targetFrame = frameAt(currentOpcodePosition, "instruction can only be reached by a branch");
-            if (targetFrame != _frame) {
-                _frame.reset(targetFrame);
+            if (targetFrame != frame) {
+                frame.reset(targetFrame);
             }
         } else {
-            if (currentOpcodePosition < _frameMap.length) {
-                final Frame recordedFrame = _frameMap[currentOpcodePosition];
+            if (currentOpcodePosition < frameMap.length) {
+                final Frame recordedFrame = frameMap[currentOpcodePosition];
                 if (recordedFrame != null) {
-                    recordedFrame.mergeFrom(_frame, currentOpcodePosition, -1);
-                    _frame.reset(recordedFrame);
+                    recordedFrame.mergeFrom(frame, currentOpcodePosition, -1);
+                    frame.reset(recordedFrame);
                 }
             }
         }
 
-        if (classVerifier().verbose()) {
-            final PrintStream out = Trace.stream();
-            out.println(Strings.indent(_frame.toString(), "    "));
-            out.println(currentOpcodePosition + ": " + _interpreter.currentOpcode());
-            out.println();
+        if (verbose) {
+            Log.println(Strings.indent(frame.toString(), "    "));
+            Log.println(currentOpcodePosition + ": " + interpreter.currentOpcode());
+            Log.println();
         }
 
-        _opcodeMap[currentOpcodePosition] = _interpreter.currentOpcode();
+        opcodeMap[currentOpcodePosition] = interpreter.currentOpcode();
 
-        for (ExceptionHandler handler = _exceptionHandlerMap[currentOpcodePosition]; handler != null; handler = handler.next()) {
+        for (ExceptionHandler handler = exceptionHandlerMap[currentOpcodePosition]; handler != null; handler = handler.next()) {
             final int handlerPosition = handler.position();
             final Frame handlerEntryFrame = frameAt(handlerPosition, "exception handler entry point");
-            handlerEntryFrame.mergeFrom(_frame, handlerPosition, handler.catchTypeIndex());
+            handlerEntryFrame.mergeFrom(frame, handlerPosition, handler.catchTypeIndex());
         }
 
-        _fallsThrough = true;
+        fallsThrough = true;
     }
 
     public void push(TypeDescriptor typeDescriptor) {
-        _frame.push(getVerificationType(typeDescriptor));
+        frame.push(getVerificationType(typeDescriptor));
     }
 
     /**
@@ -263,8 +259,8 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
      * @param toType the type of the value on top of the stack after the conversion
      */
     void performConversion(VerificationType fromType, VerificationType toType) {
-        _frame.pop(fromType);
-        _frame.push(toType);
+        frame.pop(fromType);
+        frame.push(toType);
     }
 
     /**
@@ -274,9 +270,9 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
      *            type of the result on top of the stack after the operation
      */
     void performArithmetic(VerificationType type) {
-        _frame.pop(type);
-        _frame.pop(type);
-        _frame.push(type);
+        frame.pop(type);
+        frame.pop(type);
+        frame.push(type);
     }
 
     /**
@@ -285,9 +281,9 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
      * @param type the expected type of the two input values on top of the stack to be compared before the operation
      */
     void performComparison(VerificationType type) {
-        _frame.pop(type);
-        _frame.pop(type);
-        _frame.push(INTEGER);
+        frame.pop(type);
+        frame.pop(type);
+        frame.push(INTEGER);
     }
 
     /**
@@ -300,11 +296,11 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 throw verifyError("Invalid return for void method");
             }
         } else {
-            final VerificationType returnValue = _frame.pop(returnType);
+            final VerificationType returnValue = frame.pop(returnType);
             verifyIsAssignable(returnValue, declaredReturnType, "Invalid return type");
         }
 
-        _fallsThrough = false;
+        fallsThrough = false;
     }
 
     /**
@@ -315,26 +311,26 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
      */
     protected void performBranch(int position) {
         final Frame targetFrame = frameAt(position, "branch target");
-        targetFrame.mergeFrom(_frame, position, -1);
+        targetFrame.mergeFrom(frame, position, -1);
     }
 
     protected void performIfCompareBranch(int offset, VerificationType type) {
-        _frame.pop(type);
-        _frame.pop(type);
+        frame.pop(type);
+        frame.pop(type);
         performBranch(currentOpcodePosition() + offset);
     }
 
     void performIfBranch(int offset, VerificationType type) {
-        _frame.pop(type);
+        frame.pop(type);
         performBranch(currentOpcodePosition() + offset);
     }
 
     protected void performStore(VerificationType type, int index) {
-        _frame.store(_frame.pop(type), index);
+        frame.store(frame.pop(type), index);
     }
 
     public void performLoad(VerificationType type, int index) {
-        _frame.push(_frame.load(type, index));
+        frame.push(frame.load(type, index));
     }
 
     protected void performJsr(int offset) {
@@ -359,27 +355,27 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void aaload() {
-            _frame.pop(INTEGER);
-            final VerificationType array = _frame.pop(OBJECT_ARRAY);
+            frame.pop(INTEGER);
+            final VerificationType array = frame.pop(OBJECT_ARRAY);
             if (array != NULL) {
                 final VerificationType element = array.componentType();
-                _frame.push(element);
+                frame.push(element);
             } else {
-                _frame.push(NULL);
+                frame.push(NULL);
             }
         }
 
         @Override
         public void aastore() {
-            _frame.pop(OBJECT);
-            _frame.pop(INTEGER); // index
-            _frame.pop(OBJECT_ARRAY);
+            frame.pop(OBJECT);
+            frame.pop(INTEGER); // index
+            frame.pop(OBJECT_ARRAY);
             // The remaining type check is done at runtime, throwing ArrayStoreException if it fails
         }
 
         @Override
         public void aconst_null() {
-            _frame.push(NULL);
+            frame.push(NULL);
         }
 
         @Override
@@ -409,11 +405,11 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void anewarray(int index) {
-            _frame.pop(INTEGER);
+            frame.pop(INTEGER);
             final TypeDescriptor elementDescriptor = constantPool().classAt(index).typeDescriptor();
             try {
                 final ObjectType element = (ObjectType) getVerificationType(elementDescriptor);
-                _frame.push(getObjectType(JavaTypeDescriptor.getArrayDescriptorForDescriptor(element.typeDescriptor(), 1)));
+                frame.push(getObjectType(JavaTypeDescriptor.getArrayDescriptorForDescriptor(element.typeDescriptor(), 1)));
             } catch (ClassCastException classCastException) {
                 throw verifyError("Invalid use of primitive type in ANEWARRAY: " + elementDescriptor);
             }
@@ -426,11 +422,11 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void arraylength() {
-            final VerificationType array = _frame.pop(REFERENCE);
+            final VerificationType array = frame.pop(REFERENCE);
             if (array != NULL && !array.isArray()) {
                 throw verifyError("Require array type in ARRAYLENGTH");
             }
-            _frame.push(INTEGER);
+            frame.push(INTEGER);
         }
 
         @Override
@@ -460,25 +456,25 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void athrow() {
-            _frame.pop(THROWABLE);
-            _fallsThrough = false;
+            frame.pop(THROWABLE);
+            fallsThrough = false;
         }
 
         @Override
         public void baload() {
-            _frame.pop(INTEGER);
-            final VerificationType array = _frame.pop(REFERENCE);
+            frame.pop(INTEGER);
+            final VerificationType array = frame.pop(REFERENCE);
             if (array != BYTE_ARRAY && array != BOOLEAN_ARRAY && array != NULL) {
                 throw verifyError("Invalid array type for BALOAD");
             }
-            _frame.push(BYTE);
+            frame.push(BYTE);
         }
 
         @Override
         public void bastore() {
-            _frame.pop(INTEGER);
-            _frame.pop(INTEGER);
-            final VerificationType array = _frame.pop(REFERENCE);
+            frame.pop(INTEGER);
+            frame.pop(INTEGER);
+            final VerificationType array = frame.pop(REFERENCE);
             if (array != BYTE_ARRAY && array != BOOLEAN_ARRAY && array != NULL) {
                 throw verifyError("Invalid array type for BASTORE");
             }
@@ -486,7 +482,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void bipush(int operand) {
-            _frame.push(INTEGER);
+            frame.push(INTEGER);
         }
 
         @Override
@@ -495,28 +491,28 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void caload() {
-            _frame.pop(INTEGER); // index
-            _frame.pop(CHAR_ARRAY); // array
-            _frame.push(CHAR); // value
+            frame.pop(INTEGER); // index
+            frame.pop(CHAR_ARRAY); // array
+            frame.push(CHAR); // value
         }
 
         @Override
         public void castore() {
-            _frame.pop(CHAR); // value
-            _frame.pop(INTEGER); // index
-            _frame.pop(CHAR_ARRAY); // array
+            frame.pop(CHAR); // value
+            frame.pop(INTEGER); // index
+            frame.pop(CHAR_ARRAY); // array
         }
 
         @Override
         public void checkcast(int index) {
-            _frame.pop(REFERENCE);
+            frame.pop(REFERENCE);
 
             final ClassConstant classConstant = constantPool().classAt(index);
             final TypeDescriptor toType = classConstant.typeDescriptor();
             if (JavaTypeDescriptor.isPrimitive(toType)) {
                 throw verifyError("Invalid use of primitive type in CHECKCAST: " + toType);
             }
-            _frame.push(getObjectType(toType));
+            frame.push(getObjectType(toType));
         }
 
         @Override
@@ -541,16 +537,16 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void daload() {
-            _frame.pop(INTEGER); // index
-            _frame.pop(DOUBLE_ARRAY); // array
-            _frame.push(DOUBLE); // value
+            frame.pop(INTEGER); // index
+            frame.pop(DOUBLE_ARRAY); // array
+            frame.push(DOUBLE); // value
         }
 
         @Override
         public void dastore() {
-            _frame.pop(DOUBLE); // value
-            _frame.pop(INTEGER); // index
-            _frame.pop(DOUBLE_ARRAY); // array
+            frame.pop(DOUBLE); // value
+            frame.pop(INTEGER); // index
+            frame.pop(DOUBLE_ARRAY); // array
         }
 
         @Override
@@ -565,12 +561,12 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void dconst_0() {
-            _frame.push(DOUBLE);
+            frame.push(DOUBLE);
         }
 
         @Override
         public void dconst_1() {
-            _frame.push(DOUBLE);
+            frame.push(DOUBLE);
         }
 
         @Override
@@ -610,7 +606,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void dneg() {
-            verifyIsAssignable(DOUBLE, _frame.top(), "Invalid double negation");
+            verifyIsAssignable(DOUBLE, frame.top(), "Invalid double negation");
         }
 
         @Override
@@ -655,109 +651,109 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void dup() {
-            final VerificationType value = _frame.pop(CATEGORY1);
-            _frame.push(value);
-            _frame.push(value);
+            final VerificationType value = frame.pop(CATEGORY1);
+            frame.push(value);
+            frame.push(value);
         }
 
         @Override
         public void dup2() {
-            if (!_frame.top().isCategory2()) {
-                final VerificationType value1 = _frame.pop(CATEGORY1);
-                final VerificationType value2 = _frame.pop(CATEGORY1);
-                _frame.push(value2);
-                _frame.push(value1);
-                _frame.push(value2);
-                _frame.push(value1);
+            if (!frame.top().isCategory2()) {
+                final VerificationType value1 = frame.pop(CATEGORY1);
+                final VerificationType value2 = frame.pop(CATEGORY1);
+                frame.push(value2);
+                frame.push(value1);
+                frame.push(value2);
+                frame.push(value1);
             } else {
-                final VerificationType value = _frame.pop(CATEGORY2);
-                _frame.push(value);
-                _frame.push(value);
+                final VerificationType value = frame.pop(CATEGORY2);
+                frame.push(value);
+                frame.push(value);
             }
         }
 
         @Override
         public void dup2_x1() {
-            if (!_frame.top().isCategory2()) {
-                final VerificationType value1 = _frame.pop(CATEGORY1);
-                final VerificationType value2 = _frame.pop(CATEGORY1);
-                final VerificationType value3 = _frame.pop(CATEGORY1);
-                _frame.push(value2);
-                _frame.push(value1);
-                _frame.push(value3);
-                _frame.push(value2);
-                _frame.push(value1);
+            if (!frame.top().isCategory2()) {
+                final VerificationType value1 = frame.pop(CATEGORY1);
+                final VerificationType value2 = frame.pop(CATEGORY1);
+                final VerificationType value3 = frame.pop(CATEGORY1);
+                frame.push(value2);
+                frame.push(value1);
+                frame.push(value3);
+                frame.push(value2);
+                frame.push(value1);
             } else {
-                final VerificationType value1 = _frame.pop(CATEGORY2);
-                final VerificationType value2 = _frame.pop(TOP);
-                _frame.push(value1);
-                _frame.push(value2);
-                _frame.push(value1);
+                final VerificationType value1 = frame.pop(CATEGORY2);
+                final VerificationType value2 = frame.pop(TOP);
+                frame.push(value1);
+                frame.push(value2);
+                frame.push(value1);
             }
         }
 
         @Override
         public void dup2_x2() {
-            if (!_frame.top().isCategory2()) {
-                final VerificationType value1 = _frame.pop(CATEGORY1);
-                final VerificationType value2 = _frame.pop(CATEGORY1);
-                if (!_frame.top().isCategory2()) {
-                    final VerificationType value3 = _frame.pop(CATEGORY1);
-                    final VerificationType value4 = _frame.pop(CATEGORY1);
-                    _frame.push(value2);
-                    _frame.push(value1);
-                    _frame.push(value4);
-                    _frame.push(value3);
+            if (!frame.top().isCategory2()) {
+                final VerificationType value1 = frame.pop(CATEGORY1);
+                final VerificationType value2 = frame.pop(CATEGORY1);
+                if (!frame.top().isCategory2()) {
+                    final VerificationType value3 = frame.pop(CATEGORY1);
+                    final VerificationType value4 = frame.pop(CATEGORY1);
+                    frame.push(value2);
+                    frame.push(value1);
+                    frame.push(value4);
+                    frame.push(value3);
                 } else {
-                    final VerificationType value3 = _frame.pop(CATEGORY2);
-                    _frame.push(value2);
-                    _frame.push(value1);
-                    _frame.push(value3);
+                    final VerificationType value3 = frame.pop(CATEGORY2);
+                    frame.push(value2);
+                    frame.push(value1);
+                    frame.push(value3);
                 }
-                _frame.push(value2);
-                _frame.push(value1);
+                frame.push(value2);
+                frame.push(value1);
             } else {
-                final VerificationType value1 = _frame.pop(CATEGORY2);
-                if (!_frame.top().isCategory2()) {
-                    final VerificationType value2 = _frame.pop(CATEGORY1);
-                    final VerificationType value3 = _frame.pop(CATEGORY1);
-                    _frame.push(value1);
-                    _frame.push(value3);
-                    _frame.push(value2);
-                    _frame.push(value1);
+                final VerificationType value1 = frame.pop(CATEGORY2);
+                if (!frame.top().isCategory2()) {
+                    final VerificationType value2 = frame.pop(CATEGORY1);
+                    final VerificationType value3 = frame.pop(CATEGORY1);
+                    frame.push(value1);
+                    frame.push(value3);
+                    frame.push(value2);
+                    frame.push(value1);
                 } else {
-                    final VerificationType value2 = _frame.pop(CATEGORY2);
-                    _frame.push(value1);
-                    _frame.push(value2);
-                    _frame.push(value1);
+                    final VerificationType value2 = frame.pop(CATEGORY2);
+                    frame.push(value1);
+                    frame.push(value2);
+                    frame.push(value1);
                 }
             }
         }
 
         @Override
         public void dup_x1() {
-            final VerificationType value1 = _frame.pop(CATEGORY1);
-            final VerificationType value2 = _frame.pop(CATEGORY1);
-            _frame.push(value1);
-            _frame.push(value2);
-            _frame.push(value1);
+            final VerificationType value1 = frame.pop(CATEGORY1);
+            final VerificationType value2 = frame.pop(CATEGORY1);
+            frame.push(value1);
+            frame.push(value2);
+            frame.push(value1);
         }
 
         @Override
         public void dup_x2() {
-            final VerificationType value1 = _frame.pop(CATEGORY1);
-            if (!_frame.top().isCategory2()) {
-                final VerificationType value2 = _frame.pop(CATEGORY1);
-                final VerificationType value3 = _frame.pop(CATEGORY1);
-                _frame.push(value1);
-                _frame.push(value3);
-                _frame.push(value2);
-                _frame.push(value1);
+            final VerificationType value1 = frame.pop(CATEGORY1);
+            if (!frame.top().isCategory2()) {
+                final VerificationType value2 = frame.pop(CATEGORY1);
+                final VerificationType value3 = frame.pop(CATEGORY1);
+                frame.push(value1);
+                frame.push(value3);
+                frame.push(value2);
+                frame.push(value1);
             } else {
-                final VerificationType value2 = _frame.pop(CATEGORY2);
-                _frame.push(value1);
-                _frame.push(value2);
-                _frame.push(value1);
+                final VerificationType value2 = frame.pop(CATEGORY2);
+                frame.push(value1);
+                frame.push(value2);
+                frame.push(value1);
             }
         }
 
@@ -783,16 +779,16 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void faload() {
-            _frame.pop(INTEGER); // index
-            _frame.pop(FLOAT_ARRAY); // array
-            _frame.push(FLOAT); // value
+            frame.pop(INTEGER); // index
+            frame.pop(FLOAT_ARRAY); // array
+            frame.push(FLOAT); // value
         }
 
         @Override
         public void fastore() {
-            _frame.pop(FLOAT); // value
-            _frame.pop(INTEGER); // index
-            _frame.pop(FLOAT_ARRAY); // array
+            frame.pop(FLOAT); // value
+            frame.pop(INTEGER); // index
+            frame.pop(FLOAT_ARRAY); // array
         }
 
         @Override
@@ -807,17 +803,17 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void fconst_0() {
-            _frame.push(FLOAT);
+            frame.push(FLOAT);
         }
 
         @Override
         public void fconst_1() {
-            _frame.push(FLOAT);
+            frame.push(FLOAT);
         }
 
         @Override
         public void fconst_2() {
-            _frame.push(FLOAT);
+            frame.push(FLOAT);
         }
 
         @Override
@@ -857,7 +853,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void fneg() {
-            verifyIsAssignable(FLOAT, _frame.top(), "Invalid negation");
+            verifyIsAssignable(FLOAT, frame.top(), "Invalid negation");
         }
 
         @Override
@@ -905,16 +901,16 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             final FieldRefConstant fieldConstant = constantPool().fieldAt(index);
             final TypeDescriptor fieldType = fieldConstant.type(constantPool());
             final VerificationType value = getVerificationType(fieldType);
-            final VerificationType object = _frame.pop(getObjectType(fieldConstant.holder(constantPool())));
+            final VerificationType object = frame.pop(getObjectType(fieldConstant.holder(constantPool())));
             protectedFieldAccessCheck(object, fieldConstant, index);
-            _frame.push(value);
+            frame.push(value);
         }
 
         @Override
         public void getstatic(int index) {
             final FieldRefConstant fieldConstant = constantPool().fieldAt(index);
             final VerificationType value = getVerificationType(fieldConstant.type(constantPool()));
-            _frame.push(value);
+            frame.push(value);
         }
 
         /**
@@ -927,7 +923,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
          */
         private void protectedFieldAccessCheck(VerificationType object, FieldRefConstant fieldRef, int index) {
             // Accessing a field from the current class is always okay.
-            if (object == _thisObjectType) {
+            if (object == thisObjectType) {
                 return;
             }
 
@@ -941,7 +937,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                     if (!fieldActor.isProtected()) {
                         break;
                     } else if (!classActor().packageName().equals(fieldActor.holder().packageName())) {
-                        verifyIsAssignable(object, _thisObjectType, "Invalid access of protected field");
+                        verifyIsAssignable(object, thisObjectType, "Invalid access of protected field");
                     }
 
                     // Accessing this field is okay
@@ -957,7 +953,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         @Override
         public void goto_(int offset) {
             performBranch(currentOpcodePosition() + offset);
-            _fallsThrough = false;
+            fallsThrough = false;
         }
 
         @Override
@@ -1007,9 +1003,9 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void iaload() {
-            _frame.pop(INTEGER); // index
-            _frame.pop(INTEGER_ARRAY); // array
-            _frame.push(INTEGER); // value
+            frame.pop(INTEGER); // index
+            frame.pop(INTEGER_ARRAY); // array
+            frame.push(INTEGER); // value
         }
 
         @Override
@@ -1019,44 +1015,44 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void iastore() {
-            _frame.pop(INTEGER); // value
-            _frame.pop(INTEGER); // index
-            _frame.pop(INTEGER_ARRAY); // array
+            frame.pop(INTEGER); // value
+            frame.pop(INTEGER); // index
+            frame.pop(INTEGER_ARRAY); // array
         }
 
         @Override
         public void iconst_0() {
-            _frame.push(INTEGER);
+            frame.push(INTEGER);
         }
 
         @Override
         public void iconst_1() {
-            _frame.push(INTEGER);
+            frame.push(INTEGER);
         }
 
         @Override
         public void iconst_2() {
-            _frame.push(INTEGER);
+            frame.push(INTEGER);
         }
 
         @Override
         public void iconst_3() {
-            _frame.push(INTEGER);
+            frame.push(INTEGER);
         }
 
         @Override
         public void iconst_4() {
-            _frame.push(INTEGER);
+            frame.push(INTEGER);
         }
 
         @Override
         public void iconst_5() {
-            _frame.push(INTEGER);
+            frame.push(INTEGER);
         }
 
         @Override
         public void iconst_m1() {
-            _frame.push(INTEGER);
+            frame.push(INTEGER);
         }
 
         @Override
@@ -1146,7 +1142,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void iinc(int index, int addend) {
-            _frame.load(INTEGER, index);
+            frame.load(INTEGER, index);
         }
 
         @Override
@@ -1181,21 +1177,21 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void ineg() {
-            verifyIsAssignable(INTEGER, _frame.top(), "Invalid negation");
+            verifyIsAssignable(INTEGER, frame.top(), "Invalid negation");
         }
 
         @Override
         public void instanceof_(int index) {
             constantPool().classAt(index);
-            _frame.pop(REFERENCE);
-            _frame.push(INTEGER);
+            frame.pop(REFERENCE);
+            frame.push(INTEGER);
         }
 
         private int popMethodParameters(SignatureDescriptor methodSignature) {
             final int numberOfParameters = methodSignature.numberOfParameters();
             int count = 0;
             for (int n = numberOfParameters - 1; n >= 0; n--) {
-                final VerificationType parameter = _frame.pop(getVerificationType(methodSignature.parameterDescriptorAt(n)));
+                final VerificationType parameter = frame.pop(getVerificationType(methodSignature.parameterDescriptorAt(n)));
                 count += parameter.size();
             }
             return count;
@@ -1204,7 +1200,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         private void pushMethodResult(SignatureDescriptor methodSignature) {
             final VerificationType returnType = getVerificationType(methodSignature.resultDescriptor());
             if (returnType != TOP) {
-                _frame.push(returnType);
+                frame.push(returnType);
             }
         }
 
@@ -1216,7 +1212,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
          */
         private void protectedMethodAccessCheck(VerificationType receiver, MethodRefConstant methodRef, int index) {
             // Accessing a method from the current class is always okay.
-            if (receiver == _thisObjectType) {
+            if (receiver == thisObjectType) {
                 return;
             }
 
@@ -1234,7 +1230,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                             // Special case: arrays pretend to implement public Object clone().
                             break;
                         }
-                        verifyIsAssignable(receiver, _thisObjectType, "Invalid access of protected method");
+                        verifyIsAssignable(receiver, thisObjectType, "Invalid access of protected method");
                     }
 
                     // Accessing this method is okay
@@ -1257,7 +1253,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
             final SignatureDescriptor methodSignature = methodConstant.signature(constantPool());
             final int actualCount = popMethodParameters(methodSignature) + 1;
-            _frame.pop(OBJECT);
+            frame.pop(OBJECT);
 
             if (actualCount != count) {
                 throw verifyError("INVOKEINTERFACE count operand does not match method signature");
@@ -1300,7 +1296,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                     throw verifyError("<init> must return void");
                 }
 
-                final UninitializedType uninitializedObject = (UninitializedType) _frame.pop(UNINITIALIZED);
+                final UninitializedType uninitializedObject = (UninitializedType) frame.pop(UNINITIALIZED);
                 final ObjectType initializedObject;
 
                 if (uninitializedObject instanceof UninitializedNewType) {
@@ -1312,13 +1308,13 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                     _constructorInvoked = true;
                 }
 
-                _frame.replaceStack(uninitializedObject, initializedObject);
-                _frame.replaceLocals(uninitializedObject, initializedObject);
+                frame.replaceStack(uninitializedObject, initializedObject);
+                frame.replaceLocals(uninitializedObject, initializedObject);
 
                 protectedMethodAccessCheck(initializedObject, methodConstant, index);
             } else {
-                final VerificationType object = _frame.pop(getObjectType(methodConstant.holder(constantPool())));
-                verifyIsAssignable(object, _thisObjectType, "Invalid use of INVOKESPECIAL");
+                final VerificationType object = frame.pop(getObjectType(methodConstant.holder(constantPool())));
+                verifyIsAssignable(object, thisObjectType, "Invalid use of INVOKESPECIAL");
                 pushMethodResult(methodSignature);
             }
         }
@@ -1356,7 +1352,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
             final SignatureDescriptor methodSignature = methodConstant.signature(constantPool());
             popMethodParameters(methodSignature);
-            final ObjectType receiverObject = (ObjectType) _frame.pop(getObjectType(methodConstant.holder(constantPool())));
+            final ObjectType receiverObject = (ObjectType) frame.pop(getObjectType(methodConstant.holder(constantPool())));
             protectedMethodAccessCheck(receiverObject, methodConstant, index);
             pushMethodResult(methodSignature);
         }
@@ -1453,9 +1449,9 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void laload() {
-            _frame.pop(INTEGER); // index
-            _frame.pop(LONG_ARRAY); // array
-            _frame.push(LONG); // value
+            frame.pop(INTEGER); // index
+            frame.pop(LONG_ARRAY); // array
+            frame.push(LONG); // value
         }
 
         @Override
@@ -1465,9 +1461,9 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void lastore() {
-            _frame.pop(LONG); // value
-            _frame.pop(INTEGER); // index
-            _frame.pop(LONG_ARRAY); // array
+            frame.pop(LONG); // value
+            frame.pop(INTEGER); // index
+            frame.pop(LONG_ARRAY); // array
         }
 
         @Override
@@ -1477,12 +1473,12 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void lconst_0() {
-            _frame.push(LONG);
+            frame.push(LONG);
         }
 
         @Override
         public void lconst_1() {
-            _frame.push(LONG);
+            frame.push(LONG);
         }
 
         @Override
@@ -1490,16 +1486,16 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             final ConstantPool.Tag tag = constantPool().tagAt(index);
             switch (tag) {
                 case INTEGER:
-                    _frame.push(INTEGER);
+                    frame.push(INTEGER);
                     break;
                 case FLOAT:
-                    _frame.push(FLOAT);
+                    frame.push(FLOAT);
                     break;
                 case STRING:
-                    _frame.push(STRING);
+                    frame.push(STRING);
                     break;
                 case CLASS:
-                    _frame.push(CLASS);
+                    frame.push(CLASS);
                     break;
                 default:
                     throw verifyError("LDC instruction for invalid constant pool type " + tag);
@@ -1510,9 +1506,9 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         public void ldc2_w(int index) {
             final ConstantPool.Tag tag = constantPool().tagAt(index);
             if (tag.equals(ConstantPool.Tag.LONG)) {
-                _frame.push(LONG);
+                frame.push(LONG);
             } else if (tag.equals(ConstantPool.Tag.DOUBLE)) {
-                _frame.push(DOUBLE);
+                frame.push(DOUBLE);
             } else {
                 throw verifyError("LDC2_W instruction for invalid constant pool type " + tag);
             }
@@ -1560,12 +1556,12 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void lneg() {
-            verifyIsAssignable(LONG, _frame.top(), "Invalid negation");
+            verifyIsAssignable(LONG, frame.top(), "Invalid negation");
         }
 
         @Override
         public void lookupswitch(int defaultOffset, int numberOfCases) {
-            _frame.pop(INTEGER);
+            frame.pop(INTEGER);
             performBranch(currentOpcodePosition() + defaultOffset);
             final BytecodeScanner scanner = bytecodeScanner();
             int lastMatch = 0;
@@ -1578,7 +1574,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 performBranch(currentOpcodePosition() + offset);
                 lastMatch = match;
             }
-            _fallsThrough = false;
+            fallsThrough = false;
         }
 
         @Override
@@ -1598,16 +1594,16 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void lshl() {
-            _frame.pop(INTEGER);
-            _frame.pop(LONG);
-            _frame.push(LONG);
+            frame.pop(INTEGER);
+            frame.pop(LONG);
+            frame.push(LONG);
         }
 
         @Override
         public void lshr() {
-            _frame.pop(INTEGER);
-            _frame.pop(LONG);
-            _frame.push(LONG);
+            frame.pop(INTEGER);
+            frame.pop(LONG);
+            frame.push(LONG);
         }
 
         @Override
@@ -1642,9 +1638,9 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void lushr() {
-            _frame.pop(INTEGER);
-            _frame.pop(LONG);
-            _frame.push(LONG);
+            frame.pop(INTEGER);
+            frame.pop(LONG);
+            frame.push(LONG);
         }
 
         @Override
@@ -1654,12 +1650,12 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void monitorenter() {
-            _frame.pop(REFERENCE);
+            frame.pop(REFERENCE);
         }
 
         @Override
         public void monitorexit() {
-            _frame.pop(REFERENCE);
+            frame.pop(REFERENCE);
         }
 
         @Override
@@ -1671,7 +1667,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             }
 
             for (int i = 0; i < dimensions; i++) {
-                _frame.pop(INTEGER);
+                frame.pop(INTEGER);
             }
 
             final ClassConstant classConstant = constantPool().classAt(index);
@@ -1682,13 +1678,13 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             if (JavaTypeDescriptor.getArrayDimensions(type) < dimensions) {
                 throw verifyError("MULTIANEWARRAY cannot create more dimensions than in the array type " + type);
             }
-            _frame.push(getObjectType(type));
+            frame.push(getObjectType(type));
         }
 
         @Override
         public void new_(int index) {
             final UninitializedNewType value = classVerifier().getUninitializedNewType(currentOpcodePosition());
-            if (_frame.isTypeOnStack(value)) {
+            if (frame.isTypeOnStack(value)) {
                 throw verifyError("Uninitialized type already exists on the stack: " + value);
             }
 
@@ -1696,15 +1692,15 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 throw verifyError("Invalid use of NEW instruction to create an array");
             }
 
-            _frame.push(value);
-            _frame.replaceLocals(value, TOP);
+            frame.push(value);
+            frame.replaceLocals(value, TOP);
         }
 
         @Override
         public void newarray(int tag) {
-            _frame.pop(INTEGER);
+            frame.pop(INTEGER);
             final VerificationType arrayType = getVerificationType(Kind.fromNewArrayTag(tag).arrayClassActor().typeDescriptor());
-            _frame.push(arrayType);
+            frame.push(arrayType);
         }
 
         @Override
@@ -1713,16 +1709,16 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void pop() {
-            _frame.pop(CATEGORY1);
+            frame.pop(CATEGORY1);
         }
 
         @Override
         public void pop2() {
-            if (!_frame.top().isCategory2()) {
-                _frame.pop(CATEGORY1);
-                _frame.pop(CATEGORY1);
+            if (!frame.top().isCategory2()) {
+                frame.pop(CATEGORY1);
+                frame.pop(CATEGORY1);
             } else {
-                _frame.pop(CATEGORY2);
+                frame.pop(CATEGORY2);
             }
         }
 
@@ -1730,12 +1726,12 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         public void putfield(int index) {
             final FieldRefConstant fieldConstant = constantPool().fieldAt(index);
 
-            _frame.pop(getVerificationType(fieldConstant.type(constantPool())));
+            frame.pop(getVerificationType(fieldConstant.type(constantPool())));
             final VerificationType expectedObjectType = getObjectType(fieldConstant.holder(constantPool()));
-            if (_thisObjectType.equals(expectedObjectType) && UNINITIALIZED_THIS.isAssignableFrom(_frame.top())) {
-                _frame.pop(UNINITIALIZED_THIS);
+            if (thisObjectType.equals(expectedObjectType) && UNINITIALIZED_THIS.isAssignableFrom(frame.top())) {
+                frame.pop(UNINITIALIZED_THIS);
             } else {
-                final VerificationType object = _frame.pop(expectedObjectType);
+                final VerificationType object = frame.pop(expectedObjectType);
                 protectedFieldAccessCheck(object, fieldConstant, index);
             }
         }
@@ -1744,7 +1740,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         public void putstatic(int index) {
             final FieldRefConstant fieldConstant = constantPool().fieldAt(index);
             final VerificationType value = getVerificationType(fieldConstant.type(constantPool()));
-            _frame.pop(value);
+            frame.pop(value);
         }
 
         @Override
@@ -1754,34 +1750,34 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void saload() {
-            _frame.pop(INTEGER); // index
-            _frame.pop(SHORT_ARRAY); // array
-            _frame.push(SHORT); // value
+            frame.pop(INTEGER); // index
+            frame.pop(SHORT_ARRAY); // array
+            frame.push(SHORT); // value
         }
 
         @Override
         public void sastore() {
-            _frame.pop(SHORT); // value
-            _frame.pop(INTEGER); // index
-            _frame.pop(SHORT_ARRAY); // array
+            frame.pop(SHORT); // value
+            frame.pop(INTEGER); // index
+            frame.pop(SHORT_ARRAY); // array
         }
 
         @Override
         public void sipush(int operand) {
-            _frame.push(INTEGER);
+            frame.push(INTEGER);
         }
 
         @Override
         public void swap() {
-            final VerificationType value1 = _frame.pop(CATEGORY1);
-            final VerificationType value2 = _frame.pop(CATEGORY1);
-            _frame.push(value1);
-            _frame.push(value2);
+            final VerificationType value1 = frame.pop(CATEGORY1);
+            final VerificationType value2 = frame.pop(CATEGORY1);
+            frame.push(value1);
+            frame.push(value2);
         }
 
         @Override
         public void tableswitch(int defaultOffset, int lowMatch, int highMatch, int numberOfCases) {
-            _frame.pop(INTEGER);
+            frame.pop(INTEGER);
             if (lowMatch > highMatch) {
                 throw verifyError("Low match greater than high match in TABLESWITCH: " + lowMatch + " > " + highMatch);
             }
@@ -1791,14 +1787,14 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 performBranch(currentOpcodePosition() + scanner.readSwitchOffset());
             }
 
-            _fallsThrough = false;
+            fallsThrough = false;
         }
 
         @Override
         public void vreturn() {
             performReturn(TOP);
 
-            if (classMethodActor().isInstanceInitializer() && _thisObjectType != OBJECT && !_constructorInvoked) {
+            if (classMethodActor().isInstanceInitializer() && thisObjectType != OBJECT && !_constructorInvoked) {
                 throw verifyError("Constructor must call super() or this()");
             }
         }

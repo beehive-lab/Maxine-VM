@@ -29,15 +29,15 @@ import com.sun.max.vm.compiler.ir.*;
 
 public abstract class TargetGenerator extends IrGenerator<DynamicCompilerScheme, TargetMethod> {
 
-    private final InstructionSet _instructionSet;
+    private final InstructionSet instructionSet;
 
     public InstructionSet instructionSet() {
-        return _instructionSet;
+        return instructionSet;
     }
 
     public TargetGenerator(DynamicCompilerScheme dynamicCompilerScheme, InstructionSet instructionSet) {
         super(dynamicCompilerScheme, instructionSet.name());
-        _instructionSet = instructionSet;
+        this.instructionSet = instructionSet;
     }
 
     /**

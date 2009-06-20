@@ -53,13 +53,13 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
 
     protected AMD64AdapterFrameGenerator(MethodActor classMethodActor, EirABI optimizedAbi) {
         super(classMethodActor, optimizedAbi);
-        _scratchRegister = (AMD64EirRegister.General) optimizedAbi.getScratchRegister(Kind.LONG);
+        scratchRegister = (AMD64EirRegister.General) optimizedAbi.getScratchRegister(Kind.LONG);
     }
 
     /*
      * Scratch register for memory-to-memory moves.
      */
-    protected AMD64EirRegister.General _scratchRegister;
+    protected AMD64EirRegister.General scratchRegister;
 
     public AMD64GeneralRegister64 stackPointer() {
         return AMD64GeneralRegister64.RSP;
@@ -157,11 +157,11 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
     protected void stackCopy(Kind kind, int sourceStackOffset, int destStackOffset) {
         // First, load into a scratch register of appropriate size for the kind, then write to memory location
         if (kind.isCategory2() || kind == Kind.WORD || kind == Kind.REFERENCE) {
-            assembler().mov(_scratchRegister.as64(), sourceStackOffset, stackPointer().indirect());
-            assembler().mov(destStackOffset, stackPointer().indirect(), _scratchRegister.as64());
+            assembler().mov(scratchRegister.as64(), sourceStackOffset, stackPointer().indirect());
+            assembler().mov(destStackOffset, stackPointer().indirect(), scratchRegister.as64());
         } else {
-            assembler().movzxd(_scratchRegister.as64(), sourceStackOffset, stackPointer().indirect());
-            assembler().mov(destStackOffset, stackPointer().indirect(), _scratchRegister.as32());
+            assembler().movzxd(scratchRegister.as64(), sourceStackOffset, stackPointer().indirect());
+            assembler().mov(destStackOffset, stackPointer().indirect(), scratchRegister.as32());
         }
     }
 
@@ -217,7 +217,7 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
             // On entering the adapter prologue, RSP points to the top of the JIT's Java stack.
 
             // This instruction is initially 2 bytes long, but may expand to 5 bytes
-            assembler.jmp(_adapterStart);
+            assembler.jmp(adapterStart);
 
             // Pad with bytes to make sure the alignment directive below will always yield an 8-byte long prologue,
             // regardless of the size of the jump instruction and of the alignment of the code (currently, 4-byte aligned).
@@ -348,7 +348,7 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
     }
 
     static class OptimizingToJitFrameAdapterGenerator extends AMD64AdapterFrameGenerator {
-        private int _adapterFrameSize = 0;
+        private int adapterFrameSize = 0;
 
         OptimizingToJitFrameAdapterGenerator(MethodActor classMethodActor, EirABI optimizingCompilerAbi) {
             super(classMethodActor, optimizingCompilerAbi);
@@ -377,11 +377,11 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
                 // The adapter frame constructs a JIT-like operand stack and then calls the main method entrypoint.
                 final int parameterSize = JitStackFrameLayout.parametersFrameSize(parametersKinds);
                 // align the adapter frame to the target ABI's stack pointer alignment
-                _adapterFrameSize = optimizedABI().targetABI().alignFrameSize(parameterSize);
-                final int alignmentAdjustment = _adapterFrameSize - parameterSize;
+                adapterFrameSize = optimizedABI().targetABI().alignFrameSize(parameterSize);
+                final int alignmentAdjustment = adapterFrameSize - parameterSize;
 
                 // allocate space on the stack for storing the parameters and alignment
-                emitStackIncrease(_adapterFrameSize);
+                emitStackIncrease(adapterFrameSize);
                 int stackOffset = 0;
                 // emit the parameters in reverse order.
                 for (int i = parameterLocations.length - 1; i >= 0; i--) {
@@ -443,7 +443,7 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
         @Override
         void adapt(Kind kind, int optoCompilerStackOffset32, int jitStackOffset32) {
             // Add word size to take into account the slot used by the RIP of the caller
-            stackCopy(kind, _adapterFrameSize + optoCompilerStackOffset32 + Word.size() /* = source */, jitStackOffset32 /* = dest */);
+            stackCopy(kind, adapterFrameSize + optoCompilerStackOffset32 + Word.size() /* = source */, jitStackOffset32 /* = dest */);
         }
     }
 }

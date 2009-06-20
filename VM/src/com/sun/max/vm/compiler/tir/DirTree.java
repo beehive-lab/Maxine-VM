@@ -30,19 +30,19 @@ import com.sun.max.vm.hotpath.compiler.Console.*;
 
 
 public class DirTree extends DirMethod {
-    private final TirTree _tree;
+    private final TirTree tree;
 
     public DirTree(TirTree tree, ClassMethodActor classMethodActor) {
         super(classMethodActor);
-        _tree = tree;
+        this.tree = tree;
     }
 
 
 
     public void print() {
-        Console.printDivider("DIR TREE: " + NameMap.nameOf(_tree));
+        Console.printDivider("DIR TREE: " + NameMap.nameOf(tree));
         Console.print("entry state: ");
-        _tree.entryState().println();
+        tree.entryState().println();
         Console.print("parameters: ");
         for (DirVariable parameter : parameters()) {
             Console.print(Color.LIGHTGREEN, parameter + " ");

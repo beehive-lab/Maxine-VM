@@ -27,17 +27,17 @@ import com.sun.max.vm.compiler.eir.*;
  */
 public class EirPosition {
 
-    private final EirBlock _block;
+    private final EirBlock block;
 
     public EirBlock block() {
-        return _block;
+        return block;
     }
 
-    private int _index;
+    private int index;
     private int _number = -1;
 
     public int index() {
-        return _index;
+        return index;
     }
 
     public int number() {
@@ -53,30 +53,30 @@ public class EirPosition {
     }
 
     public void setIndex(int instructionIndex) {
-        _index = instructionIndex;
+        index = instructionIndex;
     }
 
     public EirPosition(EirBlock block) {
-        _block = block;
-        _index = -1;
+        this.block = block;
+        this.index = -1;
     }
 
     public EirPosition(EirBlock block, int index) {
-        _block = block;
-        _index = index;
+        this.block = block;
+        this.index = index;
     }
 
     @Override
     public boolean equals(Object other) {
         if (other instanceof EirPosition) {
             final EirPosition position = (EirPosition) other;
-            return _index == position._index && _block == position._block;
+            return index == position.index && block == position.block;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return _index ^ _block.hashCode();
+        return index ^ block.hashCode();
     }
 }

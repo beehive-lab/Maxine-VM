@@ -31,22 +31,22 @@ import com.sun.max.vm.actor.member.*;
  */
 public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extends AbstractVMScheme implements VMScheme {
 
-    private final EirABI<EirRegister_Type> _javaABI;
+    private final EirABI<EirRegister_Type> javaABI;
 
     public EirABI javaABI() {
-        return _javaABI;
+        return javaABI;
     }
 
-    private final EirABI<EirRegister_Type> _trampolineABI;
+    private final EirABI<EirRegister_Type> trampolineABI;
 
     public EirABI trampolineABI() {
-        return _trampolineABI;
+        return trampolineABI;
     }
 
-    private final EirABI<EirRegister_Type> _templateABI;
+    private final EirABI<EirRegister_Type> templateABI;
 
     public EirABI templateABI() {
-        return _templateABI;
+        return templateABI;
     }
 
     /**
@@ -54,33 +54,33 @@ public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extend
      * If more than one compiler schemes are used, and they used different calling convention, frame adapter
      * needs to be generated for these.
      */
-    private final EirABI<EirRegister_Type> _j2cFunctionABI;
+    private final EirABI<EirRegister_Type> j2cFunctionABI;
     /**
      * ABI for java method than can only be called from native code. This includes "hook" (i.e., static private method annotated with C_FUNCTION)
      * and JNI function (i.e., method annotated with JNI_FUNCTION). These needs a single entry point and no frame adapter, regardless of how many
      * compiler scheme the VM uses, or their calling convention.
      */
-    private final EirABI<EirRegister_Type> _c2jFunctionABI;
+    private final EirABI<EirRegister_Type> c2jFunctionABI;
 
     public EirABI cFunctionABI(boolean isNative) {
-        return isNative ? _j2cFunctionABI : _c2jFunctionABI;
+        return isNative ? j2cFunctionABI : c2jFunctionABI;
     }
 
 
     public EirABI jniFunctionABI() {
-        return _c2jFunctionABI;
+        return c2jFunctionABI;
     }
 
-    private final EirABI<EirRegister_Type> _nativeABI;
+    private final EirABI<EirRegister_Type> nativeABI;
 
     public EirABI nativeABI() {
-        return _nativeABI;
+        return nativeABI;
     }
 
-    private final EirABI<EirRegister_Type> _treeABI;
+    private final EirABI<EirRegister_Type> treeABI;
 
     public EirABI treeABI() {
-        return _treeABI;
+        return treeABI;
     }
 
     public abstract EirRegister_Type safepointLatchRegister();
@@ -106,14 +106,14 @@ public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extend
                             EirABI<EirRegister_Type> treeABI
                             ) {
         super(vmConfiguration);
-        _javaABI = javaABI;
-        _trampolineABI = trampolineABI;
-        _templateABI = templateABI;
-        _j2cFunctionABI = j2cFunctionABI;
-        _c2jFunctionABI = c2jFunctionABI;
-        _nativeABI = nativeABI;
-        _treeABI = treeABI;
-        assert _nativeABI.calleeSavedRegisters().contains(safepointLatchRegister());
+        this.javaABI = javaABI;
+        this.trampolineABI = trampolineABI;
+        this.templateABI = templateABI;
+        this.j2cFunctionABI = j2cFunctionABI;
+        this.c2jFunctionABI = c2jFunctionABI;
+        this.nativeABI = nativeABI;
+        this.treeABI = treeABI;
+        assert nativeABI.calleeSavedRegisters().contains(safepointLatchRegister());
     }
 
     /**
@@ -128,15 +128,15 @@ public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extend
             return cFunctionABI(compilee.isNative());
         }
         if (compilee.isJniFunction()) {
-            return _c2jFunctionABI;
+            return c2jFunctionABI;
         }
         if (compilee.isTemplate()) {
-            return _templateABI;
+            return templateABI;
         }
         if (compilee instanceof TrampolineMethodActor) {
-            return _trampolineABI;
+            return trampolineABI;
         }
-        return _javaABI;
+        return javaABI;
     }
 
     public abstract Pool<EirRegister_Type> registerPool();

@@ -35,56 +35,56 @@ import com.sun.max.vm.value.*;
  */
 public abstract class DirToEirBuiltinTranslation extends BuiltinAdapter<DirValue> {
 
-    private final DirToEirInstructionTranslation _instructionTranslation;
-    private final DirJavaFrameDescriptor _javaFrameDescriptor;
+    private final DirToEirInstructionTranslation instructionTranslation;
+    private final DirJavaFrameDescriptor javaFrameDescriptor;
 
     protected DirToEirInstructionTranslation instructionTranslation() {
-        return _instructionTranslation;
+        return instructionTranslation;
     }
 
     protected DirToEirMethodTranslation methodTranslation() {
-        return _instructionTranslation.methodTranslation();
+        return instructionTranslation.methodTranslation();
     }
 
     protected DirToEirBuiltinTranslation(DirToEirInstructionTranslation instructionTranslation, DirJavaFrameDescriptor javaFrameDescriptor) {
-        _instructionTranslation = instructionTranslation;
-        _javaFrameDescriptor = javaFrameDescriptor;
+        this.instructionTranslation = instructionTranslation;
+        this.javaFrameDescriptor = javaFrameDescriptor;
     }
 
     public EirABI abi() {
-        return _instructionTranslation.abi();
+        return instructionTranslation.abi();
     }
 
     public void addInstruction(EirInstruction instruction) {
-        _instructionTranslation.addInstruction(instruction);
+        instructionTranslation.addInstruction(instruction);
     }
 
     public EirBlock eirBlock() {
-        return _instructionTranslation.eirBlock();
+        return instructionTranslation.eirBlock();
     }
 
     public void setEirBlock(EirBlock eirBlock) {
-        _instructionTranslation.setBlock(eirBlock);
+        instructionTranslation.setBlock(eirBlock);
     }
 
     public EirValue dirToEirValue(DirValue dirValue) {
-        return _instructionTranslation.dirToEirValue(dirValue);
+        return instructionTranslation.dirToEirValue(dirValue);
     }
 
     public EirConstant dirToEirConstant(DirConstant dirConstant) {
-        return _instructionTranslation.dirToEirConstant(dirConstant);
+        return instructionTranslation.dirToEirConstant(dirConstant);
     }
 
     public EirVariable createEirVariable(Kind kind) {
-        return _instructionTranslation.createEirVariable(kind);
+        return instructionTranslation.createEirVariable(kind);
     }
 
     public EirConstant createEirConstant(Value value) {
-        return _instructionTranslation.createEirConstant(value);
+        return instructionTranslation.createEirConstant(value);
     }
 
     public EirInstruction assign(Kind kind, EirValue destination, EirValue source) {
-        return _instructionTranslation.assign(kind, destination, source);
+        return instructionTranslation.assign(kind, destination, source);
     }
 
     @Override
@@ -119,7 +119,7 @@ public abstract class DirToEirBuiltinTranslation extends BuiltinAdapter<DirValue
         final EirCall instruction = methodTranslation().createCall(eirBlock(), methodTranslation().abi(), result, resultLocation, address, arguments, argumentLocations);
         addInstruction(instruction);
         if (!methodTranslation().isTemplate()) {
-            instruction.setEirJavaFrameDescriptor(methodTranslation().dirToEirJavaFrameDescriptor(_javaFrameDescriptor, instruction));
+            instruction.setEirJavaFrameDescriptor(methodTranslation().dirToEirJavaFrameDescriptor(javaFrameDescriptor, instruction));
         }
     }
 

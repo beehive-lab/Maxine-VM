@@ -31,7 +31,7 @@ import com.sun.max.vm.MaxineVM.*;
  * @author Ben L. Titzer
  */
 public class VMIntOption extends VMOption {
-    protected int _value;
+    protected int value;
 
     /**
      * Creates a new integer option.
@@ -46,7 +46,7 @@ public class VMIntOption extends VMOption {
     @PROTOTYPE_ONLY
     public VMIntOption(String prefix, int defaultValue, String help) {
         super(prefix, help);
-        _value = defaultValue;
+        value = defaultValue;
     }
 
     /**
@@ -56,9 +56,9 @@ public class VMIntOption extends VMOption {
      */
     @Override
     public boolean parseValue(Pointer optionValue) {
-        _value = CString.parseUnsignedInt(optionValue);
+        value = CString.parseUnsignedInt(optionValue);
         // TODO: deal with negative numbers.
-        return _value >= 0;
+        return value >= 0;
     }
 
     /**
@@ -66,7 +66,7 @@ public class VMIntOption extends VMOption {
      */
     @Override
     public void printHelp() {
-        VMOptions.printHelpForOption(_prefix, "<n>", _help);
+        VMOptions.printHelpForOption(prefix, "<n>", help);
     }
 
     /**
@@ -74,6 +74,6 @@ public class VMIntOption extends VMOption {
      * @return the value of this option
      */
     public int getValue() {
-        return _value;
+        return value;
     }
 }

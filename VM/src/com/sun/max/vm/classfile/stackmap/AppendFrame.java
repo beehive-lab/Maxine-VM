@@ -52,18 +52,18 @@ import com.sun.max.vm.verifier.types.*;
  *  variable N+2. It is an error if, for any index i, locals[i] represents a local
  *  variable whose index is greater than the maximum number of local variables for
  *  the method.
- * 
+ *
  *  @author David Liu
  *  @author Doug Simon
  */
 public class AppendFrame extends StackMapFrame {
 
-    private final VerificationType[] _locals;
+    private final VerificationType[] locals;
 
     public AppendFrame(int positionDelta, VerificationType[] locals) {
         super(positionDelta);
         assert locals.length > 0 && locals.length <= 3;
-        _locals = locals;
+        this.locals = locals;
     }
 
     public AppendFrame(int frameType, ClassfileStream classfileStream, VerificationRegistry registry) {
@@ -73,8 +73,8 @@ public class AppendFrame extends StackMapFrame {
 
     @Override
     public void applyTo(FrameModel frameModel) {
-        for (int i = 0; i < _locals.length; i++) {
-            frameModel.store(_locals[i], frameModel.activeLocals());
+        for (int i = 0; i < locals.length; i++) {
+            frameModel.store(locals[i], frameModel.activeLocals());
         }
         frameModel.clearStack();
     }
@@ -83,20 +83,20 @@ public class AppendFrame extends StackMapFrame {
     public void write(DataOutputStream stream, ConstantPoolEditor constantPoolEditor) throws IOException {
         stream.writeByte(frameType());
         stream.writeShort(positionDelta());
-        for (int i = 0; i < _locals.length; i++) {
-            _locals[i].write(stream, constantPoolEditor);
+        for (int i = 0; i < locals.length; i++) {
+            locals[i].write(stream, constantPoolEditor);
         }
     }
 
     @Override
     public int frameType() {
-        return SAME_FRAME_EXTENDED + _locals.length;
+        return SAME_FRAME_EXTENDED + locals.length;
     }
 
     @Override
     public String toString() {
         return "frame_type = " + frameType() + " /* append_frame */\n" +
                "  offset_delta = " + positionDelta() + "\n" +
-               "  locals = [ " + Arrays.toString(_locals, ", ") + " ]";
+               "  locals = [ " + Arrays.toString(locals, ", ") + " ]";
     }
 }

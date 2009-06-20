@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.verifier;
 
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -29,32 +30,41 @@ import com.sun.max.vm.verifier.types.*;
 
 /**
  * An instance of {@code MethodVerifier} is created to verify a single method.
- * 
+ *
  * @author David Liu
  * @author Doug Simon
  */
 public abstract class MethodVerifier {
 
-    private final ClassVerifier _classVerifier;
-    private final ClassLoader _classLoader;
-    private final ConstantPool _constantPool;
-    private final ClassMethodActor _classMethodActor;
-    private final CodeAttribute _codeAttribute;
+    private static final VMStringOption traceVerifierOption = VMOptions.register(new VMStringOption("-XX:TraceVerifier=", false, "",
+        "Trace bytecode verification of methods whose qualified name contains <value>."), MaxineVM.Phase.STARTING);
+
+    private final ClassVerifier classVerifier;
+    private final ClassLoader classLoader;
+    private final ConstantPool constantPool;
+    private final ClassMethodActor classMethodActor;
+    private final CodeAttribute codeAttribute;
+    public final boolean verbose;
 
     protected MethodVerifier(ClassVerifier classVerifier, ClassMethodActor classMethodActor, CodeAttribute codeAttribute) {
-        _classVerifier = classVerifier;
-        _codeAttribute = codeAttribute;
-        _classMethodActor = classMethodActor;
-        _constantPool = _codeAttribute.constantPool();
-        _classLoader = _constantPool.classLoader();
+        this.classVerifier = classVerifier;
+        this.codeAttribute = codeAttribute;
+        this.classMethodActor = classMethodActor;
+        this.constantPool = codeAttribute.constantPool();
+        this.classLoader = constantPool.classLoader();
+        if (classVerifier.verbose()) {
+            this.verbose = true;
+        } else {
+            this.verbose = traceVerifierOption.isPresent() && classMethodActor.format("%H.%n").contains(traceVerifierOption.getValue());
+        }
     }
 
     public ClassVerifier classVerifier() {
-        return _classVerifier;
+        return classVerifier;
     }
 
     public ClassLoader classLoader() {
-        return _classLoader;
+        return classLoader;
     }
 
     /**
@@ -75,19 +85,19 @@ public abstract class MethodVerifier {
     }
 
     public ConstantPool constantPool() {
-        return _constantPool;
+        return constantPool;
     }
 
     public ClassActor classActor() {
-        return _classVerifier.classActor();
+        return classVerifier.classActor();
     }
 
     public MethodActor classMethodActor() {
-        return _classMethodActor;
+        return classMethodActor;
     }
 
     public CodeAttribute codeAttribute() {
-        return _codeAttribute;
+        return codeAttribute;
     }
 
     /**
@@ -111,8 +121,8 @@ public abstract class MethodVerifier {
     public VerifyError verifyError(String message) {
         final int currentOpcodePosition = currentOpcodePositionOrMinusOne();
         try {
-            ErrorContext.enterContext("verifying " + _classMethodActor.format("%H.%n(%p)") + (currentOpcodePosition == -1 ? "" : " at bytecode position " + currentOpcodePosition));
-            throw ErrorContext.verifyError(message, _classMethodActor, _codeAttribute, currentOpcodePosition);
+            ErrorContext.enterContext("verifying " + classMethodActor.format("%H.%n(%p)") + (currentOpcodePosition == -1 ? "" : " at bytecode position " + currentOpcodePosition));
+            throw ErrorContext.verifyError(message, classMethodActor, codeAttribute, currentOpcodePosition);
         } finally {
             ErrorContext.exitContext();
         }
@@ -120,7 +130,7 @@ public abstract class MethodVerifier {
 
     /**
      * Verifies that {@code fromType} is assignable to {@code toType}.
-     * 
+     *
      * @param errorMessage
      *            the message that will be included in the verification error thrown if the assignability test fails.
      *            Only String constants should be used for this parameter so that the cost of a string concatenation

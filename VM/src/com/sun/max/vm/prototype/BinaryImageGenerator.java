@@ -122,22 +122,22 @@ public final class BinaryImageGenerator {
      * Used in the Java tester to indicate whether to test the resolution and linking mechanism for
      * test methods.
      */
-    public static boolean _unlinked = false;
+    public static boolean unlinked = false;
 
     /**
      * Used in the Java tester to indicate whether to compile the testing harness itself with the JIT.
      */
-    public static boolean _callerJit = false;
+    public static boolean callerJit = false;
 
     /**
      * Used by the Java tester to indicate whether to compile the tests themselves with the JIT.
      */
-    public static boolean _calleeJit = false;
+    public static boolean calleeJit = false;
 
     /**
      * Used by the Java tester to indicate that testing requires dynamically loading native libraries.
      */
-    public static boolean _nativeTests = false;
+    public static boolean nativeTests = false;
 
     /**
      * Get the default output directory, derived from the project directory.
@@ -206,10 +206,10 @@ public final class BinaryImageGenerator {
                 VMOption.setVMArguments(_vmArguments.getValue().split("\\s+"));
             }
 
-            BinaryImageGenerator._calleeJit = _testCalleeJit.getValue();
-            BinaryImageGenerator._callerJit = _testCallerJit.getValue();
-            BinaryImageGenerator._unlinked = _testUnlinked.getValue();
-            BinaryImageGenerator._nativeTests = _testNative.getValue();
+            BinaryImageGenerator.calleeJit = _testCalleeJit.getValue();
+            BinaryImageGenerator.callerJit = _testCallerJit.getValue();
+            BinaryImageGenerator.unlinked = _testUnlinked.getValue();
+            BinaryImageGenerator.nativeTests = _testNative.getValue();
 
             final File outputDirectory = _outputDirectoryOption.getValue();
             outputDirectory.mkdirs();
@@ -401,7 +401,7 @@ public final class BinaryImageGenerator {
         int birBytecodeTotal = 0;
         int cirBytecodeTotal = 0;
 
-        final Field bytecodeField = Classes.getDeclaredField(CirMethod.class, "_cirBytecode");
+        final Field bytecodeField = Classes.getDeclaredField(CirMethod.class, "cirBytecode");
         bytecodeField.setAccessible(true);
 
         CirGenerator cirGenerator = null;

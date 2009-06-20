@@ -31,11 +31,11 @@ import com.sun.max.vm.value.*;
  */
 public final class CirConstant extends CirValue {
 
-    private final Value _value;
+    private final Value value;
 
     public CirConstant(Value value) {
         super(value.kind());
-        _value = value;
+        this.value = value;
     }
 
     public static final CirConstant NULL = new CirConstant(ReferenceValue.NULL);
@@ -54,7 +54,7 @@ public final class CirConstant extends CirValue {
 
     @Override
     public Value value() {
-        return _value;
+        return value;
     }
 
     public static CirConstant fromInt(int n) {
@@ -78,21 +78,21 @@ public final class CirConstant extends CirValue {
 
     @Override
     public String toString() {
-        return _value.toString();
+        return value.toString();
     }
 
     @Override
     public boolean equals(Object other) {
         if (other instanceof CirConstant) {
             final CirConstant constant = (CirConstant) other;
-            return _value.equals(constant._value);
+            return value.equals(constant.value);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return _value.hashCode();
+        return value.hashCode();
     }
 
     public static final CirConstant TRUE = new CirConstant(BooleanValue.TRUE);

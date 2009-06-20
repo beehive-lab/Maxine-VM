@@ -37,17 +37,17 @@ import com.sun.max.vm.prototype.*;
  */
 public class CirInliningPolicy {
 
-    private final Class<? extends Accessor> _accessorClass;
+    private final Class<? extends Accessor> accessorClass;
 
     /**
      * @return the accessor method holder to select when encountering Accessor interface calls
      */
     public Class<? extends Accessor> accessorClass() {
-        return _accessorClass;
+        return accessorClass;
     }
 
     public CirInliningPolicy(Class<? extends Accessor> accessorClass) {
-        _accessorClass = accessorClass;
+        this.accessorClass = accessorClass;
     }
 
     public boolean isInlineable(CirOptimizer cirOptimizer, CirBlock block, CirValue[] arguments) {

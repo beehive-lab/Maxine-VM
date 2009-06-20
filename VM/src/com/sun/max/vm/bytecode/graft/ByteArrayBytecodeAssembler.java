@@ -32,24 +32,24 @@ public class ByteArrayBytecodeAssembler extends BytecodeAssembler {
 
     public ByteArrayBytecodeAssembler(ConstantPoolEditor constantPoolEditor) {
         super(constantPoolEditor);
-        _codeStream = new SeekableByteArrayOutputStream();
+        codeStream = new SeekableByteArrayOutputStream();
     }
 
-    private final SeekableByteArrayOutputStream _codeStream;
+    private final SeekableByteArrayOutputStream codeStream;
 
     @Override
     protected void setWritePosition(int position) {
-        _codeStream.seek(position);
+        codeStream.seek(position);
     }
 
     @Override
     protected void writeByte(byte b) {
-        _codeStream.write(b);
+        codeStream.write(b);
     }
 
     @Override
     public byte[] code() {
         fixup();
-        return _codeStream.toByteArray();
+        return codeStream.toByteArray();
     }
 }

@@ -34,39 +34,39 @@ import com.sun.max.vm.actor.member.*;
  */
 public final class BytecodeScanner {
 
-    final BytecodeVisitor _bytecodeVisitor;
+    final BytecodeVisitor bytecodeVisitor;
 
     public BytecodeScanner(BytecodeVisitor bytecodeVisitor) {
-        _bytecodeVisitor = bytecodeVisitor;
+        this.bytecodeVisitor = bytecodeVisitor;
         bytecodeVisitor.setBytecodeScanner(this);
     }
 
-    protected BytecodeBlock _bytecodeBlock;
+    protected BytecodeBlock bytecodeBlock;
 
     public BytecodeBlock bytecodeBlock() {
-        return _bytecodeBlock;
+        return bytecodeBlock;
     }
 
-    private int _currentBytePosition;
+    private int currentBytePosition;
 
     public int currentBytePosition() {
-        return _currentBytePosition;
+        return currentBytePosition;
     }
 
-    protected boolean _stopped;
+    protected boolean stopped;
 
     /**
      * Stop the scanning.
      */
     public void stop() {
-        _stopped = true;
+        stopped = true;
     }
 
     public boolean wasStopped() {
-        return _stopped;
+        return stopped;
     }
 
-    protected Bytecode _currentOpcode;
+    protected Bytecode currentOpcode;
 
     /**
      * Gets the most recently scanned opcode. Note that if this is called while in
@@ -77,23 +77,23 @@ public final class BytecodeScanner {
      * will return false.
      */
     public Bytecode currentOpcode() {
-        return _currentOpcode;
+        return currentOpcode;
     }
 
-    protected int _currentOpcodePosition;
+    protected int currentOpcodePosition;
 
     @INLINE
     public int currentOpcodePosition() {
-        return _currentOpcodePosition;
+        return currentOpcodePosition;
     }
 
-    protected boolean _currentOpcodeWidened;
+    protected boolean currentOpcodeWidened;
 
     /**
      * @see #currentOpcode()
      */
     public boolean isCurrentOpcodeWidened() {
-        return _currentOpcodeWidened;
+        return currentOpcodeWidened;
     }
 
     /**
@@ -102,7 +102,7 @@ public final class BytecodeScanner {
      * @param classMethodActor the context of the bytecode being scanned
      */
     public String getCurrentLocationAsString(ClassMethodActor classMethodActor) {
-        final int lineNumber = classMethodActor.codeAttribute().lineNumberTable().findLineNumber(_currentOpcodePosition);
+        final int lineNumber = classMethodActor.codeAttribute().lineNumberTable().findLineNumber(currentOpcodePosition);
         final StringBuilder buf = new StringBuilder();
         if (lineNumber != -1) {
             final ClassActor holder = classMethodActor.holder();
@@ -114,11 +114,11 @@ public final class BytecodeScanner {
         } else {
             buf.append(classMethodActor.format("%H.%n(%p)"));
         }
-        return buf.append(" [bytecode index=" + _currentOpcodePosition + ", opcode=" + _currentOpcode + "]").toString();
+        return buf.append(" [bytecode index=" + currentOpcodePosition + ", opcode=" + currentOpcode + "]").toString();
     }
 
     private byte readByte() {
-        return _bytecodeBlock.code()[_currentBytePosition++];
+        return bytecodeBlock.code()[currentBytePosition++];
     }
 
     private int readUnsigned1() {
@@ -158,792 +158,792 @@ public final class BytecodeScanner {
     }
 
     private void alignAddress() {
-        final int remainder = _currentBytePosition % 4;
+        final int remainder = currentBytePosition % 4;
         if (remainder != 0) {
-            _currentBytePosition += 4 - remainder;
+            currentBytePosition += 4 - remainder;
         }
     }
 
     private void wide() {
-        _currentOpcodeWidened = true;
-        _currentOpcode = Bytecode.from(readUnsigned1());
+        currentOpcodeWidened = true;
+        currentOpcode = Bytecode.from(readUnsigned1());
         final int index = readUnsigned2();
-        switch (_currentOpcode) {
+        switch (currentOpcode) {
             case ILOAD: {
-                _bytecodeVisitor.iload(index);
+                bytecodeVisitor.iload(index);
                 break;
             }
             case LLOAD: {
-                _bytecodeVisitor.lload(index);
+                bytecodeVisitor.lload(index);
                 break;
             }
             case FLOAD: {
-                _bytecodeVisitor.fload(index);
+                bytecodeVisitor.fload(index);
                 break;
             }
             case DLOAD: {
-                _bytecodeVisitor.dload(index);
+                bytecodeVisitor.dload(index);
                 break;
             }
             case ALOAD: {
-                _bytecodeVisitor.aload(index);
+                bytecodeVisitor.aload(index);
                 break;
             }
             case ISTORE: {
-                _bytecodeVisitor.istore(index);
+                bytecodeVisitor.istore(index);
                 break;
             }
             case LSTORE: {
-                _bytecodeVisitor.lstore(index);
+                bytecodeVisitor.lstore(index);
                 break;
             }
             case FSTORE: {
-                _bytecodeVisitor.fstore(index);
+                bytecodeVisitor.fstore(index);
                 break;
             }
             case DSTORE: {
-                _bytecodeVisitor.dstore(index);
+                bytecodeVisitor.dstore(index);
                 break;
             }
             case ASTORE: {
-                _bytecodeVisitor.astore(index);
+                bytecodeVisitor.astore(index);
                 break;
             }
             case IINC: {
                 final int addend = readSigned2();
-                _bytecodeVisitor.iinc(index, addend);
+                bytecodeVisitor.iinc(index, addend);
                 break;
             }
             case RET: {
-                _bytecodeVisitor.ret(index);
+                bytecodeVisitor.ret(index);
                 break;
             }
             default: {
-                throw verifyError("Invalid application of WIDE prefix to " + _currentOpcode);
+                throw verifyError("Invalid application of WIDE prefix to " + currentOpcode);
             }
         }
-        _currentOpcodeWidened = false;
+        currentOpcodeWidened = false;
     }
 
     protected void scanInstruction() {
-        _currentOpcode = Bytecode.from(readUnsigned1());
-        _bytecodeVisitor.opcodeDecoded();
-        if (_stopped) {
+        currentOpcode = Bytecode.from(readUnsigned1());
+        bytecodeVisitor.opcodeDecoded();
+        if (stopped) {
             return;
         }
-        switch (_currentOpcode) {
+        switch (currentOpcode) {
             case NOP: {
-                _bytecodeVisitor.nop();
+                bytecodeVisitor.nop();
                 break;
             }
             case ACONST_NULL: {
-                _bytecodeVisitor.aconst_null();
+                bytecodeVisitor.aconst_null();
                 break;
             }
             case ICONST_M1: {
-                _bytecodeVisitor.iconst_m1();
+                bytecodeVisitor.iconst_m1();
                 break;
             }
             case ICONST_0: {
-                _bytecodeVisitor.iconst_0();
+                bytecodeVisitor.iconst_0();
                 break;
             }
             case ICONST_1: {
-                _bytecodeVisitor.iconst_1();
+                bytecodeVisitor.iconst_1();
                 break;
             }
             case ICONST_2: {
-                _bytecodeVisitor.iconst_2();
+                bytecodeVisitor.iconst_2();
                 break;
             }
             case ICONST_3: {
-                _bytecodeVisitor.iconst_3();
+                bytecodeVisitor.iconst_3();
                 break;
             }
             case ICONST_4: {
-                _bytecodeVisitor.iconst_4();
+                bytecodeVisitor.iconst_4();
                 break;
             }
             case ICONST_5: {
-                _bytecodeVisitor.iconst_5();
+                bytecodeVisitor.iconst_5();
                 break;
             }
             case LCONST_0: {
-                _bytecodeVisitor.lconst_0();
+                bytecodeVisitor.lconst_0();
                 break;
             }
             case LCONST_1: {
-                _bytecodeVisitor.lconst_1();
+                bytecodeVisitor.lconst_1();
                 break;
             }
             case FCONST_0: {
-                _bytecodeVisitor.fconst_0();
+                bytecodeVisitor.fconst_0();
                 break;
             }
             case FCONST_1: {
-                _bytecodeVisitor.fconst_1();
+                bytecodeVisitor.fconst_1();
                 break;
             }
             case FCONST_2: {
-                _bytecodeVisitor.fconst_2();
+                bytecodeVisitor.fconst_2();
                 break;
             }
             case DCONST_0: {
-                _bytecodeVisitor.dconst_0();
+                bytecodeVisitor.dconst_0();
                 break;
             }
             case DCONST_1: {
-                _bytecodeVisitor.dconst_1();
+                bytecodeVisitor.dconst_1();
                 break;
             }
             case BIPUSH: {
                 final int operand = readSigned1();
-                _bytecodeVisitor.bipush(operand);
+                bytecodeVisitor.bipush(operand);
                 break;
             }
             case SIPUSH: {
                 final int operand = readSigned2();
-                _bytecodeVisitor.sipush(operand);
+                bytecodeVisitor.sipush(operand);
                 break;
             }
             case LDC: {
                 final int index = readUnsigned1();
-                _bytecodeVisitor.ldc(index);
+                bytecodeVisitor.ldc(index);
                 break;
             }
             case LDC_W: {
                 final int index = readUnsigned2();
-                _bytecodeVisitor.ldc_w(index);
+                bytecodeVisitor.ldc_w(index);
                 break;
             }
             case LDC2_W: {
                 final int index = readUnsigned2();
-                _bytecodeVisitor.ldc2_w(index);
+                bytecodeVisitor.ldc2_w(index);
                 break;
             }
             case ILOAD: {
                 final int index = readUnsigned1();
-                _bytecodeVisitor.iload(index);
+                bytecodeVisitor.iload(index);
                 break;
             }
             case LLOAD: {
                 final int index = readUnsigned1();
-                _bytecodeVisitor.lload(index);
+                bytecodeVisitor.lload(index);
                 break;
             }
             case FLOAD: {
                 final int index = readUnsigned1();
-                _bytecodeVisitor.fload(index);
+                bytecodeVisitor.fload(index);
                 break;
             }
             case DLOAD: {
                 final int index = readUnsigned1();
-                _bytecodeVisitor.dload(index);
+                bytecodeVisitor.dload(index);
                 break;
             }
             case ALOAD: {
                 final int index = readUnsigned1();
-                _bytecodeVisitor.aload(index);
+                bytecodeVisitor.aload(index);
                 break;
             }
             case ILOAD_0: {
-                _bytecodeVisitor.iload_0();
+                bytecodeVisitor.iload_0();
                 break;
             }
             case ILOAD_1: {
-                _bytecodeVisitor.iload_1();
+                bytecodeVisitor.iload_1();
                 break;
             }
             case ILOAD_2: {
-                _bytecodeVisitor.iload_2();
+                bytecodeVisitor.iload_2();
                 break;
             }
             case ILOAD_3: {
-                _bytecodeVisitor.iload_3();
+                bytecodeVisitor.iload_3();
                 break;
             }
             case LLOAD_0: {
-                _bytecodeVisitor.lload_0();
+                bytecodeVisitor.lload_0();
                 break;
             }
             case LLOAD_1: {
-                _bytecodeVisitor.lload_1();
+                bytecodeVisitor.lload_1();
                 break;
             }
             case LLOAD_2: {
-                _bytecodeVisitor.lload_2();
+                bytecodeVisitor.lload_2();
                 break;
             }
             case LLOAD_3: {
-                _bytecodeVisitor.lload_3();
+                bytecodeVisitor.lload_3();
                 break;
             }
             case FLOAD_0: {
-                _bytecodeVisitor.fload_0();
+                bytecodeVisitor.fload_0();
                 break;
             }
             case FLOAD_1: {
-                _bytecodeVisitor.fload_1();
+                bytecodeVisitor.fload_1();
                 break;
             }
             case FLOAD_2: {
-                _bytecodeVisitor.fload_2();
+                bytecodeVisitor.fload_2();
                 break;
             }
             case FLOAD_3: {
-                _bytecodeVisitor.fload_3();
+                bytecodeVisitor.fload_3();
                 break;
             }
             case DLOAD_0: {
-                _bytecodeVisitor.dload_0();
+                bytecodeVisitor.dload_0();
                 break;
             }
             case DLOAD_1: {
-                _bytecodeVisitor.dload_1();
+                bytecodeVisitor.dload_1();
                 break;
             }
             case DLOAD_2: {
-                _bytecodeVisitor.dload_2();
+                bytecodeVisitor.dload_2();
                 break;
             }
             case DLOAD_3: {
-                _bytecodeVisitor.dload_3();
+                bytecodeVisitor.dload_3();
                 break;
             }
             case ALOAD_0: {
-                _bytecodeVisitor.aload_0();
+                bytecodeVisitor.aload_0();
                 break;
             }
             case ALOAD_1: {
-                _bytecodeVisitor.aload_1();
+                bytecodeVisitor.aload_1();
                 break;
             }
             case ALOAD_2: {
-                _bytecodeVisitor.aload_2();
+                bytecodeVisitor.aload_2();
                 break;
             }
             case ALOAD_3: {
-                _bytecodeVisitor.aload_3();
+                bytecodeVisitor.aload_3();
                 break;
             }
             case IALOAD: {
-                _bytecodeVisitor.iaload();
+                bytecodeVisitor.iaload();
                 break;
             }
             case LALOAD: {
-                _bytecodeVisitor.laload();
+                bytecodeVisitor.laload();
                 break;
             }
             case FALOAD: {
-                _bytecodeVisitor.faload();
+                bytecodeVisitor.faload();
                 break;
             }
             case DALOAD: {
-                _bytecodeVisitor.daload();
+                bytecodeVisitor.daload();
                 break;
             }
             case AALOAD: {
-                _bytecodeVisitor.aaload();
+                bytecodeVisitor.aaload();
                 break;
             }
             case BALOAD: {
-                _bytecodeVisitor.baload();
+                bytecodeVisitor.baload();
                 break;
             }
             case CALOAD: {
-                _bytecodeVisitor.caload();
+                bytecodeVisitor.caload();
                 break;
             }
             case SALOAD: {
-                _bytecodeVisitor.saload();
+                bytecodeVisitor.saload();
                 break;
             }
             case ISTORE: {
                 final int index = readUnsigned1();
-                _bytecodeVisitor.istore(index);
+                bytecodeVisitor.istore(index);
                 break;
             }
             case LSTORE: {
                 final int index = readUnsigned1();
-                _bytecodeVisitor.lstore(index);
+                bytecodeVisitor.lstore(index);
                 break;
             }
             case FSTORE: {
                 final int index = readUnsigned1();
-                _bytecodeVisitor.fstore(index);
+                bytecodeVisitor.fstore(index);
                 break;
             }
             case DSTORE: {
                 final int index = readUnsigned1();
-                _bytecodeVisitor.dstore(index);
+                bytecodeVisitor.dstore(index);
                 break;
             }
             case ASTORE: {
                 final int index = readUnsigned1();
-                _bytecodeVisitor.astore(index);
+                bytecodeVisitor.astore(index);
                 break;
             }
             case ISTORE_0: {
-                _bytecodeVisitor.istore_0();
+                bytecodeVisitor.istore_0();
                 break;
             }
             case ISTORE_1: {
-                _bytecodeVisitor.istore_1();
+                bytecodeVisitor.istore_1();
                 break;
             }
             case ISTORE_2: {
-                _bytecodeVisitor.istore_2();
+                bytecodeVisitor.istore_2();
                 break;
             }
             case ISTORE_3: {
-                _bytecodeVisitor.istore_3();
+                bytecodeVisitor.istore_3();
                 break;
             }
             case LSTORE_0: {
-                _bytecodeVisitor.lstore_0();
+                bytecodeVisitor.lstore_0();
                 break;
             }
             case LSTORE_1: {
-                _bytecodeVisitor.lstore_1();
+                bytecodeVisitor.lstore_1();
                 break;
             }
             case LSTORE_2: {
-                _bytecodeVisitor.lstore_2();
+                bytecodeVisitor.lstore_2();
                 break;
             }
             case LSTORE_3: {
-                _bytecodeVisitor.lstore_3();
+                bytecodeVisitor.lstore_3();
                 break;
             }
             case FSTORE_0: {
-                _bytecodeVisitor.fstore_0();
+                bytecodeVisitor.fstore_0();
                 break;
             }
             case FSTORE_1: {
-                _bytecodeVisitor.fstore_1();
+                bytecodeVisitor.fstore_1();
                 break;
             }
             case FSTORE_2: {
-                _bytecodeVisitor.fstore_2();
+                bytecodeVisitor.fstore_2();
                 break;
             }
             case FSTORE_3: {
-                _bytecodeVisitor.fstore_3();
+                bytecodeVisitor.fstore_3();
                 break;
             }
             case DSTORE_0: {
-                _bytecodeVisitor.dstore_0();
+                bytecodeVisitor.dstore_0();
                 break;
             }
             case DSTORE_1: {
-                _bytecodeVisitor.dstore_1();
+                bytecodeVisitor.dstore_1();
                 break;
             }
             case DSTORE_2: {
-                _bytecodeVisitor.dstore_2();
+                bytecodeVisitor.dstore_2();
                 break;
             }
             case DSTORE_3: {
-                _bytecodeVisitor.dstore_3();
+                bytecodeVisitor.dstore_3();
                 break;
             }
             case ASTORE_0: {
-                _bytecodeVisitor.astore_0();
+                bytecodeVisitor.astore_0();
                 break;
             }
             case ASTORE_1: {
-                _bytecodeVisitor.astore_1();
+                bytecodeVisitor.astore_1();
                 break;
             }
             case ASTORE_2: {
-                _bytecodeVisitor.astore_2();
+                bytecodeVisitor.astore_2();
                 break;
             }
             case ASTORE_3: {
-                _bytecodeVisitor.astore_3();
+                bytecodeVisitor.astore_3();
                 break;
             }
             case IASTORE: {
-                _bytecodeVisitor.iastore();
+                bytecodeVisitor.iastore();
                 break;
             }
             case LASTORE: {
-                _bytecodeVisitor.lastore();
+                bytecodeVisitor.lastore();
                 break;
             }
             case FASTORE: {
-                _bytecodeVisitor.fastore();
+                bytecodeVisitor.fastore();
                 break;
             }
             case DASTORE: {
-                _bytecodeVisitor.dastore();
+                bytecodeVisitor.dastore();
                 break;
             }
             case AASTORE: {
-                _bytecodeVisitor.aastore();
+                bytecodeVisitor.aastore();
                 break;
             }
             case BASTORE: {
-                _bytecodeVisitor.bastore();
+                bytecodeVisitor.bastore();
                 break;
             }
             case CASTORE: {
-                _bytecodeVisitor.castore();
+                bytecodeVisitor.castore();
                 break;
             }
             case SASTORE: {
-                _bytecodeVisitor.sastore();
+                bytecodeVisitor.sastore();
                 break;
             }
             case POP: {
-                _bytecodeVisitor.pop();
+                bytecodeVisitor.pop();
                 break;
             }
             case POP2: {
-                _bytecodeVisitor.pop2();
+                bytecodeVisitor.pop2();
                 break;
             }
             case DUP: {
-                _bytecodeVisitor.dup();
+                bytecodeVisitor.dup();
                 break;
             }
             case DUP_X1: {
-                _bytecodeVisitor.dup_x1();
+                bytecodeVisitor.dup_x1();
                 break;
             }
             case DUP_X2: {
-                _bytecodeVisitor.dup_x2();
+                bytecodeVisitor.dup_x2();
                 break;
             }
             case DUP2: {
-                _bytecodeVisitor.dup2();
+                bytecodeVisitor.dup2();
                 break;
             }
             case DUP2_X1: {
-                _bytecodeVisitor.dup2_x1();
+                bytecodeVisitor.dup2_x1();
                 break;
             }
             case DUP2_X2: {
-                _bytecodeVisitor.dup2_x2();
+                bytecodeVisitor.dup2_x2();
                 break;
             }
             case SWAP: {
-                _bytecodeVisitor.swap();
+                bytecodeVisitor.swap();
                 break;
             }
             case IADD: {
-                _bytecodeVisitor.iadd();
+                bytecodeVisitor.iadd();
                 break;
             }
             case LADD: {
-                _bytecodeVisitor.ladd();
+                bytecodeVisitor.ladd();
                 break;
             }
             case FADD: {
-                _bytecodeVisitor.fadd();
+                bytecodeVisitor.fadd();
                 break;
             }
             case DADD: {
-                _bytecodeVisitor.dadd();
+                bytecodeVisitor.dadd();
                 break;
             }
             case ISUB: {
-                _bytecodeVisitor.isub();
+                bytecodeVisitor.isub();
                 break;
             }
             case LSUB: {
-                _bytecodeVisitor.lsub();
+                bytecodeVisitor.lsub();
                 break;
             }
             case FSUB: {
-                _bytecodeVisitor.fsub();
+                bytecodeVisitor.fsub();
                 break;
             }
             case DSUB: {
-                _bytecodeVisitor.dsub();
+                bytecodeVisitor.dsub();
                 break;
             }
             case IMUL: {
-                _bytecodeVisitor.imul();
+                bytecodeVisitor.imul();
                 break;
             }
             case LMUL: {
-                _bytecodeVisitor.lmul();
+                bytecodeVisitor.lmul();
                 break;
             }
             case FMUL: {
-                _bytecodeVisitor.fmul();
+                bytecodeVisitor.fmul();
                 break;
             }
             case DMUL: {
-                _bytecodeVisitor.dmul();
+                bytecodeVisitor.dmul();
                 break;
             }
             case IDIV: {
-                _bytecodeVisitor.idiv();
+                bytecodeVisitor.idiv();
                 break;
             }
             case LDIV: {
-                _bytecodeVisitor.ldiv();
+                bytecodeVisitor.ldiv();
                 break;
             }
             case FDIV: {
-                _bytecodeVisitor.fdiv();
+                bytecodeVisitor.fdiv();
                 break;
             }
             case DDIV: {
-                _bytecodeVisitor.ddiv();
+                bytecodeVisitor.ddiv();
                 break;
             }
             case IREM: {
-                _bytecodeVisitor.irem();
+                bytecodeVisitor.irem();
                 break;
             }
             case LREM: {
-                _bytecodeVisitor.lrem();
+                bytecodeVisitor.lrem();
                 break;
             }
             case FREM: {
-                _bytecodeVisitor.frem();
+                bytecodeVisitor.frem();
                 break;
             }
             case DREM: {
-                _bytecodeVisitor.drem();
+                bytecodeVisitor.drem();
                 break;
             }
             case INEG: {
-                _bytecodeVisitor.ineg();
+                bytecodeVisitor.ineg();
                 break;
             }
             case LNEG: {
-                _bytecodeVisitor.lneg();
+                bytecodeVisitor.lneg();
                 break;
             }
             case FNEG: {
-                _bytecodeVisitor.fneg();
+                bytecodeVisitor.fneg();
                 break;
             }
             case DNEG: {
-                _bytecodeVisitor.dneg();
+                bytecodeVisitor.dneg();
                 break;
             }
             case ISHL: {
-                _bytecodeVisitor.ishl();
+                bytecodeVisitor.ishl();
                 break;
             }
             case LSHL: {
-                _bytecodeVisitor.lshl();
+                bytecodeVisitor.lshl();
                 break;
             }
             case ISHR: {
-                _bytecodeVisitor.ishr();
+                bytecodeVisitor.ishr();
                 break;
             }
             case LSHR: {
-                _bytecodeVisitor.lshr();
+                bytecodeVisitor.lshr();
                 break;
             }
             case IUSHR: {
-                _bytecodeVisitor.iushr();
+                bytecodeVisitor.iushr();
                 break;
             }
             case LUSHR: {
-                _bytecodeVisitor.lushr();
+                bytecodeVisitor.lushr();
                 break;
             }
             case IAND: {
-                _bytecodeVisitor.iand();
+                bytecodeVisitor.iand();
                 break;
             }
             case LAND: {
-                _bytecodeVisitor.land();
+                bytecodeVisitor.land();
                 break;
             }
             case IOR: {
-                _bytecodeVisitor.ior();
+                bytecodeVisitor.ior();
                 break;
             }
             case LOR: {
-                _bytecodeVisitor.lor();
+                bytecodeVisitor.lor();
                 break;
             }
             case IXOR: {
-                _bytecodeVisitor.ixor();
+                bytecodeVisitor.ixor();
                 break;
             }
             case LXOR: {
-                _bytecodeVisitor.lxor();
+                bytecodeVisitor.lxor();
                 break;
             }
             case IINC: {
                 final int index = readUnsigned1();
                 final int addend = readSigned1();
-                _bytecodeVisitor.iinc(index, addend);
+                bytecodeVisitor.iinc(index, addend);
                 break;
             }
             case I2L: {
-                _bytecodeVisitor.i2l();
+                bytecodeVisitor.i2l();
                 break;
             }
             case I2F: {
-                _bytecodeVisitor.i2f();
+                bytecodeVisitor.i2f();
                 break;
             }
             case I2D: {
-                _bytecodeVisitor.i2d();
+                bytecodeVisitor.i2d();
                 break;
             }
             case L2I: {
-                _bytecodeVisitor.l2i();
+                bytecodeVisitor.l2i();
                 break;
             }
             case L2F: {
-                _bytecodeVisitor.l2f();
+                bytecodeVisitor.l2f();
                 break;
             }
             case L2D: {
-                _bytecodeVisitor.l2d();
+                bytecodeVisitor.l2d();
                 break;
             }
             case F2I: {
-                _bytecodeVisitor.f2i();
+                bytecodeVisitor.f2i();
                 break;
             }
             case F2L: {
-                _bytecodeVisitor.f2l();
+                bytecodeVisitor.f2l();
                 break;
             }
             case F2D: {
-                _bytecodeVisitor.f2d();
+                bytecodeVisitor.f2d();
                 break;
             }
             case D2I: {
-                _bytecodeVisitor.d2i();
+                bytecodeVisitor.d2i();
                 break;
             }
             case D2L: {
-                _bytecodeVisitor.d2l();
+                bytecodeVisitor.d2l();
                 break;
             }
             case D2F: {
-                _bytecodeVisitor.d2f();
+                bytecodeVisitor.d2f();
                 break;
             }
             case I2B: {
-                _bytecodeVisitor.i2b();
+                bytecodeVisitor.i2b();
                 break;
             }
             case I2C: {
-                _bytecodeVisitor.i2c();
+                bytecodeVisitor.i2c();
                 break;
             }
             case I2S: {
-                _bytecodeVisitor.i2s();
+                bytecodeVisitor.i2s();
                 break;
             }
             case LCMP: {
-                _bytecodeVisitor.lcmp();
+                bytecodeVisitor.lcmp();
                 break;
             }
             case FCMPL: {
-                _bytecodeVisitor.fcmpl();
+                bytecodeVisitor.fcmpl();
                 break;
             }
             case FCMPG: {
-                _bytecodeVisitor.fcmpg();
+                bytecodeVisitor.fcmpg();
                 break;
             }
             case DCMPL: {
-                _bytecodeVisitor.dcmpl();
+                bytecodeVisitor.dcmpl();
                 break;
             }
             case DCMPG: {
-                _bytecodeVisitor.dcmpg();
+                bytecodeVisitor.dcmpg();
                 break;
             }
             case IFEQ: {
                 final int offset = readSigned2();
-                _bytecodeVisitor.ifeq(offset);
+                bytecodeVisitor.ifeq(offset);
                 break;
             }
             case IFNE: {
                 final int offset = readSigned2();
-                _bytecodeVisitor.ifne(offset);
+                bytecodeVisitor.ifne(offset);
                 break;
             }
             case IFLT: {
                 final int offset = readSigned2();
-                _bytecodeVisitor.iflt(offset);
+                bytecodeVisitor.iflt(offset);
                 break;
             }
             case IFGE: {
                 final int offset = readSigned2();
-                _bytecodeVisitor.ifge(offset);
+                bytecodeVisitor.ifge(offset);
                 break;
             }
             case IFGT: {
                 final int offset = readSigned2();
-                _bytecodeVisitor.ifgt(offset);
+                bytecodeVisitor.ifgt(offset);
                 break;
             }
             case IFLE: {
                 final int offset = readSigned2();
-                _bytecodeVisitor.ifle(offset);
+                bytecodeVisitor.ifle(offset);
                 break;
             }
             case IF_ICMPEQ: {
                 final int offset = readSigned2();
-                _bytecodeVisitor.if_icmpeq(offset);
+                bytecodeVisitor.if_icmpeq(offset);
                 break;
             }
             case IF_ICMPNE: {
                 final int offset = readSigned2();
-                _bytecodeVisitor.if_icmpne(offset);
+                bytecodeVisitor.if_icmpne(offset);
                 break;
             }
             case IF_ICMPLT: {
                 final int offset = readSigned2();
-                _bytecodeVisitor.if_icmplt(offset);
+                bytecodeVisitor.if_icmplt(offset);
                 break;
             }
             case IF_ICMPGE: {
                 final int offset = readSigned2();
-                _bytecodeVisitor.if_icmpge(offset);
+                bytecodeVisitor.if_icmpge(offset);
                 break;
             }
             case IF_ICMPGT: {
                 final int offset = readSigned2();
-                _bytecodeVisitor.if_icmpgt(offset);
+                bytecodeVisitor.if_icmpgt(offset);
                 break;
             }
             case IF_ICMPLE: {
                 final int offset = readSigned2();
-                _bytecodeVisitor.if_icmple(offset);
+                bytecodeVisitor.if_icmple(offset);
                 break;
             }
             case IF_ACMPEQ: {
                 final int offset = readSigned2();
-                _bytecodeVisitor.if_acmpeq(offset);
+                bytecodeVisitor.if_acmpeq(offset);
                 break;
             }
             case IF_ACMPNE: {
                 final int offset = readSigned2();
-                _bytecodeVisitor.if_acmpne(offset);
+                bytecodeVisitor.if_acmpne(offset);
                 break;
             }
             case GOTO: {
                 final int offset = readSigned2();
-                _bytecodeVisitor.goto_(offset);
+                bytecodeVisitor.goto_(offset);
                 break;
             }
             case JSR: {
                 final int offset = readSigned2();
-                _bytecodeVisitor.jsr(offset);
+                bytecodeVisitor.jsr(offset);
                 break;
             }
             case RET: {
                 final int index = readUnsigned1();
-                _bytecodeVisitor.ret(index);
+                bytecodeVisitor.ret(index);
                 break;
             }
             case TABLESWITCH: {
@@ -955,11 +955,11 @@ public final class BytecodeScanner {
                     throw verifyError("Low must be less than or equal to high in TABLESWITCH");
                 }
                 final int numberOfCases = highMatch - lowMatch + 1;
-                final int start = _currentBytePosition;
-                _bytecodeVisitor.tableswitch(defaultOffset, lowMatch, highMatch, numberOfCases);
-                final int caseBytesRead = _currentBytePosition - start;
+                final int start = currentBytePosition;
+                bytecodeVisitor.tableswitch(defaultOffset, lowMatch, highMatch, numberOfCases);
+                final int caseBytesRead = currentBytePosition - start;
                 if ((caseBytesRead % 4) != 0 || (caseBytesRead >> 2) != numberOfCases) {
-                    ProgramError.unexpected("Bytecode visitor did not consume exactly the offset operands of the tableswitch instruction at " + _currentOpcodePosition);
+                    ProgramError.unexpected("Bytecode visitor did not consume exactly the offset operands of the tableswitch instruction at " + currentOpcodePosition);
                 }
                 break;
             }
@@ -970,71 +970,71 @@ public final class BytecodeScanner {
                 if (numberOfCases < 0) {
                     throw verifyError("Number of keys in LOOKUPSWITCH less than 0");
                 }
-                final int start = _currentBytePosition;
-                _bytecodeVisitor.lookupswitch(defaultOffset, numberOfCases);
-                final int caseBytesRead = _currentBytePosition - start;
+                final int start = currentBytePosition;
+                bytecodeVisitor.lookupswitch(defaultOffset, numberOfCases);
+                final int caseBytesRead = currentBytePosition - start;
                 if ((caseBytesRead % 8) != 0 || (caseBytesRead >> 3) != numberOfCases) {
-                    ProgramError.unexpected("Bytecode visitor did not consume exactly the offset operands of the tableswitch instruction at " + _currentOpcodePosition);
+                    ProgramError.unexpected("Bytecode visitor did not consume exactly the offset operands of the tableswitch instruction at " + currentOpcodePosition);
                 }
                 break;
             }
             case IRETURN: {
-                _bytecodeVisitor.ireturn();
+                bytecodeVisitor.ireturn();
                 break;
             }
             case LRETURN: {
-                _bytecodeVisitor.lreturn();
+                bytecodeVisitor.lreturn();
                 break;
             }
             case FRETURN: {
-                _bytecodeVisitor.freturn();
+                bytecodeVisitor.freturn();
                 break;
             }
             case DRETURN: {
-                _bytecodeVisitor.dreturn();
+                bytecodeVisitor.dreturn();
                 break;
             }
             case ARETURN: {
-                _bytecodeVisitor.areturn();
+                bytecodeVisitor.areturn();
                 break;
             }
             case RETURN: {
-                _bytecodeVisitor.vreturn();
+                bytecodeVisitor.vreturn();
                 break;
             }
             case GETSTATIC: {
                 final int index = readUnsigned2();
-                _bytecodeVisitor.getstatic(index);
+                bytecodeVisitor.getstatic(index);
                 break;
             }
             case PUTSTATIC: {
                 final int index = readUnsigned2();
-                _bytecodeVisitor.putstatic(index);
+                bytecodeVisitor.putstatic(index);
                 break;
             }
             case GETFIELD: {
                 final int index = readUnsigned2();
-                _bytecodeVisitor.getfield(index);
+                bytecodeVisitor.getfield(index);
                 break;
             }
             case PUTFIELD: {
                 final int index = readUnsigned2();
-                _bytecodeVisitor.putfield(index);
+                bytecodeVisitor.putfield(index);
                 break;
             }
             case INVOKEVIRTUAL: {
                 final int index = readUnsigned2();
-                _bytecodeVisitor.invokevirtual(index);
+                bytecodeVisitor.invokevirtual(index);
                 break;
             }
             case INVOKESPECIAL: {
                 final int index = readUnsigned2();
-                _bytecodeVisitor.invokespecial(index);
+                bytecodeVisitor.invokespecial(index);
                 break;
             }
             case INVOKESTATIC: {
                 final int index = readUnsigned2();
-                _bytecodeVisitor.invokestatic(index);
+                bytecodeVisitor.invokestatic(index);
                 break;
             }
             case INVOKEINTERFACE: {
@@ -1044,106 +1044,106 @@ public final class BytecodeScanner {
                 if (zero != 0) {
                     throw verifyError("Fourth operand byte of invokeinterface must be zero");
                 }
-                _bytecodeVisitor.invokeinterface(index, countUnused);
+                bytecodeVisitor.invokeinterface(index, countUnused);
                 break;
             }
             case NEW: {
                 final int index = readUnsigned2();
-                _bytecodeVisitor.new_(index);
+                bytecodeVisitor.new_(index);
                 break;
             }
             case NEWARRAY: {
                 final int tag = readByte();
-                _bytecodeVisitor.newarray(tag);
+                bytecodeVisitor.newarray(tag);
                 break;
             }
             case ANEWARRAY: {
                 final int index = readUnsigned2();
-                _bytecodeVisitor.anewarray(index);
+                bytecodeVisitor.anewarray(index);
                 break;
             }
             case ARRAYLENGTH: {
-                _bytecodeVisitor.arraylength();
+                bytecodeVisitor.arraylength();
                 break;
             }
             case ATHROW: {
-                _bytecodeVisitor.athrow();
+                bytecodeVisitor.athrow();
                 break;
             }
             case CHECKCAST: {
                 final int index = readUnsigned2();
-                _bytecodeVisitor.checkcast(index);
+                bytecodeVisitor.checkcast(index);
                 break;
             }
             case INSTANCEOF: {
                 final int index = readUnsigned2();
-                _bytecodeVisitor.instanceof_(index);
+                bytecodeVisitor.instanceof_(index);
                 break;
             }
             case MONITORENTER: {
-                _bytecodeVisitor.monitorenter();
+                bytecodeVisitor.monitorenter();
                 break;
             }
             case MONITOREXIT: {
-                _bytecodeVisitor.monitorexit();
+                bytecodeVisitor.monitorexit();
                 break;
             }
             case WIDE: {
-                _bytecodeVisitor.wide();
+                bytecodeVisitor.wide();
                 wide();
                 break;
             }
             case MULTIANEWARRAY: {
                 final int index = readUnsigned2();
                 final int nDimensions = readUnsigned1();
-                _bytecodeVisitor.multianewarray(index, nDimensions);
+                bytecodeVisitor.multianewarray(index, nDimensions);
                 break;
             }
             case IFNULL: {
                 final int offset = readSigned2();
-                _bytecodeVisitor.ifnull(offset);
+                bytecodeVisitor.ifnull(offset);
                 break;
             }
             case IFNONNULL: {
                 final int offset = readSigned2();
-                _bytecodeVisitor.ifnonnull(offset);
+                bytecodeVisitor.ifnonnull(offset);
                 break;
             }
             case GOTO_W: {
                 final int offset = readSigned4();
-                _bytecodeVisitor.goto_w(offset);
+                bytecodeVisitor.goto_w(offset);
                 break;
             }
             case JSR_W: {
                 final int offset = readSigned4();
-                _bytecodeVisitor.jsr_w(offset);
+                bytecodeVisitor.jsr_w(offset);
                 break;
             }
             case BREAKPOINT: {
-                _bytecodeVisitor.breakpoint();
+                bytecodeVisitor.breakpoint();
                 break;
             }
             case CALLNATIVE: {
                 final int nativeFunctionDescriptorIndex = readUnsigned2();
-                _bytecodeVisitor.callnative(nativeFunctionDescriptorIndex);
+                bytecodeVisitor.callnative(nativeFunctionDescriptorIndex);
                 break;
             }
             default: {
-                throw verifyError("Unsupported bytecode: " + _currentOpcode);
+                throw verifyError("Unsupported bytecode: " + currentOpcode);
             }
         }
-        _bytecodeVisitor.instructionDecoded();
+        bytecodeVisitor.instructionDecoded();
     }
 
-    public int scanInstruction(BytecodeBlock bytecodeBlock) {
-        _bytecodeBlock = bytecodeBlock;
+    public int scanInstruction(BytecodeBlock block) {
+        this.bytecodeBlock = block;
         try {
-            _currentBytePosition = _bytecodeBlock.start();
-            _currentOpcodePosition = _currentBytePosition;
+            currentBytePosition = block.start();
+            currentOpcodePosition = currentBytePosition;
             scanInstruction();
-            return _currentBytePosition;
+            return currentBytePosition;
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
-            if (_currentBytePosition > bytecodeBlock.end()) {
+            if (currentBytePosition > block.end()) {
                 throw verifyError("Ran off end of code");
             }
             throw arrayIndexOutOfBoundsException;
@@ -1154,18 +1154,18 @@ public final class BytecodeScanner {
         return scanInstruction(new BytecodeBlock(bytecode, startAddress, bytecode.length));
     }
 
-    public void scan(BytecodeBlock bytecodeBlock) {
-        _bytecodeBlock = bytecodeBlock;
+    public void scan(BytecodeBlock block) {
+        this.bytecodeBlock = block;
         try {
-            _currentBytePosition = _bytecodeBlock.start();
-            _currentOpcodePosition = _currentBytePosition;
-            _bytecodeVisitor.prologue();
-            while (!_stopped && _currentBytePosition <= _bytecodeBlock.end()) {
-                _currentOpcodePosition = _currentBytePosition;
+            currentBytePosition = block.start();
+            currentOpcodePosition = currentBytePosition;
+            bytecodeVisitor.prologue();
+            while (!stopped && currentBytePosition <= block.end()) {
+                currentOpcodePosition = currentBytePosition;
                 scanInstruction();
             }
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
-            if (_currentBytePosition > bytecodeBlock.end()) {
+            if (currentBytePosition > block.end()) {
                 throw verifyError("Ran off end of code");
             }
             throw arrayIndexOutOfBoundsException;
@@ -1177,7 +1177,7 @@ public final class BytecodeScanner {
     }
 
     public void skipBytes(int numBytes) {
-        _currentBytePosition += numBytes;
+        currentBytePosition += numBytes;
     }
 
 

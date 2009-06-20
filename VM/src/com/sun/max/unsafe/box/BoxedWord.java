@@ -33,25 +33,25 @@ public final class BoxedWord extends Word implements UnsafeBox {
 
     public static final long INT_MASK = 0x00000000ffffffffL;
 
-    private long _nativeWord;
+    private long nativeWord;
 
     public BoxedWord(UnsafeBox unsafeBox) {
-        _nativeWord = unsafeBox.nativeWord();
+        nativeWord = unsafeBox.nativeWord();
     }
 
     public BoxedWord(int value) {
-        _nativeWord = value & INT_MASK;
+        nativeWord = value & INT_MASK;
     }
 
     public BoxedWord(long value) {
-        _nativeWord = value;
+        nativeWord = value;
     }
 
     public BoxedWord(Word value) {
-        _nativeWord = value.asOffset().toLong();
+        nativeWord = value.asOffset().toLong();
     }
 
     public long nativeWord() {
-        return _nativeWord;
+        return nativeWord;
     }
 }

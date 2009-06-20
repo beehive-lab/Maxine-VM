@@ -29,31 +29,31 @@ import com.sun.max.vm.compiler.dir.transform.*;
  */
 public final class DirSafepoint extends DirInstruction {
 
-    private final DirJavaFrameDescriptor _javaFrameDescriptor;
+    private final DirJavaFrameDescriptor javaFrameDescriptor;
 
     public DirJavaFrameDescriptor javaFrameDescriptor() {
-        return _javaFrameDescriptor;
+        return javaFrameDescriptor;
     }
 
     public DirSafepoint(DirJavaFrameDescriptor javaFrameDescriptor) {
-        _javaFrameDescriptor = javaFrameDescriptor;
+        this.javaFrameDescriptor = javaFrameDescriptor;
     }
 
     @Override
     public boolean isEquivalentTo(DirInstruction other, DirBlockEquivalence dirBlockEquivalence) {
         if (other instanceof DirSafepoint) {
             final DirSafepoint dirSafepoint = (DirSafepoint) other;
-            if (_javaFrameDescriptor == null) {
-                return dirSafepoint._javaFrameDescriptor == null;
+            if (javaFrameDescriptor == null) {
+                return dirSafepoint.javaFrameDescriptor == null;
             }
-            return _javaFrameDescriptor.equals(dirSafepoint._javaFrameDescriptor);
+            return javaFrameDescriptor.equals(dirSafepoint.javaFrameDescriptor);
         }
         return false;
     }
 
     @Override
     public String toString() {
-        return "safepoint " + _javaFrameDescriptor;
+        return "safepoint " + javaFrameDescriptor;
     }
 
     @Override

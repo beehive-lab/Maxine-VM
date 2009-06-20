@@ -50,9 +50,9 @@ public final class CirCall extends CirNode {
         return count > 0 ? new CirValue[count] : NO_ARGUMENTS;
     }
 
-    private CirValue _procedure;
-    private CirValue[] _arguments;
-    private CirJavaFrameDescriptor _javaFrameDescriptor;
+    private CirValue procedure;
+    private CirValue[] arguments;
+    private CirJavaFrameDescriptor javaFrameDescriptor;
 
     public CirCall() {
     }
@@ -75,11 +75,11 @@ public final class CirCall extends CirNode {
      * @param procedure the target procedure
      */
     public void setProcedure(CirValue procedure) {
-        _procedure = procedure;
+        this.procedure = procedure;
     }
 
     public CirValue procedure() {
-        return _procedure;
+        return procedure;
     }
 
     /**
@@ -90,57 +90,56 @@ public final class CirCall extends CirNode {
      */
     public void setArguments(CirValue... arguments) {
         assert (arguments.length > 0 && Arrays.find(arguments, null) == -1) || arguments == NO_ARGUMENTS;
-        _arguments = arguments;
-
+        this.arguments = arguments;
         assert arguments.getClass() == CirValue[].class;
     }
 
     public boolean hasArguments() {
-        return _arguments != null;
+        return arguments != null;
     }
 
     public void setArgument(int index, CirValue value) {
         assert value != null;
-        _arguments[index] = value;
+        arguments[index] = value;
     }
 
     public CirValue[] arguments() {
-        return _arguments;
+        return arguments;
     }
 
     public void removeArgument(int index) {
-        if (_arguments.length == 1) {
-            _arguments = NO_ARGUMENTS;
+        if (arguments.length == 1) {
+            arguments = NO_ARGUMENTS;
         } else {
-            assert _arguments.length > 0;
-            _arguments = Arrays.remove(CirValue.class, _arguments, index);
+            assert arguments.length > 0;
+            arguments = Arrays.remove(CirValue.class, arguments, index);
         }
     }
 
     public CirJavaFrameDescriptor javaFrameDescriptor() {
-        return _javaFrameDescriptor;
+        return javaFrameDescriptor;
     }
 
     public void setJavaFrameDescriptor(CirJavaFrameDescriptor javaFrameDescriptor) {
-        _javaFrameDescriptor = javaFrameDescriptor;
+        this.javaFrameDescriptor = javaFrameDescriptor;
     }
 
     public void clearJavaFrameDescriptorIfNotNeeded() {
-        if (_procedure instanceof CirProcedure) {
-            if (_procedure instanceof CirRoutine) {
-                final CirRoutine routine = (CirRoutine) _procedure;
+        if (procedure instanceof CirProcedure) {
+            if (procedure instanceof CirRoutine) {
+                final CirRoutine routine = (CirRoutine) procedure;
                 if (Stoppable.Static.canStop(routine)) {
                     return;
                 }
             }
-            _javaFrameDescriptor = null;
+            javaFrameDescriptor = null;
         }
     }
 
     public void assign(CirCall call) {
-        _procedure = call._procedure;
-        _arguments = call._arguments;
-        _javaFrameDescriptor = call._javaFrameDescriptor;
+        procedure = call.procedure;
+        arguments = call.arguments;
+        javaFrameDescriptor = call.javaFrameDescriptor;
     }
 
     public boolean isFoldable() {
@@ -153,7 +152,7 @@ public final class CirCall extends CirNode {
      * {@link Bytecode#CALLNATIVE} instruction.
      */
     public boolean isNative() {
-        return _javaFrameDescriptor != null && _javaFrameDescriptor.isNativeCall();
+        return javaFrameDescriptor != null && javaFrameDescriptor.isNativeCall();
     }
 
     @Override
@@ -209,12 +208,12 @@ public final class CirCall extends CirNode {
 
     @RESET
     private int _hashcode = 0;
-    private static int _hashcodeCounter = 0;
+    private static int hashcodeCounter = 0;
 
     @Override
     public int hashCode() {
         if (_hashcode == 0) {
-            _hashcode = _hashcodeCounter++;
+            _hashcode = hashcodeCounter++;
             if (_hashcode == 0) {  /* overflow */
                 return hashCode(); /* try again */
             }

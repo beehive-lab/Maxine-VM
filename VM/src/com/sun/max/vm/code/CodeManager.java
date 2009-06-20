@@ -62,7 +62,7 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      * An array of the code regions.
      */
     @INSPECTED
-    protected final CodeRegion[] _runtimeCodeRegions;
+    protected final CodeRegion[] runtimeCodeRegions;
 
     /**
      * Get the code region at the specified index.
@@ -71,7 +71,7 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      * @return the code region at the specified index
      */
     protected CodeRegion getRuntimeCodeRegion(int index) {
-        return _runtimeCodeRegions[index];
+        return runtimeCodeRegions[index];
     }
 
     /**
@@ -82,9 +82,9 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      */
     CodeManager(int numberOfRuntimeCodeRegions) {
         super();
-        _runtimeCodeRegions = new CodeRegion[numberOfRuntimeCodeRegions];
+        runtimeCodeRegions = new CodeRegion[numberOfRuntimeCodeRegions];
         for (int i = 0; i < numberOfRuntimeCodeRegions; i++) {
-            _runtimeCodeRegions[i] = new CodeRegion("Code-" + i);
+            runtimeCodeRegions[i] = new CodeRegion("Code-" + i);
         }
     }
 
@@ -98,7 +98,7 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      * The current code region that is the default for allocating new target methods.
      */
     @INSPECTED
-    private CodeRegion _currentCodeRegion = Code.bootCodeRegion();
+    private CodeRegion currentCodeRegion = Code.bootCodeRegion();
 
     /**
      * Allocates a new code region with free space, if necessary.
@@ -113,14 +113,14 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      * @param targetMethod the target method to allocate space for
      */
     synchronized void allocate(TargetMethod targetMethod) {
-        if (!_currentCodeRegion.allocateTargetMethod(targetMethod)) {
-            _currentCodeRegion = makeFreeCodeRegion();
-            Code.registerMemoryRegion(_currentCodeRegion);
-            if (!_currentCodeRegion.allocateTargetMethod(targetMethod)) {
+        if (!currentCodeRegion.allocateTargetMethod(targetMethod)) {
+            currentCodeRegion = makeFreeCodeRegion();
+            Code.registerMemoryRegion(currentCodeRegion);
+            if (!currentCodeRegion.allocateTargetMethod(targetMethod)) {
                 ProgramError.unexpected("could not allocate code");
             }
         }
-        _methodKeyToTargetMethods.add(new MethodActorKey(targetMethod.classMethodActor()), targetMethod);
+        methodKeyToTargetMethods.add(new MethodActorKey(targetMethod.classMethodActor()), targetMethod);
     }
 
     /**
@@ -135,10 +135,10 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      * @return true if space was successfully allocated for the runtime stub
      */
     synchronized boolean allocateRuntimeStub(RuntimeStub stub) {
-        if (!_currentCodeRegion.allocateRuntimeStub(stub)) {
-            _currentCodeRegion = makeFreeCodeRegion();
-            Code.registerMemoryRegion(_currentCodeRegion);
-            if (!_currentCodeRegion.allocateRuntimeStub(stub)) {
+        if (!currentCodeRegion.allocateRuntimeStub(stub)) {
+            currentCodeRegion = makeFreeCodeRegion();
+            Code.registerMemoryRegion(currentCodeRegion);
+            if (!currentCodeRegion.allocateRuntimeStub(stub)) {
                 return false;
             }
         }
@@ -206,7 +206,7 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
     /**
      * A mapping from method keys to target methods.
      */
-    private final ArrayBag<MethodKey, TargetMethod> _methodKeyToTargetMethods = new ArrayBag<MethodKey, TargetMethod>(TargetMethod.class, ArrayBag.MapType.HASHED);
+    private final ArrayBag<MethodKey, TargetMethod> methodKeyToTargetMethods = new ArrayBag<MethodKey, TargetMethod>(TargetMethod.class, ArrayBag.MapType.HASHED);
 
     /**
      * Finds any target methods that match the specified method key.
@@ -215,7 +215,7 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      * @return an array of target methods that match the specified method key
      */
     synchronized TargetMethod[] methodKeyToTargetMethods(MethodKey methodKey) {
-        return _methodKeyToTargetMethods.get(methodKey);
+        return methodKeyToTargetMethods.get(methodKey);
     }
 
     /**
@@ -229,7 +229,7 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
         if (includeBootCode) {
             Code.bootCodeRegion().visitCells(cellVisitor);
         }
-        for (CodeRegion codeRegion : _runtimeCodeRegions) {
+        for (CodeRegion codeRegion : runtimeCodeRegions) {
             if (codeRegion != null) {
                 codeRegion.visitCells(cellVisitor);
             }
@@ -238,8 +238,8 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
 
     public Size getSize() {
         Size size = Size.zero();
-        for (int i = 0; i < _runtimeCodeRegions.length; i++) {
-            size = size.plus(_runtimeCodeRegions[i].size());
+        for (int i = 0; i < runtimeCodeRegions.length; i++) {
+            size = size.plus(runtimeCodeRegions[i].size());
         }
         return size;
     }

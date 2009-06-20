@@ -28,15 +28,15 @@ import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.*;
  */
 public final class BoxedBiasedLockEpoch64 extends BiasedLockEpoch implements UnsafeBox {
 
-    protected long _nativeWord;
+    protected long nativeWord;
 
     public BoxedBiasedLockEpoch64(Word word) {
         final UnsafeBox unsafeBox = (UnsafeBox) word;
-        _nativeWord = unsafeBox.nativeWord();
+        nativeWord = unsafeBox.nativeWord();
     }
 
     public long nativeWord() {
-        return _nativeWord;
+        return nativeWord;
     }
 
 }

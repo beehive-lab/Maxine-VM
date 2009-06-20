@@ -36,16 +36,16 @@ public class InterfaceMethodActor extends MethodActor {
     }
 
     @CONSTANT
-    private int _iIndexInInterface;
+    private int iIndexInInterface;
 
     @INLINE
     public final int iIndexInInterface() {
-        return _iIndexInInterface;
+        return iIndexInInterface;
     }
 
     public void setIIndexInInterface(int iIndexInInterface) {
-        assert _iIndexInInterface == 0;
+        assert this.iIndexInInterface == 0;
         assert iIndexInInterface > 0;
-        _iIndexInInterface = iIndexInInterface;
+        this.iIndexInInterface = iIndexInInterface;
     }
 }

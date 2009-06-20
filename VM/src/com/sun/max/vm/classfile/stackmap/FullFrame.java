@@ -57,19 +57,19 @@ import com.sun.max.vm.verifier.types.*;
  * Float_variable_info, Null_variable_info, UninitializedThis_variable_info, Object_variable_info, or
  * Uninitialized_variable_info, otherwise stack[M+1] represents stack element N+2. It is an error if, for any index i,
  * stack[i] represents a stack entry whose index is greater than the maximum operand stack size for the method.
- * 
+ *
  * @author David Liu
  * @author Doug Simon
  */
 public class FullFrame extends StackMapFrame {
 
-    private final VerificationType[] _locals;
-    private final VerificationType[] _stack;
+    private final VerificationType[] locals;
+    private final VerificationType[] stack;
 
     public FullFrame(int positionDelta, VerificationType[] locals, VerificationType[] stack) {
         super(positionDelta);
-        _locals = locals;
-        _stack = stack;
+        this.locals = locals;
+        this.stack = stack;
     }
 
     public FullFrame(int frameType, ClassfileStream classfileStream, VerificationRegistry registry) {
@@ -83,11 +83,11 @@ public class FullFrame extends StackMapFrame {
     @Override
     public void applyTo(FrameModel frameModel) {
         frameModel.clear();
-        for (int i = 0; i < _locals.length; i++) {
-            frameModel.store(_locals[i], frameModel.activeLocals());
+        for (int i = 0; i < locals.length; i++) {
+            frameModel.store(locals[i], frameModel.activeLocals());
         }
-        for (int i = 0; i < _stack.length; i++) {
-            frameModel.push(_stack[i]);
+        for (int i = 0; i < stack.length; i++) {
+            frameModel.push(stack[i]);
         }
     }
 
@@ -95,13 +95,13 @@ public class FullFrame extends StackMapFrame {
     public void write(DataOutputStream stream, ConstantPoolEditor constantPoolEditor) throws IOException {
         stream.writeByte(frameType());
         stream.writeShort(positionDelta());
-        stream.writeShort(_locals.length);
-        for (int i = 0; i < _locals.length; i++) {
-            _locals[i].write(stream, constantPoolEditor);
+        stream.writeShort(locals.length);
+        for (int i = 0; i < locals.length; i++) {
+            locals[i].write(stream, constantPoolEditor);
         }
-        stream.writeShort(_stack.length);
-        for (int i = 0; i < _stack.length; i++) {
-            _stack[i].write(stream, constantPoolEditor);
+        stream.writeShort(stack.length);
+        for (int i = 0; i < stack.length; i++) {
+            stack[i].write(stream, constantPoolEditor);
         }
     }
 
@@ -114,9 +114,9 @@ public class FullFrame extends StackMapFrame {
     public String toString() {
         return "frame_type = " + frameType() + " /* full_frame */\n" +
                "  offset_delta = " + positionDelta() + "\n" +
-               "  number_of_locals = " + _locals.length + "\n" +
-               "  locals = [ " + Arrays.toString(_locals, ", ") + " ]\n" +
-               "  number_of_stack_items = " + _stack.length + "\n" +
-               "  stack = [ " + Arrays.toString(_stack, ", ") + " ]";
+               "  number_of_locals = " + locals.length + "\n" +
+               "  locals = [ " + Arrays.toString(locals, ", ") + " ]\n" +
+               "  number_of_stack_items = " + stack.length + "\n" +
+               "  stack = [ " + Arrays.toString(stack, ", ") + " ]";
     }
 }

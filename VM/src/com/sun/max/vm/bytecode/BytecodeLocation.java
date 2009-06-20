@@ -30,20 +30,20 @@ import com.sun.max.vm.classfile.constant.*;
  */
 public class BytecodeLocation {
 
-    private final ClassMethodActor _classMethodActor;
-    private final int _bytecodePosition;
+    private final ClassMethodActor classMethodActor;
+    private final int bytecodePosition;
 
     public BytecodeLocation(ClassMethodActor classMethodActor, int bytecodePosition) {
-        _classMethodActor = classMethodActor;
-        _bytecodePosition = bytecodePosition;
+        this.classMethodActor = classMethodActor;
+        this.bytecodePosition = bytecodePosition;
     }
 
     public final ClassMethodActor classMethodActor() {
-        return _classMethodActor;
+        return classMethodActor;
     }
 
     public final int bytecodePosition() {
-        return _bytecodePosition;
+        return bytecodePosition;
     }
 
     @Override
@@ -89,7 +89,7 @@ public class BytecodeLocation {
      */
     public Bytecode getBytecode() {
         final byte[] code = classMethodActor().codeAttribute().code();
-        return Bytecode.from(code[_bytecodePosition]);
+        return Bytecode.from(code[bytecodePosition]);
     }
 
     /**
@@ -116,39 +116,39 @@ public class BytecodeLocation {
     }
 
     class MethodRefFinder extends BytecodeAdapter {
-        final ConstantPool _constantPool = classMethodActor().holder().constantPool();
-        int _methodRefIndex = -1;
+        final ConstantPool constantPool = classMethodActor().holder().constantPool();
+        int methodRefIndex = -1;
 
         @Override
         protected void invokestatic(int index) {
-            _methodRefIndex = index;
+            methodRefIndex = index;
         }
 
         @Override
         protected void invokespecial(int index) {
-            _methodRefIndex = index;
+            methodRefIndex = index;
         }
 
         @Override
         protected void invokevirtual(int index) {
-            _methodRefIndex = index;
+            methodRefIndex = index;
         }
 
         @Override
         protected void invokeinterface(int index, int count) {
-            _methodRefIndex = index;
+            methodRefIndex = index;
         }
 
         public MethodRefConstant methodRef() {
-            if (_methodRefIndex != -1) {
-                return _constantPool.methodAt(_methodRefIndex);
+            if (methodRefIndex != -1) {
+                return constantPool.methodAt(methodRefIndex);
             }
             return null;
         }
         public MethodActor methodActor() {
-            if (_methodRefIndex != -1) {
-                final MethodRefConstant methodRef = _constantPool.methodAt(_methodRefIndex);
-                return methodRef.resolve(_constantPool, _methodRefIndex);
+            if (methodRefIndex != -1) {
+                final MethodRefConstant methodRef = constantPool.methodAt(methodRefIndex);
+                return methodRef.resolve(constantPool, methodRefIndex);
             }
             return null;
         }

@@ -36,80 +36,80 @@ import com.sun.max.vm.*;
 public class HeapTimer {
 
     // HashMap that holds all timing facilities per collection
-    private static AppendableIndexedSequence<Map<String, SingleUseTimer>> _timers;
-    private static String[] _timersLabels;
+    private static AppendableIndexedSequence<Map<String, SingleUseTimer>> timers;
+    private static String[] timersLabels;
     private static Clock _clockType;
 
-    public HeapTimer(String[] timers, Clock clockType) {
-        _timersLabels = timers;
+    public HeapTimer(String[] labels, Clock clockType) {
+        timersLabels = labels;
         _clockType = clockType;
-        _timers = new ArrayListSequence<Map<String, SingleUseTimer>>();
+        timers = new ArrayListSequence<Map<String, SingleUseTimer>>();
     }
 
     public HeapTimer() {
-        _timers = new ArrayListSequence<Map<String, SingleUseTimer>>();
+        timers = new ArrayListSequence<Map<String, SingleUseTimer>>();
     }
 
-    public static void initializeTimers(Clock clockType, String... timers) {
-        _timersLabels = timers;
+    public static void initializeTimers(Clock clockType, String... labels) {
+        timersLabels = labels;
         _clockType = clockType;
     }
 
     public static void addCollectionProfiling() {
         final Map<String, SingleUseTimer> newTimerBuffer = initializeTimers();
-        _timers.append(newTimerBuffer);
+        timers.append(newTimerBuffer);
     }
 
     private static Map<String, SingleUseTimer> initializeTimers() {
         final Map<String, SingleUseTimer> timerBuffer = new Hashtable<String, SingleUseTimer>();
-        for (int i = 0; i < _timersLabels.length; i++) {
+        for (int i = 0; i < timersLabels.length; i++) {
             final SingleUseTimer timer = new SingleUseTimer(_clockType);
-            timerBuffer.put(_timersLabels[i], timer);
+            timerBuffer.put(timersLabels[i], timer);
         }
         return timerBuffer;
     }
 
     public static void startTimers() {
-        final Map<String, SingleUseTimer> timerBuffer = _timers.last();
-        for (int i = 0; i < _timersLabels.length; i++) {
-            timerBuffer.get(_timersLabels[i]).start();
+        final Map<String, SingleUseTimer> timerBuffer = timers.last();
+        for (int i = 0; i < timersLabels.length; i++) {
+            timerBuffer.get(timersLabels[i]).start();
         }
     }
 
     public static void stopTimer(String timer) {
-        final Map<String, SingleUseTimer> timerBuffer = _timers.last();
+        final Map<String, SingleUseTimer> timerBuffer = timers.last();
         timerBuffer.get(timer).stop();
     }
 
     public static void startTimer(String timer) {
-        final Map<String, SingleUseTimer> timerBuffer = _timers.last();
+        final Map<String, SingleUseTimer> timerBuffer = timers.last();
         timerBuffer.get(timer).start();
     }
 
     public static void stopTimers() {
-        final Map<String, SingleUseTimer> timerBuffer = _timers.last();
-        for (int i = 0; i < _timersLabels.length; i++) {
-            timerBuffer.get(_timersLabels[i]).stop();
+        final Map<String, SingleUseTimer> timerBuffer = timers.last();
+        for (int i = 0; i < timersLabels.length; i++) {
+            timerBuffer.get(timersLabels[i]).stop();
         }
     }
 
     public static void printLastCollection() {
         Log.println("Time statistics of Last Collections: ");
-        printCollection(_timers.length());
+        printCollection(timers.length());
     }
 
     public static void printCollection(int collectionNum) {
-        final Map<String, SingleUseTimer> timerBuffer = _timers.get(collectionNum);
+        final Map<String, SingleUseTimer> timerBuffer = timers.get(collectionNum);
         Log.print("Collection: ");
         Log.println(collectionNum);
-        for (int i = 0; i < _timersLabels.length; i++) {
-            printTimer(_timersLabels[i], timerBuffer.get(_timersLabels[i]));
+        for (int i = 0; i < timersLabels.length; i++) {
+            printTimer(timersLabels[i], timerBuffer.get(timersLabels[i]));
         }
     }
 
     public static void printAllCollections() {
         Log.println("Time statistics of ALL Collections: ");
-        for (int i = 0; i < _timers.length(); i++) {
+        for (int i = 0; i < timers.length(); i++) {
             printCollection(i);
         }
     }

@@ -52,14 +52,14 @@ import com.sun.max.vm.thread.*;
 public abstract class Deoptimizer {
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static Deoptimizer _deoptimizer;
+    private static Deoptimizer deoptimizer;
 
     protected static Deoptimizer deoptimizer() {
-        return _deoptimizer;
+        return deoptimizer;
     }
 
     protected Deoptimizer() {
-        _deoptimizer = this;
+        deoptimizer = this;
     }
 
     private static JitTargetMethod jitCompile(ClassMethodActor classMethodActor) {
@@ -67,7 +67,7 @@ public abstract class Deoptimizer {
     }
 
     public static int referenceReturnRegisterIndex() {
-        return _deoptimizer.referenceReturnRegister().index();
+        return deoptimizer.referenceReturnRegister().index();
     }
 
     protected abstract Deoptimization createDeoptimization();
@@ -80,7 +80,7 @@ public abstract class Deoptimizer {
             Safepoint.enable();
             final Word safepointEpoch = VmThreadLocal.SAFEPOINT_EPOCH.getVariableWord();
 
-            final Deoptimization deoptimization = _deoptimizer.createDeoptimization();
+            final Deoptimization deoptimization = deoptimizer.createDeoptimization();
             // TODO: where to start the stack walk?
             final Pointer stackPointer = Pointer.zero();
             final Pointer framePointer = Pointer.zero();
@@ -146,18 +146,18 @@ public abstract class Deoptimizer {
     }
 
     public static Situation determineCase(TargetMethod targetMethod, Pointer instructionPointer) {
-        if (!Memory.equals(instructionPointer, _deoptimizer.illegalInstruction()) || targetMethod instanceof JitTargetMethod) {
+        if (!Memory.equals(instructionPointer, deoptimizer.illegalInstruction()) || targetMethod instanceof JitTargetMethod) {
             return Situation.ERROR;
         }
         final int position = instructionPointer.minus(targetMethod.codeStart()).toInt();
         int i;
         for (i = 0; i < targetMethod.numberOfDirectCalls(); i++) {
-            if (position == targetMethod.stopPosition(i) + _deoptimizer.directCallSize()) {
+            if (position == targetMethod.stopPosition(i) + deoptimizer.directCallSize()) {
                 return targetMethod.isReferenceCall(i) ? Situation.RETURN_REFERENCE : Situation.RETURN_SCALAR;
             }
         }
         for (; i < targetMethod.numberOfIndirectCalls(); i++) {
-            if (position == targetMethod.stopPosition(i) + _deoptimizer.indirectCallSize(targetMethod, i)) {
+            if (position == targetMethod.stopPosition(i) + deoptimizer.indirectCallSize(targetMethod, i)) {
                 return targetMethod.isReferenceCall(i) ? Situation.RETURN_REFERENCE : Situation.RETURN_SCALAR;
             }
         }
@@ -172,7 +172,7 @@ public abstract class Deoptimizer {
     public abstract TargetLocation.IntegerRegister referenceReturnRegister();
 
     private static void patchIllegalInstruction(TargetMethod targetMethod, int stopIndex, int callSize) {
-        Memory.writeBytes(_deoptimizer.illegalInstruction(), targetMethod.codeStart().plus(targetMethod.stopPosition(stopIndex) + callSize));
+        Memory.writeBytes(deoptimizer.illegalInstruction(), targetMethod.codeStart().plus(targetMethod.stopPosition(stopIndex) + callSize));
     }
 
     public static void triggerDeoptimization(TargetMethod targetMethod) {
@@ -181,10 +181,10 @@ public abstract class Deoptimizer {
         }
         int i;
         for (i = 0; i < targetMethod.numberOfDirectCalls(); i++) {
-            patchIllegalInstruction(targetMethod, i, _deoptimizer.directCallSize());
+            patchIllegalInstruction(targetMethod, i, deoptimizer.directCallSize());
         }
         for (; i < targetMethod.numberOfIndirectCalls(); i++) {
-            patchIllegalInstruction(targetMethod, i, _deoptimizer.indirectCallSize(targetMethod, i));
+            patchIllegalInstruction(targetMethod, i, deoptimizer.indirectCallSize(targetMethod, i));
         }
         for (; i < targetMethod.numberOfSafepoints(); i++) {
             patchIllegalInstruction(targetMethod, i, 0);

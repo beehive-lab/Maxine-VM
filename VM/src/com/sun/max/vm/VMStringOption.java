@@ -32,10 +32,10 @@ import com.sun.max.vm.MaxineVM.*;
  * @author Ben L. Titzer
  */
 public class VMStringOption extends VMOption {
-    protected String _value;
-    protected Pointer _cstring = Pointer.zero();
-    protected final boolean _space;
-    protected boolean _allocated;
+    protected String value;
+    protected Pointer cstring = Pointer.zero();
+    protected final boolean space;
+    protected boolean allocated;
 
     /**
      * Creates a new string option with the specified parameters.
@@ -52,8 +52,8 @@ public class VMStringOption extends VMOption {
     @PROTOTYPE_ONLY
     public VMStringOption(String prefix, boolean space, String defaultValue, String help) {
         super(prefix, help);
-        _value = defaultValue;
-        _space = space;
+        this.value = defaultValue;
+        this.space = space;
     }
 
     /**
@@ -65,7 +65,7 @@ public class VMStringOption extends VMOption {
      */
     @Override
     public boolean parseValue(Pointer optionValue) {
-        _cstring = optionValue;
+        cstring = optionValue;
         return true;
     }
 
@@ -77,11 +77,11 @@ public class VMStringOption extends VMOption {
      * @return the string value of this option
      */
     public String getValue() {
-        if (!_cstring.isZero() && !_allocated) {
-            _allocated = true;
-            _value = new String(CString.toByteArray(_cstring, CString.length(_cstring).toInt()));
+        if (!cstring.isZero() && !allocated) {
+            allocated = true;
+            value = new String(CString.toByteArray(cstring, CString.length(cstring).toInt()));
         }
-        return _value;
+        return value;
     }
 
     /**
@@ -89,10 +89,10 @@ public class VMStringOption extends VMOption {
      */
     @Override
     public void printHelp() {
-        if (_space) {
-            VMOptions.printHelpForOption(_prefix, " <value>", _help);
+        if (space) {
+            VMOptions.printHelpForOption(prefix, " <value>", help);
         } else {
-            VMOptions.printHelpForOption(_prefix, "<value>", _help);
+            VMOptions.printHelpForOption(prefix, "<value>", help);
         }
     }
 
@@ -101,7 +101,7 @@ public class VMStringOption extends VMOption {
      */
     @Override
     public boolean consumesNext() {
-        return _space;
+        return space;
     }
 
     /**
@@ -109,6 +109,6 @@ public class VMStringOption extends VMOption {
      */
     @Override
     public boolean isPresent() {
-        return !_cstring.isZero();
+        return !cstring.isZero();
     }
 }

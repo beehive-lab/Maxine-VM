@@ -30,23 +30,23 @@ import com.sun.max.collect.*;
  */
 public class EirTry<EirInstructionVisitor_Type extends EirInstructionVisitor, EirTargetEmitter_Type extends EirTargetEmitter> extends EirInstruction<EirInstructionVisitor_Type, EirTargetEmitter_Type> {
 
-    private EirBlock _catchBlock;
+    private EirBlock catchBlock;
 
     public EirBlock catchBlock() {
-        return _catchBlock;
+        return catchBlock;
     }
 
     public EirTry(EirBlock block, EirBlock catchBlock) {
         super(block);
-        _catchBlock = catchBlock;
+        this.catchBlock = catchBlock;
     }
 
     @Override
     public String toString() {
-        if (_catchBlock == null) {
+        if (catchBlock == null) {
             return "try";
         }
-        return "try -> #" + _catchBlock.serial();
+        return "try -> #" + catchBlock.serial();
     }
 
     @Override
@@ -58,7 +58,7 @@ public class EirTry<EirInstructionVisitor_Type extends EirInstructionVisitor, Ei
             }
             if (instruction instanceof EirTry) {
                 final EirTry other = (EirTry) instruction;
-                return other._catchBlock == _catchBlock;
+                return other.catchBlock == catchBlock;
             }
         }
         return false;
@@ -67,16 +67,16 @@ public class EirTry<EirInstructionVisitor_Type extends EirInstructionVisitor, Ei
     @Override
     public void visitSuccessorBlocks(EirBlock.Procedure procedure) {
         super.visitSuccessorBlocks(procedure);
-        if (_catchBlock != null) {
-            procedure.run(_catchBlock);
+        if (catchBlock != null) {
+            procedure.run(catchBlock);
         }
     }
 
     @Override
     public void substituteSuccessorBlocks(Mapping<EirBlock, EirBlock> map) {
         super.substituteSuccessorBlocks(map);
-        if (_catchBlock != null && map.containsKey(_catchBlock)) {
-            _catchBlock = map.get(_catchBlock);
+        if (catchBlock != null && map.containsKey(catchBlock)) {
+            catchBlock = map.get(catchBlock);
         }
     }
 
@@ -87,7 +87,7 @@ public class EirTry<EirInstructionVisitor_Type extends EirInstructionVisitor, Ei
 
     @Override
     public void emit(EirTargetEmitter emitter) {
-        emitter.addCatching(_catchBlock);
+        emitter.addCatching(catchBlock);
     }
 
 }

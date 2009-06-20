@@ -33,28 +33,28 @@ import com.sun.max.vm.type.*;
 public abstract class EirCall<EirInstructionVisitor_Type extends EirInstructionVisitor, EirTargetEmitter_Type extends EirTargetEmitter>
                       extends EirStop<EirInstructionVisitor_Type, EirTargetEmitter_Type> {
 
-    private EirOperand[] _callerSavedOperands;
+    private EirOperand[] callerSavedOperands;
 
     public EirOperand[] callerSavedOperands() {
-        return _callerSavedOperands;
+        return callerSavedOperands;
     }
 
-    private final EirOperand _function;
+    private final EirOperand function;
 
     public EirOperand function() {
-        return _function;
+        return function;
     }
 
-    private final EirOperand _result;
+    private final EirOperand result;
 
     public EirOperand result() {
-        return _result;
+        return result;
     }
 
-    private final EirOperand[] _arguments;
+    private final EirOperand[] arguments;
 
     public EirOperand[] arguments() {
-        return _arguments;
+        return arguments;
     }
 
     protected EirCall(EirBlock block,
@@ -63,19 +63,19 @@ public abstract class EirCall<EirInstructionVisitor_Type extends EirInstructionV
                       EirValue[] arguments, EirLocation[] argumentLocations,
                       EirMethodGeneration methodGeneration) {
         super(block);
-        _function = new EirOperand(this, EirOperand.Effect.USE, functionLocationCategories);
-        _function.setEirValue(function);
+        this.function = new EirOperand(this, EirOperand.Effect.USE, functionLocationCategories);
+        this.function.setEirValue(function);
         if (result == null) {
-            _result = null;
+            this.result = null;
         } else {
-            _result = new EirOperand(this, EirOperand.Effect.DEFINITION, resultLocation.category().asSet());
-            _result.setRequiredLocation(resultLocation);
-            _result.setEirValue(result);
+            this.result = new EirOperand(this, EirOperand.Effect.DEFINITION, resultLocation.category().asSet());
+            this.result.setRequiredLocation(resultLocation);
+            this.result.setEirValue(result);
         }
         if (arguments == null) {
-            _arguments = null;
+            this.arguments = null;
         } else {
-            _arguments = new EirOperand[arguments.length];
+            this.arguments = new EirOperand[arguments.length];
             for (int i = 0; i < arguments.length; i++) {
                 EirLocation location = argumentLocations[i];
                 if (location instanceof EirStackSlot) {
@@ -84,18 +84,18 @@ public abstract class EirCall<EirInstructionVisitor_Type extends EirInstructionV
                 final EirOperand argument = new EirOperand(this, EirOperand.Effect.USE, argumentLocations[i].category().asSet());
                 argument.setRequiredLocation(argumentLocations[i]);
                 argument.setEirValue(arguments[i]);
-                _arguments[i] = argument;
+                this.arguments[i] = argument;
             }
         }
         final EirRegister[] callerSavedRegisters = abi.callerSavedRegisterArray();
-        _callerSavedOperands = new EirOperand[callerSavedRegisters.length];
+        callerSavedOperands = new EirOperand[callerSavedRegisters.length];
         for (int i = 0; i < callerSavedRegisters.length; i++) {
             final EirRegister register = callerSavedRegisters[i];
             if (register != resultLocation) {
-                _callerSavedOperands[i] = new EirOperand(this, EirOperand.Effect.DEFINITION, register.category().asSet());
-                _callerSavedOperands[i].setRequiredLocation(register);
+                callerSavedOperands[i] = new EirOperand(this, EirOperand.Effect.DEFINITION, register.category().asSet());
+                callerSavedOperands[i].setRequiredLocation(register);
                 final EirVariable variable = methodGeneration.makeRegisterVariable(register);
-                _callerSavedOperands[i].setEirValue(variable);
+                callerSavedOperands[i].setEirValue(variable);
             }
         }
     }
@@ -103,8 +103,8 @@ public abstract class EirCall<EirInstructionVisitor_Type extends EirInstructionV
     @Override
     public void addStackReferenceMap(WordWidth stackSlotWidth, ByteArrayBitMap map) {
         super.addStackReferenceMap(stackSlotWidth, map);
-        if (_arguments != null) {
-            for (EirOperand argument : _arguments) {
+        if (arguments != null) {
+            for (EirOperand argument : arguments) {
                 if (argument.kind() == Kind.REFERENCE && argument.location() instanceof EirStackSlot) {
                     final EirStackSlot stackSlot = (EirStackSlot) argument.location();
                     final int stackSlotBitIndex = stackSlot.offset() / stackSlotWidth.numberOfBytes();
@@ -116,17 +116,17 @@ public abstract class EirCall<EirInstructionVisitor_Type extends EirInstructionV
 
     @Override
     public void visitOperands(EirOperand.Procedure visitor) {
-        visitor.run(_function);
-        if (_result != null) {
-            visitor.run(_result);
+        visitor.run(function);
+        if (result != null) {
+            visitor.run(result);
         }
-        if (_arguments != null) {
-            for (EirOperand argument : _arguments) {
+        if (arguments != null) {
+            for (EirOperand argument : arguments) {
                 visitor.run(argument);
             }
         }
-        if (_callerSavedOperands != null) {
-            for (EirOperand callerSaveOperand : _callerSavedOperands) {
+        if (callerSavedOperands != null) {
+            for (EirOperand callerSaveOperand : callerSavedOperands) {
                 if (callerSaveOperand != null) {
                     visitor.run(callerSaveOperand);
                 }
@@ -137,15 +137,15 @@ public abstract class EirCall<EirInstructionVisitor_Type extends EirInstructionV
 
     @Override
     public String toString() {
-        String s = super.toString() + " " + _function;
-        if (_result != null) {
-            s = _result.toString() + " := " + s;
+        String s = super.toString() + " " + function;
+        if (result != null) {
+            s = result.toString() + " := " + s;
         }
-        if (_arguments != null) {
-            s += " (" + Arrays.toString(_arguments) + ")";
+        if (arguments != null) {
+            s += " (" + Arrays.toString(arguments) + ")";
         }
-        if (_callerSavedOperands != null) {
-            s += " [Caller saved: " + Arrays.toString(_callerSavedOperands) + "]";
+        if (callerSavedOperands != null) {
+            s += " [Caller saved: " + Arrays.toString(callerSavedOperands) + "]";
         }
         return s + " " + javaFrameDescriptor();
     }

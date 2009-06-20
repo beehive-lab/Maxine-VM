@@ -53,7 +53,7 @@ import com.sun.max.vm.thread.*;
  */
 public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements TargetGeneratorScheme {
 
-    private final AMD64EirToTargetTranslator _eirToTargetTranslator;
+    private final AMD64EirToTargetTranslator eirToTargetTranslator;
 
     protected AMD64EirToTargetTranslator createTargetTranslator() {
         return new AMD64EirToTargetTranslator(this);
@@ -61,16 +61,16 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
 
     public BcdeTargetAMD64Compiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        _eirToTargetTranslator = new AMD64EirToTargetTranslator(this);
+        eirToTargetTranslator = new AMD64EirToTargetTranslator(this);
     }
 
     public TargetGenerator targetGenerator() {
-        return _eirToTargetTranslator;
+        return eirToTargetTranslator;
     }
 
     @Override
     public IrGenerator irGenerator() {
-        return _eirToTargetTranslator;
+        return eirToTargetTranslator;
     }
 
     @Override
@@ -341,20 +341,20 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (MaxineVM.isPrototyping()) {
-            _unwindMethod = ClassActor.fromJava(BcdeTargetAMD64Compiler.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwind"), null);
-            assert _unwindMethod != null;
+            unwindMethod = ClassActor.fromJava(BcdeTargetAMD64Compiler.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwind"), null);
+            assert unwindMethod != null;
         }
     }
 
-    private static ClassMethodActor _unwindMethod;
+    private static ClassMethodActor unwindMethod;
 
-    private static int _unwindFrameSize = -1;
+    private static int unwindFrameSize = -1;
 
     private static int getUnwindFrameSize() {
-        if (_unwindFrameSize == -1) {
-            _unwindFrameSize = CompilationScheme.Static.getCurrentTargetMethod(_unwindMethod).frameSize();
+        if (unwindFrameSize == -1) {
+            unwindFrameSize = CompilationScheme.Static.getCurrentTargetMethod(unwindMethod).frameSize();
         }
-        return _unwindFrameSize;
+        return unwindFrameSize;
     }
 
     /**
@@ -382,10 +382,10 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
         // and the stack will be in the correct state for the handler.
         final Pointer returnAddressPointer = stackPointer.minus(Word.size());
         returnAddressPointer.setWord(catchAddress);
-        if (_unwindFrameSize == -1) {
-            _unwindFrameSize = getUnwindFrameSize();
+        if (unwindFrameSize == -1) {
+            unwindFrameSize = getUnwindFrameSize();
         }
-        VMRegister.setCpuStackPointer(returnAddressPointer.minus(_unwindFrameSize));
+        VMRegister.setCpuStackPointer(returnAddressPointer.minus(unwindFrameSize));
 
         // put the throwable in the return slot
         // NOTE: this is potentially dangerous, since this value must not be spilled onto the stack,

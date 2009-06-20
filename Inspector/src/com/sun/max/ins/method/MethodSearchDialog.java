@@ -74,7 +74,7 @@ public final class MethodSearchDialog extends FilteredListDialog<MethodKey> {
         return new DefaultMethodKey(holder, name, signature) {
             @Override
             public String toString() {
-                return _name + _signature.toJavaString(false, true);
+                return name + signature.toJavaString(false, true);
             }
         };
     }

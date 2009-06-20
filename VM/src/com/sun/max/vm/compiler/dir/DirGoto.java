@@ -31,26 +31,26 @@ import com.sun.max.vm.compiler.dir.transform.*;
  */
 public class DirGoto extends DirInstruction {
 
-    private DirBlock _targetBlock;
+    private DirBlock targetBlock;
 
     public DirGoto(DirBlock targetBlock) {
         super();
-        _targetBlock = targetBlock;
+        this.targetBlock = targetBlock;
     }
 
     public DirBlock targetBlock() {
-        return _targetBlock;
+        return targetBlock;
     }
 
     public void setTargetBlock(DirBlock block) {
-        _targetBlock = block;
+        targetBlock = block;
     }
 
     @Override
     public void substituteBlocks(Map<DirBlock, DirBlock> blockMap) {
-        final DirBlock block = blockMap.get(_targetBlock);
-        if (block != null && block != _targetBlock) {
-            _targetBlock = block;
+        final DirBlock block = blockMap.get(targetBlock);
+        if (block != null && block != targetBlock) {
+            targetBlock = block;
         }
     }
 
@@ -58,14 +58,14 @@ public class DirGoto extends DirInstruction {
     public boolean isEquivalentTo(DirInstruction other, DirBlockEquivalence dirBlockEquivalence) {
         if (other instanceof DirGoto) {
             final DirGoto dirGoto = (DirGoto) other;
-            return _targetBlock.isEquivalentTo(dirGoto._targetBlock, dirBlockEquivalence);
+            return targetBlock.isEquivalentTo(dirGoto.targetBlock, dirBlockEquivalence);
         }
         return false;
     }
 
     @Override
     public String toString() {
-        return "goto " + _targetBlock.serial();
+        return "goto " + targetBlock.serial();
     }
 
     @Override

@@ -34,8 +34,8 @@ import com.sun.max.vm.thread.*;
 public class SequentialHeapRootsScanner {
 
     private PointerIndexVisitor _pointerIndexVisitor;
-    private RuntimeMemoryRegion _fromSpace;
-    private RuntimeMemoryRegion _toSpace;
+    private RuntimeMemoryRegion fromSpace;
+    private RuntimeMemoryRegion toSpace;
     private HeapScheme _heapScheme;
 
     public SequentialHeapRootsScanner(HeapScheme heapScheme, PointerIndexVisitor pointerIndexVisitor) {
@@ -48,14 +48,14 @@ public class SequentialHeapRootsScanner {
     }
 
     public void setFromSpace(RuntimeMemoryRegion fromSpace) {
-        _fromSpace = fromSpace;
+        this.fromSpace = fromSpace;
     }
 
     public void setToSpace(RuntimeMemoryRegion toSpace) {
-        _toSpace = toSpace;
+        this.toSpace = toSpace;
     }
 
-    private final Pointer.Procedure _vmThreadLocalsScanner = new Pointer.Procedure() {
+    private final Pointer.Procedure vmThreadLocalsScanner = new Pointer.Procedure() {
 
         public void run(Pointer vmThreadLocals) {
             VmThreadLocal.scanReferences(vmThreadLocals, _pointerIndexVisitor);
@@ -71,7 +71,7 @@ public class SequentialHeapRootsScanner {
      * used.
      */
     public void run() {
-        VmThreadMap.ACTIVE.forAllVmThreadLocals(null, _vmThreadLocalsScanner);
+        VmThreadMap.ACTIVE.forAllVmThreadLocals(null, vmThreadLocalsScanner);
         VMConfiguration.hostOrTarget().monitorScheme().scanReferences(_pointerIndexVisitor);
     }
 

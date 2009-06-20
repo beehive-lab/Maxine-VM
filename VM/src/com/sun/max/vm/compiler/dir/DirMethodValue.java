@@ -25,20 +25,19 @@ import com.sun.max.vm.type.*;
 
 /**
  * An abstract reference to another method from within DIR.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class DirMethodValue extends DirValue {
 
-    private final ClassMethodActor _classMethodActor;
+    private final ClassMethodActor classMethodActor;
 
     public ClassMethodActor classMethodActor() {
-        return _classMethodActor;
+        return classMethodActor;
     }
 
     public DirMethodValue(ClassMethodActor classMethodActor) {
-        super();
-        _classMethodActor = classMethodActor;
+        this.classMethodActor = classMethodActor;
     }
 
     public Kind kind() {
@@ -51,20 +50,20 @@ public class DirMethodValue extends DirValue {
 
     @Override
     public int hashCodeForBlock() {
-        return _classMethodActor.name().hashCode();
+        return classMethodActor.name().hashCode();
     }
 
     @Override
     public boolean equals(Object other) {
         if (other instanceof DirMethodValue) {
             final DirMethodValue dirMethodValue = (DirMethodValue) other;
-            return _classMethodActor == dirMethodValue._classMethodActor;
+            return classMethodActor == dirMethodValue.classMethodActor;
         }
         return false;
     }
 
     @Override
     public String toString() {
-        return _classMethodActor.name().toString();
+        return classMethodActor.name().toString();
     }
 }

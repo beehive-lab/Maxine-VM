@@ -35,10 +35,10 @@ import com.sun.max.vm.reference.*;
  */
 public final class DirectGripScheme extends AbstractVMScheme implements GripScheme {
 
-    private DataModel _dataModel;
+    private DataModel dataModel;
     @INLINE
     public DataModel dataModel() {
-        return _dataModel;
+        return dataModel;
     }
 
     private WordWidth _gripWidth;
@@ -50,8 +50,8 @@ public final class DirectGripScheme extends AbstractVMScheme implements GripSche
 
     public DirectGripScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        _dataModel = vmConfiguration.platform().processorKind().dataModel();
-        _gripWidth = _dataModel.wordWidth();
+        dataModel = vmConfiguration.platform().processorKind().dataModel();
+        _gripWidth = dataModel.wordWidth();
     }
 
     @INLINE

@@ -37,8 +37,8 @@ public class CirVisitingTraversal extends CirTraversal {
     }
 
     public void run(CirVisitor visitor) {
-        while (!_toDo.isEmpty()) {
-            final CirNode node = _toDo.removeFirst();
+        while (!toDo.isEmpty()) {
+            final CirNode node = toDo.removeFirst();
             node.acceptVisitor(visitor);
             node.acceptVisitor(this);
         }

@@ -35,14 +35,14 @@ import com.sun.max.vm.value.*;
  */
 public final class StaticTuple {
 
-    private final ClassActor _classActor;
+    private final ClassActor classActor;
 
     public ClassActor classActor() {
-        return _classActor;
+        return classActor;
     }
 
     private StaticTuple(ClassActor classActor) {
-        _classActor = classActor;
+        this.classActor = classActor;
     }
 
     public static Object create(ClassActor classActor) {
@@ -64,12 +64,12 @@ public final class StaticTuple {
     }
 
     public FieldActor findStaticFieldActor(int offset) {
-        return _classActor.findStaticFieldActor(offset);
+        return classActor.findStaticFieldActor(offset);
     }
 
     @Override
     public String toString() {
-        return "staticTuple-" + _classActor.simpleName();
+        return "staticTuple-" + classActor.simpleName();
     }
 
     public static boolean is(Object object) {

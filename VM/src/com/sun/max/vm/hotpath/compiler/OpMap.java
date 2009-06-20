@@ -29,8 +29,8 @@ import com.sun.max.vm.type.*;
 public class OpMap {
     private static GrowableMapping<Pair<Operation, Kind>, Snippet> _operationSnippets;
     private static GrowableMapping<Pair<Operation, Kind>, Builtin> _operationBuiltins;
-    private static GrowableMapping<Pair<Kind, Kind>, Snippet> _conversionSnippets;
-    private static GrowableMapping<Pair<Kind, Kind>, Builtin> _conversionBuiltins;
+    private static GrowableMapping<Pair<Kind, Kind>, Snippet> conversionSnippets;
+    private static GrowableMapping<Pair<Kind, Kind>, Builtin> conversionBuiltins;
 
     private static Pair<Operation, Kind> from(Operation operation, Kind kind) {
         return new Pair<Operation, Kind>(operation, kind);
@@ -49,11 +49,11 @@ public class OpMap {
     }
 
     public static Snippet conversionSnippet(Kind fromKind, Kind toKind) {
-        return _conversionSnippets.get(from(fromKind, toKind));
+        return conversionSnippets.get(from(fromKind, toKind));
     }
 
     public static Builtin conversionBuiltin(Kind fromKind, Kind toKind) {
-        return _conversionBuiltins.get(from(fromKind, toKind));
+        return conversionBuiltins.get(from(fromKind, toKind));
     }
 
     static {
@@ -168,29 +168,29 @@ public class OpMap {
         _operationBuiltins.put(from(Operation.CMPG, Kind.DOUBLE), JavaBuiltin.DoubleCompareG.BUILTIN);
 
         // Conversion Snippets
-        _conversionSnippets = new OpenAddressingHashMapping<Pair<Kind, Kind>, Snippet>();
-        _conversionSnippets.put(from(Kind.FLOAT, Kind.INT), Snippet.ConvertFloatToInt.SNIPPET);
-        _conversionSnippets.put(from(Kind.FLOAT, Kind.LONG), Snippet.ConvertFloatToLong.SNIPPET);
+        conversionSnippets = new OpenAddressingHashMapping<Pair<Kind, Kind>, Snippet>();
+        conversionSnippets.put(from(Kind.FLOAT, Kind.INT), Snippet.ConvertFloatToInt.SNIPPET);
+        conversionSnippets.put(from(Kind.FLOAT, Kind.LONG), Snippet.ConvertFloatToLong.SNIPPET);
 
-        _conversionSnippets.put(from(Kind.DOUBLE, Kind.INT), Snippet.ConvertDoubleToInt.SNIPPET);
-        _conversionSnippets.put(from(Kind.DOUBLE, Kind.LONG), Snippet.ConvertDoubleToLong.SNIPPET);
+        conversionSnippets.put(from(Kind.DOUBLE, Kind.INT), Snippet.ConvertDoubleToInt.SNIPPET);
+        conversionSnippets.put(from(Kind.DOUBLE, Kind.LONG), Snippet.ConvertDoubleToLong.SNIPPET);
 
         // Conversion Builtins
-        _conversionBuiltins = new OpenAddressingHashMapping<Pair<Kind, Kind>, Builtin>();
-        _conversionBuiltins.put(from(Kind.INT, Kind.LONG), JavaBuiltin.ConvertIntToLong.BUILTIN);
-        _conversionBuiltins.put(from(Kind.INT, Kind.FLOAT), JavaBuiltin.ConvertIntToFloat.BUILTIN);
-        _conversionBuiltins.put(from(Kind.INT, Kind.DOUBLE), JavaBuiltin.ConvertIntToDouble.BUILTIN);
+        conversionBuiltins = new OpenAddressingHashMapping<Pair<Kind, Kind>, Builtin>();
+        conversionBuiltins.put(from(Kind.INT, Kind.LONG), JavaBuiltin.ConvertIntToLong.BUILTIN);
+        conversionBuiltins.put(from(Kind.INT, Kind.FLOAT), JavaBuiltin.ConvertIntToFloat.BUILTIN);
+        conversionBuiltins.put(from(Kind.INT, Kind.DOUBLE), JavaBuiltin.ConvertIntToDouble.BUILTIN);
 
-        _conversionBuiltins.put(from(Kind.INT, Kind.BYTE), JavaBuiltin.ConvertIntToByte.BUILTIN);
-        _conversionBuiltins.put(from(Kind.INT, Kind.CHAR), JavaBuiltin.ConvertIntToChar.BUILTIN);
-        _conversionBuiltins.put(from(Kind.INT, Kind.SHORT), JavaBuiltin.ConvertIntToShort.BUILTIN);
+        conversionBuiltins.put(from(Kind.INT, Kind.BYTE), JavaBuiltin.ConvertIntToByte.BUILTIN);
+        conversionBuiltins.put(from(Kind.INT, Kind.CHAR), JavaBuiltin.ConvertIntToChar.BUILTIN);
+        conversionBuiltins.put(from(Kind.INT, Kind.SHORT), JavaBuiltin.ConvertIntToShort.BUILTIN);
 
-        _conversionBuiltins.put(from(Kind.LONG, Kind.INT), JavaBuiltin.ConvertLongToInt.BUILTIN);
-        _conversionBuiltins.put(from(Kind.LONG, Kind.FLOAT), JavaBuiltin.ConvertLongToFloat.BUILTIN);
-        _conversionBuiltins.put(from(Kind.LONG, Kind.DOUBLE), JavaBuiltin.ConvertLongToDouble.BUILTIN);
+        conversionBuiltins.put(from(Kind.LONG, Kind.INT), JavaBuiltin.ConvertLongToInt.BUILTIN);
+        conversionBuiltins.put(from(Kind.LONG, Kind.FLOAT), JavaBuiltin.ConvertLongToFloat.BUILTIN);
+        conversionBuiltins.put(from(Kind.LONG, Kind.DOUBLE), JavaBuiltin.ConvertLongToDouble.BUILTIN);
 
-        _conversionBuiltins.put(from(Kind.FLOAT, Kind.DOUBLE), JavaBuiltin.ConvertFloatToDouble.BUILTIN);
+        conversionBuiltins.put(from(Kind.FLOAT, Kind.DOUBLE), JavaBuiltin.ConvertFloatToDouble.BUILTIN);
 
-        _conversionBuiltins.put(from(Kind.DOUBLE, Kind.FLOAT), JavaBuiltin.ConvertDoubleToFloat.BUILTIN);
+        conversionBuiltins.put(from(Kind.DOUBLE, Kind.FLOAT), JavaBuiltin.ConvertDoubleToFloat.BUILTIN);
     }
 }

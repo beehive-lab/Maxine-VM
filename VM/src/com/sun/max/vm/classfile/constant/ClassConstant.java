@@ -100,10 +100,10 @@ public interface ClassConstant extends PoolConstant<ClassConstant>, ValueConstan
 
     public static class Unresolved extends AbstractPoolConstant<ClassConstant> implements ClassConstant {
 
-        private final TypeDescriptor _typeDescriptor;
+        private final TypeDescriptor typeDescriptor;
 
         Unresolved(TypeDescriptor typeDescriptor) {
-            _typeDescriptor = typeDescriptor;
+            this.typeDescriptor = typeDescriptor;
         }
 
         @Override
@@ -116,14 +116,13 @@ public interface ClassConstant extends PoolConstant<ClassConstant>, ValueConstan
         }
 
         public TypeDescriptor typeDescriptor() {
-            return _typeDescriptor;
+            return typeDescriptor;
         }
 
         public ClassActor resolve(ConstantPool pool, int index) {
-            final TypeDescriptor typeDescriptor = _typeDescriptor;
             try {
                 try {
-                    final ClassActor classActor = typeDescriptor.resolve(pool.classLoader());
+                    final ClassActor classActor = this.typeDescriptor.resolve(pool.classLoader());
                     final ClassActor holder = pool.holder();
                     if (holder != null) {
                         // This handles the 'incompleteness' of a constant pool during class file loading.
@@ -134,7 +133,7 @@ public interface ClassConstant extends PoolConstant<ClassConstant>, ValueConstan
                     pool.updateAt(index, new Resolved(classActor));
                     return classActor;
                 } catch (RuntimeException e) {
-                    throw (NoClassDefFoundError) new NoClassDefFoundError(typeDescriptor.toJavaString()).initCause(e);
+                    throw (NoClassDefFoundError) new NoClassDefFoundError(this.typeDescriptor.toJavaString()).initCause(e);
                 }
             } catch (VirtualMachineError e) {
                 // Comment from Hotspot:
@@ -144,23 +143,23 @@ public interface ClassConstant extends PoolConstant<ClassConstant>, ValueConstan
                 // Needs clarification to section 5.4.3 of the JVM spec (see 6308271)
                 throw e;
             } catch (LinkageError e) {
-                pool.updateAt(index, new UnresolvedWithError(typeDescriptor, e));
+                pool.updateAt(index, new UnresolvedWithError(this.typeDescriptor, e));
                 throw e;
             }
         }
 
         public boolean isResolvableWithoutClassLoading(ConstantPool pool) {
-            return _typeDescriptor.isResolvableWithoutClassLoading(pool.holder(), pool.classLoader());
+            return typeDescriptor.isResolvableWithoutClassLoading(pool.holder(), pool.classLoader());
         }
 
         @Override
         public boolean equals(Object object) {
-            return object instanceof ClassConstant && ((ClassConstant) object).typeDescriptor().equals(_typeDescriptor);
+            return object instanceof ClassConstant && ((ClassConstant) object).typeDescriptor().equals(typeDescriptor);
         }
 
         @Override
         public int hashCode() {
-            return _typeDescriptor.hashCode();
+            return typeDescriptor.hashCode();
         }
 
         @Override
@@ -180,16 +179,16 @@ public interface ClassConstant extends PoolConstant<ClassConstant>, ValueConstan
 
     public static final class UnresolvedWithError extends Unresolved {
 
-        private final Error _error;
+        private final Error error;
 
         UnresolvedWithError(TypeDescriptor typeDescriptor, Error error) {
             super(typeDescriptor);
-            _error = error;
+            this.error = error;
         }
 
         @Override
         public String valueString(ConstantPool pool) {
-            return super.valueString(pool) + ", error=" + _error;
+            return super.valueString(pool) + ", error=" + error;
         }
     }
 }

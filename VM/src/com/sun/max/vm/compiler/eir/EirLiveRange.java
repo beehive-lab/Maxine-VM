@@ -37,17 +37,17 @@ import com.sun.max.vm.compiler.eir.allocate.*;
  */
 public abstract class EirLiveRange {
 
-    private final EirVariable _variable;
+    private final EirVariable variable;
 
     /**
      * Gets the variable this live range is associated with.
      */
     public EirVariable variable() {
-        return _variable;
+        return variable;
     }
 
     public EirLiveRange(EirVariable variable) {
-        _variable = variable;
+        this.variable = variable;
     }
 
     /**
@@ -92,10 +92,10 @@ public abstract class EirLiveRange {
     public abstract void forAllLiveInstructions(EirInstruction.Procedure procedure);
 
     public void compute() {
-        for (EirOperand operand : _variable.operands()) {
+        for (EirOperand operand : variable.operands()) {
             operand.recordDefinition();
         }
-        for (EirOperand operand : _variable.operands()) {
+        for (EirOperand operand : variable.operands()) {
             operand.recordUse();
         }
     }

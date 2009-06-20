@@ -24,12 +24,12 @@ import com.sun.max.vm.compiler.tir.pipeline.*;
 
 
 public class TirTreeCall extends TirInstruction {
-    final TirTree _tree;
-    final TirState _state;
+    final TirTree tree;
+    final TirState state;
 
     public TirTreeCall(TirTree tree, TirState state) {
-        _tree = tree;
-        _state = state;
+        this.tree = tree;
+        this.state = state;
     }
 
     @Override
@@ -43,10 +43,10 @@ public class TirTreeCall extends TirInstruction {
     }
 
     public TirState state() {
-        return _state;
+        return state;
     }
 
     public TirTree tree() {
-        return _tree;
+        return tree;
     }
 }

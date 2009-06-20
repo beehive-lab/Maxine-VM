@@ -42,25 +42,25 @@ public final class Preprocessor {
 
     private static final int TRACE_LEVEL = 6;
 
-    private final ClassMethodActor _classMethodActor;
-    private ConstantPoolEditor _constantPoolEditor;
+    private final ClassMethodActor classMethodActor;
+    private ConstantPoolEditor constantPoolEditor;
 
     private ConstantPoolEditor constantPoolEditor() {
-        if (_constantPoolEditor == null) {
-            _constantPoolEditor = _classMethodActor.holder().constantPool().edit();
+        if (constantPoolEditor == null) {
+            constantPoolEditor = classMethodActor.holder().constantPool().edit();
         }
-        return _constantPoolEditor;
+        return constantPoolEditor;
     }
 
     private void releaseConstantPoolEditor() {
-        if (_constantPoolEditor != null) {
-            _constantPoolEditor.release();
+        if (constantPoolEditor != null) {
+            constantPoolEditor.release();
         }
-        _constantPoolEditor = null;
+        constantPoolEditor = null;
     }
 
     private Preprocessor(ClassMethodActor classMethodActor) {
-        _classMethodActor = classMethodActor;
+        this.classMethodActor = classMethodActor;
     }
 
     public static CodeAttribute apply(ClassMethodActor classMethodActor, CodeAttribute originalCodeAttribute) {
@@ -76,9 +76,9 @@ public final class Preprocessor {
     private CodeAttribute run(CodeAttribute originalCodeAttribute) {
         CodeAttribute codeAttribute = originalCodeAttribute;
         String reason = "";
-        if (_classMethodActor.isNative()) {
+        if (classMethodActor.isNative()) {
             assert codeAttribute == null;
-            codeAttribute = new NativeStubGenerator(constantPoolEditor(), _classMethodActor).codeAttribute();
+            codeAttribute = new NativeStubGenerator(constantPoolEditor(), classMethodActor).codeAttribute();
             reason = "native";
         }
 
@@ -91,8 +91,8 @@ public final class Preprocessor {
             reason = reason + " dispatching";
         }
 
-        if (_classMethodActor.isSynchronized()) {
-            codeAttribute = new SynchronizedMethodPreprocessor(constantPoolEditor(), _classMethodActor, codeAttribute).codeAttribute();
+        if (classMethodActor.isSynchronized()) {
+            codeAttribute = new SynchronizedMethodPreprocessor(constantPoolEditor(), classMethodActor, codeAttribute).codeAttribute();
             reason = reason + " synchronizedMethod";
         }
 
@@ -100,10 +100,10 @@ public final class Preprocessor {
 
             String javaSignature = null;
             if (Trace.hasLevel(TRACE_LEVEL)) {
-                javaSignature = _classMethodActor.format("%r %H.%n(%p)");
+                javaSignature = classMethodActor.format("%r %H.%n(%p)");
                 Trace.line(TRACE_LEVEL);
                 Trace.line(TRACE_LEVEL, "bytecode preprocessed [" + reason + "]: " + javaSignature);
-                if (!_classMethodActor.isNative()) {
+                if (!classMethodActor.isNative()) {
                     Trace.stream().println("--- BEFORE PREPROCESSING ---");
                     CodeAttributePrinter.print(Trace.stream(), originalCodeAttribute);
                 }

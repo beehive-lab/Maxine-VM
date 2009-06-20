@@ -31,10 +31,10 @@ import com.sun.max.vm.type.*;
  */
 
 public final class EirVariable extends EirValue implements Comparable<EirVariable>, PoolObject {
-    private int _serial;
+    private int serial;
 
     public int serial() {
-        return _serial;
+        return serial;
     }
 
     /**
@@ -42,10 +42,10 @@ public final class EirVariable extends EirValue implements Comparable<EirVariabl
      * @param serial
      */
     public void setSerial(int serial) {
-        _serial = serial;
+        this.serial = serial;
     }
 
-    private final Kind _kind;
+    private final Kind kind;
 
 
     @Override
@@ -55,81 +55,81 @@ public final class EirVariable extends EirValue implements Comparable<EirVariabl
 
     @Override
     public Kind kind() {
-        return _kind;
+        return kind;
     }
 
     public boolean isReferenceCompatibleWith(EirValue other) {
-        return (_kind == Kind.REFERENCE) == (other.kind() == Kind.REFERENCE);
+        return (kind == Kind.REFERENCE) == (other.kind() == Kind.REFERENCE);
     }
 
-    private int _weight;
+    private int weight;
 
     public int weight() {
-        return _weight;
+        return weight;
     }
 
     public void setWeight(int weight) {
-        _weight = weight;
+        this.weight = weight;
     }
 
     public boolean isSpillingPrevented() {
-        return _weight == Integer.MAX_VALUE;
+        return weight == Integer.MAX_VALUE;
     }
 
     public EirVariable(Kind kind, int serial) {
-        _serial = serial;
-        _kind = kind;
+        this.serial = serial;
+        this.kind = kind;
     }
 
     public int compareTo(EirVariable other) {
-        return Ints.compare(other._weight, _weight); // backwards so that variables with higher weight come first
+        return Ints.compare(other.weight, weight); // backwards so that variables with higher weight come first
     }
 
-    private EirLiveRange _liveRange;
+    private EirLiveRange liveRange;
 
     public void resetLiveRange() {
-        _liveRange = new EirBitSetLiveRange(this);
+        liveRange = new EirBitSetLiveRange(this);
     }
 
     public EirLiveRange liveRange() {
-        return _liveRange;
+        return liveRange;
     }
 
     @Override
     public void recordDefinition(EirOperand operand) {
-        _liveRange.recordDefinition(operand);
+        liveRange.recordDefinition(operand);
     }
 
     @Override
     public void recordUse(EirOperand operand) {
-        _liveRange.recordUse(operand);
-        if (_aliasedVariables != null) {
-            for (EirVariable variable : _aliasedVariables) {
+        liveRange.recordUse(operand);
+        if (aliasedVariables != null) {
+            for (EirVariable variable : aliasedVariables) {
                 variable.recordUse(operand);
             }
         }
     }
 
-    private PoolSet<EirVariable> _interferingVariables;
+    private PoolSet<EirVariable> interferingVariables;
 
     public void resetInterferingVariables(PoolSet<EirVariable> emptyVariableSet) {
-        _interferingVariables = emptyVariableSet.clone();
+        interferingVariables = emptyVariableSet.clone();
     }
 
     public PoolSet<EirVariable> interferingVariables() {
-        return _interferingVariables;
+        return interferingVariables;
     }
 
     public void beInterferingWith(EirVariable other) {
         if (other != this) {
-            _interferingVariables.add(other);
-            other._interferingVariables.add(this);
+            interferingVariables.add(other);
+            other.interferingVariables.add(this);
         }
     }
 
     public void beNotInterferingWith(EirVariable other) {
-        _interferingVariables.remove(other);
-        other._interferingVariables.remove(this);
+        interferingVariables.remove(other);
+        other.interferingVariables.remove(this);
     }
 
     public void determineInterferences() {
@@ -164,7 +164,7 @@ public final class EirVariable extends EirValue implements Comparable<EirVariabl
                 case UPDATE:
                 case DEFINITION: {
                     final EirInstruction<?, ?> instruction = operand.instruction();
-                    if (_liveRange.contains(instruction)) {
+                    if (liveRange.contains(instruction)) {
                         return true;
                     }
                     break;
@@ -189,20 +189,20 @@ public final class EirVariable extends EirValue implements Comparable<EirVariabl
     }
 
     public void recomputeLiveRange() {
-        _liveRange = new EirBitSetLiveRange(this);
-        _liveRange.compute();
+        liveRange = new EirBitSetLiveRange(this);
+        liveRange.compute();
     }
 
     public boolean isLiveRangeIntact() {
-        final EirLiveRange oldLiveRange = _liveRange;
-        _liveRange = new EirBitSetLiveRange(this);
-        _liveRange.compute();
-        return oldLiveRange.equals(_liveRange);
+        final EirLiveRange oldLiveRange = liveRange;
+        liveRange = new EirBitSetLiveRange(this);
+        liveRange.compute();
+        return oldLiveRange.equals(liveRange);
     }
 
     public boolean areInterferencesIntact(EirMethodGeneration methodGeneration) {
         final PoolSet<EirVariable> nonInterferingVariables = PoolSet.allOf(methodGeneration.variablePool());
-        for (EirVariable variable : _interferingVariables) {
+        for (EirVariable variable : interferingVariables) {
             if (!isInterferingWith(variable)) {
                 traceLiveRange(variable);
                 return false;
@@ -225,7 +225,7 @@ public final class EirVariable extends EirValue implements Comparable<EirVariabl
         }
     }
 
-    private VariableDeterministicSet<EirVariable> _aliasedVariables;
+    private VariableDeterministicSet<EirVariable> aliasedVariables;
 
     /**
      * Establishes the relationship between this variable and another whereby the
@@ -235,31 +235,31 @@ public final class EirVariable extends EirValue implements Comparable<EirVariabl
      * re-allocated.
      */
     public void setAliasedVariable(EirVariable aliasedVariable) {
-        if (_aliasedVariables == null) {
-            _aliasedVariables = new LinkedIdentityHashSet<EirVariable>();
+        if (aliasedVariables == null) {
+            aliasedVariables = new LinkedIdentityHashSet<EirVariable>();
         }
         assert aliasedVariable != this;
-        _aliasedVariables.add(aliasedVariable);
+        aliasedVariables.add(aliasedVariable);
     }
 
     /**
      * @see #setAliasedVariable(EirVariable)
      */
     public DeterministicSet<EirVariable> aliasedVariables() {
-        return _aliasedVariables;
+        return aliasedVariables;
     }
 
     @Override
     public void cleanup() {
         super.cleanup();
-        _liveRange = null;
-        _interferingVariables = null;
-        _aliasedVariables = null;
+        liveRange = null;
+        interferingVariables = null;
+        aliasedVariables = null;
     }
 
     @Override
     public String toString() {
-        String s = _kind.character() + "$" + _serial;
+        String s = kind.character() + "$" + serial;
         if (location() != null) {
             s += "@" + location();
         }

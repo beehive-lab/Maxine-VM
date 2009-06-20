@@ -30,16 +30,16 @@ import com.sun.max.vm.type.*;
  */
 public class TrampolineMethodActor extends StaticMethodActor {
 
-    private final TRAMPOLINE.Invocation _invocation;
+    private final TRAMPOLINE.Invocation invocation;
 
     public TRAMPOLINE.Invocation invocation() {
-        return _invocation;
+        return invocation;
     }
 
     public TrampolineMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, CodeAttribute codeAttribute,
                                  TRAMPOLINE.Invocation invocation) {
         super(name, descriptor, flags, codeAttribute);
-        _invocation = invocation;
+        this.invocation = invocation;
     }
 
 }

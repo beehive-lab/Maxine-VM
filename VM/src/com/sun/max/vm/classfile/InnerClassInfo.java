@@ -31,42 +31,42 @@ import com.sun.max.vm.classfile.constant.*;
  */
 public class InnerClassInfo {
 
-    private final char _innerClassIndex;
-    private final char _outerClassIndex;
-    private final String _sourceName;
-    private final char _flags;
+    private final char innerClassIndex;
+    private final char outerClassIndex;
+    private final String sourceName;
+    private final char flags;
 
     public int innerClassIndex() {
-        return _innerClassIndex;
+        return innerClassIndex;
     }
 
     public int outerClassIndex() {
-        return _outerClassIndex;
+        return outerClassIndex;
     }
 
     public String sourceName() {
-        return _sourceName;
+        return sourceName;
     }
 
     public int flags() {
-        return _flags;
+        return flags;
     }
 
     public InnerClassInfo(ClassfileStream classfileStream, ConstantPool constantPool) {
-        _innerClassIndex = (char) classfileStream.readUnsigned2();
-        _outerClassIndex = (char) classfileStream.readUnsigned2();
+        innerClassIndex = (char) classfileStream.readUnsigned2();
+        outerClassIndex = (char) classfileStream.readUnsigned2();
         final int sourceNameIndex = classfileStream.readUnsigned2();
-        _sourceName = (sourceNameIndex == 0) ? null : constantPool.utf8At(sourceNameIndex, "inner class source name").toString();
-        _flags = (char) classfileStream.readUnsigned2();
+        sourceName = (sourceNameIndex == 0) ? null : constantPool.utf8At(sourceNameIndex, "inner class source name").toString();
+        flags = (char) classfileStream.readUnsigned2();
 
         // Access the components to verify the format of this attribute
-        if (_innerClassIndex != 0) {
-            constantPool.classAt(_innerClassIndex);
+        if (innerClassIndex != 0) {
+            constantPool.classAt(innerClassIndex);
         }
     }
 
     @Override
     public String toString() {
-        return "inner=" + (int) _innerClassIndex + ",outer=" + (int) _outerClassIndex + ",flags=0x" + Integer.toHexString(_flags) + ",source=" + _sourceName;
+        return "inner=" + (int) innerClassIndex + ",outer=" + (int) outerClassIndex + ",flags=0x" + Integer.toHexString(flags) + ",source=" + sourceName;
     }
 }

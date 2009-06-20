@@ -80,7 +80,7 @@ public interface CirRoutine extends Stoppable {
             return new CirCall(exceptionContinuation, CirConstant.fromObject(throwable));
         }
 
-        private static final TimerMetric _timer = GlobalMetrics.newTimer("CIRRoutine.evaluate", Clock.SYSTEM_MILLISECONDS);
+        private static final TimerMetric timer = GlobalMetrics.newTimer("CIRRoutine.evaluate", Clock.SYSTEM_MILLISECONDS);
 
         /**
          * Invokes a given method or constructor with a given set of CIR values as the arguments.
@@ -98,7 +98,7 @@ public interface CirRoutine extends Stoppable {
          */
         public static Value evaluate(MethodActor methodActor, CirValue[] cirArguments) throws CirFoldingException {
             try {
-                _timer.start();
+                timer.start();
                 if (methodActor.isInstanceInitializer()) {
                     final CirValue[] constructorArguments = Arrays.subArray(cirArguments, 1);
                     final Object uninitializedObject = cirArguments[0].value().asObject();
@@ -116,7 +116,7 @@ public interface CirRoutine extends Stoppable {
             } catch (IllegalAccessException illegalAccessException) {
                 throw ProgramError.unexpected("could not access method for invocation: " + methodActor);
             } finally {
-                _timer.stop();
+                timer.stop();
             }
         }
 

@@ -29,6 +29,7 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.util.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.verifier.TypeInferencingMethodVerifier.*;
@@ -108,7 +109,7 @@ public class SubroutineInliner {
                             final InstructionHandle callerHandle = subroutineCall.caller();
                             final Jsr caller = (Jsr) callerHandle.instruction();
 
-                            if (instruction != caller.target().targetedInstruction()) {
+                            if (instruction != caller.target.targetedInstruction()) {
                                 // If it's not the target of the JSR that got us here the JSR will be converted into a goto.
                                 callerHandle.setFlag(JSR_TARGETED_GOTO);
                             }
@@ -124,7 +125,7 @@ public class SubroutineInliner {
                                 } else {
                                     instructionHandle.setFlag(SKIP);
                                 }
-                                final SubroutineCall innerSubroutine = new SubroutineCall(jsr.target().subroutineFrame().subroutine(), subroutineCall, instructionHandle);
+                                final SubroutineCall innerSubroutine = new SubroutineCall(jsr.target.subroutineFrame().subroutine(), subroutineCall, instructionHandle);
                                 rewriteOneSubroutine(innerSubroutine);
                                 break;
                             }
@@ -199,10 +200,9 @@ public class SubroutineInliner {
         }
 
         if (_verbose) {
-            final PrintStream out = Trace.stream();
-            out.println();
+            Log.println();
             final String methodSignature = _verifier.classMethodActor().format("%H.%n(%p)");
-            out.println("Rewriting " + methodSignature);
+            Log.println("Rewriting " + methodSignature);
         }
 
         final int newCodeSize = position;
@@ -212,8 +212,7 @@ public class SubroutineInliner {
             final DataOutputStream dataStream = new DataOutputStream(newCodeStream);
             for (InstructionHandle instructionHandle : _instructionHandles) {
                 if (_verbose) {
-                    final PrintStream out = Trace.stream();
-                    out.println(instructionHandle + "   // " + instructionHandle.flag());
+                    Log.println(instructionHandle + "   // " + instructionHandle.flag());
                 }
                 if (instructionHandle.flag() != SKIP) {
                     final Instruction instruction = instructionHandle.instruction();
@@ -228,25 +227,25 @@ public class SubroutineInliner {
                         if (instruction instanceof Jsr) {
                             final Jsr jsr = (Jsr) branch;
                             assert instructionHandle.flag() == JSR_SIMPLE_GOTO || instructionHandle.flag() == JSR_TARGETED_GOTO;
-                            final SubroutineCall innerSubroutine = new SubroutineCall(jsr.target().subroutineFrame().subroutine(), subroutine, instructionHandle);
+                            final SubroutineCall innerSubroutine = new SubroutineCall(jsr.target.subroutineFrame().subroutine(), subroutine, instructionHandle);
 
                             if (opcode == Bytecode.JSR_W) {
                                 assert instruction.size() == 5;
                                 Bytecode.GOTO_W.writeTo(dataStream);
-                                dataStream.writeInt(calculateNewOffset(position, innerSubroutine, branch.target().position(), Ints.VALUE_RANGE));
+                                dataStream.writeInt(calculateNewOffset(position, innerSubroutine, branch.target.position(), Ints.VALUE_RANGE));
                             } else {
                                 assert instruction.size() == 3;
                                 Bytecode.GOTO.writeTo(dataStream);
-                                dataStream.writeShort(calculateNewOffset(position, innerSubroutine, branch.target().position(), Shorts.VALUE_RANGE));
+                                dataStream.writeShort(calculateNewOffset(position, innerSubroutine, branch.target.position(), Shorts.VALUE_RANGE));
                             }
                         } else {
                             opcode.writeTo(dataStream);
                             if (opcode == Bytecode.GOTO_W) {
                                 assert instruction.size() == 5;
-                                dataStream.writeInt(calculateNewOffset(position, subroutine, branch.target().position(), Ints.VALUE_RANGE));
+                                dataStream.writeInt(calculateNewOffset(position, subroutine, branch.target.position(), Ints.VALUE_RANGE));
                             } else {
                                 assert instruction.size() == 3;
-                                dataStream.writeShort(calculateNewOffset(position, subroutine, branch.target().position(), Shorts.VALUE_RANGE));
+                                dataStream.writeShort(calculateNewOffset(position, subroutine, branch.target.position(), Shorts.VALUE_RANGE));
                             }
                         }
                     } else {
@@ -279,19 +278,19 @@ public class SubroutineInliner {
                                 }
 
                                 // Update default target
-                                dataStream.writeInt(calculateNewOffset(position, subroutine, select.defaultTarget().position(), Ints.VALUE_RANGE));
+                                dataStream.writeInt(calculateNewOffset(position, subroutine, select.defaultTarget.position(), Ints.VALUE_RANGE));
 
                                 if (opcode == Bytecode.TABLESWITCH) {
                                     final Tableswitch tableswitch = (Tableswitch) select;
-                                    dataStream.writeInt(tableswitch.low());
-                                    dataStream.writeInt(tableswitch.high());
-                                    for (TypeState target : tableswitch.caseTargets()) {
+                                    dataStream.writeInt(tableswitch.low);
+                                    dataStream.writeInt(tableswitch.high);
+                                    for (TypeState target : tableswitch.caseTargets) {
                                         dataStream.writeInt(calculateNewOffset(position, subroutine, target.position(), Ints.VALUE_RANGE));
                                     }
                                 } else {
                                     final Lookupswitch lookupswitch = (Lookupswitch) select;
-                                    final TypeState[] caseTargets = lookupswitch.caseTargets();
-                                    final int[] matches = lookupswitch.matches();
+                                    final TypeState[] caseTargets = lookupswitch.caseTargets;
+                                    final int[] matches = lookupswitch.matches;
                                     dataStream.writeInt(matches.length); // npairs
                                     for (int i = 0; i != matches.length; ++i) {
                                         final TypeState target = caseTargets[i];

@@ -163,10 +163,10 @@ final class JDK_java_lang_ClassLoader {
      */
     private static final class Fake_AssertionStatusDirectives {
         String[] _classes;
-        boolean[] _classEnabled;
-        String[] _packages;
+        boolean[] classEnabled;
+        String[] packages;
         boolean[] _packageEnabled;
-        boolean _deflt;
+        boolean deflt;
     }
 
     /**
@@ -178,10 +178,10 @@ final class JDK_java_lang_ClassLoader {
         final Fake_AssertionStatusDirectives assertionStatusDirectives = new Fake_AssertionStatusDirectives();
         //TODO: obtain proper values for these from command line arguments:
         assertionStatusDirectives._classes = new String[0];
-        assertionStatusDirectives._classEnabled = new boolean[0];
-        assertionStatusDirectives._packages = new String[0];
+        assertionStatusDirectives.classEnabled = new boolean[0];
+        assertionStatusDirectives.packages = new String[0];
         assertionStatusDirectives._packageEnabled = new boolean[0];
-        assertionStatusDirectives._deflt = false;
+        assertionStatusDirectives.deflt = false;
 
         // Replace the result object's class reference with the type the JDK expects:
         final ClassActor classActor = ClassRegistry.vmClassRegistry().get(JavaTypeDescriptor.getDescriptorForJavaString("java.lang.AssertionStatusDirectives"));

@@ -28,24 +28,24 @@ import com.sun.max.vm.compiler.eir.*;
  */
 public abstract class AMD64EirUnaryOperation extends AMD64EirOperation {
 
-    private final EirOperand _operand;
+    private final EirOperand operand;
 
     protected AMD64EirUnaryOperation(EirBlock block, EirValue operand, EirOperand.Effect event, PoolSet<EirLocationCategory> locationCategories) {
         super(block);
-        _operand = new EirOperand(this, event, locationCategories);
-        _operand.setEirValue(operand);
+        this.operand = new EirOperand(this, event, locationCategories);
+        this.operand.setEirValue(operand);
     }
 
     public EirOperand operand() {
-        return _operand;
+        return operand;
     }
 
     public EirValue operandValue() {
-        return _operand.eirValue();
+        return operand.eirValue();
     }
 
     public EirLocation operandLocation() {
-        return _operand.location();
+        return operand.location();
     }
 
     public AMD64EirRegister.General operandGeneralRegister() {
@@ -54,13 +54,13 @@ public abstract class AMD64EirUnaryOperation extends AMD64EirOperation {
 
     @Override
     public void visitOperands(EirOperand.Procedure visitor) {
-        if (_operand != null) {
-            visitor.run(_operand);
+        if (operand != null) {
+            visitor.run(operand);
         }
     }
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "  " + _operand;
+        return getClass().getSimpleName() + "  " + operand;
     }
 }

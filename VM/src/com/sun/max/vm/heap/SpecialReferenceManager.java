@@ -63,9 +63,9 @@ public class SpecialReferenceManager {
         Grip getForwardGrip(Grip grip);
     }
 
-    private static final ReferenceFieldActor _nextField = getReferenceClassField("next");
-    private static final ReferenceFieldActor _discoveredField = getReferenceClassField("discovered");
-    private static final ReferenceFieldActor _referentField = getReferenceClassField("referent");
+    private static final ReferenceFieldActor nextField = getReferenceClassField("next");
+    private static final ReferenceFieldActor discoveredField = getReferenceClassField("discovered");
+    private static final ReferenceFieldActor referentField = getReferenceClassField("referent");
     private static final ReferenceFieldActor _pendingField = getReferenceClassField("pending");
 
     /**
@@ -77,14 +77,14 @@ public class SpecialReferenceManager {
     public static final Object LOCK = WithoutAccessCheck.getStaticField(JDK.java_lang_ref_Reference.javaClass(), "lock");
 
     // These methods and their invocation stubs must be compiled in the image
-    private static final CriticalMethod _registerMethod = new CriticalMethod(JDK.java_lang_ref_Finalizer.javaClass(), "register", SignatureDescriptor.create(Void.TYPE, Object.class));
-    private static final CriticalMethod _referenceHandlerConstructor = new CriticalMethod(JDK.java_lang_ref_Reference$ReferenceHandler.javaClass(), "<init>", SignatureDescriptor.create(Void.TYPE, ThreadGroup.class, String.class));
+    private static final CriticalMethod registerMethod = new CriticalMethod(JDK.java_lang_ref_Finalizer.javaClass(), "register", SignatureDescriptor.create(Void.TYPE, Object.class));
+    private static final CriticalMethod referenceHandlerConstructor = new CriticalMethod(JDK.java_lang_ref_Reference$ReferenceHandler.javaClass(), "<init>", SignatureDescriptor.create(Void.TYPE, ThreadGroup.class, String.class));
     static {
-        MaxineVM.registerImageInvocationStub(_registerMethod.classMethodActor());
-        MaxineVM.registerImageInvocationStub(_referenceHandlerConstructor.classMethodActor());
+        MaxineVM.registerImageInvocationStub(registerMethod.classMethodActor());
+        MaxineVM.registerImageInvocationStub(referenceHandlerConstructor.classMethodActor());
     }
 
-    private static Grip _discoveredList;
+    private static Grip discoveredList;
 
     /**
      * This method processes the special reference objects that were
@@ -99,17 +99,17 @@ public class SpecialReferenceManager {
      */
     public static void processDiscoveredSpecialReferences(GripForwarder gripForwarder) {
         // the first pass over the list finds the references that have referents that are no longer reachable
-        java.lang.ref.Reference ref = UnsafeLoophole.cast(_discoveredList.toJava());
+        java.lang.ref.Reference ref = UnsafeLoophole.cast(discoveredList.toJava());
         java.lang.ref.Reference last = UnsafeLoophole.cast(_pendingField.readStatic());
         while (ref != null) {
-            final Grip referent = Grip.fromJava(ref).readGrip(_referentField.offset());
+            final Grip referent = Grip.fromJava(ref).readGrip(referentField.offset());
             if (gripForwarder.isReachable(referent)) {
                 // this object is reachable, however the "referent" field was not scanned.
                 // we need to update this field manually
-                _referentField.writeObject(ref, gripForwarder.getForwardGrip(referent));
+                referentField.writeObject(ref, gripForwarder.getForwardGrip(referent));
             } else {
-                _referentField.writeObject(ref, null);
-                _nextField.writeObject(ref, last);
+                referentField.writeObject(ref, null);
+                nextField.writeObject(ref, last);
                 last = ref;
             }
             if (Heap.traceGC()) {
@@ -120,7 +120,7 @@ public class SpecialReferenceManager {
                 Log.print(ObjectAccess.toOrigin(ref));
                 Log.print(" whose referent ");
                 Log.print(referent.toOrigin());
-                final Object newReferent = _referentField.readObject(ref);
+                final Object newReferent = referentField.readObject(ref);
                 if (newReferent == null) {
                     Log.println(" was unreachable");
                 } else {
@@ -129,10 +129,10 @@ public class SpecialReferenceManager {
                 }
                 Log.unlock(lockDisabledSafepoints);
             }
-            ref = UnsafeLoophole.cast(_discoveredField.readObject(ref));
+            ref = UnsafeLoophole.cast(discoveredField.readObject(ref));
         }
         _pendingField.writeStatic(last);
-        _discoveredList = Grip.fromOrigin(Pointer.zero());
+        discoveredList = Grip.fromOrigin(Pointer.zero());
         if (last != null) {
             // if there are pending special references, notify the reference handler thread.
             // (note that the GC must already hold the lock object)
@@ -148,10 +148,10 @@ public class SpecialReferenceManager {
      * @param grip
      */
     public static void discoverSpecialReference(Grip grip) {
-        if (grip.readGrip(_nextField.offset()).isZero()) {
+        if (grip.readGrip(nextField.offset()).isZero()) {
             // the "next" field of this object is null, queue it for later processing
-            grip.writeGrip(_discoveredField.offset(), _discoveredList);
-            _discoveredList = grip;
+            grip.writeGrip(discoveredField.offset(), discoveredList);
+            discoveredList = grip;
             if (Heap.traceGC()) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Added ");
@@ -171,7 +171,7 @@ public class SpecialReferenceManager {
     public static void registerFinalizee(Object object) {
         if (FINALIZERS_SUPPORTED) {
             try {
-                final ClassMethodActor methodActor = _registerMethod.classMethodActor();
+                final ClassMethodActor methodActor = registerMethod.classMethodActor();
                 methodActor.invoke(ReferenceValue.from(object));
             } catch (Exception e) {
                 FatalError.unexpected("Could not register object for finalization", e);
@@ -216,7 +216,7 @@ public class SpecialReferenceManager {
             // do nothing; get the root thread group
         }
         try {
-            final Thread handler = (Thread) _referenceHandlerConstructor.classMethodActor().invokeConstructor(ReferenceValue.from(tg), ReferenceValue.from("Reference Handler")).asObject();
+            final Thread handler = (Thread) referenceHandlerConstructor.classMethodActor().invokeConstructor(ReferenceValue.from(tg), ReferenceValue.from("Reference Handler")).asObject();
             /* If there were a special system-only priority greater than
              * MAX_PRIORITY, it would be used here
              */

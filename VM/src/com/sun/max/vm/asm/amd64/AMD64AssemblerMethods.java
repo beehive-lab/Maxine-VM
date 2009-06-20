@@ -11376,74 +11376,74 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
     }
 
     class rip_add_48 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_add_48(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_add(_destination, offsetAsInt());
+            rip_add(destination, offsetAsInt());
         }
     }
 
     class rip_add_56 extends InstructionWithOffset {
-        private final AMD64GeneralRegister64 _destination;
+        private final AMD64GeneralRegister64 destination;
         rip_add_56(int startPosition, int endPosition, AMD64GeneralRegister64 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_add(_destination, offsetAsInt());
+            rip_add(destination, offsetAsInt());
         }
     }
 
     class rip_addsd_5504 extends InstructionWithOffset {
-        private final AMD64XMMRegister _destination;
+        private final AMD64XMMRegister destination;
         rip_addsd_5504(int startPosition, int endPosition, AMD64XMMRegister destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_addsd(_destination, offsetAsInt());
+            rip_addsd(destination, offsetAsInt());
         }
     }
 
     class rip_addss_5567 extends InstructionWithOffset {
-        private final AMD64XMMRegister _destination;
+        private final AMD64XMMRegister destination;
         rip_addss_5567(int startPosition, int endPosition, AMD64XMMRegister destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_addss(_destination, offsetAsInt());
+            rip_addss(destination, offsetAsInt());
         }
     }
 
     class rip_and_192 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_and_192(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_and(_destination, offsetAsInt());
+            rip_and(destination, offsetAsInt());
         }
     }
 
     class rip_and_200 extends InstructionWithOffset {
-        private final AMD64GeneralRegister64 _destination;
+        private final AMD64GeneralRegister64 destination;
         rip_and_200(int startPosition, int endPosition, AMD64GeneralRegister64 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_and(_destination, offsetAsInt());
+            rip_and(destination, offsetAsInt());
         }
     }
 
@@ -11468,354 +11468,354 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
     }
 
     class rip_cmova_3631 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_cmova_3631(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cmova(_destination, offsetAsInt());
+            rip_cmova(destination, offsetAsInt());
         }
     }
 
     class rip_cmovb_3496 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_cmovb_3496(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cmovb(_destination, offsetAsInt());
+            rip_cmovb(destination, offsetAsInt());
         }
     }
 
     class rip_cmovbe_3604 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_cmovbe_3604(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cmovbe(_destination, offsetAsInt());
+            rip_cmovbe(destination, offsetAsInt());
         }
     }
 
     class rip_cmove_3550 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_cmove_3550(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cmove(_destination, offsetAsInt());
+            rip_cmove(destination, offsetAsInt());
         }
     }
 
     class rip_cmovg_5333 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_cmovg_5333(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cmovg(_destination, offsetAsInt());
+            rip_cmovg(destination, offsetAsInt());
         }
     }
 
     class rip_cmovge_5279 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_cmovge_5279(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cmovge(_destination, offsetAsInt());
+            rip_cmovge(destination, offsetAsInt());
         }
     }
 
     class rip_cmovl_5252 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_cmovl_5252(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cmovl(_destination, offsetAsInt());
+            rip_cmovl(destination, offsetAsInt());
         }
     }
 
     class rip_cmovle_5306 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_cmovle_5306(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cmovle(_destination, offsetAsInt());
+            rip_cmovle(destination, offsetAsInt());
         }
     }
 
     class rip_cmovp_5198 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_cmovp_5198(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cmovp(_destination, offsetAsInt());
+            rip_cmovp(destination, offsetAsInt());
         }
     }
 
     class rip_cmp_2248 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_cmp_2248(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cmp(_destination, offsetAsInt());
+            rip_cmp(destination, offsetAsInt());
         }
     }
 
     class rip_cmp_2256 extends InstructionWithOffset {
-        private final AMD64GeneralRegister64 _destination;
+        private final AMD64GeneralRegister64 destination;
         rip_cmp_2256(int startPosition, int endPosition, AMD64GeneralRegister64 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cmp(_destination, offsetAsInt());
+            rip_cmp(destination, offsetAsInt());
         }
     }
 
     class rip_cmpsd_4445 extends InstructionWithOffset {
-        private final AMD64XMMRegister _destination;
-        private final AMD64XMMComparison _amd64xmmcomparison;
+        private final AMD64XMMRegister destination;
+        private final AMD64XMMComparison amd64xmmcomparison;
         rip_cmpsd_4445(int startPosition, int endPosition, AMD64XMMRegister destination, AMD64XMMComparison amd64xmmcomparison, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
-            _amd64xmmcomparison = amd64xmmcomparison;
+            this.destination = destination;
+            this.amd64xmmcomparison = amd64xmmcomparison;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cmpsd(_destination, offsetAsInt(), _amd64xmmcomparison);
+            rip_cmpsd(destination, offsetAsInt(), amd64xmmcomparison);
         }
     }
 
     class rip_cmpss_4454 extends InstructionWithOffset {
-        private final AMD64XMMRegister _destination;
-        private final AMD64XMMComparison _amd64xmmcomparison;
+        private final AMD64XMMRegister destination;
+        private final AMD64XMMComparison amd64xmmcomparison;
         rip_cmpss_4454(int startPosition, int endPosition, AMD64XMMRegister destination, AMD64XMMComparison amd64xmmcomparison, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
-            _amd64xmmcomparison = amd64xmmcomparison;
+            this.destination = destination;
+            this.amd64xmmcomparison = amd64xmmcomparison;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cmpss(_destination, offsetAsInt(), _amd64xmmcomparison);
+            rip_cmpss(destination, offsetAsInt(), amd64xmmcomparison);
         }
     }
 
     class rip_comisd_5027 extends InstructionWithOffset {
-        private final AMD64XMMRegister _destination;
+        private final AMD64XMMRegister destination;
         rip_comisd_5027(int startPosition, int endPosition, AMD64XMMRegister destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_comisd(_destination, offsetAsInt());
+            rip_comisd(destination, offsetAsInt());
         }
     }
 
     class rip_comiss_4957 extends InstructionWithOffset {
-        private final AMD64XMMRegister _destination;
+        private final AMD64XMMRegister destination;
         rip_comiss_4957(int startPosition, int endPosition, AMD64XMMRegister destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_comiss(_destination, offsetAsInt());
+            rip_comiss(destination, offsetAsInt());
         }
     }
 
     class rip_cvtsd2si_5072 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_cvtsd2si_5072(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cvtsd2si(_destination, offsetAsInt());
+            rip_cvtsd2si(destination, offsetAsInt());
         }
     }
 
     class rip_cvtsd2si_5081 extends InstructionWithOffset {
-        private final AMD64GeneralRegister64 _destination;
+        private final AMD64GeneralRegister64 destination;
         rip_cvtsd2si_5081(int startPosition, int endPosition, AMD64GeneralRegister64 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cvtsd2si(_destination, offsetAsInt());
+            rip_cvtsd2si(destination, offsetAsInt());
         }
     }
 
     class rip_cvtsd2ss_5522 extends InstructionWithOffset {
-        private final AMD64XMMRegister _destination;
+        private final AMD64XMMRegister destination;
         rip_cvtsd2ss_5522(int startPosition, int endPosition, AMD64XMMRegister destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cvtsd2ss(_destination, offsetAsInt());
+            rip_cvtsd2ss(destination, offsetAsInt());
         }
     }
 
     class rip_cvtsi2sdl_5036 extends InstructionWithOffset {
-        private final AMD64XMMRegister _destination;
+        private final AMD64XMMRegister destination;
         rip_cvtsi2sdl_5036(int startPosition, int endPosition, AMD64XMMRegister destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cvtsi2sdl(_destination, offsetAsInt());
+            rip_cvtsi2sdl(destination, offsetAsInt());
         }
     }
 
     class rip_cvtsi2sdq_5045 extends InstructionWithOffset {
-        private final AMD64XMMRegister _destination;
+        private final AMD64XMMRegister destination;
         rip_cvtsi2sdq_5045(int startPosition, int endPosition, AMD64XMMRegister destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cvtsi2sdq(_destination, offsetAsInt());
+            rip_cvtsi2sdq(destination, offsetAsInt());
         }
     }
 
     class rip_cvtsi2ssl_5090 extends InstructionWithOffset {
-        private final AMD64XMMRegister _destination;
+        private final AMD64XMMRegister destination;
         rip_cvtsi2ssl_5090(int startPosition, int endPosition, AMD64XMMRegister destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cvtsi2ssl(_destination, offsetAsInt());
+            rip_cvtsi2ssl(destination, offsetAsInt());
         }
     }
 
     class rip_cvtsi2ssq_5099 extends InstructionWithOffset {
-        private final AMD64XMMRegister _destination;
+        private final AMD64XMMRegister destination;
         rip_cvtsi2ssq_5099(int startPosition, int endPosition, AMD64XMMRegister destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cvtsi2ssq(_destination, offsetAsInt());
+            rip_cvtsi2ssq(destination, offsetAsInt());
         }
     }
 
     class rip_cvtss2sd_5585 extends InstructionWithOffset {
-        private final AMD64XMMRegister _destination;
+        private final AMD64XMMRegister destination;
         rip_cvtss2sd_5585(int startPosition, int endPosition, AMD64XMMRegister destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cvtss2sd(_destination, offsetAsInt());
+            rip_cvtss2sd(destination, offsetAsInt());
         }
     }
 
     class rip_cvtss2si_5126 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_cvtss2si_5126(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cvtss2si(_destination, offsetAsInt());
+            rip_cvtss2si(destination, offsetAsInt());
         }
     }
 
     class rip_cvtss2si_5135 extends InstructionWithOffset {
-        private final AMD64GeneralRegister64 _destination;
+        private final AMD64GeneralRegister64 destination;
         rip_cvtss2si_5135(int startPosition, int endPosition, AMD64GeneralRegister64 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cvtss2si(_destination, offsetAsInt());
+            rip_cvtss2si(destination, offsetAsInt());
         }
     }
 
     class rip_cvttsd2si_5054 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_cvttsd2si_5054(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cvttsd2si(_destination, offsetAsInt());
+            rip_cvttsd2si(destination, offsetAsInt());
         }
     }
 
     class rip_cvttsd2si_5063 extends InstructionWithOffset {
-        private final AMD64GeneralRegister64 _destination;
+        private final AMD64GeneralRegister64 destination;
         rip_cvttsd2si_5063(int startPosition, int endPosition, AMD64GeneralRegister64 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cvttsd2si(_destination, offsetAsInt());
+            rip_cvttsd2si(destination, offsetAsInt());
         }
     }
 
     class rip_cvttss2si_5108 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_cvttss2si_5108(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cvttss2si(_destination, offsetAsInt());
+            rip_cvttss2si(destination, offsetAsInt());
         }
     }
 
     class rip_cvttss2si_5117 extends InstructionWithOffset {
-        private final AMD64GeneralRegister64 _destination;
+        private final AMD64GeneralRegister64 destination;
         rip_cvttss2si_5117(int startPosition, int endPosition, AMD64GeneralRegister64 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_cvttss2si(_destination, offsetAsInt());
+            rip_cvttss2si(destination, offsetAsInt());
         }
     }
 
@@ -11830,26 +11830,26 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
     }
 
     class rip_divsd_5549 extends InstructionWithOffset {
-        private final AMD64XMMRegister _destination;
+        private final AMD64XMMRegister destination;
         rip_divsd_5549(int startPosition, int endPosition, AMD64XMMRegister destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_divsd(_destination, offsetAsInt());
+            rip_divsd(destination, offsetAsInt());
         }
     }
 
     class rip_divss_5621 extends InstructionWithOffset {
-        private final AMD64XMMRegister _destination;
+        private final AMD64XMMRegister destination;
         rip_divss_5621(int startPosition, int endPosition, AMD64XMMRegister destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_divss(_destination, offsetAsInt());
+            rip_divss(destination, offsetAsInt());
         }
     }
 
@@ -11874,26 +11874,26 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
     }
 
     class rip_imul_6103 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_imul_6103(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_imul(_destination, offsetAsInt());
+            rip_imul(destination, offsetAsInt());
         }
     }
 
     class rip_imul_6112 extends InstructionWithOffset {
-        private final AMD64GeneralRegister64 _destination;
+        private final AMD64GeneralRegister64 destination;
         rip_imul_6112(int startPosition, int endPosition, AMD64GeneralRegister64 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_imul(_destination, offsetAsInt());
+            rip_imul(destination, offsetAsInt());
         }
     }
 
@@ -12095,158 +12095,158 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
     }
 
     class rip_lea_2434 extends InstructionWithOffset {
-        private final AMD64GeneralRegister64 _destination;
+        private final AMD64GeneralRegister64 destination;
         rip_lea_2434(int startPosition, int endPosition, AMD64GeneralRegister64 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_lea(_destination, offsetAsInt());
+            rip_lea(destination, offsetAsInt());
         }
     }
 
     class rip_mov_2401 extends InstructionWithOffset {
-        private final AMD64GeneralRegister64 _destination;
+        private final AMD64GeneralRegister64 destination;
         rip_mov_2401(int startPosition, int endPosition, AMD64GeneralRegister64 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_mov(_destination, offsetAsInt());
+            rip_mov(destination, offsetAsInt());
         }
     }
 
     class rip_movsd_3373 extends InstructionWithOffset {
-        private final AMD64XMMRegister _destination;
+        private final AMD64XMMRegister destination;
         rip_movsd_3373(int startPosition, int endPosition, AMD64XMMRegister destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_movsd(_destination, offsetAsInt());
+            rip_movsd(destination, offsetAsInt());
         }
     }
 
     class rip_movss_3399 extends InstructionWithOffset {
-        private final AMD64XMMRegister _destination;
+        private final AMD64XMMRegister destination;
         rip_movss_3399(int startPosition, int endPosition, AMD64XMMRegister destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_movss(_destination, offsetAsInt());
+            rip_movss(destination, offsetAsInt());
         }
     }
 
     class rip_movsxb_6255 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_movsxb_6255(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_movsxb(_destination, offsetAsInt());
+            rip_movsxb(destination, offsetAsInt());
         }
     }
 
     class rip_movsxd_294 extends InstructionWithOffset {
-        private final AMD64GeneralRegister64 _destination;
+        private final AMD64GeneralRegister64 destination;
         rip_movsxd_294(int startPosition, int endPosition, AMD64GeneralRegister64 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_movsxd(_destination, offsetAsInt());
+            rip_movsxd(destination, offsetAsInt());
         }
     }
 
     class rip_movsxw_6282 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_movsxw_6282(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_movsxw(_destination, offsetAsInt());
+            rip_movsxw(destination, offsetAsInt());
         }
     }
 
     class rip_movzxd_303 extends InstructionWithOffset {
-        private final AMD64GeneralRegister64 _destination;
+        private final AMD64GeneralRegister64 destination;
         rip_movzxd_303(int startPosition, int endPosition, AMD64GeneralRegister64 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_movzxd(_destination, offsetAsInt());
+            rip_movzxd(destination, offsetAsInt());
         }
     }
 
     class rip_movzxw_4311 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_movzxw_4311(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_movzxw(_destination, offsetAsInt());
+            rip_movzxw(destination, offsetAsInt());
         }
     }
 
     class rip_mulsd_5513 extends InstructionWithOffset {
-        private final AMD64XMMRegister _destination;
+        private final AMD64XMMRegister destination;
         rip_mulsd_5513(int startPosition, int endPosition, AMD64XMMRegister destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_mulsd(_destination, offsetAsInt());
+            rip_mulsd(destination, offsetAsInt());
         }
     }
 
     class rip_mulss_5576 extends InstructionWithOffset {
-        private final AMD64XMMRegister _destination;
+        private final AMD64XMMRegister destination;
         rip_mulss_5576(int startPosition, int endPosition, AMD64XMMRegister destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_mulss(_destination, offsetAsInt());
+            rip_mulss(destination, offsetAsInt());
         }
     }
 
     class rip_or_2030 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_or_2030(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_or(_destination, offsetAsInt());
+            rip_or(destination, offsetAsInt());
         }
     }
 
     class rip_or_2038 extends InstructionWithOffset {
-        private final AMD64GeneralRegister64 _destination;
+        private final AMD64GeneralRegister64 destination;
         rip_or_2038(int startPosition, int endPosition, AMD64GeneralRegister64 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_or(_destination, offsetAsInt());
+            rip_or(destination, offsetAsInt());
         }
     }
 
@@ -12261,74 +12261,74 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
     }
 
     class rip_sub_2174 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_sub_2174(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_sub(_destination, offsetAsInt());
+            rip_sub(destination, offsetAsInt());
         }
     }
 
     class rip_sub_2182 extends InstructionWithOffset {
-        private final AMD64GeneralRegister64 _destination;
+        private final AMD64GeneralRegister64 destination;
         rip_sub_2182(int startPosition, int endPosition, AMD64GeneralRegister64 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_sub(_destination, offsetAsInt());
+            rip_sub(destination, offsetAsInt());
         }
     }
 
     class rip_subsd_5531 extends InstructionWithOffset {
-        private final AMD64XMMRegister _destination;
+        private final AMD64XMMRegister destination;
         rip_subsd_5531(int startPosition, int endPosition, AMD64XMMRegister destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_subsd(_destination, offsetAsInt());
+            rip_subsd(destination, offsetAsInt());
         }
     }
 
     class rip_subss_5603 extends InstructionWithOffset {
-        private final AMD64XMMRegister _destination;
+        private final AMD64XMMRegister destination;
         rip_subss_5603(int startPosition, int endPosition, AMD64XMMRegister destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_subss(_destination, offsetAsInt());
+            rip_subss(destination, offsetAsInt());
         }
     }
 
     class rip_xor_264 extends InstructionWithOffset {
-        private final AMD64GeneralRegister32 _destination;
+        private final AMD64GeneralRegister32 destination;
         rip_xor_264(int startPosition, int endPosition, AMD64GeneralRegister32 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_xor(_destination, offsetAsInt());
+            rip_xor(destination, offsetAsInt());
         }
     }
 
     class rip_xor_272 extends InstructionWithOffset {
-        private final AMD64GeneralRegister64 _destination;
+        private final AMD64GeneralRegister64 destination;
         rip_xor_272(int startPosition, int endPosition, AMD64GeneralRegister64 destination, Label label) {
             super(AMD64AssemblerMethods.this, startPosition, currentPosition(), label, 4);
-            _destination = destination;
+            this.destination = destination;
         }
         @Override
         protected void assemble() throws AssemblyException {
-            rip_xor(_destination, offsetAsInt());
+            rip_xor(destination, offsetAsInt());
         }
     }
 

@@ -39,16 +39,16 @@ public abstract class Stop {
     /**
      * The position of the stop in the target code of the method.
      */
-    final int _position;
+    final int position;
 
     /**
      * The bytecode position correlated with the stop.
      */
-    final int _bytecodePosition;
+    final int bytecodePosition;
 
     public Stop(int position, int bytecodePosition) {
-        _position = position;
-        _bytecodePosition = bytecodePosition;
+        this.position = position;
+        this.bytecodePosition = bytecodePosition;
     }
 
     /**
@@ -97,22 +97,22 @@ public abstract class Stop {
         /**
          * The template containing this derived stop.
          */
-        final TargetMethod _template;
+        final TargetMethod template;
 
         /**
          * The stop-type specific index of this stop.
          */
-        final int _index;
+        final int index;
 
         public TemplateStop(int position, int bytecodePosition, TargetMethod template, int index) {
             super(position, bytecodePosition);
-            _template = template;
-            _index = index;
+            this.template = template;
+            this.index = index;
         }
 
         @Override
         public void initializeStackReferenceMap(ByteArrayBitMap map, int firstTemplateSlot) {
-            final ByteArrayBitMap templateFrameReferenceMap = _template.frameReferenceMapFor(type(), _index);
+            final ByteArrayBitMap templateFrameReferenceMap = template.frameReferenceMapFor(type(), index);
             if (templateFrameReferenceMap != null) {
                 for (int i = templateFrameReferenceMap.nextSetBit(0); i >= 0; i = templateFrameReferenceMap.nextSetBit(i + 1)) {
                     map.set(firstTemplateSlot + i);
@@ -150,7 +150,7 @@ public abstract class Stop {
 
         @Override
         public ClassMethodActor directCallee() {
-            return _template.directCallees()[_index];
+            return template.directCallees()[index];
         }
 
         @Override
@@ -174,7 +174,7 @@ public abstract class Stop {
 
         @Override
         public void initializeRegisterReferenceMap(ByteArrayBitMap map) {
-            final ByteArrayBitMap templateRegisterReferenceMap = _template.registerReferenceMapFor(_index);
+            final ByteArrayBitMap templateRegisterReferenceMap = template.registerReferenceMapFor(index);
             for (int i = templateRegisterReferenceMap.nextSetBit(0); i >= 0; i = templateRegisterReferenceMap.nextSetBit(i + 1)) {
                 map.set(i);
             }

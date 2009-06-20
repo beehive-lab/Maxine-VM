@@ -37,11 +37,11 @@ import com.sun.max.vm.value.*;
  */
 public abstract class CirReducibleComparison extends CirReducibleCombination {
 
-    private final Kind _kind;
+    private final Kind kind;
 
     protected CirReducibleComparison(Builtin builtin, Kind kind) {
         super(builtin);
-        _kind = kind;
+        this.kind = kind;
     }
 
     /**
@@ -92,7 +92,7 @@ public abstract class CirReducibleComparison extends CirReducibleCombination {
         final CirValue oldSwitchDefaultContinuation = oldSwitchArguments[3];
 
         final CirSwitch oldSwitch = (CirSwitch) body.procedure();
-        final CirSwitch newSwitch = new CirSwitch(_kind, mapValueComparator(oldSwitch.valueComparator(), oldSwitchMatch), 1);
+        final CirSwitch newSwitch = new CirSwitch(kind, mapValueComparator(oldSwitch.valueComparator(), oldSwitchMatch), 1);
 
 
         return new CirCall(newSwitch, arguments[0], arguments[1], oldSwitchMatchContinuation, oldSwitchDefaultContinuation);
@@ -105,18 +105,18 @@ public abstract class CirReducibleComparison extends CirReducibleCombination {
     }
 
     private abstract static class CirReducibleAddressComparison extends CirReducibleComparison {
-        private final ValueComparator _valueComparator;
-        private final Address _pathologicalValue0;
-        private final Address _pathologicalValue1;
-        private final boolean _pathologicalResult;
+        private final ValueComparator valueComparator;
+        private final Address pathologicalValue0;
+        private final Address pathologicalValue1;
+        private final boolean pathologicalResult;
 
         protected CirReducibleAddressComparison(Builtin builtin, ValueComparator valueComparator,
                   Address pathologicalValue0, Address pathologicalValue1, boolean pathologicalResult) {
             super(builtin, Kind.WORD);
-            _valueComparator = valueComparator;
-            _pathologicalValue0 = pathologicalValue0;
-            _pathologicalValue1 = pathologicalValue1;
-            _pathologicalResult = pathologicalResult;
+            this.valueComparator = valueComparator;
+            this.pathologicalValue0 = pathologicalValue0;
+            this.pathologicalValue1 = pathologicalValue1;
+            this.pathologicalResult = pathologicalResult;
         }
 
         private boolean isPathological(CirValue argument, Address pathologicalValue) {
@@ -124,7 +124,7 @@ public abstract class CirReducibleComparison extends CirReducibleCombination {
         }
 
         private boolean arePathological(CirValue[] arguments) {
-            return isPathological(arguments[0], _pathologicalValue0) || isPathological(arguments[1], _pathologicalValue1);
+            return isPathological(arguments[0], pathologicalValue0) || isPathological(arguments[1], pathologicalValue1);
         }
 
         @Override
@@ -157,17 +157,17 @@ public abstract class CirReducibleComparison extends CirReducibleCombination {
         public CirCall reduce(CirOptimizer cirOptimizer, CirValue... arguments) {
             if (arePathological(arguments)) {
                 final CirValue normalContinuation = arguments[arguments.length - 2];
-                return new CirCall(normalContinuation, new CirConstant(BooleanValue.from(_pathologicalResult)));
+                return new CirCall(normalContinuation, new CirConstant(BooleanValue.from(pathologicalResult)));
             }
             return super.reduce(cirOptimizer, arguments);
         }
 
         @Override
-        protected ValueComparator mapValueComparator(ValueComparator valueComparator, int match) {
-            if ((match == 1) == (valueComparator == ValueComparator.EQUAL)) {
-                return _valueComparator;
+        protected ValueComparator mapValueComparator(ValueComparator comparator, int match) {
+            if ((match == 1) == (comparator == ValueComparator.EQUAL)) {
+                return this.valueComparator;
             }
-            return _valueComparator.complement();
+            return this.valueComparator.complement();
         }
     }
 
@@ -201,17 +201,17 @@ public abstract class CirReducibleComparison extends CirReducibleCombination {
 
     public static class CirReducibleUnsignedIntComparison extends CirReducibleComparison {
 
-        private final ValueComparator _valueComparator;
-        private final IntValue _pathologicalValue0;
-        private final IntValue _pathologicalValue1;
-        private final boolean _pathologicalResult;
+        private final ValueComparator valueComparator;
+        private final IntValue pathologicalValue0;
+        private final IntValue pathologicalValue1;
+        private final boolean pathologicalResult;
 
         protected CirReducibleUnsignedIntComparison(Builtin builtin, ValueComparator valueComparator, IntValue pathologicalValue0, IntValue pathologicalValue1, boolean pathologicalResult) {
             super(builtin, Kind.INT);
-            _valueComparator = valueComparator;
-            _pathologicalValue0 = pathologicalValue0;
-            _pathologicalValue1 = pathologicalValue1;
-            _pathologicalResult = pathologicalResult;
+            this.valueComparator = valueComparator;
+            this.pathologicalValue0 = pathologicalValue0;
+            this.pathologicalValue1 = pathologicalValue1;
+            this.pathologicalResult = pathologicalResult;
         }
 
         private boolean isPathological(CirValue argument, IntValue pathologicalValue) {
@@ -219,7 +219,7 @@ public abstract class CirReducibleComparison extends CirReducibleCombination {
         }
 
         private boolean arePathological(CirValue[] arguments) {
-            return isPathological(arguments[0], _pathologicalValue0) || isPathological(arguments[1], _pathologicalValue1);
+            return isPathological(arguments[0], pathologicalValue0) || isPathological(arguments[1], pathologicalValue1);
         }
 
         @Override
@@ -251,16 +251,16 @@ public abstract class CirReducibleComparison extends CirReducibleCombination {
         public CirCall reduce(CirOptimizer cirOptimizer, CirValue... arguments) {
             if (arePathological(arguments)) {
                 final CirValue normalContinuation = arguments[arguments.length - 2];
-                return new CirCall(normalContinuation, new CirConstant(BooleanValue.from(_pathologicalResult)));
+                return new CirCall(normalContinuation, new CirConstant(BooleanValue.from(pathologicalResult)));
             }
             return super.reduce(cirOptimizer, arguments);
         }
         @Override
-        protected ValueComparator mapValueComparator(ValueComparator valueComparator, int match) {
-            if ((match == 1) == (valueComparator == ValueComparator.EQUAL)) {
-                return _valueComparator;
+        protected ValueComparator mapValueComparator(ValueComparator comparator, int match) {
+            if ((match == 1) == (comparator == ValueComparator.EQUAL)) {
+                return this.valueComparator;
             }
-            return _valueComparator.complement();
+            return this.valueComparator.complement();
         }
 
 

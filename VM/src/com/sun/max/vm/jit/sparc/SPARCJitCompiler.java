@@ -49,24 +49,24 @@ import com.sun.max.vm.thread.*;
  * @author Laurent Daynes
  */
 public class SPARCJitCompiler extends JitCompiler {
-    private static GPR _jitFramePointerRegister;
-    private static GPR _jitLiteralBaseRegister;
+    private static GPR jitFramePointerRegister;
+    private static GPR jitLiteralBaseRegister;
 
-    private final SPARCTemplateBasedTargetGenerator _targetGenerator;
+    private final SPARCTemplateBasedTargetGenerator targetGenerator;
 
     public SPARCJitCompiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        _targetGenerator = new SPARCTemplateBasedTargetGenerator(this);
+        targetGenerator = new SPARCTemplateBasedTargetGenerator(this);
     }
 
     public SPARCJitCompiler(VMConfiguration vmConfiguration, TemplateTable templateTable) {
         this(vmConfiguration);
-        _targetGenerator.initializeTemplateTable(templateTable);
+        targetGenerator.initializeTemplateTable(templateTable);
     }
 
     @Override
     protected TemplateBasedTargetGenerator targetGenerator() {
-        return _targetGenerator;
+        return targetGenerator;
     }
 
     /**
@@ -99,15 +99,15 @@ public class SPARCJitCompiler extends JitCompiler {
     @NEVER_INLINE
     private static Address unwind(SPARCStackUnwindingContext context, Address catchAddress, Pointer stackPointer, Pointer framePointer, Pointer literalBase) {
         SpecialBuiltin.flushRegisterWindows();
-        final Address returnAddress = _stackUnwindStub.start();
+        final Address returnAddress = stackUnwindStub.start();
         final Pointer unwindStubFramePointer = context.isTopFrame() ? context.stackPointer() : context.framePointer();
 
         // Fix the local registers in the register window of the catcher. These will be used by the unwind stub to set the catcher's frame context.
         SPARCStackFrameLayout.setRegisterInSavedWindow(unwindStubFramePointer, GPR.L0, catchAddress);
         SPARCStackFrameLayout.setRegisterInSavedWindow(unwindStubFramePointer, GPR.L1, stackPointer);
-        SPARCStackFrameLayout.setRegisterInSavedWindow(unwindStubFramePointer, _jitLiteralBaseRegister,  literalBase);
+        SPARCStackFrameLayout.setRegisterInSavedWindow(unwindStubFramePointer, jitLiteralBaseRegister,  literalBase);
        // Patch the frame pointer in the register window to that of the JIT frame we'll unwind to.
-        SPARCStackFrameLayout.setRegisterInSavedWindow(unwindStubFramePointer, _jitFramePointerRegister,  framePointer);
+        SPARCStackFrameLayout.setRegisterInSavedWindow(unwindStubFramePointer, jitFramePointerRegister,  framePointer);
 
         // Save caller instruction pointer in call address register. This is only to help inspector figuring out what's the
         // call stack once we've smashed our return address with that of the unwind stub.
@@ -461,13 +461,13 @@ public class SPARCJitCompiler extends JitCompiler {
             }
         }
 
-        private final Address _jumpAddress;
-        private final TargetABI _callerTargetABI;
+        private final Address jumpAddress;
+        private final TargetABI callerTargetABI;
 
         StackUnwindStub(VMConfiguration vmConfiguration) {
             super(createStubCode(vmConfiguration));
-            _jumpAddress = start().plus(4 * SPARCStackFrameLayout.SPARC_INSTRUCTION_WIDTH);
-            _callerTargetABI = vmConfiguration.targetABIsScheme().jitABI();
+            jumpAddress = start().plus(4 * SPARCStackFrameLayout.SPARC_INSTRUCTION_WIDTH);
+            callerTargetABI = vmConfiguration.targetABIsScheme().jitABI();
         }
 
         @Override
@@ -482,19 +482,19 @@ public class SPARCJitCompiler extends JitCompiler {
                 // The stack unwind stub is always a top frame. When this is not the case, it's because the unwind method has just patched it's
                 // return address with this. In this case, the real instruction pointer for this frame is saved in the frame-less call address register.
                 // We just set the stack frame walker to the real frame and return.
-                final Pointer realInstructionPointer = stackFrameWalker.readFramelessCallAddressRegister(_callerTargetABI).asPointer();
+                final Pointer realInstructionPointer = stackFrameWalker.readFramelessCallAddressRegister(callerTargetABI).asPointer();
                 stackFrameWalker.advance(realInstructionPointer, stackFrameWalker.stackPointer(), stackFrameWalker.framePointer());
                 return true;
             }
 
-            if (instructionPointer.lessThan(_jumpAddress)) {
+            if (instructionPointer.lessThan(jumpAddress)) {
                 callerInstructionPointer = SPARCStackFrameLayout.getReturnAddress(stackFrameWalker);
                 callerFramePointer = SPARCStackFrameLayout.getCallerFramePointer(stackFrameWalker);
             } else {
                 // We're in the exception catcher's register windows. Get return address and frame pointer directly from the register
-                callerInstructionPointer = stackFrameWalker.readFramelessCallAddressRegister(_callerTargetABI).asPointer();
+                callerInstructionPointer = stackFrameWalker.readFramelessCallAddressRegister(callerTargetABI).asPointer();
                 // Reload stack and frame pointer from registers specified by the JIT abi.
-                stackFrameWalker.useABI(_callerTargetABI);
+                stackFrameWalker.useABI(callerTargetABI);
                 callerFramePointer = stackFrameWalker.framePointer();
             }
             final StackFrame stackFrame = new RuntimeStubStackFrame(stackFrameWalker.calleeStackFrame(), this,
@@ -513,19 +513,19 @@ public class SPARCJitCompiler extends JitCompiler {
             return "stack unwind stub";
         }
     }
-    private static RuntimeStub _stackUnwindStub;
+    private static RuntimeStub stackUnwindStub;
 
     public static RuntimeStub unwindStub() {
-        return _stackUnwindStub;
+        return stackUnwindStub;
     }
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         if (phase == MaxineVM.Phase.STARTING) {
             final TargetABI jitABI = vmConfiguration().targetABIsScheme().jitABI();
-            _jitFramePointerRegister = (GPR) jitABI.framePointer();
-            _jitLiteralBaseRegister = (GPR) jitABI.literalBaseRegister();
-            _stackUnwindStub = new StackUnwindStub(vmConfiguration());
+            jitFramePointerRegister = (GPR) jitABI.framePointer();
+            jitLiteralBaseRegister = (GPR) jitABI.literalBaseRegister();
+            stackUnwindStub = new StackUnwindStub(vmConfiguration());
         }
     }
 }

@@ -31,11 +31,11 @@ import com.sun.max.vm.runtime.*;
  */
 public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, FloatingPointRegister_Type extends Symbol> {
 
-    private final IntegerRegister_Type[] _integerRegisters;
+    private final IntegerRegister_Type[] integerRegisters;
 
     @FOLD
     public IntegerRegister_Type integerRegisterActingAs(VMRegister.Role role) {
-        return _integerRegisters[role.ordinal()];
+        return integerRegisters[role.ordinal()];
     }
 
     private final FloatingPointRegister_Type[] _floatingPointRegisters;
@@ -58,18 +58,18 @@ public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, F
                     Class<FloatingPointRegister_Type> floatingPointRegisterType,
                     FloatingPointRegister_Type floatingPointReturn, FloatingPointRegister_Type floatingPointScratch,
                     IntegerRegister_Type callInstructionAddress, IntegerRegister_Type framelessCallInstructionAddress) {
-        _integerRegisters = Arrays.newInstance(integerRegisterType, VMRegister.Role.VALUES.length());
-        _integerRegisters[VMRegister.Role.CPU_STACK_POINTER.ordinal()] = cpuStackPointer;
-        _integerRegisters[VMRegister.Role.CPU_FRAME_POINTER.ordinal()] = cpuFramePointer;
-        _integerRegisters[VMRegister.Role.ABI_STACK_POINTER.ordinal()] = abiStackPointer;
-        _integerRegisters[VMRegister.Role.ABI_FRAME_POINTER.ordinal()] = abiFramePointer;
-        _integerRegisters[VMRegister.Role.ABI_RETURN.ordinal()] = integerReturn;
-        _integerRegisters[VMRegister.Role.ABI_RESULT.ordinal()] = integerResult;
-        _integerRegisters[VMRegister.Role.ABI_SCRATCH.ordinal()] = integerScratch;
-        _integerRegisters[VMRegister.Role.SAFEPOINT_LATCH.ordinal()] = safepointLatch;
-        _integerRegisters[VMRegister.Role.LITERAL_BASE_POINTER.ordinal()] = literalBasePointer;
-        _integerRegisters[VMRegister.Role.CALL_INSTRUCTION_ADDRESS.ordinal()] = callInstructionAddress;
-        _integerRegisters[VMRegister.Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS.ordinal()] = framelessCallInstructionAddress;
+        integerRegisters = Arrays.newInstance(integerRegisterType, VMRegister.Role.VALUES.length());
+        integerRegisters[VMRegister.Role.CPU_STACK_POINTER.ordinal()] = cpuStackPointer;
+        integerRegisters[VMRegister.Role.CPU_FRAME_POINTER.ordinal()] = cpuFramePointer;
+        integerRegisters[VMRegister.Role.ABI_STACK_POINTER.ordinal()] = abiStackPointer;
+        integerRegisters[VMRegister.Role.ABI_FRAME_POINTER.ordinal()] = abiFramePointer;
+        integerRegisters[VMRegister.Role.ABI_RETURN.ordinal()] = integerReturn;
+        integerRegisters[VMRegister.Role.ABI_RESULT.ordinal()] = integerResult;
+        integerRegisters[VMRegister.Role.ABI_SCRATCH.ordinal()] = integerScratch;
+        integerRegisters[VMRegister.Role.SAFEPOINT_LATCH.ordinal()] = safepointLatch;
+        integerRegisters[VMRegister.Role.LITERAL_BASE_POINTER.ordinal()] = literalBasePointer;
+        integerRegisters[VMRegister.Role.CALL_INSTRUCTION_ADDRESS.ordinal()] = callInstructionAddress;
+        integerRegisters[VMRegister.Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS.ordinal()] = framelessCallInstructionAddress;
 
         _floatingPointRegisters = Arrays.newInstance(floatingPointRegisterType, VMRegister.Role.values().length);
         _floatingPointRegisters[VMRegister.Role.ABI_RETURN.ordinal()] = floatingPointReturn;
@@ -95,8 +95,8 @@ public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, F
 
     public RegisterRoleAssignment(RegisterRoleAssignment<IntegerRegister_Type, FloatingPointRegister_Type> original,
                                   VMRegister.Role role, IntegerRegister_Type newIntegerRegister) {
-        _integerRegisters = original._integerRegisters.clone();
-        _integerRegisters[role.ordinal()] = newIntegerRegister;
+        integerRegisters = original.integerRegisters.clone();
+        integerRegisters[role.ordinal()] = newIntegerRegister;
         _floatingPointRegisters = original._floatingPointRegisters;
     }
 

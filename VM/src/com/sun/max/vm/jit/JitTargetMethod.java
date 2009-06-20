@@ -53,23 +53,23 @@ public abstract class JitTargetMethod extends TargetMethod {
         return MaxineVM.hostOrTarget().configuration().jitScheme();
     }
 
-    private int _optimizedCallerAdapterFrameCodeSize;
+    private int optimizedCallerAdapterFrameCodeSize;
 
     /**
      * The size of the adapter frame code found at the {@linkplain CallEntryPoint#OPTIMIZED_ENTRY_POINT entry point} for
      * a call from a method compiled with the optimizing compiler.
      */
     public int optimizedCallerAdapterFrameCodeSize() {
-        return _optimizedCallerAdapterFrameCodeSize;
+        return optimizedCallerAdapterFrameCodeSize;
     }
 
-    private int _adapterReturnPosition;
+    private int adapterReturnPosition;
 
     /**
      * @return the code position to which the JIT method returns in its optimized-to-JIT adapter code or -1 if there is no adapter.
      */
     public int adapterReturnPosition() {
-        return _adapterReturnPosition;
+        return adapterReturnPosition;
     }
 
     /**
@@ -79,15 +79,15 @@ public abstract class JitTargetMethod extends TargetMethod {
      * used to compile the runtime (i.e the opto compiler). All other direct calls are linked using the call entry point
      * associated with the JIT compiler.
      */
-    private byte[] _isDirectCallToRuntime;
+    private byte[] isDirectCallToRuntime;
 
     public boolean isDirectCallToRuntime(int stopIndex) {
-        return _isDirectCallToRuntime != null && (stopIndex < numberOfDirectCalls()) && ByteArrayBitMap.isSet(_isDirectCallToRuntime, 0, _isDirectCallToRuntime.length, stopIndex);
+        return isDirectCallToRuntime != null && (stopIndex < numberOfDirectCalls()) && ByteArrayBitMap.isSet(isDirectCallToRuntime, 0, isDirectCallToRuntime.length, stopIndex);
     }
 
     @Override
     protected CallEntryPoint callEntryPointForDirectCall(int directCallIndex) {
-        if (_isDirectCallToRuntime != null && ByteArrayBitMap.isSet(_isDirectCallToRuntime, 0, _isDirectCallToRuntime.length, directCallIndex)) {
+        if (isDirectCallToRuntime != null && ByteArrayBitMap.isSet(isDirectCallToRuntime, 0, isDirectCallToRuntime.length, directCallIndex)) {
             return CallEntryPoint.OPTIMIZED_ENTRY_POINT;
         }
         return super.callEntryPointForDirectCall(directCallIndex);
@@ -107,10 +107,10 @@ public abstract class JitTargetMethod extends TargetMethod {
      * last target code byte emitted for the last bytecode instruction.
      */
     @INSPECTED
-    private int[] _bytecodeToTargetCodePositionMap;
+    private int[] bytecodeToTargetCodePositionMap;
 
     public int targetCodePositionFor(int bytecodePosition) {
-        return _bytecodeToTargetCodePositionMap[bytecodePosition];
+        return bytecodeToTargetCodePositionMap[bytecodePosition];
     }
 
     @Override
@@ -135,8 +135,8 @@ public abstract class JitTargetMethod extends TargetMethod {
      *         code, prologue or epilogue.
      */
     public int bytecodePositionFor(Pointer instructionPointer) {
-        assert _bytecodeToTargetCodePositionMap != null;
-        assert _bytecodeToTargetCodePositionMap.length > 0;
+        assert bytecodeToTargetCodePositionMap != null;
+        assert bytecodeToTargetCodePositionMap.length > 0;
         final int targetCodePosition = targetCodePositionFor(instructionPointer);
         return bytecodePositionFor(targetCodePosition);
     }
@@ -146,12 +146,12 @@ public abstract class JitTargetMethod extends TargetMethod {
      */
     @Override
     public final JitStackFrameLayout stackFrameLayout() {
-        final JitReferenceMapEditor referenceMapEditor = _referenceMapEditor;
-        if (referenceMapEditor != null) {
-            return referenceMapEditor.stackFrameLayout();
+        final JitReferenceMapEditor refMapEditor = this.referenceMapEditor;
+        if (refMapEditor != null) {
+            return refMapEditor.stackFrameLayout();
         }
-        FatalError.check(_stackFrameLayout != null, "Cannot get JIT stack frame layout for incomplete JIT method");
-        return _stackFrameLayout;
+        FatalError.check(stackFrameLayout != null, "Cannot get JIT stack frame layout for incomplete JIT method");
+        return stackFrameLayout;
     }
 
     /**
@@ -165,12 +165,12 @@ public abstract class JitTargetMethod extends TargetMethod {
      *         correlate with a bytecode.
      */
     public int bytecodePositionFor(int targetCodePosition) {
-        assert _bytecodeToTargetCodePositionMap != null;
-        assert _bytecodeToTargetCodePositionMap.length > 0;
+        assert bytecodeToTargetCodePositionMap != null;
+        assert bytecodeToTargetCodePositionMap.length > 0;
         int bytecodePosition;
         if (targetCodePosition >= targetCodePositionFor(0)) {
             bytecodePosition = -1;
-            for (int i = 0; i != _bytecodeToTargetCodePositionMap.length; i++) {
+            for (int i = 0; i != bytecodeToTargetCodePositionMap.length; i++) {
                 if (targetCodePositionFor(i) > targetCodePosition) {
                     // For now just ensure we are to the left from a bytecode that is too far to the right:
                     bytecodePosition = i - 1;
@@ -181,7 +181,7 @@ public abstract class JitTargetMethod extends TargetMethod {
 
             // We are just left of the leftmost bytecode that is too far right.
             // Find the start of the bytecode instruction we are in:
-            while (bytecodePosition >= 0 && _bytecodeToTargetCodePositionMap[bytecodePosition] == 0) {
+            while (bytecodePosition >= 0 && bytecodeToTargetCodePositionMap[bytecodePosition] == 0) {
                 bytecodePosition--;
             }
             return bytecodePosition;
@@ -198,10 +198,10 @@ public abstract class JitTargetMethod extends TargetMethod {
      */
     public static class CodeTranslation {
 
-        private final int _bytecodePosition;
-        private final int _bytecodeLength;
-        private final int _targetCodePosition;
-        private final int _targetCodeLength;
+        private final int bytecodePosition;
+        private final int bytecodeLength;
+        private final int targetCodePosition;
+        private final int targetCodeLength;
 
         /**
          * Creates an object that correlates a bytecode range with a target code range.
@@ -214,10 +214,10 @@ public abstract class JitTargetMethod extends TargetMethod {
          * @param targetCodeLength the length of the target code range
          */
         public CodeTranslation(int bytecodePosition, int bytecodeLength, int targetCodePosition, int targetCodeLength) {
-            _bytecodeLength = bytecodeLength;
-            _bytecodePosition = bytecodePosition;
-            _targetCodeLength = targetCodeLength;
-            _targetCodePosition = targetCodePosition;
+            this.bytecodeLength = bytecodeLength;
+            this.bytecodePosition = bytecodePosition;
+            this.targetCodeLength = targetCodeLength;
+            this.targetCodePosition = targetCodePosition;
         }
 
         /**
@@ -225,7 +225,7 @@ public abstract class JitTargetMethod extends TargetMethod {
          * {@link #bytecodeLength()} does not return 0.
          */
         public int bytecodePosition() {
-            return _bytecodePosition;
+            return bytecodePosition;
         }
 
         /**
@@ -233,14 +233,14 @@ public abstract class JitTargetMethod extends TargetMethod {
          * only valid if {@link #bytecodeLength()} does not return 0.
          */
         public int bytecodeEndPosition() {
-            return _bytecodePosition + _bytecodeLength;
+            return bytecodePosition + bytecodeLength;
         }
 
         /**
          * Gets the length of the bytecode range represented by this object.
          */
         public int bytecodeLength() {
-            return _bytecodeLength;
+            return bytecodeLength;
         }
 
         /**
@@ -248,7 +248,7 @@ public abstract class JitTargetMethod extends TargetMethod {
          * {@link #targetCodeLength()} does not return 0.
          */
         public int targetCodePosition() {
-            return _targetCodePosition;
+            return targetCodePosition;
         }
 
         /**
@@ -256,14 +256,14 @@ public abstract class JitTargetMethod extends TargetMethod {
          * {@link #targetCodeLength()} does not return 0.
          */
         public int targetCodeEndPosition() {
-            return _targetCodePosition + _targetCodeLength;
+            return targetCodePosition + targetCodeLength;
         }
 
         /**
          * Gets the length of the target code range represented by this object.
          */
         public int targetCodeLength() {
-            return _targetCodeLength;
+            return targetCodeLength;
         }
 
         /**
@@ -281,8 +281,8 @@ public abstract class JitTargetMethod extends TargetMethod {
 
         @Override
         public String toString() {
-            final String bytecode = _bytecodeLength == 0 ? "[]" : "[" + _bytecodePosition + " - " + (bytecodeEndPosition() - 1) + "]";
-            final String targetCode = _targetCodeLength == 0 ? "[]" : "[" + _targetCodePosition + " - " + (targetCodeEndPosition() - 1) + "]";
+            final String bytecode = bytecodeLength == 0 ? "[]" : "[" + bytecodePosition + " - " + (bytecodeEndPosition() - 1) + "]";
+            final String targetCode = targetCodeLength == 0 ? "[]" : "[" + targetCodePosition + " - " + (targetCodeEndPosition() - 1) + "]";
             return bytecode + " -> " + targetCode;
         }
     }
@@ -295,11 +295,11 @@ public abstract class JitTargetMethod extends TargetMethod {
     public Sequence<CodeTranslation> codeTranslations() {
         final AppendableSequence<CodeTranslation> translations = new ArrayListSequence<CodeTranslation>();
         int startBytecodePosition = 0;
-        int startTargetCodePosition = _bytecodeToTargetCodePositionMap[0];
+        int startTargetCodePosition = bytecodeToTargetCodePositionMap[0];
         assert startTargetCodePosition != 0;
         translations.append(new CodeTranslation(0, 0, 0, startTargetCodePosition));
-        for (int bytecodePosition = 1; bytecodePosition != _bytecodeToTargetCodePositionMap.length; ++bytecodePosition) {
-            final int targetCodePosition = _bytecodeToTargetCodePositionMap[bytecodePosition];
+        for (int bytecodePosition = 1; bytecodePosition != bytecodeToTargetCodePositionMap.length; ++bytecodePosition) {
+            final int targetCodePosition = bytecodeToTargetCodePositionMap[bytecodePosition];
             if (targetCodePosition != 0) {
                 final CodeTranslation codeTranslation = new CodeTranslation(startBytecodePosition, bytecodePosition - startBytecodePosition, startTargetCodePosition, targetCodePosition - startTargetCodePosition);
                 translations.append(codeTranslation);
@@ -314,15 +314,15 @@ public abstract class JitTargetMethod extends TargetMethod {
     }
 
     @INSPECTED
-    private BytecodeInfo[] _bytecodeInfos;
+    private BytecodeInfo[] bytecodeInfos;
 
-    private int _frameReferenceMapOffset;
+    private int frameReferenceMapOffset;
 
     /**
      * @return references to the emitted templates or to byte codes in corresponding order to the above
      */
     public final BytecodeInfo[] bytecodeInfos() {
-        return _bytecodeInfos;
+        return bytecodeInfos;
     }
 
     public final void setGenerated(TargetBundle targetBundle,
@@ -366,15 +366,15 @@ public abstract class JitTargetMethod extends TargetMethod {
             jitStackFrameLayout.frameReferenceMapSize(),
             abi,
             -1);
-        _isDirectCallToRuntime = isDirectRuntimeCall == null ? null : isDirectRuntimeCall.bytes();
-        _bytecodeToTargetCodePositionMap = bytecodeToTargetCodePositionMap;
-        _bytecodeInfos = bytecodeInfos;
-        _frameReferenceMapOffset = jitStackFrameLayout.frameReferenceMapOffset();
-        _optimizedCallerAdapterFrameCodeSize = optimizedCallerAdapterFrameCodeSize;
-        _adapterReturnPosition = adapterReturnPosition;
+        this.isDirectCallToRuntime = isDirectRuntimeCall == null ? null : isDirectRuntimeCall.bytes();
+        this.bytecodeToTargetCodePositionMap = bytecodeToTargetCodePositionMap;
+        this.bytecodeInfos = bytecodeInfos;
+        this.frameReferenceMapOffset = jitStackFrameLayout.frameReferenceMapOffset();
+        this.optimizedCallerAdapterFrameCodeSize = optimizedCallerAdapterFrameCodeSize;
+        this.adapterReturnPosition = adapterReturnPosition;
         if (stopPositions != null) {
-            _referenceMapEditor = new JitReferenceMapEditor(this, numberOfBlocks, blockStarts, bytecodeStopsIterator, jitStackFrameLayout);
-            final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(_referenceMapEditor.blockFrames());
+            this.referenceMapEditor = new JitReferenceMapEditor(this, numberOfBlocks, blockStarts, bytecodeStopsIterator, jitStackFrameLayout);
+            final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(referenceMapEditor.blockFrames());
             if (interpreter.performsAllocation() || MaxineVM.isPrototyping()) {
                 // if computing the reference map requires allocation or if prototyping,
                 // compute the reference map now
@@ -385,30 +385,30 @@ public abstract class JitTargetMethod extends TargetMethod {
 
     @Override
     public synchronized void finalizeReferenceMaps() {
-        if (_referenceMapEditor != null) {
-            _referenceMapEditor.fillInMaps(_bytecodeToTargetCodePositionMap);
-            _stackFrameLayout = _referenceMapEditor.stackFrameLayout();
-            _referenceMapEditor = null;
+        if (referenceMapEditor != null) {
+            referenceMapEditor.fillInMaps(bytecodeToTargetCodePositionMap);
+            stackFrameLayout = referenceMapEditor.stackFrameLayout();
+            referenceMapEditor = null;
         }
     }
 
     @Override
     public boolean areReferenceMapsFinalized() {
-        return _referenceMapEditor == null;
+        return referenceMapEditor == null;
     }
 
-    private JitReferenceMapEditor _referenceMapEditor;
+    private JitReferenceMapEditor referenceMapEditor;
 
     /**
-     * The preserves the stack frame layout object from {@link #_referenceMapEditor} when the latter is cleared in {@link #finalizeReferenceMaps()}.
+     * The preserves the stack frame layout object from {@link #referenceMapEditor} when the latter is cleared in {@link #finalizeReferenceMaps()}.
      * The stack frame layout object is required by {@link StackReferenceMapPreparer#prepareTrampolineFrameForJITCaller}.
      */
-    private JitStackFrameLayout _stackFrameLayout;
+    private JitStackFrameLayout stackFrameLayout;
 
     @Override
     public boolean prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
         finalizeReferenceMaps();
-        return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, framePointer.plus(_frameReferenceMapOffset), stackPointer);
+        return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, framePointer.plus(frameReferenceMapOffset), stackPointer);
     }
 
     public Pointer getFramePointer(Pointer cpuStackPointer, Pointer cpuFramePointer, Pointer osSignalIntegerRegisters) {

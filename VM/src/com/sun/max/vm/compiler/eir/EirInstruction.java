@@ -107,42 +107,42 @@ public abstract class EirInstruction<EirInstructionVisitor_Type extends EirInstr
         ProgramError.unexpected("impossible immediate width");
     }
 
-    private PoolSet<EirRegister> _registers;
+    private PoolSet<EirRegister> registers;
 
     public boolean hasRegister(EirRegister register) {
-        if (_registers == null) {
+        if (registers == null) {
             return true;
         }
-        return _registers.contains(register);
+        return registers.contains(register);
     }
 
     public void removeRegister(EirRegister register, Pool<EirRegister> registerPool) {
-        if (_registers == null) {
-            _registers = PoolSet.allOf(registerPool);
+        if (registers == null) {
+            registers = PoolSet.allOf(registerPool);
         }
-        _registers.remove(register);
+        registers.remove(register);
     }
 
-    private PoolSet<EirVariable> _liveVariables;
+    private PoolSet<EirVariable> liveVariables;
 
     public void resetLiveVariables(PoolSet<EirVariable> emptyVariableSet) {
-        _liveVariables = emptyVariableSet.clone();
+        liveVariables = emptyVariableSet.clone();
     }
 
     public void setLiveVariables(PoolSet<EirVariable> liveVariables) {
-        _liveVariables = liveVariables;
+        this.liveVariables = liveVariables;
     }
 
     public PoolSet<EirVariable> liveVariables() {
-        return _liveVariables;
+        return liveVariables;
     }
 
     public void addLiveVariable(EirVariable variable) {
-        _liveVariables.add(variable);
+        liveVariables.add(variable);
     }
 
     public void removeLiveVariable(EirVariable variable) {
-        _liveVariables.remove(variable);
+        liveVariables.remove(variable);
     }
 
     public void recordEffects() {
@@ -234,23 +234,23 @@ public abstract class EirInstruction<EirInstructionVisitor_Type extends EirInstr
         return true;
     }
 
-    private static final BitSet _emptyLocationFlags = new BitSet();
+    private static final BitSet emptyLocationFlags = new BitSet();
 
-    private BitSet _locationFlags;
+    private BitSet locationFlags;
 
     public BitSet locationFlags() {
-        if (_locationFlags == null) {
-            assert _emptyLocationFlags.isEmpty();
-            return _emptyLocationFlags;
+        if (locationFlags == null) {
+            assert emptyLocationFlags.isEmpty();
+            return emptyLocationFlags;
         }
-        return _locationFlags;
+        return locationFlags;
     }
 
     public void setLocationFlag(int index) {
-        if (_locationFlags == null) {
-            _locationFlags = new BitSet();
+        if (locationFlags == null) {
+            locationFlags = new BitSet();
         }
-        _locationFlags.set(index);
+        locationFlags.set(index);
     }
 
     private static final EirOperand.Procedure _operandCleanupProcedure = new EirOperand.Procedure() {
@@ -260,13 +260,13 @@ public abstract class EirInstruction<EirInstructionVisitor_Type extends EirInstr
     };
 
     public void cleanup() {
-        _registers = null;
-        _locationFlags = null;
+        registers = null;
+        locationFlags = null;
         visitOperands(_operandCleanupProcedure);
     }
 
     public void cleanupAfterEmitting() {
-        _liveVariables = null;
+        liveVariables = null;
     }
 
     public static EirOperand.Effect xorDestinationEffect(EirValue destination, EirValue source) {

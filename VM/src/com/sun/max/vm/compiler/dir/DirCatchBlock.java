@@ -29,23 +29,23 @@ import com.sun.max.vm.compiler.ir.*;
  */
 public class DirCatchBlock extends DirBlock {
 
-    private DirVariable _catchParameter;
+    private final DirVariable catchParameter;
 
     /**
      * @param catchParameter the variable to which the thrown exception is bound
      */
     public DirCatchBlock(DirVariable catchParameter) {
         super(IrBlock.Role.EXCEPTION_DISPATCHER);
-        _catchParameter = catchParameter;
+        this.catchParameter = catchParameter;
     }
 
     public DirVariable catchParameter() {
-        return _catchParameter;
+        return catchParameter;
     }
 
     @Override
     public String toString() {
-        return "Catch#" + serial() + "(" + _catchParameter + ")";
+        return "Catch#" + serial() + "(" + catchParameter + ")";
     }
 
 }

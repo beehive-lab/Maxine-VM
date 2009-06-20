@@ -55,36 +55,36 @@ public abstract class BytecodeAssembler {
      */
     public class Label {
 
-        private int _address = -1;
+        private int address = -1;
 
         /**
          * Binds this label to the current address in the instruction stream.
          */
         public void bind() {
-            assert _address == -1 : "cannot rebind label";
-            _address = currentAddress();
+            assert address == -1 : "cannot rebind label";
+            address = currentAddress();
         }
 
         /**
          * Binds this label to a given address.
          */
         public void bind(int address) {
-            assert _address == -1 : "cannot rebind label";
-            _address = address;
+            assert this.address == -1 : "cannot rebind label";
+            this.address = address;
         }
 
         public int address() {
-            assert _address != -1 : "label not yet bound to an address";
-            return _address;
+            assert address != -1 : "label not yet bound to an address";
+            return address;
         }
 
         public boolean isBound() {
-            return _address != -1;
+            return address != -1;
         }
 
         @Override
         public String toString() {
-            return isBound() ? Integer.toString(_address) : "?";
+            return isBound() ? Integer.toString(address) : "?";
         }
     }
 
@@ -93,8 +93,8 @@ public abstract class BytecodeAssembler {
      */
     abstract class LabelInstruction {
 
-        final int _opcodeAddress;
-        final int _size;
+        final int opcodeAddress;
+        final int size;
 
         public abstract void assemble(BytecodeAssembler assembler);
 
@@ -107,27 +107,27 @@ public abstract class BytecodeAssembler {
          *                the size of the encoded instruction
          */
         public LabelInstruction(int opcodeAddress, int size) {
-            _opcodeAddress = opcodeAddress;
-            _size = size;
+            this.opcodeAddress = opcodeAddress;
+            this.size = size;
         }
 
         public void fixup() {
             final int originalAddress = currentAddress();
-            setCurrentAddress(_opcodeAddress);
+            setCurrentAddress(opcodeAddress);
             assemble(BytecodeAssembler.this);
-            ProgramError.check(currentAddress() - _opcodeAddress == _size, "patched forward branch instruction changed size");
+            ProgramError.check(currentAddress() - opcodeAddress == size, "patched forward branch instruction changed size");
             setCurrentAddress(originalAddress);
         }
     }
 
-    private final ConstantPoolEditor _constantPoolEditor;
-    private final int _startAddress;
-    private int _currentAddress;
-    private int _highestAddress;
+    private final ConstantPoolEditor constantPoolEditor;
+    private final int startAddress;
+    private int currentAddress;
+    private int highestAddress;
 
-    private int _maxLocals;
-    private int _maxStack;
-    private int _stack;
+    private int maxLocals;
+    private int maxStack;
+    private int stack;
 
     /**
      * Creates local variable slots based on the signature of a method and adjusts the {@linkplain #maxLocals() number of locals variables}.
@@ -135,10 +135,10 @@ public abstract class BytecodeAssembler {
     public void allocateParameters(boolean isStatic, SignatureDescriptor signature) {
         for (int i = 0; i < signature.numberOfParameters(); i++) {
             final Kind parameterKind = signature.parameterDescriptorAt(i).toKind();
-            _maxLocals += parameterKind.isCategory1() ? 1 : 2;
+            maxLocals += parameterKind.isCategory1() ? 1 : 2;
         }
         if (!isStatic) {
-            ++_maxLocals;
+            ++maxLocals;
         }
     }
 
@@ -146,17 +146,17 @@ public abstract class BytecodeAssembler {
      * Creates a new local variable slot and adjusts the {@linkplain #maxLocals() number of locals variables}.
      */
     public int allocateLocal(Kind kind) {
-        final int local = _maxLocals;
+        final int local = maxLocals;
         if (kind.isCategory2()) {
-            _maxLocals += 2;
+            maxLocals += 2;
         } else {
-            ++_maxLocals;
+            ++maxLocals;
         }
         return local;
     }
 
     public int stack() {
-        return _stack;
+        return stack;
     }
 
     /**
@@ -164,7 +164,7 @@ public abstract class BytecodeAssembler {
      * may change as more instructions are emitted.
      */
     public int maxStack() {
-        return _maxStack;
+        return maxStack;
     }
 
     /**
@@ -175,32 +175,32 @@ public abstract class BytecodeAssembler {
      * @param depth the new stack depth
      */
     public void setStack(int depth) {
-        if (depth > _maxStack) {
-            _maxStack = depth;
+        if (depth > maxStack) {
+            maxStack = depth;
         } else if (depth < 0) {
             throw new IllegalArgumentException("stack underflow in bytecode assembler");
         }
-        _stack = depth;
+        stack = depth;
     }
 
     public void incStack() {
-        setStack(_stack + 1);
+        setStack(stack + 1);
     }
 
     public void incStack2() {
-        setStack(_stack + 2);
+        setStack(stack + 2);
     }
 
     public void decStack() {
-        setStack(_stack - 1);
+        setStack(stack - 1);
     }
 
     public void decStack2() {
-        setStack(_stack - 2);
+        setStack(stack - 2);
     }
 
     public void adjustStack(int delta) {
-        setStack(_stack + delta);
+        setStack(stack + delta);
     }
 
 
@@ -248,7 +248,7 @@ public abstract class BytecodeAssembler {
 
     private void adjustStackForInvoke(int methodRefIndex, boolean isStatic, boolean isInterface, int numArgSlots, int numReturnValueSlots) {
         assert adjustmentMatchesSignature(methodRefIndex, isStatic, isInterface, numArgSlots, numReturnValueSlots);
-        setStack(_stack - numArgSlots + numReturnValueSlots);
+        setStack(stack - numArgSlots + numReturnValueSlots);
     }
 
     /**
@@ -256,15 +256,15 @@ public abstract class BytecodeAssembler {
      * may change as more instructions are emitted.
      */
     public int maxLocals() {
-        return _maxLocals;
+        return maxLocals;
     }
 
     public ConstantPool constantPool() {
-        return _constantPoolEditor.pool();
+        return constantPoolEditor.pool();
     }
 
     public ConstantPoolEditor constantPoolEditor() {
-        return _constantPoolEditor;
+        return constantPoolEditor;
     }
 
     /**
@@ -272,40 +272,40 @@ public abstract class BytecodeAssembler {
      */
     public abstract byte[] code();
 
-    private AppendableSequence<LabelInstruction> _unboundInstructions = new LinkSequence<LabelInstruction>();
+    private AppendableSequence<LabelInstruction> unboundInstructions = new LinkSequence<LabelInstruction>();
 
     /**
      * Constructor for assembling code for a new method.
      */
     protected BytecodeAssembler(ConstantPoolEditor constantPoolEditor) {
-        _constantPoolEditor = constantPoolEditor;
-        _startAddress = 0;
+        this.constantPoolEditor = constantPoolEditor;
+        this.startAddress = 0;
     }
 
     /**
      * Constructor for assembling code that will be appended to the end of an existing method.
      */
     protected BytecodeAssembler(ConstantPoolEditor constantPoolEditor, int startAddress, int initialMaxStack, int initialMaxLocals) {
-        _constantPoolEditor = constantPoolEditor;
-        _startAddress = startAddress;
-        _currentAddress = startAddress;
-        _highestAddress = startAddress;
-        _maxStack = initialMaxStack;
-        _maxLocals = initialMaxLocals;
+        this.constantPoolEditor = constantPoolEditor;
+        this.startAddress = startAddress;
+        this.currentAddress = startAddress;
+        this.highestAddress = startAddress;
+        this.maxStack = initialMaxStack;
+        this.maxLocals = initialMaxLocals;
     }
 
     void setCurrentAddress(int address) {
-        assert address <= _highestAddress;
-        _currentAddress = address;
-        setWritePosition(address - _startAddress);
+        assert address <= highestAddress;
+        currentAddress = address;
+        setWritePosition(address - startAddress);
     }
 
     public int currentAddress() {
-        return _currentAddress;
+        return currentAddress;
     }
 
     public int numberOfEmittedBytes() {
-        return _highestAddress - _startAddress;
+        return highestAddress - startAddress;
     }
 
     protected abstract void writeByte(byte b);
@@ -319,9 +319,9 @@ public abstract class BytecodeAssembler {
 
     private void emitByte(int b) {
         writeByte((byte) (b & 0xff));
-        _currentAddress++;
-        if (_currentAddress > _highestAddress) {
-            _highestAddress = _currentAddress;
+        currentAddress++;
+        if (currentAddress > highestAddress) {
+            highestAddress = currentAddress;
         }
     }
 
@@ -363,7 +363,7 @@ public abstract class BytecodeAssembler {
     }
 
     public void branch(Bytecode opcode, int address) {
-        final int offset = address - _currentAddress;
+        final int offset = address - currentAddress;
         if (offset < Short.MIN_VALUE || offset > Short.MAX_VALUE) {
             throw classFormatError("Offset (" + offset + ") cannot be represented as signed 16-bit value");
         }
@@ -375,9 +375,9 @@ public abstract class BytecodeAssembler {
         if (label.isBound()) {
             branch(opcode, label.address());
         } else {
-            final int opcodeAddress = _currentAddress;
-            branch(opcode, _currentAddress);
-            _unboundInstructions.append(new LabelInstruction(opcodeAddress, 3){
+            final int opcodeAddress = currentAddress;
+            branch(opcode, currentAddress);
+            unboundInstructions.append(new LabelInstruction(opcodeAddress, 3){
                 @Override
                 public void assemble(BytecodeAssembler assembler) {
                     branch(opcode, label.address());
@@ -394,7 +394,7 @@ public abstract class BytecodeAssembler {
     }
 
     public boolean needsFixup() {
-        return !_unboundInstructions.isEmpty();
+        return !unboundInstructions.isEmpty();
     }
 
     /**
@@ -402,19 +402,19 @@ public abstract class BytecodeAssembler {
      */
     public final void fixup() {
         if (needsFixup()) {
-            for (LabelInstruction unboundInstruction : _unboundInstructions) {
+            for (LabelInstruction unboundInstruction : unboundInstructions) {
                 unboundInstruction.fixup();
             }
-            _unboundInstructions = new LinkSequence<LabelInstruction>();
+            unboundInstructions = new LinkSequence<LabelInstruction>();
         }
     }
 
     public void push(Kind kind) {
-        setStack(_stack + (kind.isCategory1() ? 1 : 2));
+        setStack(stack + (kind.isCategory1() ? 1 : 2));
     }
 
     public void pop(Kind kind) {
-        setStack(_stack - (kind.isCategory1() ? 1 : 2));
+        setStack(stack - (kind.isCategory1() ? 1 : 2));
     }
 
     public void appendByte(int b) {
@@ -452,7 +452,7 @@ public abstract class BytecodeAssembler {
     }
 
     public void ret(int index) {
-        ProgramError.check(index >= 0 && index < _maxLocals && index < 0xff);
+        ProgramError.check(index >= 0 && index < maxLocals && index < 0xff);
         emitOpcode(RET);
         emitByte(index);
     }
@@ -532,7 +532,7 @@ public abstract class BytecodeAssembler {
     }
 
     public void invokestatic(ClassMethodRefConstant method, int numArgSlots, int numReturnValueSlots) {
-        invokestatic(_constantPoolEditor.indexOf(method, true), numArgSlots, numReturnValueSlots);
+        invokestatic(constantPoolEditor.indexOf(method, true), numArgSlots, numReturnValueSlots);
     }
 
     public void invokevirtual(int methodRefIndex, int numArgSlots, int numReturnValueSlots) {
@@ -542,7 +542,7 @@ public abstract class BytecodeAssembler {
     }
 
     public void invokevirtual(ClassMethodRefConstant method, int numArgSlots, int numReturnValueSlots) {
-        invokevirtual(_constantPoolEditor.indexOf(method, true), numArgSlots, numReturnValueSlots);
+        invokevirtual(constantPoolEditor.indexOf(method, true), numArgSlots, numReturnValueSlots);
     }
 
     public void invokespecial(int methodRefIndex, int argSlots, int numReturnValueSlots) {
@@ -552,7 +552,7 @@ public abstract class BytecodeAssembler {
     }
 
     public void invokespecial(ClassMethodRefConstant method, int argSlots, int numReturnValueSlots) {
-        invokespecial(_constantPoolEditor.indexOf(method, true), argSlots, numReturnValueSlots);
+        invokespecial(constantPoolEditor.indexOf(method, true), argSlots, numReturnValueSlots);
     }
 
     public void invokeinterface(int methodRefIndex, int argSlots, int count, int numReturnValueSlots) {
@@ -564,7 +564,7 @@ public abstract class BytecodeAssembler {
     }
 
     public void invokeinterface(InterfaceMethodRefConstant method, int argSlots, int count, int numReturnValueSlots) {
-        invokeinterface(_constantPoolEditor.indexOf(method, true), argSlots, count, numReturnValueSlots);
+        invokeinterface(constantPoolEditor.indexOf(method, true), argSlots, count, numReturnValueSlots);
     }
 
     /**
@@ -573,11 +573,11 @@ public abstract class BytecodeAssembler {
      *                the parameters and result type of the native function linked for the Java native method
      */
     public void callnative(SignatureDescriptor nativeFunctionDescriptor, int argSlots, int returnValueSlots) {
-        final int nativeFunctionDescriptorIndex = _constantPoolEditor.indexOf(makeUtf8Constant(nativeFunctionDescriptor.toString()));
+        final int nativeFunctionDescriptorIndex = constantPoolEditor.indexOf(makeUtf8Constant(nativeFunctionDescriptor.toString()));
         emitOpcode(CALLNATIVE);
         emitCPIndex2(nativeFunctionDescriptorIndex);
         assert adjustmentMatchesSignature(nativeFunctionDescriptor, true, argSlots, returnValueSlots);
-        setStack(_stack - argSlots + returnValueSlots);
+        setStack(stack - argSlots + returnValueSlots);
     }
 
     private int fieldSizeInSlots(int fieldRefIndex) {
@@ -591,7 +591,7 @@ public abstract class BytecodeAssembler {
     }
 
     public void getstatic(FieldRefConstant field) {
-        getstatic(_constantPoolEditor.indexOf(field, true));
+        getstatic(constantPoolEditor.indexOf(field, true));
     }
 
     public void putstatic(int fieldRefIndex) {
@@ -601,7 +601,7 @@ public abstract class BytecodeAssembler {
     }
 
     public void putstatic(FieldRefConstant field) {
-        putstatic(_constantPoolEditor.indexOf(field, true));
+        putstatic(constantPoolEditor.indexOf(field, true));
     }
 
     public void getfield(int fieldRefIndex) {
@@ -611,7 +611,7 @@ public abstract class BytecodeAssembler {
     }
 
     public void getfield(FieldRefConstant field) {
-        getfield(_constantPoolEditor.indexOf(field, true));
+        getfield(constantPoolEditor.indexOf(field, true));
     }
 
     public void putfield(int fieldRefIndex) {
@@ -621,7 +621,7 @@ public abstract class BytecodeAssembler {
     }
 
     public void putfield(FieldRefConstant field) {
-        putfield(_constantPoolEditor.indexOf(field, true));
+        putfield(constantPoolEditor.indexOf(field, true));
     }
 
     public void ldc(int index) {
@@ -654,14 +654,14 @@ public abstract class BytecodeAssembler {
     }
 
     public void ldc(PoolConstant constant) {
-        ldc(_constantPoolEditor.indexOf(constant, true));
+        ldc(constantPoolEditor.indexOf(constant, true));
     }
 
     /**
      * Emit a local variable load or store instruction.
      */
     private void accessLocalVariable(Bytecode immediate0Opcode, Bytecode standardOpcode, int index, Kind kind, boolean isLoad) {
-        ProgramError.check(index >= 0 && index < _maxLocals);
+        ProgramError.check(index >= 0 && index < maxLocals);
         assert immediate0Opcode.implicitNumericOperand() == 0;
         if (index >= 0 && index <= 3) {
             emitOpcode(Bytecode.from(immediate0Opcode.ordinal() + index));
@@ -789,7 +789,7 @@ public abstract class BytecodeAssembler {
             emitOpcode(SIPUSH);
             emitShort(value);
         } else {
-            final int offset = _constantPoolEditor.indexOf(createIntegerConstant(value));
+            final int offset = constantPoolEditor.indexOf(createIntegerConstant(value));
             if (offset <= 0xff) {
                 emitOpcode(LDC);
                 emitCPIndex1(offset);
@@ -807,7 +807,7 @@ public abstract class BytecodeAssembler {
         } else if (value == 1L) {
             emitOpcode(LCONST_1);
         } else {
-            final int offset = _constantPoolEditor.indexOf(createLongConstant(value));
+            final int offset = constantPoolEditor.indexOf(createLongConstant(value));
             emitOpcode(LDC2_W);
             emitCPIndex2(offset);
         }
@@ -822,7 +822,7 @@ public abstract class BytecodeAssembler {
         } else if (value == 2f) {
             emitOpcode(FCONST_2);
         } else {
-            final int offset = _constantPoolEditor.indexOf(createFloatConstant(value));
+            final int offset = constantPoolEditor.indexOf(createFloatConstant(value));
             if (offset <= 0xff) {
                 emitOpcode(LDC);
                 emitCPIndex1(offset);
@@ -840,7 +840,7 @@ public abstract class BytecodeAssembler {
         } else if (value == 1d) {
             emitOpcode(DCONST_1);
         } else {
-            final int offset = _constantPoolEditor.indexOf(createDoubleConstant(value));
+            final int offset = constantPoolEditor.indexOf(createDoubleConstant(value));
             emitOpcode(LDC2_W);
             emitCPIndex2(offset);
         }
@@ -854,7 +854,7 @@ public abstract class BytecodeAssembler {
     }
 
     public void new_(ClassConstant type) {
-        new_(_constantPoolEditor.indexOf(type, true));
+        new_(constantPoolEditor.indexOf(type, true));
     }
 
     public void checkcast(int index) {
@@ -863,7 +863,7 @@ public abstract class BytecodeAssembler {
     }
 
     public void checkcast(ClassConstant type) {
-        checkcast(_constantPoolEditor.indexOf(type, true));
+        checkcast(constantPoolEditor.indexOf(type, true));
     }
 
     public void instanceof_(int classIndex) {
@@ -872,7 +872,7 @@ public abstract class BytecodeAssembler {
     }
 
     public void instanceof_(ClassConstant type) {
-        instanceof_(_constantPoolEditor.indexOf(type, true));
+        instanceof_(constantPoolEditor.indexOf(type, true));
     }
 
     public void arraylength() {
@@ -953,7 +953,7 @@ public abstract class BytecodeAssembler {
 
     private void tableswitch0(int defaultTarget, int lowMatch, int highMatch, int[] targets) {
         decStack();
-        final int opcodeAddress = _currentAddress;
+        final int opcodeAddress = currentAddress;
         emitOpcode(TABLESWITCH);
         final int padding = 3 - opcodeAddress % 4; // number of pad bytes
         for (int i = 0; i < padding; i++) {
@@ -983,10 +983,10 @@ public abstract class BytecodeAssembler {
     }
 
     public void tableswitch(final Label defaultTarget, final int lowMatch, final int highMatch, final Label[] targets) {
-        final int opcodeAddress = _currentAddress;
+        final int opcodeAddress = currentAddress;
         tableswitch0(0, lowMatch, highMatch, null);
-        final int size = _currentAddress - opcodeAddress;
-        _unboundInstructions.append(new LabelInstruction(opcodeAddress, size){
+        final int size = currentAddress - opcodeAddress;
+        unboundInstructions.append(new LabelInstruction(opcodeAddress, size){
             @Override
             public void assemble(BytecodeAssembler assembler) {
                 final int[] boundTargets = new int[targets.length];
@@ -1000,7 +1000,7 @@ public abstract class BytecodeAssembler {
 
     private void lookupswitch0(int defaultTarget, int npairs, int[] matches, int[] targets) {
         decStack();
-        final int opcodeAddress = _currentAddress;
+        final int opcodeAddress = currentAddress;
         emitOpcode(LOOKUPSWITCH);
         final int padding = 3 - opcodeAddress % 4; // number of pad bytes
         for (int i = 0; i < padding; i++) {
@@ -1032,10 +1032,10 @@ public abstract class BytecodeAssembler {
     }
 
     public void lookupswitch(final Label defaultTarget, final int[] matches, final Label[] targets) {
-        final int opcodeAddress = _currentAddress;
+        final int opcodeAddress = currentAddress;
         lookupswitch0(0, matches.length, null, null);
-        final int size = _currentAddress - opcodeAddress;
-        _unboundInstructions.append(new LabelInstruction(opcodeAddress, size){
+        final int size = currentAddress - opcodeAddress;
+        unboundInstructions.append(new LabelInstruction(opcodeAddress, size){
             @Override
             public void assemble(BytecodeAssembler assembler) {
                 final int[] boundTargets = new int[targets.length];

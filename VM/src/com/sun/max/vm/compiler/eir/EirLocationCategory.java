@@ -43,10 +43,10 @@ public enum EirLocationCategory implements PoolObject {
 
     public static final IndexedSequence<EirLocationCategory> VALUES = new ArraySequence<EirLocationCategory>(values());
 
-    private final String _shortName;
+    private final String shortName;
 
     private EirLocationCategory(String shortName) {
-        _shortName = shortName;
+        this.shortName = shortName;
     }
 
     public int serial() {
@@ -55,7 +55,7 @@ public enum EirLocationCategory implements PoolObject {
 
     @Override
     public String toString() {
-        return _shortName;
+        return shortName;
     }
 
     public static EirLocationCategory immediateFromWordWidth(WordWidth width) {

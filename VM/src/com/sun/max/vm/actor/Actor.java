@@ -158,14 +158,14 @@ public abstract class Actor {
 
     @INSPECTED
     @CONSTANT
-    private int _flags;
+    private int flags;
 
     @INSPECTED
-    private final Utf8Constant _name;
+    private final Utf8Constant name;
 
     protected Actor(Utf8Constant name, int flags) {
-        _flags = flags;
-        _name = name;
+        this.flags = flags;
+        this.name = name;
     }
 
     @Override
@@ -181,7 +181,7 @@ public abstract class Actor {
 
     @INLINE
     public final int flags() {
-        return _flags;
+        return flags;
     }
 
     @INLINE
@@ -414,7 +414,7 @@ public abstract class Actor {
 
     @INLINE
     public final void beUnsafe() {
-        _flags |= UNSAFE;
+        flags |= UNSAFE;
     }
 
     @INLINE
@@ -457,13 +457,13 @@ public abstract class Actor {
         return (flags & INTERPRET_ONLY) != 0;
     }
 
-    public static Predicate<Actor> _staticPredicate = new Predicate<Actor>() {
+    public static Predicate<Actor> staticPredicate = new Predicate<Actor>() {
         public boolean evaluate(Actor actor) {
             return actor.isStatic();
         }
     };
 
-    public static Predicate<Actor> _dynamicPredicate = new Predicate<Actor>() {
+    public static Predicate<Actor> dynamicPredicate = new Predicate<Actor>() {
         public boolean evaluate(Actor actor) {
             return !actor.isStatic();
         }
@@ -471,7 +471,7 @@ public abstract class Actor {
 
     @INLINE
     public final Utf8Constant name() {
-        return _name;
+        return name;
     }
 
     /**
@@ -507,7 +507,7 @@ public abstract class Actor {
     }
 
     public String flagsString() {
-        return flagsString(_flags);
+        return flagsString(flags);
     }
 
     public static String flagsString(int flags) {

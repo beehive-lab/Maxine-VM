@@ -35,10 +35,10 @@ public final class EirStackSlot extends EirLocation {
         LOCAL      // reusable
     }
 
-    private Purpose _purpose;
+    private Purpose purpose;
 
     public Purpose purpose() {
-        return _purpose;
+        return purpose;
     }
 
     @Override
@@ -47,7 +47,7 @@ public final class EirStackSlot extends EirLocation {
     }
 
     // TODO: this should be an index, not an offset
-    private final int _offset;
+    private final int offset;
 
     /**
      * Gets the logical offset of this stack slot. If this stack slot represents a {@linkplain #isParameter() parameter},
@@ -56,13 +56,12 @@ public final class EirStackSlot extends EirLocation {
      * after execution of the enclosing method's prologue.
      */
     public int offset() {
-        return _offset;
+        return offset;
     }
 
     public EirStackSlot(Purpose purpose, int offset) {
-        super();
-        _purpose = purpose;
-        _offset = offset;
+        this.purpose = purpose;
+        this.offset = offset;
     }
 
     @Override
@@ -74,28 +73,28 @@ public final class EirStackSlot extends EirLocation {
     public boolean equals(Object other) {
         if (other instanceof EirStackSlot) {
             final EirStackSlot stackSlot = (EirStackSlot) other;
-            return _offset == stackSlot._offset && _purpose == stackSlot._purpose;
+            return offset == stackSlot.offset && purpose == stackSlot.purpose;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return (_purpose == Purpose.PARAMETER) ? -_offset : _offset;
+        return (purpose == Purpose.PARAMETER) ? -offset : offset;
     }
 
     @Override
     public String toString() {
-        return _purpose.name().toLowerCase() + ":" + offset();
+        return purpose.name().toLowerCase() + ":" + offset();
     }
 
     @Override
     public TargetLocation toTargetLocation() {
         switch (purpose()) {
             case PARAMETER:
-                return new TargetLocation.ParameterStackSlot(Unsigned.idiv(_offset, Word.size()));
+                return new TargetLocation.ParameterStackSlot(Unsigned.idiv(offset, Word.size()));
             case LOCAL:
-                return new TargetLocation.LocalStackSlot(Unsigned.idiv(_offset, Word.size()));
+                return new TargetLocation.LocalStackSlot(Unsigned.idiv(offset, Word.size()));
             default:
                 throw ProgramError.unknownCase();
         }

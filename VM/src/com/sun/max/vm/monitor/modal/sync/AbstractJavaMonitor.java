@@ -38,21 +38,21 @@ import com.sun.max.vm.thread.*;
  */
 abstract class AbstractJavaMonitor implements ManagedMonitor {
 
-    private Object _boundObject;
-    protected volatile VmThread _ownerThread;
-    protected int _recursionCount;
-    private Word _displacedMiscWord;
+    private Object boundObject;
+    protected volatile VmThread ownerThread;
+    protected int recursionCount;
+    private Word displacedMiscWord;
 
-    protected BindingProtection _bindingProtection;
-    private Word _preGCLockWord;
+    protected BindingProtection bindingProtection;
+    private Word preGCLockWord;
 
-    private static final FieldActor _displacedMiscWordFieldActor = FieldActor.findInstance(AbstractJavaMonitor.class, "_displacedMiscWord");
+    private static final FieldActor displacedMiscWordFieldActor = FieldActor.findInstance(AbstractJavaMonitor.class, "displacedMiscWord");
 
     // Support for direct linked lists of JavaMonitors.
-    private ManagedMonitor _next;
+    private ManagedMonitor next;
 
     protected AbstractJavaMonitor() {
-        _bindingProtection = BindingProtection.PRE_ACQUIRE;
+        bindingProtection = BindingProtection.PRE_ACQUIRE;
     }
 
     public abstract void monitorEnter();
@@ -70,74 +70,74 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     public abstract void allocate();
 
     public final boolean isOwnedBy(VmThread thread) {
-        return _ownerThread == thread;
+        return ownerThread == thread;
     }
 
     public final Word displacedMisc() {
-        return _displacedMiscWord;
+        return displacedMiscWord;
     }
 
     public final void setDisplacedMisc(Word lockWord) {
-        _displacedMiscWord = lockWord;
+        displacedMiscWord = lockWord;
     }
 
     public final Word compareAndSwapDisplacedMisc(Word suspectedValue, Word newValue) {
-        return Reference.fromJava(this).compareAndSwapWord(_displacedMiscWordFieldActor.offset(), suspectedValue, newValue);
+        return Reference.fromJava(this).compareAndSwapWord(displacedMiscWordFieldActor.offset(), suspectedValue, newValue);
     }
 
     public void reset() {
-        _boundObject = null;
-        _ownerThread = null;
-        _recursionCount = 0;
-        _displacedMiscWord = Word.zero();
-        _preGCLockWord = Word.zero();
-        _bindingProtection = BindingProtection.PRE_ACQUIRE;
+        boundObject = null;
+        ownerThread = null;
+        recursionCount = 0;
+        displacedMiscWord = Word.zero();
+        preGCLockWord = Word.zero();
+        bindingProtection = BindingProtection.PRE_ACQUIRE;
     }
 
     public final void setBoundObject(Object object) {
-        _boundObject = object;
+        boundObject = object;
     }
 
     public final Object boundObject() {
-        return _boundObject;
+        return boundObject;
     }
 
     public final boolean isBound() {
-        return _boundObject != null;
+        return boundObject != null;
     }
 
     public final boolean isHardBound() {
-        return isBound() && ObjectAccess.readMisc(_boundObject).equals(InflatedMonitorLockWord64.boundFromMonitor(this));
+        return isBound() && ObjectAccess.readMisc(boundObject).equals(InflatedMonitorLockWord64.boundFromMonitor(this));
     }
 
     public final void preGCPrepare() {
-        _preGCLockWord = InflatedMonitorLockWord64.boundFromMonitor(this);
+        preGCLockWord = InflatedMonitorLockWord64.boundFromMonitor(this);
     }
 
     public final boolean requiresPostGCRefresh() {
-        return isBound() && ObjectAccess.readMisc(_boundObject).equals(_preGCLockWord);
+        return isBound() && ObjectAccess.readMisc(boundObject).equals(preGCLockWord);
     }
 
     public final void refreshBoundObject() {
-        ObjectAccess.writeMisc(_boundObject, InflatedMonitorLockWord64.boundFromMonitor(this));
+        ObjectAccess.writeMisc(boundObject, InflatedMonitorLockWord64.boundFromMonitor(this));
     }
 
     public final BindingProtection bindingProtection() {
-        return _bindingProtection;
+        return bindingProtection;
     }
 
     public final void setBindingProtection(BindingProtection deflationState) {
-        _bindingProtection = deflationState;
+        bindingProtection = deflationState;
     }
 
     @INLINE
     public final ManagedMonitor next() {
-        return _next;
+        return next;
     }
 
     @INLINE
     public final void setNext(ManagedMonitor next) {
-        _next = next;
+        this.next = next;
     }
 
     public void dump() {
@@ -145,11 +145,11 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
         Log.print(" boundTo=");
         Log.print(boundObject() == null ? "null" : ObjectAccess.readClassActor(boundObject()).name().string());
         Log.print(" owner=");
-        Log.print(_ownerThread == null ? "null" : _ownerThread.getName());
+        Log.print(ownerThread == null ? "null" : ownerThread.getName());
         Log.print(" recursion=");
-        Log.print(_recursionCount);
+        Log.print(recursionCount);
         Log.print(" binding=");
-        Log.print(_bindingProtection.name());
+        Log.print(bindingProtection.name());
     }
 
     protected void traceStartMonitorEnter(final VmThread currentThread) {

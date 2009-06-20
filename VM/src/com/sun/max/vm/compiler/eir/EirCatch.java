@@ -29,17 +29,17 @@ import java.lang.reflect.*;
  */
 public class EirCatch extends EirInstruction {
 
-    private EirOperand _catchParameterOperand;
+    private EirOperand catchParameterOperand;
 
     public EirOperand catchParameterOperand() {
-        return _catchParameterOperand;
+        return catchParameterOperand;
     }
 
     public EirCatch(EirBlock block, EirValue catchParameter, EirLocation location) {
         super(block);
-        _catchParameterOperand = new EirOperand(this, EirOperand.Effect.DEFINITION, location.category().asSet());
-        _catchParameterOperand.setRequiredLocation(location);
-        _catchParameterOperand.setEirValue(catchParameter);
+        catchParameterOperand = new EirOperand(this, EirOperand.Effect.DEFINITION, location.category().asSet());
+        catchParameterOperand.setRequiredLocation(location);
+        catchParameterOperand.setEirValue(catchParameter);
     }
 
     @Override
@@ -54,12 +54,12 @@ public class EirCatch extends EirInstruction {
 
     @Override
     public void visitOperands(EirOperand.Procedure visitor) {
-        visitor.run(_catchParameterOperand);
+        visitor.run(catchParameterOperand);
     }
 
     @Override
     public String toString() {
-        return super.toString() + " (" + _catchParameterOperand.eirValue() + ")";
+        return super.toString() + " (" + catchParameterOperand.eirValue() + ")";
     }
 
 }

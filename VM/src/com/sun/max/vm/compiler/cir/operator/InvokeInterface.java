@@ -46,9 +46,9 @@ public class InvokeInterface extends JavaResolvableOperator<InterfaceMethodActor
 
     @Override
     public Kind[] parameterKinds() {
-        final MethodRefConstant method = _constantPool.methodAt(_index);
-        final Kind[] kinds = method.signature(_constantPool).copyParameterKinds(null, 1);
-        kinds[0] = method.holder(_constantPool).toKind();
+        final MethodRefConstant method = constantPool.methodAt(index);
+        final Kind[] kinds = method.signature(constantPool).copyParameterKinds(null, 1);
+        kinds[0] = method.holder(constantPool).toKind();
         return kinds;
     }
 }

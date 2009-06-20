@@ -35,12 +35,12 @@ import com.sun.max.vm.compiler.cir.variable.*;
  */
 public class CirPrinter extends CirVisitor {
 
-    private final PrintStream _stream;
-    private CirMethod _method;
-    private boolean _atStartOfLine = true;
-    private final boolean _printingIds;
-    private final int _nesting;
-    private int _indentation;
+    private final PrintStream stream;
+    private CirMethod method;
+    private boolean atStartOfLine = true;
+    private final boolean printingIds;
+    private final int nesting;
+    private int indentation;
 
     /**
      * Prints a nested trace of a CIR graph.
@@ -53,44 +53,44 @@ public class CirPrinter extends CirVisitor {
      *            value to {@link Integer#MAX_VALUE} to ensures the complete graph is printed
      */
     public CirPrinter(PrintStream stream, CirNode node, boolean printIds, int nesting) {
-        _stream = stream;
-        _printingIds = printIds;
-        _nesting = nesting;
+        this.stream = stream;
+        this.printingIds = printIds;
+        this.nesting = nesting;
         if (node instanceof CirMethod) {
-            _method = (CirMethod) node;
+            this.method = (CirMethod) node;
         } else {
-            _method = null;
+            this.method = null;
         }
     }
 
     private static final String MAX_BIR_PREFIX_SPACES = "                        ";
 
     private void print(String string) {
-        if (_atStartOfLine) {
-            if (_indentation <= MAX_PRINTABLE_INDENTATION) {
-                for (int i = 0; i < _indentation; i++) {
-                    _stream.print(INDENTATION);
+        if (atStartOfLine) {
+            if (indentation <= MAX_PRINTABLE_INDENTATION) {
+                for (int i = 0; i < indentation; i++) {
+                    stream.print(INDENTATION);
                 }
             } else {
-                final int actualIndentation = _indentation % MAX_PRINTABLE_INDENTATION;
-                final int elided = _indentation - actualIndentation;
-                _stream.print("[" + elided + " more +] ");
+                final int actualIndentation = indentation % MAX_PRINTABLE_INDENTATION;
+                final int elided = indentation - actualIndentation;
+                stream.print("[" + elided + " more +] ");
                 for (int i = 0; i < actualIndentation; i++) {
-                    _stream.print(INDENTATION);
+                    stream.print(INDENTATION);
                 }
             }
-            _atStartOfLine = false;
+            atStartOfLine = false;
         }
-        _stream.print(string);
-        _stream.flush();
+        stream.print(string);
+        stream.flush();
     }
 
     private static final String INDENTATION = "| ";
     private static final int MAX_PRINTABLE_INDENTATION = 80;
 
     private void println() {
-        _stream.println();
-        _atStartOfLine = true;
+        stream.println();
+        atStartOfLine = true;
     }
 
     private void println(String string) {
@@ -99,18 +99,18 @@ public class CirPrinter extends CirVisitor {
     }
 
     private void indent() {
-        _indentation++;
+        indentation++;
         println();
     }
 
     private void outdent() {
-        _indentation--;
+        indentation--;
         println();
     }
 
     @Override
     public void visitNode(CirNode node) {
-        if (_printingIds) {
+        if (printingIds) {
             print(node.toString() + "_" + node.id());
         } else {
             print(node.toString());
@@ -150,11 +150,11 @@ public class CirPrinter extends CirVisitor {
     private void printClosure(String label, CirClosure closure) {
         print(label);
         printParameters(closure);
-        if (_indentation >= _nesting) {
+        if (indentation >= nesting) {
             indent();
             print("...");
         } else {
-            if (_printingIds) {
+            if (printingIds) {
                 print("@" + closure.body().id() + "@");
             }
             indent();
@@ -166,8 +166,8 @@ public class CirPrinter extends CirVisitor {
 
     @Override
     public void visitMethod(CirMethod method) {
-        if (method == _method && method.isGenerated()) {
-            _method = null;
+        if (method == this.method && method.isGenerated()) {
+            this.method = null;
             printClosure("{" + method.getQualifiedName(), method.closure());
             println();
         } else {
@@ -179,26 +179,26 @@ public class CirPrinter extends CirVisitor {
         }
     }
 
-    private final Map<CirBlock, Integer> _localBlockIds = new HashMap<CirBlock, Integer>();
+    private final Map<CirBlock, Integer> localBlockIds = new HashMap<CirBlock, Integer>();
 
     @Override
     public void visitBlock(CirBlock block) {
-        Integer blockId = _localBlockIds.get(block);
-        final String blockLabel = _printingIds ? block + "-" + block.id() : block.toString();
+        Integer blockId = localBlockIds.get(block);
+        final String blockLabel = printingIds ? block + "-" + block.id() : block.toString();
         if (blockId != null) {
             print("{" + blockLabel + "#" + blockId);
             printParameters(block.closure());
             print(" ...}");
         } else {
-            blockId = _localBlockIds.size();
-            _localBlockIds.put(block, blockId);
+            blockId = localBlockIds.size();
+            localBlockIds.put(block, blockId);
             printClosure("{" + blockLabel + "#" + blockId, block.closure());
         }
     }
 
     @Override
     public void visitClosure(CirClosure closure) {
-        if (_printingIds) {
+        if (printingIds) {
             printClosure("{proc_" + closure.id(), closure);
         } else {
             printClosure("{proc", closure);
@@ -207,7 +207,7 @@ public class CirPrinter extends CirVisitor {
 
     @Override
     public void visitContinuation(CirContinuation continuation) {
-        if (_printingIds) {
+        if (printingIds) {
             printClosure("{cont_" + continuation.id(), continuation);
         } else {
             printClosure("{cont", continuation);

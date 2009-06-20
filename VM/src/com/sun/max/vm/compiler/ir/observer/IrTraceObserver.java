@@ -42,11 +42,11 @@ import com.sun.max.vm.compiler.ir.*;
  */
 public class IrTraceObserver extends IrObserverAdapter {
 
-    protected static final IndentWriter _out = IndentWriter.traceStreamWriter();
+    protected static final IndentWriter out = IndentWriter.traceStreamWriter();
 
-    private final int _traceLevel;
+    private final int traceLevel;
 
-    private final Class<? extends IrMethod> _irMethodType;
+    private final Class<? extends IrMethod> irMethodType;
 
     public static final String PROPERTY_TRACE_LEVEL = "max.ir.trace.level";
 
@@ -57,14 +57,14 @@ public class IrTraceObserver extends IrObserverAdapter {
     }
 
     public IrTraceObserver(Class<? extends IrMethod> irMethodType) {
-        _irMethodType = irMethodType;
-        int traceLevel = 3;
+        this.irMethodType = irMethodType;
+        int traceLvl = 3;
         try {
-            traceLevel = Integer.parseInt(System.getProperty(PROPERTY_TRACE_LEVEL, String.valueOf(traceLevel)));
+            traceLvl = Integer.parseInt(System.getProperty(PROPERTY_TRACE_LEVEL, String.valueOf(traceLvl)));
         } catch (NumberFormatException e) {
             ProgramWarning.message("Value for system property \"" + PROPERTY_TRACE_LEVEL + "\" not a valid integer: " + System.getProperty(PROPERTY_TRACE_LEVEL));
         }
-        _traceLevel = traceLevel;
+        this.traceLevel = traceLvl;
     }
 
     protected String traceString(IrMethod irMethod, String description) {
@@ -72,7 +72,7 @@ public class IrTraceObserver extends IrObserverAdapter {
     }
 
     protected boolean hasLevel(int requiredLevel) {
-        return _traceLevel >= requiredLevel;
+        return traceLevel >= requiredLevel;
     }
 
     protected int allocationTraceLevel() {
@@ -89,9 +89,9 @@ public class IrTraceObserver extends IrObserverAdapter {
 
     @Override
     public void observeAllocation(IrMethod irMethod) {
-        if (_irMethodType.isAssignableFrom(irMethod.getClass())) {
+        if (irMethodType.isAssignableFrom(irMethod.getClass())) {
             if (hasLevel(allocationTraceLevel())) {
-                _out.println(traceString(irMethod, "allocated"));
+                out.println(traceString(irMethod, "allocated"));
             }
         }
     }
@@ -103,31 +103,31 @@ public class IrTraceObserver extends IrObserverAdapter {
 
     @Override
     public void observeAfterGeneration(IrMethod irMethod, IrGenerator irGenerator) {
-        if (_irMethodType.isAssignableFrom(irMethod.getClass())) {
+        if (irMethodType.isAssignableFrom(irMethod.getClass())) {
             if (hasLevel(afterGenerationTraceLevel())) {
-                _out.println(traceString(irMethod, "after generation"));
-                _out.println(irMethod.traceToString());
-                _out.flush();
+                out.println(traceString(irMethod, "after generation"));
+                out.println(irMethod.traceToString());
+                out.flush();
             }
         }
     }
 
     @Override
     public void observeBeforeTransformation(IrMethod irMethod, Object context, Object transform) {
-        if (_irMethodType.isAssignableFrom(irMethod.getClass())) {
+        if (irMethodType.isAssignableFrom(irMethod.getClass())) {
             if (hasLevel(transformTraceLevel(transform))) {
-                _out.println(traceString(irMethod, "before transformation: " + transform));
-                _out.println(irMethod.traceToString());
+                out.println(traceString(irMethod, "before transformation: " + transform));
+                out.println(irMethod.traceToString());
             }
         }
     }
 
     @Override
     public void observeAfterTransformation(IrMethod irMethod, Object context, Object transform) {
-        if (_irMethodType.isAssignableFrom(irMethod.getClass())) {
+        if (irMethodType.isAssignableFrom(irMethod.getClass())) {
             if (hasLevel(transformTraceLevel(transform))) {
-                _out.println(traceString(irMethod, "after transformation: " + transform));
-                _out.println(irMethod.traceToString());
+                out.println(traceString(irMethod, "after transformation: " + transform));
+                out.println(irMethod.traceToString());
             }
         }
     }

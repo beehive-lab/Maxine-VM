@@ -26,31 +26,31 @@ import com.sun.max.vm.compiler.tir.pipeline.*;
 import com.sun.max.vm.type.*;
 
 public abstract class TirCall extends TirInstruction {
-    protected final ClassMethodActor _method;
-    protected final TirInstruction[] _operands;
+    protected final ClassMethodActor method;
+    protected final TirInstruction[] operands;
 
     public TirCall(ClassMethodActor method, TirInstruction... arguments) {
-        _method = method;
-        _operands = arguments;
+        this.method = method;
+        this.operands = arguments;
     }
 
     @Override
     public void visitOperands(TirInstructionVisitor visitor) {
-        for (TirInstruction argument : _operands) {
+        for (TirInstruction argument : operands) {
             argument.accept(visitor);
         }
     }
 
     public TirInstruction[] operands() {
-        return _operands;
+        return operands;
     }
 
     public ClassMethodActor method() {
-        return _method;
+        return method;
     }
 
     public Kind resultKind() {
-        return _method.resultKind();
+        return method.resultKind();
     }
 
     @Override

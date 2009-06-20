@@ -42,8 +42,8 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
         return Arrays.subArray(arguments, 0, arguments.length - 2);
     }
 
-    protected final Builtin _builtin;
-    private final Kind[] _parameterKinds;
+    protected final Builtin builtin;
+    private final Kind[] parameterKinds;
 
     public boolean isReducible(CirOptimizer cirOptimizer, CirValue[] arguments) {
         return false;
@@ -61,11 +61,11 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
      * @author Bernd Mathiske
      */
     private static class FoldableVariant extends CirBuiltin {
-        private CirBuiltin _original;
+        private CirBuiltin original;
 
         protected FoldableVariant(CirBuiltin original) {
-            super(original._builtin);
-            _original = original;
+            super(original.builtin);
+            this.original = original;
         }
 
         @Override
@@ -76,28 +76,28 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
         @Override
         public boolean isFoldable(CirOptimizer cirOptimizer, CirValue[] arguments) {
             final CirValue[] a = withoutContinuations(arguments);
-            if (_builtin.isHostFoldable(a)) {
+            if (builtin.isHostFoldable(a)) {
                 return true;
             }
-            return _builtin.isFoldable(a);
+            return builtin.isFoldable(a);
         }
 
         @Override
         public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
-            if (cirOptimizer.cirGenerator().isCrossCompiling() && _builtin.isHostFoldable(withoutContinuations(arguments))) {
-                return CirRoutine.Static.fold(_builtin.hostFoldingMethodActor(), arguments);
+            if (cirOptimizer.cirGenerator().isCrossCompiling() && builtin.isHostFoldable(withoutContinuations(arguments))) {
+                return CirRoutine.Static.fold(builtin.hostFoldingMethodActor(), arguments);
             }
             return CirRoutine.Static.fold(foldingMethodActor(), arguments);
         }
 
         @Override
         public boolean isReducible(CirOptimizer cirOptimizer, CirValue[] arguments) {
-            return _original.isReducible(cirOptimizer, arguments);
+            return original.isReducible(cirOptimizer, arguments);
         }
 
         @Override
         public CirCall reduce(CirOptimizer cirOptimizer, CirValue... arguments) {
-            return _original.reduce(cirOptimizer, arguments);
+            return original.reduce(cirOptimizer, arguments);
         }
     }
 
@@ -147,8 +147,8 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
         @Override
         public boolean isFoldable(CirOptimizer cirOptimizer, CirValue[] arguments) {
             final CirValue[] a = withoutContinuations(arguments);
-            if (_builtin.isHostFoldable(a)) {
-                final MethodActor methodActor = cirOptimizer.cirGenerator().isCrossCompiling() ? _builtin.hostFoldingMethodActor() : _builtin.foldingMethodActor();
+            if (builtin.isHostFoldable(a)) {
+                final MethodActor methodActor = cirOptimizer.cirGenerator().isCrossCompiling() ? builtin.hostFoldingMethodActor() : builtin.foldingMethodActor();
                 try {
                     final Value result = CirRoutine.Static.evaluate(methodActor, arguments);
                     return !result.isZero();
@@ -156,31 +156,31 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
                     return false;
                 }
             }
-            return _builtin.isFoldable(a);
+            return builtin.isFoldable(a);
         }
     }
 
     @CONSTANT
-    protected FoldableWhenNotZeroVariant _foldableWhenNotZeroVariant;
+    protected FoldableWhenNotZeroVariant foldableWhenNotZeroVariant;
 
     protected CirBuiltin(Builtin builtin) {
-        _builtin = builtin;
-        _parameterKinds = builtin.parameterKinds();
+        this.builtin = builtin;
+        this.parameterKinds = builtin.parameterKinds();
     }
 
     private void initialize() {
         _foldableVariant = new FoldableVariant(this);
-        _foldableWhenNotZeroVariant = new FoldableWhenNotZeroVariant(this);
+        foldableWhenNotZeroVariant = new FoldableWhenNotZeroVariant(this);
 
         _foldableVariant._foldableVariant = _foldableVariant;
-        _foldableVariant._foldableWhenNotZeroVariant = _foldableWhenNotZeroVariant;
+        _foldableVariant.foldableWhenNotZeroVariant = foldableWhenNotZeroVariant;
 
-        _foldableWhenNotZeroVariant._foldableVariant = _foldableVariant;
-        _foldableWhenNotZeroVariant._foldableWhenNotZeroVariant = _foldableWhenNotZeroVariant;
+        foldableWhenNotZeroVariant._foldableVariant = _foldableVariant;
+        foldableWhenNotZeroVariant.foldableWhenNotZeroVariant = foldableWhenNotZeroVariant;
     }
 
     public final Builtin builtin() {
-        return _builtin;
+        return builtin;
     }
 
     public final CirBuiltin foldableVariant() {
@@ -188,29 +188,29 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
     }
 
     public final CirBuiltin foldableWhenNotZeroVariant() {
-        return _foldableWhenNotZeroVariant;
+        return foldableWhenNotZeroVariant;
     }
 
     private static CirBuiltin[] createCirBuiltins() {
         final int numberOfBuiltins = Builtin.builtins().length();
-        final CirBuiltin[] cirBuiltins = new CirBuiltin[numberOfBuiltins];
+        final CirBuiltin[] builtins = new CirBuiltin[numberOfBuiltins];
         for (int i = 0; i < numberOfBuiltins; i++) {
             final Builtin builtin = Builtin.builtins().get(i);
             assert builtin.serial() == i;
-            cirBuiltins[i] = new CirBuiltin(builtin);
-            cirBuiltins[i].initialize();
+            builtins[i] = new CirBuiltin(builtin);
+            builtins[i].initialize();
         }
-        return cirBuiltins;
+        return builtins;
     }
 
-    private static CirBuiltin[] _cirBuiltins = createCirBuiltins();
+    private static CirBuiltin[] cirBuiltins = createCirBuiltins();
 
     /**
      * Used by subclass constructors to update the above array
      * to consistently contain entries of the respective subclass.
      */
     protected void register() {
-        _cirBuiltins[_builtin.serial()] = this;
+        cirBuiltins[builtin.serial()] = this;
         initialize();
     }
 
@@ -219,28 +219,28 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
      * @return the CIR wrapper for the builtin, extending its functionality at this layer
      */
     public static CirBuiltin get(Builtin builtin) {
-        return _cirBuiltins[builtin.serial()];
+        return cirBuiltins[builtin.serial()];
     }
 
     public String name() {
-        return _builtin.name();
+        return builtin.name();
     }
 
     public final Kind resultKind() {
-        return _builtin.resultKind();
+        return builtin.resultKind();
     }
 
     @Override
     public final Kind[] parameterKinds() {
-        return _parameterKinds;
+        return parameterKinds;
     }
 
     public final MethodActor foldingMethodActor() {
-        return _builtin.foldingMethodActor();
+        return builtin.foldingMethodActor();
     }
 
     public boolean isFoldable(CirOptimizer cirOptimizer, CirValue[] arguments) {
-        return _builtin.isFoldable(withoutContinuations(arguments));
+        return builtin.isFoldable(withoutContinuations(arguments));
     }
 
     public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
@@ -248,11 +248,11 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
     }
 
     public int reasonsMayStop() {
-        return _builtin.reasonsMayStop();
+        return builtin.reasonsMayStop();
     }
 
     @Override
     public String toString() {
-        return _builtin.toString();
+        return builtin.toString();
     }
 }

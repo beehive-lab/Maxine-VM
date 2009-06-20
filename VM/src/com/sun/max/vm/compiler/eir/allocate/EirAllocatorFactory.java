@@ -62,7 +62,7 @@ public abstract class EirAllocatorFactory {
      */
     private static final String DEFAULT_ALGORITHM = "some";
 
-    private static final EirAllocatorFactory _instance;
+    private static final EirAllocatorFactory instance;
 
     static {
         String factoryClassName = System.getProperty(EIR_ALLOCATOR_FACTORY_CLASS_PROPERTY_NAME);
@@ -73,7 +73,7 @@ public abstract class EirAllocatorFactory {
             factoryClassName = factoryPackageName + ".Factory";
         }
         try {
-            _instance = (EirAllocatorFactory) Class.forName(factoryClassName).newInstance();
+            instance = (EirAllocatorFactory) Class.forName(factoryClassName).newInstance();
         } catch (Exception exception) {
             throw ProgramError.unexpected("Error instantiating " + factoryClassName, exception);
         }
@@ -88,7 +88,7 @@ public abstract class EirAllocatorFactory {
      * Creates a register allocator using the selected factory.
      */
     public static EirAllocator createAllocator(EirMethodGeneration methodGeneration) {
-        return _instance.newAllocator(methodGeneration);
+        return instance.newAllocator(methodGeneration);
     }
 
     /**
@@ -98,7 +98,7 @@ public abstract class EirAllocatorFactory {
      * @return {@code true} if the selected factory is an instance of {@code factoryClass}; {@code false} otherwise
      */
     public static boolean isSelected(Class<? extends EirAllocatorFactory> factoryClass) {
-        return factoryClass.isInstance(_instance);
+        return factoryClass.isInstance(instance);
     }
 
     /**
@@ -108,6 +108,6 @@ public abstract class EirAllocatorFactory {
      * @return {@code true} if the selected factory is in a sub-package of {@code allocatorPackage}; {@code false} otherwise
      */
     public static boolean isSelected(MaxPackage allocatorPackage) {
-        return _instance.getClass().getPackage().getName().startsWith(allocatorPackage.name());
+        return instance.getClass().getPackage().getName().startsWith(allocatorPackage.name());
     }
 }

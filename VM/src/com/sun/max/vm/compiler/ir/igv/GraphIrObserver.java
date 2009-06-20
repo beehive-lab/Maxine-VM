@@ -48,24 +48,24 @@ public class GraphIrObserver extends IrObserverAdapter {
      */
     public static final String DEFAULT_FILENAME = "graph.xml";
 
-    private static final VMStringOption _graphFileNameOption = register(new VMStringOption("-XX:GraphFileName=", false, "graph.xml", "The name of the file for the graph"), MaxineVM.Phase.PRISTINE);
+    private static final VMStringOption graphFileNameOption = register(new VMStringOption("-XX:GraphFileName=", false, "graph.xml", "The name of the file for the graph"), MaxineVM.Phase.PRISTINE);
 
-    private final GraphWriter.Document _document = GraphWriter.createDocument();
-    private final VariableMapping<IrMethod, GraphWriter.Group> _groupMapping = new ChainedHashMapping<IrMethod, GraphWriter.Group>();
-    private int _nestingLevel;
+    private final GraphWriter.Document document = GraphWriter.createDocument();
+    private final VariableMapping<IrMethod, GraphWriter.Group> groupMapping = new ChainedHashMapping<IrMethod, GraphWriter.Group>();
+    private int nestingLevel;
 
     private void begin(IrMethod irMethod) {
-        assert !_groupMapping.containsKey(irMethod);
-        final GraphWriter.Group group = _document.createGroup(irMethod.classMethodActor().format("%H.%n(%p)"));
-        _groupMapping.put(irMethod, group);
+        assert !groupMapping.containsKey(irMethod);
+        final GraphWriter.Group group = document.createGroup(irMethod.classMethodActor().format("%H.%n(%p)"));
+        groupMapping.put(irMethod, group);
         final IrMethodVisitor methodVisitor = new InitializeGroupIrMethodVisitor(group);
         IrMethodVisitor.Static.visit(irMethod, methodVisitor);
-        assert _groupMapping.containsKey(irMethod);
+        assert groupMapping.containsKey(irMethod);
     }
 
     private void process(IrMethod irMethod, Object context, String stateName) {
-        assert _groupMapping.containsKey(irMethod) : "Method must be in group mapping " + irMethod + ", " + irMethod.getClass();
-        final GraphWriter.Group group = _groupMapping.get(irMethod);
+        assert groupMapping.containsKey(irMethod) : "Method must be in group mapping " + irMethod + ", " + irMethod.getClass();
+        final GraphWriter.Group group = groupMapping.get(irMethod);
         final IrMethodVisitor methodVisitor = new GraphIrMethodVisitor(group, context, stateName);
         IrMethodVisitor.Static.visit(irMethod, methodVisitor);
     }
@@ -81,18 +81,18 @@ public class GraphIrObserver extends IrObserverAdapter {
     }
 
     private void finish(IrMethod irMethod) {
-        assert _groupMapping.containsKey(irMethod) : "Method must be in group mapping";
+        assert groupMapping.containsKey(irMethod) : "Method must be in group mapping";
 
-        final GraphWriter.Group group = _groupMapping.get(irMethod);
+        final GraphWriter.Group group = groupMapping.get(irMethod);
         setInputMethodObject(group, irMethod);
-        _groupMapping.remove(irMethod);
+        groupMapping.remove(irMethod);
 
         // Do not include groups with no graphs
         if (group.getGraphs().length() == 0) {
-            _document.removeGroup(group);
+            document.removeGroup(group);
         }
 
-        assert !_groupMapping.containsKey(irMethod) : "Method must no longer be in group mapping";
+        assert !groupMapping.containsKey(irMethod) : "Method must no longer be in group mapping";
 
     }
 
@@ -123,10 +123,10 @@ public class GraphIrObserver extends IrObserverAdapter {
     }
 
     private String nestingPrefix() {
-        if (_nestingLevel == 0) {
+        if (nestingLevel == 0) {
             return "";
         }
-        final char[] prefix = new char[_nestingLevel];
+        final char[] prefix = new char[nestingLevel];
         Arrays.fill(prefix, '+');
         return new String(prefix);
     }
@@ -140,7 +140,7 @@ public class GraphIrObserver extends IrObserverAdapter {
         if (methodOK(irMethod)) {
             process(irMethod, context, nestingPrefix() + "BEFORE: " + transform);
         }
-        _nestingLevel++;
+        nestingLevel++;
     }
 
     /**
@@ -149,7 +149,7 @@ public class GraphIrObserver extends IrObserverAdapter {
      */
     @Override
     public void observeAfterTransformation(IrMethod irMethod, Object context, Object transform) {
-        _nestingLevel--;
+        nestingLevel--;
         if (methodOK(irMethod)) {
             process(irMethod, context, nestingPrefix() + "AFTER: " + transform);
         }
@@ -161,7 +161,7 @@ public class GraphIrObserver extends IrObserverAdapter {
     @Override
     public void finish() {
         String fileName = DEFAULT_FILENAME;
-        final String propertyFileName = _graphFileNameOption.getValue();
+        final String propertyFileName = graphFileNameOption.getValue();
         if (propertyFileName != null) {
             fileName = propertyFileName;
         }
@@ -169,9 +169,9 @@ public class GraphIrObserver extends IrObserverAdapter {
         try {
             final FileWriter fileWriter = new FileWriter(fileName);
             final GraphWriter graphWriter = new GraphWriter(fileWriter);
-            graphWriter.write(_document);
+            graphWriter.write(document);
             graphWriter.close();
-            Trace.line(2, _document.getGroups().length() + " groups of graphs written to file " + fileName);
+            Trace.line(2, document.getGroups().length() + " groups of graphs written to file " + fileName);
         } catch (IOException e) {
             ProgramError.unexpected("Error while writing to file " + fileName, e);
         }

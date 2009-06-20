@@ -94,33 +94,33 @@ public class GraphWriter {
 
     public static final class Node extends PropertyObject {
 
-        private int _id;
-        private Graph _graph;
-        private Block _block;
+        private int id;
+        private Graph graph;
+        private Block block;
 
         private Node(Graph graph, int id) {
-            _graph = graph;
-            _id = id;
+            this.graph = graph;
+            this.id = id;
         }
 
         public Graph getGraph() {
-            return _graph;
+            return graph;
         }
 
         public int getId() {
-            return _id;
+            return id;
         }
 
         @Override
         public int hashCode() {
-            return _id;
+            return id;
         }
 
         @Override
         public boolean equals(Object obj) {
             if (obj instanceof Node) {
                 final Node other = (Node) obj;
-                if (other._id != _id) {
+                if (other.id != id) {
                     return false;
                 }
                 return super.equals(obj);
@@ -131,50 +131,50 @@ public class GraphWriter {
 
     public static final class Edge {
 
-        private int _from;
-        private int _fromIndex;
-        private int _to;
-        private int _toIndex;
-        private Graph _graph;
+        private int from;
+        private int fromIndex;
+        private int to;
+        private int toIndex;
+        private Graph graph;
 
         private Edge(Graph graph, int from, int fromIndex, int to, int toIndex) {
-            _graph = graph;
-            _from = from;
-            _fromIndex = fromIndex;
-            _to = to;
-            _toIndex = toIndex;
+            this.graph = graph;
+            this.from = from;
+            this.fromIndex = fromIndex;
+            this.to = to;
+            this.toIndex = toIndex;
         }
 
         public Graph getGraph() {
-            return _graph;
+            return graph;
         }
 
         public int getFrom() {
-            return _from;
+            return from;
         }
 
         public int getFromIndex() {
-            return _fromIndex;
+            return fromIndex;
         }
 
         public int getTo() {
-            return _to;
+            return to;
         }
 
         public int getToIndex() {
-            return _toIndex;
+            return toIndex;
         }
 
         @Override
         public int hashCode() {
-            return _fromIndex << 28 + _toIndex << 24 + _from << 12 + _to;
+            return fromIndex << 28 + toIndex << 24 + from << 12 + to;
         }
 
         @Override
         public boolean equals(Object obj) {
             if (obj instanceof Edge) {
                 final Edge other = (Edge) obj;
-                if (other._from == _from && other._fromIndex == _fromIndex && other._to == _to && other._toIndex == _toIndex) {
+                if (other.from == from && other.fromIndex == fromIndex && other.to == to && other.toIndex == toIndex) {
                     return true;
                 }
             }
@@ -184,26 +184,26 @@ public class GraphWriter {
 
     public static final class Block {
 
-        private Graph _graph;
-        private String _name;
+        private Graph graph;
+        private String name;
         private AppendableSequence<Block> _successors;
-        private AppendableSequence<Block> _predecessors;
-        private AppendableSequence<Node> _nodes;
+        private AppendableSequence<Block> predecessors;
+        private AppendableSequence<Node> nodes;
 
         private Block(Graph graph, String name) {
-            _graph = graph;
-            _name = name;
+            this.graph = graph;
+            this.name = name;
             _successors = new LinkSequence<Block>();
-            _predecessors = new LinkSequence<Block>();
-            _nodes = new LinkSequence<Node>();
+            predecessors = new LinkSequence<Block>();
+            nodes = new LinkSequence<Node>();
         }
 
         public Sequence<Node> getNodes() {
-            return _nodes;
+            return nodes;
         }
 
         public Graph getGraph() {
-            return _graph;
+            return graph;
         }
 
         public Sequence<Block> getSuccessors() {
@@ -211,46 +211,46 @@ public class GraphWriter {
         }
 
         public Sequence<Block> getPredecessors() {
-            return _predecessors;
+            return predecessors;
         }
 
         public void addNode(Node n) {
             assert n.getGraph() == getGraph();
-            assert n._block == null;
-            n._block = this;
-            _nodes.append(n);
+            assert n.block == null;
+            n.block = this;
+            nodes.append(n);
         }
 
         public void addSuccessor(Block b) {
             assert !Sequence.Static.containsIdentical(_successors, b);
-            assert b.getGraph() == _graph;
+            assert b.getGraph() == graph;
             _successors.append(b);
         }
 
         public void addPredecessor(Block b) {
-            assert !Sequence.Static.containsIdentical(_predecessors, b);
-            assert b.getGraph() == _graph;
-            _predecessors.append(b);
+            assert !Sequence.Static.containsIdentical(predecessors, b);
+            assert b.getGraph() == graph;
+            predecessors.append(b);
         }
 
         public String getName() {
-            return _name;
+            return name;
         }
     }
 
     public static final class Graph extends PropertyObject {
 
         private Set<Node> _nodes;
-        private Set<Edge> _edges;
-        private AppendableSequence<Block> _blocks;
-        private GrowableMapping<Integer, Node> _nodesMapping;
+        private Set<Edge> edges;
+        private AppendableSequence<Block> blocks;
+        private GrowableMapping<Integer, Node> nodesMapping;
 
         private Graph(String name) {
             this.getProperties().setProperty(GRAPH_NAME_PROPERTY, name);
             _nodes = new HashSet<Node>();
-            _edges = new HashSet<Edge>();
-            _blocks = new LinkSequence<Block>();
-            _nodesMapping = new ChainedHashMapping<Integer, Node>();
+            edges = new HashSet<Edge>();
+            blocks = new LinkSequence<Block>();
+            nodesMapping = new ChainedHashMapping<Integer, Node>();
         }
 
         public Collection<Node> getNodes() {
@@ -258,19 +258,19 @@ public class GraphWriter {
         }
 
         public Node createNode(int id) {
-            assert !_nodesMapping.containsKey(id);
+            assert !nodesMapping.containsKey(id);
             final Node n = new Node(this, id);
             _nodes.add(n);
-            _nodesMapping.put(id, n);
+            nodesMapping.put(id, n);
             return n;
         }
 
         public Node getNode(int id) {
-            return _nodesMapping.get(id);
+            return nodesMapping.get(id);
         }
 
         public Collection<Edge> getEdges() {
-            return _edges;
+            return edges;
         }
 
         public Edge createEdge(int from, int to) {
@@ -279,25 +279,25 @@ public class GraphWriter {
 
         public Edge createEdge(int from, int fromIndex, int to, int toIndex) {
             final Edge e = new Edge(this, from, fromIndex, to, toIndex);
-            _edges.add(e);
+            edges.add(e);
             return e;
         }
 
         public Block createBlock(String name) {
             final Block b = new Block(this, name);
-            _blocks.append(b);
+            blocks.append(b);
             return b;
         }
 
         public Sequence<Block> getBlocks() {
-            return _blocks;
+            return blocks;
         }
     }
 
     public static class Group extends PropertyObject {
 
         private AppendableSequence<Graph> _graphs;
-        private Method _method;
+        private Method method;
 
         public Group(String name) {
             this.getProperties().setProperty(METHOD_NAME_PROPERTY, name);
@@ -315,80 +315,80 @@ public class GraphWriter {
         }
 
         public Method getMethod() {
-            return _method;
+            return method;
         }
 
         public Method createMethod(int bci, String name, String shortName, String bytecodes) {
-            assert _method == null : "Only one method per group may be created.";
+            assert method == null : "Only one method per group may be created.";
             final Method m = new Method(bci, name, shortName, bytecodes);
-            _method = m;
+            method = m;
             return m;
         }
     }
 
     public static class Method {
 
-        private int _bci;
-        private String _name;
-        private String _shortName;
-        private String _bytecodes;
-        private AppendableSequence<Method> _inlinedMethods;
+        private int bci;
+        private String name;
+        private String shortName;
+        private String bytecodes;
+        private AppendableSequence<Method> inlinedMethods;
 
         public Method(int bci, String name, String shortName, String bytecodes) {
-            _bci = bci;
-            _name = name;
-            _shortName = shortName;
-            _bytecodes = bytecodes;
-            _inlinedMethods = new LinkSequence<Method>();
+            this.bci = bci;
+            this.name = name;
+            this.shortName = shortName;
+            this.bytecodes = bytecodes;
+            inlinedMethods = new LinkSequence<Method>();
         }
 
         public Sequence<Method> getInlinedMethods() {
-            return _inlinedMethods;
+            return inlinedMethods;
         }
 
-        public Method createInlined(int bci, String name, String shortName, String bytecodes) {
-            final Method m = new Method(bci, name, shortName, bytecodes);
-            _inlinedMethods.append(m);
+        public Method createInlined(int methodBci, String methodName, String methodShortName, String methodBytecodes) {
+            final Method m = new Method(methodBci, methodName, methodShortName, methodBytecodes);
+            inlinedMethods.append(m);
             return m;
         }
 
         public String getBytecodes() {
-            return _bytecodes;
+            return bytecodes;
         }
 
         public int getBci() {
-            return _bci;
+            return bci;
         }
 
         public String getName() {
-            return _name;
+            return name;
         }
 
         public String getShortName() {
-            return _shortName;
+            return shortName;
         }
     }
 
     public static final class Document extends PropertyObject {
 
-        private VariableSequence<Group> _groups;
+        private VariableSequence<Group> groups;
 
         private Document() {
-            _groups = new ArrayListSequence<Group>();
+            groups = new ArrayListSequence<Group>();
         }
 
         public Sequence<Group> getGroups() {
-            return _groups;
+            return groups;
         }
 
         public void removeGroup(Group g) {
-            assert Sequence.Static.containsIdentical(_groups, g);
-            _groups.remove(Sequence.Static.indexOfIdentical(_groups, g));
+            assert Sequence.Static.containsIdentical(groups, g);
+            groups.remove(Sequence.Static.indexOfIdentical(groups, g));
         }
 
         public Group createGroup(String name) {
             final Group g = new Group(name);
-            _groups.append(g);
+            groups.append(g);
             return g;
         }
     }

@@ -36,10 +36,10 @@ import com.sun.max.vm.type.*;
 public abstract class EirGenerator<EirGeneratorScheme_Type extends EirGeneratorScheme>
     extends IrGenerator<EirGeneratorScheme_Type, EirMethod> {
 
-    private final EirABIsScheme _eirABIsScheme;
+    private final EirABIsScheme eirABIsScheme;
 
     public EirABIsScheme eirABIsScheme() {
-        return _eirABIsScheme;
+        return eirABIsScheme;
     }
 
     private final WordWidth _wordWidth;
@@ -56,12 +56,12 @@ public abstract class EirGenerator<EirGeneratorScheme_Type extends EirGeneratorS
         final MaxPackage eirPackage = new com.sun.max.vm.compiler.eir.Package();
         final MaxPackage p = eirPackage.subPackage(platform.processorKind().instructionSet().name().toLowerCase(),
                                                    platform.operatingSystem().name().toLowerCase());
-        _eirABIsScheme = vmConfiguration.loadAndInstantiateScheme(p, EirABIsScheme.class, vmConfiguration);
+        eirABIsScheme = vmConfiguration.loadAndInstantiateScheme(p, EirABIsScheme.class, vmConfiguration);
     }
 
     @Override
     public final EirMethod createIrMethod(ClassMethodActor classMethodActor) {
-        final EirMethod eirMethod = new EirMethod(classMethodActor, _eirABIsScheme);
+        final EirMethod eirMethod = new EirMethod(classMethodActor, eirABIsScheme);
         notifyAllocation(eirMethod);
         return eirMethod;
     }

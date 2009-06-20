@@ -34,7 +34,7 @@ import com.sun.max.vm.reference.*;
 public final class BoxedPointer extends Pointer implements UnsafeBox {
 
     // ATTENTION: this field name must match the corresponding declaration in "pointer.c"!
-    private long _nativeWord;
+    private long nativeWord;
 
     public static final BoxedPointer ZERO = new BoxedPointer(0);
     public static final BoxedPointer MAX = new BoxedPointer(-1L);
@@ -45,11 +45,11 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
 
         static final int HIGHEST_VALUE = 1000000;
 
-        static final BoxedPointer[] _cache = new BoxedPointer[HIGHEST_VALUE + 1];
+        static final BoxedPointer[] cache = new BoxedPointer[HIGHEST_VALUE + 1];
 
         static {
-            for (int i = 0; i < _cache.length; i++) {
-                _cache[i] = new BoxedPointer(i);
+            for (int i = 0; i < cache.length; i++) {
+                cache[i] = new BoxedPointer(i);
             }
         }
     }
@@ -59,7 +59,7 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
             return ZERO;
         }
         if (value >= 0 && value <= Cache.HIGHEST_VALUE) {
-            return Cache._cache[(int) value];
+            return Cache.cache[(int) value];
         }
         if (value == -1L) {
             return MAX;
@@ -68,7 +68,7 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
     }
 
     private BoxedPointer(long value) {
-        _nativeWord = value;
+        nativeWord = value;
     }
 
     public static BoxedPointer from(int value) {
@@ -76,34 +76,34 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
     }
 
     public long nativeWord() {
-        return _nativeWord;
+        return nativeWord;
     }
 
     @Override
     protected Pointer dividedByAddress(Address divisor) {
-        return BoxedAddress.from(_nativeWord).dividedByAddress(divisor).asPointer();
+        return BoxedAddress.from(nativeWord).dividedByAddress(divisor).asPointer();
     }
 
     @Override
     protected Pointer dividedByInt(int divisor) {
-        return BoxedAddress.from(_nativeWord).dividedByInt(divisor).asPointer();
+        return BoxedAddress.from(nativeWord).dividedByInt(divisor).asPointer();
     }
 
     @Override
     protected Pointer remainderByAddress(Address divisor) {
-        return BoxedAddress.from(_nativeWord).remainderByAddress(divisor).asPointer();
+        return BoxedAddress.from(nativeWord).remainderByAddress(divisor).asPointer();
     }
 
     @Override
     protected int remainderByInt(int divisor) {
-        return BoxedAddress.from(_nativeWord).remainderByInt(divisor);
+        return BoxedAddress.from(nativeWord).remainderByInt(divisor);
     }
 
     private static native byte nativeReadByteAtLongOffset(long pointer, long offset);
 
     @Override
     protected byte readByteAtLongOffset(long offset) {
-        return nativeReadByteAtLongOffset(_nativeWord, offset);
+        return nativeReadByteAtLongOffset(nativeWord, offset);
     }
 
     @Override
@@ -115,7 +115,7 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
 
     @Override
     protected short readShortAtLongOffset(long offset) {
-        return nativeReadShortAtLongOffset(_nativeWord, offset);
+        return nativeReadShortAtLongOffset(nativeWord, offset);
     }
 
     @Override
@@ -137,7 +137,7 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
 
     @Override
     protected int readIntAtLongOffset(long offset) {
-        return nativeReadIntAtLongOffset(_nativeWord, offset);
+        return nativeReadIntAtLongOffset(nativeWord, offset);
     }
 
     @Override
@@ -159,7 +159,7 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
 
     @Override
     protected long readLongAtLongOffset(long offset) {
-        return nativeReadLongAtLongOffset(_nativeWord, offset);
+        return nativeReadLongAtLongOffset(nativeWord, offset);
     }
 
     @Override
@@ -206,7 +206,7 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
 
     @Override
     protected void writeByteAtLongOffset(long offset, byte value) {
-        nativeWriteByteAtLongOffset(_nativeWord, offset, value);
+        nativeWriteByteAtLongOffset(nativeWord, offset, value);
     }
 
     @Override
@@ -218,7 +218,7 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
 
     @Override
     protected void writeShortAtLongOffset(long offset, short value) {
-        nativeWriteShortAtLongOffset(_nativeWord, offset, value);
+        nativeWriteShortAtLongOffset(nativeWord, offset, value);
     }
 
     @Override
@@ -230,7 +230,7 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
 
     @Override
     protected void writeIntAtLongOffset(long offset, int value) {
-        nativeWriteIntAtLongOffset(_nativeWord, offset, value);
+        nativeWriteIntAtLongOffset(nativeWord, offset, value);
     }
 
     @Override
@@ -252,7 +252,7 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
 
     @Override
     protected void writeLongAtLongOffset(long offset, long value) {
-        nativeWriteLongAtLongOffset(_nativeWord, offset, value);
+        nativeWriteLongAtLongOffset(nativeWord, offset, value);
     }
 
     @Override
@@ -288,7 +288,7 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
 
     @Override
     protected void writeReferenceAtLongOffset(long offset, Reference value) {
-        nativeWriteObjectAtLongOffset(_nativeWord, offset, value.toJava());
+        nativeWriteObjectAtLongOffset(nativeWord, offset, value.toJava());
     }
 
     @Override

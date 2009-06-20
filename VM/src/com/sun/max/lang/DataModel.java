@@ -29,29 +29,29 @@ import com.sun.max.vm.value.*;
 
 public class DataModel {
 
-    private final WordWidth _wordWidth;
-    private final Endianness _endianness;
-    private final Alignment _alignment;
+    private final WordWidth wordWidth;
+    private final Endianness endianness;
+    private final Alignment alignment;
 
     public DataModel(WordWidth wordWidth, Endianness endianness, Alignment alignment) {
-        _wordWidth = wordWidth;
-        _endianness = endianness;
-        _alignment = alignment;
+        this.wordWidth = wordWidth;
+        this.endianness = endianness;
+        this.alignment = alignment;
     }
 
     @INLINE
     public final WordWidth wordWidth() {
-        return _wordWidth;
+        return wordWidth;
     }
 
     @INLINE
     public final Endianness endianness() {
-        return _endianness;
+        return endianness;
     }
 
     @INLINE
     public final Alignment alignment() {
-        return _alignment;
+        return alignment;
     }
 
     @Override
@@ -60,7 +60,7 @@ public class DataModel {
             return false;
         }
         final DataModel dataModel = (DataModel) other;
-        return _wordWidth.equals(dataModel._wordWidth) && _endianness.equals(dataModel._endianness) && _alignment.equals(dataModel._alignment);
+        return wordWidth.equals(dataModel.wordWidth) && endianness.equals(dataModel.endianness) && alignment.equals(dataModel.alignment);
     }
 
     public byte[] toBytes(byte value) {
@@ -121,6 +121,6 @@ public class DataModel {
 
     @Override
     public String toString() {
-        return _wordWidth + "-bit, " + _endianness + " endian, " + _alignment + "-byte aligned";
+        return wordWidth + "-bit, " + endianness + " endian, " + alignment + "-byte aligned";
     }
 }

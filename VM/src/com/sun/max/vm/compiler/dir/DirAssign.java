@@ -29,35 +29,35 @@ import com.sun.max.vm.compiler.dir.transform.*;
  */
 public class DirAssign extends DirInstruction {
 
-    private final DirVariable _destination;
-    private final DirValue _source;
+    private final DirVariable destination;
+    private final DirValue source;
 
     public DirAssign(DirVariable destination, DirValue source) {
         super();
-        _destination = destination;
-        _source = source;
+        this.destination = destination;
+        this.source = source;
     }
 
     public DirVariable destination() {
-        return _destination;
+        return destination;
     }
 
     public DirValue source() {
-        return _source;
+        return source;
     }
 
     @Override
     public boolean isEquivalentTo(DirInstruction other, DirBlockEquivalence dirBlockEquivalence) {
         if (other instanceof DirAssign) {
             final DirAssign dirAssign = (DirAssign) other;
-            return _destination == dirAssign._destination && _source.equals(dirAssign._source);
+            return destination == dirAssign.destination && source.equals(dirAssign.source);
         }
         return false;
     }
 
     @Override
     public String toString() {
-        return _destination + " := " + _source;
+        return destination + " := " + source;
     }
 
     @Override

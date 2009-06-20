@@ -42,12 +42,12 @@ public class IrMethodFilter extends IrObserverAdapter {
 
     public static final String PROPERTY_FILTER = "max.ir.observer.method";
 
-    private final IrObserver _observer;
-    private final String[] _filters;
+    private final IrObserver observer;
+    private final String[] filters;
 
     public IrMethodFilter(IrObserver observer, String[] filters) {
-        _filters = filters;
-        _observer = observer;
+        this.filters = filters;
+        this.observer = observer;
     }
 
     public IrMethodFilter(IrObserver observer) {
@@ -57,46 +57,46 @@ public class IrMethodFilter extends IrObserverAdapter {
     @Override
     public void observeAllocation(IrMethod irMethod) {
         if (match(irMethod)) {
-            _observer.observeAllocation(irMethod);
+            observer.observeAllocation(irMethod);
         }
     }
 
     @Override
     public void observeBeforeGeneration(IrMethod irMethod, IrGenerator irGenerator) {
         if (match(irMethod)) {
-            _observer.observeBeforeGeneration(irMethod, irGenerator);
+            observer.observeBeforeGeneration(irMethod, irGenerator);
         }
     }
 
     @Override
     public void observeAfterGeneration(IrMethod irMethod, IrGenerator irGenerator) {
         if (match(irMethod)) {
-            _observer.observeAfterGeneration(irMethod, irGenerator);
+            observer.observeAfterGeneration(irMethod, irGenerator);
         }
     }
 
     @Override
     public void observeBeforeTransformation(IrMethod irMethod, Object context, Object transform) {
         if (match(irMethod)) {
-            _observer.observeBeforeTransformation(irMethod, context, transform);
+            observer.observeBeforeTransformation(irMethod, context, transform);
         }
     }
 
     @Override
     public void observeAfterTransformation(IrMethod irMethod, Object context, Object transform) {
         if (match(irMethod)) {
-            _observer.observeAfterTransformation(irMethod, context, transform);
+            observer.observeAfterTransformation(irMethod, context, transform);
         }
     }
 
     @Override
     public void finish() {
-        _observer.finish();
+        observer.finish();
     }
 
     private boolean match(IrMethod irMethod) {
         final String signature = irMethod.classMethodActor().format("%H.%n(%p)");
-        for (String filter : _filters) {
+        for (String filter : filters) {
             if (signature.contains(filter)) {
                 return true;
             }

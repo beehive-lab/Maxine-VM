@@ -37,25 +37,25 @@ public enum Alignment {
 
     public static final IndexedSequence<Alignment> VALUES = new ArraySequence<Alignment>(values());
 
-    private final int _nBytes;
+    private final int nBytes;
 
     private Alignment(int nBytes) {
-        _nBytes = nBytes;
+        this.nBytes = nBytes;
     }
 
     @Override
     public String toString() {
-        return Integer.toString(_nBytes);
+        return Integer.toString(nBytes);
     }
 
     @INLINE
     public final int numberOfBytes() {
-        return _nBytes;
+        return nBytes;
     }
 
     public static Alignment fromInt(int nBytes) {
         for (Alignment value : Alignment.VALUES) {
-            if (value._nBytes == nBytes) {
+            if (value.nBytes == nBytes) {
                 return value;
             }
         }

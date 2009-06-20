@@ -30,11 +30,11 @@ package com.sun.max.vm.classfile.create;
  */
 public class MillClassConstant extends MillConstant {
 
-    final int _nameIndex;
+    final int nameIndex;
 
     MillClassConstant(MillUtf8Constant name) {
-        super(CONSTANT_Class, 3, ~name._hashValue);
-        _nameIndex = name._index;
+        super(CONSTANT_Class, 3, ~name.hashValue);
+        nameIndex = name.index;
     }
 
     /**
@@ -48,7 +48,7 @@ public class MillClassConstant extends MillConstant {
     public boolean equals(Object other) {
         if (other instanceof MillClassConstant) {
             final MillClassConstant millClassConstant = (MillClassConstant) other;
-            return _nameIndex == millClassConstant._nameIndex;
+            return nameIndex == millClassConstant.nameIndex;
         }
         return false;
     }

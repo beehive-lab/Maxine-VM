@@ -29,15 +29,15 @@ import com.sun.max.vm.grip.*;
  */
 public  class PointerIndexVisitorImpl implements BeltWayPointerIndexVisitor {
 
-    private   Action _actionImpl;
+    private   Action actionImpl;
 
     public PointerIndexVisitorImpl(Action actionImpl) {
-        _actionImpl = actionImpl;
+        this.actionImpl = actionImpl;
     }
 
     public void visitPointerIndex(Pointer pointer, int wordIndex, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         final Grip oldGrip = pointer.getGrip(wordIndex);
-        final Grip newGrip = _actionImpl.doAction(oldGrip, from, to);
+        final Grip newGrip = actionImpl.doAction(oldGrip, from, to);
         if (newGrip != null) {
             if (newGrip != oldGrip) {
                 pointer.setGrip(wordIndex, newGrip);

@@ -52,17 +52,17 @@ import com.sun.max.vm.runtime.VMRegister.*;
 @PROTOTYPE_ONLY
 public final class CirTemplateChecker extends CirVisitor {
 
-    private final MethodActor _classMethodActor;
+    private final MethodActor classMethodActor;
 
     /**
      * Maps a closure/block/call to a stop instruction reachable from the node.
      */
-    private final VariableMapping<CirNode, CirCall> _stops = new ChainedHashMapping<CirNode, CirCall>();
+    private final VariableMapping<CirNode, CirCall> stops = new ChainedHashMapping<CirNode, CirCall>();
 
-    private boolean _changed;
+    private boolean changed;
 
     private CirTemplateChecker(MethodActor classMethodActor) {
-        _classMethodActor = classMethodActor;
+        this.classMethodActor = classMethodActor;
     }
 
     /**
@@ -75,7 +75,7 @@ public final class CirTemplateChecker extends CirVisitor {
      */
     private void reportError(CirCall call, CirCall stop) {
         final StringBuilder sb = new StringBuilder("In a bytecode template, the Java stack or locals array must not be updated before a safepoint or call.\n");
-        sb.append("[in " + _classMethodActor.format("%H.%n(%p)") + " ]\n");
+        sb.append("[in " + classMethodActor.format("%H.%n(%p)") + " ]\n");
         sb.append("Stack/local update: " + call.procedure() + "(" + Arrays.toString(call.arguments(), ", ") + ")\n");
         sb.append("    at " + call.javaFrameDescriptor().toStackTraceElement() + "\n");
         sb.append("Safepoint/call:     " + stop.procedure() + "(" + Arrays.toString(stop.arguments(), ", ") + ")\n");
@@ -86,23 +86,23 @@ public final class CirTemplateChecker extends CirVisitor {
 
     @Override
     public void visitBlock(CirBlock block) {
-        CirCall stop = _stops.get(block);
+        CirCall stop = stops.get(block);
         if (stop == null) {
-            stop = _stops.get(block.closure());
+            stop = stops.get(block.closure());
             if (stop != null) {
-                _changed = true;
-                _stops.put(block, stop);
+                changed = true;
+                stops.put(block, stop);
             }
         }
     }
 
     @Override
     public void visitClosure(CirClosure cirClosure) {
-        CirCall stop = _stops.get(cirClosure);
+        CirCall stop = stops.get(cirClosure);
         if (stop == null) {
-            stop = _stops.get(cirClosure.body());
+            stop = stops.get(cirClosure.body());
             if (stop != null) {
-                _stops.put(cirClosure, stop);
+                stops.put(cirClosure, stop);
             }
         }
     }
@@ -153,20 +153,20 @@ public final class CirTemplateChecker extends CirVisitor {
         final CirValue procedure = call.procedure();
         final CirValue[] arguments = call.arguments();
 
-        CirCall stop = _stops.get(call);
+        CirCall stop = stops.get(call);
         if (stop == null) {
-            stop = _stops.get(procedure);
+            stop = stops.get(procedure);
             if (stop == null) {
                 for (CirValue argument : arguments) {
-                    stop = _stops.get(argument);
+                    stop = stops.get(argument);
                     if (stop != null) {
-                        _stops.put(call, stop);
+                        stops.put(call, stop);
                         break;
                     }
                 }
             }
             if (stop != null) {
-                _stops.put(call, stop);
+                stops.put(call, stop);
             }
         }
 
@@ -176,7 +176,7 @@ public final class CirTemplateChecker extends CirVisitor {
             }
         } else {
             if (isStop(call)) {
-                _stops.put(call, call);
+                stops.put(call, call);
             }
         }
     }
@@ -187,10 +187,10 @@ public final class CirTemplateChecker extends CirVisitor {
         final CirDepthFirstTraversal depthFirstTraversal = new CirDepthFirstTraversal(blockSet);
         final CirTemplateChecker checker = new CirTemplateChecker(cirMethod.classMethodActor());
         do {
-            checker._changed = false;
+            checker.changed = false;
             depthFirstTraversal.run(closure, checker);
             blockSet.clear();
-        } while (checker._changed);
+        } while (checker.changed);
         cirGenerator.notifyAfterTransformation(cirMethod, cirMethod, TEMPLATE_CHECKING);
     }
 }

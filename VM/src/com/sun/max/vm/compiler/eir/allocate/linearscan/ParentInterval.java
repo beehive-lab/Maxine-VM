@@ -32,24 +32,24 @@ import com.sun.max.vm.type.*;
  */
 public final class ParentInterval {
 
-    private AppendableSequence<Interval> _children;
-    private EirVariable _slotVariable;
-    private boolean _spillSlotDefined;
+    private AppendableSequence<Interval> children;
+    private EirVariable slotVariable;
+    private boolean spillSlotDefined;
 
     public ParentInterval() {
-        _children = new ArrayListSequence<Interval>(3);
+        children = new ArrayListSequence<Interval>(3);
     }
 
     public boolean spillSlotDefined() {
-        return _spillSlotDefined;
+        return spillSlotDefined;
     }
 
     public void setSpillSlotDefined(boolean b) {
-        _spillSlotDefined = b;
+        spillSlotDefined = b;
     }
 
     public Sequence<Interval> children() {
-        return _children;
+        return children;
     }
 
     public String detailedToString() {
@@ -82,7 +82,7 @@ public final class ParentInterval {
     public Interval createChild(EirVariable variable) {
         final Interval result = new Interval(this, variable);
         variable.setInterval(result);
-        _children.append(result);
+        children.append(result);
         return result;
     }
 
@@ -90,7 +90,7 @@ public final class ParentInterval {
 
         // Children may be completely unsorted
         Interval prev = null;
-        for (Interval i : _children) {
+        for (Interval i : children) {
             if (i != current && i.getLastRangeEnd() <= current.getFirstRangeStart()) {
                 if (prev == null || i.getLastRangeEnd() > prev.getLastRangeEnd()) {
                     prev = i;
@@ -105,14 +105,14 @@ public final class ParentInterval {
 
     public Interval getChildAt(int endNumber) {
 
-        for (Interval i : _children) {
+        for (Interval i : children) {
             if (i.covers(endNumber)) {
                 return i;
             }
         }
 
         // TODO (tw): Check why this is needed!
-        for (Interval i : _children) {
+        for (Interval i : children) {
             if (i.coversEndInclusive(endNumber)) {
                 return i;
             }
@@ -122,27 +122,27 @@ public final class ParentInterval {
     }
 
     public boolean hasSlotVariable() {
-        return _slotVariable != null;
+        return slotVariable != null;
     }
 
     public EirVariable slotVariable(EirMethodGeneration generation) {
 
-        if (_slotVariable == null) {
-            final Kind kind = _children.first().variable().kind();
+        if (slotVariable == null) {
+            final Kind kind = children.first().variable().kind();
 
-            for (Interval i : _children) {
+            for (Interval i : children) {
                 assert i.variable().kind() == kind;
                 if (i.variable().location() != null && i.variable().location().asStackSlot() != null) {
-                    _slotVariable = i.variable();
+                    slotVariable = i.variable();
                 }
             }
 
-            if (_slotVariable == null) {
-                _slotVariable = generation.createEirVariable(kind);
-                _slotVariable.fixLocation(generation.allocateSpillStackSlot());
+            if (slotVariable == null) {
+                slotVariable = generation.createEirVariable(kind);
+                slotVariable.fixLocation(generation.allocateSpillStackSlot());
             }
         }
 
-        return _slotVariable;
+        return slotVariable;
     }
 }

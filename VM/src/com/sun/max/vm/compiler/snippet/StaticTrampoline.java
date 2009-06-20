@@ -34,7 +34,7 @@ import com.sun.max.vm.runtime.*;
  */
 public final class StaticTrampoline extends NonFoldableSnippet {
 
-    private final CriticalMethod _classMethodActor = new CriticalMethod(classMethodActor(), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    private final CriticalMethod classMethodActor = new CriticalMethod(classMethodActor(), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
 
     private StaticTrampoline() {
     }
@@ -51,19 +51,19 @@ public final class StaticTrampoline extends NonFoldableSnippet {
         VMConfiguration.target().compilerScheme().staticTrampoline();
     }
 
-    private static final StaticTrampoline _snippet = new StaticTrampoline();
+    private static final StaticTrampoline snippet = new StaticTrampoline();
 
     public static StaticTrampoline snippet() {
-        return _snippet;
+        return snippet;
     }
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static Pointer _codeStart = Pointer.zero();
+    private static Pointer codeStart = Pointer.zero();
 
     public static Pointer codeStart() {
-        if (_codeStart.isZero()) {
-            _codeStart = CompilationScheme.Static.getCurrentTargetMethod(_snippet.classMethodActor()).codeStart();
+        if (codeStart.isZero()) {
+            codeStart = CompilationScheme.Static.getCurrentTargetMethod(snippet.classMethodActor()).codeStart();
         }
-        return _codeStart;
+        return codeStart;
     }
 }

@@ -41,50 +41,50 @@ public final class JavaTester {
     private JavaTester() {
     }
 
-    private static final OptionSet _options = new OptionSet(true);
+    private static final OptionSet options = new OptionSet(true);
 
-    private static final Option<Boolean> HELP = _options.newBooleanOption("help", false,
+    private static final Option<Boolean> HELP = options.newBooleanOption("help", false,
                     "Displays usage message and exits.");
-    private static final Option<Integer> VERBOSE = _options.newIntegerOption("verbose", 1,
+    private static final Option<Integer> VERBOSE = options.newIntegerOption("verbose", 1,
                     "Selects the verbosity level of the testing framework.");
-    private static final Option<Boolean> LOADING_PACKAGES = _options.newBooleanOption("loadPackages", false,
+    private static final Option<Boolean> LOADING_PACKAGES = options.newBooleanOption("loadPackages", false,
                     "Determines whether the Java prototype is to load all VM packages.");
-    private static final Option<List<String>> EXECS = _options.newStringListOption("scenario", "reflect",
+    private static final Option<List<String>> EXECS = options.newStringListOption("scenario", "reflect",
                     "Selects the scenarios in which to run each test.");
-    private static final Option<Boolean> GEN_RUNSCHEME = _options.newBooleanOption("gen-run-scheme", true,
+    private static final Option<Boolean> GEN_RUNSCHEME = options.newBooleanOption("gen-run-scheme", true,
                     "Selects whether the java tester will generate a run scheme for the " +
                     "tests, which can be used to create a target VM to run.");
-    private static final Option<String> RUNSCHEME_PACKAGE = _options.newStringOption("run-scheme-package", "some",
+    private static final Option<String> RUNSCHEME_PACKAGE = options.newStringOption("run-scheme-package", "some",
                     "Selects the target output package for the tests.");
-    private static final Option<Boolean> GEN_IMAGE = _options.newBooleanOption("gen-image", false,
+    private static final Option<Boolean> GEN_IMAGE = options.newBooleanOption("gen-image", false,
                     "Selects whether the tester will generate a boot image with the specified tests.");
-    private static final Option<Boolean> RUN_IMAGE = _options.newBooleanOption("run-image", false,
+    private static final Option<Boolean> RUN_IMAGE = options.newBooleanOption("run-image", false,
                     "Selects whether the tester will run the target VM that has been generated.");
-    private static final Option<Boolean> RESTART_IMAGE = _options.newBooleanOption("restart", true,
+    private static final Option<Boolean> RESTART_IMAGE = options.newBooleanOption("restart", true,
                     "Selects whether the tester will generate an image that allows restarting the tests " +
                     "from a particular test number.");
-    private static final Option<Boolean> SORT_OPTION = _options.newBooleanOption("alphabetical", true,
+    private static final Option<Boolean> SORT_OPTION = options.newBooleanOption("alphabetical", true,
                     "Selects whether the tester will sort the tests alphabetically when generating an image.");
-    private static final Option<List<String>> GEN_IMAGE_ARGS = _options.newStringListOption("gen-image-args", "",
+    private static final Option<List<String>> GEN_IMAGE_ARGS = options.newStringListOption("gen-image-args", "",
                     "Additional args to pass to the image generator.");
-    private static final Option<List<String>> GEN_IMAGE_PROPS = _options.newStringListOption("gen-image-props", "",
+    private static final Option<List<String>> GEN_IMAGE_PROPS = options.newStringListOption("gen-image-props", "",
                     "Additional system properties to pass to the image generator.");
-    private static final Option<List<String>> RUN_IMAGE_ARGS = _options.newStringListOption("run-image-args", "",
+    private static final Option<List<String>> RUN_IMAGE_ARGS = options.newStringListOption("run-image-args", "",
                     "Additional args to pass to the target image.");
-    private static final Option<Boolean> NATIVE_TESTS = _options.newBooleanOption("native-tests", false,
+    private static final Option<Boolean> NATIVE_TESTS = options.newBooleanOption("native-tests", false,
                     "When specified, the JavaTester will attempt to load " + System.mapLibraryName("javatest") + " in order to run " +
                     "native JNI and JVM tests.");
-    private static final Option<Boolean> REPORT_METRICS = _options.newBooleanOption("report-metrics", false,
+    private static final Option<Boolean> REPORT_METRICS = options.newBooleanOption("report-metrics", false,
                     "When specified, the JavaTester will report metrics that were gathered while running " +
                     "the tests.");
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        Trace.addTo(_options);
+        Trace.addTo(options);
         // parse the arguments
-        final String[] arguments = _options.parseArguments(args).getArguments();
+        final String[] arguments = options.parseArguments(args).getArguments();
 
         if (HELP.getValue()) {
-            _options.printHelp(System.out, 80);
+            options.printHelp(System.out, 80);
             return;
         }
         // create a registry of known VM executors.
@@ -120,10 +120,10 @@ public final class JavaTester {
         if (GEN_RUNSCHEME.getValue()) {
             // generate the run scheme if necessary
             Trace.line(0, "Generating target run scheme...");
-            _options.setValue("restart", String.valueOf(RESTART_IMAGE.getValue()));
-            _options.setValue("alphabetical", String.valueOf(SORT_OPTION.getValue()));
-            _options.setValue("package", String.valueOf(RUNSCHEME_PACKAGE.getValue()));
-            JavaTesterGenerator.generate(_options, arguments);
+            options.setValue("restart", String.valueOf(RESTART_IMAGE.getValue()));
+            options.setValue("alphabetical", String.valueOf(SORT_OPTION.getValue()));
+            options.setValue("package", String.valueOf(RUNSCHEME_PACKAGE.getValue()));
+            JavaTesterGenerator.generate(options, arguments);
         }
         if (GEN_IMAGE.getValue()) {
             // generate an image if necessary

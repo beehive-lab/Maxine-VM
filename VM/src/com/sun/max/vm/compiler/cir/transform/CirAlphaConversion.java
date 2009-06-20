@@ -33,14 +33,14 @@ import com.sun.max.vm.compiler.cir.variable.*;
  */
 public final class CirAlphaConversion {
 
-    private final CirVariableFactory _variableFactory = new CirVariableFactory();
+    private final CirVariableFactory variableFactory = new CirVariableFactory();
 
     private CirVariableRenaming renameParameters(CirClosure closure, CirVariableRenaming renaming) {
         CirVariableRenaming r = renaming;
         final CirVariable[] parameters = closure.parameters();
         for (int i = 0; i < parameters.length; i++) {
             final CirVariable oldParameter = parameters[i];
-            final CirVariable newParameter = _variableFactory.createFresh(oldParameter);
+            final CirVariable newParameter = variableFactory.createFresh(oldParameter);
             parameters[i] = newParameter;
             r = new CirVariableRenaming(r, oldParameter, newParameter);
         }
@@ -48,12 +48,12 @@ public final class CirAlphaConversion {
     }
 
     private final class Inspection {
-        private final CirNode _node;
-        private final CirVariableRenaming _renaming;
+        private final CirNode node;
+        private final CirVariableRenaming renaming;
 
         private Inspection(CirNode node, CirVariableRenaming renaming) {
-            _node = node;
-            _renaming = renaming;
+            this.node = node;
+            this.renaming = renaming;
         }
     }
 
@@ -115,8 +115,8 @@ public final class CirAlphaConversion {
                 return;
             }
             final Inspection inspection = toDo.removeFirst();
-            currentNode = inspection._node;
-            renaming = inspection._renaming;
+            currentNode = inspection.node;
+            renaming = inspection.renaming;
         }
     }
 

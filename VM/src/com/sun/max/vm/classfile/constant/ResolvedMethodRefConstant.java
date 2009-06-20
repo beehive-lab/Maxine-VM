@@ -31,14 +31,14 @@ import com.sun.max.vm.type.*;
 public abstract class ResolvedMethodRefConstant<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> extends AbstractPoolConstant<PoolConstant_Type> implements MethodRefConstant<PoolConstant_Type> {
 
     @INSPECTED
-    private final MethodActor _methodActor;
+    private final MethodActor methodActor;
 
     public final MethodActor methodActor() {
-        return _methodActor;
+        return methodActor;
     }
 
     public ResolvedMethodRefConstant(MethodActor methodActor) {
-        _methodActor = methodActor;
+        this.methodActor = methodActor;
     }
 
     public final Utf8Constant name(ConstantPool pool) {
@@ -62,7 +62,7 @@ public abstract class ResolvedMethodRefConstant<PoolConstant_Type extends PoolCo
     }
 
     public final MethodActor resolve(ConstantPool pool, int index) {
-        return _methodActor;
+        return methodActor;
     }
 
     static StaticMethodActor verifyIsStatic(MethodActor methodActor, ConstantPool pool) throws IncompatibleClassChangeError {
@@ -86,18 +86,18 @@ public abstract class ResolvedMethodRefConstant<PoolConstant_Type extends PoolCo
     }
 
     public final TypeDescriptor holder() {
-        return _methodActor.holder().typeDescriptor();
+        return methodActor.holder().typeDescriptor();
     }
 
     public final Utf8Constant name() {
-        return _methodActor.name();
+        return methodActor.name();
     }
 
     public final SignatureDescriptor signature() {
-        return _methodActor.descriptor();
+        return methodActor.descriptor();
     }
 
     public final String valueString(ConstantPool pool) {
-        return _methodActor.format("%H.%n(%p):%r");
+        return methodActor.format("%H.%n(%p):%r");
     }
 }

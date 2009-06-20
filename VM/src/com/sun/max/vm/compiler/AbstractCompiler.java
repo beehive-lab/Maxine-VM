@@ -88,16 +88,16 @@ public abstract class AbstractCompiler extends AbstractVMScheme implements Compi
     }
 
     @PROTOTYPE_ONLY
-    private boolean _areSnippetsCompiled = false;
+    private boolean areSnippetsCompiled = false;
 
     @PROTOTYPE_ONLY
     public boolean areSnippetsCompiled() {
-        return _areSnippetsCompiled;
+        return areSnippetsCompiled;
     }
 
     @PROTOTYPE_ONLY
     public void compileSnippets() {
-        _areSnippetsCompiled = true;
+        areSnippetsCompiled = true;
         ClassActor.DEFERRABLE_QUEUE_2.runAll();
     }
 

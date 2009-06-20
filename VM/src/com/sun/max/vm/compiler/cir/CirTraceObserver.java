@@ -70,16 +70,16 @@ public class CirTraceObserver extends IrTraceObserver {
 
 
         TransformationType(String description, int traceLevel) {
-            _description = description;
-            _traceLevel = traceLevel;
+            this.description = description;
+            this.traceLevel = traceLevel;
         }
 
-        private final int _traceLevel;
-        private final String _description;
+        private final int traceLevel;
+        private final String description;
 
         @Override
         public String toString() {
-            return _description;
+            return description;
         }
     }
 
@@ -90,36 +90,36 @@ public class CirTraceObserver extends IrTraceObserver {
      * the method being inlined could be part of the description.
      */
     public static class Transformation {
-        final TransformationType _type;
-        final String _detail;
+        final TransformationType type;
+        final String detail;
 
         public Transformation(TransformationType type) {
             this(type, null);
         }
 
         public Transformation(TransformationType type, String detail) {
-            _type = type;
-            _detail = detail;
+            this.type = type;
+            this.detail = detail;
         }
 
         @Override
         public String toString() {
-            if (_detail == null) {
-                return _type.toString();
+            if (detail == null) {
+                return type.toString();
             }
-            return _type + " -- " + _detail;
+            return type + " -- " + detail;
         }
     }
 
-    private static final ThreadLocal<String> _lastTrace = new ThreadLocal<String>();
+    private static final ThreadLocal<String> lastTrace = new ThreadLocal<String>();
 
     private String trace(CirNode node) {
         final String trace = node.traceToString(false);
-        final String lastTrace = _lastTrace.get();
-        if (trace.equals(lastTrace)) {
+        final String theLastTrace = lastTrace.get();
+        if (trace.equals(theLastTrace)) {
             return "[no change from last CIR trace]";
         }
-        _lastTrace.set(trace);
+        lastTrace.set(trace);
         return trace;
     }
 
@@ -129,15 +129,15 @@ public class CirTraceObserver extends IrTraceObserver {
             final int transformTraceLevel = transformTraceLevel(transform);
             if (hasLevel(transformTraceLevel)) {
                 if (irMethod instanceof CirMethod) {
-                    _out.println(traceString(irMethod, "before transformation: " + transform));
+                    out.println(traceString(irMethod, "before transformation: " + transform));
                     final CirMethod cirMethod = (CirMethod) irMethod;
                     if (context == null) {
-                        _out.println(trace(cirMethod));
+                        out.println(trace(cirMethod));
                     } else {
                         final CirNode cirNode = (CirNode) context;
-                        _out.println(trace(cirNode));
+                        out.println(trace(cirNode));
                     }
-                    _out.flush();
+                    out.flush();
                 }
             }
         }
@@ -149,15 +149,15 @@ public class CirTraceObserver extends IrTraceObserver {
             final int transformTraceLevel = transformTraceLevel(transform);
             if (hasLevel(transformTraceLevel)) {
                 if (irMethod instanceof CirMethod) {
-                    _out.println(traceString(irMethod, "after transformation: " + transform));
+                    out.println(traceString(irMethod, "after transformation: " + transform));
                     final CirMethod cirMethod = (CirMethod) irMethod;
                     if (context == null) {
-                        _out.println(trace(cirMethod));
+                        out.println(trace(cirMethod));
                     } else {
                         final CirNode cirNode = (CirNode) context;
-                        _out.println(trace(cirNode));
+                        out.println(trace(cirNode));
                     }
-                    _out.flush();
+                    out.flush();
                 }
             }
         }
@@ -166,8 +166,8 @@ public class CirTraceObserver extends IrTraceObserver {
     @Override
     protected int transformTraceLevel(Object transform) {
         if (transform instanceof Transformation) {
-            return ((Transformation) transform)._type._traceLevel;
+            return ((Transformation) transform).type.traceLevel;
         }
-        return ((TransformationType) transform)._traceLevel;
+        return ((TransformationType) transform).traceLevel;
     }
 }

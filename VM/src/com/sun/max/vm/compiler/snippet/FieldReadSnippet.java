@@ -38,15 +38,14 @@ import com.sun.max.vm.type.*;
  */
 public class FieldReadSnippet extends BuiltinsSnippet {
 
-    private TupleOffsetSnippet _tupleOffsetSnippet;
+    private TupleOffsetSnippet tupleOffsetSnippet;
 
     protected FieldReadSnippet(TupleOffsetSnippet tupleOffsetSnippet) {
-        super();
-        _tupleOffsetSnippet = tupleOffsetSnippet;
+        this.tupleOffsetSnippet = tupleOffsetSnippet;
     }
 
     public TupleOffsetSnippet tupleOffsetSnippet() {
-        return _tupleOffsetSnippet;
+        return tupleOffsetSnippet;
     }
 
     @Override

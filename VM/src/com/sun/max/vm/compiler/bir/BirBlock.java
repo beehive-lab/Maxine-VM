@@ -31,74 +31,74 @@ import com.sun.max.vm.compiler.ir.*;
  */
 public class BirBlock implements IrBlock {
 
-    private BytecodeBlock _bytecodeBlock;
-    private IrBlock.Role _role;
-    private GrowableDeterministicSet<BirBlock> _predecessors = new LinkedIdentityHashSet<BirBlock>();
-    private GrowableDeterministicSet<BirBlock> _successors = new LinkedIdentityHashSet<BirBlock>();
-    private boolean _hasSafepoint;
+    private BytecodeBlock bytecodeBlock;
+    private IrBlock.Role role;
+    private GrowableDeterministicSet<BirBlock> predecessors = new LinkedIdentityHashSet<BirBlock>();
+    private GrowableDeterministicSet<BirBlock> successors = new LinkedIdentityHashSet<BirBlock>();
+    private boolean hasSafepoint;
 
     public BytecodeBlock bytecodeBlock() {
-        return _bytecodeBlock;
+        return bytecodeBlock;
     }
 
 
     public IrBlock.Role role() {
-        return _role;
+        return role;
     }
 
     public void setRole(IrBlock.Role role) {
-        _role = role;
+        this.role = role;
         if (role == IrBlock.Role.EXCEPTION_DISPATCHER) {
             haveSafepoint();
         }
     }
 
     public boolean hasSafepoint() {
-        return _hasSafepoint;
+        return hasSafepoint;
     }
 
     public void haveSafepoint() {
-        _hasSafepoint = true;
+        hasSafepoint = true;
     }
 
     public BirBlock(BytecodeBlock bytecodeBlock) {
-        _bytecodeBlock = bytecodeBlock;
-        _role = IrBlock.Role.NORMAL;
+        this.bytecodeBlock = bytecodeBlock;
+        this.role = IrBlock.Role.NORMAL;
     }
 
     @Override
     public int hashCode() {
-        return _bytecodeBlock.start() * _bytecodeBlock.end();
+        return bytecodeBlock.start() * bytecodeBlock.end();
     }
 
 
     public void addPredecessor(BirBlock predecessor) {
-        _predecessors.add(predecessor);
+        predecessors.add(predecessor);
     }
 
     public DeterministicSet<BirBlock> predecessors() {
-        return _predecessors;
+        return predecessors;
     }
 
 
     public void addSuccessor(BirBlock successor) {
-        _successors.add(successor);
+        successors.add(successor);
     }
 
     public DeterministicSet<BirBlock> successors() {
-        return _successors;
+        return successors;
     }
 
     public int serial() {
-        return _bytecodeBlock.start();
+        return bytecodeBlock.start();
     }
 
     @Override
     public String toString() {
-        return "<" + _role + ": " + _bytecodeBlock + ">";
+        return "<" + role + ": " + bytecodeBlock + ">";
     }
 
     public boolean isReachable() {
-        return !predecessors().isEmpty() || _bytecodeBlock.start() == 0 || _role == IrBlock.Role.EXCEPTION_DISPATCHER;
+        return !predecessors().isEmpty() || bytecodeBlock.start() == 0 || role == IrBlock.Role.EXCEPTION_DISPATCHER;
     }
 }

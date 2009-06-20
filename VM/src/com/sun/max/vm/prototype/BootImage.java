@@ -35,6 +35,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -71,24 +72,32 @@ public class BootImage {
      */
     public static final int VERSION = 1;
 
-    public abstract class Section {
+    public abstract static class Section {
         protected Section() {
         }
 
-        protected Field[] fields() {
-            return Arrays.filter(getClass().getDeclaredFields(), new Predicate<Field>() {
+        static Field[] fields(Class holder, final Class fieldType) {
+            return Arrays.filter(holder.getDeclaredFields(), new Predicate<Field>() {
                 public boolean evaluate(Field field) {
-                    return field.getName().startsWith("_");
+                    final int flags = Actor.ACC_FINAL | Actor.ACC_PUBLIC;
+                    if ((field.getModifiers() & flags) == flags && field.getType().equals(fieldType)) {
+                        return true;
+                    }
+                    return false;
                 }
             }, new Field[0]);
         }
 
-        public abstract void check() throws BootImageException;
+        protected Field[] fields() {
+            return fields(getClass(), fieldType());
+        }
+
+        public abstract Class<?> fieldType();
         public abstract int size();
         public abstract void write(OutputStream outputStream) throws IOException;
     }
 
-    public abstract class IntSection extends Section {
+    public abstract static class IntSection extends Section {
         private final Endianness _endianness;
 
         public Endianness endianness() {
@@ -121,6 +130,10 @@ public class BootImage {
             }
         }
 
+        @Override
+        public Class<?> fieldType() {
+            return int.class;
+        }
     }
 
     private static final Utf8Constant run = SymbolTable.makeSymbol("run");
@@ -146,7 +159,7 @@ public class BootImage {
      *
      * @author Bernd Mathiske
      */
-    public final class Header extends IntSection {
+    public static final class Header extends IntSection {
         public final int _isBigEndian;
 
         public final int _identification;
@@ -171,8 +184,8 @@ public class BootImage {
         public final int _stringInfoSize;
         public final int _relocationDataSize;
 
-        public final int _bootHeapSize;
-        public final int _bootCodeSize;
+        public final int bootHeapSize;
+        public final int bootCodeSize;
         public final int _codeCacheSize;
 
         public final int _heapRegionsPointerOffset;
@@ -228,8 +241,8 @@ public class BootImage {
             _stringInfoSize = endian.readInt(dataInputStream);
             _relocationDataSize = endian.readInt(dataInputStream);
 
-            _bootHeapSize = endian.readInt(dataInputStream);
-            _bootCodeSize = endian.readInt(dataInputStream);
+            bootHeapSize = endian.readInt(dataInputStream);
+            bootCodeSize = endian.readInt(dataInputStream);
             _codeCacheSize = endian.readInt(dataInputStream);
 
             _heapRegionsPointerOffset = endian.readInt(dataInputStream);
@@ -266,20 +279,19 @@ public class BootImage {
             _classRegistryOffset = dataPrototype.objectToOrigin(ClassRegistry.vmClassRegistry()).toInt();
             _stringInfoSize = stringInfo.size();
             _relocationDataSize = dataPrototype.relocationData().length;
-            _bootHeapSize = dataPrototype.heapData().length;
-            _bootCodeSize = dataPrototype.codeData().length;
+            bootHeapSize = dataPrototype.heapData().length;
+            bootCodeSize = dataPrototype.codeData().length;
             _codeCacheSize = CodeManager.CODE_CACHE_SIZE;
 
-            _heapRegionsPointerOffset = staticFieldPointerOffset(dataPrototype, TeleHeapInfo.class, "_memoryRegions");
-            _codeRegionsPointerOffset = staticFieldPointerOffset(dataPrototype, Code.class, "_memoryRegions");
+            _heapRegionsPointerOffset = staticFieldPointerOffset(dataPrototype, TeleHeapInfo.class, "memoryRegions");
+            _codeRegionsPointerOffset = staticFieldPointerOffset(dataPrototype, Code.class, "memoryRegions");
 
-            _auxiliarySpaceSize = vmConfiguration.heapScheme().auxiliarySpaceSize(_bootHeapSize + _bootCodeSize);
+            _auxiliarySpaceSize = vmConfiguration.heapScheme().auxiliarySpaceSize(bootHeapSize + bootCodeSize);
 
-            _messengerInfoOffset = staticFieldPointerOffset(dataPrototype, MaxineMessenger.class, "_info");
-            _threadSpecificsListOffset = staticFieldPointerOffset(dataPrototype, VmThread.class, "_threadSpecificsList");
+            _messengerInfoOffset = staticFieldPointerOffset(dataPrototype, MaxineMessenger.class, "info");
+            _threadSpecificsListOffset = staticFieldPointerOffset(dataPrototype, VmThread.class, "threadSpecificsList");
         }
 
-        @Override
         public void check() throws BootImageException {
             BootImageException.check(_identification == IDENTIFICATION, "not a MaxineVM VM boot image file, wrong identification: " + _identification);
             BootImageException.check(_version == VERSION, "wrong version: " + _version);
@@ -319,7 +331,7 @@ public class BootImage {
     /**
      * See "image.h".
      */
-    public final class StringInfo extends Section {
+    public static final class StringInfo extends Section {
         public final String _buildLevelName;
         public final String _processorModelName;
         public final String _instructionSetName;
@@ -453,7 +465,6 @@ public class BootImage {
             BootImageException.check(MaxPackage.fromName(packageName) instanceof VMPackage, "not a VM package: " + packageName);
         }
 
-        @Override
         public void check() throws BootImageException {
             BootImageException.check(buildLevel() != null, "unknown build level: " + _buildLevelName);
             BootImageException.check(processorModel() != null, "unknown processor model: " + _processorModelName);
@@ -498,6 +509,10 @@ public class BootImage {
                 }
             }
         }
+        @Override
+        public Class<?> fieldType() {
+            return String.class;
+        }
     }
 
     private final StringInfo _stringInfo;
@@ -505,10 +520,11 @@ public class BootImage {
     /**
      * See "image.h".
      */
-    public final class Trailer extends IntSection {
+    public static final class Trailer extends IntSection {
         public final int _randomID;
         public final int _version;
         public final int _identification;
+
 
         private Trailer(Header header, InputStream inputStream) throws IOException {
             super(header.endianness());
@@ -524,11 +540,10 @@ public class BootImage {
             _identification = header._identification;
         }
 
-        @Override
-        public void check() throws BootImageException {
-            BootImageException.check(_identification == _header._identification, "inconsistent trailer identififcation");
-            BootImageException.check(_version == _header._version, "inconsistent trailer version");
-            BootImageException.check(_randomID == _header._randomID, "inconsistent trailer random ID");
+        public void check(Header header) throws BootImageException {
+            BootImageException.check(_identification == header._identification, "inconsistent trailer identififcation");
+            BootImageException.check(_version == header._version, "inconsistent trailer version");
+            BootImageException.check(_randomID == header._randomID, "inconsistent trailer random ID");
         }
     }
 
@@ -594,9 +609,9 @@ public class BootImage {
 
                 fileInputStream.skip(_header._relocationDataSize);
                 final int padding = pagePaddingSize(_header.size() + _header._stringInfoSize + _header._relocationDataSize);
-                fileInputStream.skip(padding + _header._bootHeapSize + _header._bootCodeSize);
+                fileInputStream.skip(padding + _header.bootHeapSize + _header.bootCodeSize);
                 _trailer = new Trailer(_header, fileInputStream);
-                _trailer.check();
+                _trailer.check(_header);
             } catch (Utf8Exception utf8Exception) {
                 throw new BootImageException(utf8Exception);
             } finally {

@@ -40,64 +40,64 @@ import com.sun.max.vm.compiler.ir.*;
  */
 public class IrLevelFilter extends IrObserverAdapter {
 
-    private final IrObserver _observer;
-    private final String[] _filter;
+    private final IrObserver observer;
+    private final String[] filter;
 
     public IrLevelFilter(IrObserver observer) {
-        _filter = System.getProperty("max.ir.observer.levels", "").split(",");
+        this.filter = System.getProperty("max.ir.observer.levels", "").split(",");
         // capitalize the name of all the IRs.
-        for (int i = 0; i < _filter.length; i++) {
-            if (_filter[i].length() > 0) {
-                _filter[i] = Strings.capitalizeFirst(_filter[i], false);
+        for (int i = 0; i < filter.length; i++) {
+            if (filter[i].length() > 0) {
+                filter[i] = Strings.capitalizeFirst(filter[i], false);
             }
         }
-        _observer = observer;
+        this.observer = observer;
     }
 
     @Override
     public void observeAllocation(IrMethod irMethod) {
         if (match(irMethod)) {
-            _observer.observeAllocation(irMethod);
+            observer.observeAllocation(irMethod);
         }
     }
 
     @Override
     public void observeBeforeGeneration(IrMethod irMethod, IrGenerator irGenerator) {
         if (match(irMethod)) {
-            _observer.observeBeforeGeneration(irMethod, irGenerator);
+            observer.observeBeforeGeneration(irMethod, irGenerator);
         }
     }
 
     @Override
     public void observeAfterGeneration(IrMethod irMethod, IrGenerator irGenerator) {
         if (match(irMethod)) {
-            _observer.observeAfterGeneration(irMethod, irGenerator);
+            observer.observeAfterGeneration(irMethod, irGenerator);
         }
     }
 
     @Override
     public void observeBeforeTransformation(IrMethod irMethod, Object context, Object transform) {
         if (match(irMethod)) {
-            _observer.observeBeforeTransformation(irMethod, context, transform);
+            observer.observeBeforeTransformation(irMethod, context, transform);
         }
     }
 
     @Override
     public void observeAfterTransformation(IrMethod irMethod, Object context, Object transform) {
         if (match(irMethod)) {
-            _observer.observeAfterTransformation(irMethod, context, transform);
+            observer.observeAfterTransformation(irMethod, context, transform);
         }
     }
 
     @Override
     public void finish() {
-        _observer.finish();
+        observer.finish();
     }
 
     private boolean match(IrMethod irMethod) {
         final String name = irMethod.getClass().getSimpleName();
-        for (String filter : _filter) {
-            if (name.startsWith(filter)) {
+        for (String f : this.filter) {
+            if (name.startsWith(f)) {
                 return true;
             }
         }

@@ -46,16 +46,16 @@ import com.sun.max.vm.value.*;
 
 public class BirInterpreter extends IrInterpreter<BirMethod> {
     public static OptionSet _optionSet = new OptionSet();
-    public static Option<Boolean> _printState = _optionSet.newBooleanOption("PS", false, "(P)rints the Interpreter's Execution (S)tate.");
+    public static Option<Boolean> printState = _optionSet.newBooleanOption("PS", false, "(P)rints the Interpreter's Execution (S)tate.");
 
     public static class BirMethodCache {
-        private static GrowableMapping<ClassMethodActor, BirMethod> _methods = new IdentityHashMapping<ClassMethodActor, BirMethod>();
+        private static GrowableMapping<ClassMethodActor, BirMethod> methods = new IdentityHashMapping<ClassMethodActor, BirMethod>();
 
         public static BirMethod lookup(ClassMethodActor classMethodActor) {
-            BirMethod method = _methods.get(classMethodActor);
+            BirMethod method = methods.get(classMethodActor);
             if (method == null) {
                 method = generateBirMethod(classMethodActor);
-                _methods.put(classMethodActor, method);
+                methods.put(classMethodActor, method);
             }
             return method;
         }
@@ -73,30 +73,30 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
         void trace(BytecodeLocation location, BirState state);
     }
 
-    static final Value _filler = Value.fromBoxedJavaValue("%");
-    static final Value _undefined = Value.fromBoxedJavaValue("_");
+    static final Value filler = Value.fromBoxedJavaValue("%");
+    static final Value undefined = Value.fromBoxedJavaValue("_");
 
     private final BirState _state = new BirState();
-    private final Profiler _profiler;
+    private final Profiler profiler;
 
     public BirInterpreter(Profiler profiler) {
-        _profiler = profiler;
+        this.profiler = profiler;
     }
 
-    private int _jumpPosition = -1;
+    private int jumpPosition = -1;
 
     protected void jumpTo(int position) {
-        _jumpPosition = position;
+        jumpPosition = position;
     }
 
     protected int resetJump() {
-        final int position = _jumpPosition;
-        _jumpPosition = -1;
+        final int position = jumpPosition;
+        jumpPosition = -1;
         return position;
     }
 
     protected boolean needsToJump() {
-        return _jumpPosition >= 0;
+        return jumpPosition >= 0;
     }
 
     private Value toStackValue(Value value) {
@@ -142,20 +142,20 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
     }
 
     private void profileTrace(ClassMethodActor method, int position) {
-        if (_profiler != null) {
-            _profiler.trace(new BytecodeLocation(method, position), _state);
+        if (profiler != null) {
+            profiler.trace(new BytecodeLocation(method, position), _state);
         }
     }
 
     private void profileJump(ClassMethodActor method, int fromPosition, int toPosition) {
-        if (_profiler != null) {
-            _profiler.jump(new BytecodeLocation(method, fromPosition), new BytecodeLocation(method, toPosition), _state);
+        if (profiler != null) {
+            profiler.jump(new BytecodeLocation(method, fromPosition), new BytecodeLocation(method, toPosition), _state);
         }
     }
 
     private void profileInvoke(ClassMethodActor target) {
-        if (_profiler != null) {
-            _profiler.invoke(target, _state);
+        if (profiler != null) {
+            profiler.invoke(target, _state);
         }
     }
 
@@ -528,7 +528,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
         @Override
         protected void opcodeDecoded() {
             AsynchronousProfiler.event(CounterMetric.INTERPRETED_BYTECODES);
-            if (_printState.getValue()) {
+            if (printState.getValue()) {
                 _state.println();
                 Console.println(Color.LIGHTMAGENTA, "opcode: method: " + _state.last().method() + " pc: " + currentOpcodePosition() + ", op: " + currentOpcode());
             }

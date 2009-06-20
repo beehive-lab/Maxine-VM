@@ -36,23 +36,23 @@ import com.sun.max.util.*;
  */
 public class ClassfileStream {
 
-    private final int _length;
-    private final DataInputStream _stream;
-    private Address _position = Address.zero();
+    private final int length;
+    private final DataInputStream stream;
+    private Address position = Address.zero();
 
     public ClassfileStream(byte[] bytes) {
         this(bytes, 0, bytes.length);
     }
 
     public ClassfileStream(byte[] bytes, int offset, int length) {
-        _length = length;
-        _stream = new DataInputStream(new ByteArrayInputStream(bytes, offset, length));
+        this.length = length;
+        this.stream = new DataInputStream(new ByteArrayInputStream(bytes, offset, length));
     }
 
     public byte readByte() {
         try {
-            final byte value = _stream.readByte();
-            _position = _position.plus(1);
+            final byte value = stream.readByte();
+            position = position.plus(1);
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -63,8 +63,8 @@ public class ClassfileStream {
 
     public short readShort() {
         try {
-            final short value = _stream.readShort();
-            _position = _position.plus(2);
+            final short value = stream.readShort();
+            position = position.plus(2);
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -75,8 +75,8 @@ public class ClassfileStream {
 
     public char readChar() {
         try {
-            final char value = _stream.readChar();
-            _position = _position.plus(2);
+            final char value = stream.readChar();
+            position = position.plus(2);
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -87,8 +87,8 @@ public class ClassfileStream {
 
     public int readInt() {
         try {
-            final int value = _stream.readInt();
-            _position = _position.plus(4);
+            final int value = stream.readInt();
+            position = position.plus(4);
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -99,8 +99,8 @@ public class ClassfileStream {
 
     public float readFloat() {
         try {
-            final float value = _stream.readFloat();
-            _position = _position.plus(4);
+            final float value = stream.readFloat();
+            position = position.plus(4);
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -111,8 +111,8 @@ public class ClassfileStream {
 
     public long readLong() {
         try {
-            final long value = _stream.readLong();
-            _position = _position.plus(8);
+            final long value = stream.readLong();
+            position = position.plus(8);
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -123,8 +123,8 @@ public class ClassfileStream {
 
     public double readDouble() {
         try {
-            final double value = _stream.readDouble();
-            _position = _position.plus(8);
+            final double value = stream.readDouble();
+            position = position.plus(8);
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -135,8 +135,8 @@ public class ClassfileStream {
 
     public int readUnsigned1() {
         try {
-            final int value = _stream.readUnsignedByte();
-            _position = _position.plus(1);
+            final int value = stream.readUnsignedByte();
+            position = position.plus(1);
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -147,8 +147,8 @@ public class ClassfileStream {
 
     public int readUnsigned2() {
         try {
-            final int value = _stream.readUnsignedShort();
-            _position = _position.plus(2);
+            final int value = stream.readUnsignedShort();
+            position = position.plus(2);
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -159,8 +159,8 @@ public class ClassfileStream {
 
     public Size readSize4() {
         try {
-            final Size value = Size.fromUnsignedInt(_stream.readInt());
-            _position = _position.plus(4);
+            final Size value = Size.fromUnsignedInt(stream.readInt());
+            position = position.plus(4);
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -171,8 +171,8 @@ public class ClassfileStream {
 
     public int readSigned1() {
         try {
-            final byte value = _stream.readByte();
-            _position = _position.plus(1);
+            final byte value = stream.readByte();
+            position = position.plus(1);
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -183,8 +183,8 @@ public class ClassfileStream {
 
     public int readSigned2() {
         try {
-            final short value = _stream.readShort();
-            _position = _position.plus(2);
+            final short value = stream.readShort();
+            position = position.plus(2);
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -195,8 +195,8 @@ public class ClassfileStream {
 
     public int readSigned4() {
         try {
-            final int value = _stream.readInt();
-            _position = _position.plus(4);
+            final int value = stream.readInt();
+            position = position.plus(4);
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -205,11 +205,11 @@ public class ClassfileStream {
         }
     }
 
-    public byte[] readByteArray(Size length) {
+    public byte[] readByteArray(Size len) {
         try {
-            final byte[] bytes = new byte[length.toInt()];
-            _stream.readFully(bytes);
-            _position = _position.plus(length);
+            final byte[] bytes = new byte[len.toInt()];
+            stream.readFully(bytes);
+            position = position.plus(len);
             return bytes;
         } catch (EOFException eofException) {
             throw eofError();
@@ -220,9 +220,9 @@ public class ClassfileStream {
 
     public String readUtf8String() {
         try {
-            final int utflen = _stream.readUnsignedShort();
-            final String value = Utf8.readUtf8(_stream, true, utflen);
-            _position = _position.plus(2 + utflen);
+            final int utflen = stream.readUnsignedShort();
+            final String value = Utf8.readUtf8(stream, true, utflen);
+            position = position.plus(2 + utflen);
             return value;
         } catch (Utf8Exception e) {
             throw classFormatError("Invalid UTF-8 encoded string", e);
@@ -235,8 +235,8 @@ public class ClassfileStream {
 
     public void skip(Size nBytes) {
         try {
-            _position = _position.plus(nBytes);
-            _stream.skipBytes(nBytes.toInt());
+            position = position.plus(nBytes);
+            stream.skipBytes(nBytes.toInt());
         } catch (EOFException eofException) {
             throw eofError();
         } catch (IOException ioException) {
@@ -245,7 +245,7 @@ public class ClassfileStream {
     }
 
     public boolean isAtEndOfFile() {
-        return _position.toLong() == _length;
+        return position.toLong() == length;
     }
 
     public void checkEndOfFile() {
@@ -256,12 +256,12 @@ public class ClassfileStream {
 
     public Address getPosition() {
         // Prevent sharing by reference of _position when not bootstrapped:
-        return _position.asAddress();
+        return position.asAddress();
     }
 
     public void close() {
         try {
-            _stream.close();
+            stream.close();
         } catch (EOFException eofException) {
             throw eofError();
         } catch (IOException ioException) {

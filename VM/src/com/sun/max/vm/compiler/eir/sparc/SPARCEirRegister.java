@@ -38,38 +38,38 @@ import com.sun.max.vm.type.*;
  */
 public abstract class SPARCEirRegister extends EirRegister {
 
-    private static SPARCEirRegister[] _registers = new SPARCEirRegister[32 + 32 + 16];
+    private static SPARCEirRegister[] registers = new SPARCEirRegister[32 + 32 + 16];
 
-    private static Pool<SPARCEirRegister> _pool = new ArrayPool<SPARCEirRegister>(_registers);
+    private static Pool<SPARCEirRegister> pool = new ArrayPool<SPARCEirRegister>(registers);
 
     public static Pool<SPARCEirRegister> pool() {
-        return _pool;
+        return pool;
     }
 
     /**
      * Unique identifier of the register.
      */
-    private final int _ordinal;
+    private final int ordinal;
 
-    private final int _serial;
+    private final int serial;
 
-    private static int _nextSerial;
+    private static int nextSerial;
 
     protected SPARCEirRegister(int ordinal) {
-        _ordinal = ordinal;
-        _serial = _nextSerial++;
-        assert _registers[_serial] == null;
-        _registers[_serial] = this;
+        this.ordinal = ordinal;
+        this.serial = nextSerial++;
+        assert registers[serial] == null;
+        registers[serial] = this;
     }
 
     @Override
     public final int ordinal() {
-        return _ordinal;
+        return ordinal;
     }
 
     @Override
     public final int serial() {
-        return _serial;
+        return serial;
     }
 
     /**
@@ -119,29 +119,29 @@ public abstract class SPARCEirRegister extends EirRegister {
         public static final GeneralPurpose I6 = new GeneralPurpose(30);
         public static final GeneralPurpose I7 = new GeneralPurpose(31);
 
-        private static final GeneralPurpose[] _values = {G0, G1, G2, G3, G4, G5, G6, G7,
-                                                         O0, O1, O2, O3, O4, O5, O6, O7,
-                                                         L0, L1, L2, L3, L4, L5, L6, L7,
-                                                         I0, I1, I2, I3, I4, I5, I6, I7};
+        private static final GeneralPurpose[] values = {G0, G1, G2, G3, G4, G5, G6, G7,
+                                                        O0, O1, O2, O3, O4, O5, O6, O7,
+                                                        L0, L1, L2, L3, L4, L5, L6, L7,
+                                                        I0, I1, I2, I3, I4, I5, I6, I7};
 
-        public static final IndexedSequence<GeneralPurpose> VALUES = new ArraySequence<GeneralPurpose>(_values);
+        public static final IndexedSequence<GeneralPurpose> VALUES = new ArraySequence<GeneralPurpose>(values);
 
-        private static final GeneralPurpose[] _locals = {L0, L1, L2, L3, L4, L5, L6, L7};
+        private static final GeneralPurpose[] locals = {L0, L1, L2, L3, L4, L5, L6, L7};
 
-        public static final IndexedSequence<GeneralPurpose> LOCAL_REGISTERS = new ArraySequence<GeneralPurpose>(_locals);
+        public static final IndexedSequence<GeneralPurpose> LOCAL_REGISTERS = new ArraySequence<GeneralPurpose>(locals);
 
-        private static final GeneralPurpose[] _ins = {I0, I1, I2, I3, I4, I5, I6, I7};
+        private static final GeneralPurpose[] ins = {I0, I1, I2, I3, I4, I5, I6, I7};
 
-        public static final IndexedSequence<GeneralPurpose> IN_REGISTERS = new ArraySequence<GeneralPurpose>(_ins);
+        public static final IndexedSequence<GeneralPurpose> IN_REGISTERS = new ArraySequence<GeneralPurpose>(ins);
 
-        private static final GeneralPurpose[] _outs = {O0, O1, O2, O3, O4, O5, O6, O7};
+        private static final GeneralPurpose[] outs = {O0, O1, O2, O3, O4, O5, O6, O7};
 
-        public static final IndexedSequence<GeneralPurpose> OUT_REGISTERS = new ArraySequence<GeneralPurpose>(_outs);
+        public static final IndexedSequence<GeneralPurpose> OUT_REGISTERS = new ArraySequence<GeneralPurpose>(outs);
 
-        private static final PoolSet<SPARCEirRegister> _poolSet = PoolSet.of(_pool, _values);
+        private static final PoolSet<SPARCEirRegister> poolSet = PoolSet.of(pool, values);
 
         public static PoolSet<SPARCEirRegister> poolSet() {
-            return _poolSet;
+            return poolSet;
         }
 
         public GPR as() {
@@ -149,7 +149,7 @@ public abstract class SPARCEirRegister extends EirRegister {
         }
 
         public static GeneralPurpose from(GPR register) {
-            return _values[register.value()];
+            return values[register.value()];
         }
 
         @Override
@@ -216,9 +216,9 @@ public abstract class SPARCEirRegister extends EirRegister {
         public FloatingPoint overlappingSinglePrecision() {
             final int value = ordinal();
             if (isDoublePrecision()) {
-                return isDoublePrecisionOnly(value) ? null : _singlePrecisionValues[value + 1];
+                return isDoublePrecisionOnly(value) ? null : singlePrecisionValues[value + 1];
             }
-            return _singlePrecisionValues[value - 1];
+            return singlePrecisionValues[value - 1];
         }
 
         public static final DoublePrecision F0 = new DoublePrecision(0);
@@ -254,7 +254,7 @@ public abstract class SPARCEirRegister extends EirRegister {
         public static final DoublePrecision F30 = new DoublePrecision(30);
         public static final FloatingPoint F31 = new FloatingPoint(31);
 
-        private static final FloatingPoint[] _singlePrecisionValues = {F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31};
+        private static final FloatingPoint[] singlePrecisionValues = {F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31};
 
 
 
@@ -275,40 +275,40 @@ public abstract class SPARCEirRegister extends EirRegister {
         public static final DoublePrecision F60 = new DoublePrecision(60);
         public static final DoublePrecision F62 = new DoublePrecision(62);
 
-        private static final DoublePrecision[] _doublePrecisionValues = {F0, F2, F4, F6, F8, F10, F12, F14, F16, F18, F20, F22, F24, F26, F28, F30, F32, F34, F36, F38, F40, F42, F44, F46, F48, F50, F52, F54, F56, F58, F60, F62};
+        private static final DoublePrecision[] doublePrecisionValues = {F0, F2, F4, F6, F8, F10, F12, F14, F16, F18, F20, F22, F24, F26, F28, F30, F32, F34, F36, F38, F40, F42, F44, F46, F48, F50, F52, F54, F56, F58, F60, F62};
 
-        private static final FloatingPoint[] _values = {F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31,
+        private static final FloatingPoint[] values = {F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31,
             F32, F34, F36, F38, F40, F42, F44, F46, F48, F50, F52, F54, F56, F58, F60, F62};
 
         /**
          * A sequence describing all the EIR representations of the floating-point registers.
          */
-        public static final IndexedSequence<FloatingPoint> VALUES = new ArraySequence<FloatingPoint>(_values);
+        public static final IndexedSequence<FloatingPoint> VALUES = new ArraySequence<FloatingPoint>(values);
 
         /**
          * A sequence describing all the EIR representations of the single-precision floating-point registers.
          */
-        public static final IndexedSequence<FloatingPoint> SINGLE_PRECISION_VALUES = new ArraySequence<FloatingPoint>(_singlePrecisionValues);
+        public static final IndexedSequence<FloatingPoint> SINGLE_PRECISION_VALUES = new ArraySequence<FloatingPoint>(singlePrecisionValues);
 
         /**
          * A sequence describing all the EIR representations of the double-precision floating-point registers.
          */
-        public static final IndexedSequence<FloatingPoint> DOUBLE_PRECISION_VALUES = new ArraySequence<FloatingPoint>(_doublePrecisionValues);
+        public static final IndexedSequence<FloatingPoint> DOUBLE_PRECISION_VALUES = new ArraySequence<FloatingPoint>(doublePrecisionValues);
 
-        private static final PoolSet<SPARCEirRegister> _poolSet = PoolSet.of(_pool, _values);
-        private static final PoolSet<SPARCEirRegister> _doublePrecisionPoolSet = PoolSet.of(_pool, _doublePrecisionValues);
-        private static final PoolSet<SPARCEirRegister> _singlePrecisionPoolSet = PoolSet.of(_pool, _singlePrecisionValues);
+        private static final PoolSet<SPARCEirRegister> poolSet = PoolSet.of(pool, values);
+        private static final PoolSet<SPARCEirRegister> doublePrecisionPoolSet = PoolSet.of(pool, doublePrecisionValues);
+        private static final PoolSet<SPARCEirRegister> singlePrecisionPoolSet = PoolSet.of(pool, singlePrecisionValues);
 
         public static PoolSet<SPARCEirRegister> poolSet() {
-            return _poolSet;
+            return poolSet;
         }
 
         public static PoolSet<SPARCEirRegister> doublePrecisionPoolSet() {
-            return _doublePrecisionPoolSet;
+            return doublePrecisionPoolSet;
         }
 
         public static PoolSet<SPARCEirRegister> singlePrecisionPoolSet() {
-            return _singlePrecisionPoolSet;
+            return singlePrecisionPoolSet;
         }
 
         public static FloatingPoint doublePrecisionFrom(FPR register) {
@@ -317,9 +317,9 @@ public abstract class SPARCEirRegister extends EirRegister {
                 throw new IllegalArgumentException();
             }
             if (isDoublePrecisionOnly(value)) {
-                return _doublePrecisionValues[value >> 1];
+                return doublePrecisionValues[value >> 1];
             }
-            return _singlePrecisionValues[value];
+            return singlePrecisionValues[value];
         }
 
         public FPR as() {

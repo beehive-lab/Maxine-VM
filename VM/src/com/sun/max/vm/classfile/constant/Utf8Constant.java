@@ -26,9 +26,9 @@ import com.sun.max.vm.classfile.constant.SymbolTable.*;
 
 /**
  * Canonical representation of strings.
- * 
+ *
  * #4.4.7.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
@@ -40,10 +40,10 @@ public abstract class Utf8Constant extends AbstractPoolConstant<Utf8Constant> im
     }
 
     @INSPECTED
-    private final String _string;
+    private final String string;
 
     public final String string() {
-        return _string;
+        return string;
     }
 
     /**
@@ -52,16 +52,16 @@ public abstract class Utf8Constant extends AbstractPoolConstant<Utf8Constant> im
     Utf8Constant(String value) {
         // Can only be subclassed by Utf8ConstantEntry
         assert getClass() == Utf8ConstantEntry.class;
-        _string = value;
+        string = value;
     }
 
     @Override
     public final String toString() {
-        return _string;
+        return string;
     }
 
     public final String valueString(ConstantPool pool) {
-        return _string;
+        return string;
     }
 
     @Override
@@ -69,13 +69,13 @@ public abstract class Utf8Constant extends AbstractPoolConstant<Utf8Constant> im
         return this == other;
     }
 
-    public final boolean equals(String string) {
-        return _string.equals(string);
+    public final boolean equals(String s) {
+        return string.equals(s);
     }
 
     @Override
     public final int hashCode() {
-        return _string.hashCode();
+        return string.hashCode();
     }
 
     @Override
@@ -84,6 +84,6 @@ public abstract class Utf8Constant extends AbstractPoolConstant<Utf8Constant> im
     }
 
     public final int compareTo(Utf8Constant other) {
-        return _string.compareTo(other._string);
+        return string.compareTo(other.string);
     }
 }

@@ -34,9 +34,9 @@ import com.sun.max.vm.compiler.cir.variable.*;
  * @author Aziz Ghuloum
  */
 public class CirCopyPropagation{
-    IdentityHashMapping<CirVariable, CirValue> _copies = new IdentityHashMapping<CirVariable, CirValue>();
-    LinkedList _queue = null;
-    IdentitySet<CirBlock> _seenBlocks = new IdentitySet<CirBlock>();
+    IdentityHashMapping<CirVariable, CirValue> copies = new IdentityHashMapping<CirVariable, CirValue>();
+    LinkedList queue = null;
+    IdentitySet<CirBlock> seenBlocks = new IdentitySet<CirBlock>();
 
     public static void apply(CirClosure closure) {
         final CirCopyPropagation x = new CirCopyPropagation();
@@ -45,9 +45,9 @@ public class CirCopyPropagation{
     }
 
     private void runall() {
-        while (_queue != null) {
-            final CirCall x = _queue._head;
-            _queue = _queue._rest;
+        while (queue != null) {
+            final CirCall x = queue.head;
+            queue = queue.rest;
             processCall(x);
         }
 
@@ -98,7 +98,7 @@ public class CirCopyPropagation{
         for (int i = 0; i < params.length; i++) {
             if (subst[i] != null) {
                 finalLength--;
-                _copies.put(params[i], subst[i]);
+                copies.put(params[i], subst[i]);
             }
         }
 
@@ -125,7 +125,7 @@ public class CirCopyPropagation{
 
     private CirValue processValue(CirValue val) {
         if (val instanceof CirVariable) {
-            final CirValue v = _copies.get((CirVariable) val);
+            final CirValue v = copies.get((CirVariable) val);
             if (v == null) {
                 return val;
             }
@@ -133,8 +133,8 @@ public class CirCopyPropagation{
         }
         if (val instanceof CirBlock) {
             final CirBlock b = (CirBlock) val;
-            if (!_seenBlocks.contains(b)) {
-                _seenBlocks.add(b);
+            if (!seenBlocks.contains(b)) {
+                seenBlocks.add(b);
                 enqueue(b.closure().body());
             }
         } else if (val instanceof CirClosure) {
@@ -144,15 +144,15 @@ public class CirCopyPropagation{
     }
 
     private void enqueue(CirCall call) {
-        _queue = new LinkedList(call, _queue);
+        queue = new LinkedList(call, queue);
     }
 
     private static final class LinkedList {
-        private final CirCall _head;
-        private final LinkedList _rest;
+        private final CirCall head;
+        private final LinkedList rest;
         private LinkedList(CirCall x, LinkedList y) {
-            _head = x;
-            _rest = y;
+            head = x;
+            rest = y;
         }
     }
 

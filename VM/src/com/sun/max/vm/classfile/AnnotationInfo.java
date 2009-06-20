@@ -31,10 +31,10 @@ import com.sun.max.vm.value.*;
  */
 public class AnnotationInfo {
 
-    private final TypeDescriptor _annotationTypeDescriptor;
+    private final TypeDescriptor annotationTypeDescriptor;
 
     public TypeDescriptor annotationTypeDescriptor() {
-        return _annotationTypeDescriptor;
+        return annotationTypeDescriptor;
     }
 
     /**
@@ -46,86 +46,80 @@ public class AnnotationInfo {
     }
 
     public static final class ValueElement extends Element {
-        private final Value _value;
+        private final Value value;
 
         public Value value() {
-            return _value;
+            return value;
         }
 
         private ValueElement(Value value) {
-            super();
-            _value = value;
+            this.value = value;
         }
     }
 
     public static final class StringElement extends Element {
-        private final String _string;
+        private final String string;
 
         public String string() {
-            return _string;
+            return string;
         }
 
         private StringElement(String string) {
-            super();
-            _string = string;
+            this.string = string;
         }
     }
 
     public static final class EnumElement extends Element {
-        private final TypeDescriptor _enumConstantTypeDescriptor;
-        private final String _enumConstantName;
+        private final TypeDescriptor enumConstantTypeDescriptor;
+        private final String enumConstantName;
 
         public TypeDescriptor enumConstantTypeDescriptor() {
-            return _enumConstantTypeDescriptor;
+            return enumConstantTypeDescriptor;
         }
 
         public String enumConstantName() {
-            return _enumConstantName;
+            return enumConstantName;
         }
 
         private EnumElement(TypeDescriptor enumConstantTypeDescriptor, String enumConstantName) {
-            super();
-            _enumConstantTypeDescriptor = enumConstantTypeDescriptor;
-            _enumConstantName = enumConstantName;
+            this.enumConstantTypeDescriptor = enumConstantTypeDescriptor;
+            this.enumConstantName = enumConstantName;
         }
     }
 
     public static final class TypeElement extends Element {
-        private final TypeDescriptor _typeDescriptor;
+        private final TypeDescriptor typeDescriptor;
 
         public TypeDescriptor typeDescriptor() {
-            return _typeDescriptor;
+            return typeDescriptor;
         }
 
         private TypeElement(TypeDescriptor typeDescriptor) {
-            super();
-            _typeDescriptor = typeDescriptor;
+            this.typeDescriptor = typeDescriptor;
         }
     }
 
     public static final class AnnotationElement extends Element {
-        private final AnnotationInfo _annotationInfo;
+        private final AnnotationInfo annotationInfo;
 
         public AnnotationInfo annotationInfo() {
-            return _annotationInfo;
+            return annotationInfo;
         }
 
         private AnnotationElement(AnnotationInfo annotationInfo) {
-            super();
-            _annotationInfo = annotationInfo;
+            this.annotationInfo = annotationInfo;
         }
     }
 
     public static final class ArrayElement extends Element {
-        private final Element[] _arrayElements;
+        private final Element[] arrayElements;
 
         public Element[] arrayElements() {
-            return _arrayElements;
+            return arrayElements;
         }
 
         private ArrayElement(Element[] arrayElements) {
-            super();
-            _arrayElements = arrayElements;
+            this.arrayElements = arrayElements;
         }
     }
 
@@ -191,39 +185,39 @@ public class AnnotationInfo {
      * The spec calls this 'element_value_pair'.
      */
     public final class NameElementPair {
-        final String _name;
-        final Element _element;
+        final String name;
+        final Element element;
 
         public String name() {
-            return _name;
+            return name;
         }
 
         public Element element() {
-            return _element;
+            return element;
         }
 
         private NameElementPair(String name, Element element) {
-            _name = name;
-            _element = element;
+            this.name = name;
+            this.element = element;
         }
     }
 
-    private final NameElementPair[] _nameElementPairs;
+    private final NameElementPair[] nameElementPairs;
 
     public NameElementPair[] nameElementPairs() {
-        return _nameElementPairs;
+        return nameElementPairs;
     }
 
     public AnnotationInfo(ClassfileStream classfileStream, ConstantPool constantPool) {
         final int typeIndex = classfileStream.readUnsigned2();
-        _annotationTypeDescriptor = JavaTypeDescriptor.parseTypeDescriptor(constantPool.utf8At(typeIndex, "annotation type").toString());
+        annotationTypeDescriptor = JavaTypeDescriptor.parseTypeDescriptor(constantPool.utf8At(typeIndex, "annotation type").toString());
         final int numberOfNameElementPairs = classfileStream.readUnsigned2();
-        _nameElementPairs = new NameElementPair[numberOfNameElementPairs];
+        nameElementPairs = new NameElementPair[numberOfNameElementPairs];
         for (int i = 0; i < numberOfNameElementPairs; i++) {
             final int elementNameIndex = classfileStream.readUnsigned2();
             final String name = constantPool.utf8At(elementNameIndex, "element name").toString();
             final Element element = createElement(classfileStream, constantPool);
-            _nameElementPairs[i] = new NameElementPair(name, element);
+            nameElementPairs[i] = new NameElementPair(name, element);
         }
     }
 

@@ -43,21 +43,21 @@ abstract class MillConstant {
     static final byte CONSTANT_NameAndType = 12;
 
     @CONSTANT
-    byte _tag;
+    byte tag;
 
     @CONSTANT
-    int _numberOfBytes;
+    int numberOfBytes;
 
     @CONSTANT
-    int _hashValue;
+    int hashValue;
 
-    MillConstant _next;
-    int _index = -1;
+    MillConstant next;
+    int index = -1;
 
     protected MillConstant(byte tag, int nBytes, int hashValue) {
-        this._tag = tag;
-        this._numberOfBytes = nBytes;
-        this._hashValue = hashValue;
+        this.tag = tag;
+        this.numberOfBytes = nBytes;
+        this.hashValue = hashValue;
     }
 
     /**
@@ -67,7 +67,7 @@ abstract class MillConstant {
      */
     @Override
     public int hashCode() {
-        return _hashValue;
+        return hashValue;
     }
 
 }

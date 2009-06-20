@@ -30,10 +30,10 @@ import com.sun.c1x.ci.*;
  */
 public class MaxCiExceptionHandler implements CiExceptionHandler {
 
-    private final int _startBCI;
-    private final int _endBCI;
-    private final int _handlerBCI;
-    private final int _classCPI;
+    private final int startBCI;
+    private final int endBCI;
+    private final int handlerBCI;
+    private final int classCPI;
 
     /**
      * Creates a new exception handler with the specified ranges.
@@ -43,10 +43,10 @@ public class MaxCiExceptionHandler implements CiExceptionHandler {
      * @param classCPI the index of the throwable class in the constant pool
      */
     public MaxCiExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI) {
-        _startBCI = startBCI;
-        _endBCI = endBCI;
-        _handlerBCI = catchBCI;
-        _classCPI = classCPI;
+        this.startBCI = startBCI;
+        this.endBCI = endBCI;
+        this.handlerBCI = catchBCI;
+        this.classCPI = classCPI;
     }
 
     /**
@@ -54,7 +54,7 @@ public class MaxCiExceptionHandler implements CiExceptionHandler {
      * @return the start index
      */
     public int startBCI() {
-        return _startBCI;
+        return startBCI;
     }
 
     /**
@@ -62,7 +62,7 @@ public class MaxCiExceptionHandler implements CiExceptionHandler {
      * @return the end index
      */
     public int endBCI() {
-        return _endBCI;
+        return endBCI;
     }
 
     /**
@@ -70,7 +70,7 @@ public class MaxCiExceptionHandler implements CiExceptionHandler {
      * @return the handler block index
      */
     public int handlerBCI() {
-        return _handlerBCI;
+        return handlerBCI;
     }
 
     /**
@@ -78,7 +78,7 @@ public class MaxCiExceptionHandler implements CiExceptionHandler {
      * @return the constant pool index of the throwable type
      */
     public int catchClassIndex() {
-        return _classCPI;
+        return classCPI;
     }
 
     /**
@@ -86,7 +86,7 @@ public class MaxCiExceptionHandler implements CiExceptionHandler {
      * @return <code>true</code> if this handler catches all exceptions
      */
     public boolean isCatchAll() {
-        return _classCPI == 0;
+        return classCPI == 0;
     }
 
 }

@@ -43,18 +43,18 @@ public class AdaptiveMethodState extends MethodState {
     /**
      * The enclosing instance of the compilation scheme.
      */
-    private final AdaptiveCompilationScheme _adaptiveCompilationScheme;
+    private final AdaptiveCompilationScheme adaptiveCompilationScheme;
 
-    protected TargetMethod[][] _targetMethods;
+    protected TargetMethod[][] targetMethods;
 
-    protected MethodInstrumentation _methodInstrumentation;
-    protected Compilation [] _currentCompilations;
+    protected MethodInstrumentation methodInstrumentation;
+    protected Compilation [] currentCompilations;
 
     protected AdaptiveMethodState(AdaptiveCompilationScheme adaptiveCompilationScheme, ClassMethodActor classMethodActor) {
         super(classMethodActor, AdaptiveCompilationScheme.DEFAULT_HISTORY_LENGTH);
-        this._adaptiveCompilationScheme = adaptiveCompilationScheme;
-        _targetMethods = new TargetMethod[CompilationDirective.count()][];
-        _currentCompilations = new Compilation[CompilationDirective.count()];
+        this.adaptiveCompilationScheme = adaptiveCompilationScheme;
+        targetMethods = new TargetMethod[CompilationDirective.count()][];
+        currentCompilations = new Compilation[CompilationDirective.count()];
     }
 
     /**
@@ -63,10 +63,10 @@ public class AdaptiveMethodState extends MethodState {
      * @return the method instrumentation for this method state
      */
     public synchronized MethodInstrumentation makeMethodInstrumentation() {
-        if (_methodInstrumentation == null) {
-            _methodInstrumentation = new MethodInstrumentation(_classMethodActor);
+        if (methodInstrumentation == null) {
+            methodInstrumentation = new MethodInstrumentation(classMethodActor);
         }
-        return _methodInstrumentation;
+        return methodInstrumentation;
     }
 
     /**
@@ -75,7 +75,7 @@ public class AdaptiveMethodState extends MethodState {
      * @return the method instrumentation if it exists; {@code null} if it does not exist
      */
     public MethodInstrumentation getMethodInstrumentation() {
-        return _methodInstrumentation;
+        return methodInstrumentation;
     }
 
     /**
@@ -85,11 +85,11 @@ public class AdaptiveMethodState extends MethodState {
      */
     @INLINE
     final Compilation currentCompilation(CompilationDirective compilationDirective) {
-        return _currentCompilations[compilationDirective.ordinal()];
+        return currentCompilations[compilationDirective.ordinal()];
     }
 
     void setCurrentCompilation(Compilation compilation, CompilationDirective compilationDirective) {
-        _currentCompilations[compilationDirective.ordinal()] = compilation;
+        currentCompilations[compilationDirective.ordinal()] = compilation;
     }
 
     /**
@@ -107,7 +107,7 @@ public class AdaptiveMethodState extends MethodState {
             addTargetMethod(newTargetMethod, compilationDirective);
         } else if (currentTargetMethod == newTargetMethod) {
             // nothing to be done.
-        } else if (this._adaptiveCompilationScheme.allowUpdate(this, newTargetMethod)) {
+        } else if (this.adaptiveCompilationScheme.allowUpdate(this, newTargetMethod)) {
             // the method update was allowed, perform code update on previous compilations
             // we only update target methods that were compiled with promotable compilation directives
             for (CompilationDirective promotableDirective : compilationDirective.promotableFrom()) {
@@ -125,7 +125,7 @@ public class AdaptiveMethodState extends MethodState {
     }
 
     private TargetMethod[] methodHistory(CompilationDirective compilationDirective) {
-        final TargetMethod[] methodHistory = _targetMethods[compilationDirective.ordinal()];
+        final TargetMethod[] methodHistory = targetMethods[compilationDirective.ordinal()];
         return methodHistory;
     }
 
@@ -146,7 +146,7 @@ public class AdaptiveMethodState extends MethodState {
             methodHistory = new TargetMethod[1];
         }
         methodHistory[methodHistory.length - 1] = targetMethod;
-        _targetMethods[compilationDirective.ordinal()] = methodHistory;
+        targetMethods[compilationDirective.ordinal()] = methodHistory;
         // TODO: No need to keep track of method history in two places, remove if from the super class.
         // For now we leave it in to make the inspector happy.
         addTargetMethod(targetMethod);

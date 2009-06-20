@@ -39,10 +39,10 @@ import com.sun.max.vm.value.*;
  */
 public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements SPARCEirInstruction, EirAssignment, SPARCEirBinaryOperation.GeneralBinaryOperationEmitter {
 
-    private final Kind _kind;
+    private final Kind kind;
 
     public Kind kind() {
-        return _kind;
+        return kind;
     }
 
     private Type _type = Type.NORMAL;
@@ -241,7 +241,7 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
 
     public SPARCEirAssignment(EirBlock block, Kind kind, EirValue destination, EirValue source) {
         super(block, destination, destinationLocationCategories(kind), source, sourceLocationCategories(kind));
-        _kind = kind;
+        this.kind = kind;
     }
 
     /**
@@ -415,7 +415,7 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
 
     @Override
     public String toString() {
-        String result = "assign-" + _kind + " " + destinationOperand() + " := " + sourceOperand();
+        String result = "assign-" + kind + " " + destinationOperand() + " := " + sourceOperand();
 
         if (type() != Type.NORMAL) {
             result += " (" + type().toString() + ")";

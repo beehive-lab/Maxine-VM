@@ -50,20 +50,20 @@ public abstract class TirMessage implements Cloneable {
     }
 
     public static class TirTreeBegin extends TirMessage {
-        private final TirPipelineOrder _order;
-        private final TirTree _tree;
+        private final TirPipelineOrder order;
+        private final TirTree tree;
 
         public TirTreeBegin(TirTree tree, TirPipelineOrder order) {
-            _tree = tree;
-            _order = order;
+            this.tree = tree;
+            this.order = order;
         }
 
         public TirPipelineOrder order() {
-            return _order;
+            return order;
         }
 
         public TirTree tree() {
-            return _tree;
+            return tree;
         }
 
         @Override
@@ -80,7 +80,7 @@ public abstract class TirMessage implements Cloneable {
     }
 
     public static class TirTraceBegin extends TirMessage {
-        private final TirTrace _trace;
+        private final TirTrace trace;
 
         @Override
         public void accept(TirInstructionVisitor visitor) {
@@ -88,11 +88,11 @@ public abstract class TirMessage implements Cloneable {
         }
 
         public TirTraceBegin(TirTrace trace) {
-            _trace = trace;
+            this.trace = trace;
         }
 
         public TirTrace trace() {
-            return _trace;
+            return trace;
         }
 
     }

@@ -56,37 +56,37 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
 
     public static class InstructionAddress {
 
-        private final EirBlock _block;
-        private final int _index;
+        private final EirBlock block;
+        private final int index;
         public InstructionAddress(EirBlock block, int index) {
-            _block = block;
-            _index = index;
+            this.block = block;
+            this.index = index;
         }
 
         public EirBlock block() {
-            return _block;
+            return block;
         }
 
         public int index() {
-            return _index;
+            return index;
         }
 
         public InstructionAddress next() {
-            return new InstructionAddress(_block, _index + 1);
+            return new InstructionAddress(block, index + 1);
         }
 
         public EirInstruction get() {
-            return _block.instructions().get(_index);
+            return block.instructions().get(index);
         }
 
         @Override
         public String toString() {
-            return _block.serial() + ":" + _index;
+            return block.serial() + ":" + index;
         }
     }
 
-    private InstructionAddress _nextInstructionAddress;
-    private InstructionAddress _currentInstructionAddress;
+    private InstructionAddress nextInstructionAddress;
+    private InstructionAddress currentInstructionAddress;
 
     /**
      * Gets the address of the instruction that will be returned from the next call to {@link #nextInstruction()}
@@ -94,14 +94,14 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
      * or {@link #gotoBlock(EirBlock)}.
      */
     public InstructionAddress nextInstructionAddress() {
-        return _nextInstructionAddress;
+        return nextInstructionAddress;
     }
 
     /**
      * Gets the address of the instruction returned from the last call to {@link #nextInstruction()}.
      */
     public InstructionAddress currentInstructionAddress() {
-        return _currentInstructionAddress;
+        return currentInstructionAddress;
     }
 
     /**
@@ -109,9 +109,9 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
      * and advances this address before returning.
      */
     public EirInstruction nextInstruction() {
-        final EirInstruction instruction = _nextInstructionAddress.get();
-        _currentInstructionAddress = _nextInstructionAddress;
-        _nextInstructionAddress = _nextInstructionAddress.next();
+        final EirInstruction instruction = nextInstructionAddress.get();
+        currentInstructionAddress = nextInstructionAddress;
+        nextInstructionAddress = nextInstructionAddress.next();
         return instruction;
     }
 
@@ -120,22 +120,22 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
      * (assuming there are no interleaving calls to {@link #gotoBlock(EirBlock)} or this method).
      */
     public void gotoInstruction(InstructionAddress instructionAddress) {
-        _nextInstructionAddress = instructionAddress;
+        nextInstructionAddress = instructionAddress;
     }
 
     public void gotoBlock(EirBlock block) {
         gotoInstruction(new InstructionAddress(block, 0));
     }
 
-    private final EirStack _stack;
+    private final EirStack stack;
 
     public EirStack stack() {
-        return _stack;
+        return stack;
     }
 
     protected EirCPU(EirInterpreter interpreter) {
         _interpreter = interpreter;
-        _stack = new EirStack();
+        stack = new EirStack();
     }
 
     /**
@@ -144,9 +144,9 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
      */
     protected EirCPU(EirCPU cpu) {
         _interpreter = cpu._interpreter;
-        _stack = cpu._stack.save();
-        _currentInstructionAddress = cpu._currentInstructionAddress;
-        _nextInstructionAddress = cpu._nextInstructionAddress;
+        stack = cpu.stack.save();
+        currentInstructionAddress = cpu.currentInstructionAddress;
+        nextInstructionAddress = cpu.nextInstructionAddress;
     }
 
     /**
@@ -211,7 +211,7 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
         switch (location.category()) {
             case STACK_SLOT: {
                 final EirStackSlot stackSlot = (EirStackSlot) location;
-                return _stack.read(readFramePointer().plus(offset(stackSlot)));
+                return stack.read(readFramePointer().plus(offset(stackSlot)));
             }
             case LITERAL:
             case IMMEDIATE_8:
@@ -323,7 +323,7 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
             }
             case STACK_SLOT: {
                 final EirStackSlot stackSlot = (EirStackSlot) location;
-                _stack.write(readFramePointer().plus(offset(stackSlot)), value);
+                stack.write(readFramePointer().plus(offset(stackSlot)), value);
                 break;
             }
             default: {
@@ -343,7 +343,7 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
             }
             case STACK_SLOT: {
                 final EirStackSlot stackSlot = (EirStackSlot) location;
-                _stack.writeByte(readFramePointer().plus(offset(stackSlot)), b);
+                stack.writeByte(readFramePointer().plus(offset(stackSlot)), b);
                 break;
             }
             default: {
@@ -363,7 +363,7 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
             }
             case STACK_SLOT: {
                 final EirStackSlot stackSlot = (EirStackSlot) location;
-                _stack.writeShort(readFramePointer().plus(offset(stackSlot)), s);
+                stack.writeShort(readFramePointer().plus(offset(stackSlot)), s);
                 break;
             }
             default: {
@@ -383,7 +383,7 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
             }
             case STACK_SLOT: {
                 final EirStackSlot stackSlot = (EirStackSlot) location;
-                _stack.writeInt(readFramePointer().plus(offset(stackSlot)), i);
+                stack.writeInt(readFramePointer().plus(offset(stackSlot)), i);
                 break;
             }
             default: {
@@ -403,7 +403,7 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
             }
             case STACK_SLOT: {
                 final EirStackSlot stackSlot = (EirStackSlot) location;
-                _stack.writeLong(readFramePointer().plus(offset(stackSlot)), n);
+                stack.writeLong(readFramePointer().plus(offset(stackSlot)), n);
                 break;
             }
             default: {
@@ -423,7 +423,7 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
             }
             case STACK_SLOT: {
                 final EirStackSlot stackSlot = (EirStackSlot) location;
-                _stack.writeWord(readFramePointer().plus(offset(stackSlot)), word);
+                stack.writeWord(readFramePointer().plus(offset(stackSlot)), word);
                 break;
             }
             default: {
@@ -443,7 +443,7 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
             }
             case STACK_SLOT: {
                 final EirStackSlot stackSlot = (EirStackSlot) location;
-                _stack.writeFloat(readFramePointer().plus(offset(stackSlot)), f);
+                stack.writeFloat(readFramePointer().plus(offset(stackSlot)), f);
                 break;
             }
             default: {
@@ -463,7 +463,7 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
             }
             case STACK_SLOT: {
                 final EirStackSlot stackSlot = (EirStackSlot) location;
-                _stack.writeDouble(readFramePointer().plus(offset(stackSlot)), d);
+                stack.writeDouble(readFramePointer().plus(offset(stackSlot)), d);
                 break;
             }
             default: {
@@ -502,21 +502,21 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
 
     protected static class TextTableColumn {
 
-        private final String _header;
-        private final AppendableIndexedSequence<String> _entries = new ArrayListSequence<String>();
+        private final String header;
+        private final AppendableIndexedSequence<String> entries = new ArrayListSequence<String>();
         private int _width = 0;
 
         public TextTableColumn(String header) {
-            _header = header;
+            this.header = header;
         }
 
         public void add(String entry) {
-            _entries.append(entry);
+            entries.append(entry);
             _width = Math.max(_width, entry.length());
         }
 
         public String header() {
-            return _header;
+            return header;
         }
 
         public int width() {
@@ -524,7 +524,7 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
         }
 
         public IndexedSequence<String> entries() {
-            return _entries;
+            return entries;
         }
 
         public static void printTable(PrintStream stream, TextTableColumn... columns) {

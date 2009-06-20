@@ -36,8 +36,8 @@ public class CirSearch extends CirTraversal {
     }
 
     private CirNode runPredicate(CirPredicate predicate) {
-        while (!_toDo.isEmpty()) {
-            final CirNode node = _toDo.removeFirst();
+        while (!toDo.isEmpty()) {
+            final CirNode node = toDo.removeFirst();
             if (node.acceptPredicate(predicate)) {
                 return node;
             }
@@ -47,8 +47,8 @@ public class CirSearch extends CirTraversal {
     }
 
     protected boolean runNode(CirNode node) {
-        while (!_toDo.isEmpty()) {
-            final CirNode current = _toDo.removeFirst();
+        while (!toDo.isEmpty()) {
+            final CirNode current = toDo.removeFirst();
             if (current == node) {
                 return true;
             }

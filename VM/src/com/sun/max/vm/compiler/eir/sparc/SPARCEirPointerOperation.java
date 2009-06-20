@@ -38,16 +38,16 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
         return _kind;
     }
 
-    private final Kind _offsetKind;
+    private final Kind offsetKind;
 
     public EirOperand offsetOperand() {
         return rightOperand();
     }
 
-    private final EirOperand _indexOperand;
+    private final EirOperand indexOperand;
 
     public EirOperand indexOperand() {
-        return _indexOperand;
+        return indexOperand;
     }
 
     public EirOperand pointerOperand() {
@@ -69,8 +69,8 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
     @Override
     public void visitOperands(EirOperand.Procedure visitor) {
         super.visitOperands(visitor);
-        if (_indexOperand != null) {
-            visitor.run(_indexOperand);
+        if (indexOperand != null) {
+            visitor.run(indexOperand);
         }
     }
 
@@ -90,8 +90,8 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
                     PoolSet<EirLocationCategory> locationCategories, EirValue pointer) {
         super(block, operand, event, locationCategories, pointer,  EirOperand.Effect.USE, G, nullOperand);
         _kind = kind;
-        _offsetKind = null;
-        _indexOperand = nullOperand;
+        offsetKind = null;
+        indexOperand = nullOperand;
     }
 
     private static final EirOperand nullOperand = null;
@@ -99,27 +99,27 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
     protected SPARCEirPointerOperation(EirBlock block, Kind kind, EirValue operand, Effect event,
                     PoolSet<EirLocationCategory> locationCategories, EirValue pointer, Kind offsetKind, EirValue offset) {
         super(block, operand, event, locationCategories, pointer,  EirOperand.Effect.USE, G, offset, EirOperand.Effect.USE, G_I8_I32);
-        _kind = kind;
-        _offsetKind = offsetKind;
-        _indexOperand = nullOperand;
+        this._kind = kind;
+        this.offsetKind = offsetKind;
+        this.indexOperand = nullOperand;
     }
 
     protected SPARCEirPointerOperation(EirBlock block, Kind kind, EirValue operand, Effect event,
                     PoolSet<EirLocationCategory> locationCategories, EirValue pointer,  EirValue index) {
         super(block, operand, event, locationCategories, pointer,  EirOperand.Effect.USE, G, nullOperand);
-        _kind = kind;
-        _offsetKind = null;
-        _indexOperand = new EirOperand(this, EirOperand.Effect.USE, index.locationCategories());
-        _indexOperand.setEirValue(index);
+        this._kind = kind;
+        this.offsetKind = null;
+        this.indexOperand = new EirOperand(this, EirOperand.Effect.USE, index.locationCategories());
+        this.indexOperand.setEirValue(index);
     }
 
     protected SPARCEirPointerOperation(EirBlock block, Kind kind, EirValue operand, Effect event,
                     PoolSet<EirLocationCategory> locationCategories, EirValue pointer, Kind offsetKind, EirValue offset,  EirValue index) {
         super(block, operand, event, locationCategories, pointer,  EirOperand.Effect.USE, G, offset, EirOperand.Effect.USE, G_I8_I32);
-        _kind = kind;
-        _offsetKind = offsetKind;
-        _indexOperand = new EirOperand(this, EirOperand.Effect.USE, index.locationCategories());
-        _indexOperand.setEirValue(index);
+        this._kind = kind;
+        this.offsetKind = offsetKind;
+        this.indexOperand = new EirOperand(this, EirOperand.Effect.USE, index.locationCategories());
+        this.indexOperand.setEirValue(index);
     }
 
 

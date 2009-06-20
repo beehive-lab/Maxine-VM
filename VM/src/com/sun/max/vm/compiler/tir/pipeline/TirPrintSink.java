@@ -46,11 +46,11 @@ public class TirPrintSink extends TirBufferedSink {
 
     private class PrintSink extends TirInstructionFilter {
         private GrowableMapping<TirMessage, String> _labelMap = new IdentityHashMapping<TirMessage, String>();
-        private OperandVisitor _operandVisitor = new OperandVisitor();
-        private TirTreeBegin _treeBegin;
+        private OperandVisitor operandVisitor = new OperandVisitor();
+        private TirTreeBegin treeBegin;
         private TirTraceBegin _traceBegin;
 
-        private MapFunction<TirInstruction, String> _defLabelMap = new MapFunction<TirInstruction, String>() {
+        private MapFunction<TirInstruction, String> defLabelMap = new MapFunction<TirInstruction, String>() {
             public String map(TirInstruction instruction) {
                 assert _labelMap.containsKey(instruction) == false;
                 final String name = "(" + _labelMap.length() + ")";
@@ -68,7 +68,7 @@ public class TirPrintSink extends TirBufferedSink {
                 } else if (instruction instanceof TirConstant) {
                     return Color.color(NameMap.CONSTANT_COLOR, instruction.toString());
                 } else if (instruction instanceof TirLocal) {
-                    final String variableName = localVar((TirLocal) instruction, _treeBegin.tree());
+                    final String variableName = localVar((TirLocal) instruction, treeBegin.tree());
                     return variableName;
                 }
                 String name = _labelMap.get(instruction);
@@ -88,10 +88,10 @@ public class TirPrintSink extends TirBufferedSink {
         public void visit(TirTreeBegin treeBegin) {
             NameMap.updateLabelMap(treeBegin.tree(), _useLabelMap);
             assert treeBegin.order() == TirPipelineOrder.FORWARD;
-            _treeBegin = treeBegin;
+            this.treeBegin = treeBegin;
             Console.printDivider("TREE " + NameMap.nameOf(treeBegin.tree()), '=', 6);
             Console.print("entry state: ");
-            _treeBegin.tree().entryState().println(_useLabelMap);
+            treeBegin.tree().entryState().println(_useLabelMap);
             Console.println("anchor: " + treeBegin.tree().anchor().toString());
             Console.printDivider('-');
         }
@@ -123,7 +123,7 @@ public class TirPrintSink extends TirBufferedSink {
         @Override
         public void visit(TirLocal instruction) {
             printPrefix(instruction);
-            final TirTree tree = _treeBegin.tree();
+            final TirTree tree = treeBegin.tree();
             final String variableName = localVar(instruction, tree);
             Console.print(", var: " + variableName);
             Console.print(", " + instruction.flags());
@@ -156,7 +156,7 @@ public class TirPrintSink extends TirBufferedSink {
         @Override
         public void visit(TirGuard guard) {
             printPrefix(guard);
-            Console.print(" #" + _treeBegin.tree().getNumber(guard));
+            Console.print(" #" + treeBegin.tree().getNumber(guard));
             Console.print(", " + _useLabelMap.map(guard.operand0()) + " " + guard.valueComparator().symbol() + " " + _useLabelMap.map(guard.operand1()));
             if (guard.thorwable() != null) {
                 Console.print(", " + guard.thorwable().getSimpleName());
@@ -177,12 +177,12 @@ public class TirPrintSink extends TirBufferedSink {
         }
 
         private void printPrefix(TirInstruction instruction) {
-            Console.printf("%5s: ", _defLabelMap.map(instruction));
+            Console.printf("%5s: ", defLabelMap.map(instruction));
             Console.print(instruction.toString());
         }
 
         private void printOperands(TirInstruction instruction) {
-            instruction.visitOperands(_operandVisitor);
+            instruction.visitOperands(operandVisitor);
         }
 
         @Override

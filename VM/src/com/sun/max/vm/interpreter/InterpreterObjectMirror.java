@@ -39,12 +39,12 @@ import com.sun.max.vm.value.*;
  * @author Bernd Mathiske
  */
 public class InterpreterObjectMirror implements ObjectMirror {
-    private final Object _object;
-    private final ClassActor _classActor;
+    private final Object object;
+    private final ClassActor classActor;
 
     public InterpreterObjectMirror(final Object object) {
-        _object = object;
-        _classActor = MaxineVM.usingTarget(new Function<ClassActor>() {
+        this.object = object;
+        classActor = MaxineVM.usingTarget(new Function<ClassActor>() {
             public ClassActor call() {
                 return ClassActor.fromJava(object.getClass());
             }
@@ -52,20 +52,20 @@ public class InterpreterObjectMirror implements ObjectMirror {
     }
 
     public boolean isArray() {
-        return _classActor.isArrayClassActor();
+        return classActor.isArrayClassActor();
     }
 
     public ClassActor classActor() {
-        return _classActor;
+        return classActor;
     }
 
     public Value readHub() {
-        return ReferenceValue.from(_classActor.dynamicHub());
+        return ReferenceValue.from(classActor.dynamicHub());
     }
 
     public Value readElement(Kind kind, int index) {
-        if (_object instanceof Hybrid) {
-            final Hybrid hybrid = (Hybrid) _object;
+        if (object instanceof Hybrid) {
+            final Hybrid hybrid = (Hybrid) object;
             switch (kind.asEnum()) {
                 case INT:
                     return IntValue.from(hybrid.getInt(index));
@@ -76,19 +76,19 @@ public class InterpreterObjectMirror implements ObjectMirror {
                     return null;
             }
         }
-        final Object javaValue = Array.get(_object, index);
-        final ArrayClassActor arrayClassActor = (ArrayClassActor) _classActor;
+        final Object javaValue = Array.get(object, index);
+        final ArrayClassActor arrayClassActor = (ArrayClassActor) classActor;
         ProgramError.check(arrayClassActor.componentClassActor().kind().toStackKind() == kind.toStackKind());
         return arrayClassActor.componentClassActor().kind().asValue(javaValue);
     }
 
 
     public Value readField(int offset) {
-        final FieldActor fieldActor = _classActor.findInstanceFieldActor(offset);
+        final FieldActor fieldActor = classActor.findInstanceFieldActor(offset);
         final Field field = fieldActor.toJava();
         field.setAccessible(true);
         try {
-            return fieldActor.kind().asValue(field.get(_object));
+            return fieldActor.kind().asValue(field.get(object));
         } catch (Throwable throwable) {
             throw ProgramError.unexpected("could not read field: " + field, throwable);
         }
@@ -96,28 +96,28 @@ public class InterpreterObjectMirror implements ObjectMirror {
 
 
     public Value readMisc() {
-        return new WordValue(VMConfiguration.target().monitorScheme().createMisc(_object));
+        return new WordValue(VMConfiguration.target().monitorScheme().createMisc(object));
     }
 
 
     public Value readArrayLength() {
-        return IntValue.from(HostObjectAccess.getArrayLength(_object));
+        return IntValue.from(HostObjectAccess.getArrayLength(object));
     }
 
 
     public void writeArrayLength(Value value) {
-        assert value.asInt() == HostObjectAccess.getArrayLength(_object);
+        assert value.asInt() == HostObjectAccess.getArrayLength(object);
     }
 
 
     public void writeHub(Value value) {
-        assert value == ReferenceValue.from(_classActor);
+        assert value == ReferenceValue.from(classActor);
     }
 
 
     public void writeElement(Kind kind, int index, Value value) {
-        if (_object instanceof Hybrid) {
-            final Hybrid hybrid = (Hybrid) _object;
+        if (object instanceof Hybrid) {
+            final Hybrid hybrid = (Hybrid) object;
             switch (kind.asEnum()) {
                 case INT:
                     hybrid.setInt(index, value.asInt());
@@ -130,24 +130,24 @@ public class InterpreterObjectMirror implements ObjectMirror {
                     break;
             }
         } else {
-            final ArrayClassActor arrayClassActor = (ArrayClassActor) _classActor;
+            final ArrayClassActor arrayClassActor = (ArrayClassActor) classActor;
             final ClassActor componentClassActor = arrayClassActor.componentClassActor();
             if (componentClassActor.kind().toStackKind() != kind.toStackKind()) {
                 throw new ArrayStoreException("cannot store a '" + kind + "' into an array of '" + componentClassActor.kind() + "'");
             }
-            if (_object instanceof Object[]) {
-                final Object[] objectArray = (Object[]) _object;
+            if (object instanceof Object[]) {
+                final Object[] objectArray = (Object[]) object;
                 objectArray[index] = value.asObject();
             } else {
                 final Object javaBoxedValue = componentClassActor.kind().convert(value).asBoxedJavaValue();
-                Array.set(_object, index, javaBoxedValue);
+                Array.set(object, index, javaBoxedValue);
             }
         }
     }
 
 
     public void writeField(int offset, Value value) {
-        final TupleClassActor tupleClassActor = (TupleClassActor) _classActor;
+        final TupleClassActor tupleClassActor = (TupleClassActor) classActor;
         final FieldActor fieldActor = tupleClassActor.findInstanceFieldActor(offset);
         final Field field = fieldActor.toJava();
         field.setAccessible(true);
@@ -156,9 +156,9 @@ public class InterpreterObjectMirror implements ObjectMirror {
             if (KindTypeDescriptor.isWord(fieldDescriptor)) {
                 final Class<Class<? extends Word>> type = null;
                 final Word word = value.toWord().as(StaticLoophole.cast(type, field.getType()));
-                field.set(_object, word);
+                field.set(object, word);
             } else {
-                field.set(_object, fieldActor.kind().convert(value).asBoxedJavaValue());
+                field.set(object, fieldActor.kind().convert(value).asBoxedJavaValue());
             }
         } catch (IllegalArgumentException e) {
             throw ProgramError.unexpected(e);
@@ -168,20 +168,20 @@ public class InterpreterObjectMirror implements ObjectMirror {
     }
 
     public void writeMisc(Value value) {
-        assert value.asWord().equals(VMConfiguration.target().monitorScheme().createMisc(_object));
+        assert value.asWord().equals(VMConfiguration.target().monitorScheme().createMisc(object));
     }
 
     public int firstWordIndex() {
-        if (_classActor.isHybridClassActor()) {
-            final Hybrid hybrid = (Hybrid) _object;
+        if (classActor.isHybridClassActor()) {
+            final Hybrid hybrid = (Hybrid) object;
             return hybrid.firstWordIndex();
         }
         return Integer.MAX_VALUE;
     }
 
     public int firstIntIndex() {
-        if (_classActor.isHybridClassActor()) {
-            final Hybrid hybrid = (Hybrid) _object;
+        if (classActor.isHybridClassActor()) {
+            final Hybrid hybrid = (Hybrid) object;
             return hybrid.firstIntIndex();
         }
         return Integer.MAX_VALUE;

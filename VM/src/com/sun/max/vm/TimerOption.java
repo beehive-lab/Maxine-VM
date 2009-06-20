@@ -31,8 +31,8 @@ import com.sun.max.util.timer.*;
  */
 public class TimerOption extends VMOption {
 
-    protected final TimerMetric _timerMetric;
-    protected final String _label;
+    protected final TimerMetric timerMetric;
+    protected final String label;
 
     @PROTOTYPE_ONLY
     public TimerOption(String label, String help, Timer timer) {
@@ -50,44 +50,44 @@ public class TimerOption extends VMOption {
     @PROTOTYPE_ONLY
     public TimerOption(String prefix, String label, String help, TimerMetric timerMetric) {
         super(prefix, help);
-        _timerMetric = timerMetric;
-        _label = label;
+        this.timerMetric = timerMetric;
+        this.label = label;
     }
 
     /**
      * If this option is {@linkplain #isPresent() enabled}, then the timer is started.
      */
     public void start() {
-        _timerMetric.start();
+        timerMetric.start();
     }
 
     /**
      * If this option is {@linkplain #isPresent() enabled}, then the timer is stopped.
      */
     public long stop() {
-        _timerMetric.stop();
-        return _timerMetric.getLastElapsedTime();
+        timerMetric.stop();
+        return timerMetric.getLastElapsedTime();
     }
 
     @Override
     protected void beforeExit() {
         if (isPresent()) {
             Log.print("    ");
-            Log.print(_label);
+            Log.print(label);
             Log.print(':');
-            int column = 5 + _label.length();
+            int column = 5 + label.length();
             for (; column < 22; column++) {
                 Log.print(' ');
             }
             Log.print("Elapsed=");
-            Log.print(_timerMetric.getElapsedTime());
+            Log.print(timerMetric.getElapsedTime());
             Log.print(' ');
-            Log.print(TimerUtil.getHzSuffix(_timerMetric.getClock()));
-            if (_timerMetric.getNestedTime() != 0) {
+            Log.print(TimerUtil.getHzSuffix(timerMetric.getClock()));
+            if (timerMetric.getNestedTime() != 0) {
                 Log.print(" [Nested=");
-                Log.print(_timerMetric.getNestedTime());
+                Log.print(timerMetric.getNestedTime());
                 Log.print(' ');
-                Log.print(TimerUtil.getHzSuffix(_timerMetric.getClock()));
+                Log.print(TimerUtil.getHzSuffix(timerMetric.getClock()));
                 Log.print(']');
             }
             Log.println();

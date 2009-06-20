@@ -39,10 +39,10 @@ public class ActorToBirTranslator extends BirGenerator {
         super(birGeneratorScheme);
     }
 
-    private static final TimerMetric _timer = GlobalMetrics.newTimer("Translate-ActorToBir", Clock.SYSTEM_MILLISECONDS);
+    private static final TimerMetric timer = GlobalMetrics.newTimer("Translate-ActorToBir", Clock.SYSTEM_MILLISECONDS);
 
     private void translate(BirMethod birMethod) {
-        _timer.start();
+        timer.start();
         final CodeAttribute codeAttribute = birMethod.classMethodActor().compilee().codeAttribute();
         final ControlFlowAnalyzer controlFlowAnalyzer = new ControlFlowAnalyzer(codeAttribute.code());
         final IndexedSequence<BirBlock> blocks = controlFlowAnalyzer.run();
@@ -55,7 +55,7 @@ public class ActorToBirTranslator extends BirGenerator {
                         blocks,
                         blockMap,
                         codeAttribute.exceptionHandlerTable());
-        _timer.stop();
+        timer.stop();
     }
 
     @Override

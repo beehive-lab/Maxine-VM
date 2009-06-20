@@ -32,16 +32,16 @@ import com.sun.max.vm.value.*;
  */
 public class MaxCiConstant implements CiConstant {
 
-    private final Value _value;
-    private final MaxCiType _type;
+    private final Value value;
+    private final MaxCiType type;
 
     /**
      * Constructs a new constant from a <code>Value</code>.
      * @param value the value
      */
     MaxCiConstant(Value value) {
-        _value = value;
-        _type = null;
+        this.value = value;
+        this.type = null;
     }
 
     /**
@@ -49,8 +49,8 @@ public class MaxCiConstant implements CiConstant {
      * @param type the type
      */
     MaxCiConstant(MaxCiType type) {
-        _value = null;
-        _type = type;
+        this.value = null;
+        this.type = type;
     }
 
     /**
@@ -58,7 +58,7 @@ public class MaxCiConstant implements CiConstant {
      * @return <code>true</code> if this constant is a compiler interface type, <code>false</code> otherwise
      */
     public boolean isCiType() {
-        return _type != null;
+        return type != null;
     }
 
     /**
@@ -67,7 +67,7 @@ public class MaxCiConstant implements CiConstant {
      * type
      */
     public CiType asCiType() {
-        return _type;
+        return type;
     }
 
     /**
@@ -75,13 +75,13 @@ public class MaxCiConstant implements CiConstant {
      * @return the object reference this constant represents
      */
     public Object asObject() {
-        if (_type != null) {
-            if (!_type.isLoaded()) {
-                throw new MaxCiUnresolved("asObject() not defined for unresolved MaxCiConstant of class " + _type);
+        if (type != null) {
+            if (!type.isLoaded()) {
+                throw new MaxCiUnresolved("asObject() not defined for unresolved MaxCiConstant of class " + type);
             }
-            return _type.javaClass();
+            return type.javaClass();
         }
-        return _value.asObject();
+        return value.asObject();
     }
 
     /**
@@ -89,7 +89,7 @@ public class MaxCiConstant implements CiConstant {
      * @return the string reference this constant represents
      */
     public String asString() {
-        return (String) _value.asObject();
+        return (String) value.asObject();
     }
 
     /**
@@ -97,7 +97,7 @@ public class MaxCiConstant implements CiConstant {
      * @return the boolean value
      */
     public boolean asBoolean() {
-        return _value.asBoolean();
+        return value.asBoolean();
     }
 
     /**
@@ -105,7 +105,7 @@ public class MaxCiConstant implements CiConstant {
      * @return the byte value
      */
     public byte asByte() {
-        return _value.asByte();
+        return value.asByte();
     }
 
     /**
@@ -113,7 +113,7 @@ public class MaxCiConstant implements CiConstant {
      * @return the short value
      */
     public short asShort() {
-        return _value.asShort();
+        return value.asShort();
     }
 
     /**
@@ -121,7 +121,7 @@ public class MaxCiConstant implements CiConstant {
      * @return the char value
      */
     public char asChar() {
-        return _value.asChar();
+        return value.asChar();
     }
 
     /**
@@ -129,7 +129,7 @@ public class MaxCiConstant implements CiConstant {
      * @return the int value
      */
     public int asInt() {
-        return _value.asInt();
+        return value.asInt();
     }
 
     /**
@@ -137,7 +137,7 @@ public class MaxCiConstant implements CiConstant {
      * @return the long value
      */
     public long asLong() {
-        return _value.asLong();
+        return value.asLong();
     }
 
     /**
@@ -145,7 +145,7 @@ public class MaxCiConstant implements CiConstant {
      * @return the float value
      */
     public float asFloat() {
-        return _value.asFloat();
+        return value.asFloat();
     }
 
     /**
@@ -153,7 +153,7 @@ public class MaxCiConstant implements CiConstant {
      * @return the double value
      */
     public double asDouble() {
-        return _value.asDouble();
+        return value.asDouble();
     }
 
     /**
@@ -161,9 +161,9 @@ public class MaxCiConstant implements CiConstant {
      * @return the basic type of this constant.
      */
     public BasicType basicType() {
-        if (_type != null) {
+        if (type != null) {
             return BasicType.Object;
         }
-        return MaxCiType.kindToBasicType(_value.kind());
+        return MaxCiType.kindToBasicType(value.kind());
     }
 }

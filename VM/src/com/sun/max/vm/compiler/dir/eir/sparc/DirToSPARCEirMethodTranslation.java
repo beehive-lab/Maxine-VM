@@ -37,14 +37,14 @@ import com.sun.max.vm.value.*;
 public final class DirToSPARCEirMethodTranslation extends DirToEirMethodTranslation {
     public static final SPARCEirRegister.GeneralPurpose SAVED_SAFEPOINT_LATCH_LOCAL = SPARCEirRegister.GeneralPurpose.L5;
 
-    boolean _saveSafetpoinLatchInLocal = false;
+    boolean saveSafetpoinLatchInLocal = false;
 
     public void needsSavingSafepointLatchInLocal() {
-        _saveSafetpoinLatchInLocal = true;
+        saveSafetpoinLatchInLocal = true;
     }
 
     public boolean saveSafetpoinLatchInLocal() {
-        return _saveSafetpoinLatchInLocal;
+        return saveSafetpoinLatchInLocal;
     }
 
     public DirToSPARCEirMethodTranslation(EirGenerator eirGenerator, EirMethod eirMethod, DirMethod dirMethod) {
@@ -56,17 +56,17 @@ public final class DirToSPARCEirMethodTranslation extends DirToEirMethodTranslat
      * Methods that perform such operations allocate an extra-slot on top of their frame (below the mandatory minimal stack frame)
      * The EirGenerator can detect the use of this staging area by checking if the _offsetToConversionArea is non-null.
      */
-    private EirConstant _offsetToConversionArea;
+    private EirConstant offsetToConversionArea;
 
     public EirConstant offsetToConversionArea() {
-        if (_offsetToConversionArea == null) {
-            _offsetToConversionArea = createEirConstant(IntValue.from(SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer()));
+        if (offsetToConversionArea == null) {
+            offsetToConversionArea = createEirConstant(IntValue.from(SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer()));
         }
-        return _offsetToConversionArea;
+        return offsetToConversionArea;
     }
 
     public boolean usesConversionArea() {
-        return _offsetToConversionArea != null;
+        return offsetToConversionArea != null;
     }
 
     @Override
@@ -139,7 +139,7 @@ public final class DirToSPARCEirMethodTranslation extends DirToEirMethodTranslat
     /**
      * A boolean value indicating that at least one call use an ABI that requires the caller to save the latch register.
      */
-    private boolean _callerMustSaveLatchRegister;
+    private boolean callerMustSaveLatchRegister;
 
     /**
      * Set a flag indicating that a call that uses an ABI that requires the caller to save the latch register is being made.
@@ -147,8 +147,8 @@ public final class DirToSPARCEirMethodTranslation extends DirToEirMethodTranslat
      * @return a boolean indicating whether this is the first time for the method being compiled.
      */
     public boolean callerMustSaveLatchRegister() {
-        final boolean firstTime = !_callerMustSaveLatchRegister;
-        _callerMustSaveLatchRegister = true;
+        final boolean firstTime = !callerMustSaveLatchRegister;
+        callerMustSaveLatchRegister = true;
         return firstTime;
     }
 }

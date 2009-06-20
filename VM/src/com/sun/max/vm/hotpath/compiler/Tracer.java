@@ -38,19 +38,19 @@ import com.sun.max.vm.hotpath.compiler.Console.*;
  * @author Michael Bebenita
  */
 public abstract class Tracer {
-    public static OptionSet _optionSet = new OptionSet();
-    public static Option<Integer> _resetThreshold = _optionSet.newIntegerOption("RS", 1000, "Reset threhold.");
-    public static Option<Integer> _recordingThreshold = _optionSet.newIntegerOption("RT", 10, "Record threhold.");
-    public static Option<Integer> _numberOfRecordingTriesAllowed = _optionSet.newIntegerOption("TR", 3, "Tries.");
-    public static Option<Integer> _numberOfCyclesAllowed = _optionSet.newIntegerOption("CYCLES", 0, "Number of times to unroll hotpaths.");
-    public static Option<Integer> _numberOfBackwardJumpsAllowed = _optionSet.newIntegerOption("BJUMPS", 3, "Number of times to inner cycles.");
-    public static Option<Integer> _numberOfBytecodesAllowed = _optionSet.newIntegerOption("LEN", 1024, "Number of bytecodes allowed.");
-    public static Option<Boolean> _nestTrees = _optionSet.newBooleanOption("NEST", true, "Nest trees.");
-    public static Option<Boolean> _printState = _optionSet.newBooleanOption("PT", true, "(P)rints the Tracers's Execution.");
-    public static Option<Integer> _numberOfBranchesAllowed = _optionSet.newIntegerOption("BRANCHES", 64, "Number of branch traces allowed.");
-    public static Option<Integer> _maxTries = _optionSet.newIntegerOption("TRIES", 16, "Number of tries.");
+    public static OptionSet optionSet = new OptionSet();
+    public static Option<Integer> resetThreshold = optionSet.newIntegerOption("RS", 1000, "Reset threhold.");
+    public static Option<Integer> _recordingThreshold = optionSet.newIntegerOption("RT", 10, "Record threhold.");
+    public static Option<Integer> numberOfRecordingTriesAllowed = optionSet.newIntegerOption("TR", 3, "Tries.");
+    public static Option<Integer> _numberOfCyclesAllowed = optionSet.newIntegerOption("CYCLES", 0, "Number of times to unroll hotpaths.");
+    public static Option<Integer> numberOfBackwardJumpsAllowed = optionSet.newIntegerOption("BJUMPS", 3, "Number of times to inner cycles.");
+    public static Option<Integer> numberOfBytecodesAllowed = optionSet.newIntegerOption("LEN", 1024, "Number of bytecodes allowed.");
+    public static Option<Boolean> nestTrees = optionSet.newBooleanOption("NEST", true, "Nest trees.");
+    public static Option<Boolean> printState = optionSet.newBooleanOption("PT", true, "(P)rints the Tracers's Execution.");
+    public static Option<Integer> numberOfBranchesAllowed = optionSet.newIntegerOption("BRANCHES", 64, "Number of branch traces allowed.");
+    public static Option<Integer> maxTries = optionSet.newIntegerOption("TRIES", 16, "Number of tries.");
 
-    public static Option<Integer> _branchMetricThreshold = _optionSet.newIntegerOption("BRANCH_METRIC", 16, "Brach metric threshold.");
+    public static Option<Integer> _branchMetricThreshold = optionSet.newIntegerOption("BRANCH_METRIC", 16, "Brach metric threshold.");
 
     public enum AbortReason {
         FAILED_LENGTH_METRIC, UNSUPPORTED_BYTECODE, EXCEEDED_NUMBER_OF_BACKWARD_JUMPS_ALLOWED, REACHED_TREE_ANCHOR, BREACHED_SCOPE, UNEXPECTED_EXCEPTION, FAILED_BRANCH_METRIC
@@ -84,126 +84,126 @@ public abstract class Tracer {
     }
 
     private static boolean evaluateBranchMetric(Scope scope) {
-        return scope._branchMetric < _branchMetricThreshold.getValue();
+        return scope.branchMetric < _branchMetricThreshold.getValue();
     }
 
     private static boolean evaluateLengthMetric(Scope scope) {
-        return scope._numberOfBytecodes < _numberOfBytecodesAllowed.getValue();
+        return scope._numberOfBytecodes < numberOfBytecodesAllowed.getValue();
     }
 
     public abstract class Scope {
-        protected final TreeAnchor _treeAnchor;
-        protected TirTrace _trace;
-        protected TirRecorder _recorder;
+        protected final TreeAnchor treeAnchor;
+        protected TirTrace trace;
+        protected TirRecorder recorder;
 
-        private int _numberOfCycles;
-        private int _numberOfBackwardJumps;
+        private int numberOfCycles;
+        private int numberOfBackwardJumps;
         private int _numberOfBytecodes;
 
-        protected int _branchMetric;
+        protected int branchMetric;
 
         public Scope(TreeAnchor anchor) {
-            _treeAnchor = anchor;
-            _isRecording = true;
-            _isTracing = true;
+            treeAnchor = anchor;
+            isRecording = true;
+            isTracing = true;
         }
 
         /**
          * Indicates that the {@link Tracer.Scope} is receiving trace notifications from trace instrumented code.
          */
-        protected boolean _isTracing = false;
+        protected boolean isTracing = false;
 
         /**
          * Indicates that the {@link Tracer.Scope} is currently recording trace notifications.
          */
-        protected boolean _isRecording = false;
+        protected boolean isRecording = false;
 
         public void completeRecording(TreeAnchor anchor) {
-            _isRecording = false;
-            _isTracing = false;
+            isRecording = false;
+            isTracing = false;
         }
 
         public void record(BytecodeLocation location) {
-            _recorder.record(location);
+            recorder.record(location);
         }
 
         public void recordNesting(TreeAnchor anchor, Bailout bailout) {
-            _recorder.recordNesting(anchor, bailout);
+            recorder.recordNesting(anchor, bailout);
         }
 
         public void abort(AbortReason abortReason) {
-            _isRecording = false;
-            _isTracing = false;
-            if (_printState.getValue()) {
+            isRecording = false;
+            isTracing = false;
+            if (printState.getValue()) {
                 Console.println(Color.RED, abortReason.toString());
             }
         }
 
         public void profileBranch(BranchMetric metric) {
-            _branchMetric += metric.weight();
+            branchMetric += metric.weight();
         }
     }
 
     public class Trunk extends Scope {
-        private final TirTree _tree;
+        private final TirTree tree;
         public Trunk(TreeAnchor anchor) {
             super(anchor);
-            _tree = TirState.fromAnchor(anchor);
-            _trace = new TirTrace(_tree, null);
-            _recorder = new TirRecorder(Tracer.this, this, _tree.entryState().copy(), _trace);
+            tree = TirState.fromAnchor(anchor);
+            trace = new TirTrace(tree, null);
+            recorder = new TirRecorder(Tracer.this, this, tree.entryState().copy(), trace);
         }
 
         @Override
         public void completeRecording(TreeAnchor anchor) {
             super.completeRecording(anchor);
-            _tree.append(_trace);
-            _tree.commitFlags();
-            _trace.complete(_recorder.takeSnapshot(anchor));
-            _treeAnchor.setTree(_tree);
-            if (_printState.getValue()) {
-                TirPrintSink.print(_tree);
+            tree.append(trace);
+            tree.commitFlags();
+            trace.complete(recorder.takeSnapshot(anchor));
+            treeAnchor.setTree(tree);
+            if (printState.getValue()) {
+                TirPrintSink.print(tree);
             }
-            TirCompiler.compile(_tree);
+            TirCompiler.compile(tree);
             AsynchronousProfiler.event(CounterMetric.TRUNKS);
         }
     }
 
     public class Branch extends Scope {
-        private final TirTree _tree;
-        private final TraceAnchor _traceAnchor;
+        private final TirTree tree;
+        private final TraceAnchor traceAnchor;
         public Branch(TreeAnchor treeAnchor, TraceAnchor traceAnchor, TirGuard guard) {
             super(treeAnchor);
-            _traceAnchor = traceAnchor;
-            _tree = treeAnchor.tree();
-            _trace = new TirTrace(_tree, _traceAnchor);
-            _recorder = new TirRecorder(Tracer.this, this, guard.state().copy(), _trace);
+            this.traceAnchor = traceAnchor;
+            this.tree = treeAnchor.tree();
+            this.trace = new TirTrace(tree, traceAnchor);
+            this.recorder = new TirRecorder(Tracer.this, this, guard.state().copy(), trace);
         }
 
         @Override
         public void completeRecording(TreeAnchor anchor) {
             super.completeRecording(anchor);
-            _tree.append(_trace);
-            _tree.commitFlags();
-            _trace.complete(_recorder.takeSnapshot(anchor));
-            _traceAnchor.setTrace(_trace);
-            if (_printState.getValue()) {
-                TirPrintSink.print(_tree);
+            tree.append(trace);
+            tree.commitFlags();
+            trace.complete(recorder.takeSnapshot(anchor));
+            traceAnchor.setTrace(trace);
+            if (printState.getValue()) {
+                TirPrintSink.print(tree);
             }
-            TirCompiler.compile(_tree);
+            TirCompiler.compile(tree);
             AsynchronousProfiler.event(CounterMetric.BRANCHES);
         }
     }
 
-    private VariableSequence<Scope> _scopes = new ArrayListSequence<Scope>();
+    private VariableSequence<Scope> scopes = new ArrayListSequence<Scope>();
     private BytecodeLocation _currentLocation;
 
     protected Scope active() {
-        return _scopes.last();
+        return scopes.last();
     }
 
     protected boolean begin(TreeAnchor anchor) {
         // Have we tried to record a trace too many times? If so, don't record anymore.
-        if (anchor.incrementNumberOfTries() >= _maxTries.getValue()) {
+        if (anchor.incrementNumberOfTries() >= maxTries.getValue()) {
             return false;
         }
 
@@ -216,16 +216,16 @@ public abstract class Tracer {
     }
 
     public void abort(AbortReason reason) {
-        for (Scope scope : _scopes) {
-            if (scope._isRecording) {
+        for (Scope scope : scopes) {
+            if (scope.isRecording) {
                 scope.abort(reason);
             }
         }
     }
 
     public boolean isTracing() {
-        for (Scope scope : _scopes) {
-            if (scope._isTracing) {
+        for (Scope scope : scopes) {
+            if (scope.isTracing) {
                 return true;
             }
         }
@@ -236,8 +236,8 @@ public abstract class Tracer {
      * @return {@code true} if any
      */
     public boolean isRecording() {
-        for (Scope scope : _scopes) {
-            if (scope._isRecording) {
+        for (Scope scope : scopes) {
+            if (scope.isRecording) {
                 return true;
             }
         }
@@ -250,26 +250,26 @@ public abstract class Tracer {
     public void visitAnchor(TreeAnchor anchor) {
         if (isRecording()) {
             // Attempt to complete traces.
-            for (int i = _scopes.length() - 1; i >= 0; i--) {
-                final Scope scope = _scopes.get(i);
-                if (scope._isRecording) {
-                    if (scope._treeAnchor == anchor) {
-                        if (scope._numberOfCycles++ >= _numberOfCyclesAllowed.getValue()) {
+            for (int i = scopes.length() - 1; i >= 0; i--) {
+                final Scope scope = scopes.get(i);
+                if (scope.isRecording) {
+                    if (scope.treeAnchor == anchor) {
+                        if (scope.numberOfCycles++ >= _numberOfCyclesAllowed.getValue()) {
                             scope.completeRecording(anchor);
                         }
                         return;
                     }
-                    if (scope._numberOfBackwardJumps++ >= _numberOfBackwardJumpsAllowed.getValue()) {
+                    if (scope.numberOfBackwardJumps++ >= numberOfBackwardJumpsAllowed.getValue()) {
                         scope.abort(AbortReason.EXCEEDED_NUMBER_OF_BACKWARD_JUMPS_ALLOWED);
                     }
                 }
             }
             // We've reached an out of scope TreeAnchor, try to nest tree.
             if (anchor.hasTree()) {
-                if (_nestTrees.getValue()) {
+                if (nestTrees.getValue()) {
                     final Bailout bailout = evaluateTree(anchor.tree());
-                    for (Scope scope : _scopes) {
-                        if (scope._isRecording) {
+                    for (Scope scope : scopes) {
+                        if (scope.isRecording) {
                             scope.recordNesting(anchor, bailout);
                         }
                     }
@@ -283,16 +283,16 @@ public abstract class Tracer {
                 AsynchronousProfiler.eventExecute(anchor.tree());
                 final Bailout bailout = evaluateTree(anchor.tree());
                 AsynchronousProfiler.eventBailout(anchor.tree(), bailout);
-                if (bailout.tree().traces().length() < _numberOfBranchesAllowed.getValue() + 1) {
+                if (bailout.tree().traces().length() < numberOfBranchesAllowed.getValue() + 1) {
                     createScope(bailout);
                 }
                 return;
             }
-            if (anchor.frequency() >= _resetThreshold.getValue()) {
+            if (anchor.frequency() >= resetThreshold.getValue()) {
                 anchor.resetFrequency();
             }
             if (anchor.frequency() >= _recordingThreshold.getValue() &&
-                anchor.frequency() < _recordingThreshold.getValue() + _numberOfRecordingTriesAllowed.getValue()) {
+                anchor.frequency() < _recordingThreshold.getValue() + numberOfRecordingTriesAllowed.getValue()) {
                 createScope(anchor);
             }
         }
@@ -301,8 +301,8 @@ public abstract class Tracer {
     public void visitBytecode(BytecodeLocation location) {
         setCurrentLocation(location);
         try {
-            for (Scope scope : _scopes) {
-                if (scope._isRecording) {
+            for (Scope scope : scopes) {
+                if (scope.isRecording) {
                     if (evaluateBranchMetric(scope) == false) {
                         scope.abort(AbortReason.FAILED_BRANCH_METRIC);
                         continue;
@@ -343,23 +343,23 @@ public abstract class Tracer {
     }
 
     private void createScope(TreeAnchor treeAnchor, TraceAnchor traceAnchor, TirGuard guard) {
-        if (_printState.getValue()) {
+        if (printState.getValue()) {
             Console.println(Color.RED, "RECORDING STARTED AT SIDE EXIT @" + traceAnchor);
         }
         final Scope scope = new Branch(treeAnchor, traceAnchor, guard);
-        _scopes.append(scope);
+        scopes.append(scope);
     }
 
     private void createScope(TreeAnchor anchor) {
-        if (_printState.getValue()) {
+        if (printState.getValue()) {
             Console.println(Color.RED, "RECORDING STARTED @" + anchor);
         }
         final Scope scope = new Trunk(anchor);
-        _scopes.append(scope);
+        scopes.append(scope);
     }
 
     public Sequence<Scope> scopes() {
-        return  _scopes;
+        return  scopes;
     }
 
     protected abstract boolean evaluateIcmpBranch(BranchCondition condition);

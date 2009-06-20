@@ -50,7 +50,7 @@ import com.sun.max.vm.runtime.*;
  */
 public final class JniNativeInterface {
 
-    private static boolean _verboseJNI;
+    private static boolean verboseJNI;
 
     private JniNativeInterface() {
     }
@@ -135,17 +135,17 @@ public final class JniNativeInterface {
         ProgramError.check(jniFunctionNames.length() == jniFunctionActors.length);
     }
 
-    private static final CriticalMethod[] _jniFunctions = getJniFunctions();
+    private static final CriticalMethod[] jniFunctions = getJniFunctions();
 
     public static CriticalMethod[] jniFunctions() {
-        return _jniFunctions;
+        return jniFunctions;
     }
 
     private static Pointer _pointer = Pointer.zero();
 
     public static Pointer pointer() {
         if (_pointer.isZero()) {
-            _pointer = Memory.mustAllocate(_jniFunctions.length * Word.size());
+            _pointer = Memory.mustAllocate(jniFunctions.length * Word.size());
         }
         return _pointer;
     }
@@ -164,8 +164,8 @@ public final class JniNativeInterface {
      * Must be called at VM startup, relying on having as few other features working as possible at that moment.
      */
     public static void initialize() {
-        for (int i = 0; i < _jniFunctions.length; i++) {
-            final Word functionPointer = _jniFunctions[i].address();
+        for (int i = 0; i < jniFunctions.length; i++) {
+            final Word functionPointer = jniFunctions[i].address();
             pointer().setWord(i, functionPointer);
         }
         nativeInitializeJniInterface(pointer());
@@ -181,8 +181,8 @@ public final class JniNativeInterface {
      * @return {@code null} if {@code code instructionPointer} is not within any JNI function
      */
     public static TargetMethod jniTargetMethod(Address instructionPointer) {
-        for (int i = 0; i < _jniFunctions.length; i++) {
-            final TargetMethod targetMethod = _jniFunctions[i].targetMethod();
+        for (int i = 0; i < jniFunctions.length; i++) {
+            final TargetMethod targetMethod = jniFunctions[i].targetMethod();
             if (targetMethod != null && targetMethod.contains(instructionPointer)) {
                 return targetMethod;
             }
@@ -191,7 +191,7 @@ public final class JniNativeInterface {
     }
 
     private static void check(StackVariable stackVariable) {
-        for (CriticalMethod jniFunction : _jniFunctions) {
+        for (CriticalMethod jniFunction : jniFunctions) {
             final ClassMethodActor classMethodActor = jniFunction.classMethodActor();
             final Integer offset = stackVariable.offset(classMethodActor);
             if (offset == null) {
@@ -211,13 +211,13 @@ public final class JniNativeInterface {
         check(JniFunctionWrapper.savedLastJavaCallerStackPointer());
     }
 
-    private static final VMOption _verboseOption = register(new VMOption("-verbose:jni",
+    private static final VMOption verboseOption = register(new VMOption("-verbose:jni",
         "Report information about use of native methods and other Java Native Interface activity."), MaxineVM.Phase.PRISTINE);
 
     /**
      * Determines if information should be displayed about use of native methods and other Java Native Interface activity.
      */
     public static boolean verbose() {
-        return _verboseOption.isPresent() || ClassMethodActor.traceJNI();
+        return verboseOption.isPresent() || ClassMethodActor.traceJNI();
     }
 }

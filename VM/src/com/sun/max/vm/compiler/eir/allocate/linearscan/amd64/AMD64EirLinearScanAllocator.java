@@ -30,11 +30,11 @@ import com.sun.max.vm.compiler.eir.amd64.*;
  */
 public final class AMD64EirLinearScanAllocator extends LinearScanRegisterAllocator<AMD64EirRegister> {
 
-    private final PoolSet<AMD64EirRegister> _noRegisters = PoolSet.noneOf(AMD64EirRegister.pool());
+    private final PoolSet<AMD64EirRegister> noRegisters = PoolSet.noneOf(AMD64EirRegister.pool());
 
     @Override
     protected PoolSet<AMD64EirRegister> noRegisters() {
-        return _noRegisters;
+        return noRegisters;
     }
 
     private final PoolSet<AMD64EirRegister> _allocatableIntegerRegisters;
@@ -44,11 +44,11 @@ public final class AMD64EirLinearScanAllocator extends LinearScanRegisterAllocat
         return _allocatableIntegerRegisters;
     }
 
-    private final PoolSet<AMD64EirRegister> _allocatableFloatingPointRegisters;
+    private final PoolSet<AMD64EirRegister> allocatableFloatingPointRegisters;
 
     @Override
     protected PoolSet<AMD64EirRegister> allocatableFloatingPointRegisters() {
-        return _allocatableFloatingPointRegisters;
+        return allocatableFloatingPointRegisters;
     }
 
     public AMD64EirLinearScanAllocator(EirMethodGeneration methodGeneration) {
@@ -59,9 +59,9 @@ public final class AMD64EirLinearScanAllocator extends LinearScanRegisterAllocat
         _allocatableIntegerRegisters.and(AMD64EirRegister.General.poolSet());
         _allocatableIntegerRegisters.and(abi.allocatableRegisters());
 
-        _allocatableFloatingPointRegisters = PoolSet.allOf(AMD64EirRegister.pool());
-        _allocatableFloatingPointRegisters.and(AMD64EirRegister.XMM.poolSet());
-        _allocatableFloatingPointRegisters.and(abi.allocatableRegisters());
+        allocatableFloatingPointRegisters = PoolSet.allOf(AMD64EirRegister.pool());
+        allocatableFloatingPointRegisters.and(AMD64EirRegister.XMM.poolSet());
+        allocatableFloatingPointRegisters.and(abi.allocatableRegisters());
     }
 
 }

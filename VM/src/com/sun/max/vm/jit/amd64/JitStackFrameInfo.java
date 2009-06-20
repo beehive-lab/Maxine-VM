@@ -26,41 +26,41 @@ import com.sun.max.unsafe.*;
  * @author Bernd Mathiske
  */
 final class JitStackFrameInfo {
-    private boolean _isAdapterFrame;
+    private boolean isAdapterFrame;
 
     public boolean isAdapterFrame() {
-        return _isAdapterFrame;
+        return isAdapterFrame;
     }
 
-    private final int _callSaveAreaPosition;
+    private final int callSaveAreaPosition;
 
     public int callSaveAreaPosition() {
-        return _callSaveAreaPosition;
+        return callSaveAreaPosition;
     }
 
-    private final int _framePointerPosition;
+    private final int framePointerPosition;
 
     public int framePointerPosition() {
-        return _framePointerPosition;
+        return framePointerPosition;
     }
 
-    private final Pointer _instructionPointer;
+    private final Pointer instructionPointer;
 
     public Pointer instructionPointer() {
-        return _instructionPointer;
+        return instructionPointer;
     }
 
     public JitStackFrameInfo(int saveAreaPosition, int framePointerPosition, Pointer instructionPointer) {
-        _isAdapterFrame = false;
-        _callSaveAreaPosition = saveAreaPosition;
-        _framePointerPosition = framePointerPosition;
-        _instructionPointer = instructionPointer;
+        this.isAdapterFrame = false;
+        this.callSaveAreaPosition = saveAreaPosition;
+        this.framePointerPosition = framePointerPosition;
+        this.instructionPointer = instructionPointer;
     }
 
     public JitStackFrameInfo(int saveAreaPosition, Pointer instructionPointer) {
-        _isAdapterFrame = true;
-        _callSaveAreaPosition = saveAreaPosition;
-        _framePointerPosition = -1;
-        _instructionPointer = instructionPointer;
+        this.isAdapterFrame = true;
+        this.callSaveAreaPosition = saveAreaPosition;
+        this.framePointerPosition = -1;
+        this.instructionPointer = instructionPointer;
     }
 }

@@ -90,18 +90,18 @@ public class BytecodePrinter extends BytecodeVisitor {
         }
     }
 
-    private final PrintWriter _writer;
+    private final PrintWriter writer;
 
-    private final ConstantPool _constantPool;
+    private final ConstantPool constantPool;
 
     public ConstantPool constantPool() {
-        return _constantPool;
+        return constantPool;
     }
 
-    private final String _instructionPrefix;
-    private final String _instructionSuffix;
-    private final boolean _printBytes;
-    private final boolean _printConstantIndices;
+    private final String instructionPrefix;
+    private final String instructionSuffix;
+    private final boolean printBytes;
+    private final boolean printConstantIndices;
 
     /**
      * Creates an object for disassembling a bytecode instruction stream. Each disassembled instruction will be suffixed
@@ -131,16 +131,16 @@ public class BytecodePrinter extends BytecodeVisitor {
         if (unrecognizedFlags != 0) {
             ProgramWarning.message("Unrecognized bytecode disassembly flags will be ignored: 0x" + Integer.toHexString(unrecognizedFlags));
         }
-        _writer = writer;
-        _constantPool = constantPool;
-        _instructionPrefix = instructionPrefix;
-        _instructionSuffix = instructionSuffix;
-        _printBytes = (flags & PRINT_BYTES) != 0;
-        _printConstantIndices = (flags & PRINT_CONSTANT_POOL_INDICES) != 0;
+        this.writer = writer;
+        this.constantPool = constantPool;
+        this.instructionPrefix = instructionPrefix;
+        this.instructionSuffix = instructionSuffix;
+        this.printBytes = (flags & PRINT_BYTES) != 0;
+        this.printConstantIndices = (flags & PRINT_CONSTANT_POOL_INDICES) != 0;
     }
 
     protected void printOpcode() {
-        _writer.print(currentOpcode().toString().toLowerCase());
+        writer.print(currentOpcode().toString().toLowerCase());
     }
 
     protected void printImmediate(int immediate) {
@@ -148,46 +148,46 @@ public class BytecodePrinter extends BytecodeVisitor {
     }
 
     protected void printImmediate(String prefix, int immediate) {
-        _writer.print(prefix + immediate);
+        writer.print(prefix + immediate);
     }
 
     protected void printConstant(int index) {
-        _writer.print(' ');
-        if (_printConstantIndices) {
-            _writer.print("cp[" + index + "]:");
+        writer.print(' ');
+        if (printConstantIndices) {
+            writer.print("cp[" + index + "]:");
         }
         try {
-            _writer.print(_constantPool.at(index).valueString(_constantPool));
+            writer.print(constantPool.at(index).valueString(constantPool));
         } catch (ClassFormatError classFormatError) {
-            _writer.print(" ***ERROR***");
+            writer.print(" ***ERROR***");
         }
     }
 
     protected void printKind(Kind kind) {
-        _writer.print(" " + kind);
+        writer.print(" " + kind);
     }
 
     protected void prolog() {
-        if (_instructionPrefix != null && !_instructionPrefix.isEmpty()) {
-            _writer.print(_instructionPrefix);
+        if (instructionPrefix != null && !instructionPrefix.isEmpty()) {
+            writer.print(instructionPrefix);
         }
-        _writer.print(currentOpcodePosition() + ": ");
+        writer.print(currentOpcodePosition() + ": ");
         if (isCurrentOpcodeWidened()) {
-            _writer.print("wide ");
+            writer.print("wide ");
         }
     }
 
     protected void epilog() {
-        if (_printBytes) {
+        if (printBytes) {
             final int endAddress = currentBytePosition();
-            _writer.print(" |");
+            writer.print(" |");
             final byte[] bytes = code();
             for (int i = currentOpcodePosition(); i < endAddress; i++) {
-                _writer.print(" " + (bytes[i] & 0xff));
+                writer.print(" " + (bytes[i] & 0xff));
             }
         }
-        if (_instructionSuffix != null && !_instructionSuffix.isEmpty()) {
-            _writer.print(_instructionSuffix);
+        if (instructionSuffix != null && !instructionSuffix.isEmpty()) {
+            writer.print(instructionSuffix);
         }
     }
 

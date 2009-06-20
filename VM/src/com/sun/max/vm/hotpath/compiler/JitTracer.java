@@ -31,7 +31,7 @@ import com.sun.max.vm.jit.*;
 
 
 public class JitTracer extends Tracer {
-    private static ThreadLocal<JitTracer> _tracers = new ThreadLocal<JitTracer>() {
+    private static ThreadLocal<JitTracer> tracers = new ThreadLocal<JitTracer>() {
         @Override
         protected JitTracer initialValue() {
             return new JitTracer();
@@ -42,7 +42,7 @@ public class JitTracer extends Tracer {
      * @return the {@link JitTracer} object associated with the current thread.
      */
     private static JitTracer current() {
-        return _tracers.get();
+        return tracers.get();
     }
 
     /**

@@ -39,18 +39,18 @@ import com.sun.max.vm.verifier.types.*;
  *          verification_type_info stack[1];
  *      }
  * </pre>
- * 
+ *
  * @author David Liu
  * @author Doug Simon
  */
 public class SameLocalsOneStack extends StackMapFrame {
 
-    private final VerificationType _singleStackItem;
+    private final VerificationType singleStackItem;
 
     public SameLocalsOneStack(int positionDelta, VerificationType singleStackItem) {
         super(positionDelta);
         assert positionDelta >= 0 && positionDelta <= (SAME_LOCALS_1_STACK_ITEM_BOUND - SAME_FRAME_BOUND);
-        _singleStackItem = singleStackItem;
+        this.singleStackItem = singleStackItem;
     }
 
     public SameLocalsOneStack(int frameType, ClassfileStream classfileStream, VerificationRegistry registry) {
@@ -60,14 +60,14 @@ public class SameLocalsOneStack extends StackMapFrame {
     @Override
     public void applyTo(FrameModel frameModel) {
         frameModel.clearStack();
-        frameModel.push(_singleStackItem);
+        frameModel.push(singleStackItem);
     }
 
     @Override
     public void write(DataOutputStream stream, ConstantPoolEditor constantPoolEditor) throws IOException {
         final int frameType = frameType();
         stream.writeByte(frameType);
-        _singleStackItem.write(stream, constantPoolEditor);
+        singleStackItem.write(stream, constantPoolEditor);
     }
 
     @Override
@@ -79,6 +79,6 @@ public class SameLocalsOneStack extends StackMapFrame {
     public String toString() {
         return "frame_type = " + frameType() + " /* same_locals_1_stack_item_frame */\n" +
                "  offset_delta = " + positionDelta() + " /* implicit */\n" +
-               "  stack = [ " + _singleStackItem + " ]";
+               "  stack = [ " + singleStackItem + " ]";
     }
 }

@@ -350,10 +350,10 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
         final ReferenceMap[] verifiedMaps = new ReferenceMap[codeLength];
         if (_classVerifier instanceof TypeCheckingVerifier) {
             new TypeCheckingMethodVerifier(_classVerifier, classMethodActor, codeAttribute) {
-                private final boolean _receiverTypeIsWord = _thisObjectType.typeDescriptor().toKind() == Kind.WORD;
+                private final boolean _receiverTypeIsWord = thisObjectType.typeDescriptor().toKind() == Kind.WORD;
                 @Override
                 public void verify() {
-                    clearNonBlockStartFrames(_frameMap, blockStarts);
+                    clearNonBlockStartFrames(frameMap, blockStarts);
                     super.verify();
                 }
 
@@ -361,15 +361,15 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
                 protected void preInstructionScan() {
                     super.preInstructionScan();
                     final int currentOpcodePosition = currentOpcodePosition();
-                    verifiedMaps[currentOpcodePosition] = new ReferenceMap(_receiverTypeIsWord, codeAttribute().code(), constantPool(), _frame, maxLocals, maxStack);
+                    verifiedMaps[currentOpcodePosition] = new ReferenceMap(_receiverTypeIsWord, codeAttribute().code(), constantPool(), frame, maxLocals, maxStack);
                 }
             }.verify();
         } else {
             new TypeInferencingMethodVerifier(_classVerifier, classMethodActor, codeAttribute) {
-                private final boolean _receiverTypeIsWord = _thisObjectType.typeDescriptor().toKind() == Kind.WORD;
+                private final boolean _receiverTypeIsWord = thisObjectType.typeDescriptor().toKind() == Kind.WORD;
                 @Override
                 public void verify() {
-                    clearNonBlockStartFrames(_frameMap, blockStarts);
+                    clearNonBlockStartFrames(frameMap, blockStarts);
                     super.verify();
                 }
 
@@ -377,7 +377,7 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
                 protected void preInstructionScan() {
                     super.preInstructionScan();
                     final int currentOpcodePosition = currentOpcodePosition();
-                    verifiedMaps[currentOpcodePosition] = new ReferenceMap(_receiverTypeIsWord, codeAttribute().code(), constantPool(), _frame, maxLocals, maxStack);
+                    verifiedMaps[currentOpcodePosition] = new ReferenceMap(_receiverTypeIsWord, codeAttribute().code(), constantPool(), frame, maxLocals, maxStack);
                 }
             }.verify();
         }

@@ -39,67 +39,67 @@ import com.sun.max.vm.type.*;
  */
 public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
 
-    private final Assembler_Type _assembler;
+    private final Assembler_Type assembler;
 
     public Assembler_Type assembler() {
-        return _assembler;
+        return assembler;
     }
 
-    private final EirABI _abi;
+    private final EirABI abi;
 
     public EirABI abi() {
-        return _abi;
+        return abi;
     }
 
-    private final int _frameSize;
+    private final int frameSize;
 
     public int frameSize() {
-        return _frameSize;
+        return frameSize;
     }
 
-    private final WordWidth _stackSlotWidth;
+    private final WordWidth stackSlotWidth;
 
     public WordWidth stackSlotWidth() {
-        return _stackSlotWidth;
+        return stackSlotWidth;
     }
 
     /**
      * Code generator for adapter frame, if any is needed. The generator emits code needed to adapt call from code compiled by other compiler to code
      * produced by the EirTargetEmitter. The frame adapter is embedded in the target method's code. It's code is typically made of an prologue and epilogue.
      */
-    private final AdapterFrameGenerator<Assembler_Type> _adapterFrameGenerator;
+    private final AdapterFrameGenerator<Assembler_Type> adapterFrameGenerator;
 
     public void emitFrameAdapterPrologue() {
-        if (_adapterFrameGenerator != null) {
-            _adapterFrameGenerator.emitPrologue(assembler());
+        if (adapterFrameGenerator != null) {
+            adapterFrameGenerator.emitPrologue(assembler());
         }
     }
 
     public void emitFrameAdapterEpilogue() {
-        if (_adapterFrameGenerator != null) {
-            _adapterFrameGenerator.emitEpilogue(assembler());
+        if (adapterFrameGenerator != null) {
+            adapterFrameGenerator.emitEpilogue(assembler());
         }
     }
 
-    private final Safepoint _safepoint;
+    private final Safepoint safepoint;
 
     protected EirTargetEmitter(Assembler_Type assembler, EirABI abi, int frameSize, Safepoint safepoint, WordWidth stackSlotWidth, AdapterFrameGenerator<Assembler_Type> adapterFrameGenerator) {
-        _assembler = assembler;
-        _abi = abi;
-        _frameSize = frameSize;
-        _safepoint = safepoint;
-        _adapterFrameGenerator = adapterFrameGenerator;
-        _stackSlotWidth = stackSlotWidth;
+        this.assembler = assembler;
+        this.abi = abi;
+        this.frameSize = frameSize;
+        this.safepoint = safepoint;
+        this.adapterFrameGenerator = adapterFrameGenerator;
+        this.stackSlotWidth = stackSlotWidth;
     }
 
-    private EirBlock _currentEirBlock;
+    private EirBlock currentEirBlock;
 
     public EirBlock currentEirBlock() {
-        return _currentEirBlock;
+        return currentEirBlock;
     }
 
     public void setCurrentEirBlock(EirBlock eirBlock) {
-        _currentEirBlock = eirBlock;
+        currentEirBlock = eirBlock;
     }
 
     private final AppendableSequence<Label> _catchRangeLabels = new LinkSequence<Label>();
@@ -108,23 +108,23 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         return _catchRangeLabels;
     }
 
-    private final AppendableIndexedSequence<EirBlock> _catchBlocks = new ArrayListSequence<EirBlock>();
+    private final AppendableIndexedSequence<EirBlock> catchBlocks = new ArrayListSequence<EirBlock>();
 
     public IndexedSequence<EirBlock> catchBlocks() {
-        return _catchBlocks;
+        return catchBlocks;
     }
 
-    private EirBlock _currentCatchBlock = null;
+    private EirBlock currentCatchBlock = null;
 
     public void addCatching(EirBlock catchBlock) {
-        if (catchBlock == _currentCatchBlock) {
+        if (catchBlock == currentCatchBlock) {
             return;
         }
-        _currentCatchBlock = catchBlock;
+        currentCatchBlock = catchBlock;
         final Label label = new Label();
-        _assembler.bindLabel(label);
+        assembler.bindLabel(label);
         _catchRangeLabels.append(label);
-        _catchBlocks.append(catchBlock);
+        catchBlocks.append(catchBlock);
     }
 
     final AppendableSequence<Label> _directCallLabels = new LinkSequence<Label>();
@@ -133,13 +133,13 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         return _directCallLabels;
     }
 
-    private final AppendableSequence<EirCall> _directCalls = new LinkSequence<EirCall>();
+    private final AppendableSequence<EirCall> directCalls = new LinkSequence<EirCall>();
 
     public Sequence<EirCall> directCalls() {
-        return _directCalls;
+        return directCalls;
     }
 
-    private final BitSet _directReferenceCalls = new BitSet();
+    private final BitSet directReferenceCalls = new BitSet();
 
     private TargetLocation[] eirToTargetLocations(EirOperand[] eirOperands) {
         final TargetLocation[] result = new TargetLocation[eirOperands.length];
@@ -169,49 +169,49 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
 
     public void addDirectCall(EirCall call) {
         final Label label = new Label();
-        _assembler.bindLabel(label);
+        assembler.bindLabel(label);
         if (call.result() != null && call.result().eirValue().kind() == Kind.REFERENCE) {
-            _directReferenceCalls.set(_directCalls.length());
+            directReferenceCalls.set(directCalls.length());
         }
         _directCallLabels.append(label);
-        _directCalls.append(call);
+        directCalls.append(call);
     }
 
-    final AppendableSequence<Label> _indirectCallLabels = new LinkSequence<Label>();
+    final AppendableSequence<Label> indirectCallLabels = new LinkSequence<Label>();
 
     public Sequence<Label> indirectCallLabels() {
-        return _indirectCallLabels;
+        return indirectCallLabels;
     }
 
-    final AppendableSequence<EirCall> _indirectCalls = new LinkSequence<EirCall>();
+    final AppendableSequence<EirCall> indirectCalls = new LinkSequence<EirCall>();
 
     public Sequence<EirCall> indirectCalls() {
-        return _indirectCalls;
+        return indirectCalls;
     }
 
-    private final BitSet _indirectReferenceCalls = new BitSet();
+    private final BitSet indirectReferenceCalls = new BitSet();
 
     public void addIndirectCall(EirCall call) {
         final Label label = new Label();
-        _assembler.bindLabel(label);
+        assembler.bindLabel(label);
         if (call.result() != null && call.result().eirValue().kind() == Kind.REFERENCE) {
-            _indirectReferenceCalls.set(_indirectCalls.length());
+            indirectReferenceCalls.set(indirectCalls.length());
         }
-        _indirectCallLabels.append(label);
-        _indirectCalls.append(call);
+        indirectCallLabels.append(label);
+        indirectCalls.append(call);
     }
 
     public final boolean isReferenceCall(int stopIndex) {
-        if (stopIndex < _directCalls.length()) {
-            return _directReferenceCalls.get(stopIndex);
+        if (stopIndex < directCalls.length()) {
+            return directReferenceCalls.get(stopIndex);
         }
-        return _indirectReferenceCalls.get(stopIndex - _directCalls.length());
+        return indirectReferenceCalls.get(stopIndex - directCalls.length());
     }
 
-    private final AppendableSequence<Label> _safepointLabels = new LinkSequence<Label>();
+    private final AppendableSequence<Label> safepointLabels = new LinkSequence<Label>();
 
     public Sequence<Label> safepointLabels() {
-        return _safepointLabels;
+        return safepointLabels;
     }
 
     private final AppendableSequence<EirSafepoint> _safepoints = new LinkSequence<EirSafepoint>();
@@ -220,21 +220,21 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         return _safepoints;
     }
 
-    public void addSafepoint(EirSafepoint safepoint) {
+    public void addSafepoint(EirSafepoint eirSafepoint) {
         final Label label = new Label();
-        _assembler.bindLabel(label);
-        _safepointLabels.append(label);
-        _safepoints.append(safepoint);
+        assembler.bindLabel(label);
+        safepointLabels.append(label);
+        _safepoints.append(eirSafepoint);
     }
 
-    private final AppendableSequence<EirGuardpoint> _guardpoints = new LinkSequence<EirGuardpoint>();
+    private final AppendableSequence<EirGuardpoint> guardpoints = new LinkSequence<EirGuardpoint>();
 
     Sequence<EirGuardpoint> guardpoints() {
-        return _guardpoints;
+        return guardpoints;
     }
 
     public void addGuardpoint(EirGuardpoint guardpoint) {
-        _guardpoints.append(guardpoint);
+        guardpoints.append(guardpoint);
     }
 
     private void appendTargetJavaFrameDescriptors(Iterable<? extends EirStop> stops, AppendableSequence<TargetJavaFrameDescriptor> descriptors) {
@@ -246,11 +246,11 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
     }
 
     private Sequence<TargetJavaFrameDescriptor> getTargetJavaFrameDescriptors() {
-        final AppendableSequence<TargetJavaFrameDescriptor> descriptors = new ArrayListSequence<TargetJavaFrameDescriptor>(_directCalls.length() + _indirectCalls.length() + _safepoints.length() + _guardpoints.length());
-        appendTargetJavaFrameDescriptors(_directCalls, descriptors);
-        appendTargetJavaFrameDescriptors(_indirectCalls, descriptors);
+        final AppendableSequence<TargetJavaFrameDescriptor> descriptors = new ArrayListSequence<TargetJavaFrameDescriptor>(directCalls.length() + indirectCalls.length() + _safepoints.length() + guardpoints.length());
+        appendTargetJavaFrameDescriptors(directCalls, descriptors);
+        appendTargetJavaFrameDescriptors(indirectCalls, descriptors);
         appendTargetJavaFrameDescriptors(_safepoints, descriptors);
-        appendTargetJavaFrameDescriptors(_guardpoints, descriptors);
+        appendTargetJavaFrameDescriptors(guardpoints, descriptors);
         return descriptors;
     }
 
@@ -261,7 +261,7 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
     protected abstract boolean isCall(byte[] code, int offset);
 
     protected boolean isSafepoint(byte[] code, int offset) {
-        return Bytes.equals(code, offset, _safepoint.code());
+        return Bytes.equals(code, offset, safepoint.code());
     }
 
     /**
@@ -269,17 +269,17 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
      */
     private boolean areLabelsValid(byte[] code, Address startAddress) throws AssemblyException {
         for (Label label : _directCallLabels) {
-            if (!_assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isCall(code, label.position())) {
+            if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isCall(code, label.position())) {
                 if (MaxineVM.isPrototyping()) {
-                    Disassemble.disassemble(System.out, code, VMConfiguration.hostOrTarget().platform().processorKind(), startAddress, InlineDataDecoder.createFrom(_inlineDataRecorder), null);
+                    Disassemble.disassemble(System.out, code, VMConfiguration.hostOrTarget().platform().processorKind(), startAddress, InlineDataDecoder.createFrom(inlineDataRecorder), null);
                 }
                 return false;
             }
         }
-        for (Label label : _safepointLabels) {
-            if (!_assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isSafepoint(code, label.position())) {
+        for (Label label : safepointLabels) {
+            if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isSafepoint(code, label.position())) {
                 if (MaxineVM.isPrototyping()) {
-                    Disassemble.disassemble(System.out, code, VMConfiguration.hostOrTarget().platform().processorKind(), startAddress, InlineDataDecoder.createFrom(_inlineDataRecorder), null);
+                    Disassemble.disassemble(System.out, code, VMConfiguration.hostOrTarget().platform().processorKind(), startAddress, InlineDataDecoder.createFrom(inlineDataRecorder), null);
                 }
                 return false;
             }
@@ -287,15 +287,15 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         return true;
     }
 
-    private final InlineDataRecorder _inlineDataRecorder = new InlineDataRecorder();
+    private final InlineDataRecorder inlineDataRecorder = new InlineDataRecorder();
 
     public InlineDataRecorder inlineDataRecorder() {
-        return _inlineDataRecorder;
+        return inlineDataRecorder;
     }
 
     public byte[] toByteArray() throws AssemblyException {
-        final byte[] result = _assembler.toByteArray(_inlineDataRecorder);
-        assert areLabelsValid(result, Address.fromLong(_assembler.baseAddress()));
+        final byte[] result = assembler.toByteArray(inlineDataRecorder);
+        assert areLabelsValid(result, Address.fromLong(assembler.baseAddress()));
         return result;
     }
 
@@ -303,35 +303,35 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
 
     protected abstract void fixLabel(Label label, Address address);
 
-    private Map<StackVariable, Integer> _namedStackVariables;
+    private Map<StackVariable, Integer> namedStackVariables;
 
     /**
      * See {@link StackVariable#create(String)} for an explanation as to why this can only be called while prototyping.
      */
     public void recordStackVariableOffset(StackVariable key, int offset) {
         ProgramError.check(MaxineVM.isPrototyping());
-        if (_namedStackVariables == null) {
-            _namedStackVariables = new HashMap<StackVariable, Integer>();
+        if (namedStackVariables == null) {
+            namedStackVariables = new HashMap<StackVariable, Integer>();
         }
-        final Integer old = _namedStackVariables.put(key, offset);
+        final Integer old = namedStackVariables.put(key, offset);
         assert old == null;
     }
 
     public Iterable<Map.Entry<StackVariable, Integer>> namedStackVariableOffsets() {
-        if (_namedStackVariables == null) {
+        if (namedStackVariables == null) {
             return Iterables.empty();
         }
-        return _namedStackVariables.entrySet();
+        return namedStackVariables.entrySet();
     }
 
 
-    private Label _markerLabel = new Label();
+    private Label markerLabel = new Label();
 
     public Label markerLabel() {
-        return _markerLabel;
+        return markerLabel;
     }
 
     public void setMarker() {
-        _assembler.bindLabel(_markerLabel);
+        assembler.bindLabel(markerLabel);
     }
 }

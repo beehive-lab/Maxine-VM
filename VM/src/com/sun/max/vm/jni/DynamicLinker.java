@@ -57,16 +57,16 @@ public final class DynamicLinker {
     }
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static Word _nativeOpenDynamicLibrary = Word.zero();
+    private static Word nativeOpenDynamicLibrary = Word.zero();
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static Word _dlsym = Word.zero();
+    private static Word dlsym = Word.zero();
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static Word _dlerror = Word.zero();
+    private static Word dlerror = Word.zero();
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static Word _mainHandle = Word.zero();
+    private static Word mainHandle = Word.zero();
 
     /**
      * Initialize the system, "opening" the main program dynamic library.
@@ -75,11 +75,11 @@ public final class DynamicLinker {
      * @param dlsym
      * @param dlerror
     */
-    public static void initialize(Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror) {
-        _nativeOpenDynamicLibrary = nativeOpenDynamicLibrary;
-        _dlsym = dlsym;
-        _dlerror = dlerror;
-        _mainHandle = nativeOpenDynamicLibrary(Address.zero());
+    public static void initialize(Word nativeOpenDynamicLibraryAddress, Word dlsymAddress, Word dlerrorAddress) {
+        nativeOpenDynamicLibrary = nativeOpenDynamicLibraryAddress;
+        dlsym = dlsymAddress;
+        dlerror = dlerrorAddress;
+        mainHandle = nativeOpenDynamicLibrary(Address.zero());
     }
 
     @C_FUNCTION
@@ -99,7 +99,7 @@ public final class DynamicLinker {
     private static Word doLoad(String absolutePath) {
         final Word handle;
         if (absolutePath == null) {
-            handle = _mainHandle;
+            handle = mainHandle;
         } else {
             final Pointer buffer = BootMemory.buffer();
             final int i = CString.writePartialUtf8(absolutePath, 0, buffer, BootMemory.bufferSize());
@@ -150,13 +150,13 @@ public final class DynamicLinker {
         Word h = handle;
         if (h.isZero()) {
             if ("nativeOpenDynamicLibrary".equals(name)) {
-                return _nativeOpenDynamicLibrary;
+                return nativeOpenDynamicLibrary;
             } else if ("dlsym".equals(name)) {
-                return _dlsym;
+                return dlsym;
             } else if ("dlerror".equals(name)) {
-                return _dlerror;
+                return dlerror;
             }
-            h = _mainHandle;
+            h = mainHandle;
             if (MaxineVM.isPrimordialOrPristine()) {
                 // 'synchronized' does not work yet while starting,
                 // but we don't need it in that case, we are still single-threaded.
@@ -191,13 +191,13 @@ public final class DynamicLinker {
     /**
      * The method ClassLoader.findNative(ClassLoader, String) has to be called via reflection as it is not publicly accessible.
      */
-    private static MethodActor _findNativeMethod;
+    private static MethodActor findNativeMethod;
 
     private static MethodActor getFindNativeMethod() {
-        if (_findNativeMethod == null) {
-            _findNativeMethod = ClassActor.fromJava(ClassLoader.class).findLocalStaticMethodActor(SymbolTable.makeSymbol("findNative"), SignatureDescriptor.create(long.class, ClassLoader.class, String.class));
+        if (findNativeMethod == null) {
+            findNativeMethod = ClassActor.fromJava(ClassLoader.class).findLocalStaticMethodActor(SymbolTable.makeSymbol("findNative"), SignatureDescriptor.create(long.class, ClassLoader.class, String.class));
         }
-        return _findNativeMethod;
+        return findNativeMethod;
     }
 
     /**

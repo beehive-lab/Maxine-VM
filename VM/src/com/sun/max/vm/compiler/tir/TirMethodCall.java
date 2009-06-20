@@ -38,7 +38,7 @@ public class TirMethodCall extends TirCall {
 
     @Override
     public String toString() {
-        return "METHOD " + _method.name().toString();
+        return "METHOD " + method.name().toString();
     }
 
     public TirState state() {

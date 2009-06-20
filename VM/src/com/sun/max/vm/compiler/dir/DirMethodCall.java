@@ -27,13 +27,13 @@ import com.sun.max.vm.compiler.dir.transform.*;
  */
 public class DirMethodCall extends DirCall<DirValue> {
 
-    private final DirValue _method;
+    private final DirValue method;
 
     public DirValue method() {
-        return _method;
+        return method;
     }
 
-    private final boolean _isNative;
+    private final boolean isNative;
 
     /**
      * Determines if this is a call to a native function. Note, this does not mean a call to a native method, but the
@@ -41,23 +41,23 @@ public class DirMethodCall extends DirCall<DirValue> {
      * {@link Bytecode#CALLNATIVE} instruction.
      */
     public boolean isNative() {
-        return _isNative;
+        return isNative;
     }
 
     public DirMethodCall(DirVariable result, DirValue method, DirValue[] arguments, DirCatchBlock catchBlock, boolean isNativeCall, DirJavaFrameDescriptor javaFrameDescriptor) {
         super(result, arguments, catchBlock, javaFrameDescriptor);
-        _method = method;
-        _isNative = isNativeCall;
+        this.method = method;
+        this.isNative = isNativeCall;
     }
 
     @Override
     protected DirValue procedure() {
-        return _method;
+        return method;
     }
 
     @Override
     public int hashCodeForBlock() {
-        return super.hashCodeForBlock() ^ _method.hashCodeForBlock();
+        return super.hashCodeForBlock() ^ method.hashCodeForBlock();
     }
 
     @Override

@@ -33,15 +33,15 @@ import com.sun.max.vm.type.*;
 
 /**
  * Internal representations of classes, which have instances that are tuples.
- * 
+ *
  * A "tuple" is an object with fields, as opposed to an array, which has only elements.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class TupleClassActor extends ReferenceClassActor {
 
     @INSPECTED
-    private final ConstantPool _constantPool;
+    private final ConstantPool constantPool;
 
     protected TupleClassActor(Kind kind,
                               ConstantPool constantPool,
@@ -78,13 +78,13 @@ public class TupleClassActor extends ReferenceClassActor {
               innerClasses,
               outerClass,
               enclosingMethodInfo);
-        _constantPool = constantPool;
+        this.constantPool = constantPool;
         constantPool.setHolder(this);
     }
 
     @Override
     public final ConstantPool constantPool() {
-        return _constantPool;
+        return constantPool;
     }
 
     /**

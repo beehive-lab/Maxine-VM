@@ -41,9 +41,9 @@ public final class Heap {
     private Heap() {
     }
 
-    private static final VMSizeOption _maxHeapSizeOption = register(new VMSizeOption("-Xmx", Size.G, "The maximum heap size."), MaxineVM.Phase.PRISTINE);
+    private static final VMSizeOption maxHeapSizeOption = register(new VMSizeOption("-Xmx", Size.G, "The maximum heap size."), MaxineVM.Phase.PRISTINE);
 
-    private static final VMSizeOption _initialHeapSizeOption = register(new InitialHeapSizeOption(), MaxineVM.Phase.PRISTINE);
+    private static final VMSizeOption initialHeapSizeOption = register(new InitialHeapSizeOption(), MaxineVM.Phase.PRISTINE);
 
     static class InitialHeapSizeOption extends VMSizeOption {
         @PROTOTYPE_ONLY
@@ -52,7 +52,7 @@ public final class Heap {
         }
         @Override
         public boolean check() {
-            return !(isPresent() && _maxHeapSizeOption.isPresent() && getValue().greaterThan(_maxHeapSizeOption.getValue()));
+            return !(isPresent() && maxHeapSizeOption.isPresent() && getValue().greaterThan(maxHeapSizeOption.getValue()));
         }
         @Override
         public void printErrorMessage() {
@@ -62,18 +62,18 @@ public final class Heap {
 
     private static final VMBooleanXXOption _disableGCOption = register(new VMBooleanXXOption("-XX:-DisableGC", "Disable garbage collection."), MaxineVM.Phase.PRISTINE);
 
-    private static Size _maxSize;
-    private static Size _initialSize;
+    private static Size maxSize;
+    private static Size initialSize;
 
     public static Size maxSize() {
-        if (_maxSize.isZero()) {
-            _maxSize = maxSizeOption();
+        if (maxSize.isZero()) {
+            maxSize = maxSizeOption();
         }
-        return _maxSize;
+        return maxSize;
     }
 
     public static void setMaxSize(Size size) {
-        _maxSize = size;
+        maxSize = size;
     }
 
     /**
@@ -81,25 +81,25 @@ public final class Heap {
      * @return the size of the maximum heap specified on the command line
      */
     private static Size maxSizeOption() {
-        if (_maxHeapSizeOption.isPresent() || _maxHeapSizeOption.getValue().greaterThan(_initialHeapSizeOption.getValue())) {
-            return _maxHeapSizeOption.getValue();
+        if (maxHeapSizeOption.isPresent() || maxHeapSizeOption.getValue().greaterThan(initialHeapSizeOption.getValue())) {
+            return maxHeapSizeOption.getValue();
         }
-        return _initialHeapSizeOption.getValue();
+        return initialHeapSizeOption.getValue();
     }
 
     public static boolean maxSizeOptionIsPresent() {
-        return _maxHeapSizeOption.isPresent();
+        return maxHeapSizeOption.isPresent();
     }
 
     public static Size initialSize() {
-        if (_initialSize.isZero()) {
-            _initialSize = initialSizeOption();
+        if (initialSize.isZero()) {
+            initialSize = initialSizeOption();
         }
-        return _initialSize;
+        return initialSize;
     }
 
     public static void setInitialSize(Size size) {
-        _initialSize = size;
+        initialSize = size;
     }
 
     /**
@@ -107,14 +107,14 @@ public final class Heap {
      * @return the size of the initial heap specified on the command line
      */
     private static Size initialSizeOption() {
-        if (_initialHeapSizeOption.isPresent() || _initialHeapSizeOption.getValue().lessThan(_maxHeapSizeOption.getValue())) {
-            return _initialHeapSizeOption.getValue();
+        if (initialHeapSizeOption.isPresent() || initialHeapSizeOption.getValue().lessThan(maxHeapSizeOption.getValue())) {
+            return initialHeapSizeOption.getValue();
         }
-        return _maxHeapSizeOption.getValue();
+        return maxHeapSizeOption.getValue();
     }
 
     public static boolean initialSizeOptionIsPresent() {
-        return _initialHeapSizeOption.isPresent();
+        return initialHeapSizeOption.isPresent();
     }
 
     private static final VMOption _verboseOption = register(new VMOption("-verbose:gc", "Report on each garbage collection event."), MaxineVM.Phase.PRISTINE);
@@ -126,7 +126,7 @@ public final class Heap {
         return _verboseOption.isPresent() || Heap.traceGCRootScanning() || Heap.traceGCTime() || Heap.traceGC();
     }
 
-    private static boolean _traceAllocation;
+    private static boolean traceAllocation;
 
     /**
      * Determines if allocation should be traced.
@@ -138,7 +138,7 @@ public final class Heap {
         if (!VMConfiguration.hostOrTarget().debugging()) {
             return false;
         }
-        return _traceAllocation;
+        return traceAllocation;
     }
 
     /**
@@ -147,7 +147,7 @@ public final class Heap {
      * so that error situations can be reported without being confused by interleaving allocation traces.
      */
     public static void setTraceAllocation(boolean flag) {
-        _traceAllocation = flag;
+        traceAllocation = flag;
     }
 
     static {
@@ -155,7 +155,7 @@ public final class Heap {
             register(new VMBooleanXXOption("-XX:-TraceAllocation", "Trace heap allocation.") {
                 @Override
                 public boolean parseValue(Pointer optionValue) {
-                    _traceAllocation = getValue();
+                    traceAllocation = getValue();
                     return true;
                 }
             }, MaxineVM.Phase.STARTING);
@@ -175,7 +175,7 @@ public final class Heap {
      */
     @INLINE
     public static boolean traceGCRootScanning() {
-        return _traceGCRootScanning;
+        return traceGCRootScanning;
     }
 
     /**
@@ -183,24 +183,24 @@ public final class Heap {
      */
     @INLINE
     public static boolean traceGCTime() {
-        return _traceGCTime;
+        return traceGCTime;
     }
 
     private static boolean _traceGC;
-    private static boolean _traceGCRootScanning;
-    private static boolean _traceGCTime;
+    private static boolean traceGCRootScanning;
+    private static boolean traceGCTime;
 
     private static final VMOption _traceGCOption = register(new VMOption("-XX:TraceGC", "Trace garbage collection activity.") {
         @Override
         public boolean parseValue(Pointer optionValue) {
             if (CString.equals(optionValue, "")) {
                 _traceGC = true;
-                _traceGCRootScanning = true;
-                _traceGCTime = true;
+                traceGCRootScanning = true;
+                traceGCTime = true;
             } else if (CString.equals(optionValue, ":RootScanning")) {
-                _traceGCRootScanning = true;
+                traceGCRootScanning = true;
             } else if (CString.equals(optionValue, ":Time")) {
-                _traceGCTime = true;
+                traceGCTime = true;
             } else {
                 return false;
             }
@@ -208,7 +208,7 @@ public final class Heap {
         }
         @Override
         public void printHelp() {
-            VMOptions.printHelpForOption("-XX:TraceGC[:RootScanning|:Time]", "", _help);
+            VMOptions.printHelpForOption("-XX:TraceGC[:RootScanning|:Time]", "", help);
         }
     }, MaxineVM.Phase.STARTING);
 
@@ -371,7 +371,7 @@ public final class Heap {
         return heapScheme().contains(address);
     }
 
-    private static boolean _collecting;
+    private static boolean collecting;
 
     public static boolean collectGarbage(Size requestedFreeSpace) {
         if (verbose()) {

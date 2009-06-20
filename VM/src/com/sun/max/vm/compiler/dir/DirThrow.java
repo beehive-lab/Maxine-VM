@@ -30,33 +30,33 @@ import com.sun.max.vm.compiler.dir.transform.*;
  */
 public class DirThrow extends DirInstruction {
 
-    final DirValue _throwable;
+    final DirValue throwable;
 
     public DirThrow(DirValue throwable) {
-        _throwable = throwable;
+        this.throwable = throwable;
     }
 
     public DirValue throwable() {
-        return _throwable;
+        return throwable;
     }
 
     @Override
     public boolean isEquivalentTo(DirInstruction other, DirBlockEquivalence dirBlockEquivalence) {
         if (other instanceof DirThrow) {
             final DirThrow dirThrow = (DirThrow) other;
-            return _throwable.equals(dirThrow._throwable);
+            return throwable.equals(dirThrow.throwable);
         }
         return false;
     }
 
     @Override
     public int hashCodeForBlock() {
-        return super.hashCodeForBlock() ^ _throwable.hashCodeForBlock();
+        return super.hashCodeForBlock() ^ throwable.hashCodeForBlock();
     }
 
     @Override
     public String toString() {
-        return "throw " + _throwable;
+        return "throw " + throwable;
     }
 
     @Override

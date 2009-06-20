@@ -31,50 +31,50 @@ import com.sun.max.vm.type.*;
  * @author Laurent Daynes
  */
 public abstract class AdapterFrameGenerator<Assembler_Type extends Assembler> {
-    private final MethodActor _classMethodActor;
+    private final MethodActor classMethodActor;
 
     protected final Label _methodEntryPoint = new Label();
-    protected final  Label _adapterStart = new Label();
+    protected final  Label adapterStart = new Label();
 
-    private final Label _adapterReturnPoint = new Label();
+    private final Label adapterReturnPoint = new Label();
 
     public final Label adapterReturnPoint() {
-        return _adapterReturnPoint;
+        return adapterReturnPoint;
     }
 
     public MethodActor classMethodActor() {
-        return _classMethodActor;
+        return classMethodActor;
     }
 
-    private final EirABI _optimizedABI;
+    private final EirABI optimizedABI;
 
     public EirABI optimizedABI() {
-        return _optimizedABI;
+        return optimizedABI;
     }
 
-    private Assembler_Type _assembler;
+    private Assembler_Type assembler;
 
     public Assembler_Type assembler() {
-        return _assembler;
+        return assembler;
     }
 
     private void setAssembler(Assembler_Type assembler) {
-        _assembler = assembler;
+        this.assembler = assembler;
     }
 
     protected AdapterFrameGenerator(MethodActor classMethodActor, EirABI optimizedABI) {
-        _classMethodActor = classMethodActor;
-        _optimizedABI = optimizedABI;
+        this.classMethodActor = classMethodActor;
+        this.optimizedABI = optimizedABI;
     }
 
 
-    protected abstract void emit(Kind[] parametersKinds, EirLocation[] parameterLocations, Label adapterReturnPoint, Label methodEntryPoint);
+    protected abstract void emit(Kind[] parametersKinds, EirLocation[] parameterLocations, Label adapterReturnPt, Label methodEntryPoint);
 
     /**
      * Produces the code that resides at the entry point for the caller.
      */
-    public abstract void emitPrologue(Assembler_Type assembler);
-    public abstract void emitEpilogue(Assembler_Type assembler);
+    public abstract void emitPrologue(Assembler_Type asm);
+    public abstract void emitEpilogue(Assembler_Type asm);
 
     /**
      * Specified the label corresponding to the JIT Entry point.
@@ -99,11 +99,11 @@ public abstract class AdapterFrameGenerator<Assembler_Type extends Assembler> {
     }
 
     // CLEANUP: this is going to be replaced by emitEpilogue
-    public void emitFrameAdapter(Assembler_Type assembler) {
-        setAssembler(assembler);
-        final Kind[] parametersKinds = _classMethodActor.getParameterKinds();
-        final EirLocation[] parameterLocations = _optimizedABI.getParameterLocations(adapterArgumentPurpose(), parametersKinds);
-        assembler().bindLabel(_adapterStart);
-        emit(parametersKinds, parameterLocations, _adapterReturnPoint, _methodEntryPoint);
+    public void emitFrameAdapter(Assembler_Type asm) {
+        setAssembler(asm);
+        final Kind[] parametersKinds = classMethodActor.getParameterKinds();
+        final EirLocation[] parameterLocations = optimizedABI.getParameterLocations(adapterArgumentPurpose(), parametersKinds);
+        assembler().bindLabel(adapterStart);
+        emit(parametersKinds, parameterLocations, adapterReturnPoint, _methodEntryPoint);
     }
 }

@@ -50,7 +50,7 @@ import com.sun.max.vm.value.*;
  */
 public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends MemberActor {
 
-    private final Kind<Value_Type> _kind;
+    private final Kind<Value_Type> kind;
 
     protected FieldActor(Kind<Value_Type> kind,
                     Utf8Constant name,
@@ -59,7 +59,7 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
         super(name,
               descriptor,
               flags);
-        _kind = kind;
+        this.kind = kind;
         assert isInjected() == this instanceof InjectedFieldActor;
     }
 
@@ -98,11 +98,11 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
     }
 
     public Kind<Value_Type> kind() {
-        return _kind;
+        return kind;
     }
 
     public int valueSize() {
-        return _kind.size();
+        return kind.size();
     }
 
     /**
@@ -122,15 +122,15 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
     }
 
     @CONSTANT
-    private int _offset;
+    private int offset;
 
     public void setOffset(int offset) {
-        _offset = offset;
+        this.offset = offset;
     }
 
     @INLINE
     public final int offset() {
-        return _offset;
+        return offset;
     }
 
     public Value_Type readValue(Reference reference) {
@@ -139,11 +139,11 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
             return injectedFieldActor.readInjectedValue(reference);
         }
 
-        return _kind.readValue(reference, _offset);
+        return kind.readValue(reference, offset);
     }
 
     public void writeValue(Object reference, Value value) {
-        _kind.writeErasedValue(reference, _offset, value);
+        kind.writeErasedValue(reference, offset, value);
     }
 
     public static FieldActor fromJava(Field javaField) {

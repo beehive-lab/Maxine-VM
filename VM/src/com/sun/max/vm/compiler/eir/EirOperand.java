@@ -38,24 +38,24 @@ public final class EirOperand implements IrValue {
         void run(EirOperand operand);
     }
 
-    private final EirInstruction _instruction;
+    private final EirInstruction instruction;
 
     public EirInstruction instruction() {
-        return _instruction;
+        return instruction;
     }
 
     public enum Effect {
         DEFINITION, UPDATE, USE;
     }
 
-    private final Effect _effect;
+    private final Effect effect;
 
     public Effect effect() {
-        return _effect;
+        return effect;
     }
 
     public void recordDefinition() {
-        switch (_effect) {
+        switch (effect) {
             case DEFINITION:
             case UPDATE: {
                 _eirValue.recordDefinition(this);
@@ -68,7 +68,7 @@ public final class EirOperand implements IrValue {
     }
 
     public void recordUse() {
-        switch (_effect) {
+        switch (effect) {
             case USE:
             case UPDATE: {
                 _eirValue.recordUse(this);
@@ -80,10 +80,10 @@ public final class EirOperand implements IrValue {
         }
     }
 
-    private PoolSet<EirLocationCategory> _locationCategories;
+    private PoolSet<EirLocationCategory> locationCategories;
 
     public PoolSet<EirLocationCategory> locationCategories() {
-        return _locationCategories;
+        return locationCategories;
     }
 
     private EirValue _eirValue;
@@ -100,42 +100,42 @@ public final class EirOperand implements IrValue {
     }
 
     void setEirValueWithoutUpdate(EirValue eirValue) {
-        assert !eirValue.isLocationFixed() || _locationCategories.contains(eirValue.location().category());
+        assert !eirValue.isLocationFixed() || locationCategories.contains(eirValue.location().category());
         _eirValue = eirValue;
     }
 
     public void setEirValue(EirValue eirValue) {
         clearEirValue();
-        assert !eirValue.isLocationFixed() || _locationCategories.contains(eirValue.location().category());
+        assert !eirValue.isLocationFixed() || locationCategories.contains(eirValue.location().category());
         _eirValue = eirValue;
         eirValue.addOperand(this);
     }
 
-    private int _weight;
+    private int weight;
 
     public int weight() {
-        return _weight;
+        return weight;
     }
 
     public void setWeight(int weight) {
-        _weight = weight;
+        this.weight = weight;
     }
 
     public EirOperand(EirInstruction instruction, Effect effect, PoolSet<EirLocationCategory> locationCategories) {
-        _instruction = instruction;
-        _effect = effect;
-        _locationCategories = locationCategories;
+        this.instruction = instruction;
+        this.effect = effect;
+        this.locationCategories = locationCategories;
     }
 
-    private EirRegister _preferredRegister;
+    private EirRegister preferredRegister;
 
     public EirRegister preferredRegister() {
-        return _preferredRegister;
+        return preferredRegister;
     }
 
     public void setPreferredRegister(EirRegister register) {
-        assert _locationCategories.contains(register.category());
-        _preferredRegister = register;
+        assert locationCategories.contains(register.category());
+        preferredRegister = register;
     }
 
     private EirRegister _requiredRegister;
@@ -145,20 +145,20 @@ public final class EirOperand implements IrValue {
     }
 
     public void setRequiredRegister(EirRegister register) {
-        assert _locationCategories.contains(register.category());
+        assert locationCategories.contains(register.category());
         _requiredRegister = register;
         setPreferredRegister(register);
     }
 
-    private EirLocation _requiredLocation;
+    private EirLocation requiredLocation;
 
     public EirLocation requiredLocation() {
-        return _requiredLocation;
+        return requiredLocation;
     }
 
     public void setRequiredLocation(EirLocation location) {
-        assert _locationCategories.contains(location.category());
-        _requiredLocation = location;
+        assert locationCategories.contains(location.category());
+        requiredLocation = location;
         if (location.asRegister() != null) {
             setRequiredRegister(location.asRegister());
         }
@@ -181,17 +181,17 @@ public final class EirOperand implements IrValue {
     }
 
     public void cleanup() {
-        _locationCategories = null;
+        locationCategories = null;
         _eirValue.cleanup();
     }
 
     @Override
     public String toString() {
         if (_eirValue == null) {
-            if (_effect == null) {
+            if (effect == null) {
                 return null;
             }
-            return _effect.name();
+            return effect.name();
         }
         return _eirValue.toString();
     }

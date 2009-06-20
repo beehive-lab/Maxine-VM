@@ -73,14 +73,14 @@ public interface FieldRefConstant extends PoolConstant<FieldRefConstant>, Member
     public static final class Resolved extends AbstractPoolConstant<FieldRefConstant> implements FieldRefConstant, FieldRefKey {
 
         @INSPECTED
-        private final FieldActor _fieldActor;
+        private final FieldActor fieldActor;
 
         public FieldActor fieldActor() {
-            return _fieldActor;
+            return fieldActor;
         }
 
         public Resolved(FieldActor fieldActor) {
-            _fieldActor = fieldActor;
+            this.fieldActor = fieldActor;
         }
 
         @Override
@@ -97,19 +97,19 @@ public interface FieldRefConstant extends PoolConstant<FieldRefConstant>, Member
         }
 
         public FieldActor resolve(ConstantPool pool, int index) {
-            return _fieldActor;
+            return fieldActor;
         }
 
         public TypeDescriptor holder() {
-            return _fieldActor.holder().typeDescriptor();
+            return fieldActor.holder().typeDescriptor();
         }
 
         public Utf8Constant name() {
-            return _fieldActor.name();
+            return fieldActor.name();
         }
 
         public TypeDescriptor type() {
-            return _fieldActor.descriptor();
+            return fieldActor.descriptor();
         }
 
         public Utf8Constant name(ConstantPool pool) {
@@ -144,7 +144,7 @@ public interface FieldRefConstant extends PoolConstant<FieldRefConstant>, Member
         }
 
         public String valueString(ConstantPool pool) {
-            return _fieldActor.format("%H.%n:%t");
+            return fieldActor.format("%H.%n:%t");
         }
     }
 

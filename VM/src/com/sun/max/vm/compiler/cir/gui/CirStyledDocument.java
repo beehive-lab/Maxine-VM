@@ -30,22 +30,22 @@ import com.sun.max.vm.compiler.cir.*;
 
 /**
  * A styled document derived from an annotated CIR trace.
- * 
+ *
  * @author Doug Simon
  * @author Sumeet Panchal
  */
 class CirStyledDocument extends DefaultStyledDocument {
 
-    public int _collapsedOffset;
-    public CirAnnotatedTrace.ParenthesisElement _collapsedDual;
-    public CirAnnotatedTrace _cirAnnotatedTrace;
-    public IntHashMap<CirAnnotatedTrace.Element> _offsetToElement = new IntHashMap<CirAnnotatedTrace.Element>();
-    public Bag<CirNode, CirAnnotatedTrace.Element, Sequence<CirAnnotatedTrace.Element>> _elementsPerNode = new SequenceBag<CirNode, CirAnnotatedTrace.Element>(IDENTITY);
+    public int collapsedOffset;
+    public CirAnnotatedTrace.ParenthesisElement collapsedDual;
+    public CirAnnotatedTrace cirAnnotatedTrace;
+    public IntHashMap<CirAnnotatedTrace.Element> offsetToElement = new IntHashMap<CirAnnotatedTrace.Element>();
+    public Bag<CirNode, CirAnnotatedTrace.Element, Sequence<CirAnnotatedTrace.Element>> elementsPerNode = new SequenceBag<CirNode, CirAnnotatedTrace.Element>(IDENTITY);
 
     public CirStyledDocument(CirAnnotatedTrace cirAnnotatedTrace) {
-        _collapsedOffset = -1;
-        _collapsedDual = null;
-        _cirAnnotatedTrace = cirAnnotatedTrace;
+        this.collapsedOffset = -1;
+        this.collapsedDual = null;
+        this.cirAnnotatedTrace = cirAnnotatedTrace;
         if (cirAnnotatedTrace == null) {
             try {
                 insertString(0, "NO VISUALIZATION AVAILABLE", null);
@@ -57,12 +57,12 @@ class CirStyledDocument extends DefaultStyledDocument {
         for (final CirAnnotatedTrace.Element element : cirAnnotatedTrace) {
             final CirNode node = element.node();
             if (node != null) {
-                _elementsPerNode.add(node, element);
+                elementsPerNode.add(node, element);
             }
             element.visitRanges(new RangeVisitor() {
                 public void visitRange(Range range) {
                     for (int i = range.start(); i != range.end(); ++i) {
-                        _offsetToElement.put(i, element);
+                        offsetToElement.put(i, element);
                     }
                 }
             });
@@ -70,14 +70,14 @@ class CirStyledDocument extends DefaultStyledDocument {
     }
 
     public CirAnnotatedTrace.Element elementAt(int offset) {
-        return _offsetToElement.get(offset);
+        return offsetToElement.get(offset);
     }
 
     public Sequence<CirAnnotatedTrace.Element> occurrences(CirAnnotatedTrace.Element element) {
         if (element.node() == null) {
             return new ArraySequence<CirAnnotatedTrace.Element>(element);
         }
-        final Sequence<CirAnnotatedTrace.Element> occurrences = _elementsPerNode.get(element.node());
+        final Sequence<CirAnnotatedTrace.Element> occurrences = elementsPerNode.get(element.node());
         return occurrences;
     }
 }

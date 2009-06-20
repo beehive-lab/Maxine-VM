@@ -28,17 +28,17 @@ import com.sun.max.vm.type.*;
 
 
 public class CallNative extends JavaOperator {
-    private final SignatureDescriptor _signatureDescriptor;
-    private final MethodActor _classMethodActor;
+    private final SignatureDescriptor signatureDescriptor;
+    private final MethodActor classMethodActor;
 
     public CallNative(ConstantPool constantPool, int nativeFunctionDescriptorIndex, MethodActor classMethodActor) {
         super(CALL);
-        _signatureDescriptor = SignatureDescriptor.create(constantPool.utf8At(nativeFunctionDescriptorIndex, "native function descriptor"));
-        _classMethodActor = classMethodActor;
+        this.signatureDescriptor = SignatureDescriptor.create(constantPool.utf8At(nativeFunctionDescriptorIndex, "native function descriptor"));
+        this.classMethodActor = classMethodActor;
     }
 
     public Kind resultKind() {
-        return _signatureDescriptor.resultKind();
+        return signatureDescriptor.resultKind();
     }
 
     @Override
@@ -52,20 +52,20 @@ public class CallNative extends JavaOperator {
     }
 
     public SignatureDescriptor signatureDescriptor() {
-        return _signatureDescriptor;
+        return signatureDescriptor;
     }
 
     public MethodActor classMethodActor() {
-        return _classMethodActor;
+        return classMethodActor;
     }
 
     @Override
     public Kind[] parameterKinds() {
-        return _signatureDescriptor.copyParameterKinds(null, 0);
+        return signatureDescriptor.copyParameterKinds(null, 0);
     }
 
     @Override
     public String toString() {
-        return "CallNative:" + _classMethodActor.name();
+        return "CallNative:" + classMethodActor.name();
     }
 }

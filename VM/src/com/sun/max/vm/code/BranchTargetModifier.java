@@ -29,15 +29,15 @@ import com.sun.max.lang.*;
  * @author Laurent Daynes
  */
 public class BranchTargetModifier extends InstructionModifier {
-    final WordWidth _displacementWidth;
+    final WordWidth displacementWidth;
 
     public BranchTargetModifier(int position, int length, WordWidth displacementWidth) {
         super(position, length);
-        _displacementWidth = displacementWidth;
+        this.displacementWidth = displacementWidth;
     }
 
     public void fix(byte[] codeRegion, int offsetToCode, int dispToBranchTarget) throws AssemblyException {
         final AssemblyInstructionEditor editor =  createAssemblyInstructionEditor(codeRegion, offsetToCode + startPosition(), size());
-        editor.fixBranchRelativeDisplacement(_displacementWidth, dispToBranchTarget);
+        editor.fixBranchRelativeDisplacement(displacementWidth, dispToBranchTarget);
     }
 }

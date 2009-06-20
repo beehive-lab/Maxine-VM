@@ -25,9 +25,9 @@ import com.sun.max.unsafe.*;
 
 /**
  * Memoization of function results with adaptive caching.
- * 
+ *
  * Typically used to implement infrequent functional attributes.
- * 
+ *
  * @author Bernd Mathiske
  */
 public final class Memoizer {
@@ -38,17 +38,17 @@ public final class Memoizer {
 
         public static final class Result<Value_Type> {
 
-            private Value_Type _value;
+            private final Value_Type value;
 
             public Value_Type value() {
-                return _value;
+                return value;
             }
 
-            private Size _size;
+            private final Size size;
 
             public Result(Value_Type value, Size size) {
-                _value = value;
-                _size = size;
+                this.value = value;
+                this.size = size;
             }
         }
 
@@ -61,40 +61,40 @@ public final class Memoizer {
 
     private static final class FunctionResultCache<Key_Type, Value_Type> implements Mapping<Key_Type, Value_Type> {
 
-        private final Function<Key_Type, Value_Type> _function;
+        private final Function<Key_Type, Value_Type> function;
 
         private FunctionResultCache(Function<Key_Type, Value_Type> function) {
-            _function = function;
+            this.function = function;
         }
 
-        private final Cache<Key_Type, Value_Type> _cache = Cache.createIdentityCache();
+        private final Cache<Key_Type, Value_Type> cache = Cache.createIdentityCache();
 
         public boolean containsKey(Key_Type key) {
             return true;
         }
 
         public Value_Type get(Key_Type key) {
-            Value_Type value = _cache.get(key);
+            Value_Type value = cache.get(key);
             if (value == null) {
                 final long milliSecondsBefore = System.currentTimeMillis();
-                final Function.Result<Value_Type> result = _function.create(key);
+                final Function.Result<Value_Type> result = function.create(key);
                 final long costInMilliSeconds = System.currentTimeMillis() - milliSecondsBefore;
-                value = result._value;
-                _cache.put(key, value, result._size, Size.fromLong(costInMilliSeconds));
+                value = result.value;
+                cache.put(key, value, result.size, Size.fromLong(costInMilliSeconds));
             }
             return value;
         }
 
         public int length() {
-            return _cache.length();
+            return cache.length();
         }
 
         public IterableWithLength<Key_Type> keys() {
-            return _cache.keys();
+            return cache.keys();
         }
 
         public IterableWithLength<Value_Type> values() {
-            return _cache.values();
+            return cache.values();
         }
     }
 }

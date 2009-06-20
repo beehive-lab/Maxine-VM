@@ -28,19 +28,19 @@ import com.sun.max.vm.compiler.dir.transform.*;
  */
 public class DirJump extends DirInstruction {
 
-    private final DirVariable _parameter;
+    private final DirVariable parameter;
 
     public DirVariable parameter() {
-        return _parameter;
+        return parameter;
     }
 
     public DirJump(DirVariable parameter) {
-        _parameter = parameter;
+        this.parameter = parameter;
     }
 
     @Override
     public String toString() {
-        return "jump(" + _parameter + ")";
+        return "jump(" + parameter + ")";
     }
 
     @Override
@@ -52,7 +52,7 @@ public class DirJump extends DirInstruction {
     public boolean isEquivalentTo(DirInstruction other, DirBlockEquivalence dirBlockEquivalence) {
         if (other instanceof DirJump) {
             final DirJump dirJump = (DirJump) other;
-            return _parameter == dirJump._parameter;
+            return parameter == dirJump.parameter;
         }
         return false;
     }

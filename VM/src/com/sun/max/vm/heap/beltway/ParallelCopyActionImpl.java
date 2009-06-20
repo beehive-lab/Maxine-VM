@@ -34,7 +34,7 @@ import com.sun.max.vm.thread.*;
  */
 public class ParallelCopyActionImpl implements Action {
 
-    private static Verify _verifyAction = new VerifyActionImpl();
+    private static Verify verifyAction = new VerifyActionImpl();
 
     public Grip doAction(Grip origin, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         final Pointer fromOrigin = origin.toOrigin();
@@ -45,7 +45,7 @@ public class ParallelCopyActionImpl implements Action {
                 FatalError.unexpected("invalid grip");
             }
 
-            _verifyAction.checkGripTag(origin);
+            verifyAction.checkGripTag(origin);
         }
         if (from.contains(fromOrigin)) {
             final Grip forwardGrip = Layout.readForwardGrip(fromOrigin);

@@ -40,59 +40,59 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 public class TirInterpreter extends IrInterpreter<TirTree> {
-    private VariableMapping<TirInstruction, Value> _contextValues = new IdentityHashMapping<TirInstruction, Value>();
-    private VariableMapping<TirInstruction, Value> _invariantValues = new IdentityHashMapping<TirInstruction, Value>();
+    private VariableMapping<TirInstruction, Value> contextValues = new IdentityHashMapping<TirInstruction, Value>();
+    private VariableMapping<TirInstruction, Value> invariantValues = new IdentityHashMapping<TirInstruction, Value>();
     private VariableMapping<TirInstruction, Value> _variantValues = new IdentityHashMapping<TirInstruction, Value>();
-    private VariableMapping<TirTreeCall, BirState> _callResults = new IdentityHashMapping<TirTreeCall, BirState>();
+    private VariableMapping<TirTreeCall, BirState> callResults = new IdentityHashMapping<TirTreeCall, BirState>();
 
-    private static ClassMethodActor _createTupleOrHybridMethodActor = ClassMethodActor.findStatic(CreateTupleOrHybrid.class, "createTupleOrHybrid");
+    private static ClassMethodActor createTupleOrHybridMethodActor = ClassMethodActor.findStatic(CreateTupleOrHybrid.class, "createTupleOrHybrid");
 
-    private Evaluator _evaluator = new Evaluator();
-    private BirState _executionState;
-    private TirTree _tree;
-    private TirTrace _targetTrace;
-    private TirGuard _exitGuard;
+    private Evaluator evaluator = new Evaluator();
+    private BirState executionState;
+    private TirTree tree;
+    private TirTrace targetTrace;
+    private TirGuard exitGuard;
 
-    private boolean _hasBailedOut;
-    private boolean _isInvariant;
-    private boolean _needsToJump;
+    private boolean hasBailedOut;
+    private boolean isInvariant;
+    private boolean needsToJump;
 
     private boolean needsToJump() {
-        return _needsToJump;
+        return needsToJump;
     }
 
     private TirTrace resetJump() {
-        _needsToJump = false;
-        return _targetTrace;
+        needsToJump = false;
+        return targetTrace;
     }
 
     private void jump(TirTrace trace) {
-        _needsToJump = true;
-        _targetTrace = trace;
+        needsToJump = true;
+        targetTrace = trace;
     }
 
-    public TirGuard execute(TirTree tree, BirState state) {
-        assert tree.entryState().matchesSliceOf(state) : "Incompatible states.";
+    public TirGuard execute(TirTree tirTree, BirState state) {
+        assert tirTree.entryState().matchesSliceOf(state) : "Incompatible states.";
 
-        _tree = tree;
-        _executionState = state;
-        _isInvariant = true;
+        this.tree = tirTree;
+        executionState = state;
+        isInvariant = true;
 
-        for (TirLocal local : tree.locals()) {
+        for (TirLocal local : tirTree.locals()) {
             if (local.flags().isRead()) {
-                define(local, _executionState.getSlot(local.slot()));
+                define(local, executionState.getSlot(local.slot()));
             }
         }
 
-        for (TirInstruction instruction : tree.prologue()) {
-            instruction.accept(_evaluator);
+        for (TirInstruction instruction : tirTree.prologue()) {
+            instruction.accept(evaluator);
         }
 
-        _isInvariant = false;
-        while (_hasBailedOut == false) {
-            execute(tree.traces().first());
+        isInvariant = false;
+        while (hasBailedOut == false) {
+            execute(tirTree.traces().first());
         }
-        return _exitGuard;
+        return exitGuard;
     }
 
 
@@ -101,16 +101,16 @@ public class TirInterpreter extends IrInterpreter<TirTree> {
             final TirConstant constant = (TirConstant) instruction;
             return constant.value();
         } else if (instruction instanceof TirLocal) {
-            ProgramError.check(_contextValues.get(instruction) != null);
-            return _contextValues.get(instruction);
+            ProgramError.check(contextValues.get(instruction) != null);
+            return contextValues.get(instruction);
         } else if (instruction instanceof TirNestedLocal) {
             final TirNestedLocal local = (TirNestedLocal) instruction;
-            final BirState state = _callResults.get(local.call());
+            final BirState state = callResults.get(local.call());
             return state.getOne(local.slot());
         }
         Value value = _variantValues.get(instruction);
         if (value == null) {
-            value = _invariantValues.get(instruction);
+            value = invariantValues.get(instruction);
         }
         return value;
     }
@@ -124,16 +124,16 @@ public class TirInterpreter extends IrInterpreter<TirTree> {
     }
 
     private void define(TirTreeCall call, BirState state) {
-        _callResults.put(call, state);
+        callResults.put(call, state);
     }
 
     private void define(TirLocal context, Value value) {
-        _contextValues.put(context, value);
+        contextValues.put(context, value);
     }
 
     private void define(TirInstruction instruction, Value value) {
-        if (_isInvariant) {
-            _invariantValues.put(instruction, value);
+        if (isInvariant) {
+            invariantValues.put(instruction, value);
         } else {
             _variantValues.put(instruction, value);
         }
@@ -142,8 +142,8 @@ public class TirInterpreter extends IrInterpreter<TirTree> {
     private void execute(TirTrace trace) {
         for (TirInstruction instruction : trace.instructions()) {
             try {
-                _tree.profile()._executions++;
-                instruction.accept(_evaluator);
+                tree.profile().executions++;
+                instruction.accept(evaluator);
                 if (needsToJump()) {
                     final TirTrace target = resetJump();
                     if (target == null) {
@@ -154,7 +154,7 @@ public class TirInterpreter extends IrInterpreter<TirTree> {
                     return;
                 }
             } catch (Throwable e) {
-                Console.println(Color.RED, "Exception At: " + NameMap.nameOf(_tree, instruction) + " " + e.toString());
+                Console.println(Color.RED, "Exception At: " + NameMap.nameOf(tree, instruction) + " " + e.toString());
                 ProgramError.unexpected(e);
                 return;
             }
@@ -163,9 +163,9 @@ public class TirInterpreter extends IrInterpreter<TirTree> {
     }
 
     private void loop(TirTrace trace) {
-        assert trace.tailState().matches(_tree.entryState());
+        assert trace.tailState().matches(tree.entryState());
         final VariableMapping<TirInstruction, Value> newContext = new IdentityHashMapping<TirInstruction, Value>();
-        trace.tailState().compare(_tree.entryState(), new StatePairVisitor<TirInstruction, TirInstruction>() {
+        trace.tailState().compare(tree.entryState(), new StatePairVisitor<TirInstruction, TirInstruction>() {
             @Override
             public void visit(TirInstruction tail, TirInstruction entry) {
                 final TirLocal local = (TirLocal) entry;
@@ -175,19 +175,19 @@ public class TirInterpreter extends IrInterpreter<TirTree> {
                 }
             }
         });
-        _contextValues = newContext;
+        contextValues = newContext;
         _variantValues.clear();
-        _tree.profile()._iterations++;
+        tree.profile().iterations++;
     }
 
     private void bailout(TirGuard guard) {
-        _hasBailedOut = true;
-        restore(guard.state(), _executionState);
-        _exitGuard = guard;
+        hasBailedOut = true;
+        restore(guard.state(), executionState);
+        exitGuard = guard;
     }
 
-    private void restore(TirState state, final BirState executionState) {
-        state.compare(_tree.entryState(), new StatePairVisitor<TirInstruction, TirInstruction>() {
+    private void restore(TirState state, final BirState exeState) {
+        state.compare(tree.entryState(), new StatePairVisitor<TirInstruction, TirInstruction>() {
             @Override
             public void visit(TirInstruction exit, TirInstruction entry) {
                 if (entry instanceof TirLocal) {
@@ -197,11 +197,11 @@ public class TirInterpreter extends IrInterpreter<TirTree> {
                     }
                 }
                 if (exit instanceof Placeholder == false) {
-                    executionState.store(_index, evaluate(exit));
+                    exeState.store(index, evaluate(exit));
                 }
             }
         });
-        executionState.append(state.frames());
+        exeState.append(state.frames());
     }
 
     public class Evaluator extends TirInstructionAdapter {
@@ -246,7 +246,7 @@ public class TirInterpreter extends IrInterpreter<TirTree> {
             final Value[] arguments = evaluateMany(call.operands());
             final Value result;
             try {
-                if (call.method() == _createTupleOrHybridMethodActor) {
+                if (call.method() == createTupleOrHybridMethodActor) {
                     final ClassActor classActor = (ClassActor) arguments[0].asObject();
                     result = ObjectReferenceValue.from(Objects.allocateInstance(classActor.toJava()));
                 } else {
@@ -264,16 +264,16 @@ public class TirInterpreter extends IrInterpreter<TirTree> {
         @Override
         public void visit(TirTreeCall call) {
             final TirInterpreter interpreter = new TirInterpreter();
-            BirState executionState = _executionState.copy();
-            restore(call.state(), executionState);
-            executionState = executionState.slice(1);
-            interpreter.execute(call.tree(), executionState);
-            define(call, executionState);
+            BirState executionStateCopy = TirInterpreter.this.executionState.copy();
+            restore(call.state(), executionStateCopy);
+            executionStateCopy = executionStateCopy.slice(1);
+            interpreter.execute(call.tree(), executionStateCopy);
+            define(call, executionStateCopy);
         }
 
         @Override
         public void visit(TirNestedLocal local) {
-            define(local, _executionState.getSlot(local.slot()));
+            define(local, executionState.getSlot(local.slot()));
         }
     }
 

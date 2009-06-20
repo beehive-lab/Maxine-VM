@@ -33,54 +33,54 @@ import com.sun.max.vm.compiler.cir.transform.*;
  */
 public class CirOptimizer {
 
-    private final CirGenerator _cirGenerator;
-    private final CirMethod _cirMethod;
-    private final CirNode _node;
-    private final CirInliningPolicy _inliningPolicy;
+    private final CirGenerator cirGenerator;
+    private final CirMethod cirMethod;
+    private final CirNode node;
+    private final CirInliningPolicy inliningPolicy;
 
     public CirGenerator cirGenerator() {
-        return _cirGenerator;
+        return cirGenerator;
     }
 
     public CirNode node() {
-        return _node;
+        return node;
     }
 
     private static final boolean OBSERVE_COMPLETE_IR = true;
 
-    public void notifyBeforeTransformation(CirNode node, Transformation transformation) {
-        _cirGenerator.notifyBeforeTransformation(_cirMethod, OBSERVE_COMPLETE_IR ? _node : node, transformation);
+    public void notifyBeforeTransformation(CirNode n, Transformation transformation) {
+        cirGenerator.notifyBeforeTransformation(cirMethod, OBSERVE_COMPLETE_IR ? node : n, transformation);
     }
 
-    public void notifyAfterTransformation(CirNode node, Transformation transformation) {
-        _cirGenerator.notifyAfterTransformation(_cirMethod, OBSERVE_COMPLETE_IR ? _node : node, transformation);
+    public void notifyAfterTransformation(CirNode n, Transformation transformation) {
+        cirGenerator.notifyAfterTransformation(cirMethod, OBSERVE_COMPLETE_IR ? node : n, transformation);
     }
 
-    public void notifyBeforeTransformation(CirNode node, TransformationType transformationType) {
-        _cirGenerator.notifyBeforeTransformation(_cirMethod, OBSERVE_COMPLETE_IR ? _node : node, transformationType);
+    public void notifyBeforeTransformation(CirNode n, TransformationType transformationType) {
+        cirGenerator.notifyBeforeTransformation(cirMethod, OBSERVE_COMPLETE_IR ? node : n, transformationType);
     }
 
-    public void notifyAfterTransformation(CirNode node, TransformationType transformationType) {
-        _cirGenerator.notifyAfterTransformation(_cirMethod, OBSERVE_COMPLETE_IR ? _node : node, transformationType);
+    public void notifyAfterTransformation(CirNode n, TransformationType transformationType) {
+        cirGenerator.notifyAfterTransformation(cirMethod, OBSERVE_COMPLETE_IR ? node : n, transformationType);
     }
 
     public CirInliningPolicy inliningPolicy() {
-        return _inliningPolicy;
+        return inliningPolicy;
     }
 
     public CirMethod cirMethod() {
-        return _cirMethod;
+        return cirMethod;
     }
 
     public ClassMethodActor classMethodActor() {
-        return _cirMethod.classMethodActor();
+        return cirMethod.classMethodActor();
     }
 
     public CirOptimizer(CirGenerator cirGenerator, CirMethod cirMethod, CirNode node, CirInliningPolicy inliningPolicy) {
-        _cirGenerator = cirGenerator;
-        _node = node;
-        _inliningPolicy = inliningPolicy;
-        _cirMethod = cirMethod;
+        this.cirGenerator = cirGenerator;
+        this.node = node;
+        this.inliningPolicy = inliningPolicy;
+        this.cirMethod = cirMethod;
     }
 
     public static void apply(CirGenerator cirGenerator, CirMethod cirMethod, CirNode node, CirInliningPolicy inliningPolicy) {

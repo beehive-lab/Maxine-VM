@@ -77,39 +77,39 @@ public enum MemoryBarrier implements PoolObject {
     private static void barMemory(PoolSet<MemoryBarrier> relations) {
     }
 
-    private static final PoolSet<MemoryBarrier> _loadLoad = PoolSet.of(VALUE_POOL, MemoryBarrier.LOAD_LOAD);
+    private static final PoolSet<MemoryBarrier> loadLoad = PoolSet.of(VALUE_POOL, MemoryBarrier.LOAD_LOAD);
 
     @INLINE
     public static void loadLoad() {
-        barMemory(_loadLoad);
+        barMemory(loadLoad);
     }
 
-    private static final PoolSet<MemoryBarrier> _loadStore = PoolSet.of(VALUE_POOL, MemoryBarrier.LOAD_STORE);
+    private static final PoolSet<MemoryBarrier> loadStore = PoolSet.of(VALUE_POOL, MemoryBarrier.LOAD_STORE);
 
     @INLINE
     public static void loadStore() {
-        barMemory(_loadStore);
+        barMemory(loadStore);
     }
 
-    private static final PoolSet<MemoryBarrier> _storeLoad = PoolSet.of(VALUE_POOL, MemoryBarrier.STORE_LOAD);
+    private static final PoolSet<MemoryBarrier> storeLoad = PoolSet.of(VALUE_POOL, MemoryBarrier.STORE_LOAD);
 
     @INLINE
     public static void storeLoad() {
-        barMemory(_storeLoad);
+        barMemory(storeLoad);
     }
 
-    private static final PoolSet<MemoryBarrier> _storeStore = PoolSet.of(VALUE_POOL, MemoryBarrier.STORE_STORE);
+    private static final PoolSet<MemoryBarrier> storeStore = PoolSet.of(VALUE_POOL, MemoryBarrier.STORE_STORE);
 
     @INLINE
     public static void storeStore() {
-        barMemory(_storeStore);
+        barMemory(storeStore);
     }
 
-    private static final PoolSet<MemoryBarrier> _all = PoolSet.allOf(VALUE_POOL);
+    private static final PoolSet<MemoryBarrier> all = PoolSet.allOf(VALUE_POOL);
 
     @INLINE
     public static void all() {
-        barMemory(_all);
+        barMemory(all);
     }
 
 }

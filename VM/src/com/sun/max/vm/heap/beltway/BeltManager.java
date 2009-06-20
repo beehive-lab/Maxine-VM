@@ -43,9 +43,9 @@ public final class BeltManager {
     // The beltSize, currently static, but it will change in Appel style GCs
     private static Size _beltSize;
 
-    private static Belt _applicationHeap = new Belt();
+    private static Belt applicationHeap = new Belt();
 
-    private static Belt _tempBelt = new Belt();
+    private static Belt tempBelt = new Belt();
 
     public BeltManager() {
     }
@@ -84,7 +84,7 @@ public final class BeltManager {
         _belts.get(0).setIndex(0);
         _belts.get(0).setFramePercentageOfUsableMemory(BeltwayConfiguration.getPercentOfUsableMemoryPerBelt(0));
         _belts.get(0).resetAllocationMark();
-        _tempBelt.resetAllocationMark();
+        tempBelt.resetAllocationMark();
     }
 
 
@@ -164,10 +164,10 @@ public final class BeltManager {
 
     @INLINE
     public Belt getRemainingOverlappingBelt(Belt from) {
-        _tempBelt.setStart(from.getPrevAllocationMark());
-        _tempBelt.setEnd(from.end());
-        _tempBelt.setAllocationMark(from.getAllocationMark());
-        return _tempBelt;
+        tempBelt.setStart(from.getPrevAllocationMark());
+        tempBelt.setEnd(from.end());
+        tempBelt.setAllocationMark(from.getAllocationMark());
+        return tempBelt;
     }
 
     @INLINE
@@ -177,9 +177,9 @@ public final class BeltManager {
 
     @INLINE
     public static Belt getApplicationHeap() {
-        _applicationHeap.setStart(BeltwayConfiguration.getApplicationHeapStartAddress());
-        _applicationHeap.setEnd(BeltwayConfiguration.getApplicationHeapEndAddress());
-        return _applicationHeap;
+        applicationHeap.setStart(BeltwayConfiguration.getApplicationHeapStartAddress());
+        applicationHeap.setEnd(BeltwayConfiguration.getApplicationHeapEndAddress());
+        return applicationHeap;
     }
 
 

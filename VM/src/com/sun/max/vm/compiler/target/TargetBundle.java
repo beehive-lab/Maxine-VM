@@ -40,8 +40,8 @@ import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
  */
 public class TargetBundle {
 
-    private final TargetBundleLayout _layout;
-    private final Pointer _start;
+    private final TargetBundleLayout layout;
+    private final Pointer start;
 
     /**
      * Creates an object for low-level addressing of the arrays in a target bundle associated with a given target
@@ -51,12 +51,12 @@ public class TargetBundle {
      * @param start the start address of the target bundle
      */
     public TargetBundle(TargetBundleLayout layout, Address start) {
-        _layout = layout;
-        _start = start.asPointer();
+        this.layout = layout;
+        this.start = start.asPointer();
     }
 
     public TargetBundleLayout layout() {
-        return _layout;
+        return layout;
     }
 
     /**
@@ -67,7 +67,7 @@ public class TargetBundle {
      * @throws IllegalArgumentException if no cell has been allocated for {@code field} in this target bundle
      */
     public Pointer cell(ArrayField field) {
-        return _start.plus(_layout.cellOffset(field));
+        return start.plus(layout.cellOffset(field));
     }
 
     /**
@@ -78,7 +78,7 @@ public class TargetBundle {
      * @throws IllegalArgumentException if no cell has been allocated for {@code field} in this target bundle
      */
     public Pointer cellEnd(ArrayField field) {
-        return _start.plus(_layout.cellEndOffset(field));
+        return start.plus(layout.cellEndOffset(field));
     }
 
     /**
@@ -89,12 +89,12 @@ public class TargetBundle {
      * @throws IllegalArgumentException if no cell has been allocated for {@code field} in this target bundle
      */
     public Pointer firstElementPointer(ArrayField field) {
-        return _start.plus(_layout.firstElementOffset(field));
+        return start.plus(layout.firstElementOffset(field));
     }
 
     @Override
     public String toString() {
-        return String.format("address=%s%n%s", _start.toString(), _layout);
+        return String.format("address=%s%n%s", start.toString(), layout);
     }
 
     /**

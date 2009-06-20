@@ -41,7 +41,7 @@ import com.sun.max.vm.thread.*;
  */
 public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
 
-    private static Safepoint.Procedure _suspendProcedure = new Safepoint.Procedure() {
+    private static Safepoint.Procedure suspendProcedure = new Safepoint.Procedure() {
         public void run(Pointer trapState) {
             // note that this procedure always runs with safepoints disabled
             final Pointer vmThreadLocals = Safepoint.getLatchRegister();
@@ -60,11 +60,11 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
         }
     };
 
-    private Runnable _procedure = null;
+    private Runnable procedure = null;
 
     public BeltwayStopTheWorldDaemon(String name, Runnable procedure) {
         super(name);
-        _procedure = procedure;
+        this.procedure = procedure;
 
     }
 
@@ -82,26 +82,26 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
         super.start();
     }
 
-    private final Pointer.Procedure _triggerSafepoint = new Pointer.Procedure() {
+    private final Pointer.Procedure triggerSafepoint = new Pointer.Procedure() {
         public void run(Pointer vmThreadLocals) {
             if (vmThreadLocals.isZero()) {
                 // Thread is still starting up.
                 // Do not need to do anything, because it will try to lock 'VmThreadMap.ACTIVE' and thus block.
             } else {
-                Safepoint.runProcedure(vmThreadLocals, _suspendProcedure);
+                Safepoint.runProcedure(vmThreadLocals, suspendProcedure);
             }
         }
     };
 
-    private final Pointer.Procedure _resetSafepoint = new Pointer.Procedure() {
+    private final Pointer.Procedure resetSafepoint = new Pointer.Procedure() {
 
         public void run(Pointer vmThreadLocals) {
-            Safepoint.cancelProcedure(vmThreadLocals, _suspendProcedure);
+            Safepoint.cancelProcedure(vmThreadLocals, suspendProcedure);
             Safepoint.reset(vmThreadLocals);
         }
     };
 
-    private final Pointer.Procedure _waitUntilNonMutating = new Pointer.Procedure() {
+    private final Pointer.Procedure waitUntilNonMutating = new Pointer.Procedure() {
 
         public void run(Pointer vmThreadLocals) {
             while (VmThreadLocal.inJava(vmThreadLocals)) {
@@ -152,39 +152,39 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
         }
     }
 
-    private TLABScavengerReset _tlabScavengerReset = new TLABScavengerReset();
+    private TLABScavengerReset tlabScavengerReset = new TLABScavengerReset();
 
-    private static final Pointer.Procedure _prepareGCThreadStackMap = new Pointer.Procedure() {
+    private static final Pointer.Procedure prepareGCThreadStackMap = new Pointer.Procedure() {
         public void run(Pointer vmThreadLocals) {
             VmThreadLocal.prepareStackReferenceMap(vmThreadLocals);
         }
     };
 
-    private final Runnable _gcRequest = new Runnable() {
+    private final Runnable gcRequest = new Runnable() {
 
         public void run() {
             synchronized (VmThreadMap.ACTIVE) {
-                BeltwayHeapScheme._inGC = true;
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCThreadLocalsOrCurrent, _triggerSafepoint);
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCThreadLocalsOrCurrent, _waitUntilNonMutating);
+                BeltwayHeapScheme.inGC = true;
+                VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCThreadLocalsOrCurrent, triggerSafepoint);
+                VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCThreadLocalsOrCurrent, waitUntilNonMutating);
                 if (BeltwayConfiguration._useTLABS) {
                     VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCThreadLocalsOrCurrent, _fillLastTlabs);
                 }
-                if (BeltwayConfiguration._useGCTlabs) {
-                    VmThreadMap.ACTIVE.forAllVmThreads(_isGCOrStopTheWorldDaemonThread, _tlabScavengerReset);
+                if (BeltwayConfiguration.useGCTlabs) {
+                    VmThreadMap.ACTIVE.forAllVmThreads(isGCOrStopTheWorldDaemonThread, tlabScavengerReset);
                 }
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(_isGCThread, _prepareGCThreadStackMap);
+                VmThreadMap.ACTIVE.forAllVmThreadLocals(isGCThread, prepareGCThreadStackMap);
                 VmThreadLocal.prepareCurrentStackReferenceMap();
-                _procedure.run();
-                BeltwayHeapScheme._inGC = false;
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCThreadLocalsOrCurrent, _resetSafepoint);
+                procedure.run();
+                BeltwayHeapScheme.inGC = false;
+                VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCThreadLocalsOrCurrent, resetSafepoint);
             }
         }
 
 
     };
 
-    private static final Predicate<VmThread> _isGCOrStopTheWorldDaemonThread = new Predicate<VmThread>() {
+    private static final Predicate<VmThread> isGCOrStopTheWorldDaemonThread = new Predicate<VmThread>() {
         public boolean evaluate(VmThread vmThread) {
             final Thread javaThread = vmThread.javaThread();
             return javaThread instanceof BeltwayStopTheWorldDaemon || javaThread instanceof BeltwayCollectorThread;
@@ -201,7 +201,7 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
         }
     };
 
-    private static final Pointer.Predicate _isGCThread = new Pointer.Predicate() {
+    private static final Pointer.Predicate isGCThread = new Pointer.Predicate() {
         public boolean evaluate(Pointer vmThreadLocals) {
             final Thread javaThread = VmThread.current(vmThreadLocals).javaThread();
             return javaThread instanceof BeltwayCollectorThread;
@@ -209,13 +209,13 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
     };
 
     public void execute() {
-        execute(_gcRequest);
+        execute(gcRequest);
     }
 
     public TLAB getScavengeTLAB() {
-        return _currentTLAB;
+        return currentTLAB;
     }
 
-    private TLAB _currentTLAB;
+    private TLAB currentTLAB;
 
 }

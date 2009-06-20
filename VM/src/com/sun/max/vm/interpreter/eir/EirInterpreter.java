@@ -72,30 +72,30 @@ import com.sun.max.vm.value.*;
  */
 public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements EirInstructionVisitor {
 
-    private final EirGenerator _eirGenerator;
+    private final EirGenerator eirGenerator;
 
     public EirGenerator<?> eirGenerator() {
-        return _eirGenerator;
+        return eirGenerator;
     }
 
-    private EirFrame _frame;
+    private EirFrame frame;
 
     /**
      * @return the current interpreter frame.
      */
     public EirFrame frame() {
-        return _frame;
+        return frame;
     }
 
-    protected void pushFrame(EirFrame frame) {
-        _frame = frame;
+    protected void pushFrame(EirFrame f) {
+        this.frame = f;
     }
 
     protected void popFrame() {
-        _frame = _frame.caller();
-        if (_frame != null && _trace) {
+        frame = frame.caller();
+        if (frame != null && trace) {
             // This just helps reading traces of large methods where the entry point is off-screen
-            Trace.stream().println(_traceIndentation + "RE-ENTER: " + _frame.method());
+            Trace.stream().println(traceIndentation + "RE-ENTER: " + frame.method());
             Trace.stream().flush();
         }
     }
@@ -107,7 +107,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
 
         @Override
         public EirABI abi() {
-            return  _eirGenerator.eirABIsScheme().nativeABI();
+            return  eirGenerator.eirABIsScheme().nativeABI();
         }
     }
 
@@ -119,20 +119,20 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
      * @return the current interpreter frame's abi.
      */
     public EirABI abi() {
-        return _frame.abi();
+        return frame.abi();
     }
 
     public EirInterpreter(EirGenerator eirGenerator) {
-        _eirGenerator = eirGenerator;
-        _traceFilters = _traceFiltersOption.getValue();
-        _traceCpu = _traceCpuOption.getValue();
-        _traceStack = _traceStackOption.getValue();
-        _jitEnabled = _jitOption.getValue();
-        _trace = _traceFilters != null ||
-                 _traceCpu ||
-                 _traceStack ||
-                 _traceOption.getValue();
-        _frame = initialEirFrame();
+        this.eirGenerator = eirGenerator;
+        this.traceFilters = traceFiltersOption.getValue();
+        this.traceCpu = traceCpuOption.getValue();
+        this.traceStack = traceStackOption.getValue();
+        this.jitEnabled = jitOption.getValue();
+        this.trace = traceFilters != null ||
+                 traceCpu ||
+                 traceStack ||
+                 traceOption.getValue();
+        this.frame = initialEirFrame();
     }
 
     protected abstract EirCPU cpu();
@@ -147,22 +147,22 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
             }
         }
 
-        final boolean traceCpu = _traceCpu;
-        final boolean trace = _trace;
-        if (_traceFilters != null) {
-            _traceCpu = false;
-            _trace = false;
+        final boolean savedTraceCpu = this.traceCpu;
+        final boolean savedTrace = this.trace;
+        if (traceFilters != null) {
+            this.traceCpu = false;
+            this.trace = false;
             final String name = eirMethod.classMethodActor().holder().name() + eirMethod.name();
-            for (String filter : _traceFilters) {
+            for (String filter : traceFilters) {
                 if (name.contains(filter)) {
-                    _traceCpu = traceCpu;
-                    _trace = trace;
+                    this.traceCpu = savedTraceCpu;
+                    this.trace = savedTrace;
                     break;
                 }
             }
         }
 
-        if (_trace && !_tracedMethods.contains(eirMethod.classMethodActor())) {
+        if (savedTrace && !_tracedMethods.contains(eirMethod.classMethodActor())) {
             _tracedMethods.add(eirMethod.classMethodActor());
             Trace.stream().println(eirMethod.traceToString());
         }
@@ -170,8 +170,8 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
         try {
             return interpret(eirMethod, arguments);
         } finally {
-            _traceCpu = traceCpu;
-            _trace = trace;
+            this.traceCpu = savedTraceCpu;
+            this.trace = savedTrace;
         }
     }
 
@@ -293,21 +293,21 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
 
     private static final String TRACE_INDENTATION_UNIT = "    ";
 
-    private String _traceIndentation;
+    private String traceIndentation;
 
     private void indent() {
-        if (_traceIndentation == null) {
-            _traceIndentation = "";
+        if (traceIndentation == null) {
+            traceIndentation = "";
         } else {
-            _traceIndentation += TRACE_INDENTATION_UNIT;
+            traceIndentation += TRACE_INDENTATION_UNIT;
         }
     }
 
     private void outdent() {
-        if (_traceIndentation != null && _traceIndentation.length() >= TRACE_INDENTATION_UNIT.length()) {
-            _traceIndentation = _traceIndentation.substring(TRACE_INDENTATION_UNIT.length());
+        if (traceIndentation != null && traceIndentation.length() >= TRACE_INDENTATION_UNIT.length()) {
+            traceIndentation = traceIndentation.substring(TRACE_INDENTATION_UNIT.length());
         } else {
-            _traceIndentation = null;
+            traceIndentation = null;
         }
     }
 
@@ -319,13 +319,13 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
     protected  InstructionAddress callAndLink(EirMethod eirMethod) {
         final InstructionAddress returnAddress = cpu().nextInstructionAddress();
         cpu().push(ReferenceValue.from(returnAddress));
-        _frame = new EirFrame(_frame, eirMethod);
+        frame = new EirFrame(frame, eirMethod);
         return returnAddress;
     }
 
     public InstructionAddress call(EirMethod eirMethod) {
         if (eirMethod.classMethodActor().isAnnotationPresent(SNIPPET.class)) {
-            EirFrame outer = _frame == null ? null : _frame.caller();
+            EirFrame outer = frame == null ? null : frame.caller();
             while (outer != null) {
                 ProgramError.check(outer.method() != eirMethod, "snippet implementation is recursive: " + eirMethod);
                 outer = outer.caller();
@@ -335,9 +335,9 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
         final InstructionAddress returnAddress = callAndLink(eirMethod);
 
         cpu().gotoBlock(eirMethod.blocks().get(0));
-        if (_trace) {
+        if (trace) {
             indent();
-            Trace.stream().println(_traceIndentation + "ENTER: " + eirMethod);
+            Trace.stream().println(traceIndentation + "ENTER: " + eirMethod);
             Trace.stream().flush();
         }
         return returnAddress;
@@ -345,8 +345,8 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
 
     protected void ret(InstructionAddress instructionAddress) {
         cpu().gotoInstruction(instructionAddress);
-        if (_trace) {
-            Trace.stream().println(_traceIndentation + "EXIT: " + _frame.method());
+        if (trace) {
+            Trace.stream().println(traceIndentation + "EXIT: " + frame.method());
             Trace.stream().flush();
             outdent();
         }
@@ -357,46 +357,46 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
         popFrame();
     }
 
-    private final boolean _jitEnabled;
+    private final boolean jitEnabled;
 
     /**
      * Determines if this interpreter instance should try to compile a callee as it is called
      * and then execute the compiled version or if the method should be called via reflection.
      */
     public boolean jitEnabled() {
-        return _jitEnabled;
+        return jitEnabled;
     }
 
-    private final List<String> _traceFilters;
-    private boolean _trace;
-    private boolean _traceCpu;
-    private boolean _traceStack;
+    private final List<String> traceFilters;
+    private boolean trace;
+    private boolean traceCpu;
+    private boolean traceStack;
     private final Set<ClassMethodActor> _tracedMethods = new HashSet<ClassMethodActor>();
 
     public boolean traceStack() {
-        return _traceStack;
+        return traceStack;
     }
 
     private void dispatchInvocationTargetException(InvocationTargetException invocationTargetException) throws InvocationTargetException {
-        while (_frame != null) {
-            if (_frame.catchBlock() != null) {
-                if (_trace) {
+        while (frame != null) {
+            if (frame.catchBlock() != null) {
+                if (trace) {
                     Trace.stream().println("Dispatching exception: " + invocationTargetException.getTargetException());
                     Trace.stream().flush();
                     outdent();
                 }
-                cpu().write(_eirGenerator.catchParameterLocation(), ReferenceValue.from(invocationTargetException.getTargetException()));
-                cpu().gotoBlock(_frame.catchBlock());
+                cpu().write(eirGenerator.catchParameterLocation(), ReferenceValue.from(invocationTargetException.getTargetException()));
+                cpu().gotoBlock(frame.catchBlock());
                 return;
             }
 
             // Pop frame
-            if (_trace) {
-                Trace.stream().println("Unwinding: " + _frame.method() + "  due to exception: " + invocationTargetException.getTargetException());
+            if (trace) {
+                Trace.stream().println("Unwinding: " + frame.method() + "  due to exception: " + invocationTargetException.getTargetException());
                 Trace.stream().flush();
                 outdent();
             }
-            _frame = _frame.caller();
+            frame = frame.caller();
         }
         throw invocationTargetException;
     }
@@ -411,12 +411,12 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
             try {
                 final Class<EirInstruction<EirInstructionVisitor, ?>> type = null;
                 final EirInstruction<EirInstructionVisitor, ?> instruction = StaticLoophole.cast(type, cpu().nextInstruction());
-                if (_trace) {
-                    if (_traceCpu) {
+                if (trace) {
+                    if (traceCpu) {
                         cpu().dump(Trace.stream());
                     }
-                    Trace.stream().println(_traceIndentation + "catch Block: " + _frame.catchBlock());
-                    Trace.stream().println(_traceIndentation + (_traceCpu ? _frame.method() : "") + "#" + cpu().currentInstructionAddress() + "   " + instruction.toString());
+                    Trace.stream().println(traceIndentation + "catch Block: " + frame.catchBlock());
+                    Trace.stream().println(traceIndentation + (traceCpu ? frame.method() : "") + "#" + cpu().currentInstructionAddress() + "   " + instruction.toString());
                     Trace.stream().flush();
                 }
                 instruction.acceptVisitor(this);
@@ -521,22 +521,22 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
     }
 
 
-    private EirMethod _jniHandleUnhand;
+    private EirMethod jniHandleUnhand;
 
     /**
      * Gets the compiled EIR version of {@link JniHandle#unhand()}.
      */
     protected EirMethod jniHandleUnhandMethod() {
-        if (_jniHandleUnhand == null) {
+        if (jniHandleUnhand == null) {
             try {
                 final Method javaMethod = JniHandle.class.getDeclaredMethod("unhand");
                 final ClassMethodActor classMethodActor = ClassMethodActor.fromJava(javaMethod);
-                _jniHandleUnhand = eirGenerator().makeIrMethod(classMethodActor);
+                jniHandleUnhand = eirGenerator().makeIrMethod(classMethodActor);
             } catch (NoSuchMethodException e) {
                 ProgramError.unexpected("could not find 'JniHandle.get()' method used in JNI stub");
             }
         }
-        return _jniHandleUnhand;
+        return jniHandleUnhand;
     }
 
     /**

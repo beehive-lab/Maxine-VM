@@ -52,17 +52,17 @@ public abstract class IrInterpreter<Method_Type extends IrMethod> {
     public static final String PROPERTY_PREFIX = "max.interpreter.";
 
     public static final OptionSet _options = new OptionSet();
-    protected static final Option<List<String>> _traceFiltersOption = _options.newStringListOption("filter", (String[]) null,
+    protected static final Option<List<String>> traceFiltersOption = _options.newStringListOption("filter", (String[]) null,
         "trace filters, separated by \",\"");
-    protected static final Option<Boolean> _jitOption = _options.newBooleanOption("jit", false,
+    protected static final Option<Boolean> jitOption = _options.newBooleanOption("jit", false,
         "compile and interpret called methods (instead of using reflection)");
-    protected static final Option<Boolean> _traceCpuOption = _options.newBooleanOption("tracecpu", false,
+    protected static final Option<Boolean> traceCpuOption = _options.newBooleanOption("tracecpu", false,
         "include CPU state in the trace");
-    protected static final Option<Boolean> _traceStackOption = _options.newBooleanOption("tracestack", false,
+    protected static final Option<Boolean> traceStackOption = _options.newBooleanOption("tracestack", false,
         "include full stack frame state in the trace");
-    protected static final Option<Boolean> _traceOption = _options.newBooleanOption("trace", false,
-        "enable tracing of each IR instruction. This option can be omitted if -" + _traceFiltersOption +
-        ", -" + _traceCpuOption + ", or -" + _traceStackOption + " is given a non-default value.");
+    protected static final Option<Boolean> traceOption = _options.newBooleanOption("trace", false,
+        "enable tracing of each IR instruction. This option can be omitted if -" + traceFiltersOption +
+        ", -" + traceCpuOption + ", or -" + traceStackOption + " is given a non-default value.");
 
     static {
         _options.loadSystemProperties(PROPERTY_PREFIX);

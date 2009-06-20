@@ -46,9 +46,9 @@ public final class CirVerifyingObserver extends IrObserverAdapter {
 
     static class Verifier {
 
-        final ClassMethodActor _classMethodActor;
-        final CirNode _ir;
-        final Object _transform;
+        final ClassMethodActor classMethodActor;
+        final CirNode ir;
+        final Object transform;
 
         void check(boolean condition, String errorMessage) {
             if (!condition) {
@@ -57,21 +57,21 @@ public final class CirVerifyingObserver extends IrObserverAdapter {
         }
 
         void error(String errorMessage) {
-            final String prefix = _transform == null ? "" : _transform + ": ";
+            final String prefix = transform == null ? "" : transform + ": ";
             Trace.stream().flush();
-            throw new CirVerifyError(prefix + "Unwellformed CIR while compiling " + _classMethodActor.format("%H.%n(%p)") + ": " + errorMessage);
+            throw new CirVerifyError(prefix + "Unwellformed CIR while compiling " + classMethodActor.format("%H.%n(%p)") + ": " + errorMessage);
         }
 
         void warn(boolean condition, String warningMessage) {
             if (!condition) {
-                Trace.stream().println("Potentially unwellformed CIR while compiling " + _classMethodActor.format("%H.%n(%p)") + ": " + warningMessage);
+                Trace.stream().println("Potentially unwellformed CIR while compiling " + classMethodActor.format("%H.%n(%p)") + ": " + warningMessage);
             }
         }
 
         public Verifier(ClassMethodActor classMethodActor, CirNode node, Object transform) {
-            _classMethodActor = classMethodActor;
-            _ir = node;
-            _transform = transform;
+            this.classMethodActor = classMethodActor;
+            this.ir = node;
+            this.transform = transform;
         }
 
         CirVariableRenaming declareParameters(CirClosure closure, CirVariableRenaming renaming) {
@@ -85,12 +85,12 @@ public final class CirVerifyingObserver extends IrObserverAdapter {
         }
 
         private final class Inspection {
-            private final CirNode _node;
-            private final CirVariableRenaming _renaming;
+            private final CirNode node;
+            private final CirVariableRenaming renaming;
 
             private Inspection(CirNode node, CirVariableRenaming renaming) {
-                _node = node;
-                _renaming = renaming;
+                this.node = node;
+                this.renaming = renaming;
             }
         }
 
@@ -108,14 +108,14 @@ public final class CirVerifyingObserver extends IrObserverAdapter {
         }
 
         void run() {
-            if (_ir == null || _ir instanceof CirCall) {
+            if (ir == null || ir instanceof CirCall) {
                 return;
             }
             final IdentityHashSet<CirClosure> visitedClosures = new IdentityHashSet<CirClosure>();
             final IdentityHashSet<CirCall> visitedCalls = new IdentityHashSet<CirCall>();
             final LinkedList<Inspection> toDo = new LinkedList<Inspection>();
             CirVariableRenaming renaming = null;
-            CirNode currentNode = _ir;
+            CirNode currentNode = ir;
             while (true) {
                 if (currentNode instanceof CirCall) {
                     final CirCall call = (CirCall) currentNode;
@@ -164,8 +164,8 @@ public final class CirVerifyingObserver extends IrObserverAdapter {
                     return;
                 }
                 final Inspection inspection = toDo.removeFirst();
-                currentNode = inspection._node;
-                renaming = inspection._renaming;
+                currentNode = inspection.node;
+                renaming = inspection.renaming;
             }
         }
     }

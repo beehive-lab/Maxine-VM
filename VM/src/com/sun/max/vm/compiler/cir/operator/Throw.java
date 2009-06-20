@@ -46,11 +46,11 @@ public class Throw extends JavaOperator implements Lowerable{
         call.setProcedure(CirSnippet.get(NonFoldableSnippet.RaiseThrowable.SNIPPET));
     }
 
-    private static final Kind[] _parameterKinds = {Kind.REFERENCE};
+    private static final Kind[] parameterKinds = {Kind.REFERENCE};
 
     @Override
     public Kind[] parameterKinds() {
-        return _parameterKinds;
+        return parameterKinds;
     }
 
     @Override

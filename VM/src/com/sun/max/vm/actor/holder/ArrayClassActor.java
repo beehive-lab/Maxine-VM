@@ -45,13 +45,13 @@ public class ArrayClassActor<Value_Type extends Value<Value_Type>> extends Refer
         return (componentClassActor.flags() & (ACC_PUBLIC | ACC_PROTECTED | ACC_PRIVATE)) | ACC_FINAL;
     }
 
-    private static InterfaceActor[] _interfaceActors;
+    private static InterfaceActor[] interfaceActors;
 
     private static InterfaceActor[] getInterfaceActors() {
-        if (_interfaceActors == null) {
-            _interfaceActors = new InterfaceActor[]{(InterfaceActor) ClassActor.fromJava(Cloneable.class), (InterfaceActor) ClassActor.fromJava(Serializable.class)};
+        if (interfaceActors == null) {
+            interfaceActors = new InterfaceActor[]{(InterfaceActor) ClassActor.fromJava(Cloneable.class), (InterfaceActor) ClassActor.fromJava(Serializable.class)};
         }
-        return _interfaceActors;
+        return interfaceActors;
     }
 
     ArrayClassActor(ClassActor componentClassActor) {

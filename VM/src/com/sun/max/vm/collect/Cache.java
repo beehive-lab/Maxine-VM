@@ -34,23 +34,23 @@ import com.sun.max.unsafe.*;
 public class Cache<Key_Type, Value_Type> implements Mapping<Key_Type, Value_Type> {
 
     private final class Entry {
-        Value_Type _value;
-        Size _size;
-        Size _costInMilliSeconds;
-        int _numberOfUses;
+        Value_Type value;
+        Size size;
+        Size costInMilliSeconds;
+        int numberOfUses;
 
         Entry(Value_Type value, Size size, Size costInMilliSeconds) {
-            _value = value;
-            _size = size;
-            _costInMilliSeconds = costInMilliSeconds;
-            _numberOfUses = 1;
+            this.value = value;
+            this.size = size;
+            this.costInMilliSeconds = costInMilliSeconds;
+            this.numberOfUses = 1;
         }
     }
 
-    private final VariableMapping<Key_Type, Entry> _mapping;
+    private final VariableMapping<Key_Type, Entry> mapping;
 
     protected Cache(HashEquivalence<Key_Type> equivalence) {
-        _mapping = HashMapping.createVariableMapping(equivalence);
+        mapping = HashMapping.createVariableMapping(equivalence);
     }
 
     public static <Key_Type, Value_Type> Cache<Key_Type, Value_Type> createIdentityCache() {
@@ -66,20 +66,20 @@ public class Cache<Key_Type, Value_Type> implements Mapping<Key_Type, Value_Type
     }
 
     public int length() {
-        return _mapping.length();
+        return mapping.length();
     }
 
     public synchronized boolean containsKey(Key_Type key) {
-        return _mapping.containsKey(key);
+        return mapping.containsKey(key);
     }
 
     public synchronized Value_Type get(Key_Type key) {
-        final Entry entry = _mapping.get(key);
+        final Entry entry = mapping.get(key);
         if (entry == null) {
             return null;
         }
-        entry._numberOfUses++;
-        return entry._value;
+        entry.numberOfUses++;
+        return entry.value;
     }
 
     /**
@@ -95,23 +95,23 @@ public class Cache<Key_Type, Value_Type> implements Mapping<Key_Type, Value_Type
      * @return the previous value or null if none existed
      */
     public synchronized Value_Type put(Key_Type key, Value_Type value, Size size, Size costInMilliSeconds) {
-        final Entry entry = _mapping.put(key, new Entry(value, size, costInMilliSeconds));
+        final Entry entry = mapping.put(key, new Entry(value, size, costInMilliSeconds));
         if (entry == null) {
             return null;
         }
-        return entry._value;
+        return entry.value;
     }
 
     public synchronized void remove(Key_Type key) {
-        _mapping.remove(key);
+        mapping.remove(key);
     }
 
     public synchronized void clear() {
-        _mapping.clear();
+        mapping.clear();
     }
 
     public IterableWithLength<Key_Type> keys() {
-        return _mapping.keys();
+        return mapping.keys();
     }
 
     public IterableWithLength<Value_Type> values() {
@@ -122,14 +122,14 @@ public class Cache<Key_Type, Value_Type> implements Mapping<Key_Type, Value_Type
 
             public Iterator<Value_Type> iterator() {
                 return new Iterator<Value_Type>() {
-                    final Iterator<Entry> _entryIterator = _mapping.values().iterator();
+                    final Iterator<Entry> _entryIterator = mapping.values().iterator();
 
                     public boolean hasNext() {
                         return _entryIterator.hasNext();
                     }
 
                     public Value_Type next() {
-                        return _entryIterator.next()._value;
+                        return _entryIterator.next().value;
                     }
 
                     public void remove() {

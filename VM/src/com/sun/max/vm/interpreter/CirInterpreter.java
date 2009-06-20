@@ -43,11 +43,11 @@ import com.sun.max.vm.value.*;
  */
 public class CirInterpreter extends IrInterpreter<CirMethod> {
 
-    private final CirGenerator _cirGenerator;
-    private CirOptimizer _cirOptimizer;
+    private final CirGenerator cirGenerator;
+    private CirOptimizer cirOptimizer;
 
     public CirInterpreter(CirGenerator cirGenerator) {
-        _cirGenerator = cirGenerator;
+        this.cirGenerator = cirGenerator;
     }
 
     protected CirCall foldBuiltin(CirBuiltin cirBuiltin, CirValue[] cirArguments) {
@@ -72,13 +72,13 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
             }
         }
         try {
-            return cirBuiltin.fold(_cirOptimizer, cirArguments);
+            return cirBuiltin.fold(cirOptimizer, cirArguments);
         } catch (CirFoldingException cirFoldingException) {
             return CirRoutine.Static.createExceptionCall(cirFoldingException.getCause(), cirArguments);
         }
     }
 
-    private final CirVariableFactory _variableFactory = new CirVariableFactory();
+    private final CirVariableFactory variableFactory = new CirVariableFactory();
 
     private CirValue evaluate(CirCall cirCall) throws InvocationTargetException {
         CirCall call = cirCall;
@@ -91,12 +91,12 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
             if (procedure instanceof CirConstant) {
                 final MethodID methodID = MethodID.fromWord(procedure.value().asWord());
                 final ClassMethodActor classMethodActor = (ClassMethodActor) MethodID.toMethodActor(methodID);
-                procedure = _cirGenerator.createIrMethod(classMethodActor);
+                procedure = cirGenerator.createIrMethod(classMethodActor);
             }
             if (procedure instanceof CirMethod) {
                 final CirMethod method = (CirMethod) procedure;
                 try {
-                    call = method.fold(_cirOptimizer, arguments);
+                    call = method.fold(cirOptimizer, arguments);
                 } catch (CirFoldingException cirFoldingException) {
                     call = CirRoutine.Static.createExceptionCall(cirFoldingException.getCause(), arguments);
                 }
@@ -121,7 +121,7 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
             } else if (procedure instanceof CirSwitch) {
                 final CirSwitch method = (CirSwitch) procedure;
                 try {
-                    call = method.fold(_cirOptimizer, arguments);
+                    call = method.fold(cirOptimizer, arguments);
                 } catch (CirFoldingException cirFoldingException) {
                     // Folding a CirSwitch should never fail
                     throw ProgramError.unexpected(cirFoldingException);
@@ -141,20 +141,20 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
         for (int i = 0; i < arguments.length; i++) {
             cirArguments[i] = new CirConstant(arguments[i]);
         }
-        cirArguments[cirArguments.length - 2] = _variableFactory.normalContinuationParameter();
-        cirArguments[cirArguments.length - 1] = _variableFactory.exceptionContinuationParameter();
+        cirArguments[cirArguments.length - 2] = variableFactory.normalContinuationParameter();
+        cirArguments[cirArguments.length - 1] = variableFactory.exceptionContinuationParameter();
         return cirArguments;
     }
 
     @Override
     public Value execute(CirMethod cirMethod, Value... arguments) throws InvocationTargetException {
         CirCall call = new CirCall(cirMethod, arguments.length > 0 ? valuesToCirArguments(arguments) : CirCall.NO_ARGUMENTS);
-        _cirOptimizer = new CirOptimizer(_cirGenerator, cirMethod, call, CirInliningPolicy.NONE);
+        cirOptimizer = new CirOptimizer(cirGenerator, cirMethod, call, CirInliningPolicy.NONE);
 
         if (cirMethod.isNative()) {
             // native stubs cannot be interpreted at the CIR level so the CIR interpreter simply
             // invokes the native method via reflection:
-            call = cirMethod.fold(_cirOptimizer, valuesToCirArguments(arguments));
+            call = cirMethod.fold(cirOptimizer, valuesToCirArguments(arguments));
         } else {
             call = new CirCall(cirMethod.copyClosure(), valuesToCirArguments(arguments));
         }

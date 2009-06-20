@@ -41,8 +41,8 @@ import com.sun.max.vm.value.*;
  * Incomplete!
  */
 public class AMD64TreeEirInterpreter extends AMD64EirInterpreter {
-    private BirState _executionState;
-    private TirTree _tree;
+    private BirState executionState;
+    private TirTree tree;
 
     public AMD64TreeEirInterpreter() {
         super(eirGeneratorScheme().eirGenerator());
@@ -51,19 +51,15 @@ public class AMD64TreeEirInterpreter extends AMD64EirInterpreter {
     public TirGuard execute(TirTree tree, BirState state) {
         final TargetTree targetTree = tree.targetTree();
 
-        _executionState = state;
-        _tree = tree;
+        executionState = state;
+        this.tree = tree;
 
         final Value[] arguments = state.getSlots(0, tree.entryState().length());
-        TirGuard exitGuard = null;
-
         try {
-            exitGuard = (TirGuard) execute(targetTree.treeEirMethod(), arguments).asObject();
+            return (TirGuard) execute(targetTree.treeEirMethod(), arguments).asObject();
         } catch (InvocationTargetException e) {
-            ProgramError.unexpected(e);
+            throw ProgramError.unexpected(e);
         }
-
-        return exitGuard;
     }
 
     private IndexedSequence<EirJavaFrameDescriptor> getGuardpointDescriptors(EirMethod method) {
@@ -81,38 +77,38 @@ public class AMD64TreeEirInterpreter extends AMD64EirInterpreter {
 
     private void writeback(TirGuard guard) {
 
-        final IndexedSequence<EirJavaFrameDescriptor> descriptors = getGuardpointDescriptors(_tree.targetTree().treeEirMethod());
+        final IndexedSequence<EirJavaFrameDescriptor> descriptors = getGuardpointDescriptors(tree.targetTree().treeEirMethod());
 
-        final EirJavaFrameDescriptor descriptor = descriptors.get(_tree.getNumber(guard));
+        final EirJavaFrameDescriptor descriptor = descriptors.get(tree.getNumber(guard));
         Console.println("EXITED AT: " + descriptor.toMultiLineString());
 
         for (int i = 0; i < descriptor.locals().length; i++) {
             Console.println(Color.TEAL, "SLOT: " + i + " <== " + cpu().read(descriptor.locals()[i].location()) + " from " + descriptor.locals()[i].location());
-            _executionState.store(i, cpu().read(descriptor.locals()[i].location()));
+            executionState.store(i, cpu().read(descriptor.locals()[i].location()));
         }
 
         for (int i = 0; i < descriptor.stackSlots().length; i++) {
             Console.println(Color.TEAL, "SLOT: " + (i + descriptor.locals().length) + " <== " + cpu().read(descriptor.stackSlots()[i].location()) + " from " + descriptor.stackSlots()[i].location());
-            _executionState.store(i + descriptor.locals().length, cpu().read(descriptor.stackSlots()[i].location()));
+            executionState.store(i + descriptor.locals().length, cpu().read(descriptor.stackSlots()[i].location()));
         }
 
-        _executionState.println();
+        executionState.println();
     }
 
-    private TirGuard _exitGuard;
+    private TirGuard exitGuard;
 
     @Override
     public void visit(EirAssignment assignment) {
         final Value read = cpu().read(assignment.sourceOperand().location());
         if (read.kind() == Kind.REFERENCE) {
-            _exitGuard = (TirGuard) read.asObject();
+            exitGuard = (TirGuard) read.asObject();
         }
         super.visit(assignment);
     }
 
     @Override
     public void visit(EirCall call) throws InvocationTargetException {
-        writeback(_exitGuard);
+        writeback(exitGuard);
         super.visit(call);
     }
 
@@ -142,7 +138,7 @@ public class AMD64TreeEirInterpreter extends AMD64EirInterpreter {
 
     @Override
     protected void setupParameters(EirLocation[] locations, Value... arguments) {
-        final AMD64JitStackFrameLayout layout = new AMD64JitStackFrameLayout(_executionState.last().method(), 2);
+        final AMD64JitStackFrameLayout layout = new AMD64JitStackFrameLayout(executionState.last().method(), 2);
 
         // Push parameter locals.
         for (int i = 0; i < layout.numberOfParameterSlots(); i++) {
