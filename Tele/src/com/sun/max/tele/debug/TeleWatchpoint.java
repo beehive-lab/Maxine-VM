@@ -331,19 +331,19 @@ public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint
         }
     }
 
-    public boolean setExec(boolean exec) {
-        this.exec = exec;
+    public boolean setExec(boolean exec1) {
+        this.exec = exec1;
         return _factory.resetWatchpoint(this);
     }
 
 
-    public boolean setRead(boolean read) {
-        this.read = read;
+    public boolean setRead(boolean read1) {
+        this.read = read1;
         return _factory.resetWatchpoint(this);
     }
 
-    public boolean setWrite(boolean write) {
-        this.write = write;
+    public boolean setWrite(boolean write1) {
+        this.write = write1;
         return _factory.resetWatchpoint(this);
     }
 }
