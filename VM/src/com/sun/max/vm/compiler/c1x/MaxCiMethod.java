@@ -88,16 +88,6 @@ public class MaxCiMethod implements CiMethod {
     }
 
     /**
-     * Checks whether this method will link at the specified location for the specified bytecode.
-     * @param where the type from which the method is referenced
-     * @param opcode the opcode used to reference the method
-     * @return <code>true</code> if the method will link successfully
-     */
-    public boolean willLink(CiType where, int opcode) {
-        return _methodActor != null; // TODO: this is not correct
-    }
-
-    /**
      * Gets the compiler interface signature for this method.
      * @return the signature of this method
      */
@@ -168,7 +158,7 @@ public class MaxCiMethod implements CiMethod {
      * @throws MaxCiUnresolved if the method is unresolved
      */
     public boolean isAbstract() {
-        return asClassMethodActor("isAbstract()").isAbstract();
+        return asMethodActor("isAbstract()").isAbstract();
     }
 
     /**
@@ -177,7 +167,7 @@ public class MaxCiMethod implements CiMethod {
      * @throws MaxCiUnresolved if the method is unresolved
      */
     public boolean isNative() {
-        return asClassMethodActor("isNative()").isNative();
+        return asMethodActor("isNative()").isNative();
     }
 
     /**
@@ -186,7 +176,7 @@ public class MaxCiMethod implements CiMethod {
      * @throws MaxCiUnresolved if the method is unresolved
      */
     public boolean isFinalMethod() {
-        return asClassMethodActor("isFinalMethod()").isFinal();
+        return asMethodActor("isFinalMethod()").isFinal();
     }
 
     /**
@@ -195,7 +185,7 @@ public class MaxCiMethod implements CiMethod {
      * @throws MaxCiUnresolved if the method is unresolved
      */
     public boolean isSynchronized() {
-        return asClassMethodActor("isSynchronized()").isSynchronized();
+        return asMethodActor("isSynchronized()").isSynchronized();
 
     }
 
@@ -205,7 +195,7 @@ public class MaxCiMethod implements CiMethod {
      * @throws MaxCiUnresolved if the method is unresolved
      */
     public boolean isStrictFP() {
-        return asClassMethodActor("isStrictFP()").isStrict();
+        return asMethodActor("isStrictFP()").isStrict();
     }
 
     /**
@@ -214,7 +204,7 @@ public class MaxCiMethod implements CiMethod {
      * @throws MaxCiUnresolved if the method is unresolved
      */
     public boolean isStatic() {
-        return asClassMethodActor("isStatic()").isStatic();
+        return asMethodActor("isStatic()").isStatic();
     }
 
     /**
@@ -307,8 +297,21 @@ public class MaxCiMethod implements CiMethod {
         throw unresolved(operation);
     }
 
+    MethodActor asMethodActor(String operation) {
+        if (_methodActor != null) {
+            return _methodActor;
+        }
+        throw unresolved(operation);
+    }
+
     private MaxCiUnresolved unresolved(String operation) {
-        throw new MaxCiUnresolved(operation + " not defined for unresolved method " + _methodRef.toString(_constantPool._constantPool));
+        String name;
+        if (_methodActor != null) {
+            name = _methodActor.toString();
+        } else {
+            name = _methodRef.toString(_constantPool._constantPool);
+        }
+        throw new MaxCiUnresolved(operation + " not defined for unresolved method " + name);
     }
 
     /**

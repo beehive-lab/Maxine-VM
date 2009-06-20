@@ -126,6 +126,9 @@ public class GraphBuilder {
         if (syncHandler != null && syncHandler.state() != null) {
             Instruction lock = null;
             if (method.isSynchronized()) {
+                curBlock = syncHandler;
+                lastInstr = syncHandler;
+                curState = syncHandler.state().copy();
                 lock = synchronizedObject(initialState, method);
                 syncHandler.state().unlock(); // pop the null off the stack
                 syncHandler.state().lock(scope, lock);
@@ -766,69 +769,71 @@ public class GraphBuilder {
         apush(append(n));
     }
 
-    void accessField(int opcode) {
-        CiField field = constantPool().lookupField(opcode, stream().readCPI());
-        CiType holder = field.holder();
-        boolean isLoaded = holder.isLoaded() && field.willLink(method().holder(), opcode);
-        boolean isInitialized = isLoaded && holder.isInitialized();
+    void getField() {
+        CiField field = constantPool().lookupGetField(stream().readCPI());
+        boolean isLoaded = field.isLoaded() && !C1XOptions.TestPatching;
+        ValueStack stateCopy = !isLoaded ? curState.copy() : null;
+        LoadField load = new LoadField(apop(), field, false, lockStack(), stateCopy, isLoaded, true);
+        loadField(ValueType.fromBasicType(field.basicType()), load);
+    }
 
-        ValueStack stateCopy = null;
-        if (!isInitialized || C1XOptions.TestPatching) {
-            // save state before the instruction for debugging information when patching
-            stateCopy = curState.copy();
-        }
-
+    void putField() {
+        CiField field = constantPool().lookupPutField(stream().readCPI());
+        boolean isLoaded = field.isLoaded() && !C1XOptions.TestPatching;
+        ValueStack stateCopy = !isLoaded ? curState.copy() : null;
         ValueType type = ValueType.fromBasicType(field.basicType());
-        int offset = isLoaded ? field.offset() : -1;
+        Instruction value = pop(type);
+        storeField(new StoreField(apop(), field, value, false, lockStack(), stateCopy, isLoaded, true));
+    }
 
-        switch (opcode) {
-            case Bytecodes.GETSTATIC: {
-                // note that folding of constant static fields happens in canonicalizer now
-                Constant holderConstant = new Constant(new ClassType(holder), stateCopy);
-                loadField(type, new LoadField(append(holderConstant), offset, field, true, lockStack(), stateCopy, isLoaded, isInitialized));
-                break;
-            }
-            case Bytecodes.PUTSTATIC: {
-                Instruction value = pop(type);
-                Constant holderConstant = new Constant(new ClassType(holder), stateCopy);
-                storeField(new StoreField(append(holderConstant), offset, field, value, true, lockStack(), stateCopy, isLoaded, isInitialized));
-                break;
-            }
-            case Bytecodes.GETFIELD: {
-                LoadField load = new LoadField(apop(), offset, field, false, lockStack(), stateCopy, isLoaded, true);
-                loadField(type, load);
-                break;
-            }
-            case Bytecodes.PUTFIELD: {
-                Instruction value = pop(type);
-                storeField(new StoreField(apop(), offset, field, value, false, lockStack(), stateCopy, isLoaded, true));
-                break;
-            }
-            default:
-                throw Util.shouldNotReachHere();
-        }
+    void getStatic() {
+        CiField field = constantPool().lookupGetStatic(stream().readCPI());
+        CiType holder = field.holder();
+        boolean isLoaded = field.isLoaded() && holder.isLoaded() && !C1XOptions.TestPatching;
+        boolean isInitialized = isLoaded && holder.isInitialized();
+        ValueStack stateCopy = !isLoaded ? curState.copy() : null;
+        Instruction holderConstant = append(new Constant(new ClassType(holder), stateCopy));
+        LoadField load = new LoadField(holderConstant, field, true, lockStack(), stateCopy, isLoaded, isInitialized);
+        loadField(ValueType.fromBasicType(field.basicType()), load);
+    }
+
+    void putStatic() {
+        CiField field = constantPool().lookupPutStatic(stream().readCPI());
+        CiType holder = field.holder();
+        boolean isLoaded = field.isLoaded() && holder.isLoaded() && !C1XOptions.TestPatching;
+        boolean isInitialized = isLoaded && holder.isInitialized();
+        ValueStack stateCopy = !isLoaded ? curState.copy() : null;
+        Instruction holderConstant = append(new Constant(new ClassType(holder), stateCopy));
+        ValueType type = ValueType.fromBasicType(field.basicType());
+        StoreField store = new StoreField(holderConstant, field, pop(type), true, lockStack(), stateCopy, isLoaded, isInitialized);
+        storeField(store);
     }
 
     private void storeField(StoreField store) {
-        StoreField s;
-        if (memoryMap != null && (s = memoryMap.store(store)) != null) {
-            append(s);
+        if (memoryMap != null) {
+            StoreField previous = memoryMap.store(store);
+            if (previous == null) {
+                // the store is redundant, do not append
+                return;
+            }
         }
+        append(store);
     }
 
     private void loadField(ValueType type, LoadField load) {
-        Instruction replacement = memoryMap != null ? memoryMap.load(load) : load;
-        if (replacement != load) {
-            // the memory buffer found a replacement for this load
-            assert replacement.isAppended() || replacement instanceof Phi || replacement instanceof Local;
-            push(type, replacement);
-        } else {
-            push(type, append(load));
+        if (memoryMap != null) {
+            Instruction replacement = memoryMap.load(load);
+            if (replacement != load) {
+                // the memory buffer found a replacement for this load
+                assert replacement.isAppended() || replacement instanceof Phi || replacement instanceof Local;
+                push(type, replacement);
+                return;
+            }
         }
+        push(type, append(load));
     }
 
     void invokeStatic(CiMethod target) {
-        checkForLinkError(target, Bytecodes.INVOKESTATIC);
         if (!tryInline(target, null)) {
             profileInvocation(target);
             ValueType resultType = returnValueType(target);
@@ -838,7 +843,6 @@ public class GraphBuilder {
     }
 
     void invokeInterface(CiMethod target) {
-        checkForLinkError(target, Bytecodes.INVOKEINTERFACE);
         ValueType resultType = returnValueType(target);
         Instruction[] args = popArguments(target);
         Instruction receiver = apop();
@@ -847,7 +851,6 @@ public class GraphBuilder {
     }
 
     void invokeVirtual(CiMethod target) {
-        checkForLinkError(target, Bytecodes.INVOKEVIRTUAL);
         Instruction receiver = getReceiver(target);
         // attempt to devirtualize the call
         if (target.isLoaded() && target.holder().isLoaded()) {
@@ -892,7 +895,6 @@ public class GraphBuilder {
     }
 
     void invokeSpecial(CiMethod target, CiType knownHolder) {
-        checkForLinkError(target, Bytecodes.INVOKESPECIAL);
         if (!tryInline(target, knownHolder)) {
             profileInvocation(target);
             ValueType resultType = returnValueType(target);
@@ -950,12 +952,6 @@ public class GraphBuilder {
             }
         }
         return null;
-    }
-
-    void checkForLinkError(CiMethod target, int opcode) {
-        if (target.isLoaded() && target.isStatic() != (opcode == Bytecodes.INVOKESTATIC)) {
-            throw new Bailout("will cause link error");
-        }
     }
 
     Instruction getReceiver(CiMethod target) {
@@ -1995,14 +1991,14 @@ public class GraphBuilder {
                 case Bytecodes.DRETURN        : methodReturn(dpop()); break;
                 case Bytecodes.ARETURN        : methodReturn(apop()); break;
                 case Bytecodes.RETURN         : methodReturn(null  ); break;
-                case Bytecodes.GETSTATIC      : // fall through
-                case Bytecodes.PUTSTATIC      : // fall through
-                case Bytecodes.GETFIELD       : // fall through
-                case Bytecodes.PUTFIELD       : accessField(opcode); break;
-                case Bytecodes.INVOKEVIRTUAL  : invokeVirtual(readMethod(opcode)); break;
-                case Bytecodes.INVOKESPECIAL  : invokeSpecial(readMethod(opcode), null); break;
-                case Bytecodes.INVOKESTATIC   : invokeStatic(readMethod(opcode)); break;
-                case Bytecodes.INVOKEINTERFACE: invokeInterface(readMethod(opcode)); break;
+                case Bytecodes.GETSTATIC      : getStatic(); break;
+                case Bytecodes.PUTSTATIC      : putStatic(); break;
+                case Bytecodes.GETFIELD       : getField(); break;
+                case Bytecodes.PUTFIELD       : putField(); break;
+                case Bytecodes.INVOKEVIRTUAL  : invokeVirtual(constantPool().lookupInvokeVirtual(s.readCPI())); break;
+                case Bytecodes.INVOKESPECIAL  : invokeSpecial(constantPool().lookupInvokeSpecial(s.readCPI()), null); break;
+                case Bytecodes.INVOKESTATIC   : invokeStatic(constantPool().lookupInvokeStatic(s.readCPI())); break;
+                case Bytecodes.INVOKEINTERFACE: invokeInterface(constantPool().lookupInvokeInterface(s.readCPI())); break;
                 case Bytecodes.NEW            : newInstance(); break;
                 case Bytecodes.NEWARRAY       : newTypeArray(); break;
                 case Bytecodes.ANEWARRAY      : newObjectArray(); break;
@@ -2060,10 +2056,6 @@ public class GraphBuilder {
             scopeData.addToWorkList(succ);
         }
         return end;
-    }
-
-    private CiMethod readMethod(int opcode) {
-        return scopeData.constantPool.lookupMethod(opcode, scopeData.stream.readCPI());
     }
 
     void killValueAndMemoryMaps() {
