@@ -444,7 +444,7 @@ public class Canonicalizer extends InstructionVisitor {
         } else if (array instanceof LoadField) {
             // the array is a load of a field; check if it is a constant
             CiField field = ((LoadField) array).field();
-            if (field.isConstant()) {
+            if (field.isConstant() && field.isStatic()) {
                 Object obj = field.constantValue().asObject();
                 if (obj != null) {
                     setIntConstant(java.lang.reflect.Array.getLength(obj));

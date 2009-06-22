@@ -482,7 +482,7 @@ public class BlockMap {
 
     int processWideStore(int opcode, byte[] code, int bci) {
         switch (opcode) {
-            case Bytecodes.IINC:     storeOne(Bytes.beU2(code, bci + 2)); return 5;
+            case Bytecodes.IINC:     storeOne(Bytes.beU2(code, bci + 2)); return 6;
             case Bytecodes.ISTORE:   storeOne(Bytes.beU2(code, bci + 2)); return 3;
             case Bytecodes.LSTORE:   storeTwo(Bytes.beU2(code, bci + 2)); return 3;
             case Bytecodes.FSTORE:   storeOne(Bytes.beU2(code, bci + 2)); return 3;
