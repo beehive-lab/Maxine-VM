@@ -43,10 +43,10 @@ public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint
     private boolean _active = false;
 
     // configuration flags
-    private boolean read = false;
-    private boolean write = false;
-    private boolean exec = false;
-    private boolean after = true;
+    private boolean _read = false;
+    private boolean _write = false;
+    private boolean _exec = false;
+    private boolean _after = true;
 
     private byte[] teleWatchpointCache;
 
@@ -58,10 +58,10 @@ public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint
 
     public TeleWatchpoint(Factory factory, Address address, Size size, boolean after, boolean read, boolean write, boolean exec) {
         this(factory, address, size);
-        this.after = after;
-        this.read = read;
-        this.write = write;
-        this.exec = exec;
+        this._after = after;
+        this._read = read;
+        this._write = write;
+        this._exec = exec;
     }
 
     @Override
@@ -75,19 +75,19 @@ public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint
     }
 
     public boolean isAfter() {
-        return after;
+        return _after;
     }
 
     public boolean isRead() {
-        return read;
+        return _read;
     }
 
     public boolean isWrite() {
-        return write;
+        return _write;
     }
 
     public boolean isExec() {
-        return exec;
+        return _exec;
     }
 
     /* (non-Javadoc)
@@ -331,19 +331,19 @@ public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint
         }
     }
 
-    public boolean setExec(boolean exec1) {
-        this.exec = exec1;
+    public boolean setExec(boolean exec) {
+        _exec = exec;
         return _factory.resetWatchpoint(this);
     }
 
 
-    public boolean setRead(boolean read1) {
-        this.read = read1;
+    public boolean setRead(boolean read) {
+        _read = read;
         return _factory.resetWatchpoint(this);
     }
 
-    public boolean setWrite(boolean write1) {
-        this.write = write1;
+    public boolean setWrite(boolean write) {
+        _write = write;
         return _factory.resetWatchpoint(this);
     }
 }

@@ -1160,7 +1160,7 @@ public abstract class TeleVM implements MaxVM {
      * (non-Javadoc)
      * @see com.sun.max.tele.MaxVM#findTriggeredWatchpoint()
      */
-    public MaxWatchpoint findTriggeredWatchpoint() {
+    public final MaxWatchpoint findTriggeredWatchpoint() {
         return _teleProcess.watchpointFactory().findTriggeredWatchpoint();
     }
 
