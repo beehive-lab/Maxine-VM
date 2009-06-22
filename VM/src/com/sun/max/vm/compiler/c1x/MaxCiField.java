@@ -24,8 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.object.host.HostTupleAccess;
-import com.sun.max.vm.object.TupleAccess;
+import com.sun.max.vm.object.host.*;
 
 /**
  * The <code>MaxCiField</code> implements a compiler interface field. A field can
