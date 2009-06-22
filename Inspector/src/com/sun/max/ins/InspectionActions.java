@@ -2510,7 +2510,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private void setWordWatchpoint(Address address) {
             final Size size = Size.fromInt(Word.size());
             try {
-                final MaxWatchpoint watchpoint = maxVM().setWatchpoint(address, size, false, true, true, true);
+                final MaxWatchpoint watchpoint = maxVM().setWatchpoint(address, size, true, true, true, true);
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
