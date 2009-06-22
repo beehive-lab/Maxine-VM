@@ -71,7 +71,7 @@ public class C1XOptions {
 
     // local value numbering / load elimination settings
     public static boolean UseLocalValueNumbering             = ____;
-    public static boolean EliminateFieldAccess               = TRUE;
+    public static boolean EliminateFieldAccess               = ____;
     public static boolean AlwaysCSEArrayLength               = ____;
 
     // profiling settings
@@ -84,6 +84,7 @@ public class C1XOptions {
     public static boolean UseCHA                             = ____;
     public static boolean UseDeopt                           = ____;
     public static boolean UseCHALeafMethods                  = ____;
+    public static boolean AggressivelyResolveCPEs            = ____;
 
     // state merging settings
     public static boolean MergeEquivalentConstants           = ____;

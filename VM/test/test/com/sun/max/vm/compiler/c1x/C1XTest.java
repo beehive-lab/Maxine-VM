@@ -48,7 +48,7 @@ import com.sun.max.vm.type.*;
  */
 public class C1XTest {
 
-    private static final OptionSet _options = new OptionSet(true);
+    private static final OptionSet _options = new OptionSet(false);
 
     private static final Option<Integer> _trace = _options.newIntegerOption("trace", 0,
         "Set the tracing level of the Maxine VM and runtime.");
