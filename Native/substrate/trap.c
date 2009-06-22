@@ -252,10 +252,14 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
 	 trapInfo[3] = ucontext->uc_mcontext.gregs[REG_G2];
 	 /* set the safepoint latch register of the trapped frame to the disable state */
 	 ucontext->uc_mcontext.gregs[REG_G2] = disabledVmThreadLocals;
+#elif isa_AMD64 && (os_SOLARIS || os_LINUX)
+	 trapInfo[3] = ucontext->uc_mcontext.gregs[REG_R14];
+	 ucontext->uc_mcontext.gregs[REG_R14] = disabledVmThreadLocals;
+#elif isa_AMD64 && os_DARWIN
+	 trapInfo[3] = ucontext->uc_mcontext->__ss.__r14;
+	 ucontext->uc_mcontext->__ss.__r14 = disabledVmThreadLocals;
 #else
-    /* note: overwrite the stack top with a pointer to the vm thread locals for the java stub to pick up */
-    trapInfo[3] = (Address)*stackPointer;
-    *stackPointer = (Word)disabledVmThreadLocals;
+    c_UNIMPLEMENTED();
 #endif
 
 #if log_TRAP
@@ -264,11 +268,7 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
         log_println("trapInfo[0] (trap number)         = %p", trapInfo[0]);
         log_println("trapInfo[1] (instruction pointer) = %p", trapInfo[1]);
         log_println("trapInfo[2] (fault address)       = %p", trapInfo[2]);
-#   if os_SOLARIS && isa_SPARC
         log_println("trapInfo[3] (safepoint latch)     = %p", trapInfo[3]);
-#   else
-        log_println("trapInfo[3] (stack top value)     = %p", trapInfo[3]);
-#   endif
     }
     log_println("SIGNAL: returning to java trap stub 0x%0lx\n", _javaTrapStub);
 #endif
