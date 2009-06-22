@@ -3340,6 +3340,40 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void test_bytecode_BC_iinc_4() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_iinc_4");
+        String runString = null;
+        try {
+        // test(1) == 513
+            runString = "test(1)";
+            if (513 != test.bytecode.BC_iinc_4.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 514
+            runString = "test(2)";
+            if (514 != test.bytecode.BC_iinc_4.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == 516
+            runString = "test(4)";
+            if (516 != test.bytecode.BC_iinc_4.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-1) == 511
+            runString = "test(-1)";
+            if (511 != test.bytecode.BC_iinc_4.test(-1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void test_bytecode_BC_iload_0() {
         JavaTesterRunScheme.begin("test.bytecode.BC_iload_0");
         String runString = null;
@@ -4631,6 +4665,22 @@ public class JavaTesterTests {
         // test(0) == -2.33
             runString = "test(0)";
             if (-2.33 != test.bytecode.BC_ldc_05.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_bytecode_BC_ldc_06() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_ldc_06");
+        String runString = null;
+        try {
+        // test(0) == test.bytecode.BC_ldc_06
+            runString = "test(0)";
+            if (!"test.bytecode.BC_ldc_06".equals(test.bytecode.BC_ldc_06.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
@@ -7988,6 +8038,72 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void test_except_Except_Synchronized01() {
+        JavaTesterRunScheme.begin("test.except.Except_Synchronized01");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.Except_Synchronized01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 2
+            runString = "test(1)";
+            if (2 != test.except.Except_Synchronized01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_Except_Synchronized02() {
+        JavaTesterRunScheme.begin("test.except.Except_Synchronized02");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.Except_Synchronized02.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 2
+            runString = "test(1)";
+            if (2 != test.except.Except_Synchronized02.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_Except_Synchronized03() {
+        JavaTesterRunScheme.begin("test.except.Except_Synchronized03");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.Except_Synchronized03.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 2
+            runString = "test(1)";
+            if (2 != test.except.Except_Synchronized03.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void test_except_Throw_InCatch01() {
         JavaTesterRunScheme.begin("test.except.Throw_InCatch01");
         String runString = null;
@@ -8177,6 +8293,74 @@ public class JavaTesterTests {
                     JavaTesterRunScheme.end(runString, e);
                     return;
                 }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_Throw_Synchronized05() {
+        JavaTesterRunScheme.begin("test.except.Throw_Synchronized05");
+        String runString = null;
+        try {
+        // test(0) == true
+            runString = "test(0)";
+            if (true != test.except.Throw_Synchronized05.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == !java.lang.Exception
+            try {
+                runString = "test(1)";
+                test.except.Throw_Synchronized05.test(1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.Exception.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_ArrayLength01() {
+        JavaTesterRunScheme.begin("test.optimize.ArrayLength01");
+        String runString = null;
+        try {
+        // test(0) == 5
+            runString = "test(0)";
+            if (5 != test.optimize.ArrayLength01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 6
+            runString = "test(1)";
+            if (6 != test.optimize.ArrayLength01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 7
+            runString = "test(2)";
+            if (7 != test.optimize.ArrayLength01.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == 8
+            runString = "test(3)";
+            if (8 != test.optimize.ArrayLength01.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == 4
+            runString = "test(4)";
+            if (4 != test.optimize.ArrayLength01.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
             }
         } catch (Throwable t) {
             JavaTesterRunScheme.end(runString, t);
@@ -8744,6 +8928,554 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void test_optimize_Fold_Cast01() {
+        JavaTesterRunScheme.begin("test.optimize.Fold_Cast01");
+        String runString = null;
+        try {
+        // test(0) == 9
+            runString = "test(0)";
+            if (9 != test.optimize.Fold_Cast01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 9
+            runString = "test(1)";
+            if (9 != test.optimize.Fold_Cast01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == !java.lang.NullPointerException
+            try {
+                runString = "test(2)";
+                test.optimize.Fold_Cast01.test(2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Fold_Convert01() {
+        JavaTesterRunScheme.begin("test.optimize.Fold_Convert01");
+        String runString = null;
+        try {
+        // test(0) == -128
+            runString = "test(0)";
+            if (-128 != test.optimize.Fold_Convert01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == -32768
+            runString = "test(1)";
+            if (-32768 != test.optimize.Fold_Convert01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 65535
+            runString = "test(2)";
+            if (65535 != test.optimize.Fold_Convert01.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Fold_Convert02() {
+        JavaTesterRunScheme.begin("test.optimize.Fold_Convert02");
+        String runString = null;
+        try {
+        // test(0) == -2147483648
+            runString = "test(0)";
+            if (-2147483648L != test.optimize.Fold_Convert02.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == -33
+            runString = "test(1)";
+            if (-33L != test.optimize.Fold_Convert02.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == -78
+            runString = "test(2)";
+            if (-78L != test.optimize.Fold_Convert02.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Fold_Convert03() {
+        JavaTesterRunScheme.begin("test.optimize.Fold_Convert03");
+        String runString = null;
+        try {
+        // test(0) == 1024.0
+            runString = "test(0)";
+            if (1024.0f != test.optimize.Fold_Convert03.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == -33.0
+            runString = "test(1)";
+            if (-33.0f != test.optimize.Fold_Convert03.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == -78.1
+            runString = "test(2)";
+            if (-78.1f != test.optimize.Fold_Convert03.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Fold_Convert04() {
+        JavaTesterRunScheme.begin("test.optimize.Fold_Convert04");
+        String runString = null;
+        try {
+        // test(0) == 1024.0
+            runString = "test(0)";
+            if (1024.0 != test.optimize.Fold_Convert04.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == -1.25
+            runString = "test(1)";
+            if (-1.25 != test.optimize.Fold_Convert04.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Fold_Double01() {
+        JavaTesterRunScheme.begin("test.optimize.Fold_Double01");
+        String runString = null;
+        try {
+        // test(0.0) == 10.0
+            runString = "test(0.0)";
+            if (10.0 != test.optimize.Fold_Double01.test(0.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == 11.0
+            runString = "test(1.0)";
+            if (11.0 != test.optimize.Fold_Double01.test(1.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2.0) == 12.0
+            runString = "test(2.0)";
+            if (12.0 != test.optimize.Fold_Double01.test(2.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3.0) == 13.0
+            runString = "test(3.0)";
+            if (13.0 != test.optimize.Fold_Double01.test(3.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4.0) == 14.0
+            runString = "test(4.0)";
+            if (14.0 != test.optimize.Fold_Double01.test(4.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Fold_Double02() {
+        JavaTesterRunScheme.begin("test.optimize.Fold_Double02");
+        String runString = null;
+        try {
+        // test(0) == true
+            runString = "test(0)";
+            if (true != test.optimize.Fold_Double02.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == true
+            runString = "test(1)";
+            if (true != test.optimize.Fold_Double02.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == true
+            runString = "test(2)";
+            if (true != test.optimize.Fold_Double02.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == false
+            runString = "test(3)";
+            if (false != test.optimize.Fold_Double02.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == false
+            runString = "test(4)";
+            if (false != test.optimize.Fold_Double02.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(5) == false
+            runString = "test(5)";
+            if (false != test.optimize.Fold_Double02.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Fold_Float01() {
+        JavaTesterRunScheme.begin("test.optimize.Fold_Float01");
+        String runString = null;
+        try {
+        // test(0.0) == 10.0
+            runString = "test(0.0)";
+            if (10.0f != test.optimize.Fold_Float01.test(0.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == 11.0
+            runString = "test(1.0)";
+            if (11.0f != test.optimize.Fold_Float01.test(1.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2.0) == 12.0
+            runString = "test(2.0)";
+            if (12.0f != test.optimize.Fold_Float01.test(2.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3.0) == 13.0
+            runString = "test(3.0)";
+            if (13.0f != test.optimize.Fold_Float01.test(3.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4.0) == 14.0
+            runString = "test(4.0)";
+            if (14.0f != test.optimize.Fold_Float01.test(4.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Fold_Float02() {
+        JavaTesterRunScheme.begin("test.optimize.Fold_Float02");
+        String runString = null;
+        try {
+        // test(0) == true
+            runString = "test(0)";
+            if (true != test.optimize.Fold_Float02.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == true
+            runString = "test(1)";
+            if (true != test.optimize.Fold_Float02.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == true
+            runString = "test(2)";
+            if (true != test.optimize.Fold_Float02.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == false
+            runString = "test(3)";
+            if (false != test.optimize.Fold_Float02.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == false
+            runString = "test(4)";
+            if (false != test.optimize.Fold_Float02.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(5) == false
+            runString = "test(5)";
+            if (false != test.optimize.Fold_Float02.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Fold_InstanceOf01() {
+        JavaTesterRunScheme.begin("test.optimize.Fold_InstanceOf01");
+        String runString = null;
+        try {
+        // test(0) == true
+            runString = "test(0)";
+            if (true != test.optimize.Fold_InstanceOf01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == true
+            runString = "test(1)";
+            if (true != test.optimize.Fold_InstanceOf01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == false
+            runString = "test(2)";
+            if (false != test.optimize.Fold_InstanceOf01.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Fold_Int01() {
+        JavaTesterRunScheme.begin("test.optimize.Fold_Int01");
+        String runString = null;
+        try {
+        // test(0) == 10
+            runString = "test(0)";
+            if (10 != test.optimize.Fold_Int01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 11
+            runString = "test(1)";
+            if (11 != test.optimize.Fold_Int01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 12
+            runString = "test(2)";
+            if (12 != test.optimize.Fold_Int01.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == 13
+            runString = "test(3)";
+            if (13 != test.optimize.Fold_Int01.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == 14
+            runString = "test(4)";
+            if (14 != test.optimize.Fold_Int01.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(5) == 15
+            runString = "test(5)";
+            if (15 != test.optimize.Fold_Int01.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(6) == 16
+            runString = "test(6)";
+            if (16 != test.optimize.Fold_Int01.test(6)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(7) == 17
+            runString = "test(7)";
+            if (17 != test.optimize.Fold_Int01.test(7)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Fold_Int02() {
+        JavaTesterRunScheme.begin("test.optimize.Fold_Int02");
+        String runString = null;
+        try {
+        // test(0) == true
+            runString = "test(0)";
+            if (true != test.optimize.Fold_Int02.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == true
+            runString = "test(1)";
+            if (true != test.optimize.Fold_Int02.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == true
+            runString = "test(2)";
+            if (true != test.optimize.Fold_Int02.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == false
+            runString = "test(3)";
+            if (false != test.optimize.Fold_Int02.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == false
+            runString = "test(4)";
+            if (false != test.optimize.Fold_Int02.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(5) == false
+            runString = "test(5)";
+            if (false != test.optimize.Fold_Int02.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Fold_Long01() {
+        JavaTesterRunScheme.begin("test.optimize.Fold_Long01");
+        String runString = null;
+        try {
+        // test(0) == 10
+            runString = "test(0)";
+            if (10L != test.optimize.Fold_Long01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 11
+            runString = "test(1)";
+            if (11L != test.optimize.Fold_Long01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 12
+            runString = "test(2)";
+            if (12L != test.optimize.Fold_Long01.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == 13
+            runString = "test(3)";
+            if (13L != test.optimize.Fold_Long01.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == 14
+            runString = "test(4)";
+            if (14L != test.optimize.Fold_Long01.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(5) == 15
+            runString = "test(5)";
+            if (15L != test.optimize.Fold_Long01.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(6) == 16
+            runString = "test(6)";
+            if (16L != test.optimize.Fold_Long01.test(6)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(7) == 17
+            runString = "test(7)";
+            if (17L != test.optimize.Fold_Long01.test(7)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Fold_Long02() {
+        JavaTesterRunScheme.begin("test.optimize.Fold_Long02");
+        String runString = null;
+        try {
+        // test(0) == true
+            runString = "test(0)";
+            if (true != test.optimize.Fold_Long02.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == true
+            runString = "test(1)";
+            if (true != test.optimize.Fold_Long02.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == true
+            runString = "test(2)";
+            if (true != test.optimize.Fold_Long02.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == false
+            runString = "test(3)";
+            if (false != test.optimize.Fold_Long02.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == false
+            runString = "test(4)";
+            if (false != test.optimize.Fold_Long02.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(5) == false
+            runString = "test(5)";
+            if (false != test.optimize.Fold_Long02.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void test_optimize_List_reorder_bug() {
         JavaTesterRunScheme.begin("test.optimize.List_reorder_bug");
         String runString = null;
@@ -8760,6 +9492,1010 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void test_optimize_Narrow_byte01() {
+        JavaTesterRunScheme.begin("test.optimize.Narrow_byte01");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if ((byte) 0 != test.optimize.Narrow_byte01.test((byte) 0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 1
+            runString = "test(1)";
+            if ((byte) 1 != test.optimize.Narrow_byte01.test((byte) 1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-1) == -1
+            runString = "test(-1)";
+            if ((byte) -1 != test.optimize.Narrow_byte01.test((byte) -1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(110) == 110
+            runString = "test(110)";
+            if ((byte) 110 != test.optimize.Narrow_byte01.test((byte) 110)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Narrow_byte02() {
+        JavaTesterRunScheme.begin("test.optimize.Narrow_byte02");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if ((byte) 0 != test.optimize.Narrow_byte02.test((byte) 0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 1
+            runString = "test(1)";
+            if ((byte) 1 != test.optimize.Narrow_byte02.test((byte) 1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-1) == -1
+            runString = "test(-1)";
+            if ((byte) -1 != test.optimize.Narrow_byte02.test((byte) -1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(110) == 110
+            runString = "test(110)";
+            if ((byte) 110 != test.optimize.Narrow_byte02.test((byte) 110)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Narrow_byte03() {
+        JavaTesterRunScheme.begin("test.optimize.Narrow_byte03");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if ((byte) 0 != test.optimize.Narrow_byte03.test((byte) 0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 1
+            runString = "test(1)";
+            if ((byte) 1 != test.optimize.Narrow_byte03.test((byte) 1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-1) == -1
+            runString = "test(-1)";
+            if ((byte) -1 != test.optimize.Narrow_byte03.test((byte) -1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(110) == 110
+            runString = "test(110)";
+            if ((byte) 110 != test.optimize.Narrow_byte03.test((byte) 110)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Narrow_char01() {
+        JavaTesterRunScheme.begin("test.optimize.Narrow_char01");
+        String runString = null;
+        try {
+        // test('\0') == '\0'
+            runString = "test('\0')";
+            if ((char) 0 != test.optimize.Narrow_char01.test((char) 0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test('\1') == '\1'
+            runString = "test('\1')";
+            if ((char) 1 != test.optimize.Narrow_char01.test((char) 1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test('\377') == '\377'
+            runString = "test('\377')";
+            if ((char) 255 != test.optimize.Narrow_char01.test((char) 255)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test('\176750') == '\176750'
+            runString = "test('\176750')";
+            if ((char) 65000 != test.optimize.Narrow_char01.test((char) 65000)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Narrow_char02() {
+        JavaTesterRunScheme.begin("test.optimize.Narrow_char02");
+        String runString = null;
+        try {
+        // test('\0') == '\0'
+            runString = "test('\0')";
+            if ((char) 0 != test.optimize.Narrow_char02.test((char) 0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test('\1') == '\1'
+            runString = "test('\1')";
+            if ((char) 1 != test.optimize.Narrow_char02.test((char) 1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test('\377') == '\377'
+            runString = "test('\377')";
+            if ((char) 255 != test.optimize.Narrow_char02.test((char) 255)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test('\176750') == '\176750'
+            runString = "test('\176750')";
+            if ((char) 65000 != test.optimize.Narrow_char02.test((char) 65000)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Narrow_char03() {
+        JavaTesterRunScheme.begin("test.optimize.Narrow_char03");
+        String runString = null;
+        try {
+        // test('\0') == '\0'
+            runString = "test('\0')";
+            if ((char) 0 != test.optimize.Narrow_char03.test((char) 0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test('\1') == '\1'
+            runString = "test('\1')";
+            if ((char) 1 != test.optimize.Narrow_char03.test((char) 1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test('\377') == '\377'
+            runString = "test('\377')";
+            if ((char) 255 != test.optimize.Narrow_char03.test((char) 255)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test('\176750') == '\176750'
+            runString = "test('\176750')";
+            if ((char) 65000 != test.optimize.Narrow_char03.test((char) 65000)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Narrow_short01() {
+        JavaTesterRunScheme.begin("test.optimize.Narrow_short01");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if ((short) 0 != test.optimize.Narrow_short01.test((short) 0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 1
+            runString = "test(1)";
+            if ((short) 1 != test.optimize.Narrow_short01.test((short) 1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-1) == -1
+            runString = "test(-1)";
+            if ((short) -1 != test.optimize.Narrow_short01.test((short) -1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(23110) == 23110
+            runString = "test(23110)";
+            if ((short) 23110 != test.optimize.Narrow_short01.test((short) 23110)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Narrow_short02() {
+        JavaTesterRunScheme.begin("test.optimize.Narrow_short02");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if ((short) 0 != test.optimize.Narrow_short02.test((short) 0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 1
+            runString = "test(1)";
+            if ((short) 1 != test.optimize.Narrow_short02.test((short) 1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-1) == -1
+            runString = "test(-1)";
+            if ((short) -1 != test.optimize.Narrow_short02.test((short) -1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(23110) == 23110
+            runString = "test(23110)";
+            if ((short) 23110 != test.optimize.Narrow_short02.test((short) 23110)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Narrow_short03() {
+        JavaTesterRunScheme.begin("test.optimize.Narrow_short03");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if ((short) 0 != test.optimize.Narrow_short03.test((short) 0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 1
+            runString = "test(1)";
+            if ((short) 1 != test.optimize.Narrow_short03.test((short) 1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-1) == -1
+            runString = "test(-1)";
+            if ((short) -1 != test.optimize.Narrow_short03.test((short) -1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(23110) == 23110
+            runString = "test(23110)";
+            if ((short) 23110 != test.optimize.Narrow_short03.test((short) 23110)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Reduce_Convert01() {
+        JavaTesterRunScheme.begin("test.optimize.Reduce_Convert01");
+        String runString = null;
+        try {
+        // test(0) == 10
+            runString = "test(0)";
+            if (10 != test.optimize.Reduce_Convert01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 11
+            runString = "test(1)";
+            if (11 != test.optimize.Reduce_Convert01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 12
+            runString = "test(2)";
+            if (12 != test.optimize.Reduce_Convert01.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Reduce_Double01() {
+        JavaTesterRunScheme.begin("test.optimize.Reduce_Double01");
+        String runString = null;
+        try {
+        // test(0.0) == 10.0
+            runString = "test(0.0)";
+            if (10.0 != test.optimize.Reduce_Double01.test(0.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == 11.0
+            runString = "test(1.0)";
+            if (11.0 != test.optimize.Reduce_Double01.test(1.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2.0) == 12.0
+            runString = "test(2.0)";
+            if (12.0 != test.optimize.Reduce_Double01.test(2.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3.0) == 13.0
+            runString = "test(3.0)";
+            if (13.0 != test.optimize.Reduce_Double01.test(3.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Reduce_Float01() {
+        JavaTesterRunScheme.begin("test.optimize.Reduce_Float01");
+        String runString = null;
+        try {
+        // test(0.0) == 10.0
+            runString = "test(0.0)";
+            if (10.0f != test.optimize.Reduce_Float01.test(0.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == 11.0
+            runString = "test(1.0)";
+            if (11.0f != test.optimize.Reduce_Float01.test(1.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2.0) == 12.0
+            runString = "test(2.0)";
+            if (12.0f != test.optimize.Reduce_Float01.test(2.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3.0) == 13.0
+            runString = "test(3.0)";
+            if (13.0f != test.optimize.Reduce_Float01.test(3.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Reduce_Int01() {
+        JavaTesterRunScheme.begin("test.optimize.Reduce_Int01");
+        String runString = null;
+        try {
+        // test(0) == 10
+            runString = "test(0)";
+            if (10 != test.optimize.Reduce_Int01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 11
+            runString = "test(1)";
+            if (11 != test.optimize.Reduce_Int01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 12
+            runString = "test(2)";
+            if (12 != test.optimize.Reduce_Int01.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == 13
+            runString = "test(3)";
+            if (13 != test.optimize.Reduce_Int01.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == 14
+            runString = "test(4)";
+            if (14 != test.optimize.Reduce_Int01.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(5) == 15
+            runString = "test(5)";
+            if (15 != test.optimize.Reduce_Int01.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(6) == 16
+            runString = "test(6)";
+            if (16 != test.optimize.Reduce_Int01.test(6)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(7) == 17
+            runString = "test(7)";
+            if (17 != test.optimize.Reduce_Int01.test(7)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Reduce_Int02() {
+        JavaTesterRunScheme.begin("test.optimize.Reduce_Int02");
+        String runString = null;
+        try {
+        // test(0) == 10
+            runString = "test(0)";
+            if (10 != test.optimize.Reduce_Int02.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 11
+            runString = "test(1)";
+            if (11 != test.optimize.Reduce_Int02.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 12
+            runString = "test(2)";
+            if (12 != test.optimize.Reduce_Int02.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == 13
+            runString = "test(3)";
+            if (13 != test.optimize.Reduce_Int02.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == 14
+            runString = "test(4)";
+            if (14 != test.optimize.Reduce_Int02.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(5) == 15
+            runString = "test(5)";
+            if (15 != test.optimize.Reduce_Int02.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(6) == 16
+            runString = "test(6)";
+            if (16 != test.optimize.Reduce_Int02.test(6)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(7) == 17
+            runString = "test(7)";
+            if (17 != test.optimize.Reduce_Int02.test(7)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Reduce_Int03() {
+        JavaTesterRunScheme.begin("test.optimize.Reduce_Int03");
+        String runString = null;
+        try {
+        // test(0) == 10
+            runString = "test(0)";
+            if (10 != test.optimize.Reduce_Int03.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 0
+            runString = "test(1)";
+            if (0 != test.optimize.Reduce_Int03.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 25
+            runString = "test(2)";
+            if (25 != test.optimize.Reduce_Int03.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == 1
+            runString = "test(3)";
+            if (1 != test.optimize.Reduce_Int03.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == 0
+            runString = "test(4)";
+            if (0 != test.optimize.Reduce_Int03.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(5) == 15
+            runString = "test(5)";
+            if (15 != test.optimize.Reduce_Int03.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(6) == 16
+            runString = "test(6)";
+            if (16 != test.optimize.Reduce_Int03.test(6)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(7) == 0
+            runString = "test(7)";
+            if (0 != test.optimize.Reduce_Int03.test(7)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Reduce_Int04() {
+        JavaTesterRunScheme.begin("test.optimize.Reduce_Int04");
+        String runString = null;
+        try {
+        // test(0) == 40
+            runString = "test(0)";
+            if (40 != test.optimize.Reduce_Int04.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 655360
+            runString = "test(1)";
+            if (655360 != test.optimize.Reduce_Int04.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Reduce_IntShift01() {
+        JavaTesterRunScheme.begin("test.optimize.Reduce_IntShift01");
+        String runString = null;
+        try {
+        // test(0) == 10
+            runString = "test(0)";
+            if (10 != test.optimize.Reduce_IntShift01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 11
+            runString = "test(1)";
+            if (11 != test.optimize.Reduce_IntShift01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 12
+            runString = "test(2)";
+            if (12 != test.optimize.Reduce_IntShift01.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == 13
+            runString = "test(3)";
+            if (13 != test.optimize.Reduce_IntShift01.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == 14
+            runString = "test(4)";
+            if (14 != test.optimize.Reduce_IntShift01.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(5) == 15
+            runString = "test(5)";
+            if (15 != test.optimize.Reduce_IntShift01.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Reduce_IntShift02() {
+        JavaTesterRunScheme.begin("test.optimize.Reduce_IntShift02");
+        String runString = null;
+        try {
+        // test(0) == 80
+            runString = "test(0)";
+            if (80 != test.optimize.Reduce_IntShift02.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 11
+            runString = "test(1)";
+            if (11 != test.optimize.Reduce_IntShift02.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 12
+            runString = "test(2)";
+            if (12 != test.optimize.Reduce_IntShift02.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == 13
+            runString = "test(3)";
+            if (13 != test.optimize.Reduce_IntShift02.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == 64
+            runString = "test(4)";
+            if (64 != test.optimize.Reduce_IntShift02.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Reduce_Long01() {
+        JavaTesterRunScheme.begin("test.optimize.Reduce_Long01");
+        String runString = null;
+        try {
+        // test(0) == 10
+            runString = "test(0)";
+            if (10L != test.optimize.Reduce_Long01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 11
+            runString = "test(1)";
+            if (11L != test.optimize.Reduce_Long01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 12
+            runString = "test(2)";
+            if (12L != test.optimize.Reduce_Long01.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == 13
+            runString = "test(3)";
+            if (13L != test.optimize.Reduce_Long01.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == 14
+            runString = "test(4)";
+            if (14L != test.optimize.Reduce_Long01.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(5) == 15
+            runString = "test(5)";
+            if (15L != test.optimize.Reduce_Long01.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(6) == 16
+            runString = "test(6)";
+            if (16L != test.optimize.Reduce_Long01.test(6)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(7) == 17
+            runString = "test(7)";
+            if (17L != test.optimize.Reduce_Long01.test(7)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Reduce_Long02() {
+        JavaTesterRunScheme.begin("test.optimize.Reduce_Long02");
+        String runString = null;
+        try {
+        // test(0) == 10
+            runString = "test(0)";
+            if (10L != test.optimize.Reduce_Long02.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 11
+            runString = "test(1)";
+            if (11L != test.optimize.Reduce_Long02.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 12
+            runString = "test(2)";
+            if (12L != test.optimize.Reduce_Long02.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == 13
+            runString = "test(3)";
+            if (13L != test.optimize.Reduce_Long02.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == 14
+            runString = "test(4)";
+            if (14L != test.optimize.Reduce_Long02.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(5) == 15
+            runString = "test(5)";
+            if (15L != test.optimize.Reduce_Long02.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(6) == 16
+            runString = "test(6)";
+            if (16L != test.optimize.Reduce_Long02.test(6)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(7) == 17
+            runString = "test(7)";
+            if (17L != test.optimize.Reduce_Long02.test(7)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Reduce_Long03() {
+        JavaTesterRunScheme.begin("test.optimize.Reduce_Long03");
+        String runString = null;
+        try {
+        // test(0) == 10
+            runString = "test(0)";
+            if (10L != test.optimize.Reduce_Long03.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 0
+            runString = "test(1)";
+            if (0L != test.optimize.Reduce_Long03.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 25
+            runString = "test(2)";
+            if (25L != test.optimize.Reduce_Long03.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == 1
+            runString = "test(3)";
+            if (1L != test.optimize.Reduce_Long03.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == 0
+            runString = "test(4)";
+            if (0L != test.optimize.Reduce_Long03.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(5) == 15
+            runString = "test(5)";
+            if (15L != test.optimize.Reduce_Long03.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(6) == 16
+            runString = "test(6)";
+            if (16L != test.optimize.Reduce_Long03.test(6)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(7) == 0
+            runString = "test(7)";
+            if (0L != test.optimize.Reduce_Long03.test(7)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Reduce_Long04() {
+        JavaTesterRunScheme.begin("test.optimize.Reduce_Long04");
+        String runString = null;
+        try {
+        // test(0) == 40
+            runString = "test(0)";
+            if (40L != test.optimize.Reduce_Long04.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 85899345920
+            runString = "test(1)";
+            if (85899345920L != test.optimize.Reduce_Long04.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Reduce_LongShift01() {
+        JavaTesterRunScheme.begin("test.optimize.Reduce_LongShift01");
+        String runString = null;
+        try {
+        // test(0) == 10
+            runString = "test(0)";
+            if (10L != test.optimize.Reduce_LongShift01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 11
+            runString = "test(1)";
+            if (11L != test.optimize.Reduce_LongShift01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 12
+            runString = "test(2)";
+            if (12L != test.optimize.Reduce_LongShift01.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == 13
+            runString = "test(3)";
+            if (13L != test.optimize.Reduce_LongShift01.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == 14
+            runString = "test(4)";
+            if (14L != test.optimize.Reduce_LongShift01.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(5) == 15
+            runString = "test(5)";
+            if (15L != test.optimize.Reduce_LongShift01.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Reduce_LongShift02() {
+        JavaTesterRunScheme.begin("test.optimize.Reduce_LongShift02");
+        String runString = null;
+        try {
+        // test(0) == 80
+            runString = "test(0)";
+            if (80L != test.optimize.Reduce_LongShift02.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 11
+            runString = "test(1)";
+            if (11L != test.optimize.Reduce_LongShift02.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 12
+            runString = "test(2)";
+            if (12L != test.optimize.Reduce_LongShift02.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == 13
+            runString = "test(3)";
+            if (13L != test.optimize.Reduce_LongShift02.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == 64
+            runString = "test(4)";
+            if (64L != test.optimize.Reduce_LongShift02.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Switch01() {
+        JavaTesterRunScheme.begin("test.optimize.Switch01");
+        String runString = null;
+        try {
+        // test(0) == 1
+            runString = "test(0)";
+            if (1 != test.optimize.Switch01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_Switch02() {
+        JavaTesterRunScheme.begin("test.optimize.Switch02");
+        String runString = null;
+        try {
+        // test(0) == 1
+            runString = "test(0)";
+            if (1 != test.optimize.Switch02.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 2
+            runString = "test(1)";
+            if (2 != test.optimize.Switch02.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void test_optimize_TypeCastElem() {
         JavaTesterRunScheme.begin("test.optimize.TypeCastElem");
         String runString = null;
@@ -8767,6 +10503,370 @@ public class JavaTesterTests {
         // test(10,13,25) == 4683
             runString = "test(10,13,25)";
             if (4683 != test.optimize.TypeCastElem.test(10, 13, 25)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_VN_Cast01() {
+        JavaTesterRunScheme.begin("test.optimize.VN_Cast01");
+        String runString = null;
+        try {
+        // test(0) == 18
+            runString = "test(0)";
+            if (18 != test.optimize.VN_Cast01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 18
+            runString = "test(1)";
+            if (18 != test.optimize.VN_Cast01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == !java.lang.NullPointerException
+            try {
+                runString = "test(2)";
+                test.optimize.VN_Cast01.test(2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_VN_Convert01() {
+        JavaTesterRunScheme.begin("test.optimize.VN_Convert01");
+        String runString = null;
+        try {
+        // test(0) == 20
+            runString = "test(0)";
+            if (20 != test.optimize.VN_Convert01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 22
+            runString = "test(1)";
+            if (22 != test.optimize.VN_Convert01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 24
+            runString = "test(2)";
+            if (24 != test.optimize.VN_Convert01.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_VN_Double01() {
+        JavaTesterRunScheme.begin("test.optimize.VN_Double01");
+        String runString = null;
+        try {
+        // test(0.0) == 22.0
+            runString = "test(0.0)";
+            if (22.0 != test.optimize.VN_Double01.test(0.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == 0.0
+            runString = "test(1.0)";
+            if (0.0 != test.optimize.VN_Double01.test(1.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2.0) == 144.0
+            runString = "test(2.0)";
+            if (144.0 != test.optimize.VN_Double01.test(2.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3.0) == 1.0
+            runString = "test(3.0)";
+            if (1.0 != test.optimize.VN_Double01.test(3.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_VN_Field01() {
+        JavaTesterRunScheme.begin("test.optimize.VN_Field01");
+        String runString = null;
+        try {
+        // test(0) == 18
+            runString = "test(0)";
+            if (18 != test.optimize.VN_Field01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 18
+            runString = "test(1)";
+            if (18 != test.optimize.VN_Field01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == !java.lang.NullPointerException
+            try {
+                runString = "test(2)";
+                test.optimize.VN_Field01.test(2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_VN_Float01() {
+        JavaTesterRunScheme.begin("test.optimize.VN_Float01");
+        String runString = null;
+        try {
+        // test(0.0) == 22.0
+            runString = "test(0.0)";
+            if (22.0f != test.optimize.VN_Float01.test(0.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == 0.0
+            runString = "test(1.0)";
+            if (0.0f != test.optimize.VN_Float01.test(1.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2.0) == 144.0
+            runString = "test(2.0)";
+            if (144.0f != test.optimize.VN_Float01.test(2.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3.0) == 1.0
+            runString = "test(3.0)";
+            if (1.0f != test.optimize.VN_Float01.test(3.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_VN_InstanceOf01() {
+        JavaTesterRunScheme.begin("test.optimize.VN_InstanceOf01");
+        String runString = null;
+        try {
+        // test(0) == true
+            runString = "test(0)";
+            if (true != test.optimize.VN_InstanceOf01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == true
+            runString = "test(1)";
+            if (true != test.optimize.VN_InstanceOf01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == false
+            runString = "test(2)";
+            if (false != test.optimize.VN_InstanceOf01.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_VN_Int01() {
+        JavaTesterRunScheme.begin("test.optimize.VN_Int01");
+        String runString = null;
+        try {
+        // test(0) == 6
+            runString = "test(0)";
+            if (6 != test.optimize.VN_Int01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 0
+            runString = "test(1)";
+            if (0 != test.optimize.VN_Int01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 36
+            runString = "test(2)";
+            if (36 != test.optimize.VN_Int01.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == 1
+            runString = "test(3)";
+            if (1 != test.optimize.VN_Int01.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == 0
+            runString = "test(4)";
+            if (0 != test.optimize.VN_Int01.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(5) == 5
+            runString = "test(5)";
+            if (5 != test.optimize.VN_Int01.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(6) == 7
+            runString = "test(6)";
+            if (7 != test.optimize.VN_Int01.test(6)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(7) == 0
+            runString = "test(7)";
+            if (0 != test.optimize.VN_Int01.test(7)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_VN_Int02() {
+        JavaTesterRunScheme.begin("test.optimize.VN_Int02");
+        String runString = null;
+        try {
+        // test(0) == 10
+            runString = "test(0)";
+            if (10 != test.optimize.VN_Int02.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 10
+            runString = "test(1)";
+            if (10 != test.optimize.VN_Int02.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 48
+            runString = "test(2)";
+            if (48 != test.optimize.VN_Int02.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_VN_Long01() {
+        JavaTesterRunScheme.begin("test.optimize.VN_Long01");
+        String runString = null;
+        try {
+        // test(0) == 6
+            runString = "test(0)";
+            if (6L != test.optimize.VN_Long01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 0
+            runString = "test(1)";
+            if (0L != test.optimize.VN_Long01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 36
+            runString = "test(2)";
+            if (36L != test.optimize.VN_Long01.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == 1
+            runString = "test(3)";
+            if (1L != test.optimize.VN_Long01.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == 0
+            runString = "test(4)";
+            if (0L != test.optimize.VN_Long01.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(5) == 5
+            runString = "test(5)";
+            if (5L != test.optimize.VN_Long01.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(6) == 7
+            runString = "test(6)";
+            if (7L != test.optimize.VN_Long01.test(6)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(7) == 0
+            runString = "test(7)";
+            if (0L != test.optimize.VN_Long01.test(7)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_optimize_VN_Long02() {
+        JavaTesterRunScheme.begin("test.optimize.VN_Long02");
+        String runString = null;
+        try {
+        // test(0) == 10
+            runString = "test(0)";
+            if (10L != test.optimize.VN_Long02.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 10
+            runString = "test(1)";
+            if (10L != test.optimize.VN_Long02.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 48
+            runString = "test(2)";
+            if (48L != test.optimize.VN_Long02.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
