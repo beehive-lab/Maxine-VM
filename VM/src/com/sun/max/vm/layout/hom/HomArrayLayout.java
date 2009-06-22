@@ -37,16 +37,16 @@ import com.sun.max.vm.value.*;
  */
 public abstract class HomArrayLayout<Value_Type extends Value<Value_Type>> extends HomArrayHeaderLayout implements ArrayLayout<Value_Type> {
 
-    protected final Kind<Value_Type> _elementKind;
+    protected final Kind<Value_Type> elementKind;
 
     public HomArrayLayout(GripScheme gripScheme, Kind<Value_Type> elementKind) {
         super(gripScheme);
-        _elementKind = elementKind;
+        this.elementKind = elementKind;
     }
 
     @INLINE
     public final Kind<Value_Type> elementKind() {
-        return _elementKind;
+        return elementKind;
     }
 
     public Layout.Category category() {
@@ -55,13 +55,13 @@ public abstract class HomArrayLayout<Value_Type extends Value<Value_Type>> exten
 
     @Override
     public final boolean isReferenceArrayLayout() {
-        final Kind rawKind = _elementKind;
+        final Kind rawKind = elementKind;
         return rawKind == Kind.REFERENCE;
     }
 
     @INLINE
     public final int elementSize() {
-        return elementKind().size();
+        return elementKind().width.numberOfBytes;
     }
 
     @INLINE
@@ -77,7 +77,7 @@ public abstract class HomArrayLayout<Value_Type extends Value<Value_Type>> exten
 
     @INLINE
     public final Offset getElementOffsetInCell(int index) {
-        return getElementOffsetFromOrigin(index).plus(_headerSize);
+        return getElementOffsetFromOrigin(index).plus(headerSize);
     }
 
     @INLINE
@@ -94,15 +94,15 @@ public abstract class HomArrayLayout<Value_Type extends Value<Value_Type>> exten
     @Override
     public void visitHeader(ObjectCellVisitor visitor, Object array) {
         super.visitHeader(visitor, array);
-        final int origin = -_arrayLengthOffset;
-        visitor.visitHeaderField(origin + _arrayLengthOffset, "length", JavaTypeDescriptor.WORD, new WordValue(lengthToWord(HostObjectAccess.getArrayLength(array))));
+        final int origin = -arrayLengthOffset;
+        visitor.visitHeaderField(origin + arrayLengthOffset, "length", JavaTypeDescriptor.WORD, new WordValue(lengthToWord(HostObjectAccess.getArrayLength(array))));
     }
 
     @PROTOTYPE_ONLY
     private void visitElements(ObjectCellVisitor visitor, Object array) {
         final int length = Array.getLength(array);
         final Hub hub = HostObjectAccess.readHub(array);
-        final Kind elementKind = hub.classActor().componentClassActor().kind();
+        final Kind elementKind = hub.classActor().componentClassActor().kind;
         if (elementKind == Kind.REFERENCE) {
             for (int i = 0; i < length; i++) {
                 final Object object = Array.get(array, i);
@@ -124,17 +124,17 @@ public abstract class HomArrayLayout<Value_Type extends Value<Value_Type>> exten
     }
 
     public int getHubReferenceOffsetInCell() {
-        return _headerSize + _hubOffset;
+        return headerSize + hubOffset;
     }
 
     public Value readValue(Kind kind, ObjectMirror mirror, int offset) {
-        assert kind.isPrimitiveOfSameSizeAs(_elementKind);
+        assert kind.isPrimitiveOfSameSizeAs(elementKind);
         final Value value = readHeaderValue(mirror, offset);
         if (value != null) {
             return value;
         }
-        assert offset % kind.size() == 0;
-        final int index = offset / kind.size();
+        assert offset % kind.width.numberOfBytes == 0;
+        final int index = offset / kind.width.numberOfBytes;
         return mirror.readElement(kind, index);
     }
 
@@ -144,8 +144,8 @@ public abstract class HomArrayLayout<Value_Type extends Value<Value_Type>> exten
             return;
         }
         assert offset % elementSize() == 0;
-        assert kind.isPrimitiveOfSameSizeAs(_elementKind);
+        assert kind.isPrimitiveOfSameSizeAs(elementKind);
         final int index = offset / elementSize();
-        mirror.writeElement(_elementKind, index, value);
+        mirror.writeElement(elementKind, index, value);
     }
 }

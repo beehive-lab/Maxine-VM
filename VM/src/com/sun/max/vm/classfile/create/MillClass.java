@@ -173,7 +173,7 @@ public class MillClass {
         numberOfInterfaces++;
     }
 
-    MillField _fieldList = null;
+    MillField fieldList = null;
     private int numberOfFields = 0;
 
     /**
@@ -305,8 +305,8 @@ public class MillClass {
                     final MillRefConstant c = (MillRefConstant) constant;
                     b[--i] = MillWord.byte0(c.nameAndTypeIndex);
                     b[--i] = MillWord.byte1(c.nameAndTypeIndex);
-                    b[--i] = MillWord.byte0(c._classIndex);
-                    b[--i] = MillWord.byte1(c._classIndex);
+                    b[--i] = MillWord.byte0(c.classIndex);
+                    b[--i] = MillWord.byte1(c.classIndex);
                     break;
                 }
                 case MillConstant.CONSTANT_NameAndType: {
@@ -340,7 +340,7 @@ public class MillClass {
         }
         b[i++] = MillWord.byte1(numberOfFields);
         b[i++] = MillWord.byte0(numberOfFields);
-        MillField field = _fieldList;
+        MillField field = fieldList;
         while (field != null) {
             b[i++] = MillWord.byte1(field.modifiers);
             b[i++] = MillWord.byte0(field.modifiers);

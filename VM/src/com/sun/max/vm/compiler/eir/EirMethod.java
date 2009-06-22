@@ -63,14 +63,14 @@ public class EirMethod extends AbstractIrMethod {
     /**
      * Locations where this method retrieves its parameters.
      */
-    private EirLocation[] _parameterLocations;
+    private EirLocation[] parameterLocations;
 
     public EirLocation[] parameterLocations() {
-        return _parameterLocations;
+        return parameterLocations;
     }
 
     public void setParameterLocations(EirLocation[] parameterLocations) {
-        _parameterLocations = parameterLocations;
+        this.parameterLocations = parameterLocations;
     }
 
     /**
@@ -86,14 +86,14 @@ public class EirMethod extends AbstractIrMethod {
         this.argumentLocations = argumentLocations;
     }
 
-    private EirLocation _resultLocation;
+    private EirLocation resultLocation;
 
     public EirLocation resultLocation() {
-        return _resultLocation;
+        return resultLocation;
     }
 
     protected void setResultLocation(EirLocation resultLocation) {
-        _resultLocation = resultLocation;
+        this.resultLocation = resultLocation;
     }
 
     private int frameSize;

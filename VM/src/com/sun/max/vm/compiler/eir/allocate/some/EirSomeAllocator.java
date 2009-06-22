@@ -407,14 +407,14 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
 
     private static final Timer constantAllocationTimer = GlobalMetrics.newTimer("RegisterAllocation-ConstantAllocation", Clock.SYSTEM_MILLISECONDS);
     private static final Timer variableSplittingTimer = GlobalMetrics.newTimer("RegisterAllocation-VariableSplitting", Clock.SYSTEM_MILLISECONDS);
-    private static final Timer _resettingTimer = GlobalMetrics.newTimer("RegisterAllocation-Resetting", Clock.SYSTEM_MILLISECONDS);
+    private static final Timer resettingTimer = GlobalMetrics.newTimer("RegisterAllocation-Resetting", Clock.SYSTEM_MILLISECONDS);
     private static final Timer resetting2Timer = GlobalMetrics.newTimer("RegisterAllocation-Resetting2", Clock.SYSTEM_MILLISECONDS);
     private static final Timer liveRangeBuildingTimer = GlobalMetrics.newTimer("RegisterAllocation-LiveRangeBuilding", Clock.SYSTEM_MILLISECONDS);
     private static final Timer preallocatedVariablePropogationTimer = GlobalMetrics.newTimer("RegisterAllocation-PreallocatedVariablePropogation", Clock.SYSTEM_MILLISECONDS);
     private static final Timer interferencesTimer = GlobalMetrics.newTimer("RegisterAllocation-Interferences", Clock.SYSTEM_MILLISECONDS);
     private static final Timer weighTimer = GlobalMetrics.newTimer("RegisterAllocation-Weigh", Clock.SYSTEM_MILLISECONDS);
     private static final Timer assignRequiredTimer = GlobalMetrics.newTimer("RegisterAllocation-AssignRequired", Clock.SYSTEM_MILLISECONDS);
-    private static final Timer _allocateTimer = GlobalMetrics.newTimer("RegisterAllocation-Allocate", Clock.SYSTEM_MILLISECONDS);
+    private static final Timer allocateTimer = GlobalMetrics.newTimer("RegisterAllocation-Allocate", Clock.SYSTEM_MILLISECONDS);
     private static final Timer coalescingTimer = GlobalMetrics.newTimer("RegisterAllocation-Coalescing", Clock.SYSTEM_MILLISECONDS);
     private static final Timer trimTimer = GlobalMetrics.newTimer("RegisterAllocation-Trimming", Clock.SYSTEM_MILLISECONDS);
     private static final Timer rankTimer = GlobalMetrics.newTimer("RegisterAllocation-Ranking", Clock.SYSTEM_MILLISECONDS);
@@ -434,7 +434,7 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
 
         methodGeneration().notifyAfterTransformation(methodGeneration().eirBlocks(), Transformation.VARIABLE_SPLITTING);
 
-        _resettingTimer.start();
+        resettingTimer.start();
         final Pool<EirVariable> variablePool = methodGeneration().variablePool();
         final PoolSet<EirVariable> emptyVariableSet = PoolSet.noneOf(variablePool);
         for (EirBlock block : methodGeneration().eirBlocks()) {
@@ -442,7 +442,7 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
                 instruction.resetLiveVariables(emptyVariableSet);
             }
         }
-        _resettingTimer.stop();
+        resettingTimer.stop();
 
         methodGeneration().notifyBeforeTransformation(methodGeneration().variables(), Transformation.LIVE_RANGES);
         resetting2Timer.start();
@@ -480,9 +480,9 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
         rankTimer.start();
         final EirVariable[] rankedVariables = rankVariables(variables);
         rankTimer.stop();
-        _allocateTimer.start();
+        allocateTimer.start();
         allocateVariables(rankedVariables);
-        _allocateTimer.stop();
+        allocateTimer.stop();
         assert assertPlausibleCorrectness();
         coalescingTimer.start();
         coalesceVariables(rankedVariables);

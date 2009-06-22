@@ -60,7 +60,7 @@ public final class Heap {
         }
     }
 
-    private static final VMBooleanXXOption _disableGCOption = register(new VMBooleanXXOption("-XX:-DisableGC", "Disable garbage collection."), MaxineVM.Phase.PRISTINE);
+    private static final VMBooleanXXOption disableGCOption = register(new VMBooleanXXOption("-XX:-DisableGC", "Disable garbage collection."), MaxineVM.Phase.PRISTINE);
 
     private static Size maxSize;
     private static Size initialSize;
@@ -117,13 +117,13 @@ public final class Heap {
         return initialHeapSizeOption.isPresent();
     }
 
-    private static final VMOption _verboseOption = register(new VMOption("-verbose:gc", "Report on each garbage collection event."), MaxineVM.Phase.PRISTINE);
+    private static final VMOption verboseOption = register(new VMOption("-verbose:gc", "Report on each garbage collection event."), MaxineVM.Phase.PRISTINE);
 
     /**
      * Determines if information should be displayed about each garbage collection event.
      */
     public static boolean verbose() {
-        return _verboseOption.isPresent() || Heap.traceGCRootScanning() || Heap.traceGCTime() || Heap.traceGC();
+        return verboseOption.isPresent() || Heap.traceGCRootScanning() || Heap.traceGCTime() || Heap.traceGC();
     }
 
     private static boolean traceAllocation;
@@ -167,7 +167,7 @@ public final class Heap {
      */
     @INLINE
     public static boolean traceGC() {
-        return _traceGC;
+        return traceGC;
     }
 
     /**
@@ -186,15 +186,15 @@ public final class Heap {
         return traceGCTime;
     }
 
-    private static boolean _traceGC;
+    private static boolean traceGC;
     private static boolean traceGCRootScanning;
     private static boolean traceGCTime;
 
-    private static final VMOption _traceGCOption = register(new VMOption("-XX:TraceGC", "Trace garbage collection activity.") {
+    private static final VMOption traceGCOption = register(new VMOption("-XX:TraceGC", "Trace garbage collection activity.") {
         @Override
         public boolean parseValue(Pointer optionValue) {
             if (CString.equals(optionValue, "")) {
-                _traceGC = true;
+                traceGC = true;
                 traceGCRootScanning = true;
                 traceGCTime = true;
             } else if (CString.equals(optionValue, ":RootScanning")) {
@@ -220,15 +220,15 @@ public final class Heap {
      * @return
      */
     public static boolean gcDisabled() {
-        return _disableGCOption.getValue();
+        return disableGCOption.getValue();
     }
 
     @INSPECTED
-    private static final BootHeapRegion _bootHeapRegion = new BootHeapRegion(Address.zero(), Size.fromInt(Integer.MAX_VALUE), "Heap-Boot");
+    private static final BootHeapRegion bootHeapRegion = new BootHeapRegion(Address.zero(), Size.fromInt(Integer.MAX_VALUE), "Heap-Boot");
 
     @INLINE
     public static BootHeapRegion bootHeapRegion() {
-        return _bootHeapRegion;
+        return bootHeapRegion;
     }
 
     @UNSAFE
@@ -265,7 +265,7 @@ public final class Heap {
     private static void traceCreateArray(DynamicHub hub, int length, final Object array) {
         final boolean lockDisabledSafepoints = Log.lock();
         Log.print("Allocated array ");
-        Log.print(hub.classActor().name().string());
+        Log.print(hub.classActor().name.string);
         Log.print(" of length ");
         Log.print(length);
         Log.print(" at ");
@@ -289,7 +289,7 @@ public final class Heap {
     private static void traceCreateTuple(Hub hub, final Object object) {
         final boolean lockDisabledSafepoints = Log.lock();
         Log.print("Allocated tuple ");
-        Log.print(hub.classActor().name().string());
+        Log.print(hub.classActor().name.string);
         Log.print(" at ");
         Log.print(Layout.originToCell(ObjectAccess.toOrigin(object)));
         Log.print(" [");
@@ -311,7 +311,7 @@ public final class Heap {
     private static void traceCreateHybrid(DynamicHub hub, final Object hybrid) {
         final boolean lockDisabledSafepoints = Log.lock();
         Log.print("Allocated hybrid ");
-        Log.print(hub.classActor().name().string());
+        Log.print(hub.classActor().name.string);
         Log.print(" at ");
         Log.print(Layout.originToCell(ObjectAccess.toOrigin(hybrid)));
         Log.print(" [");
@@ -334,7 +334,7 @@ public final class Heap {
         final boolean lockDisabledSafepoints = Log.lock();
         Log.print("Allocated expanded hybrid ");
         final Hub hub = ObjectAccess.readHub(hybrid);
-        Log.print(hub.classActor().name().string());
+        Log.print(hub.classActor().name.string);
         Log.print(" at ");
         Log.print(Layout.originToCell(ObjectAccess.toOrigin(expandedHybrid)));
         Log.print(" [");
@@ -357,7 +357,7 @@ public final class Heap {
         final boolean lockDisabledSafepoints = Log.lock();
         Log.print("Allocated cloned ");
         final Hub hub = ObjectAccess.readHub(object);
-        Log.print(hub.classActor().name().string());
+        Log.print(hub.classActor().name.string);
         Log.print(" at ");
         Log.print(Layout.originToCell(ObjectAccess.toOrigin(clone)));
         Log.print(" [");

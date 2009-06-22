@@ -118,7 +118,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
 
     @Override
     protected void loadTemplateArgumentRelativeToInstructionPointer(Kind kind, int parameterIndex, int offsetFromInstructionPointer) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case LONG:
             case WORD:
             case REFERENCE: {
@@ -150,7 +150,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
     /**
      * Templates for native branch instructions with a short (8 bits) relative offset.
      */
-    private static final BranchConditionMap<byte[]> _rel8BranchTemplates = new BranchConditionMap<byte[]>();
+    private static final BranchConditionMap<byte[]> rel8BranchTemplates = new BranchConditionMap<byte[]>();
 
     /**
      * Templates for native branch instructions with a long (32 bits) relative offset.
@@ -161,9 +161,9 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
      * Table of templates for tableswitch bytecode. There is one template for each byte of an alignment requirement for the
      * jump table (e.g., if the requirement is 4-bytes aligned, there are 4 templates, one for offsets 0, 1, 2 and 3).
      */
-    private static final byte[][] tableSwitchTemplates = new byte[WordWidth.BITS_32.numberOfBytes()][];
+    private static final byte[][] tableSwitchTemplates = new byte[WordWidth.BITS_32.numberOfBytes][];
 
-    private static byte[] _lookupSwitchTemplate;
+    private static byte[] lookupSwitchTemplate;
     private static ImmediateConstantModifier tableswitchHighMatchModifier;
     private static ImmediateConstantModifier tableswitchIndexAdjustModifier;
     private static BranchTargetModifier tableswitchBranchToDefaultTargetModifier;
@@ -174,7 +174,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
     /**
      * Editors of the template for conditional branch with short offset (<= 8 bits).
      */
-    private final BranchConditionMap<AMD64InstructionEditor> _rel8BranchEditors;
+    private final BranchConditionMap<AMD64InstructionEditor> rel8BranchEditors;
 
     /**
      * Editors of the template for conditional branch with long offset (> 8 bits and <= 32 bits).
@@ -199,15 +199,15 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
     }
 
     public BytecodeToAMD64TargetTranslator(ClassMethodActor classMethodActor, CodeBuffer codeBuffer, TemplateTable templateTable, EirABI optimizingCompilerAbi, boolean trace) {
-        super(classMethodActor, codeBuffer, templateTable, new AMD64JitStackFrameLayout(classMethodActor, templateTable.maxFrameSlots()), trace);
-        _rel8BranchEditors = new BranchConditionMap<AMD64InstructionEditor>();
+        super(classMethodActor, codeBuffer, templateTable, new AMD64JitStackFrameLayout(classMethodActor, templateTable.maxFrameSlots), trace);
+        rel8BranchEditors = new BranchConditionMap<AMD64InstructionEditor>();
         rel32BranchEditors = new BranchConditionMap<AMD64InstructionEditor>();
         // Make copies of the template. That's because at the moment, the translator works by modifying the template, then
         // copying the modified template in the code buffer. Thus, if we want concurrent compilation to occur, each translator needs
         // it's own copy of the templates.
         // FIXME: may want to do this lazily, i.e., allocate editors as needed (causes an extra test).
         for (BranchCondition cond :  BranchCondition.VALUES) {
-            _rel8BranchEditors.put(cond, new AMD64InstructionEditor(_rel8BranchTemplates.get(cond).clone()));
+            rel8BranchEditors.put(cond, new AMD64InstructionEditor(rel8BranchTemplates.get(cond).clone()));
             rel32BranchEditors.put(cond, new AMD64InstructionEditor(rel32BranchTemplates.get(cond).clone()));
         }
 
@@ -261,12 +261,12 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
                 // Note that the safepoint takes place once the stack frame is in the same state as that of the target bytecode.
                 // The reference maps of the target should be used when at this safepoint.
                 final int stopPosition = codeBuffer.currentPosition();
-                codeBuffer.emit(VMConfiguration.hostOrTarget().safepoint().code());
+                codeBuffer.emit(VMConfiguration.hostOrTarget().safepoint().code);
                 emitSafepoint(new BackwardBranchBytecodeSafepoint(stopPosition, currentOpcodePosition()));
             }
             // Compute relative offset.
             final int toBranchTarget = bytecodeToTargetCodePosition(toBytecodePosition);
-            final int endOfRel8BranchInstruction = codeBuffer.currentPosition() + _rel8BranchTemplates.get(branchCondition).length;
+            final int endOfRel8BranchInstruction = codeBuffer.currentPosition() + rel8BranchTemplates.get(branchCondition).length;
             offsetToBranchTarget = toBranchTarget - endOfRel8BranchInstruction;
             if (WordWidth.signedEffective(offsetToBranchTarget) != WordWidth.BITS_8) {
                 final int endOfRel32BranchInstruction = codeBuffer.currentPosition() + rel32BranchTemplates.get(branchCondition).length;
@@ -274,7 +274,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
                 branchEditor = rel32BranchEditors.get(branchCondition);
             } else {
                 // Stay with 8 bits branch. Change the default setting:
-                branchEditor = _rel8BranchEditors.get(branchCondition);
+                branchEditor = rel8BranchEditors.get(branchCondition);
                 offsetWidth = WordWidth.BITS_8;
             }
         }
@@ -299,7 +299,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
         try {
             int effectiveHighMatch = highMatch;
             // What's the offset of the code buffer pointer to the last 4-byte aligned word ?
-            final int mask = WordWidth.BITS_32.numberOfBytes() - 1;
+            final int mask = WordWidth.BITS_32.numberOfBytes - 1;
             final int templateIndex = codeBuffer.currentPosition() & mask;
             final byte[] tableSwitchTemplate = tableSwitchTemplates[templateIndex].clone();
             if (lowMatch != 0) {
@@ -333,7 +333,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
         try {
             final int templateTargetCodePosition = bytecodeToTargetCodePosition(tableSwitch.opcodePosition);
             // The default target is expressed as an offset from the tableswitch bytecode. Compute the default target's position relative to the beginning of the method.
-            final int defaultTargetTargetCodePosition = bytecodeToTargetCodePosition(tableSwitch._defaultTargetBytecodePosition);
+            final int defaultTargetTargetCodePosition = bytecodeToTargetCodePosition(tableSwitch.defaultTargetBytecodePosition);
             // Fix the branch target in the template.
             final int offsetToDefaultTarget = defaultTargetTargetCodePosition - (templateTargetCodePosition + tableswitchBranchToDefaultTargetModifier.endPosition());
             codeBuffer.fix(templateTargetCodePosition, tableswitchBranchToDefaultTargetModifier, offsetToDefaultTarget);
@@ -366,7 +366,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
                 }
                 return;
             }
-            final byte[] lookupSwitchTemplate = _lookupSwitchTemplate.clone();
+            final byte[] lookupSwitchTemplate = BytecodeToAMD64TargetTranslator.lookupSwitchTemplate.clone();
             // Fix the index to the last match value in the jump table
             final int lastMatchIndex = (numberOfCases - 1) * 2;
             lookupswitchMaxIndexModifier.fix(lookupSwitchTemplate, lastMatchIndex);
@@ -394,14 +394,14 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
         try {
             final int templateAddress = bytecodeToTargetCodePosition(lookupSwitch.opcodePosition);
             // The default target is expressed as an offset from the lookupswitch bytecode. Compute the default target's position relative to the beginning of the method.
-            final int defaultTargetAddress = bytecodeToTargetCodePosition(lookupSwitch._defaultTargetBytecodePosition);
+            final int defaultTargetAddress = bytecodeToTargetCodePosition(lookupSwitch.defaultTargetBytecodePosition);
             // Fix the branches to the default  target in the template.
             final int offsetToDefaultTarget = defaultTargetAddress - (templateAddress + lookupswitchBranchToDefaultTargetModifier.endPosition());
             codeBuffer.fix(templateAddress, lookupswitchBranchToDefaultTargetModifier, offsetToDefaultTarget);
 
             asm.reset();
             final Directives directives = asm.directives();
-            final int matchOffsetPairTableAddress =  templateAddress + _lookupSwitchTemplate.length;
+            final int matchOffsetPairTableAddress =  templateAddress + lookupSwitchTemplate.length;
             // Initialize the match offset pair table: matching values are at even positions, offset to target at odd positions
             for (int i = 0; i < lookupSwitch.matches.length; i++) {
                 directives.inlineInt(lookupSwitch.matches[i]);
@@ -440,7 +440,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
             asm.nop();
             asm.nop();
             asm.nop();
-            dir.align(Kind.BYTE.size() * 4);  // forcing alignment to the next 4-bytes will always provide an 8-bytes long prologue.
+            dir.align(Kind.BYTE.width.numberOfBytes * 4);  // forcing alignment to the next 4-bytes will always provide an 8-bytes long prologue.
 
             // Entry point to the optimized code
             final Label adapterCodeStart = new Label();
@@ -486,42 +486,42 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
         final AMD64Assembler asm = new AMD64Assembler();
 
         asm.jmp(rel8);
-        _rel8BranchTemplates.put(NONE, toByteArrayAndReset(asm));
+        rel8BranchTemplates.put(NONE, toByteArrayAndReset(asm));
         asm.jmp(rel32);
         rel32BranchTemplates.put(NONE, toByteArrayAndReset(asm));
 
         asm.jz(rel8);
-        _rel8BranchTemplates.put(EQ, toByteArrayAndReset(asm));
+        rel8BranchTemplates.put(EQ, toByteArrayAndReset(asm));
         asm.jz(rel32);
         rel32BranchTemplates.put(EQ, toByteArrayAndReset(asm));
 
         asm.jnz(rel8);
-        _rel8BranchTemplates.put(NE, toByteArrayAndReset(asm));
+        rel8BranchTemplates.put(NE, toByteArrayAndReset(asm));
         asm.jnz(rel32);
         rel32BranchTemplates.put(NE, toByteArrayAndReset(asm));
 
         asm.jl(rel8);
-        _rel8BranchTemplates.put(LT, toByteArrayAndReset(asm));
+        rel8BranchTemplates.put(LT, toByteArrayAndReset(asm));
         asm.jl(rel32);
         rel32BranchTemplates.put(LT, toByteArrayAndReset(asm));
 
         asm.jnl(rel8);
-        _rel8BranchTemplates.put(GE, toByteArrayAndReset(asm));
+        rel8BranchTemplates.put(GE, toByteArrayAndReset(asm));
         asm.jnl(rel32);
         rel32BranchTemplates.put(GE, toByteArrayAndReset(asm));
 
         asm.jnle(rel8);
-        _rel8BranchTemplates.put(GT, toByteArrayAndReset(asm));
+        rel8BranchTemplates.put(GT, toByteArrayAndReset(asm));
         asm.jnle(rel32);
         rel32BranchTemplates.put(GT, toByteArrayAndReset(asm));
 
         asm.jle(rel8);
-        _rel8BranchTemplates.put(LE, toByteArrayAndReset(asm));
+        rel8BranchTemplates.put(LE, toByteArrayAndReset(asm));
         asm.jle(rel32);
         rel32BranchTemplates.put(LE, toByteArrayAndReset(asm));
 
         for (BranchCondition branchCondition : BranchCondition.VALUES) {
-            assert _rel8BranchTemplates.get(branchCondition) != null;
+            assert rel8BranchTemplates.get(branchCondition) != null;
             assert rel32BranchTemplates.get(branchCondition) != null;
         }
 
@@ -586,7 +586,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
         asm.add(tableRegister, indexRegister64);
         asm.jmp(tableRegister);
         asm.bindLabel(valueTable);
-        _lookupSwitchTemplate = toByteArrayAndReset(asm);
+        lookupSwitchTemplate = toByteArrayAndReset(asm);
         lookupswitchMaxIndexModifier = new ImmediateConstantModifier(toPosition(initLastMatchIndex), toPosition(loopBegin) - toPosition(initLastMatchIndex), IntValue.from(0));
         lookupswitchBranchToDefaultTargetModifier = new BranchTargetModifier(toPosition(branchToDefaultTarget), toPosition(found) - toPosition(branchToDefaultTarget), WordWidth.BITS_32);
     }
@@ -630,7 +630,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
         asm.jmp(targetRegister);
 
         // setup the inlined jmp table.
-        directives.align(WordWidth.BITS_32.numberOfBytes());
+        directives.align(WordWidth.BITS_32.numberOfBytes);
         asm.bindLabel(jumpTable);
         final byte[] emitted = toByteArrayAndReset(asm);
         final byte[] template = new byte[emitted.length - numBytesFromAlignment];

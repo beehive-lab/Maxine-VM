@@ -36,22 +36,18 @@ public abstract class EirSwitch<EirInstructionVisitor_Type extends EirInstructio
         return tag;
     }
 
-    private final EirOperand[] _matches;
+    private final EirOperand[] matches;
 
     public EirOperand[] matches() {
-        return _matches;
+        return matches;
     }
 
-    private final EirBlock[] targets;
+    public final EirBlock[] targets;
 
-    public EirBlock[] targets() {
-        return targets;
-    }
-
-    private EirBlock _defaultTarget;
+    private EirBlock defaultTarget;
 
     public EirBlock defaultTarget() {
-        return _defaultTarget;
+        return defaultTarget;
     }
 
     public EirSwitch(EirBlock block, EirValue tag, EirValue[] matches, EirBlock[] targets, EirBlock defaultTarget) {
@@ -60,23 +56,23 @@ public abstract class EirSwitch<EirInstructionVisitor_Type extends EirInstructio
         assert matches.length == targets.length;
         this.tag = new EirOperand(this, EirOperand.Effect.USE, G);
         this.tag.setEirValue(tag);
-        _matches = new EirOperand[matches.length];
+        this.matches = new EirOperand[matches.length];
         for (int i = 0; i < matches.length; i++) {
-            _matches[i] = new EirOperand(this, EirOperand.Effect.USE, I32_I64_L);
-            _matches[i].setEirValue(matches[i]);
+            this.matches[i] = new EirOperand(this, EirOperand.Effect.USE, I32_I64_L);
+            this.matches[i].setEirValue(matches[i]);
         }
         this.targets = targets;
         for (EirBlock target : targets) {
             target.addPredecessor(block);
         }
-        _defaultTarget = defaultTarget;
-        _defaultTarget.addPredecessor(block);
+        this.defaultTarget = defaultTarget;
+        this.defaultTarget.addPredecessor(block);
     }
 
     @Override
     public void visitOperands(EirOperand.Procedure visitor) {
         visitor.run(tag);
-        for (EirOperand match : _matches) {
+        for (EirOperand match : matches) {
             visitor.run(match);
         }
     }
@@ -84,8 +80,8 @@ public abstract class EirSwitch<EirInstructionVisitor_Type extends EirInstructio
     @Override
     public void visitSuccessorBlocks(EirBlock.Procedure procedure) {
         super.visitSuccessorBlocks(procedure);
-        if (_defaultTarget != null) {
-            procedure.run(_defaultTarget);
+        if (defaultTarget != null) {
+            procedure.run(defaultTarget);
         }
         for (EirBlock block : targets) {
             procedure.run(block);
@@ -95,8 +91,8 @@ public abstract class EirSwitch<EirInstructionVisitor_Type extends EirInstructio
     @Override
     public void substituteSuccessorBlocks(Mapping<EirBlock, EirBlock> map) {
         super.substituteSuccessorBlocks(map);
-        if (map.containsKey(_defaultTarget)) {
-            _defaultTarget = map.get(_defaultTarget);
+        if (map.containsKey(defaultTarget)) {
+            defaultTarget = map.get(defaultTarget);
         }
 
         for (int i = 0; i < targets.length; i++) {
@@ -121,8 +117,8 @@ public abstract class EirSwitch<EirInstructionVisitor_Type extends EirInstructio
 
     @Override
     public EirBlock selectSuccessorBlock(PoolSet<EirBlock> eligibleBlocks) {
-        if (eligibleBlocks.contains(_defaultTarget)) {
-            return _defaultTarget;
+        if (eligibleBlocks.contains(defaultTarget)) {
+            return defaultTarget;
         }
         for (EirBlock block : targets) {
             if (eligibleBlocks.contains(block)) {

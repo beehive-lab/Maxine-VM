@@ -315,7 +315,7 @@ public abstract class ObjectInspector extends Inspector {
             for (FieldActor fieldActor : localFieldActors) {
                 fieldActors.add(fieldActor);
             }
-            collectFieldActors(classActor.superClassActor(), isStatic, fieldActors);
+            collectFieldActors(classActor.superClassActor, isStatic, fieldActors);
         }
     }
 

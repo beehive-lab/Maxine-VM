@@ -123,7 +123,7 @@ public final class JDK_java_lang_Throwable {
     }
 
     private static void addStackTraceElements(List<StackTraceElement> result, TargetMethod targetMethod, StackFrame stackFrame) {
-        final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer());
+        final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer);
         if (bytecodeLocations == null) {
             addDefaultStackTraceElement(result, targetMethod.classMethodActor(), -1);
         } else {
@@ -147,7 +147,7 @@ public final class JDK_java_lang_Throwable {
      */
     private static void addDefaultStackTraceElement(final List<StackTraceElement> result, final ClassMethodActor classMethodActor, int sourceLineNumber) {
         final ClassActor holder = classMethodActor.holder();
-        result.add(new StackTraceElement(holder.name().toString(), classMethodActor.name().toString(), holder.sourceFileName(), sourceLineNumber));
+        result.add(new StackTraceElement(holder.name.toString(), classMethodActor.name.toString(), holder.sourceFileName, sourceLineNumber));
     }
 
     /**

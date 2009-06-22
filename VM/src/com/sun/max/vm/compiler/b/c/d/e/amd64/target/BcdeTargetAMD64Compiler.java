@@ -97,7 +97,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                                                       VMRegister.getCpuStackPointer(),
                                                       VMRegister.getCpuFramePointer(),
                                                       context);
-        final Pointer callSite = context.instructionPointer().minus(RIP_CALL_INSTRUCTION_SIZE);
+        final Pointer callSite = context.instructionPointer.minus(RIP_CALL_INSTRUCTION_SIZE);
         final TargetMethod caller = Code.codePointerToTargetMethod(callSite);
 
         final ClassMethodActor callee = caller.callSiteToCallee(callSite);
@@ -114,7 +114,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
         patchRipCallSite(callSite, calleeEntryPoint);
 
         // Make the trampoline's caller re-execute the now modified CALL instruction after we return from the trampoline:
-        final Pointer stackPointer = context.stackPointer().minus(Word.size());
+        final Pointer stackPointer = context.stackPointer.minus(Word.size());
         stackPointer.setWord(callSite); // patch return address
     }
 
@@ -302,7 +302,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                 final Address catchAddress = targetMethod.throwAddressToCatchAddress(throwAddress);
                 if (!catchAddress.isZero()) {
                     final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
-                    final Throwable throwable = stackUnwindingContext._throwable;
+                    final Throwable throwable = stackUnwindingContext.throwable;
                     if (!(throwable instanceof StackOverflowError) || VmThread.current().hasSufficentStackToReprotectGuardPage(stackPointer)) {
                         // Reset the stack walker
                         stackFrameWalker.reset();

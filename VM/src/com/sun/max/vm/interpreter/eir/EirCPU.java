@@ -44,14 +44,14 @@ import com.sun.max.vm.value.*;
  */
 public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
 
-    private final EirInterpreter _interpreter;
+    private final EirInterpreter interpreter;
 
     protected EirInterpreter interpreter() {
-        return _interpreter;
+        return interpreter;
     }
 
     protected int stackSlotSize() {
-        return _interpreter.abi().stackSlotSize();
+        return interpreter.abi().stackSlotSize();
     }
 
     public static class InstructionAddress {
@@ -134,7 +134,7 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
     }
 
     protected EirCPU(EirInterpreter interpreter) {
-        _interpreter = interpreter;
+        this.interpreter = interpreter;
         stack = new EirStack();
     }
 
@@ -143,7 +143,7 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
      * This is a deep copy except for the reference to the interpreter.
      */
     protected EirCPU(EirCPU cpu) {
-        _interpreter = cpu._interpreter;
+        this.interpreter = cpu.interpreter;
         stack = cpu.stack.save();
         currentInstructionAddress = cpu.currentInstructionAddress;
         nextInstructionAddress = cpu.nextInstructionAddress;
@@ -174,22 +174,22 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
     public Value pop() {
         final Address sp = readStackPointer();
         final Value value = stack().read(sp);
-        writeStackPointer(sp.plus(_interpreter.abi().stackSlotSize()));
+        writeStackPointer(sp.plus(interpreter.abi().stackSlotSize()));
         return value;
     }
 
     public void push(Value value) {
         final Address sp = readStackPointer();
-        writeStackPointer(sp.minus(_interpreter.abi().stackSlotSize()));
+        writeStackPointer(sp.minus(interpreter.abi().stackSlotSize()));
         stack().write(readStackPointer(), value);
     }
 
     protected EirRegister stackPointer() {
-        return _interpreter.abi().stackPointer();
+        return interpreter.abi().stackPointer();
     }
 
     private EirRegister framePointer() {
-        return _interpreter.abi().framePointer();
+        return interpreter.abi().framePointer();
     }
 
     /**
@@ -200,7 +200,7 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
      */
     public int offset(EirStackSlot slot) {
         if (slot.purpose() == EirStackSlot.Purpose.PARAMETER) {
-            final EirFrame frame = _interpreter.frame();
+            final EirFrame frame = interpreter.frame();
             // Add one slot to account for the pushed return address and then add the size of the local stack frame
             return slot.offset() + frame.abi().stackSlotSize() + frame.method().frameSize();
         }
@@ -263,7 +263,7 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
     }
 
     public Value read(Kind kind, EirLocation location) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case BYTE: {
                 return ByteValue.from(readByte(location));
             }
@@ -302,7 +302,7 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
 
     public void write(EirLocation location, Value value) {
         if (value != null) {
-            switch (value.kind().asEnum()) {
+            switch (value.kind().asEnum) {
                 case BYTE:
                 case BOOLEAN:
                 case SHORT:
@@ -504,7 +504,7 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
 
         private final String header;
         private final AppendableIndexedSequence<String> entries = new ArrayListSequence<String>();
-        private int _width = 0;
+        private int width = 0;
 
         public TextTableColumn(String header) {
             this.header = header;
@@ -512,7 +512,7 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
 
         public void add(String entry) {
             entries.append(entry);
-            _width = Math.max(_width, entry.length());
+            width = Math.max(width, entry.length());
         }
 
         public String header() {
@@ -520,7 +520,7 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
         }
 
         public int width() {
-            return _width;
+            return width;
         }
 
         public IndexedSequence<String> entries() {

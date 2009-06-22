@@ -185,10 +185,10 @@ public abstract class Stop {
      * Represents a {@linkplain StopType#DIRECT_CALL direct call} stop inserted when compiling an {@linkplain Bytecode.Flags#INVOKE_ invoke} bytecode.
      */
     public static class BytecodeDirectCall extends Stop {
-        final ClassMethodActor _callee;
+        final ClassMethodActor callee;
         public BytecodeDirectCall(int position, int bytecodePosition, ClassMethodActor callee) {
             super(position, bytecodePosition);
-            _callee = callee;
+            this.callee = callee;
         }
 
         @Override
@@ -198,7 +198,7 @@ public abstract class Stop {
 
         @Override
         public ClassMethodActor directCallee() {
-            return _callee;
+            return callee;
         }
 
         @Override

@@ -32,11 +32,7 @@ import com.sun.max.vm.type.*;
 
 
 public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
-    private final Kind _kind;
-
-    public Kind kind() {
-        return _kind;
-    }
+    public final Kind kind;
 
     private final Kind offsetKind;
 
@@ -55,7 +51,7 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
     }
 
     private static PoolSet<EirLocationCategory> offsetLocationCategories(Kind kind) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case INT:
                 return G_I8_I32;
             case LONG:
@@ -89,9 +85,9 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
     protected SPARCEirPointerOperation(EirBlock block, Kind kind, EirValue operand, Effect event,
                     PoolSet<EirLocationCategory> locationCategories, EirValue pointer) {
         super(block, operand, event, locationCategories, pointer,  EirOperand.Effect.USE, G, nullOperand);
-        _kind = kind;
-        offsetKind = null;
-        indexOperand = nullOperand;
+        this.kind = kind;
+        this.offsetKind = null;
+        this.indexOperand = nullOperand;
     }
 
     private static final EirOperand nullOperand = null;
@@ -99,7 +95,7 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
     protected SPARCEirPointerOperation(EirBlock block, Kind kind, EirValue operand, Effect event,
                     PoolSet<EirLocationCategory> locationCategories, EirValue pointer, Kind offsetKind, EirValue offset) {
         super(block, operand, event, locationCategories, pointer,  EirOperand.Effect.USE, G, offset, EirOperand.Effect.USE, G_I8_I32);
-        this._kind = kind;
+        this.kind = kind;
         this.offsetKind = offsetKind;
         this.indexOperand = nullOperand;
     }
@@ -107,7 +103,7 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
     protected SPARCEirPointerOperation(EirBlock block, Kind kind, EirValue operand, Effect event,
                     PoolSet<EirLocationCategory> locationCategories, EirValue pointer,  EirValue index) {
         super(block, operand, event, locationCategories, pointer,  EirOperand.Effect.USE, G, nullOperand);
-        this._kind = kind;
+        this.kind = kind;
         this.offsetKind = null;
         this.indexOperand = new EirOperand(this, EirOperand.Effect.USE, index.locationCategories());
         this.indexOperand.setEirValue(index);
@@ -116,7 +112,7 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
     protected SPARCEirPointerOperation(EirBlock block, Kind kind, EirValue operand, Effect event,
                     PoolSet<EirLocationCategory> locationCategories, EirValue pointer, Kind offsetKind, EirValue offset,  EirValue index) {
         super(block, operand, event, locationCategories, pointer,  EirOperand.Effect.USE, G, offset, EirOperand.Effect.USE, G_I8_I32);
-        this._kind = kind;
+        this.kind = kind;
         this.offsetKind = offsetKind;
         this.indexOperand = new EirOperand(this, EirOperand.Effect.USE, index.locationCategories());
         this.indexOperand.setEirValue(index);
@@ -149,7 +145,7 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
      * This translates into a pair of real instructions  {@code srl Ri, scale, Ro; ld [Rp + Ro], R}..
      */
     private void emitWithIndex(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose pointerRegister, SPARCEirRegister.GeneralPurpose indexRegister) {
-        final int scale = indexShiftScale(kind());
+        final int scale = indexShiftScale(kind);
         SPARCEirRegister.GeneralPurpose offsetRegister = indexRegister;
         if (scale > 0) {
             offsetRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
@@ -173,7 +169,7 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
     }
 
     private void emitWithIndex(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose pointerRegister, int offset13, SPARCEirRegister.GeneralPurpose indexRegister) {
-        final int scale = indexShiftScale(kind());
+        final int scale = indexShiftScale(kind);
         final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
         SPARCEirRegister.GeneralPurpose scaledIndexRegister =  indexRegister;
         assert !scratchRegister.equals(indexRegister);
@@ -186,7 +182,7 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
     }
 
     private void emitWithOffsetWithIndex(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose pointerRegister, SPARCEirRegister.GeneralPurpose offsetRegister, SPARCEirRegister.GeneralPurpose indexRegister) {
-        final int scale = indexShiftScale(kind());
+        final int scale = indexShiftScale(kind);
         final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
         SPARCEirRegister.GeneralPurpose scaledIndexRegister =  indexRegister;
         assert !(scratchRegister.equals(indexRegister) || scratchRegister.equals(offsetRegister));
@@ -250,7 +246,7 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
      * @return
      */
     public static int indexShiftScale(Kind k) {
-        switch (k.asEnum()) {
+        switch (k.asEnum) {
             case BYTE:
             case BOOLEAN:
                 return 0;
@@ -279,8 +275,8 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
             return "[" + pointerOperand() + " + " + offsetOperand() + "]";
         }
         if (offsetOperand() == null) {
-            return pointerOperand() + "[" + indexOperand() + " * " + kind().size() + "]";
+            return pointerOperand() + "[" + indexOperand() + " * " + kind.width.numberOfBytes + "]";
         }
-        return pointerOperand() + "[" + indexOperand() + " * " + kind().size() + " + " + offsetOperand() + "]";
+        return pointerOperand() + "[" + indexOperand() + " * " + kind.width.numberOfBytes + " + " + offsetOperand() + "]";
     }
 }

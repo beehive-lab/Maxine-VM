@@ -31,17 +31,17 @@ import com.sun.max.vm.type.*;
  */
 public final class IntValue extends PrimitiveValue<IntValue> {
 
-    private final int _value;
+    private final int value;
 
     private static final class Cache {
         private Cache() {
         }
 
-        static final IntValue[] _cache = new IntValue[-(-128) + 127 + 1];
+        static final IntValue[] cache = new IntValue[-(-128) + 127 + 1];
 
         static {
-            for (int i = 0; i < _cache.length; i++) {
-                _cache[i] = new IntValue(i - 128);
+            for (int i = 0; i < cache.length; i++) {
+                cache[i] = new IntValue(i - 128);
             }
         }
     }
@@ -49,7 +49,7 @@ public final class IntValue extends PrimitiveValue<IntValue> {
     public static IntValue from(int value) {
         final int offset = 128;
         if (value >= -128 && value <= 127) { // must cache
-            return Cache._cache[value + offset];
+            return Cache.cache[value + offset];
         }
         return new IntValue(value);
     }
@@ -63,7 +63,7 @@ public final class IntValue extends PrimitiveValue<IntValue> {
     }
 
     private IntValue(int value) {
-        _value = value;
+        this.value = value;
     }
 
     public static final IntValue MINUS_ONE = from(-1);
@@ -81,21 +81,21 @@ public final class IntValue extends PrimitiveValue<IntValue> {
 
     @Override
     public boolean isZero() {
-        return _value == 0;
+        return value == 0;
     }
 
     @Override
     public boolean isAllOnes() {
-        return _value == -1;
+        return value == -1;
     }
 
     @Override
     protected int unsignedCompareSameKind(IntValue other) {
-        if (_value == other._value) {
+        if (value == other.value) {
             return 0;
         }
-        final long unsignedThis = _value & 0xFFFFFFFFL;
-        final long unsignedOther = other._value & 0xFFFFFFFFL;
+        final long unsignedThis = value & 0xFFFFFFFFL;
+        final long unsignedOther = other.value & 0xFFFFFFFFL;
         if (unsignedThis < unsignedOther) {
             return -1;
         }
@@ -112,52 +112,52 @@ public final class IntValue extends PrimitiveValue<IntValue> {
             return false;
         }
         final IntValue intValue = (IntValue) other;
-        return _value == intValue.asInt();
+        return value == intValue.asInt();
     }
 
     @Override
     public String toString() {
-        return Integer.toString(_value);
+        return Integer.toString(value);
     }
 
     @Override
     public Object asBoxedJavaValue() {
-        return new Integer(_value);
+        return new Integer(value);
     }
 
     @Override
     public byte toByte() {
-        return (byte) _value;
+        return (byte) value;
     }
 
     @Override
     public byte unsignedToByte() {
-        return (byte) (_value & 0xff);
+        return (byte) (value & 0xff);
     }
 
     @Override
     public boolean toBoolean() {
-        return (_value != 0) ? true : false;
+        return (value != 0) ? true : false;
     }
 
     @Override
     public short toShort() {
-        return (short) _value;
+        return (short) value;
     }
 
     @Override
     public short unsignedToShort() {
-        return (short) (_value & 0xffff);
+        return (short) (value & 0xffff);
     }
 
     @Override
     public char toChar() {
-        return (char) _value;
+        return (char) value;
     }
 
     @Override
     public int asInt() {
-        return _value;
+        return value;
     }
 
     @Override
@@ -172,19 +172,19 @@ public final class IntValue extends PrimitiveValue<IntValue> {
 
     @Override
     public byte unboxByte() {
-        assert toByte() == _value;
+        assert toByte() == value;
         return toByte();
     }
 
     @Override
     public char unboxChar() {
-        assert toChar() == _value;
+        assert toChar() == value;
         return toChar();
     }
 
     @Override
     public short unboxShort() {
-        assert toShort() == _value;
+        assert toShort() == value;
         return toShort();
     }
 
@@ -198,51 +198,51 @@ public final class IntValue extends PrimitiveValue<IntValue> {
 
     @Override
     public int toInt() {
-        return _value;
+        return value;
     }
 
     @Override
     public int unsignedToInt() {
-        return _value;
+        return value;
     }
 
     @Override
     public float toFloat() {
-        return _value;
+        return value;
     }
 
     @Override
     public long toLong() {
-        return _value;
+        return value;
     }
 
     @Override
     public double toDouble() {
-        return _value;
+        return value;
     }
 
     @Override
     public Word toWord() {
-        return Offset.fromInt(_value);
+        return Offset.fromInt(value);
     }
 
     @Override
     public WordWidth signedEffectiveWidth() {
-        return WordWidth.signedEffective(_value);
+        return WordWidth.signedEffective(value);
     }
 
     @Override
     public WordWidth unsignedEffectiveWidth() {
-        return WordWidth.unsignedEffective(_value);
+        return WordWidth.unsignedEffective(value);
     }
 
     @Override
     public byte[] toBytes(DataModel dataModel) {
-        return dataModel.toBytes(_value);
+        return dataModel.toBytes(value);
     }
 
     @Override
     public void write(DataOutput stream) throws IOException {
-        stream.writeInt(_value);
+        stream.writeInt(value);
     }
 }

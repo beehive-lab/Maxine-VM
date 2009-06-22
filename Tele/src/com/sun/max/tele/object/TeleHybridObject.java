@@ -53,7 +53,7 @@ public abstract class TeleHybridObject extends TeleObject {
 
     @Override
     public Value readFieldValue(FieldActor fieldActor) {
-        if (fieldActor.kind() == Kind.REFERENCE) {
+        if (fieldActor.kind == Kind.REFERENCE) {
             return TeleReferenceValue.from(teleVM(), teleVM().wordToReference(reference().readWord(fieldActor.offset())));
         }
         return fieldActor.readValue(reference());
@@ -63,28 +63,28 @@ public abstract class TeleHybridObject extends TeleObject {
      * @return length of the word array part of this hybrid in the tele VM
      */
     public int readWordArrayLength() {
-        return teleVM().layoutScheme().wordArrayLayout().readLength(reference());
+        return teleVM().layoutScheme().wordArrayLayout.readLength(reference());
     }
 
     /**
      * @return an element of the word array part of this hybrid in the tele VM
      */
     public Word readWord(int wordIndex) {
-        return teleVM().layoutScheme().wordArrayLayout().getWord(reference(), wordIndex);
+        return teleVM().layoutScheme().wordArrayLayout.getWord(reference(), wordIndex);
     }
 
     /**
      * @return length of the int array part of this hybrid in the tele VM
      */
     public int readArrayLength() {
-        return  teleVM().layoutScheme().arrayHeaderLayout().readLength(reference());
+        return  teleVM().layoutScheme().arrayHeaderLayout.readLength(reference());
     }
 
     /**
      * @return an element of the int array part of this hybrid in the tele VM
      */
     public int readArrayInt(int intIndex) {
-        return teleVM().layoutScheme().intArrayLayout().getInt(reference(), intIndex);
+        return teleVM().layoutScheme().intArrayLayout.getInt(reference(), intIndex);
     }
 
     @Override
@@ -97,7 +97,7 @@ public abstract class TeleHybridObject extends TeleObject {
             // The tuple part
             do {
                 for (FieldActor fieldActor : holderClassActor.localInstanceFieldActors()) {
-                    if (!(fieldActor.kind() == Kind.REFERENCE || fieldActor.isInjected())) {
+                    if (!(fieldActor.kind == Kind.REFERENCE || fieldActor.isInjected())) {
                         final Field field = fieldActor.toJava();
                         field.setAccessible(true);
                         try {
@@ -107,7 +107,7 @@ public abstract class TeleHybridObject extends TeleObject {
                         }
                     }
                 }
-                holderClassActor = holderClassActor.superClassActor();
+                holderClassActor = holderClassActor.superClassActor;
             } while (holderClassActor != null);
             // Expand to include the array part
             final int wordArrayLength = readWordArrayLength();

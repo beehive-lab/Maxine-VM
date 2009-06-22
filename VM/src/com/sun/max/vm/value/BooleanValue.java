@@ -31,7 +31,7 @@ import com.sun.max.vm.type.*;
  */
 public final class BooleanValue extends PrimitiveValue<BooleanValue> {
 
-    private final boolean _value;
+    private final boolean value;
 
     public static BooleanValue from(boolean value) {
         return value ? TRUE : FALSE;
@@ -46,7 +46,7 @@ public final class BooleanValue extends PrimitiveValue<BooleanValue> {
     }
 
     private BooleanValue(boolean value) {
-        _value = value;
+        this.value = value;
     }
 
     @Override
@@ -56,7 +56,7 @@ public final class BooleanValue extends PrimitiveValue<BooleanValue> {
 
     @Override
     public boolean isZero() {
-        return _value == false;
+        return value == false;
     }
 
     @Override
@@ -74,22 +74,22 @@ public final class BooleanValue extends PrimitiveValue<BooleanValue> {
             return false;
         }
         final BooleanValue booleanValue = (BooleanValue) other;
-        return _value == booleanValue.asBoolean();
+        return value == booleanValue.asBoolean();
     }
 
     @Override
     public String toString() {
-        return Boolean.toString(_value);
+        return Boolean.toString(value);
     }
 
     @Override
     public Boolean asBoxedJavaValue() {
-        return new Boolean(_value);
+        return new Boolean(value);
     }
 
     @Override
     public byte toByte() {
-        return _value ? (byte) 1 : (byte) 0;
+        return value ? (byte) 1 : (byte) 0;
     }
 
     @Override
@@ -99,12 +99,12 @@ public final class BooleanValue extends PrimitiveValue<BooleanValue> {
 
     @Override
     public boolean asBoolean() {
-        return _value;
+        return value;
     }
 
     @Override
     public boolean unboxBoolean() {
-        return _value;
+        return value;
     }
 
     @Override
@@ -114,12 +114,12 @@ public final class BooleanValue extends PrimitiveValue<BooleanValue> {
 
     @Override
     public boolean toBoolean() {
-        return _value;
+        return value;
     }
 
     @Override
     public short toShort() {
-        return _value ? (short) 1 : (short) 0;
+        return value ? (short) 1 : (short) 0;
     }
 
     @Override
@@ -129,12 +129,12 @@ public final class BooleanValue extends PrimitiveValue<BooleanValue> {
 
     @Override
     public char toChar() {
-        return _value ? '\1' : '\0';
+        return value ? '\1' : '\0';
     }
 
     @Override
     public int toInt() {
-        return _value ? 1 : 0;
+        return value ? 1 : 0;
     }
 
     @Override
@@ -144,22 +144,22 @@ public final class BooleanValue extends PrimitiveValue<BooleanValue> {
 
     @Override
     public float toFloat() {
-        return _value ? (float) 1.0 : (float) 0.0;
+        return value ? (float) 1.0 : (float) 0.0;
     }
 
     @Override
     public long toLong() {
-        return _value ? 1L : 0L;
+        return value ? 1L : 0L;
     }
 
     @Override
     public double toDouble() {
-        return _value ? 1.0 : 0.0;
+        return value ? 1.0 : 0.0;
     }
 
     @Override
     public Word toWord() {
-        return _value ? Address.fromInt(1) : Word.zero();
+        return value ? Address.fromInt(1) : Word.zero();
     }
 
     public static final BooleanValue FALSE = new BooleanValue(false);
@@ -177,11 +177,11 @@ public final class BooleanValue extends PrimitiveValue<BooleanValue> {
 
     @Override
     public byte[] toBytes(DataModel dataModel) {
-        return dataModel.toBytes(_value);
+        return dataModel.toBytes(value);
     }
 
     @Override
     public void write(DataOutput stream) throws IOException {
-        stream.writeBoolean(_value);
+        stream.writeBoolean(value);
     }
 }

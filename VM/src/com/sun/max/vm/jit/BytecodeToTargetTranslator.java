@@ -130,7 +130,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     protected int numberOfBlocks;
     private Bytecode previousBytecode;
 
-    private void beginBytecode(BytecodeInfo info) {
+    private void beginBytecode(Bytecode info) {
         final int opcodePosition = currentOpcodePosition();
         final int targetCodePosition = codeBuffer.currentPosition();
         if (Trace.hasLevel(4)) {
@@ -184,7 +184,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
 
     protected void addSwitch(Switch aSwitch) {
         switches.append(aSwitch);
-        startBlock(aSwitch._defaultTargetBytecodePosition);
+        startBlock(aSwitch.defaultTargetBytecodePosition);
         startBlocks(aSwitch.targetBytecodePositions);
     }
 
@@ -306,12 +306,12 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
      * Register a direct (related to invokestatic or invokespecial) bytecode call (which is NOT a runtime call).
      */
     protected void recordDirectBytecodeCall(CompiledBytecodeTemplate template, ClassMethodActor callee) {
-        assert template.targetMethod().numberOfDirectCalls() == 1;
-        assert template.targetMethod().numberOfIndirectCalls() == 0;
-        assert template.targetMethod().numberOfSafepoints() == 0;
-        assert template.targetMethod().numberOfStopPositions() == 1;
-        assert template.targetMethod().referenceMaps() == null || Bytes.areClear(template.targetMethod().referenceMaps());
-        final int stopPosition = codeBuffer.currentPosition() + template.targetMethod().stopPosition(0);
+        assert template.targetMethod.numberOfDirectCalls() == 1;
+        assert template.targetMethod.numberOfIndirectCalls() == 0;
+        assert template.targetMethod.numberOfSafepoints() == 0;
+        assert template.targetMethod.numberOfStopPositions() == 1;
+        assert template.targetMethod.referenceMaps() == null || Bytes.areClear(template.targetMethod.referenceMaps());
+        final int stopPosition = codeBuffer.currentPosition() + template.targetMethod.stopPosition(0);
         stops.add(new BytecodeDirectCall(stopPosition, currentOpcodePosition(), callee));
     }
 
@@ -357,7 +357,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         /**
          * The bytecode position of the default switch target.
          */
-        public final int _defaultTargetBytecodePosition;
+        public final int defaultTargetBytecodePosition;
 
         /**
          * The bytecode positions of the non-default switch targets.
@@ -366,7 +366,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
 
         public Switch(int opcodePosition, int defaultTargetBytecodePosition, int[] targetBytecodePositions) {
             this.opcodePosition = opcodePosition;
-            this._defaultTargetBytecodePosition = defaultTargetBytecodePosition;
+            this.defaultTargetBytecodePosition = defaultTargetBytecodePosition;
             this.targetBytecodePositions = targetBytecodePositions;
         }
 
@@ -449,7 +449,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             stops.stopPositions,
             stops.bytecodeStopsIterator,
             compressedJavaFrameDescriptors,
-            stops._directCallees,
+            stops.directCallees,
             stops.numberOfIndirectCalls,
             stops.numberOfSafepoints,
             stops.referenceMaps,
@@ -641,7 +641,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
      */
     protected void emitTemplateFor(Bytecode bytecode) {
         final CompiledBytecodeTemplate template = getTemplate(bytecode);
-        beginBytecode(template);
+        beginBytecode(bytecode);
         emitAndRecordStops(template);
     }
 
@@ -723,7 +723,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         referenceLiterals.prepend(literal);
         if (VMConfiguration.target().debugging()) {
             // Account for the DebugHeap tag in front of the code object:
-            literalOffset += VMConfiguration.target().wordWidth().numberOfBytes();
+            literalOffset += VMConfiguration.target().wordWidth().numberOfBytes;
         }
         return -literalOffset;
     }
@@ -737,7 +737,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
 
         if (classConstant.isResolvableWithoutClassLoading(constantPool) && isTraceInstrumented == false) {
             final CompiledBytecodeTemplate template = getTemplate(bytecode, TemplateChooser.Selector.RESOLVED);
-            beginBytecode(template);
+            beginBytecode(bytecode);
             ClassActor resolvedClassActor = classConstant.resolve(constantPool, index);
             if (isArray) {
                 resolvedClassActor = ArrayClassActor.forComponentClassActor(resolvedClassActor);
@@ -747,7 +747,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             return true;
         }
         final CompiledBytecodeTemplate template = getTemplate(bytecode);
-        beginBytecode(template);
+        beginBytecode(bytecode);
         final ResolutionSnippet snippet = isArray ? ResolutionSnippet.ResolveArrayClass.SNIPPET : ResolutionSnippet.ResolveClass.SNIPPET;
         assignReferenceLiteralTemplateArgument(0, constantPool.makeResolutionGuard(index, snippet));
         emitAndRecordStops(template);
@@ -782,7 +782,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
                     if (fieldActor.holder().isInitialized()) {
                         selector = TemplateChooser.Selector.INITIALIZED;
                         template = getTemplate(bytecode, fieldKind, selector);
-                        beginBytecode(template);
+                        beginBytecode(bytecode);
                         assignReferenceLiteralTemplateArgument(0, fieldActor.holder().staticTuple());
                         assignIntTemplateArgument(1, fieldActor.offset());
                         emitAndRecordStops(template);
@@ -791,7 +791,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
                 } else {
                     selector = TemplateChooser.Selector.RESOLVED;
                     template = getTemplate(bytecode, fieldKind, selector);
-                    beginBytecode(template);
+                    beginBytecode(bytecode);
                     assignIntTemplateArgument(0, fieldActor.offset());
                     emitAndRecordStops(template);
                     return;
@@ -803,7 +803,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             }
         }
         final CompiledBytecodeTemplate template = templateTable.get(bytecode, fieldKind);
-        beginBytecode(template);
+        beginBytecode(bytecode);
         assignReferenceLiteralTemplateArgument(0, constantPool.makeResolutionGuard(index, snippet));
         // Emit the template unmodified now. It will be modified in the end once all labels to literals are fixed.
         emitAndRecordStops(template);
@@ -1079,7 +1079,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     @Override
     protected void dneg() {
         final CompiledBytecodeTemplate template = getTemplate(DNEG);
-        beginBytecode(template);
+        beginBytecode(DNEG);
         assignDoubleTemplateArgument(0, 0D);
         emitAndRecordStops(template);
     }
@@ -1254,7 +1254,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     @Override
     protected void fneg() {
         final CompiledBytecodeTemplate template = getTemplate(FNEG);
-        beginBytecode(template);
+        beginBytecode(FNEG);
         assignFloatTemplateArgument(0, 0F);
         emitAndRecordStops(template);
     }
@@ -1315,8 +1315,8 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         startBlock(targetBytecodePosition);
         // emit prefix of the bytecodeinstruction.
         final CompiledBytecodeTemplate template = getTemplate(bytecode);
-        beginBytecode(template);
-        assert template.targetMethod().directCallees() == null || isTraceInstrumented;
+        beginBytecode(bytecode);
+        assert template.targetMethod.directCallees() == null || isTraceInstrumented;
         emitAndRecordStops(template);
         emitBranch(condition, currentBytecodePosition, targetBytecodePosition);
     }
@@ -1584,7 +1584,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
                     final VirtualMethodActor dynamicMethodActor = classMethodRef.resolveVirtual(constantPool, index);
                     if (shouldInsertInstrumentation(dynamicMethodActor)) {
                         final CompiledBytecodeTemplate template = getTemplate(INVOKEVIRTUAL, selectorKind, TemplateChooser.Selector.RESOLVED_INSTRUMENTED);
-                        beginBytecode(template);
+                        beginBytecode(INVOKEVIRTUAL);
                         final int vtableIndex = dynamicMethodActor.vTableIndex();
                         assignIntTemplateArgument(0, vtableIndex);
                         assignIntTemplateArgument(1, receiverStackIndex(signatureDescriptor));
@@ -1592,7 +1592,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
                         emitAndRecordStops(template);
                     } else {
                         final CompiledBytecodeTemplate template = getTemplate(INVOKEVIRTUAL, selectorKind, TemplateChooser.Selector.RESOLVED);
-                        beginBytecode(template);
+                        beginBytecode(INVOKEVIRTUAL);
                         assignIntTemplateArgument(0, dynamicMethodActor.vTableIndex());
                         assignIntTemplateArgument(1, receiverStackIndex(signatureDescriptor));
                         emitAndRecordStops(template);
@@ -1605,7 +1605,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             // Fall back on unresolved template that will cause the error to be rethrown at runtime.
         }
         final CompiledBytecodeTemplate template = getTemplate(INVOKEVIRTUAL, selectorKind, TemplateChooser.Selector.NO_ASSUMPTION);
-        beginBytecode(template);
+        beginBytecode(INVOKEVIRTUAL);
         assignReferenceLiteralTemplateArgument(0, constantPool.makeResolutionGuard(index, ResolveVirtualMethod.SNIPPET));
         assignIntTemplateArgument(1, receiverStackIndex(signatureDescriptor));
         emitAndRecordStops(template);
@@ -1622,14 +1622,14 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
                     final InterfaceMethodActor interfaceMethodActor = (InterfaceMethodActor) interfaceMethodRef.resolve(constantPool, index);
                     if (shouldInsertInstrumentation(interfaceMethodActor)) {
                         final CompiledBytecodeTemplate template = getTemplate(INVOKEINTERFACE, selectorKind, TemplateChooser.Selector.RESOLVED_INSTRUMENTED);
-                        beginBytecode(template);
+                        beginBytecode(INVOKEINTERFACE);
                         assignReferenceLiteralTemplateArgument(0, interfaceMethodActor);
                         assignIntTemplateArgument(1, receiverStackIndex(signatureDescriptor));
                         assignReferenceLiteralTemplateArgument(2, methodInstrumentation().newCounterTable(currentOpcodePosition()));
                         emitAndRecordStops(template);
                     } else {
                         final CompiledBytecodeTemplate template = getTemplate(INVOKEINTERFACE, selectorKind, TemplateChooser.Selector.RESOLVED);
-                        beginBytecode(template);
+                        beginBytecode(INVOKEINTERFACE);
                         assignReferenceLiteralTemplateArgument(0, interfaceMethodActor);
                         assignIntTemplateArgument(1, receiverStackIndex(signatureDescriptor));
                         emitAndRecordStops(template);
@@ -1642,7 +1642,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             // Fall back on unresolved template that will cause the error to be rethrown at runtime.
         }
         final CompiledBytecodeTemplate template = getTemplate(INVOKEINTERFACE, selectorKind);
-        beginBytecode(template);
+        beginBytecode(INVOKEINTERFACE);
         assignReferenceLiteralTemplateArgument(0, constantPool.makeResolutionGuard(index, ResolveInterfaceMethod.SNIPPET));
         assignIntTemplateArgument(1, receiverStackIndex(signatureDescriptor));
         emitAndRecordStops(template);
@@ -1656,7 +1656,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
 
     private Kind invokeSelectorKind(SignatureDescriptor signatureDescriptor) {
         final Kind resultKind = signatureDescriptor.resultKind();
-        switch (resultKind.asEnum()) {
+        switch (resultKind.asEnum) {
             case DOUBLE:
             case LONG:
             case FLOAT:
@@ -1676,7 +1676,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             if (classMethodRef.isResolvableWithoutClassLoading(constantPool) && isTraceInstrumented == false) {
                 final VirtualMethodActor dynamicMethodActor = classMethodRef.resolveVirtual(constantPool, index);
                 final CompiledBytecodeTemplate template = getTemplate(INVOKESPECIAL, selectorKind, TemplateChooser.Selector.RESOLVED);
-                beginBytecode(template);
+                beginBytecode(INVOKESPECIAL);
                 recordDirectBytecodeCall(template, dynamicMethodActor);
                 codeBuffer.emit(template);
                 return;
@@ -1685,7 +1685,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             // Fall back on unresolved template that will cause the error to be rethrown at runtime.
         }
         final CompiledBytecodeTemplate template = getTemplate(INVOKESPECIAL, selectorKind, TemplateChooser.Selector.NO_ASSUMPTION);
-        beginBytecode(template);
+        beginBytecode(INVOKESPECIAL);
         assignReferenceLiteralTemplateArgument(0, constantPool.makeResolutionGuard(index, ResolveSpecialMethod.SNIPPET));
         emitAndRecordStops(template);
     }
@@ -1700,7 +1700,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
                 final StaticMethodActor staticMethodActor = classMethodRef.resolveStatic(constantPool, index);
                 if (staticMethodActor.holder().isInitialized()) {
                     final CompiledBytecodeTemplate template = getTemplate(INVOKESTATIC, selectorKind, TemplateChooser.Selector.INITIALIZED);
-                    beginBytecode(template);
+                    beginBytecode(INVOKESTATIC);
                     recordDirectBytecodeCall(template, staticMethodActor);
                     codeBuffer.emit(template);
                     return;
@@ -1710,7 +1710,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             // Fall back on unresolved template that will cause the error to be rethrown at runtime.
         }
         final CompiledBytecodeTemplate template = getTemplate(INVOKESTATIC, selectorKind, TemplateChooser.Selector.NO_ASSUMPTION);
-        beginBytecode(template);
+        beginBytecode(INVOKESTATIC);
         assignReferenceLiteralTemplateArgument(0, constantPool.makeResolutionGuard(index, ResolveStaticMethod.SNIPPET));
         emitAndRecordStops(template);
     }
@@ -1864,13 +1864,13 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
                 final ClassConstant classConstant = (ClassConstant) constant;
                 if (classConstant.isResolvableWithoutClassLoading(constantPool) && isTraceInstrumented == false) {
                     final CompiledBytecodeTemplate template = getTemplate(LDC, Kind.REFERENCE, TemplateChooser.Selector.RESOLVED);
-                    beginBytecode(template);
+                    beginBytecode(LDC);
                     final Object mirror = ((ClassActor) classConstant.value(constantPool, index).asObject()).mirror();
                     assignReferenceLiteralTemplateArgument(0, mirror);
                     emitAndRecordStops(template);
                 } else {
                     final CompiledBytecodeTemplate template = getTemplate(LDC, Kind.REFERENCE, TemplateChooser.Selector.NO_ASSUMPTION);
-                    beginBytecode(template);
+                    beginBytecode(LDC);
                     assignReferenceLiteralTemplateArgument(0, constantPool.makeResolutionGuard(index, ResolveClass.SNIPPET));
                     emitAndRecordStops(template);
                 }
@@ -1878,7 +1878,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             }
             case INTEGER: {
                 final CompiledBytecodeTemplate template = getTemplate(LDC, Kind.INT, TemplateChooser.Selector.NO_ASSUMPTION);
-                beginBytecode(template);
+                beginBytecode(LDC);
                 final IntegerConstant integerConstant = (IntegerConstant) constant;
                 assignIntTemplateArgument(0, integerConstant.value());
                 emitAndRecordStops(template);
@@ -1886,7 +1886,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             }
             case LONG: {
                 final CompiledBytecodeTemplate template = getTemplate(LDC, Kind.LONG, TemplateChooser.Selector.NO_ASSUMPTION);
-                beginBytecode(template);
+                beginBytecode(LDC);
                 final LongConstant longConstant = (LongConstant) constant;
                 assignLongTemplateArgument(0, longConstant.value());
                 emitAndRecordStops(template);
@@ -1894,7 +1894,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             }
             case FLOAT: {
                 final CompiledBytecodeTemplate template = getTemplate(LDC, Kind.FLOAT, TemplateChooser.Selector.NO_ASSUMPTION);
-                beginBytecode(template);
+                beginBytecode(LDC);
                 final FloatConstant floatConstant = (FloatConstant) constant;
                 assignFloatTemplateArgument(0, floatConstant.value());
                 emitAndRecordStops(template);
@@ -1902,7 +1902,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             }
             case DOUBLE: {
                 final CompiledBytecodeTemplate template = getTemplate(LDC, Kind.DOUBLE, TemplateChooser.Selector.NO_ASSUMPTION);
-                beginBytecode(template);
+                beginBytecode(LDC);
                 final DoubleConstant doubleConstant = (DoubleConstant) constant;
                 assignDoubleTemplateArgument(0, doubleConstant.value());
                 emitAndRecordStops(template);
@@ -1910,9 +1910,9 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             }
             case STRING: {
                 final CompiledBytecodeTemplate template = getTemplate(LDC, Kind.REFERENCE, TemplateChooser.Selector.RESOLVED);
-                beginBytecode(template);
+                beginBytecode(LDC);
                 final StringConstant stringConstant = (StringConstant) constant;
-                assignReferenceLiteralTemplateArgument(0, stringConstant.value());
+                assignReferenceLiteralTemplateArgument(0, stringConstant.value);
                 emitAndRecordStops(template);
                 break;
             }
@@ -2060,7 +2060,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         final ClassConstant classRef = constantPool.classAt(index);
         if (classRef.isResolvableWithoutClassLoading(constantPool) && isTraceInstrumented == false) {
             final CompiledBytecodeTemplate template = getTemplate(MULTIANEWARRAY, TemplateChooser.Selector.RESOLVED);
-            beginBytecode(template);
+            beginBytecode(MULTIANEWARRAY);
             final ClassActor arrayClassActor = classRef.resolve(constantPool, index);
             assert arrayClassActor.isArrayClassActor();
             assert arrayClassActor.numberOfDimensions() >= numberOfDimensions : "dimensionality of array class constant smaller that dimension operand";
@@ -2072,7 +2072,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         }
         // Unresolved case
         final CompiledBytecodeTemplate template = getTemplate(MULTIANEWARRAY);
-        beginBytecode(template);
+        beginBytecode(MULTIANEWARRAY);
         assignReferenceLiteralTemplateArgument(0, constantPool.makeResolutionGuard(index, ResolveClass.SNIPPET));
         assignReferenceLiteralTemplateArgument(1, new int[numberOfDimensions]);
         emitAndRecordStops(template);
@@ -2085,14 +2085,14 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             final ClassActor classActor = classRef.resolve(constantPool, index);
             if (classActor.isInitialized()) {
                 final CompiledBytecodeTemplate template = getTemplate(NEW, TemplateChooser.Selector.INITIALIZED);
-                beginBytecode(template);
+                beginBytecode(NEW);
                 assignReferenceLiteralTemplateArgument(0, classActor);
                 emitAndRecordStops(template);
                 return;
             }
         }
         final CompiledBytecodeTemplate template = getTemplate(NEW, TemplateChooser.Selector.NO_ASSUMPTION);
-        beginBytecode(template);
+        beginBytecode(NEW);
         assignReferenceLiteralTemplateArgument(0, constantPool.makeResolutionGuard(index, ResolveClassForNew.SNIPPET));
         emitAndRecordStops(template);
     }
@@ -2100,7 +2100,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     @Override
     protected void newarray(int tag) {
         final CompiledBytecodeTemplate template = getTemplate(NEWARRAY);
-        beginBytecode(template);
+        beginBytecode(NEWARRAY);
         final Kind arrayElementKind = Kind.fromNewArrayTag(tag);
         assignReferenceLiteralTemplateArgument(0, arrayElementKind);
         emitAndRecordStops(template);

@@ -92,12 +92,12 @@ public class EirTraceObserver extends IrTraceObserver {
         };
 
         Transformation(String description, int traceLevel) {
-            this._description = description;
+            this.description = description;
             this.traceLevel = traceLevel;
         }
 
         private final int traceLevel;
-        private final String _description;
+        private final String description;
 
         void traceContext(Object context) {
             traceContext(context, out);
@@ -145,7 +145,7 @@ public class EirTraceObserver extends IrTraceObserver {
 
         @Override
         public String toString() {
-            return _description;
+            return description;
         }
     }
 

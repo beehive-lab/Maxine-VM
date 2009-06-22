@@ -31,10 +31,10 @@ public abstract class DirInstruction {
 
     private static int instructionCounter = 0;
 
-    protected final int _serial;
+    protected final int serial;
 
     protected DirInstruction() {
-        _serial = instructionCounter++;
+        serial = instructionCounter++;
     }
 
     public DirCatchBlock catchBlock() {
@@ -55,7 +55,7 @@ public abstract class DirInstruction {
      * @return a unique ID for human consumption
      */
     public int serial() {
-        return _serial;
+        return serial;
     }
 
     public int hashCodeForBlock() {

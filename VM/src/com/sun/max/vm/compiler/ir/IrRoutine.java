@@ -63,7 +63,7 @@ public abstract class IrRoutine {
         return null;
     }
 
-    private final String _name;
+    private final String name;
     private final MethodActor foldingMethodActor;
     private final Kind resultKind;
 
@@ -75,11 +75,11 @@ public abstract class IrRoutine {
 
     @PROTOTYPE_ONLY
     protected IrRoutine(Class foldingMethodHolder) {
-        _name = Naming.toFieldName(getClass().getSimpleName());
+        name = Naming.toFieldName(getClass().getSimpleName());
         if (foldingMethodHolder != null) {
-            foldingMethodActor = getFoldingMethodActor(foldingMethodHolder, _name, true);
+            foldingMethodActor = getFoldingMethodActor(foldingMethodHolder, name, true);
         } else {
-            foldingMethodActor = getFoldingMethodActor(getClass(), _name, true);
+            foldingMethodActor = getFoldingMethodActor(getClass(), name, true);
         }
         classMethodActor = (ClassMethodActor) foldingMethodActor;
         resultKind = foldingMethodActor.descriptor().resultKind();
@@ -87,7 +87,7 @@ public abstract class IrRoutine {
     }
 
     public String name() {
-        return _name;
+        return name;
     }
 
     public MethodActor foldingMethodActor() {
@@ -104,13 +104,13 @@ public abstract class IrRoutine {
         return resultKind;
     }
 
-    private Kind[] _parameterKinds;
+    private Kind[] parameterKinds;
 
     public Kind[] parameterKinds() {
-        if (_parameterKinds == null) {
-            _parameterKinds = classMethodActor().getParameterKinds();
+        if (parameterKinds == null) {
+            parameterKinds = classMethodActor().getParameterKinds();
         }
-        return _parameterKinds;
+        return parameterKinds;
     }
 
     public boolean isFoldable(IrValue[] arguments) {

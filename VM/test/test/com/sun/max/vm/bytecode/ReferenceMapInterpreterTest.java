@@ -277,7 +277,7 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
     protected BirMethod compileMethod(final ClassMethodActor classMethodActor) {
         final BirMethod method = super.compileMethod(classMethodActor);
 
-        if (_classVerifier == null || !_classVerifier.classActor().equals(classMethodActor.holder())) {
+        if (_classVerifier == null || !_classVerifier.classActor.equals(classMethodActor.holder())) {
             _classVerifier = Verifier.verifierFor(classMethodActor.holder());
         }
 

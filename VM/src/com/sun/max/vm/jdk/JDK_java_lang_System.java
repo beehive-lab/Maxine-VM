@@ -122,7 +122,7 @@ public final class JDK_java_lang_System {
      * @param toComponentClassActor the class actor representing the component type of the destination array
      */
     private static void arrayCopyForward(final Kind kind, Object fromArray, int fromIndex, Object toArray, int toIndex, int length, ClassActor toComponentClassActor) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case BYTE: {
                 for (int i = 0; i < length; i++) {
                     ArrayAccess.setByte(toArray, toIndex + i, ArrayAccess.getByte(fromArray, fromIndex + i));
@@ -204,7 +204,7 @@ public final class JDK_java_lang_System {
      * @param length the number of elements to copy
      */
     private static void arrayCopyBackward(final Kind kind, Object fromArray, int fromIndex, Object toArray, int toIndex, int length) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case BYTE: {
                 for (int i = length - 1; i >= 0; i--) {
                     ArrayAccess.setByte(toArray, toIndex + i, ArrayAccess.getByte(fromArray, fromIndex + i));
@@ -291,7 +291,7 @@ public final class JDK_java_lang_System {
         if (!fromArrayClassActor.isArrayClassActor()) {
             throw new ArrayStoreException();
         }
-        final Kind kind = fromArrayClassActor.componentClassActor().kind();
+        final Kind kind = fromArrayClassActor.componentClassActor().kind;
         if (fromArray == toArray) {
             if (fromIndex < toIndex) {
                 if (fromIndex < 0 || length < 0 || toIndex + length > ArrayAccess.readArrayLength(fromArray)) {
@@ -320,7 +320,7 @@ public final class JDK_java_lang_System {
                 throw new ArrayStoreException();
             }
             final ClassActor toComponentClassActor = toArrayClassActor.componentClassActor();
-            if (kind != Kind.REFERENCE || toComponentClassActor.kind() != Kind.REFERENCE) {
+            if (kind != Kind.REFERENCE || toComponentClassActor.kind != Kind.REFERENCE) {
                 throw new ArrayStoreException();
             }
             if (fromIndex < 0 || toIndex < 0 || length < 0 ||
@@ -563,21 +563,21 @@ public final class JDK_java_lang_System {
     private static final String CLASSPATH_HELP_MESSAGE = "A list of paths to search for Java classes, separated by the : character.";
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static VMStringOption _classpathOption = register(new VMStringOption("-classpath", true, null, CLASSPATH_HELP_MESSAGE), MaxineVM.Phase.PRISTINE);
+    private static VMStringOption classpathOption = register(new VMStringOption("-classpath", true, null, CLASSPATH_HELP_MESSAGE), MaxineVM.Phase.PRISTINE);
 
     @CONSTANT_WHEN_NOT_ZERO
     private static VMStringOption cpOption = register(new VMStringOption("-cp", true, null, CLASSPATH_HELP_MESSAGE) {
         @Override
         public boolean parseValue(Pointer optionValue) {
-            return _classpathOption.parseValue(optionValue);
+            return classpathOption.parseValue(optionValue);
         }
         @Override
         public boolean isPresent() {
-            return _classpathOption.isPresent();
+            return classpathOption.isPresent();
         }
         @Override
         public String getValue() {
-            return _classpathOption.getValue();
+            return classpathOption.getValue();
         }
     }, MaxineVM.Phase.PRISTINE);
 
@@ -641,7 +641,7 @@ public final class JDK_java_lang_System {
         setIfAbsent(properties, "java.vm.version", MaxineVM.version());
         setIfAbsent(properties, "java.vm.info", VMConfiguration.hostOrTarget().compilationScheme().mode().name().toLowerCase() + " mode");
 
-        setIfAbsent(properties, "sun.arch.data.model", Integer.toString(Word.width().numberOfBits()));
+        setIfAbsent(properties, "sun.arch.data.model", Integer.toString(Word.width().numberOfBits));
         setIfAbsent(properties, "sun.cpu.endian", Word.endianness().name().toLowerCase());
 
         switch (Platform.hostOrTarget().processorKind().dataModel().endianness()) {
@@ -729,7 +729,7 @@ public final class JDK_java_lang_System {
         // 8. set up the class path
         // N.B. -jar overrides any other classpath setting
         if (VMOptions.jarFile() == null) {
-            String javaClassPath = _classpathOption.getValue();
+            String javaClassPath = classpathOption.getValue();
             if (javaClassPath == null) {
                 javaClassPath = getenvClassPath();
             }

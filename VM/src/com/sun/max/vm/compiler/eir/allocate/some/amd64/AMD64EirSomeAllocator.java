@@ -30,11 +30,11 @@ import com.sun.max.vm.compiler.eir.amd64.*;
  */
 public final class AMD64EirSomeAllocator extends EirSomeAllocator<AMD64EirRegister> {
 
-    private final PoolSet<AMD64EirRegister> _noRegisters = PoolSet.noneOf(AMD64EirRegister.pool());
+    private final PoolSet<AMD64EirRegister> noRegisters = PoolSet.noneOf(AMD64EirRegister.pool());
 
     @Override
     protected PoolSet<AMD64EirRegister> noRegisters() {
-        return _noRegisters;
+        return noRegisters;
     }
 
     private final PoolSet<AMD64EirRegister> allocatableIntegerRegisters;

@@ -73,8 +73,8 @@ public abstract class CirUpdate {
         result |= updateValues(call.arguments());
         CirJavaFrameDescriptor javaFrameDescriptor = call.javaFrameDescriptor();
         while (javaFrameDescriptor != null) {
-            result |= updateValues(javaFrameDescriptor.locals());
-            result |= updateValues(javaFrameDescriptor.stackSlots());
+            result |= updateValues(javaFrameDescriptor.locals);
+            result |= updateValues(javaFrameDescriptor.stackSlots);
             javaFrameDescriptor = javaFrameDescriptor.parent();
         }
         result |= updateNode(call);

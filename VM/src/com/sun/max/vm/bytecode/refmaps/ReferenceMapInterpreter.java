@@ -224,7 +224,7 @@ public abstract class ReferenceMapInterpreter {
         }
 
         private boolean isReference(VerificationType type) {
-            return ReferenceMapInterpreter.isReference(context.classMethodActor().holder().kind() == Kind.WORD, code, constantPool, type);
+            return ReferenceMapInterpreter.isReference(context.classMethodActor().holder().kind == Kind.WORD, code, constantPool, type);
         }
 
         public void push(VerificationType type) {
@@ -295,7 +295,7 @@ public abstract class ReferenceMapInterpreter {
         final FramesInitialization framesInitialization = new FramesInitialization();
         final ClassMethodActor classMethodActor = context.classMethodActor();
         if (!classMethodActor.isStatic()) {
-            final VerificationType receiverType = classMethodActor.holder().kind() == Kind.REFERENCE ? VerificationType.OBJECT : VerificationType.WORD;
+            final VerificationType receiverType = classMethodActor.holder().kind == Kind.REFERENCE ? VerificationType.OBJECT : VerificationType.WORD;
             framesInitialization.store(receiverType, 0);
         }
 

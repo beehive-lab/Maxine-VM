@@ -32,18 +32,18 @@ import com.sun.max.vm.classfile.constant.*;
  */
 public final class UninitializedNewType extends UninitializedType {
 
-    private final int _position;
+    private final int position;
 
     public UninitializedNewType(int position) {
         assert position != -1;
-        _position = position;
+        this.position = position;
     }
 
     /**
      * Gets the bytecode position of the {@link Bytecode#NEW} instruction that created the uninitialized object denoted by this type.
      */
     public int position() {
-        return _position;
+        return position;
     }
 
     @Override
@@ -54,12 +54,12 @@ public final class UninitializedNewType extends UninitializedType {
 
     @Override
     public void writeInfo(DataOutputStream stream, ConstantPoolEditor constantPoolEditor) throws IOException {
-        stream.writeShort(_position);
+        stream.writeShort(position);
     }
 
     @Override
     public String toString() {
-        return "uninitialized[new@" + _position + "]";
+        return "uninitialized[new@" + position + "]";
     }
 
     @Override

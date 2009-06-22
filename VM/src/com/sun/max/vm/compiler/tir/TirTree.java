@@ -40,14 +40,14 @@ public class TirTree extends AbstractIrMethod {
     }
 
     private final TreeAnchor anchor;
-    private TargetTree _targetTree;
+    private TargetTree targetTree;
 
     public TargetTree targetTree() {
-        return _targetTree;
+        return targetTree;
     }
 
     public void setTarget(TargetTree targetTree) {
-        _targetTree = targetTree;
+        this.targetTree = targetTree;
     }
 
     private AppendableIndexedSequence<TirLocal> locals = new ArrayListSequence<TirLocal>();
@@ -137,13 +137,13 @@ public class TirTree extends AbstractIrMethod {
         final MutableInnerClassGlobal<Integer> result = new MutableInnerClassGlobal<Integer>(-1);
         final Class<? extends TirInstruction> cls = instruction.getClass();
         send(new TirReverse(new TirMessageSink() {
-            private int _number = 0;
+            private int number = 0;
             public void receive(TirMessage message) {
                 if (cls.isAssignableFrom(message.getClass())) {
                     if (message == instruction) {
-                        result.setValue(_number);
+                        result.setValue(number);
                     } else {
-                        _number++;
+                        number++;
                     }
                 }
             }

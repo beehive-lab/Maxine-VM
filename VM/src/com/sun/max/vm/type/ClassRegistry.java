@@ -47,12 +47,12 @@ import com.sun.max.vm.value.*;
  */
 public final class ClassRegistry implements IterableWithLength<ClassActor> {
 
-    private static final EnumMap<Property, VariableMapping<Object, Object>> _propertyMapsPrototype = new EnumMap<Property, VariableMapping<Object, Object>>(Property.class);
+    private static final EnumMap<Property, VariableMapping<Object, Object>> propertyMapsPrototyp = new EnumMap<Property, VariableMapping<Object, Object>>(Property.class);
 
     private ClassRegistry() {
-        _propertyMaps = _propertyMapsPrototype.clone();
+        propertyMaps = propertyMapsPrototyp.clone();
         for (Property property : Property.VALUES) {
-            _propertyMaps.put(property, property.createMap());
+            propertyMaps.put(property, property.createMap());
         }
     }
 
@@ -60,7 +60,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
      * This is only here to support ClassFileWriter.testLoadGeneratedClasses().
      */
     @PROTOTYPE_ONLY
-    public static final Map<ClassLoader, ClassRegistry> _classLoaderToRegistryMap = new IdentityHashMap<ClassLoader, ClassRegistry>() {
+    public static final Map<ClassLoader, ClassRegistry> classLoaderToRegistryMap = new IdentityHashMap<ClassLoader, ClassRegistry>() {
         @Override
         public ClassRegistry put(ClassLoader key, ClassRegistry value) {
             if (value == null) {
@@ -70,22 +70,22 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
         }
     };
 
-    private static final ClassRegistry _vmClassRegistry = new ClassRegistry();
+    private static final ClassRegistry vmClassRegistry = new ClassRegistry();
 
     public static ClassRegistry vmClassRegistry() {
-        return _vmClassRegistry;
+        return vmClassRegistry;
     }
 
     public static ClassRegistry makeRegistry(ClassLoader classLoader) {
         if (MaxineVM.isPrototyping()) {
-            final ClassRegistry classRegistry = _classLoaderToRegistryMap.get(classLoader);
+            final ClassRegistry classRegistry = classLoaderToRegistryMap.get(classLoader);
             if (classRegistry != null) {
                 return classRegistry;
             }
-            return _vmClassRegistry;
+            return vmClassRegistry;
         }
         if (classLoader == null) {
-            return _vmClassRegistry;
+            return vmClassRegistry;
         }
         synchronized (classLoader) {
             final ClassRegistry result = (ClassRegistry) ClassLoader_classRegistry.readObject(classLoader);
@@ -99,44 +99,44 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     }
 
     @INSPECTED
-    private final GrowableMapping<TypeDescriptor, ClassActor> _typeDescriptorToClassActor = new ChainedHashMapping<TypeDescriptor, ClassActor>(5000);
+    private final GrowableMapping<TypeDescriptor, ClassActor> typeDescriptorToClassActor = new ChainedHashMapping<TypeDescriptor, ClassActor>(5000);
 
     public int numberOfClassActors() {
-        return _typeDescriptorToClassActor.length();
+        return typeDescriptorToClassActor.length();
     }
 
     public Iterator<ClassActor> iterator() {
-        return _typeDescriptorToClassActor.values().iterator();
+        return typeDescriptorToClassActor.values().iterator();
     }
 
     public int length() {
         return numberOfClassActors();
     }
 
-    private static TupleClassActor _javaLangObjectActor;
-    private static TupleClassActor _javaLangClassActor;
-    private static InterfaceActor _javaLangCloneableActor;
-    private static InterfaceActor _javaIoSerializableActor;
+    private static TupleClassActor javaLangObjectActor;
+    private static TupleClassActor javaLangClassActor;
+    private static InterfaceActor javaLangCloneableActor;
+    private static InterfaceActor javaIoSerializableActor;
 
     private void put(ClassActor classActor) {
-        final TypeDescriptor typeDescriptor = classActor.typeDescriptor();
-        final ClassActor existingClassActor = _typeDescriptorToClassActor.put(typeDescriptor, classActor);
+        final TypeDescriptor typeDescriptor = classActor.typeDescriptor;
+        final ClassActor existingClassActor = typeDescriptorToClassActor.put(typeDescriptor, classActor);
         if (existingClassActor != null) {
-            ProgramWarning.message("Cannot add class actor for " + classActor.name() + " to registry more than once");
+            ProgramWarning.message("Cannot add class actor for " + classActor.name + " to registry more than once");
             return;
         }
-        if (MaxineVM.isPrototyping() && this == _vmClassRegistry) {
-            if (_javaLangObjectActor == null && typeDescriptor.equals(JavaTypeDescriptor.OBJECT)) {
-                _javaLangObjectActor = (TupleClassActor) classActor;
+        if (MaxineVM.isPrototyping() && this == vmClassRegistry) {
+            if (javaLangObjectActor == null && typeDescriptor.equals(JavaTypeDescriptor.OBJECT)) {
+                javaLangObjectActor = (TupleClassActor) classActor;
             }
-            if (_javaLangClassActor == null && typeDescriptor.equals(JavaTypeDescriptor.CLASS)) {
-                _javaLangClassActor = (TupleClassActor) classActor;
+            if (javaLangClassActor == null && typeDescriptor.equals(JavaTypeDescriptor.CLASS)) {
+                javaLangClassActor = (TupleClassActor) classActor;
             }
-            if (_javaLangCloneableActor == null && typeDescriptor.equals(JavaTypeDescriptor.CLONEABLE)) {
-                _javaLangCloneableActor = (InterfaceActor) classActor;
+            if (javaLangCloneableActor == null && typeDescriptor.equals(JavaTypeDescriptor.CLONEABLE)) {
+                javaLangCloneableActor = (InterfaceActor) classActor;
             }
-            if (_javaIoSerializableActor == null && typeDescriptor.equals(JavaTypeDescriptor.SERIALIZABLE)) {
-                _javaIoSerializableActor = (InterfaceActor) classActor;
+            if (javaIoSerializableActor == null && typeDescriptor.equals(JavaTypeDescriptor.SERIALIZABLE)) {
+                javaIoSerializableActor = (InterfaceActor) classActor;
             }
         }
     }
@@ -157,10 +157,10 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     }
 
     public ClassActor get(TypeDescriptor typeDescriptor) {
-        final ClassActor classActor = _typeDescriptorToClassActor.get(typeDescriptor);
+        final ClassActor classActor = typeDescriptorToClassActor.get(typeDescriptor);
         if (false && (!MaxineVM.isPrototyping() && classActor == null)) {
             Log.print("unresolved: ");
-            Log.println(typeDescriptor.string());
+            Log.println(typeDescriptor.string);
         }
         return classActor;
     }
@@ -170,7 +170,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     }
 
     public boolean contains(TypeDescriptor typeDescriptor) {
-        return _typeDescriptorToClassActor.containsKey(typeDescriptor);
+        return typeDescriptorToClassActor.containsKey(typeDescriptor);
     }
 
     public static boolean contains(ClassLoader classLoader, TypeDescriptor typeDescriptor) {
@@ -178,23 +178,23 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     }
 
     public static TupleClassActor javaLangObjectActor() {
-        assert _javaLangObjectActor != null;
-        return _javaLangObjectActor;
+        assert javaLangObjectActor != null;
+        return javaLangObjectActor;
     }
 
     public static TupleClassActor javaLangClassActor() {
-        assert _javaLangClassActor != null;
-        return _javaLangClassActor;
+        assert javaLangClassActor != null;
+        return javaLangClassActor;
     }
 
     public static InterfaceActor javaLangCloneableActor() {
-        assert _javaLangCloneableActor != null;
-        return _javaLangCloneableActor;
+        assert javaLangCloneableActor != null;
+        return javaLangCloneableActor;
     }
 
     public static InterfaceActor javaIoSerializeableActor() {
-        assert _javaIoSerializableActor != null;
-        return _javaIoSerializableActor;
+        assert javaIoSerializableActor != null;
+        return javaIoSerializableActor;
     }
 
     /**
@@ -220,39 +220,32 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
 
         public static final IndexedSequence<Property> VALUES = new ArraySequence<Property>(values());
 
-        private final Class _keyType;
-        private final Class _valueType;
-        private final Object _defaultValue;
-        private final boolean _isFinal;
+        private final Class keyType;
+        private final Class valueType;
+        private final Object defaultValue;
+        private final boolean isFinal;
 
         /**
          * Defines a property.
          *
-         * @param isFinal
-         *                determines if the property can only be set once for a given object
-         * @param keyType
-         *                the type of objects to which the property applies
-         * @param valueType
-         *                the type of the property's values
-         * @param defaultValue
-         *                the default value of the property
+         * @param isFinal determines if the property can only be set once for a given object
+         * @param keyType the type of objects to which the property applies
+         * @param valueType the type of the property's values
+         * @param defaultValue the default value of the property
          */
         private Property(boolean isFinal, Class keyType, Class valueType, Object defaultValue) {
-            _keyType = keyType;
-            _valueType = valueType;
-            _defaultValue = defaultValue;
-            _isFinal = isFinal;
+            this.keyType = keyType;
+            this.valueType = valueType;
+            this.defaultValue = defaultValue;
+            this.isFinal = isFinal;
         }
 
         /**
          * Defines a property that can only be set once.
          *
-         * @param keyType
-         *                the type of objects to which the property applies
-         * @param valueType
-         *                the type of the property's values
-         * @param defaultValue
-         *                the default value of the property
+         * @param keyType the type of objects to which the property applies
+         * @param valueType the type of the property's values
+         * @param defaultValue the default value of the property
          */
         private Property(Class keyType, Class valueType, Object defaultValue) {
             this(true, keyType, valueType, defaultValue);
@@ -265,20 +258,17 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
         /**
          * Sets the value of this property for a given key.
          *
-         * @param mapping
-         *                the mapping from keys to values for this property
-         * @param object
-         *                the object for which the value of this property is to be retrieved
-         * @param value
-         *                the value to be set
+         * @param mapping the mapping from keys to values for this property
+         * @param object the object for which the value of this property is to be retrieved
+         * @param value the value to be set
          */
         void set(VariableMapping<Object, Object> mapping, Object object, Object value) {
-            assert _keyType.isInstance(object);
+            assert keyType.isInstance(object);
             if (value != null) {
-                assert _valueType.isInstance(value);
+                assert valueType.isInstance(value);
                 synchronized (mapping) {
                     final Object oldValue = mapping.put(object, value);
-                    assert !_isFinal || oldValue == null;
+                    assert !isFinal || oldValue == null;
                 }
             } else {
                 mapping.remove(object);
@@ -288,30 +278,28 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
         /**
          * Gets the value of this property for a given key.
          *
-         * @param mapping
-         *                the mapping from keys to values for this property
-         * @param object
-         *                the object for which the value of this property is to be retrieved
+         * @param mapping the mapping from keys to values for this property
+         * @param object the object for which the value of this property is to be retrieved
          */
         Object get(VariableMapping<Object, Object> mapping, Object object) {
-            assert _keyType.isInstance(object);
+            assert keyType.isInstance(object);
             synchronized (mapping) {
                 final Object value = mapping.get(object);
                 if (value != null) {
                     return value;
                 }
             }
-            return _defaultValue;
+            return defaultValue;
         }
     }
 
-    private final Map<Property, VariableMapping<Object, Object>> _propertyMaps;
+    private final Map<Property, VariableMapping<Object, Object>> propertyMaps;
 
     /**
      * Sets the value of a given property for a given object.
      */
     public <Key_Type, Value_Type> void set(Property property, Key_Type object, Value_Type value) {
-        property.set(_propertyMaps.get(property), object, value);
+        property.set(propertyMaps.get(property), object, value);
     }
 
     /**
@@ -319,7 +307,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
      */
     public <Key_Type, Value_Type> Value_Type get(Property property, Key_Type object) {
         final Class<Value_Type> type = null;
-        return StaticLoophole.cast(type, property.get(_propertyMaps.get(property), object));
+        return StaticLoophole.cast(type, property.get(propertyMaps.get(property), object));
     }
 
     public void trace(int level) {
@@ -328,8 +316,8 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
         }
         final PrintStream out = Trace.stream();
         out.println("BEGIN ClassRegistry");
-        for (ClassActor classActor : _typeDescriptorToClassActor.values()) {
-            out.println("    " + classActor.name());
+        for (ClassActor classActor : typeDescriptorToClassActor.values()) {
+            out.println("    " + classActor.name);
         }
         out.println("END ClassRegistry");
     }

@@ -55,7 +55,7 @@ public final class TemplateBasedITableTrampoline extends NonFoldableSnippet {
     /**
      * Template-based generator for trampoline code.
      */
-    private static final TrampolineGenerator _trampolineGenerator = new TemplateBasedTrampolineGenerator.ItableTrampolineGenerator(SNIPPET.classMethodActor());
+    private static final TrampolineGenerator trampolineGenerator = new TemplateBasedTrampolineGenerator.ItableTrampolineGenerator(SNIPPET.classMethodActor());
 
     /*
      * Template for a dynamic trampoline.
@@ -72,7 +72,7 @@ public final class TemplateBasedITableTrampoline extends NonFoldableSnippet {
     }
 
     public static synchronized Address makeCallEntryPoint(int iIndex) {
-        return _trampolineGenerator.makeCallEntryPoint(iIndex);
+        return trampolineGenerator.makeCallEntryPoint(iIndex);
     }
 
     public static synchronized boolean isITableTrampoline(MethodActor classMethodActor) {

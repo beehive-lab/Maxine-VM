@@ -122,14 +122,14 @@ public class Cache<Key_Type, Value_Type> implements Mapping<Key_Type, Value_Type
 
             public Iterator<Value_Type> iterator() {
                 return new Iterator<Value_Type>() {
-                    final Iterator<Entry> _entryIterator = mapping.values().iterator();
+                    final Iterator<Entry> entryIterator = mapping.values().iterator();
 
                     public boolean hasNext() {
-                        return _entryIterator.hasNext();
+                        return entryIterator.hasNext();
                     }
 
                     public Value_Type next() {
-                        return _entryIterator.next().value;
+                        return entryIterator.next().value;
                     }
 
                     public void remove() {

@@ -66,28 +66,28 @@ public class DirTracer {
         }
     }
 
-    private final DirMethod _method;
+    private final DirMethod method;
     private final GrowableDeterministicSet<DirBlock> tracedBlocks = new LinkedIdentityHashSet<DirBlock>();
-    private final GrowableMapping<DirValue, TirInstruction> _values = new OpenAddressingHashMapping<DirValue, TirInstruction>();
+    private final GrowableMapping<DirValue, TirInstruction> values = new OpenAddressingHashMapping<DirValue, TirInstruction>();
     private TirInstruction returnInstruction;
 
     protected DirTracer(DirMethod method) {
-        _method = method;
+        this.method = method;
     }
 
     private TirInstruction trace(final TirTrace trace, TirInstruction[] arguments, TirRecorder recorder) {
         // Map arguments onto parameters.
-        for (int i = 0; i < _method.parameters().length; i++) {
-            _values.put(_method.parameters()[i], arguments[i]);
+        for (int i = 0; i < method.parameters().length; i++) {
+            values.put(method.parameters()[i], arguments[i]);
         }
 
         final AppendableSequence<TirInstruction> path = new ArrayListSequence<TirInstruction>();
-        final boolean isTraceable = trace(_method.blocks().first(), path, trace, recorder);
+        final boolean isTraceable = trace(method.blocks().first(), path, trace, recorder);
 
         if (isTraceable) {
             trace.append(path);
         } else {
-            final TirDirCall call = new TirDirCall(_method, arguments);
+            final TirDirCall call = new TirDirCall(method, arguments);
             trace.append(call);
             if (call.resultKind() != Kind.VOID) {
                 returnInstruction = call;
@@ -102,7 +102,7 @@ public class DirTracer {
             final DirConstant dirConstant = (DirConstant) value;
             return new TirConstant(dirConstant.value());
         }
-        final TirInstruction instruction = _values.get(value);
+        final TirInstruction instruction = values.get(value);
         assert instruction != null;
         return instruction;
     }
@@ -132,7 +132,7 @@ public class DirTracer {
 
                 @Override
                 public void visitAssign(DirAssign dirMove) {
-                    _values.put(dirMove.destination(), map(dirMove.source()));
+                    values.put(dirMove.destination(), map(dirMove.source()));
                 }
 
                 @Override
@@ -141,7 +141,7 @@ public class DirTracer {
                     final TirBuiltinCall call = new TirBuiltinCall(dirBuiltinCall.builtin(), instructions);
                     if (dirBuiltinCall.builtin().resultKind() != Kind.VOID) {
                         assert dirBuiltinCall.result() != null;
-                        _values.put(dirBuiltinCall.result(), call);
+                        values.put(dirBuiltinCall.result(), call);
                     }
                     path.append(call);
                 }
@@ -151,7 +151,7 @@ public class DirTracer {
                     if (dirReturn.returnValue() != DirConstant.VOID) {
                         returnInstruction = map(dirReturn.returnValue());
                     } else {
-                        ProgramError.check(_method.classMethodActor().resultKind() == Kind.VOID);
+                        ProgramError.check(method.classMethodActor().resultKind() == Kind.VOID);
                     }
                 }
 

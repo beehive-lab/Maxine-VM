@@ -31,6 +31,7 @@ import com.sun.max.ins.value.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.type.*;
 
 
@@ -47,9 +48,9 @@ public final class ObjectPane extends InspectorScrollPane {
     public static ObjectPane createArrayElementsPane(ObjectInspector objectInspector, TeleArrayObject teleArrayObject) {
         final int length = teleArrayObject.getLength();
         final ArrayClassActor arrayClassActor = (ArrayClassActor) teleArrayObject.classActorForType();
-        final Kind kind = arrayClassActor.componentClassActor().kind();
+        final Kind kind = arrayClassActor.componentClassActor().kind;
         final WordValueLabel.ValueMode valueMode = kind == Kind.REFERENCE ? WordValueLabel.ValueMode.REFERENCE : WordValueLabel.ValueMode.WORD;
-        final int arrayOffsetFromOrigin = arrayClassActor.arrayLayout().getElementOffsetFromOrigin(0).toInt();
+        final int arrayOffsetFromOrigin = arrayClassActor.kind.arrayLayout(Layout.layoutScheme()).getElementOffsetFromOrigin(0).toInt();
         final ArrayElementsTable arrayElementsTable = new ArrayElementsTable(objectInspector, kind, arrayOffsetFromOrigin, 0, length, "", valueMode);
         return new ObjectPane(objectInspector.inspection(), arrayElementsTable);
     }
@@ -80,7 +81,7 @@ public final class ObjectPane extends InspectorScrollPane {
         }
         final int vTableStartIndex = Hub.vTableStartIndex();
         final InspectorTable table = new ArrayElementsTable(objectInspector, Kind.WORD,
-                        objectInspector.inspection().maxVM().vmConfiguration().layoutScheme().wordArrayLayout().getElementOffsetFromOrigin(vTableStartIndex).toInt(),
+                        objectInspector.inspection().maxVM().vmConfiguration().layoutScheme().wordArrayLayout.getElementOffsetFromOrigin(vTableStartIndex).toInt(),
                         vTableStartIndex,
                         hub.vTableLength(),
                         "V",
@@ -98,7 +99,7 @@ public final class ObjectPane extends InspectorScrollPane {
         }
         final int iTableStartIndex = hub.iTableStartIndex();
         final InspectorTable table = new ArrayElementsTable(objectInspector, Kind.WORD,
-                        objectInspector.inspection().maxVM().vmConfiguration().layoutScheme().wordArrayLayout().getElementOffsetFromOrigin(iTableStartIndex).toInt(),
+                        objectInspector.inspection().maxVM().vmConfiguration().layoutScheme().wordArrayLayout.getElementOffsetFromOrigin(iTableStartIndex).toInt(),
                         iTableStartIndex,
                         hub.iTableLength(),
                         "I",
@@ -116,7 +117,7 @@ public final class ObjectPane extends InspectorScrollPane {
         final MaxVM maxVM = objectInspector.inspection().maxVM();
         final int mTableStartIndex = maxVM.fields().Hub_mTableStartIndex.readInt(teleHub.reference());
         final InspectorTable table = new ArrayElementsTable(objectInspector, Kind.INT,
-                        maxVM.vmConfiguration().layoutScheme().intArrayLayout().getElementOffsetFromOrigin(mTableStartIndex).toInt(),
+                        maxVM.vmConfiguration().layoutScheme().intArrayLayout.getElementOffsetFromOrigin(mTableStartIndex).toInt(),
                         mTableStartIndex,
                         maxVM.fields().Hub_mTableLength.readInt(teleHub.reference()),
                         "M",
@@ -134,7 +135,7 @@ public final class ObjectPane extends InspectorScrollPane {
         final MaxVM maxVM = objectInspector.inspection().maxVM();
         final int referenceMapStartIndex = maxVM.fields().Hub_referenceMapStartIndex.readInt(teleHub.reference());
         final InspectorTable table = new ArrayElementsTable(objectInspector, Kind.INT,
-                        maxVM.vmConfiguration().layoutScheme().intArrayLayout().getElementOffsetFromOrigin(referenceMapStartIndex).toInt(),
+                        maxVM.vmConfiguration().layoutScheme().intArrayLayout.getElementOffsetFromOrigin(referenceMapStartIndex).toInt(),
                         referenceMapStartIndex,
                         maxVM.fields().Hub_referenceMapLength.readInt(teleHub.reference()),
                         "R",

@@ -52,10 +52,10 @@ public class BytecodeTemplateGenerator extends TemplateGenerator {
         super();
     }
 
-    private int _maxTemplateFrameSize;
+    private int maxTemplateFrameSize;
 
     public int maxTemplateFrameSize() {
-        return _maxTemplateFrameSize;
+        return maxTemplateFrameSize;
     }
 
     @Override
@@ -82,8 +82,8 @@ public class BytecodeTemplateGenerator extends TemplateGenerator {
                 final TargetMethod targetMethod = targetGenerator().makeIrMethod(bytecodeSourceTemplate);
                 ProgramError.check(targetMethod.referenceLiterals() == null, "Template must not have *any* reference literals: " + targetMethod);
                 ProgramError.check(targetMethod.scalarLiteralBytes() == null, "Template must not have *any* scalar literals: " + targetMethod);
-                if (targetMethod.frameSize() > _maxTemplateFrameSize) {
-                    _maxTemplateFrameSize = targetMethod.frameSize();
+                if (targetMethod.frameSize() > maxTemplateFrameSize) {
+                    maxTemplateFrameSize = targetMethod.frameSize();
                 }
                 return new CompiledBytecodeTemplate(targetMethod);
             }

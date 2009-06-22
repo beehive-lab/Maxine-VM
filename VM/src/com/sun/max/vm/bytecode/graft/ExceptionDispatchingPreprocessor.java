@@ -92,7 +92,7 @@ import com.sun.max.vm.classfile.constant.*;
 public final class ExceptionDispatchingPreprocessor extends BytecodeAssembler {
 
     private final SeekableByteArrayOutputStream codeStream;
-    private final CodeAttribute _result;
+    private final CodeAttribute result;
 
     public ExceptionDispatchingPreprocessor(ConstantPoolEditor constantPoolEditor, CodeAttribute codeAttribute) {
         super(constantPoolEditor, codeAttribute.code().length, codeAttribute.maxStack(), codeAttribute.maxLocals());
@@ -107,7 +107,7 @@ public final class ExceptionDispatchingPreprocessor extends BytecodeAssembler {
         final byte[] originalCode = codeAttribute.code();
         final byte[] code = Arrays.copyOf(originalCode, originalCode.length + codeStream.size());
         codeStream.copyTo(0, code, originalCode.length, codeStream.size());
-        _result = new CodeAttribute(codeAttribute.constantPool(),
+        result = new CodeAttribute(codeAttribute.constantPool(),
                                     code,
                                     (char) maxStack(),
                                     (char) maxLocals(),
@@ -128,7 +128,7 @@ public final class ExceptionDispatchingPreprocessor extends BytecodeAssembler {
     }
 
     public CodeAttribute codeAttribute() {
-        return _result;
+        return result;
     }
 
     private ExceptionDispatcher[] synthesizeExceptionDispatchers(byte[] code, Sequence<ExceptionHandlerEntry> exceptionHandlerEntries) {

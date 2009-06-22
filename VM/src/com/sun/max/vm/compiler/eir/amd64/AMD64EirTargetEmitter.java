@@ -43,7 +43,7 @@ public final class AMD64EirTargetEmitter extends EirTargetEmitter<AMD64Assembler
             // well as the return address that is pushed to the stack by a call instruction.
             return new StackAddress(slot.offset() + frameSize() + abi().stackSlotSize(), stackPointer.indirect());
         }
-        return new StackAddress(slot.offset(),  _framePointer.indirect());
+        return new StackAddress(slot.offset(),  framePointer.indirect());
     }
 
     /**
@@ -100,16 +100,16 @@ public final class AMD64EirTargetEmitter extends EirTargetEmitter<AMD64Assembler
         return ((AMD64EirRegister.General) abi().integerRegisterActingAs(Role.ABI_SCRATCH)).as64();
     }
 
-    private AMD64GeneralRegister64 _framePointer;
+    private AMD64GeneralRegister64 framePointer;
 
     public AMD64GeneralRegister64 framePointer() {
-        return _framePointer;
+        return framePointer;
     }
 
     public AMD64EirTargetEmitter(AMD64EirABI abi, int frameSize, Safepoint safepoint, AdapterFrameGenerator<AMD64Assembler> adapterFrameGenerator) {
         super(new AMD64Assembler(), abi, frameSize, safepoint, WordWidth.BITS_64, adapterFrameGenerator);
         stackPointer = abi.targetABI().stackPointer();
-        _framePointer = abi.targetABI().framePointer();
+        framePointer = abi.targetABI().framePointer();
     }
 
     @Override

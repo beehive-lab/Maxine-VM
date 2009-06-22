@@ -61,7 +61,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
     public static final GPR SAVED_CALLER_ADDRESS = GPR.L5;
 
     protected final GPR intScratchRegister;
-    protected final GPR _longScratchRegister;
+    protected final GPR longScratchRegister;
     protected final GPR optimizedCodeStackPointer;
     protected final GPR optimizedCodeFramePointer;
     protected final GPR jitedCodeFramePointer;
@@ -76,7 +76,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
     protected SPARCAdapterFrameGenerator(MethodActor classMethodActor, EirABI optimizedAbi) {
         super(classMethodActor, optimizedAbi);
         intScratchRegister = ((SPARCEirRegister.GeneralPurpose) optimizedAbi.getScratchRegister(Kind.INT)).as();
-        _longScratchRegister = ((SPARCEirRegister.GeneralPurpose) optimizedAbi.getScratchRegister(Kind.LONG)).as();
+        longScratchRegister = ((SPARCEirRegister.GeneralPurpose) optimizedAbi.getScratchRegister(Kind.LONG)).as();
         optimizedCodeStackPointer = ((SPARCEirRegister.GeneralPurpose) optimizedAbi.stackPointer()).as();
         optimizedCodeFramePointer = ((SPARCEirRegister.GeneralPurpose) optimizedAbi.framePointer()).as();
         final TargetABI jitABI = VMConfiguration.target().targetABIsScheme().jitABI();
@@ -226,7 +226,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
                 assembler.stx(literalBaseRegister, jitedCodeFramePointer, -STACK_SLOT_SIZE);
                 assembler.nop();
             }
-            assembler.bindLabel(_methodEntryPoint);
+            assembler.bindLabel(methodEntryPoint);
         }
 
         @Override
@@ -289,8 +289,8 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
         void adapt(Kind kind, int optoCompilerStackOffset32, int jitStackOffset32) {
             final int biasedOptToStackOffset32 = optoCompilerStackOffset32 + SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
             if (kind.isCategory2() || kind == Kind.WORD || kind == Kind.REFERENCE) {
-                assembler().ldx(optimizedCodeFramePointer, jitStackOffset32, _longScratchRegister);
-                assembler().stx(_longScratchRegister, optimizedCodeStackPointer, biasedOptToStackOffset32);
+                assembler().ldx(optimizedCodeFramePointer, jitStackOffset32, longScratchRegister);
+                assembler().stx(longScratchRegister, optimizedCodeStackPointer, biasedOptToStackOffset32);
             } else {
                 assembler().lduw(optimizedCodeFramePointer, jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind), intScratchRegister);
                 assembler().stw(intScratchRegister, optimizedCodeStackPointer, biasedOptToStackOffset32);
@@ -300,7 +300,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
         @Override
         void adapt(Kind kind, SPARCEirRegister.GeneralPurpose parameterRegister, int jitStackOffset32) {
             final int offset = jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind);
-            switch (kind.asEnum()) {
+            switch (kind.asEnum) {
                 case BYTE:
                 case BOOLEAN:
                     assembler().ldsb(optimizedCodeStackPointer, offset, parameterRegister.as());
@@ -326,7 +326,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
         @Override
         void adapt(Kind kind, SPARCEirRegister.FloatingPoint parameterRegister, int jitStackOffset32) {
             final int offset = jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind);
-            switch (kind.asEnum()) {
+            switch (kind.asEnum) {
                 case FLOAT:
                     assembler().ld(optimizedCodeStackPointer, offset, parameterRegister.asSinglePrecision());
                     break;
@@ -390,8 +390,8 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             @Override
             void adapt(Kind kind, int optoCompilerStackOffset32, int jitStackOffset32) {
                 if (kind.isCategory2() || kind == Kind.WORD || kind == Kind.REFERENCE) {
-                    assembler().ldx(optimizedCodeFramePointer, optoCompilerStackOffset32, _longScratchRegister);
-                    assembler().stx(_longScratchRegister, optimizedCodeStackPointer, jitStackOffset32);
+                    assembler().ldx(optimizedCodeFramePointer, optoCompilerStackOffset32, longScratchRegister);
+                    assembler().stx(longScratchRegister, optimizedCodeStackPointer, jitStackOffset32);
                 } else {
                     assembler().lduw(optimizedCodeFramePointer, optoCompilerStackOffset32, intScratchRegister);
                     assembler().stw(intScratchRegister, optimizedCodeStackPointer, jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind));
@@ -401,7 +401,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             @Override
             void adapt(Kind kind, SPARCEirRegister.GeneralPurpose parameterRegister, int jitStackOffset32) {
                 final int offset = jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind);
-                switch (kind.asEnum()) {
+                switch (kind.asEnum) {
                     case BYTE:
                     case BOOLEAN:
                         assembler().stb(parameterRegister.as(), optimizedCodeStackPointer, offset);
@@ -427,7 +427,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             @Override
             void adapt(Kind kind, SPARCEirRegister.FloatingPoint parameterRegister, int jitStackOffset32) {
                 final int offset = jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind);
-                switch (kind.asEnum()) {
+                switch (kind.asEnum) {
                     case FLOAT:
                         assembler().st(parameterRegister.asSinglePrecision(), optimizedCodeStackPointer, offset);
                         break;

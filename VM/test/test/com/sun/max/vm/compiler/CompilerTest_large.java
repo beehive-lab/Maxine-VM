@@ -20,12 +20,10 @@
  */
 package test.com.sun.max.vm.compiler;
 
-import com.sun.max.lang.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.ir.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -41,11 +39,6 @@ public abstract class CompilerTest_large<Method_Type extends IrMethod> extends C
         // Set the system property that overrides the default behaviour of ClassfileReader when it encounters
         // a <clinit> while MaxineVM.isPrototying() returns true. The default behaviour is to discard such methods.
         System.setProperty("max.loader.preserveClinitMethods", "");
-    }
-
-    public void test_ReducedHexByte_clinit() {
-        Classes.load(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, ReducedHexByte.class.getName());
-        compileMethod(ReducedHexByte.class, SymbolTable.CLINIT.toString(), SignatureDescriptor.create(void.class));
     }
 
     public void test_HexByte_clinit() {

@@ -188,7 +188,7 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
         if (targetMethod != null) {
             final ClassMethodActor[] directCallees = targetMethod.directCallees();
             for (int stopIndex = 0; stopIndex < directCallees.length; ++stopIndex) {
-                if (directCallees[stopIndex].name().string().equals("prepareCurrentStackReferenceMap")) {
+                if (directCallees[stopIndex].name.string.equals("prepareCurrentStackReferenceMap")) {
                     final int stopPosition = targetMethod.stopPosition(stopIndex);
                     final int nextCallPosition = targetMethod.findNextCall(stopPosition);
                     if (nextCallPosition >= 0) {

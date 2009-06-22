@@ -26,10 +26,10 @@ package test.bytecode;
  */
 public class BC_iastore {
 
-    static int[] _array = {0, 0, 0, 0};
+    static int[] array = {0, 0, 0, 0};
 
     public static int test(int arg, int val) {
-        _array[arg] = val;
-        return _array[arg];
+        array[arg] = val;
+        return array[arg];
     }
 }

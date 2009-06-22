@@ -27,10 +27,10 @@ import com.sun.max.vm.verifier.TypeInferencingMethodVerifier.*;
 /**
  * This class represents a single instruction in the method output as a result of
  * {@linkplain SubroutineInliner subroutine inlining}.
- * 
+ *
  * @author Doug Simon
  */
-class InstructionHandle {
+final class InstructionHandle {
 
     /**
      * Enumeration of the rewrite action to be applied a handle when processing a list of handles to generate the new
@@ -64,56 +64,28 @@ class InstructionHandle {
         RET_SIMPLE_GOTO;
     }
 
-    private final Instruction _instruction;
-    private final SubroutineCall _subroutineCall;
-    private int _position;
+    public final Instruction instruction;
+    public final SubroutineCall subroutineCall;
+    public int position;
 
     /**
      * Link in a linked list of handles representing the copies of an original instruction in the rewritten method (each
      * original instruction that was in a subroutine may occur more than once in the rewritten method).
      */
-    private final InstructionHandle _next;
+    public final InstructionHandle next;
 
-    private Flag _flag;
+    public Flag flag;
 
     public InstructionHandle(Instruction instruction, SubroutineCall caller, InstructionHandle next) {
-        _instruction = instruction;
-        _subroutineCall = caller;
-        _next = next;
-        _flag = NORMAL;
-        _position = -1;
-    }
-
-    public Instruction instruction() {
-        return _instruction;
-    }
-
-    public int position() {
-        return _position;
-    }
-
-    public void setPosition(int position) {
-        _position = position;
-    }
-
-    public Flag flag() {
-        return _flag;
-    }
-
-    public void setFlag(Flag flag) {
-        _flag = flag;
-    }
-
-    public InstructionHandle next() {
-        return _next;
-    }
-
-    public SubroutineCall subroutineCall() {
-        return _subroutineCall;
+        this.instruction = instruction;
+        this.subroutineCall = caller;
+        this.next = next;
+        this.flag = NORMAL;
+        this.position = -1;
     }
 
     @Override
     public String toString() {
-        return (_position == -1 ? "?" : _position) + "[" + _instruction.position() + "] " + _instruction.toString();
+        return (position == -1 ? "?" : position) + "[" + instruction.position() + "] " + instruction.toString();
     }
 }

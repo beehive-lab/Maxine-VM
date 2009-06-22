@@ -712,7 +712,7 @@ public abstract class BytecodeAssembler {
     }
 
     public void return_(Kind kind) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case BYTE:
             case BOOLEAN:
             case SHORT:

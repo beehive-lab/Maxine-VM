@@ -124,8 +124,8 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
         return integerSystemReservedGlobalRegisters;
     }
 
-    protected static final IndexedSequence<SPARCEirRegister> _integerOutRegisters = new ArraySequence<SPARCEirRegister>(O0, O1, O2, O3, O4, O5);
-    protected static final IndexedSequence<SPARCEirRegister> _integerInRegisters = new ArraySequence<SPARCEirRegister>(I0, I1, I2, I3, I4, I5);
+    protected static final IndexedSequence<SPARCEirRegister> integerOutRegisters = new ArraySequence<SPARCEirRegister>(O0, O1, O2, O3, O4, O5);
+    protected static final IndexedSequence<SPARCEirRegister> integerInRegisters = new ArraySequence<SPARCEirRegister>(I0, I1, I2, I3, I4, I5);
 
     // The SPARC / Solaris ABI distinguishes 3 categories of floating point registers
     // that overlaps over the entire set of floating point registers: single, double and quad precisions.
@@ -135,11 +135,11 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
     // precisions are passed in even-numbered registers (D0, D2, D4, etc...). Each double precision register actually maps phisically
     // to two consecutives single-precision registers (e.g., D0 == F0 + F1, D2 = F2 + F3, etc...) for the first 32 registers. Subsequent
     // registers (D32 and up) are actual double precision registers.
-    protected static final IndexedSequence<SPARCEirRegister> _floatingPointOutRegisters =
+    protected static final IndexedSequence<SPARCEirRegister> floatingPointOutRegisters =
         new ArraySequence<SPARCEirRegister>(
                         F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15,
                         F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31);
-    protected static final IndexedSequence<SPARCEirRegister> _floatingPointInRegisters = new ArraySequence<SPARCEirRegister>(_floatingPointOutRegisters);
+    protected static final IndexedSequence<SPARCEirRegister> floatingPointInRegisters = new ArraySequence<SPARCEirRegister>(floatingPointOutRegisters);
 
     protected static final IndexedSequence<SPARCEirRegister> singlePrecisionParameterRegisters =
         new ArraySequence<SPARCEirRegister>(F1, F3, F5, F7, F9,  F11, F13, F15, F17, F19, F21, F23, F25, F27, F29, F31);
@@ -151,7 +151,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
     @Override
     public EirLocation[] getParameterLocations(EirStackSlot.Purpose stackSlotPurpose, Kind... kinds) {
         final EirLocation[] result = new EirLocation[kinds.length];
-        final IndexedSequence<SPARCEirRegister> integerParameterRegisters = stackSlotPurpose.equals(EirStackSlot.Purpose.PARAMETER) ? _integerInRegisters : _integerOutRegisters;
+        final IndexedSequence<SPARCEirRegister> integerParameterRegisters = stackSlotPurpose.equals(EirStackSlot.Purpose.PARAMETER) ? integerInRegisters : integerOutRegisters;
         // This strictly follows the Solaris / SPARC 64-bits ABI.
         // Each argument matches a position on the stack, and each stack position corresponds to a specific register.
         // So it may be the case that a register is not used. For instance, consider the following call:
@@ -170,7 +170,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
         int stackOffset = 0;
         for (int i = 0; i < kinds.length; i++) {
             final IndexedSequence<SPARCEirRegister> parameterRegisters;
-            switch (kinds[i].asEnum()) {
+            switch (kinds[i].asEnum) {
                 case BYTE:
                 case BOOLEAN:
                 case SHORT:
@@ -251,7 +251,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
             result.remove(register);
         }
         // Same for "in" register.
-        for (SPARCEirRegister register : _integerInRegisters) {
+        for (SPARCEirRegister register : integerInRegisters) {
             result.remove(register);
         }
         return result;
@@ -273,17 +273,17 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
         return calleeSavedRegisters;
     }
 
-    private final PoolSet<SPARCEirRegister> _resultRegisters;
+    private final PoolSet<SPARCEirRegister> resultRegisters;
 
     @Override
     public PoolSet<SPARCEirRegister> resultRegisters() {
-        return _resultRegisters;
+        return resultRegisters;
     }
 
     private static GPR[] getTargetIntegerParameterRegisters() {
-        final GPR[] result = new GPR[_integerOutRegisters.length()];
-        for (int i = 0; i < _integerOutRegisters.length(); i++) {
-            final SPARCEirRegister.GeneralPurpose r = (SPARCEirRegister.GeneralPurpose) _integerOutRegisters.get(i);
+        final GPR[] result = new GPR[integerOutRegisters.length()];
+        for (int i = 0; i < integerOutRegisters.length(); i++) {
+            final SPARCEirRegister.GeneralPurpose r = (SPARCEirRegister.GeneralPurpose) integerOutRegisters.get(i);
             result[i] = r.as();
         }
         return result;
@@ -309,7 +309,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
 
     @Override
     public Sequence<SPARCEirRegister> floatingPointParameterRegisters() {
-        return _floatingPointOutRegisters;
+        return floatingPointOutRegisters;
     }
 
     public SPARCAssembler createAssembler() {
@@ -321,9 +321,9 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
         targetABI = targetABI(vmConfiguration);
         unallocatableRegisters = createUnallocatableRegisterPoolSet();
         allocatableRegisters = createAllocatableRegisterPoolSet();
-        _resultRegisters = PoolSet.noneOf(SPARCEirRegister.pool());
-        _resultRegisters.add((SPARCEirRegister) getResultLocation(Kind.LONG));
-        _resultRegisters.add((SPARCEirRegister) getResultLocation(Kind.DOUBLE));
+        resultRegisters = PoolSet.noneOf(SPARCEirRegister.pool());
+        resultRegisters.add((SPARCEirRegister) getResultLocation(Kind.LONG));
+        resultRegisters.add((SPARCEirRegister) getResultLocation(Kind.DOUBLE));
         callerSavedRegisters = createCallerSavedRegisterPoolSet();
     }
 

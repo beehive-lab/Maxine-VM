@@ -437,7 +437,7 @@ public abstract class TeleVM implements MaxVM {
         // Pre-initialize an appropriate disassembler to save time.
         TeleDisassembler.initialize(_vmConfiguration.platform().processorKind());
 
-        _wordSize = _vmConfiguration.platform().processorKind().dataModel().wordWidth().numberOfBytes();
+        _wordSize = _vmConfiguration.platform().processorKind().dataModel().wordWidth().numberOfBytes;
         _programFile = new File(bootImageFile.getParent(), PROGRAM_NAME);
 
         if (commandLineArguments == null) {
@@ -700,22 +700,22 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final Pointer referenceToCell(Reference reference) {
-        return layoutScheme().generalLayout().originToCell(reference.toOrigin());
+        return layoutScheme().generalLayout.originToCell(reference.toOrigin());
     }
 
     public final Reference cellToReference(Pointer cell) {
-        return originToReference(layoutScheme().generalLayout().cellToOrigin(cell));
+        return originToReference(layoutScheme().generalLayout.cellToOrigin(cell));
     }
 
     public final Reference bootClassRegistryReference() {
-        return originToReference(_bootImageStart.plus(_bootImage.header()._classRegistryOffset));
+        return originToReference(_bootImageStart.plus(_bootImage.header().classRegistryOffset));
     }
 
     public final boolean isValidOrigin(Pointer origin) {
         if (origin.isZero()) {
             return false;
         }
-        final Pointer cell = layoutScheme().generalLayout().originToCell(origin);
+        final Pointer cell = layoutScheme().generalLayout.originToCell(origin);
         Pointer p = cell;
         if (_bootImage.vmConfiguration().debugging()) {
             p = p.minus(Word.size()); // can the tag be accessed?
@@ -736,7 +736,7 @@ public abstract class TeleVM implements MaxVM {
             // Keep following hub pointers until the same hub is traversed twice or
             // an address outside of heap or code
             // region(s) is encountered.
-            Word hubWord = layoutScheme().generalLayout().readHubReferenceAsWord(
+            Word hubWord = layoutScheme().generalLayout.readHubReferenceAsWord(
                     temporaryRemoteTeleGripFromOrigin(origin));
             for (int i = 0; i < 3; i++) { // longest expected chain: staticTuple
                                             // -> staticHub -> dynamicHub ->
@@ -746,7 +746,7 @@ public abstract class TeleVM implements MaxVM {
                 if (!containsInHeap(hubOrigin) && !containsInCode(hubOrigin)) {
                     return false;
                 }
-                final Word nextHubWord = layoutScheme().generalLayout().readHubReferenceAsWord(hubGrip);
+                final Word nextHubWord = layoutScheme().generalLayout.readHubReferenceAsWord(hubGrip);
                 if (nextHubWord.equals(hubWord)) {
                     return true;
                 }
@@ -798,7 +798,7 @@ public abstract class TeleVM implements MaxVM {
      */
     public final Reference readReference(Reference reference, int index) throws InvalidReferenceException {
         checkReference(reference);
-        return wordToReference(layoutScheme().wordArrayLayout().getWord(reference, index));
+        return wordToReference(layoutScheme().wordArrayLayout.getWord(reference, index));
     }
 
     /**
@@ -812,7 +812,7 @@ public abstract class TeleVM implements MaxVM {
         int offset = fields().String_offset.readInt(stringReference);
         final int count = fields().String_count.readInt(stringReference);
         final char[] chars = new char[count];
-        final CharArrayLayout charArrayLayout = layoutScheme().charArrayLayout();
+        final CharArrayLayout charArrayLayout = layoutScheme().charArrayLayout;
         for (int i = 0; i < count; i++) {
             chars[i] = charArrayLayout.getChar(valueReference, offset);
             offset++;
@@ -879,7 +879,7 @@ public abstract class TeleVM implements MaxVM {
 
     public final ClassActor makeClassActorForTypeOf(Reference objectReference)  throws InvalidReferenceException {
         checkReference(objectReference);
-        final Reference hubReference = wordToReference(layoutScheme().generalLayout().readHubReferenceAsWord(objectReference));
+        final Reference hubReference = wordToReference(layoutScheme().generalLayout.readHubReferenceAsWord(objectReference));
         final Reference classActorReference = fields().Hub_classActor.readReference(hubReference);
         return makeClassActor(classActorReference);
     }
@@ -891,8 +891,7 @@ public abstract class TeleVM implements MaxVM {
      */
     public final Hub makeLocalHubForObject(Reference objectReference) throws InvalidReferenceException {
         checkReference(objectReference);
-        final Reference hubReference = wordToReference(layoutScheme().
-                generalLayout().readHubReferenceAsWord(objectReference));
+        final Reference hubReference = wordToReference(layoutScheme().generalLayout.readHubReferenceAsWord(objectReference));
         final Reference classActorReference = fields().Hub_classActor.
                 readReference(hubReference);
         final ClassActor objectClassActor = makeClassActor(classActorReference);
@@ -902,29 +901,28 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final Value getElementValue(Kind kind, Reference reference, int index) throws InvalidReferenceException {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case BYTE:
-                return ByteValue.from(layoutScheme().byteArrayLayout().getByte(reference, index));
+                return ByteValue.from(layoutScheme().byteArrayLayout.getByte(reference, index));
             case BOOLEAN:
-                return BooleanValue.from(layoutScheme().booleanArrayLayout().getBoolean(reference, index));
+                return BooleanValue.from(layoutScheme().booleanArrayLayout.getBoolean(reference, index));
             case SHORT:
-                return ShortValue.from(layoutScheme().shortArrayLayout().getShort(reference, index));
+                return ShortValue.from(layoutScheme().shortArrayLayout.getShort(reference, index));
             case CHAR:
-                return CharValue.from(layoutScheme().charArrayLayout().getChar(reference, index));
+                return CharValue.from(layoutScheme().charArrayLayout.getChar(reference, index));
             case INT:
-                return IntValue.from(layoutScheme().intArrayLayout().getInt(reference, index));
+                return IntValue.from(layoutScheme().intArrayLayout.getInt(reference, index));
             case FLOAT:
-                return FloatValue.from(layoutScheme().floatArrayLayout().getFloat(reference, index));
+                return FloatValue.from(layoutScheme().floatArrayLayout.getFloat(reference, index));
             case LONG:
-                return LongValue.from(layoutScheme().longArrayLayout().getLong(reference, index));
+                return LongValue.from(layoutScheme().longArrayLayout.getLong(reference, index));
             case DOUBLE:
-                return DoubleValue.from(layoutScheme().doubleArrayLayout().getDouble(reference, index));
+                return DoubleValue.from(layoutScheme().doubleArrayLayout.getDouble(reference, index));
             case WORD:
-                return new WordValue(layoutScheme().wordArrayLayout().getWord(reference, index));
+                return new WordValue(layoutScheme().wordArrayLayout.getWord(reference, index));
             case REFERENCE:
                 checkReference(reference);
-                return TeleReferenceValue.from(this, wordToReference(layoutScheme().
-                                wordArrayLayout().getWord(reference, index)));
+                return TeleReferenceValue.from(this, wordToReference(layoutScheme().wordArrayLayout.getWord(reference, index)));
             default:
                 throw ProgramError.unknownCase("unknown array kind");
         }
@@ -1015,7 +1013,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final <TeleMethodActor_Type extends TeleMethodActor> TeleMethodActor_Type findTeleMethodActor(Class<TeleMethodActor_Type> teleMethodActorType, MethodActor methodActor) {
-        final TeleClassActor teleClassActor = _teleClassRegistry.findTeleClassActorByType(methodActor.holder().typeDescriptor());
+        final TeleClassActor teleClassActor = _teleClassRegistry.findTeleClassActorByType(methodActor.holder().typeDescriptor);
         if (teleClassActor != null) {
             for (TeleMethodActor teleMethodActor : teleClassActor.getTeleMethodActors()) {
                 if (teleMethodActorType.isInstance(teleMethodActor)) {
@@ -1222,7 +1220,7 @@ public abstract class TeleVM implements MaxVM {
 
     public void advanceToJavaEntryPoint() throws IOException {
         _messenger.enable();
-        final Address startEntryPoint = bootImageStart().plus(bootImage().header()._vmRunMethodOffset);
+        final Address startEntryPoint = bootImageStart().plus(bootImage().header().vmRunMethodOffset);
         try {
             runToInstruction(startEntryPoint, true, false);
         } catch (Exception exception) {
@@ -1477,7 +1475,7 @@ public abstract class TeleVM implements MaxVM {
      */
     public static Type maxineKindToJDWPType(Kind kind) {
 
-        final KindEnum e = kind.asEnum();
+        final KindEnum e = kind.asEnum;
         switch (e) {
             case BOOLEAN:
                 return VMValue.Type.BOOLEAN;
@@ -1515,7 +1513,7 @@ public abstract class TeleVM implements MaxVM {
      * @return the value as seen by the JDWP server
      */
     public final VMValue maxineValueToJDWPValue(Value value) {
-        switch (value.kind().asEnum()) {
+        switch (value.kind().asEnum) {
             case BOOLEAN:
                 return _jdwpAccess.createBooleanValue(value.asBoolean());
             case BYTE:

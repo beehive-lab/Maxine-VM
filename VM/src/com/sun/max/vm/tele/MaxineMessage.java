@@ -36,14 +36,10 @@ public abstract class MaxineMessage<Message_Type extends MaxineMessage> {
         public static final IndexedSequence<Tag> VALUES = new ArraySequence<Tag>(values());
     }
 
-    private final Tag _tag;
-
-    public Tag tag() {
-        return _tag;
-    }
+    public final Tag tag;
 
     protected MaxineMessage(Tag tag) {
-        _tag = tag;
+        this.tag = tag;
     }
 
     public void readData(DataInputStream dataInputStream) throws IOException {
@@ -69,7 +65,7 @@ public abstract class MaxineMessage<Message_Type extends MaxineMessage> {
     }
 
     public final void write(DataOutputStream dataOutputStream) throws IOException {
-        dataOutputStream.writeInt(_tag.ordinal());
+        dataOutputStream.writeInt(tag.ordinal());
         writeData(dataOutputStream);
     }
 

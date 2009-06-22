@@ -94,14 +94,14 @@ public class AMD64DtInterpreterStackFrameLayout extends JavaStackFrameLayout {
     }
 
     public static int offsetWithinWord(Kind kind) {
-        return ENDIANNESS.offsetWithinWord(Kind.WORD.width(), kind.width());
+        return ENDIANNESS.offsetWithinWord(Kind.WORD.width, kind.width);
     }
 
     private static final int CAT1_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.INT);
     private static final int CAT2_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.LONG);
 
     public static int offsetInStackSlot(Kind kind) {
-        if (kind.width().equals(WordWidth.BITS_64)) {
+        if (kind.width.equals(WordWidth.BITS_64)) {
             return CAT2_OFFSET_WITHIN_WORD;
         }
         return CAT1_OFFSET_WITHIN_WORD;

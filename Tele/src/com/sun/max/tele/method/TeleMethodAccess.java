@@ -49,9 +49,9 @@ public abstract class TeleMethodAccess extends AbstractTeleVMHolder {
         final ClassActor classActor = PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(holder));
         MethodActor uniqueMethodActor = null;
         for (MethodActor methodActor : classActor.getLocalMethodActors()) {
-            if (methodActor.name().string().equals(name)) {
+            if (methodActor.name.string.equals(name)) {
                 if (uniqueMethodActor != null) {
-                    ProgramError.unexpected("need to disambiguate method named '" + name + "' in " + classActor.name() + " with a signature");
+                    ProgramError.unexpected("need to disambiguate method named '" + name + "' in " + classActor.name + " with a signature");
                 }
                 uniqueMethodActor = methodActor;
             }

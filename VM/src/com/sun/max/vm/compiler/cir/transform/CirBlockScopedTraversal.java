@@ -70,8 +70,8 @@ public class CirBlockScopedTraversal extends CirBlockScopedVisitor {
         addValues(call.arguments(), scope);
         CirJavaFrameDescriptor javaFrameDescriptor = call.javaFrameDescriptor();
         while (javaFrameDescriptor != null) {
-            addValues(javaFrameDescriptor.locals(), scope);
-            addValues(javaFrameDescriptor.stackSlots(), scope);
+            addValues(javaFrameDescriptor.locals, scope);
+            addValues(javaFrameDescriptor.stackSlots, scope);
             javaFrameDescriptor = javaFrameDescriptor.parent();
         }
     }

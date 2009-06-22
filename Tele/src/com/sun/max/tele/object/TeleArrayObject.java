@@ -58,13 +58,13 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
      */
     public int getLength() {
         if (_length < 0) {
-            _length = teleVM().layoutScheme().arrayHeaderLayout().readLength(reference());
+            _length = teleVM().layoutScheme().arrayHeaderLayout.readLength(reference());
         }
         return _length;
     }
 
     public Kind componentKind() {
-        return classActorForType().componentClassActor().kind();
+        return classActorForType().componentClassActor().kind;
     }
 
     @Override

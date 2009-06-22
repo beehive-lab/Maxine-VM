@@ -251,7 +251,7 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
      */
     static class HeapSchemeDeadlockDetectionJavaMonitor extends StandardJavaMonitor {
 
-        private boolean _elideForDeadlockStackTrace = false;
+        private boolean elideForDeadlockStackTrace = false;
 
         @Override
         public void monitorEnter() {
@@ -260,7 +260,7 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
                 if (currentThread.waitingCondition() == null) {
                     // This is the GC thread creating its private waiting condition variable.
                     // This done at VM boot so no deadlock risk.
-                } else if (_elideForDeadlockStackTrace) {
+                } else if (elideForDeadlockStackTrace) {
                     // Pretend the GC thread has acquired the lock so that we can allocate if necessary while dumping its stack.
                     return;
                 } else {
@@ -274,13 +274,13 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
             Log.println("WARNING : GC thread is going for the HeapScheme lock. Trying to allocate?");
             Log.println("WARNING : Eliding HeapScheme lock for GC thread and attempting stack trace...");
             DebugBreak.here();
-            _elideForDeadlockStackTrace = true;
+            elideForDeadlockStackTrace = true;
             throw FatalError.unexpected("GC thread is attempting to allocate. Attempting stack trace.");
         }
 
         @Override
         public void monitorExit() {
-            if (_elideForDeadlockStackTrace) {
+            if (elideForDeadlockStackTrace) {
                 // Pretend the GC thread has released the lock so that we can allocate if necessary while dumping its stack.
                 return;
             }

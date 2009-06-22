@@ -37,7 +37,7 @@ public class SideTable {
     public static final int CREATING = 3;
 
     public static final int CHUNK_SHIFT = 9;
-    public static final int CHUNK_SLOT_LENGTH = VMConfiguration.hostOrTarget().wordWidth().numberOfBytes();
+    public static final int CHUNK_SLOT_LENGTH = VMConfiguration.hostOrTarget().wordWidth().numberOfBytes;
 
     private static final boolean debug = false;
 

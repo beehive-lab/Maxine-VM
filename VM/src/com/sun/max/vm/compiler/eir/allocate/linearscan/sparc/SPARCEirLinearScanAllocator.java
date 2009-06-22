@@ -40,11 +40,11 @@ public final class SPARCEirLinearScanAllocator extends LinearScanRegisterAllocat
         return noRegisters;
     }
 
-    private final PoolSet<SPARCEirRegister> _allocatableIntegerRegisters;
+    private final PoolSet<SPARCEirRegister> allocatableIntegerRegisters;
 
     @Override
     protected PoolSet<SPARCEirRegister> allocatableIntegerRegisters() {
-        return _allocatableIntegerRegisters;
+        return allocatableIntegerRegisters;
     }
 
     private final PoolSet<SPARCEirRegister> allocatableFloatingPointRegisters;
@@ -58,12 +58,12 @@ public final class SPARCEirLinearScanAllocator extends LinearScanRegisterAllocat
         super(methodGeneration);
         final SPARCEirABI abi = (SPARCEirABI) methodGeneration.abi();
 
-        _allocatableIntegerRegisters = PoolSet.allOf(SPARCEirRegister.pool());
-        _allocatableIntegerRegisters.and(SPARCEirRegister.GeneralPurpose.poolSet());
-        _allocatableIntegerRegisters.and(abi.allocatableRegisters());
+        allocatableIntegerRegisters = PoolSet.allOf(SPARCEirRegister.pool());
+        allocatableIntegerRegisters.and(SPARCEirRegister.GeneralPurpose.poolSet());
+        allocatableIntegerRegisters.and(abi.allocatableRegisters());
         if (((DirToSPARCEirMethodTranslation) methodGeneration).saveSafetpoinLatchInLocal()) {
             // Reserve L5
-            _allocatableIntegerRegisters.remove(DirToSPARCEirMethodTranslation.SAVED_SAFEPOINT_LATCH_LOCAL);
+            allocatableIntegerRegisters.remove(DirToSPARCEirMethodTranslation.SAVED_SAFEPOINT_LATCH_LOCAL);
         }
 
         allocatableFloatingPointRegisters = PoolSet.allOf(SPARCEirRegister.pool());

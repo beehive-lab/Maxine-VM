@@ -301,8 +301,8 @@ public enum Endianness {
 
         @Override
         public int offsetWithinWord(WordWidth wordWidth, WordWidth dataWidth) {
-            assert wordWidth.numberOfBytes() >= dataWidth.numberOfBytes();
-            return wordWidth.numberOfBytes() - dataWidth.numberOfBytes();
+            assert wordWidth.numberOfBytes >= dataWidth.numberOfBytes;
+            return wordWidth.numberOfBytes - dataWidth.numberOfBytes;
         }
 
         @Override

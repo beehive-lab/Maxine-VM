@@ -54,7 +54,7 @@ public abstract class JdkTest_System<Method_Type extends IrMethod> extends Compi
     }
 
     private static Object createEmptyArray(Kind kind) {
-        return Array.newInstance(kind.toJava(), LENGTH);
+        return Array.newInstance(kind.javaClass, LENGTH);
     }
 
     private static Object createFullArray(Kind kind) {

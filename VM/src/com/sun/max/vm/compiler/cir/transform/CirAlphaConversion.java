@@ -83,8 +83,8 @@ public final class CirAlphaConversion {
                 renameValues(call.arguments(), renaming, toDo);
                 CirJavaFrameDescriptor javaFrameDescriptor = call.javaFrameDescriptor();
                 while (javaFrameDescriptor != null) {
-                    renameValues(javaFrameDescriptor.locals(), renaming, toDo);
-                    renameValues(javaFrameDescriptor.stackSlots(), renaming, toDo);
+                    renameValues(javaFrameDescriptor.locals, renaming, toDo);
+                    renameValues(javaFrameDescriptor.stackSlots, renaming, toDo);
                     javaFrameDescriptor = javaFrameDescriptor.parent();
                 }
                 if (call.procedure() instanceof CirVariable) {

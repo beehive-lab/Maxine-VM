@@ -33,8 +33,8 @@ public class DetectLoops extends AlgorithmPart {
 
     private AppendableIndexedSequence<Pair<EirBlock, EirBlock>> loopEndBlocks;
     private PoolSet<EirBlock> loopHeaders;
-    private AppendableIndexedSequence<Loop> _loops;
-    private VariableMapping<EirBlock, Loop> _blockToLoop;
+    private AppendableIndexedSequence<Loop> loops;
+    private VariableMapping<EirBlock, Loop> blockToLoop;
 
     public DetectLoops() {
         super(2);
@@ -43,8 +43,8 @@ public class DetectLoops extends AlgorithmPart {
     @Override
     protected void doit() {
         loopEndBlocks = new ArrayListSequence<Pair<EirBlock, EirBlock>>(10);
-        _loops = new ArrayListSequence<Loop>(10);
-        _blockToLoop = new ChainedHashMapping<EirBlock, Loop>();
+        loops = new ArrayListSequence<Loop>(10);
+        blockToLoop = new ChainedHashMapping<EirBlock, Loop>();
 
         final PoolSet<EirBlock> visitedBlockPoolSet = PoolSet.noneOf(new ArrayPool<EirBlock>(Sequence.Static.toArray(generation().eirBlocks(), EirBlock.class)));
         final PoolSet<EirBlock> activeBlockPoolSet = visitedBlockPoolSet.clone();
@@ -54,7 +54,7 @@ public class DetectLoops extends AlgorithmPart {
         assert startBlock.predecessors().length() == 0 : "must be start block";
         detectLoopEndBlocks(visitedBlockPoolSet, activeBlockPoolSet, startBlock);
 
-        if (_loops.length() > 0) {
+        if (loops.length() > 0) {
             markLoops();
             clearNonNaturalLoops(startBlock);
             assignLoopDepth(startBlock);
@@ -112,9 +112,9 @@ public class DetectLoops extends AlgorithmPart {
                         // We found a pair (parent, cur) of loop end block and loop header
                         loopEndBlocks.append(new Pair<EirBlock, EirBlock>(cur, succ));
                         loopHeaders.add(succ);
-                        final Loop loop = new Loop(_loops.length());
-                        _loops.append(loop);
-                        _blockToLoop.put(succ, loop);
+                        final Loop loop = new Loop(loops.length());
+                        loops.append(loop);
+                        blockToLoop.put(succ, loop);
                     } else if (!visited.contains(cur)) {
                         stack.append(succ);
                     }
@@ -131,7 +131,7 @@ public class DetectLoops extends AlgorithmPart {
 
             final EirBlock loopEnd = loopEndBlocks.get(i).first();
             final EirBlock loopStart = loopEndBlocks.get(i).second();
-            final Loop loop = _blockToLoop.get(loopStart);
+            final Loop loop = blockToLoop.get(loopStart);
 
             assert loopHeaders.contains(loopStart) : "must be loop header";
             assert loop != null : "loop start block must have associated loop in map";
@@ -160,7 +160,7 @@ public class DetectLoops extends AlgorithmPart {
 
     private void clearNonNaturalLoops(EirBlock startBlock) {
 
-        for (Loop loop : _loops) {
+        for (Loop loop : loops) {
             if (loop.containsBlock(startBlock)) {
                 loop.clear();
             }
@@ -183,15 +183,15 @@ public class DetectLoops extends AlgorithmPart {
                 assert cur.loopNestingDepth() == 0 : "cannot set loop-depth twice";
                 int loopDepth = 0;
                 int minLoopIndex = 0;
-                for (int i = _loops.length() - 1; i >= 0; i--) {
-                    if (_loops.get(i).containsBlock(cur)) {
+                for (int i = loops.length() - 1; i >= 0; i--) {
+                    if (loops.get(i).containsBlock(cur)) {
                         loopDepth++;
                         minLoopIndex = i;
                     }
                 }
 
                 cur.setLoopNestingDepth(loopDepth);
-                _blockToLoop.put(cur, _loops.get(minLoopIndex));
+                blockToLoop.put(cur, loops.get(minLoopIndex));
 
                 // append all unvisited successors to work list
                 for (EirBlock succ : cur.allUniqueSuccessors()) {

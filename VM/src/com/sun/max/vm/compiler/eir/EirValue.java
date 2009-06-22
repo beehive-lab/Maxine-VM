@@ -31,13 +31,13 @@ import com.sun.max.vm.value.*;
  */
 public abstract class EirValue implements IrValue {
 
-    private LinkedIdentityHashSet<EirOperand> _operands = new LinkedIdentityHashSet<EirOperand>();
+    private LinkedIdentityHashSet<EirOperand> operands = new LinkedIdentityHashSet<EirOperand>();
 
     /**
      * Gets the set of operands representing all the uses of this value by the instructions of an EIR method.
      */
     public final Sequence<EirOperand> operands() {
-        return _operands;
+        return operands;
     }
 
 
@@ -51,7 +51,7 @@ public abstract class EirValue implements IrValue {
             operand.setEirValueWithoutUpdate(other);
         }
 
-        _operands.clear();
+        operands.clear();
     }
 
     public EirVariable asVariable() {
@@ -105,7 +105,7 @@ public abstract class EirValue implements IrValue {
 
     public void addOperand(EirOperand operand) {
         locationCategories = null;
-        _operands.add(operand);
+        operands.add(operand);
         switch (operand.effect()) {
             case USE:
                 numberOfUses++;
@@ -121,7 +121,7 @@ public abstract class EirValue implements IrValue {
 
     public final void removeOperand(EirOperand operand) {
         locationCategories = null;
-        _operands.remove(operand);
+        operands.remove(operand);
         switch (operand.effect()) {
             case USE:
                 numberOfUses--;
@@ -142,7 +142,7 @@ public abstract class EirValue implements IrValue {
     public PoolSet<EirLocationCategory> locationCategories() {
         if (locationCategories == null) {
             locationCategories = EirLocationCategory.all();
-            for (EirOperand operand : _operands) {
+            for (EirOperand operand : operands) {
                 locationCategories.and(operand.locationCategories());
             }
         }
@@ -226,7 +226,7 @@ public abstract class EirValue implements IrValue {
     }
 
     public void cleanup() {
-        _operands = null;
+        operands = null;
         locationCategories = null;
     }
 

@@ -40,7 +40,7 @@ public class MaxCiRuntime implements CiRuntime {
     final MaxCiConstantPool globalConstantPool = new MaxCiConstantPool(this, null);
 
     final WeakHashMap<MaxCiField, MaxCiField> fields = new WeakHashMap<MaxCiField, MaxCiField>();
-    final WeakHashMap<MaxCiMethod, MaxCiMethod> _methods = new WeakHashMap<MaxCiMethod, MaxCiMethod>();
+    final WeakHashMap<MaxCiMethod, MaxCiMethod> methods = new WeakHashMap<MaxCiMethod, MaxCiMethod>();
     final WeakHashMap<MaxCiType, MaxCiType> types = new WeakHashMap<MaxCiType, MaxCiType>();
     final WeakHashMap<ConstantPool, MaxCiConstantPool> constantPools = new WeakHashMap<ConstantPool, MaxCiConstantPool>();
 

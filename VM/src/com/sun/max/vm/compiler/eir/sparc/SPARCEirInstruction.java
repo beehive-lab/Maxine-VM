@@ -80,7 +80,7 @@ public interface SPARCEirInstruction {
 
         public BranchOnIntegerConditionCode(EirBlock block, EirBlock target, EirBlock next, Kind comparisonKind) {
             super(block, target, next);
-            conditionCode = comparisonKind.width().equals(WordWidth.BITS_64) ? ICCOperand.XCC : ICCOperand.ICC;
+            conditionCode = comparisonKind.width.equals(WordWidth.BITS_64) ? ICCOperand.XCC : ICCOperand.ICC;
         }
 
         @Override
@@ -531,11 +531,11 @@ public interface SPARCEirInstruction {
      *  Moving the register windows is the callee's decision. See EirPrologue and return instructions.
      */
     public static class CALL extends EirCall<EirInstructionVisitor, SPARCEirTargetEmitter> implements SPARCEirInstruction  {
-        final SPARCEirRegister.GeneralPurpose _savedSafepointLatch;
+        final SPARCEirRegister.GeneralPurpose savedSafepointLatch;
         final SPARCEirRegister.GeneralPurpose safepointLatch;
 
         public SPARCEirRegister.GeneralPurpose savedSafepointLatch() {
-            return _savedSafepointLatch;
+            return savedSafepointLatch;
         }
 
         public CALL(EirBlock block, EirABI abi, EirValue result, EirLocation resultLocation,
@@ -546,10 +546,10 @@ public interface SPARCEirInstruction {
             safepointLatch = (SPARCEirRegister.GeneralPurpose) sparcAbi.safepointLatchRegister();
             final DirToSPARCEirMethodTranslation sparcMethodGeneration = (DirToSPARCEirMethodTranslation) methodGeneration;
             if (sparcAbi.callerSavedRegisters().contains(safepointLatch) && sparcMethodGeneration.callerMustSaveLatchRegister()) {
-                _savedSafepointLatch = DirToSPARCEirMethodTranslation.SAVED_SAFEPOINT_LATCH_LOCAL;
+                savedSafepointLatch = DirToSPARCEirMethodTranslation.SAVED_SAFEPOINT_LATCH_LOCAL;
                 sparcMethodGeneration.needsSavingSafepointLatchInLocal();
             } else {
-                _savedSafepointLatch = null;
+                savedSafepointLatch = null;
             }
         }
 
@@ -576,11 +576,11 @@ public interface SPARCEirInstruction {
             }
             // This is a workaround to a problem with the current register allocator which makes it very hard to reload a spilled - preallocated caller save
             // register (the only occurrence of which is the safepoint latch) into its preallocated location.
-            if (_savedSafepointLatch != null) {
+            if (savedSafepointLatch != null) {
                 // Save safepoint latch in delay slot
-                emitter.assembler().mov(safepointLatch.as(), _savedSafepointLatch.as());
+                emitter.assembler().mov(safepointLatch.as(), savedSafepointLatch.as());
                 // Restore it on return
-                emitter.assembler().mov(_savedSafepointLatch.as(), safepointLatch.as());
+                emitter.assembler().mov(savedSafepointLatch.as(), safepointLatch.as());
             } else {
                 // TODO: fill delay slot.
                 emitter.assembler().nop();
@@ -597,10 +597,10 @@ public interface SPARCEirInstruction {
             TRAP_STUB
         }
 
-        final FROM _from;
+        final FROM from;
         public RET(EirBlock block, FROM returnFrom) {
             super(block);
-            _from = returnFrom;
+            from = returnFrom;
         }
         public RET(EirBlock block) {
             this(block, FROM.JAVA_METHOD);
@@ -608,7 +608,7 @@ public interface SPARCEirInstruction {
 
         @Override
         public void emit(SPARCEirTargetEmitter emitter) {
-            switch(_from) {
+            switch(from) {
                 case TRAMPOLINE:
                     emitter.assembler().jmpl(O0, G0, G0);
                     emitter.assembler().restore(O1, G0, O0);   // Restore the receiver in %o0
@@ -1767,16 +1767,16 @@ public interface SPARCEirInstruction {
     }
 
     public static class MEMBAR extends SPARCEirOperation {
-        private final MembarOperand _ordering;
+        private final MembarOperand ordering;
 
         public MEMBAR(EirBlock block, MembarOperand ordering) {
             super(block);
-            _ordering = ordering;
+            this.ordering = ordering;
         }
 
         @Override
         public void emit(SPARCEirTargetEmitter emitter) {
-            emitter.assembler().membar(_ordering);
+            emitter.assembler().membar(ordering);
         }
 
         @Override
@@ -1786,7 +1786,7 @@ public interface SPARCEirInstruction {
 
         @Override
         public String toString() {
-            return super.toString() + " " + _ordering;
+            return super.toString() + " " + ordering;
         }
     }
 
@@ -2183,7 +2183,7 @@ public interface SPARCEirInstruction {
 
     public static final class ZERO extends SPARCEirUnaryOperation {
         public static PoolSet<EirLocationCategory> locationCategories(Kind kind) {
-            switch (kind.asEnum()) {
+            switch (kind.asEnum) {
                 case INT:
                 case LONG:
                 case WORD:
@@ -2197,15 +2197,11 @@ public interface SPARCEirInstruction {
             }
         }
 
-        private Kind _kind;
-
-        public Kind kind() {
-            return _kind;
-        }
+        public final Kind kind;
 
         public ZERO(EirBlock block, Kind kind, EirValue operand) {
             super(block, operand, EirOperand.Effect.DEFINITION, locationCategories(kind));
-            _kind = kind;
+            this.kind = kind;
         }
 
         @Override
@@ -2215,7 +2211,7 @@ public interface SPARCEirInstruction {
                     emitter.assembler().mov(G0, operandGeneralRegister().as());
                     break;
                 case FLOATING_POINT_REGISTER: {
-                    switch (kind().asEnum()) {
+                    switch (kind.asEnum) {
                         case FLOAT:  {
                             final SFPR freg = operandFloatingPointRegister().asSinglePrecision();
                             emitter.assembler().fsubs(freg, freg, freg);
@@ -2282,7 +2278,7 @@ public interface SPARCEirInstruction {
             if (SPARCEirOperation.isSimm13(minMatchValue()) && SPARCEirOperation.isSimm13(maxMatchValue())) {
                 for (int i = 0; i < matches().length; i++) {
                     emitter.assembler().cmp(tagRegister, matches()[i].value().asInt());
-                    emitter.assembler().be(targets()[i].asLabel());
+                    emitter.assembler().be(targets[i].asLabel());
                     emitter.assembler().nop(); // empty delay slot
                 }
             } else {
@@ -2307,7 +2303,7 @@ public interface SPARCEirInstruction {
                         }
                         emitter.assembler().cmp(tagRegister, matchRegister);
                     }
-                    emitter.assembler().be(AnnulBit.NO_A, targets()[i].asLabel());
+                    emitter.assembler().be(AnnulBit.NO_A, targets[i].asLabel());
                     if (i == last) {
                         emitter.assembler().nop(); // empty delay slot
                         break;
@@ -2342,7 +2338,7 @@ public interface SPARCEirInstruction {
             final Label defaultTargetLabel = defaultTarget().asLabel();
             final Label jumpTable = new Label();
             for (int i = 0; i < matches.length; i++) {
-                targetLabels[i] = targets()[i].asLabel();
+                targetLabels[i] = targets[i].asLabel();
             }
             final GPR tagRegister = tagGeneralRegister().as();
             final int numElements = numberOfTableElements();
@@ -2415,7 +2411,7 @@ public interface SPARCEirInstruction {
                     impossibleImmediateWidth();
                 }
             }
-            emitter.assembler().be(AnnulBit.NO_A, targets()[middleIndex].asLabel());
+            emitter.assembler().be(AnnulBit.NO_A, targets[middleIndex].asLabel());
             emitter.assembler().nop(); // TODO -- exploit delay slot
             if (bottomIndex == topIndex) {
                 branchToDefaultTarget(emitter);

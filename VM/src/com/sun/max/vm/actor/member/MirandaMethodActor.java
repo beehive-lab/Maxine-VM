@@ -59,7 +59,7 @@ import com.sun.max.vm.compiler.*;
 public class MirandaMethodActor extends VirtualMethodActor {
 
     public MirandaMethodActor(InterfaceMethodActor interfaceMethodActor) {
-        super(interfaceMethodActor.name(),
+        super(interfaceMethodActor.name,
               interfaceMethodActor.descriptor(),
               ACC_PUBLIC | MethodActor.ACC_ABSTRACT | ACC_SYNTHETIC,
               null);

@@ -217,7 +217,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
         delegate().delegateMonitorWait(object, timeout, lockWord);
     }
 
-    private final boolean[] _threadHoldsMonitorResult = new boolean[1];
+    private final boolean[] threadHoldsMonitorResult = new boolean[1];
 
     protected boolean threadHoldsMonitor(Object object, ModalLockWord64 lockWord, VmThread thread, int threadID) {
         ModalLockWord64 newLockWord = lockWord;
@@ -226,8 +226,8 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
                 final ThinLockWord64 thinLockWord = ThinLockWord64.from(newLockWord);
                 return !thinLockWord.countUnderflow() && thinLockWord.getLockOwnerID() == threadID;
             }
-            if (delegate().delegateThreadHoldsMonitor(object, lockWord, thread, threadID, _threadHoldsMonitorResult)) {
-                return _threadHoldsMonitorResult[0];
+            if (delegate().delegateThreadHoldsMonitor(object, lockWord, thread, threadID, threadHoldsMonitorResult)) {
+                return threadHoldsMonitorResult[0];
             }
             // Deflation. Try again.
             newLockWord = ModalLockWord64.from(ObjectAccess.readMisc(object));

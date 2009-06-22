@@ -57,11 +57,11 @@ public final class AMD64Deoptimizer extends Deoptimizer {
         return isRexPrefix(firstInstructionByte) ? 4 : 3;
     }
 
-    private static byte[] _illegalInstruction = {(byte) 0x27}; // DAA: illegal in 64-bit mode
+    private static byte[] illegalInstruction = {(byte) 0x27}; // DAA: illegal in 64-bit mode
 
     @Override
     public byte[] illegalInstruction() {
-        return _illegalInstruction;
+        return illegalInstruction;
     }
 
     public static final TargetLocation.IntegerRegister INTEGER_RETURN_REGISTER = new TargetLocation.IntegerRegister(VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI().integerReturn().value());

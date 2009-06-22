@@ -60,7 +60,7 @@ import com.sun.max.vm.value.*;
  */
 public final class DataPrototype extends Prototype {
 
-    private final GraphPrototype _graphPrototype;
+    private final GraphPrototype graphPrototype;
 
     /**
      * Retrieves the graph prototype from which this data prototype was built.
@@ -68,10 +68,10 @@ public final class DataPrototype extends Prototype {
      * @return
      */
     public GraphPrototype graphPrototype() {
-        return _graphPrototype;
+        return graphPrototype;
     }
 
-    private Map<Object, Address> _objectToCell = new IdentityHashMap<Object, Address>();
+    private Map<Object, Address> objectToCell = new IdentityHashMap<Object, Address>();
 
     /**
      * Gets the address of the cell allocated for the specified object.
@@ -80,7 +80,7 @@ public final class DataPrototype extends Prototype {
      * @return the address of the specified object
      */
     public Address objectToCell(Object object) {
-        return _objectToCell.get(HostObjectAccess.hostToTarget(object));
+        return objectToCell.get(HostObjectAccess.hostToTarget(object));
     }
 
     /**
@@ -89,7 +89,7 @@ public final class DataPrototype extends Prototype {
      * @return a map from objects to cells
      */
     public Map<Object, Address> allocationMap() {
-        return Collections.unmodifiableMap(_objectToCell);
+        return Collections.unmodifiableMap(objectToCell);
     }
 
     /**
@@ -99,7 +99,7 @@ public final class DataPrototype extends Prototype {
      * @return a pointer to the origin of the object in this data prototype
      */
     public Pointer objectToOrigin(Object object) {
-        return _layoutScheme.generalLayout().cellToOrigin(objectToCell(object).asPointer());
+        return layoutScheme.generalLayout.cellToOrigin(objectToCell(object).asPointer());
     }
 
     /**
@@ -113,12 +113,12 @@ public final class DataPrototype extends Prototype {
         if (object == null) {
             return false;
         }
-        assert !_objectToCell.containsKey(object);
-        _objectToCell.put(object, cell);
+        assert !objectToCell.containsKey(object);
+        objectToCell.put(object, cell);
         return true;
     }
 
-    private AppendableIndexedSequence<Object> _codeObjects = new ArrayListSequence<Object>();
+    private AppendableIndexedSequence<Object> codeObjects = new ArrayListSequence<Object>();
 
     /**
      * Allocates a cell for a given object which is referenced from a given target bundle.
@@ -133,7 +133,7 @@ public final class DataPrototype extends Prototype {
             assert !cellSize.isZero();
             final Pointer cell = targetBundle.cell(field);
             if (assignCell(object, cell)) {
-                _codeObjects.append(object);
+                codeObjects.append(object);
                 assert HostObjectAccess.getSize(object).equals(cellSize);
             }
         }
@@ -163,7 +163,7 @@ public final class DataPrototype extends Prototype {
         Trace.end(1, "assignCodeCells: " + n + " target methods");
     }
 
-    private AppendableIndexedSequence<Object> _heapObjects = new ArrayListSequence<Object>();
+    private AppendableIndexedSequence<Object> heapObjects = new ArrayListSequence<Object>();
 
     /**
      * Assigns a heap cell to the specified object.
@@ -173,13 +173,13 @@ public final class DataPrototype extends Prototype {
      */
     private void assignHeapCell(Object object, Address cell) {
         if (assignCell(object, cell)) {
-            _heapObjects.append(object);
+            heapObjects.append(object);
         } else {
             ProgramError.unexpected("null found in list of heap objects");
         }
     }
 
-    private Address _nonZeroBootHeapStart;
+    private Address nonZeroBootHeapStart;
 
     /**
      * Allocate one object that is not referenced and sits at the bottom of the boot image heap. Thus we avoid having
@@ -190,7 +190,7 @@ public final class DataPrototype extends Prototype {
         final Object object = new Object();
         final Address cell = Heap.bootHeapRegion().allocateCell(HostObjectAccess.getSize(object));
         assignHeapCell(object, cell);
-        _nonZeroBootHeapStart = Heap.bootHeapRegion().getAllocationMark();
+        nonZeroBootHeapStart = Heap.bootHeapRegion().getAllocationMark();
     }
 
     /**
@@ -201,20 +201,20 @@ public final class DataPrototype extends Prototype {
      * @return the object allocated
      */
     private Object createPageAlignmentObject(LinearAllocatorHeapRegion region) {
-        final int rest = region.getAllocationMark().minus(region.start()).remainder(_pageSize);
+        final int rest = region.getAllocationMark().minus(region.start()).remainder(pageSize);
         if (rest == 0) {
             return null;
         }
-        assert 0 < rest && rest < _pageSize;
-        int size = _pageSize - rest;
+        assert 0 < rest && rest < pageSize;
+        int size = pageSize - rest;
 
-        final ByteArrayLayout byteArrayLayout = _layoutScheme.byteArrayLayout();
+        final ByteArrayLayout byteArrayLayout = layoutScheme.byteArrayLayout;
         final int minSize = byteArrayLayout.getArraySize(0).toInt();
         if (size < minSize) {
-            size += _pageSize;
+            size += pageSize;
         }
 
-        for (int i = 0; i <= 2 * _pageSize; i++) {
+        for (int i = 0; i <= 2 * pageSize; i++) {
             final int allocationSize = region.allocationSize(byteArrayLayout.getArraySize(i)).toInt();
             if (allocationSize == size) {
                 return new byte[i];
@@ -239,7 +239,7 @@ public final class DataPrototype extends Prototype {
         }
 
         heapRegion.trim();
-        assert heapRegion.size().remainder(_pageSize) == 0;
+        assert heapRegion.size().remainder(pageSize) == 0;
     }
 
     /**
@@ -255,11 +255,11 @@ public final class DataPrototype extends Prototype {
         Trace.begin(1, tracePrefix);
         int count = 0;
         final Address mark = heapRegion.getAllocationMark();
-        final AppendableSequence<Object> mutableHeapObjects = new ArrayListSequence<Object>(_graphPrototype.objects().length());
-        for (Object object : _graphPrototype.objects()) {
-            final ClassInfo classInfo = _graphPrototype.classInfoFor(object);
+        final AppendableSequence<Object> mutableHeapObjects = new ArrayListSequence<Object>(graphPrototype.objects().length());
+        for (Object object : graphPrototype.objects()) {
+            final ClassInfo classInfo = graphPrototype.classInfoFor(object);
             if (classInfo.containsMutableReferences(object) == objectsWithMutableReferences) {
-                Address cell = _objectToCell.get(object);
+                Address cell = objectToCell.get(object);
                 if (cell != null) {
                     assert Code.bootCodeRegion().contains(cell);
                 } else {
@@ -301,9 +301,9 @@ public final class DataPrototype extends Prototype {
 
         int count = 0;
         for (Object object : mutableHeapObjects) {
-            final ClassInfo classInfo = _graphPrototype.classInfoFor(object);
+            final ClassInfo classInfo = graphPrototype.classInfoFor(object);
             assert classInfo.containsMutableReferences(object);
-            final Address cell = _objectToCell.get(object);
+            final Address cell = objectToCell.get(object);
             final Hub hub = HostObjectAccess.readHub(object);
             final SpecificLayout specificLayout = hub.specificLayout();
             if (specificLayout.isArrayLayout()) {
@@ -320,7 +320,7 @@ public final class DataPrototype extends Prototype {
                                 referenceMap.set(index);
                             } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
                                 throw ProgramError.unexpected("Error while preparing reference map for mutable array in boot heap of type " +
-                                    classInfo._clazz.getName() + ": cell=" + cell.toHexString() + ", index=" + i +
+                                    classInfo.clazz.getName() + ": cell=" + cell.toHexString() + ", index=" + i +
                                     " [" + origin.toHexString() + "+" + (Word.size() * i) + "], refmap index=" + index, indexOutOfBoundsException);
                             }
                         }
@@ -334,13 +334,13 @@ public final class DataPrototype extends Prototype {
                         continue;
                     }
                     final Pointer address = origin.plus(fieldActor.offset());
-                    final int index = address.toInt() / _alignment;
+                    final int index = address.toInt() / alignment;
                     try {
                         assert !referenceMap.isSet(index);
                         referenceMap.set(index);
                     } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
                         throw ProgramError.unexpected("Error while preparing reference map for mutable object in boot heap of type " +
-                            classInfo._clazz.getName() + ": cell=" + cell.toHexString() + ", field=" + fieldActor.name() +
+                            classInfo.clazz.getName() + ": cell=" + cell.toHexString() + ", field=" + fieldActor.name +
                             " [" + origin.toHexString() + "+" + fieldActor.offset() + "], refmap index=" + index, indexOutOfBoundsException);
                     }
                 }
@@ -355,7 +355,7 @@ public final class DataPrototype extends Prototype {
         }
 
         byte[] referenceMapBytes = referenceMap.bytes();
-        if (_dataModel.endianness() != Endianness.LITTLE) {
+        if (dataModel.endianness() != Endianness.LITTLE) {
             // Convert the bytes in the reference map to the target endianness so that it can be
             // correctly read as words. By default, the reference map can be read as an array
             // of little endian words and so there's no need for the conversion in this case.
@@ -366,10 +366,10 @@ public final class DataPrototype extends Prototype {
                 final int referenceMapWordLength = length / Word.size();
                 for (int i = 0; i < referenceMapWordLength; ++i) {
                     final Word referenceMapWord = Word.read(inputStream, Endianness.LITTLE);
-                    referenceMapWord.write(outputStream, _dataModel.endianness());
+                    referenceMapWord.write(outputStream, dataModel.endianness());
                 }
             } catch (IOException ioException) {
-                throw ProgramError.unexpected("Error converting boot heap reference map from little endian to " + _dataModel.endianness(), ioException);
+                throw ProgramError.unexpected("Error converting boot heap reference map from little endian to " + dataModel.endianness(), ioException);
             }
             referenceMapBytes = outputStream.toByteArray();
             assert length == referenceMapBytes.length;
@@ -389,7 +389,7 @@ public final class DataPrototype extends Prototype {
      * @return a byte array containing the raw data of the code region
      */
     public byte[] codeData() {
-        return _codeDataWriter.data();
+        return codeDataWriter.data();
     }
 
     /**
@@ -398,20 +398,20 @@ public final class DataPrototype extends Prototype {
      * @return a byte array containing the raw data of the code region
      */
     public byte[] heapData() {
-        return _heapDataWriter.data();
+        return heapDataWriter.data();
     }
 
-    private ByteArrayMemoryRegionWriter _heapDataWriter;
+    private ByteArrayMemoryRegionWriter heapDataWriter;
 
-    private ByteArrayMemoryRegionWriter _codeDataWriter;
+    private ByteArrayMemoryRegionWriter codeDataWriter;
 
     /**
      * A visitor that can visit an entire memory region, as well as individual object fields.
      */
     abstract class MemoryRegionVisitor implements ObjectCellVisitor, Cloneable {
 
-        final MemoryRegion _region;
-        final String _name;
+        final MemoryRegion region;
+        final String name;
 
         /**
          * Creates a new memory region visitor for the specified region with the specified name.
@@ -420,35 +420,17 @@ public final class DataPrototype extends Prototype {
          * @param name the name of this visitor
          */
         MemoryRegionVisitor(MemoryRegion region, String name) {
-            _region = region;
-            _name = name;
+            this.region = region;
+            this.name = name;
         }
 
-        /**
-         * Gets the name of this visitor.
-         *
-         * @return the name of this visitor
-         */
-        String name() {
-            return _name;
-        }
-
-        /**
-         * Gets the memory region for this visitor.
-         *
-         * @return the memory region for this visitor
-         */
-        MemoryRegion region() {
-            return _region;
-        }
-
-        int _offset;
+        int offset;
 
         /**
          * Sets the current write offset to the specified offset.
          */
         void setOffset(int offset, Object object) {
-            _offset = offset;
+            this.offset = offset;
         }
 
         /**
@@ -502,9 +484,9 @@ public final class DataPrototype extends Prototype {
      */
     class ByteArrayMemoryRegionWriter extends MemoryRegionVisitor {
 
-        final byte[] _data;
-        final boolean[] _used;
-        final byte[] _nullGripBytes;
+        final byte[] data;
+        final boolean[] used;
+        final byte[] nullGripBytes;
 
         /**
          * Creates a new instance for the specified memory region with the specified name.
@@ -514,9 +496,9 @@ public final class DataPrototype extends Prototype {
          */
         ByteArrayMemoryRegionWriter(MemoryRegion region, String name) {
             super(region, name);
-            _data = new byte[region.size().roundedUpBy(_pageSize).toInt()];
-            _used = new boolean[_data.length];
-            _nullGripBytes = _gripScheme.createPrototypeNullGrip();
+            data = new byte[region.size().roundedUpBy(pageSize).toInt()];
+            used = new boolean[data.length];
+            nullGripBytes = gripScheme.createPrototypeNullGrip();
         }
 
         /**
@@ -525,7 +507,7 @@ public final class DataPrototype extends Prototype {
          * @return a byte array representing the bytes in this region
          */
         byte[] data() {
-            return _data;
+            return data;
         }
 
         /**
@@ -571,7 +553,7 @@ public final class DataPrototype extends Prototype {
          */
         @Override
         void visitBytes(String name, byte[] value) {
-            write(value, _offset);
+            write(value, offset);
         }
 
         /**
@@ -583,11 +565,11 @@ public final class DataPrototype extends Prototype {
         private void write(Value value, int offsetInCell) {
             final byte[] valueBytes;
             if (value.kind() == Kind.REFERENCE) {
-                valueBytes = (value.asObject() == null) ? _nullGripBytes : _gripScheme.createPrototypeGrip(cellFor(value.asObject()));
+                valueBytes = (value.asObject() == null) ? nullGripBytes : gripScheme.createPrototypeGrip(cellFor(value.asObject()));
             } else {
-                valueBytes = value.toBytes(_dataModel);
+                valueBytes = value.toBytes(dataModel);
             }
-            write(valueBytes, offsetInCell + _offset);
+            write(valueBytes, offsetInCell + offset);
         }
 
         /**
@@ -598,9 +580,9 @@ public final class DataPrototype extends Prototype {
          */
         private void write(byte[] value, int offset) {
             for (int i = 0; i != value.length; ++i) {
-                assert !_used[offset + i];
-                _used[offset + i] = true;
-                _data[offset + i] = value[i];
+                assert !used[offset + i];
+                used[offset + i] = true;
+                data[offset + i] = value[i];
             }
         }
 
@@ -612,8 +594,8 @@ public final class DataPrototype extends Prototype {
          */
         public void clear(int offset, int size) {
             for (int i = 0; i != size; ++i) {
-                _used[offset + i] = false;
-                _data[offset + i] = 0;
+                used[offset + i] = false;
+                data[offset + i] = 0;
             }
         }
     }
@@ -623,11 +605,11 @@ public final class DataPrototype extends Prototype {
      */
     class MemoryRegionMapWriter extends MemoryRegionVisitor {
 
-        private final PrintStream _mapPrintStream;
-        private Object _object;
-        private boolean _objectIsArray;
-        private String[] _values;
-        private final MemoryRegion _otherRegion;
+        private final PrintStream mapPrintStream;
+        private Object object;
+        private boolean objectIsArray;
+        private String[] values;
+        private final MemoryRegion otherRegion;
 
         /**
          * Creates a new map writer for the specified region.
@@ -639,8 +621,8 @@ public final class DataPrototype extends Prototype {
          */
         MemoryRegionMapWriter(MemoryRegion region, MemoryRegion otherRegion, String name, PrintStream mapPrintStream) {
             super(region, name);
-            _mapPrintStream = mapPrintStream;
-            _otherRegion = otherRegion;
+            this.mapPrintStream = mapPrintStream;
+            this.otherRegion = otherRegion;
         }
 
         /**
@@ -654,7 +636,7 @@ public final class DataPrototype extends Prototype {
             if (javaClass == String.class) {
                 return '"' + object.toString() + '"';
             } else if (object instanceof Actor) {
-                final Actor actor = (Actor) _object;
+                final Actor actor = (Actor) this.object;
                 return actor.javaSignature(object instanceof ClassActor);
             }
             return null;
@@ -667,7 +649,7 @@ public final class DataPrototype extends Prototype {
          * @return a string representation of the offset
          */
         private String addressLabel(int offset) {
-            final long absoluteAddress = _region.start().toLong() + offset;
+            final long absoluteAddress = region.start().toLong() + offset;
             return absoluteAddress + "[+" + offset + "]";
         }
 
@@ -675,23 +657,23 @@ public final class DataPrototype extends Prototype {
          * Prints the last object that was encountered.
          */
         private void printLastObject() {
-            if (_object != null) {
-                final Class javaClass = _object.getClass();
-                final String asString = asString(javaClass, _object);
+            if (object != null) {
+                final Class javaClass = object.getClass();
+                final String asString = asString(javaClass, object);
                 if (asString == null) {
-                    _mapPrintStream.println(addressLabel(_offset) + ": class=" + javaClass.getName());
+                    mapPrintStream.println(addressLabel(offset) + ": class=" + javaClass.getName());
                 } else {
-                    _mapPrintStream.println(addressLabel(_offset) + ": class=" + javaClass.getName() + " asString=" + asString);
+                    mapPrintStream.println(addressLabel(offset) + ": class=" + javaClass.getName() + " asString=" + asString);
                 }
                 int offsetInCell = 0;
-                for (String value : _values) {
+                for (String value : values) {
                     if (value != null) {
-                        _mapPrintStream.println("  +" + offsetInCell + ": " + value);
+                        mapPrintStream.println("  +" + offsetInCell + ": " + value);
                     }
                     ++offsetInCell;
                 }
-                _object = null;
-                _values = null;
+                object = null;
+                values = null;
             }
         }
 
@@ -707,9 +689,9 @@ public final class DataPrototype extends Prototype {
 
             if (object != null) {
                 final Size size = HostObjectAccess.getSize(object);
-                _object = object;
-                _values = new String[size.toInt()];
-                _objectIsArray = object.getClass().isArray();
+                this.object = object;
+                values = new String[size.toInt()];
+                objectIsArray = object.getClass().isArray();
             }
 
             super.setOffset(offset, object);
@@ -723,10 +705,10 @@ public final class DataPrototype extends Prototype {
          * @param value the value of the element of the array
          */
         public void visitElement(int offsetInCell, int arrayIndex, Value value) {
-            if (_objectIsArray) {
+            if (objectIsArray) {
                 print("[" + arrayIndex + "]", null, offsetInCell, value);
             } else {
-                print(value.kind().name() + "[" + arrayIndex + "]", null, offsetInCell, value);
+                print(value.kind().name + "[" + arrayIndex + "]", null, offsetInCell, value);
             }
         }
 
@@ -738,7 +720,7 @@ public final class DataPrototype extends Prototype {
          */
         @Override
         void visitBytes(String name, byte[] value) {
-            _mapPrintStream.println(addressLabel(_offset) + ": " + name + " = " + Arrays.toString(value));
+            mapPrintStream.println(addressLabel(offset) + ": " + name + " = " + Arrays.toString(value));
         }
 
         /**
@@ -783,12 +765,12 @@ public final class DataPrototype extends Prototype {
                     if (address == null) {
                         valueString = "*** no cell for instance of " + value.asObject().getClass().getName() + " ***";
                     } else {
-                        if (region().contains(address)) {
-                            final int offset = address.minus(_region.start()).toInt();
+                        if (region.contains(address)) {
+                            final int offset = address.minus(region.start()).toInt();
                             valueString = address + "[+" + offset + "]";
-                        } else if (_otherRegion.contains(address)) {
-                            final int offset = address.minus(_otherRegion.start()).toInt();
-                            valueString = address + "[" + _otherRegion.start().toLong() + "+" + offset + "]";
+                        } else if (otherRegion.contains(address)) {
+                            final int offset = address.minus(otherRegion.start()).toInt();
+                            valueString = address + "[" + otherRegion.start().toLong() + "+" + offset + "]";
                         } else {
                             valueString = address.toString() + "[" + address.toLong() + "]";
                         }
@@ -799,11 +781,11 @@ public final class DataPrototype extends Prototype {
             } else {
                 valueString = value.toString();
             }
-            _values[offsetInCell] = (type == null ? "" : type) + " " + name + " = " + valueString;
+            values[offsetInCell] = (type == null ? "" : type) + " " + name + " = " + valueString;
         }
     }
 
-    private final int _numberOfProcessors = ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors();
+    private final int numberOfProcessors = ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors();
     private static final int BATCH = 10000;
 
     /**
@@ -814,17 +796,17 @@ public final class DataPrototype extends Prototype {
      * @return the number of bytes of data (including padding bytes) initialized for region
      */
     private int createData(final IndexedSequence<Object> objects, MemoryRegionVisitor memoryRegionVisitor) {
-        final String regionName = memoryRegionVisitor.name();
+        final String regionName = memoryRegionVisitor.name;
         Trace.begin(1, "createData: " + regionName);
-        final byte[] tagBytes = _dataModel.wordWidth() == WordWidth.BITS_64 ? _dataModel.toBytes(DebugHeap.LONG_OBJECT_TAG) : _dataModel.toBytes(DebugHeap.INT_OBJECT_TAG);
+        final byte[] tagBytes = dataModel.wordWidth() == WordWidth.BITS_64 ? dataModel.toBytes(DebugHeap.LONG_OBJECT_TAG) : dataModel.toBytes(DebugHeap.INT_OBJECT_TAG);
 
-        final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(_numberOfProcessors);
+        final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(numberOfProcessors);
         final CompletionService<Integer> completionService = new ExecutorCompletionService<Integer>(executor);
 
         for (int n = 0; n < objects.length(); n += BATCH) {
             final MemoryRegionVisitor m = memoryRegionVisitor.clone(); // prevent 'setOffset()' below from causing a
                                                                         // sharing conflict
-            final Address regionStart = m.region().start();
+            final Address regionStart = m.region.start();
             final int start = n;
             completionService.submit(new Callable<Integer>() {
                 public Integer call() throws Exception {
@@ -843,7 +825,7 @@ public final class DataPrototype extends Prototype {
                         final int expectedOffset = previousOffset + previousSize;
                         assert previousObject == null || expectedOffset <= offset : "expected offset: 0x" + Integer.toHexString(expectedOffset) + ", actual offset: 0x" + Integer.toHexString(offset);
 
-                        if (_debugging) {
+                        if (debugging) {
                             m.setOffset(offset - tagBytes.length, null);
                             m.visitBytes("debugTag", tagBytes);
                             numberOfBytes += tagBytes.length;
@@ -853,8 +835,8 @@ public final class DataPrototype extends Prototype {
                         try {
                             hub.specificLayout().visitObjectCell(object, m);
                         } catch (MissingCellException e) {
-                            System.err.println("no cell for object: class=" + e._object.getClass().getName() + " toString=\"" + e._object + "\"");
-                            _graphPrototype.printPath(object, System.err);
+                            System.err.println("no cell for object: class=" + e.object.getClass().getName() + " toString=\"" + e.object + "\"");
+                            graphPrototype.printPath(object, System.err);
                             throw ProgramError.unexpected(e);
                         }
 
@@ -887,8 +869,8 @@ public final class DataPrototype extends Prototype {
      * @param delta the value to add to all pointers/references
      */
     private void adjustCodeAddresses(int delta) {
-        for (Object object : _codeObjects) {
-            _objectToCell.put(object, _objectToCell.get(object).plus(delta));
+        for (Object object : codeObjects) {
+            objectToCell.put(object, objectToCell.get(object).plus(delta));
         }
 
         for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
@@ -901,7 +883,7 @@ public final class DataPrototype extends Prototype {
                 }
 
                 for (InterfaceActor interfaceActor : classActor.getAllInterfaceActors()) {
-                    final int interfaceITableIndex = dynamicHub.getITableIndex(interfaceActor.id());
+                    final int interfaceITableIndex = dynamicHub.getITableIndex(interfaceActor.id);
                     for (InterfaceMethodActor interfaceMethodActor : interfaceActor.localInterfaceMethodActors()) {
                         final int iTableIndex = interfaceITableIndex + interfaceMethodActor.iIndexInInterface();
                         dynamicHub.setWord(iTableIndex, dynamicHub.getWord(iTableIndex).asAddress().plus(delta));
@@ -925,7 +907,7 @@ public final class DataPrototype extends Prototype {
         final LinearAllocatorHeapRegion heap = Heap.bootHeapRegion();
         final LinearAllocatorHeapRegion code = Code.bootCodeRegion();
 
-        final Address codeStart = heap.end().roundedUpBy(_pageSize);
+        final Address codeStart = heap.end().roundedUpBy(pageSize);
         final int delta = codeStart.minus(code.start()).toInt();
         adjustCodeAddresses(delta);
 
@@ -934,7 +916,7 @@ public final class DataPrototype extends Prototype {
         Trace.end(1, "adjustMemoryRegions");
     }
 
-    private final ByteArrayBitMap _relocationFlags;
+    private final ByteArrayBitMap relocationFlags;
 
     /**
      * Gets a byte array that represents the relocation data for the entire data prototype.
@@ -942,7 +924,7 @@ public final class DataPrototype extends Prototype {
      * @return a byte array that represents the relocation data, with one bit per word
      */
     public byte[] relocationData() {
-        return _relocationFlags.bytes();
+        return relocationFlags.bytes();
     }
 
     /**
@@ -968,15 +950,15 @@ public final class DataPrototype extends Prototype {
      * @param address the address which contains a value to be relocated
      */
     private void setRelocationFlag(Address address) {
-        assert address.remainder(_alignment) == 0;
-        final int index = address.toInt() / _alignment;
-        _relocationFlags.set(index);
+        assert address.remainder(alignment) == 0;
+        final int index = address.toInt() / alignment;
+        relocationFlags.set(index);
     }
 
     /**
      * A visitor that sets the relocation flag for the origin of all objects.
      */
-    private final PointerOffsetVisitor _originOffsetVisitor = new PointerOffsetVisitor() {
+    private final PointerOffsetVisitor originOffsetVisitor = new PointerOffsetVisitor() {
         public void visitPointerOffset(Pointer origin, int offset) {
             setRelocationFlag(origin.plus(offset));
         }
@@ -1007,7 +989,7 @@ public final class DataPrototype extends Prototype {
             return 1;
         }
         final Pointer origin = specificLayout.cellToOrigin(cell.asPointer());
-        TupleReferenceMap.visitOriginOffsets(hub, origin, _originOffsetVisitor);
+        TupleReferenceMap.visitOriginOffsets(hub, origin, originOffsetVisitor);
         return 1 + hub.referenceMapLength();
     }
 
@@ -1019,7 +1001,7 @@ public final class DataPrototype extends Prototype {
      */
     private void assignObjectRelocationFlags(final IndexedSequence<Object> objects, String name) {
         Trace.begin(1, "assignObjectRelocationFlags: " + name);
-        final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(_numberOfProcessors);
+        final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(numberOfProcessors);
         final CompletionService<Integer> completionService = new ExecutorCompletionService<Integer>(executor);
 
         int numberOfRelocations = 0;
@@ -1032,7 +1014,7 @@ public final class DataPrototype extends Prototype {
                         final int end = Math.min(objects.length(), start + BATCH);
                         for (int i = start; i < end; i++) {
                             final Object object = objects.get(i);
-                            numberOfRelocationsInBatch += setRelocationFlags(object, _objectToCell.get(object));
+                            numberOfRelocationsInBatch += setRelocationFlags(object, objectToCell.get(object));
                         }
                         return numberOfRelocationsInBatch;
                     } catch (Exception e) {
@@ -1060,11 +1042,11 @@ public final class DataPrototype extends Prototype {
      */
     private void assignMethodDispatchTableRelocationFlags() {
         Trace.begin(1, "assignMethodDispatchTableRelocationFlags");
-        final WordArrayLayout wordArrayLayout = _layoutScheme.wordArrayLayout();
+        final WordArrayLayout wordArrayLayout = layoutScheme.wordArrayLayout;
         for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
             if (classActor instanceof ReferenceClassActor) {
                 final DynamicHub dynamicHub = classActor.dynamicHub();
-                final Address hubCell = _objectToCell.get(dynamicHub);
+                final Address hubCell = objectToCell.get(dynamicHub);
 
                 for (int i = 0; i < dynamicHub.vTableLength(); i++) {
                     final int vTableIndex = Hub.vTableStartIndex() + i;
@@ -1072,7 +1054,7 @@ public final class DataPrototype extends Prototype {
                 }
 
                 for (InterfaceActor interfaceActor : classActor.getAllInterfaceActors()) {
-                    final int interfaceITableIndex = dynamicHub.getITableIndex(interfaceActor.id());
+                    final int interfaceITableIndex = dynamicHub.getITableIndex(interfaceActor.id);
                     for (InterfaceMethodActor interfaceMethodActor : interfaceActor.localInterfaceMethodActors()) {
                         final int iTableIndex = interfaceITableIndex + interfaceMethodActor.iIndexInInterface();
                         setRelocationFlag(hubCell.plus(wordArrayLayout.getElementOffsetInCell(iTableIndex)));
@@ -1098,8 +1080,8 @@ public final class DataPrototype extends Prototype {
         final int codeStartFieldOffset = getInstanceFieldOffsetInTupleCell(TargetMethod.class, codeStart, JavaTypeDescriptor.forJavaClass(Pointer.class));
 
         for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
-            setRelocationFlag(_objectToCell.get(targetMethod).plus(startFieldOffset));
-            setRelocationFlag(_objectToCell.get(targetMethod).plus(codeStartFieldOffset));
+            setRelocationFlag(objectToCell.get(targetMethod).plus(startFieldOffset));
+            setRelocationFlag(objectToCell.get(targetMethod).plus(codeStartFieldOffset));
         }
 
         Trace.end(1, "assignTargetMethodRelocationFlags");
@@ -1111,28 +1093,28 @@ public final class DataPrototype extends Prototype {
     public void assignRelocationFlags() {
         Trace.begin(1, "assignRelocationFlags");
 
-        assignObjectRelocationFlags(_heapObjects, "heap");
-        assignObjectRelocationFlags(_codeObjects, "code");
+        assignObjectRelocationFlags(heapObjects, "heap");
+        assignObjectRelocationFlags(codeObjects, "code");
 
         assignMethodDispatchTableRelocationFlags();
 
         final int startFieldOffset = getInstanceFieldOffsetInTupleCell(RuntimeMemoryRegion.class, start, JavaTypeDescriptor.forJavaClass(Address.class));
         assignTargetMethodRelocationFlags(startFieldOffset);
-        setRelocationFlag(_objectToCell.get(Code.bootCodeRegion()).plus(startFieldOffset));
+        setRelocationFlag(objectToCell.get(Code.bootCodeRegion()).plus(startFieldOffset));
 
         final int markFieldOffset = getInstanceFieldOffsetInTupleCell(LinearAllocatorHeapRegion.class, mark, JavaTypeDescriptor.forJavaClass(Address.class));
-        setRelocationFlag(_objectToCell.get(Heap.bootHeapRegion()).plus(markFieldOffset));
-        setRelocationFlag(_objectToCell.get(Code.bootCodeRegion()).plus(markFieldOffset));
+        setRelocationFlag(objectToCell.get(Heap.bootHeapRegion()).plus(markFieldOffset));
+        setRelocationFlag(objectToCell.get(Code.bootCodeRegion()).plus(markFieldOffset));
 
         Trace.end(1, "assignRelocationFlags");
     }
 
-    private final int _pageSize;
-    private final DataModel _dataModel;
-    private final int _alignment;
-    private final LayoutScheme _layoutScheme;
-    private final GripScheme _gripScheme;
-    private final boolean _debugging;
+    private final int pageSize;
+    private final DataModel dataModel;
+    private final int alignment;
+    private final LayoutScheme layoutScheme;
+    private final GripScheme gripScheme;
+    private final boolean debugging;
 
     /**
      * Create and build a new data prototype from the specifeid graph prototype.
@@ -1142,14 +1124,14 @@ public final class DataPrototype extends Prototype {
      */
     public DataPrototype(GraphPrototype graphPrototype, File mapFile) {
         super(graphPrototype.vmConfiguration());
-        _graphPrototype = graphPrototype;
+        this.graphPrototype = graphPrototype;
         final Platform platform = graphPrototype.vmConfiguration().platform();
-        _pageSize = platform.pageSize();
-        _dataModel = platform.processorKind().dataModel();
-        _alignment = _dataModel.alignment().numberOfBytes();
-        _layoutScheme = graphPrototype.vmConfiguration().layoutScheme();
-        _gripScheme = graphPrototype.vmConfiguration().gripScheme();
-        _debugging = graphPrototype.vmConfiguration().debugging();
+        pageSize = platform.pageSize();
+        dataModel = platform.processorKind().dataModel();
+        alignment = dataModel.alignment().numberOfBytes();
+        layoutScheme = graphPrototype.vmConfiguration().layoutScheme();
+        gripScheme = graphPrototype.vmConfiguration().gripScheme();
+        debugging = graphPrototype.vmConfiguration().debugging();
 
         Trace.begin(1, DataPrototype.class.getSimpleName());
 
@@ -1159,19 +1141,19 @@ public final class DataPrototype extends Prototype {
         adjustMemoryRegions();
 
         MaxineVM.target().setPhase(MaxineVM.Phase.PRIMORDIAL);
-        _heapDataWriter = new ByteArrayMemoryRegionWriter(Heap.bootHeapRegion(), "heap");
-        _codeDataWriter = new ByteArrayMemoryRegionWriter(Code.bootCodeRegion(), "code");
+        heapDataWriter = new ByteArrayMemoryRegionWriter(Heap.bootHeapRegion(), "heap");
+        codeDataWriter = new ByteArrayMemoryRegionWriter(Code.bootCodeRegion(), "code");
 
-        int numberOfBytes = createData(_heapObjects, _heapDataWriter);
+        int numberOfBytes = createData(heapObjects, heapDataWriter);
         final int bootHeapRegionSize = Heap.bootHeapRegion().size().toInt();
         ProgramWarning.check(numberOfBytes == bootHeapRegionSize, "numberOfBytes != bootHeapRegionSize");
 
-        numberOfBytes = createData(_codeObjects, _codeDataWriter);
+        numberOfBytes = createData(codeObjects, codeDataWriter);
         final int bootCodeRegionSize = Code.bootCodeRegion().size().toInt();
         ProgramWarning.check(numberOfBytes <= bootCodeRegionSize, "numberOfBytes > bootCodeRegionSize");
 
         // one bit per alignment unit
-        _relocationFlags = new ByteArrayBitMap((_heapDataWriter.data().length + _codeDataWriter.data().length) / _alignment);
+        relocationFlags = new ByteArrayBitMap((heapDataWriter.data().length + codeDataWriter.data().length) / alignment);
 
         assignRelocationFlags();
 
@@ -1179,10 +1161,10 @@ public final class DataPrototype extends Prototype {
             try {
                 final PrintStream mapPrintStream = new PrintStream(new FileOutputStream(mapFile));
                 mapPrintStream.println("start heap");
-                createData(_heapObjects, new MemoryRegionMapWriter(Heap.bootHeapRegion(), Code.bootCodeRegion(), "heap", mapPrintStream));
+                createData(heapObjects, new MemoryRegionMapWriter(Heap.bootHeapRegion(), Code.bootCodeRegion(), "heap", mapPrintStream));
                 mapPrintStream.println("end heap");
                 mapPrintStream.println("start code");
-                createData(_codeObjects, new MemoryRegionMapWriter(Code.bootCodeRegion(), Heap.bootHeapRegion(), "code", mapPrintStream));
+                createData(codeObjects, new MemoryRegionMapWriter(Code.bootCodeRegion(), Heap.bootHeapRegion(), "code", mapPrintStream));
                 mapPrintStream.println("end code");
                 mapPrintStream.close();
             } catch (IOException e) {
@@ -1195,9 +1177,9 @@ public final class DataPrototype extends Prototype {
     }
 
     private static class MissingCellException extends RuntimeException {
-        final Object _object;
+        final Object object;
         MissingCellException(Object object) {
-            this._object = object;
+            this.object = object;
         }
     }
 }

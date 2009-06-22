@@ -146,7 +146,7 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
                 final Class returnType = signature.resolveReturnType(javaClass.getClassLoader());
                 final AccessibleObject member = name.equals(SymbolTable.INIT) ?
                     Classes.getDeclaredConstructor(javaClass, parameterTypes) :
-                    Classes.resolveMethod(javaClass, returnType, name.string(), parameterTypes);
+                    Classes.resolveMethod(javaClass, returnType, name.string, parameterTypes);
                 if (MaxineVM.isPrototypeOnly(member)) {
                     throw new PrototypeOnlyMethodError(errorMessage);
                 }
@@ -155,7 +155,7 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
         }
 
         public MethodActor resolve(ConstantPool pool, int index) {
-            return resolve(pool, index, _holder, _name, signature());
+            return resolve(pool, index, holder, name, signature());
         }
 
         public StaticMethodActor resolveStatic(ConstantPool pool, int index) {
@@ -218,7 +218,7 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
         }
 
         public MethodActor resolve(ConstantPool pool, int index) {
-            final ClassActor classActor = pool.classAt(_classIndex).resolve(pool, _classIndex);
+            final ClassActor classActor = pool.classAt(classIndex).resolve(pool, classIndex);
             return Unresolved.resolve(pool, index, classActor, name(pool), signature(pool));
         }
 

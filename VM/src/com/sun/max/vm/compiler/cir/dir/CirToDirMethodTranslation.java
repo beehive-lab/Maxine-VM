@@ -72,7 +72,7 @@ class CirToDirMethodTranslation {
     /**
      * All generated blocks.
      */
-    private final GrowableDeterministicSet<DirBlock> _dirExceptionDispatchers = new LinkedIdentityHashSet<DirBlock>();
+    private final GrowableDeterministicSet<DirBlock> dirExceptionDispatchers = new LinkedIdentityHashSet<DirBlock>();
 
     final CirVariableFactory variableFactory = new CirVariableFactory();
 
@@ -159,7 +159,7 @@ class CirToDirMethodTranslation {
 
     private Translation makeExceptionDispatcherTranslation(CirValue continuation, Translation translation) {
         final Translation exceptionDispatcherTranslation = makeTranslation(IrBlock.Role.EXCEPTION_DISPATCHER, valueToClosure(continuation), translation.cc, translation.ce);
-        _dirExceptionDispatchers.add(exceptionDispatcherTranslation.dirBlock);
+        dirExceptionDispatchers.add(exceptionDispatcherTranslation.dirBlock);
         return exceptionDispatcherTranslation;
     }
 
@@ -296,8 +296,8 @@ class CirToDirMethodTranslation {
             dirJavaFrameDescriptor = new DirJavaFrameDescriptor(cirToDirJavaFrameDescriptor(cirJavaFrameDescriptor.parent()),
                                                                        cirJavaFrameDescriptor.classMethodActor(),
                                                                        cirJavaFrameDescriptor.bytecodePosition(),
-                                                                       cirToDirValues(cirJavaFrameDescriptor.locals()),
-                                                                       cirToDirValues(cirJavaFrameDescriptor.stackSlots()));
+                                                                       cirToDirValues(cirJavaFrameDescriptor.locals),
+                                                                       cirToDirValues(cirJavaFrameDescriptor.stackSlots));
             cirToDirJavaFrameDescriptor.put(cirJavaFrameDescriptor, dirJavaFrameDescriptor);
         }
         return dirJavaFrameDescriptor;
@@ -312,13 +312,13 @@ class CirToDirMethodTranslation {
         return exceptionVariable;
     }
 
-    private DirVariable _returnVariable;
+    private DirVariable returnVariable;
 
     private DirVariable getReturnVariable() {
-        if (_returnVariable == null && resultKind != Kind.VOID) {
-            _returnVariable = new DirVariable(resultKind, -1);
+        if (returnVariable == null && resultKind != Kind.VOID) {
+            returnVariable = new DirVariable(resultKind, -1);
         }
-        return _returnVariable;
+        return returnVariable;
     }
 
     private DirVariable getResultVariable(Translation cc) {
@@ -438,7 +438,7 @@ class CirToDirMethodTranslation {
         }
     };
 
-    private final CallGenerator<CirBuiltin> _builtinCallGenerator = new CallGenerator<CirBuiltin>() {
+    private final CallGenerator<CirBuiltin> builtinCallGenerator = new CallGenerator<CirBuiltin>() {
         @Override
         protected DirInstruction createCallInstruction(DirVariable result, CirBuiltin cirBuiltin, DirValue[] arguments, DirCatchBlock catchBlock, boolean isNativeCall, DirJavaFrameDescriptor javaFrameDescriptor) {
             return new DirBuiltinCall(result, cirBuiltin.builtin(), arguments, catchBlock, javaFrameDescriptor);
@@ -527,7 +527,7 @@ class CirToDirMethodTranslation {
             if (cirBuiltin.builtin() == SafepointBuiltin.SoftSafepoint.BUILTIN || cirBuiltin.builtin() == SafepointBuiltin.HardSafepoint.BUILTIN) {
                 safepointGenerator.generateCall(translation, cirBuiltin, cirArguments, false, dirJavaFrameDescriptor);
             } else {
-                _builtinCallGenerator.generateCall(translation, cirBuiltin, cirArguments, false, dirJavaFrameDescriptor);
+                builtinCallGenerator.generateCall(translation, cirBuiltin, cirArguments, false, dirJavaFrameDescriptor);
             }
         } else if (cirProcedure instanceof CirMethod || cirProcedure instanceof CirConstant) {
             final DirJavaFrameDescriptor dirJavaFrameDescriptor = cirToDirJavaFrameDescriptor(cirCall.javaFrameDescriptor());
@@ -606,7 +606,7 @@ class CirToDirMethodTranslation {
         }
     }
 
-    private int _serial = 0;
+    private int serial = 0;
 
     private void gatherMergedDirBlocks(DirBlock dirBlock, AppendableSequence<DirBlock> result) {
         final LinkedList<DirBlock> toDo = new LinkedList<DirBlock>();
@@ -616,8 +616,8 @@ class CirToDirMethodTranslation {
             if (block.serial() < 0) {
                 if (!block.isTrivial()) {
                     result.append(block);
-                    block.setSerial(_serial);
-                    _serial++;
+                    block.setSerial(serial);
+                    serial++;
                     assimilateSuccessors(block);
                     forwardTrivialGotos(block);
                 }
@@ -700,7 +700,7 @@ class CirToDirMethodTranslation {
         // which is nicer later on for human consumption of DIR listings .
         gatherMergedDirBlocks(translation.dirBlock, mergedBlocks);
 
-        for (DirBlock exceptionDispatcher : _dirExceptionDispatchers) {
+        for (DirBlock exceptionDispatcher : dirExceptionDispatchers) {
             assert exceptionDispatcher.role() == IrBlock.Role.EXCEPTION_DISPATCHER;
             gatherMergedDirBlocks(exceptionDispatcher, mergedBlocks);
         }

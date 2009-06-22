@@ -31,22 +31,22 @@ import com.sun.max.vm.type.*;
  */
 public class ResolvedArrayType extends ArrayType implements ResolvedType {
 
-    private final ArrayClassActor _arrayClassActor;
+    private final ArrayClassActor arrayClassActor;
 
     ResolvedArrayType(ArrayClassActor arrayClassActor, VerificationType componentType) {
-        super(arrayClassActor.typeDescriptor(), null);
-        assert JavaTypeDescriptor.getArrayDimensions(arrayClassActor.typeDescriptor()) == 1;
-        _arrayClassActor = arrayClassActor;
-        _componentType = componentType;
+        super(arrayClassActor.typeDescriptor, null);
+        assert JavaTypeDescriptor.getArrayDimensions(arrayClassActor.typeDescriptor) == 1;
+        this.arrayClassActor = arrayClassActor;
+        this.componentType = componentType;
     }
 
     @Override
     public VerificationType elementType() {
-        return _componentType;
+        return componentType;
     }
 
     @Override
     public ClassActor resolve() {
-        return _arrayClassActor;
+        return arrayClassActor;
     }
 }

@@ -34,14 +34,14 @@ public class EirPosition {
     }
 
     private int index;
-    private int _number = -1;
+    private int number = -1;
 
     public int index() {
         return index;
     }
 
     public int number() {
-        return _number;
+        return number;
     }
 
     /**
@@ -49,7 +49,7 @@ public class EirPosition {
      * @param instructionNumber the new unique number assigned to this instruction
      */
     public void setNumber(int instructionNumber) {
-        _number = instructionNumber;
+        number = instructionNumber;
     }
 
     public void setIndex(int instructionIndex) {

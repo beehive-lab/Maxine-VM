@@ -36,25 +36,25 @@ public class OhmArrayHeaderLayout extends OhmGeneralLayout implements ArrayHeade
     /**
      * The cell offset of the word in the header containing the array length.
      */
-    protected final int _lengthOffset;
+    protected final int lengthOffset;
 
     /**
      * The cell offset of the first element in the array.
      */
-    protected final int _elementsOffset;
+    protected final int elementsOffset;
 
-    private final int _headerSize;
+    private final int headerSize;
 
     @INLINE
     public final int headerSize() {
-        return _headerSize;
+        return headerSize;
     }
 
     OhmArrayHeaderLayout(GripScheme gripScheme) {
         super(gripScheme);
-        _lengthOffset = _miscOffset + Word.size();
-        _elementsOffset = _lengthOffset + Word.size();
-        _headerSize = _elementsOffset;
+        lengthOffset = miscOffset + Word.size();
+        elementsOffset = lengthOffset + Word.size();
+        headerSize = elementsOffset;
     }
 
     @Override
@@ -64,31 +64,31 @@ public class OhmArrayHeaderLayout extends OhmGeneralLayout implements ArrayHeade
 
     @INLINE
     public final Size getArraySize(Kind kind, int length) {
-        return Size.fromInt(kind.size()).times(length).plus(_headerSize).aligned();
+        return Size.fromInt(kind.width.numberOfBytes).times(length).plus(headerSize).aligned();
     }
 
     @INLINE
     public final Kind getElementKind(Accessor accessor) {
         final ArrayClassActor arrayClassActor = UnsafeLoophole.cast(readHubReference(accessor).toJava());
-        return arrayClassActor.componentClassActor().kind();
+        return arrayClassActor.componentClassActor().kind;
     }
 
     @Override
     public Offset getOffsetFromOrigin(HeaderField headerField) {
         if (headerField == HeaderField.LENGTH) {
-            return Offset.fromInt(_lengthOffset);
+            return Offset.fromInt(lengthOffset);
         }
         return super.getOffsetFromOrigin(headerField);
     }
 
     @INLINE
     public final int readLength(Accessor accessor) {
-        return accessor.readInt(_lengthOffset);
+        return accessor.readInt(lengthOffset);
     }
 
     @INLINE
     public final void writeLength(Accessor accessor, int length) {
-        accessor.writeInt(_lengthOffset, length);
+        accessor.writeInt(lengthOffset, length);
     }
 
 }

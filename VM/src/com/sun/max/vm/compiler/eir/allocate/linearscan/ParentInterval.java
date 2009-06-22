@@ -81,7 +81,7 @@ public final class ParentInterval {
 
     public Interval createChild(EirVariable variable) {
         final Interval result = new Interval(this, variable);
-        variable.setInterval(result);
+        variable.interval = result;
         children.append(result);
         return result;
     }

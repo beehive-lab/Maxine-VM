@@ -41,22 +41,22 @@ public final class NativeMutex extends Mutex {
     static class NativeReference extends WeakReference<NativeMutex> {
 
         @CONSTANT_WHEN_NOT_ZERO
-        private Pointer _mutex = Pointer.zero();
+        private Pointer mutex = Pointer.zero();
 
         NativeReference(NativeMutex m) {
-            super(m, _refQueue);
+            super(m, refQueue);
         }
 
         private void disposeNative() {
-            Memory.deallocate(_mutex);
+            Memory.deallocate(mutex);
         }
     }
 
-    private static ReferenceQueue<NativeMutex> _refQueue = new ReferenceQueue<NativeMutex>();
+    private static ReferenceQueue<NativeMutex> refQueue = new ReferenceQueue<NativeMutex>();
 
-    private NativeReference _native;
+    private NativeReference nativeRef;
 
-    private static int _size;
+    private static int size;
 
     static {
         new CriticalNativeMethod(NativeMutex.class, "nativeMutexSize");
@@ -78,11 +78,11 @@ public final class NativeMutex extends Mutex {
 
     static void initialize() {
         assert MaxineVM.hostOrTarget().phase() == MaxineVM.Phase.PRIMORDIAL;
-        _size = nativeMutexSize();
+        size = nativeMutexSize();
     }
 
     NativeMutex() {
-        _native = new NativeReference(this);
+        nativeRef = new NativeReference(this);
     }
 
     /**
@@ -90,21 +90,21 @@ public final class NativeMutex extends Mutex {
      */
     @Override
     public Mutex init() {
-        if (_native._mutex.isZero()) {
-            _native._mutex =  Memory.mustAllocate(_size);
-            nativeMutexInitialize(_native._mutex);
+        if (nativeRef.mutex.isZero()) {
+            nativeRef.mutex =  Memory.mustAllocate(size);
+            nativeMutexInitialize(nativeRef.mutex);
         }
         return this;
     }
 
     @Override
     public void cleanup() {
-        _native.disposeNative();
+        nativeRef.disposeNative();
     }
 
     @Override
     public boolean lock() {
-        return nativeMutexLock(_native._mutex);
+        return nativeMutexLock(nativeRef.mutex);
     }
 
     /**
@@ -118,7 +118,7 @@ public final class NativeMutex extends Mutex {
      */
     @Override
     public boolean unlock() {
-        return nativeMutexUnlock(_native._mutex);
+        return nativeMutexUnlock(nativeRef.mutex);
     }
 
     /**
@@ -127,12 +127,12 @@ public final class NativeMutex extends Mutex {
      */
     @INLINE
     Pointer asPointer() {
-        return _native._mutex;
+        return nativeRef.mutex;
     }
 
     @Override
     public long logId() {
-        return _native._mutex.toLong();
+        return nativeRef.mutex.toLong();
     }
 
 }

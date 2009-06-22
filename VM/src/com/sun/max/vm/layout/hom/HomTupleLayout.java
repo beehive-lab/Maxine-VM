@@ -42,13 +42,13 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
     @Override
     @INLINE
     public Pointer cellToOrigin(Pointer cell) {
-        return cell.plus(-_miscOffset);
+        return cell.plus(-miscOffset);
     }
 
     @Override
     @INLINE
     public Pointer originToCell(Pointer origin) {
-        return origin.plus(_miscOffset);
+        return origin.plus(miscOffset);
     }
 
     public Layout.Category category() {
@@ -66,7 +66,7 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
         return hub.tupleSize();
     }
 
-    private final int _headerSize = 2 * Word.size();
+    private final int headerSize = 2 * Word.size();
 
     public HomTupleLayout(GripScheme gripScheme) {
         super(gripScheme);
@@ -75,12 +75,12 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
 
     @INLINE
     public int headerSize() {
-        return _headerSize;
+        return headerSize;
     }
 
     @INLINE
     public int getFieldOffsetInCell(FieldActor fieldActor) {
-        return _headerSize + fieldActor.offset();
+        return headerSize + fieldActor.offset();
     }
 
     private static final int INVALID_OFFSET = -1;
@@ -111,7 +111,7 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
                 if (scale > nBytesToFill) {
                     break;
                 }
-                if (fieldActor.offset() == INVALID_OFFSET && fieldActor.kind().size() == scale) {
+                if (fieldActor.offset() == INVALID_OFFSET && fieldActor.kind.width.numberOfBytes == scale) {
                     fieldActor.setOffset(currentOffset);
                     currentOffset += scale;
                     assert nBytesToFill >= 0;
@@ -135,7 +135,7 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
         }
         for (int scale = 8; scale >= 1; scale /= 2) {
             for (FieldActor fieldActor : fieldActors) {
-                if (fieldActor.offset() == INVALID_OFFSET && fieldActor.kind().size() == scale) {
+                if (fieldActor.offset() == INVALID_OFFSET && fieldActor.kind.width.numberOfBytes == scale) {
                     fieldActor.setOffset(offset);
                     offset += scale;
                 }
@@ -154,12 +154,12 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
             final FieldActor[] fieldActors = (hub instanceof StaticHub) ? classActor.localStaticFieldActors() : classActor.localInstanceFieldActors();
             for (FieldActor fieldActor : fieldActors) {
                 final Value value = HostTupleAccess.readValue(tuple, fieldActor);
-                visitor.visitField(getFieldOffsetInCell(fieldActor), fieldActor.name(), fieldActor.descriptor(), value);
+                visitor.visitField(getFieldOffsetInCell(fieldActor), fieldActor.name, fieldActor.descriptor(), value);
             }
             if (hub instanceof StaticHub) {
                 return;
             }
-            classActor = classActor.superClassActor();
+            classActor = classActor.superClassActor;
         } while (classActor != null);
     }
 
@@ -170,7 +170,7 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
     }
 
     public int getHubReferenceOffsetInCell() {
-        return _headerSize + _hubOffset;
+        return headerSize + hubOffset;
     }
 
     public Value readValue(Kind kind, ObjectMirror mirror, int offset) {

@@ -50,12 +50,12 @@ public abstract class EirPrologue<EirInstructionVisitor_Type extends EirInstruct
     AppendableSequence<EirOperand> calleeSavedOperands = new LinkSequence<EirOperand>();
     private final EirOperand[] parameterOperands;
 
-    private final AppendableSequence<EirOperand> _definitionOperands = new LinkSequence<EirOperand>();
+    private final AppendableSequence<EirOperand> definitionOperands = new LinkSequence<EirOperand>();
 
     public void addDefinition(EirValue definedValue) {
         final EirOperand operand = new EirOperand(this, EirOperand.Effect.DEFINITION, definedValue.location().category().asSet());
         operand.setEirValue(definedValue);
-        _definitionOperands.append(operand);
+        definitionOperands.append(operand);
     }
 
     protected EirPrologue(EirBlock block, EirMethod eirMethod,
@@ -95,7 +95,7 @@ public abstract class EirPrologue<EirInstructionVisitor_Type extends EirInstruct
         for (EirOperand parameter : parameterOperands) {
             visitor.run(parameter);
         }
-        for (EirOperand parameter : _definitionOperands) {
+        for (EirOperand parameter : definitionOperands) {
             visitor.run(parameter);
         }
     }
@@ -106,8 +106,8 @@ public abstract class EirPrologue<EirInstructionVisitor_Type extends EirInstruct
         if (!calleeSavedOperands.isEmpty()) {
             s += "[Callee saved: " + calleeSavedOperands.toString() + "]";
         }
-        if (!_definitionOperands.isEmpty()) {
-            s += "[Defined: " + _definitionOperands.toString() + "]";
+        if (!definitionOperands.isEmpty()) {
+            s += "[Defined: " + definitionOperands.toString() + "]";
         }
         if (eirMethod.isGenerated()) {
             s += " frameSize:" + eirMethod.frameSize();

@@ -34,27 +34,29 @@ import com.sun.max.vm.verifier.*;
  */
 public class ObjectType extends ReferenceType {
 
-    private TypeDescriptor _typeDescriptor;
-    Verifier _verifier;
+    private final TypeDescriptor typeDescriptor;
+    final Verifier verifier;
 
     /**
      * Only called by {@link NullType#NullType()}.
      */
     ObjectType() {
         assert getClass() == NullType.class;
+        typeDescriptor = null;
+        verifier = null;
     }
 
     public ObjectType(TypeDescriptor typeDescriptor, Verifier verifier) {
         assert verifier != null || this instanceof ResolvedType;
         assert typeDescriptor != null;
         assert !JavaTypeDescriptor.isPrimitive(typeDescriptor);
-        _typeDescriptor = typeDescriptor;
-        _verifier = verifier;
+        this.typeDescriptor = typeDescriptor;
+        this.verifier = verifier;
     }
 
     @Override
     public TypeDescriptor typeDescriptor() {
-        return _typeDescriptor;
+        return typeDescriptor;
     }
 
     @Override
@@ -135,8 +137,8 @@ public class ObjectType extends ReferenceType {
 
         // Find out whether the classes are deeper in the class tree by moving both
         // toward the root, and see who gets there first.
-        ClassActor thisSuperClassActor = classActor.superClassActor();
-        fromSuperClassActor = fromClassActor.superClassActor();
+        ClassActor thisSuperClassActor = classActor.superClassActor;
+        fromSuperClassActor = fromClassActor.superClassActor;
         while ((thisSuperClassActor != null) && (fromSuperClassActor != null)) {
             // If either hits the other when going up looking for a parent, then return the parent.
             if (fromSuperClassActor.equals(classActor)) {
@@ -145,8 +147,8 @@ public class ObjectType extends ReferenceType {
             if (thisSuperClassActor.equals(fromClassActor)) {
                 return from;
             }
-            thisSuperClassActor = thisSuperClassActor.superClassActor();
-            fromSuperClassActor = fromSuperClassActor.superClassActor();
+            thisSuperClassActor = thisSuperClassActor.superClassActor;
+            fromSuperClassActor = fromSuperClassActor.superClassActor;
         }
 
         // At most one of the following two while clauses will be executed.
@@ -154,31 +156,31 @@ public class ObjectType extends ReferenceType {
         ClassActor thisClassActor = classActor;
         while (thisSuperClassActor != null) {
             // thisClass is deeper
-            thisClassActor = thisClassActor.superClassActor();
-            thisSuperClassActor = thisSuperClassActor.superClassActor();
+            thisClassActor = thisClassActor.superClassActor;
+            thisSuperClassActor = thisSuperClassActor.superClassActor;
         }
         while (fromSuperClassActor != null) {
             // fromClass is deeper
-            fromClassActor = fromClassActor.superClassActor();
-            fromSuperClassActor = fromSuperClassActor.superClassActor();
+            fromClassActor = fromClassActor.superClassActor;
+            fromSuperClassActor = fromSuperClassActor.superClassActor;
         }
 
         // Walk both up, maintaining equal depth, until a join is found.
         // We know that we'll always find one.
         while (!thisClassActor.equals(fromClassActor)) {
-            thisClassActor = thisClassActor.superClassActor();
-            fromClassActor = fromClassActor.superClassActor();
+            thisClassActor = thisClassActor.superClassActor;
+            fromClassActor = fromClassActor.superClassActor;
         }
 
         if (thisClassActor.equals(ClassRegistry.javaLangObjectActor())) {
             return OBJECT;
         }
 
-        return _verifier.getObjectType(thisClassActor.typeDescriptor());
+        return verifier.getObjectType(thisClassActor.typeDescriptor);
     }
 
     public ClassActor resolve() {
-        return _verifier.resolve(typeDescriptor());
+        return verifier.resolve(typeDescriptor());
     }
 
     @Override
@@ -188,11 +190,11 @@ public class ObjectType extends ReferenceType {
 
     @Override
     public void writeInfo(DataOutputStream stream, ConstantPoolEditor constantPoolEditor) throws IOException {
-        stream.writeShort(constantPoolEditor.indexOf(PoolConstantFactory.createClassConstant(_typeDescriptor), true));
+        stream.writeShort(constantPoolEditor.indexOf(PoolConstantFactory.createClassConstant(typeDescriptor), true));
     }
 
     @Override
     public String toString() {
-        return _typeDescriptor.toJavaString();
+        return typeDescriptor.toJavaString();
     }
 }

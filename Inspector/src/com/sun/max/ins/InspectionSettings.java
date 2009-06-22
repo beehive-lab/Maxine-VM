@@ -191,15 +191,15 @@ public class InspectionSettings {
         final BootImage bootImage = inspection.maxVM().bootImage();
         _bootimageClient = new AbstractSaveSettingsListener("bootimage") {
             public void saveSettings(SaveSettingsEvent settings) {
-                settings.save(BOOT_VERSION_KEY, String.valueOf(bootImage.header()._version));
-                settings.save(BOOT_ID_KEY, String.valueOf(bootImage.header()._randomID));
+                settings.save(BOOT_VERSION_KEY, String.valueOf(bootImage.header().version));
+                settings.save(BOOT_ID_KEY, String.valueOf(bootImage.header().randomID));
             }
         };
 
         addSaveSettingsListener(_bootimageClient);
         final int version = get(_bootimageClient, BOOT_VERSION_KEY, OptionTypes.INT_TYPE, 0);
         final int randomID = get(_bootimageClient, BOOT_ID_KEY, OptionTypes.INT_TYPE, 0);
-        _bootImageChanged = version != bootImage.header()._version || randomID != bootImage.header()._randomID;
+        _bootImageChanged = version != bootImage.header().version || randomID != bootImage.header().randomID;
         _bootimageClient.saveSettings(new SaveSettingsEvent(_bootimageClient, _properties));
         _saver = new Saver();
     }

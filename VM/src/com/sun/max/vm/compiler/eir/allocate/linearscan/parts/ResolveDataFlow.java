@@ -45,7 +45,7 @@ public class ResolveDataFlow extends AlgorithmPart {
     private final Timer splitsTimer = createTimer("Resolve splits");
     private final Timer exceptionsTimer = createTimer("Resolve exception edges");
     private final Timer dataFlowTimer = createTimer("Resolve normal data flow");
-    private final Timer _mergeTimer = createTimer("Merge");
+    private final Timer mergeTimer = createTimer("Merge");
     private final Timer substituteVariablesTimer = createTimer("Substitute variables");
     private final Timer spillSlotOptimizationTimer = createTimer("Spill slot optimization");
 
@@ -476,26 +476,26 @@ public class ResolveDataFlow extends AlgorithmPart {
             final EirInstruction afterInstruction = modificationOperand.instruction();
             final EirVariable variable = modificationOperand.eirValue().asVariable();
             assert variable != null;
-            assert variable.interval().parent().hasSlotVariable();
+            assert variable.interval.parent().hasSlotVariable();
             assert modificationOperand.eirValue() == variable;
 
-            final EirInstruction newInstruction = generation().createAssignment(afterInstruction.block(), variable.kind(), variable.interval().parent().slotVariable(generation()), variable);
+            final EirInstruction newInstruction = generation().createAssignment(afterInstruction.block(), variable.kind(), variable.interval.parent().slotVariable(generation()), variable);
             assert newInstruction instanceof EirAssignment;
             ((EirAssignment) newInstruction).setType(EirAssignment.Type.SPILL_SLOT_DEFINITION);
-            variable.interval().parent().setSpillSlotDefined(true);
+            variable.interval.parent().setSpillSlotDefined(true);
             generation().introduceInstructionAfter(afterInstruction, newInstruction);
         }
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
             spillSlotOptimizationTimer.stop();
-            _mergeTimer.start();
+            mergeTimer.start();
         }
 
         // Merge variables such that there is only one variable for one location
         merge();
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _mergeTimer.stop();
+            mergeTimer.stop();
         }
     }
 
@@ -630,8 +630,8 @@ public class ResolveDataFlow extends AlgorithmPart {
         final VariableMapping<EirTry, ExceptionAdapterEdge> adapterBlockMapping = new ChainedHashMapping<EirTry, ExceptionAdapterEdge>();
 
         for (EirVariable variable : block.liveIn()) {
-            final Interval interval = variable.interval().parent().getChildAt(block.beginNumber());
-            assert interval != null || traceIntervalParent(variable.interval().parent());
+            final Interval interval = variable.interval.parent().getChildAt(block.beginNumber());
+            assert interval != null || traceIntervalParent(variable.interval.parent());
             final EirVariable variableAtExceptionBlock = interval.variable();
 
             for (EirTry curTry : tries) {
@@ -728,11 +728,11 @@ public class ResolveDataFlow extends AlgorithmPart {
         // before an exception can happen.
         final VariableMapping<EirVariable, EirVariable> variableToRescue = new ChainedHashMapping<EirVariable, EirVariable>();
         for (EirVariable variable : block.liveIn()) {
-            final Interval interval = variable.interval().parent().getChildAt(block.beginNumber());
-            assert interval != null || traceIntervalParent(variable.interval().parent());
+            final Interval interval = variable.interval.parent().getChildAt(block.beginNumber());
+            assert interval != null || traceIntervalParent(variable.interval.parent());
             final EirVariable realVariable = interval.variable();
             if (realVariable.location().asRegister() != null) {
-                final EirVariable stackVariable = realVariable.interval().parent().slotVariable(generation());
+                final EirVariable stackVariable = realVariable.interval.parent().slotVariable(generation());
                 variableToRescue.put(realVariable, stackVariable);
             } else {
                 assert realVariable.location().asStackSlot() != null;
@@ -760,7 +760,7 @@ public class ResolveDataFlow extends AlgorithmPart {
                         for (EirVariable variable : variableToRescue.keys()) {
                             if (variablesUpdated.contains(variable)) {
                                 final EirVariable stackVariable = variableToRescue.get(variable);
-                                final Interval interval = variable.interval().parent().getChildAt(instruction.number());
+                                final Interval interval = variable.interval.parent().getChildAt(instruction.number());
                                 final EirVariable currentVariable = interval.variable();
                                 if (currentVariable.location() != stackVariable.location()) {
                                     final EirInstruction newInstruction = generation().createAssignment(pred, variable.kind(), stackVariable, currentVariable);
@@ -810,11 +810,11 @@ public class ResolveDataFlow extends AlgorithmPart {
 
         final VariableMapping<ParentInterval, Interval> mapping = new ChainedHashMapping<ParentInterval, Interval>();
         for (EirVariable variable : block.liveOut()) {
-            mapping.put(variable.interval().parent(), variable.interval());
+            mapping.put(variable.interval.parent(), variable.interval);
         }
 
         for (EirVariable variable : succ.liveIn()) {
-            final ParentInterval parentInterval = variable.interval().parent();
+            final ParentInterval parentInterval = variable.interval.parent();
 
             // TODO (tw): Check why -2 is necessary; problem can occur when split is exactly at block.endNumber() - 1
             final Interval fromInterval = parentInterval.getChildAt(block.endNumber() - 2);

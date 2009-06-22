@@ -287,7 +287,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     @INLINE
     @NO_SAFEPOINTS("TODO")
     public Object createArray(DynamicHub dynamicHub, int length) {
-        final Size size = Layout.getArraySize(dynamicHub.classActor().componentClassActor().kind(), length);
+        final Size size = Layout.getArraySize(dynamicHub.classActor().componentClassActor().kind, length);
         final Pointer cell = allocate(size);
         return Cell.plantArray(cell, size, dynamicHub, length);
     }
@@ -386,7 +386,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     private final PointerIndexVisitor pointerIndexGripVerifier = new PointerIndexVisitor() {
         @Override
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
-            verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.size(), pointer.getGrip(wordIndex));
+            verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.width.numberOfBytes, pointer.getGrip(wordIndex));
         }
     };
 
@@ -396,7 +396,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
         }
     };
 
-    private final SequentialHeapRootsScanner heapRootsVerifier = new SequentialHeapRootsScanner(this, pointerIndexGripVerifier);
+    private final SequentialHeapRootsScanner heapRootsVerifier = new SequentialHeapRootsScanner(pointerIndexGripVerifier);
 
     private void verifyHeap() {
         if (Heap.traceGC()) {
@@ -421,7 +421,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
                 } else if (specificLayout.isReferenceArrayLayout()) {
                     final int length = Layout.readArrayLength(origin);
                     for (int index = 0; index < length; index++) {
-                        verifyGripAtIndex(origin, index * Kind.REFERENCE.size(), Layout.getGrip(origin, index));
+                        verifyGripAtIndex(origin, index * Kind.REFERENCE.width.numberOfBytes, Layout.getGrip(origin, index));
                     }
                 }
                 cell = cell.plus(Layout.size(origin));

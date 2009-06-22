@@ -30,22 +30,22 @@ import com.sun.max.vm.stack.*;
  * @author Laurent Daynes
  */
 public class SPARCStackUnwindingContext extends StackUnwindingContext {
-    private Word _stackPointer;
-    private Word _framePointer;
-    private boolean _isTopFrame;
+    private Word stackPointer;
+    private Word framePointer;
+    private boolean isTopFrame;
 
     public SPARCStackUnwindingContext(Word stackPointer, Word framePointer, Throwable throwable) {
         super(throwable);
         // Initialize with top frame's pointers. This is necessary when unwinding starts from an signal handler stub.
-        _stackPointer = stackPointer;
-        _framePointer = framePointer;
-        _isTopFrame = true;
+        this.stackPointer = stackPointer;
+        this.framePointer = framePointer;
+        this.isTopFrame = true;
     }
 
     public void record(Pointer stackPointer, Pointer framePointer) {
-        _stackPointer = stackPointer;
-        _framePointer = framePointer;
-        _isTopFrame = false;
+        this.stackPointer = stackPointer;
+        this.framePointer = framePointer;
+        this.isTopFrame = false;
     }
 
     @Override
@@ -54,14 +54,14 @@ public class SPARCStackUnwindingContext extends StackUnwindingContext {
     }
 
     public Pointer stackPointer() {
-        return _stackPointer.asPointer();
+        return stackPointer.asPointer();
     }
 
     public Pointer framePointer() {
-        return _framePointer.asPointer();
+        return framePointer.asPointer();
     }
 
     public boolean isTopFrame() {
-        return _isTopFrame;
+        return isTopFrame;
     }
 }

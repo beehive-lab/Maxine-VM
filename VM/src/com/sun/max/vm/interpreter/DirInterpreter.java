@@ -53,12 +53,12 @@ import com.sun.max.vm.value.*;
  */
 public class DirInterpreter extends IrInterpreter<DirMethod> {
 
-    private final boolean _trace;
-    private final boolean _traceVariables;
+    private final boolean trace;
+    private final boolean traceVariables;
 
     public DirInterpreter() {
-        _traceVariables = traceCpuOption.getValue();
-        _trace = _traceVariables || traceOption.getValue();
+        traceVariables = traceCpuOption.getValue();
+        trace = traceVariables || traceOption.getValue();
     }
 
     private static DirValue[] valuesToDirValues(Value[] values) {
@@ -71,10 +71,10 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
 
 
     private class Environment {
-        private final Map<DirVariable, DirValue> _bindings = new HashMap<DirVariable, DirValue>();
+        private final Map<DirVariable, DirValue> bindings = new HashMap<DirVariable, DirValue>();
 
         public void bind(DirVariable variable, DirValue value) {
-            _bindings.put(variable, value);
+            bindings.put(variable, value);
         }
 
         public void bind(DirVariable[] variables, DirValue[] values) {
@@ -93,7 +93,7 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
 
         DirValue lookup(DirValue value) {
             if (value instanceof DirVariable) {
-                final DirValue result = _bindings.get(value);
+                final DirValue result = bindings.get(value);
                 ProgramError.check(result != null, "DIR variable is not defined: " + value);
                 return result;
             }
@@ -109,8 +109,8 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
         }
 
         public void trace() {
-            if (_trace) {
-                for (Map.Entry<DirVariable, DirValue> entry : _bindings.entrySet()) {
+            if (trace) {
+                for (Map.Entry<DirVariable, DirValue> entry : bindings.entrySet()) {
                     Trace.stream().println("    " + entry.getKey() + " = " + entry.getValue());
                 }
             }
@@ -120,7 +120,7 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
     private class Evaluator extends DirAdapter {
         private final DirMethod dirMethod;
         private DirValue throwable = null;
-        private DirValue _result = null;
+        private DirValue result = null;
         private int instructionIndex = 0;
         private DirBlock block;
         private final Environment environment;
@@ -140,7 +140,7 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
             if (Trace.hasLevel(3)) {
                 dirMethod.traceToString();
             }
-            while (_result == null) {
+            while (result == null) {
                 final DirInstruction instruction = block.instructions().get(instructionIndex);
                 traceRun(instruction);
                 instructionIndex++;
@@ -158,17 +158,17 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
                     }
                 }
             }
-            if (_result instanceof DirConstant) {
-                final DirConstant dirConstant = (DirConstant) _result;
+            if (result instanceof DirConstant) {
+                final DirConstant dirConstant = (DirConstant) result;
                 return dirMethod.classMethodActor().resultKind().convert(dirConstant.value());
             }
-            return ReferenceValue.from(_result);
+            return ReferenceValue.from(result);
         }
 
         private void traceRun(DirInstruction instruction) {
-            if (_trace) {
+            if (trace) {
                 Trace.stream().println("------------------");
-                if (_traceVariables) {
+                if (traceVariables) {
                     environment.trace();
                 }
                 Trace.stream().println(block.toString() + "[" + instructionIndex + "]: " + instruction);
@@ -276,7 +276,7 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
 
         @Override
         public void visitReturn(DirReturn dirReturn) {
-            _result = environment.lookup(dirReturn.returnValue());
+            result = environment.lookup(dirReturn.returnValue());
         }
 
         @Override

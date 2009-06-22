@@ -41,27 +41,27 @@ public final class TeleClassInfo {
     }
 
     @INSPECTED
-    private static ClassActor[] _classActors;
+    private static ClassActor[] classActors;
 
     @INSPECTED
-    private static int _classActorCount = 0;
+    private static int classActorCount = 0;
 
     /**
      * Adds to the inspectable record of dynamically loaded classes.
      */
     public static void registerClassLoaded(ClassActor classActor) {
         if (MaxineMessenger.isVmInspected()) {
-            if (_classActors == null) {
-                _classActors = new ClassActor[100];
+            if (classActors == null) {
+                classActors = new ClassActor[100];
             }
-            if (_classActorCount == _classActors.length) {
-                _classActors = Arrays.extend(_classActors, _classActorCount * 2);
+            if (classActorCount == classActors.length) {
+                classActors = Arrays.extend(classActors, classActorCount * 2);
             }
             // The classActor needs to be set up before we increment _classActorCount
             // otherwise we have a race condition where the Inspector might see
             // a null classActor.
-            _classActors[_classActorCount] = classActor;
-            _classActorCount++;
+            classActors[classActorCount] = classActor;
+            classActorCount++;
         }
     }
 

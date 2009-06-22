@@ -161,7 +161,7 @@ public abstract class Actor {
     private int flags;
 
     @INSPECTED
-    private final Utf8Constant name;
+    public final Utf8Constant name;
 
     protected Actor(Utf8Constant name, int flags) {
         this.flags = flags;
@@ -469,11 +469,6 @@ public abstract class Actor {
         }
     };
 
-    @INLINE
-    public final Utf8Constant name() {
-        return name;
-    }
-
     /**
      * Gets the name of this actor qualified by it's declaring class (if known).
      * @return
@@ -755,7 +750,7 @@ public abstract class Actor {
                     case 'h': {
                         if (this instanceof MemberActor) {
                             final MemberActor memberActor = (MemberActor) this;
-                            sb.append(memberActor.holder().typeDescriptor().toJavaString(qualified));
+                            sb.append(memberActor.holder().typeDescriptor.toJavaString(qualified));
                         } else {
                             if (strict) {
                                 throw new IllegalFormatConversionException(specifier, getClass());
@@ -764,7 +759,7 @@ public abstract class Actor {
                         break;
                     }
                     case 'n': {
-                        sb.append(name());
+                        sb.append(name);
                         break;
                     }
                     case 'P':
@@ -826,7 +821,7 @@ public abstract class Actor {
 
     public final void checkAccessBy(ClassActor accessor) {
         if (!isAccessibleBy(accessor)) {
-            throw new IllegalAccessError(accessor.name() + " cannot access " + this);
+            throw new IllegalAccessError(accessor.name + " cannot access " + this);
         }
     }
 }

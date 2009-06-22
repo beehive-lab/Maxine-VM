@@ -140,7 +140,7 @@ public abstract class TeleMethodActor extends TeleMemberActor implements TeleRou
     }
 
     public String getName() {
-        return methodActor().name().string();
+        return methodActor().name.string;
     }
 
     public String getSignature() {

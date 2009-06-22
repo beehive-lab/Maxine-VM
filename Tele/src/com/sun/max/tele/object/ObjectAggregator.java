@@ -216,7 +216,7 @@ public abstract class ObjectAggregator {
 
         ArrayAggregator(ArrayClassActor arrayClassActor, Pointer base) {
             super(arrayClassActor, base);
-            _layout = arrayClassActor.componentClassActor().arrayLayout();
+            _layout = arrayClassActor.componentClassActor().kind.arrayLayout(Layout.layoutScheme());
         }
 
         @Override

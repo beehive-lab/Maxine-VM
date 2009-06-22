@@ -83,7 +83,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     }
 
     public final String name() {
-        return classMethodActor.name().toString();
+        return classMethodActor.name.toString();
     }
 
     public final boolean isNative() {

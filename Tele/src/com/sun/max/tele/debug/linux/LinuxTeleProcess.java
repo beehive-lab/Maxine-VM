@@ -102,7 +102,7 @@ public final class LinuxTeleProcess extends TeleProcess {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws IOException {
-                    final Word threadSpecificsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header()._threadSpecificsListOffset));
+                    final Word threadSpecificsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header().threadSpecificsListOffset));
                     nativeGatherThreads(_task.tgid(), threads, threadSpecificsList.asAddress().toLong());
                     return null;
                 }

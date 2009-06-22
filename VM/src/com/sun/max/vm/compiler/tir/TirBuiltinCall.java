@@ -40,7 +40,7 @@ public class TirBuiltinCall extends TirCall {
 
     @Override
     public String toString() {
-        return "BUILTIN " + method().name().toString();
+        return "BUILTIN " + method().name.toString();
     }
 
     public Builtin builtin() {

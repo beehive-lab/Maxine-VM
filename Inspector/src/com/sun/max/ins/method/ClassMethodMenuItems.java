@@ -155,7 +155,7 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
 
             try {
                 final Value returnValue = maxVM().interpretMethod(classMethodActor, arguments);
-                inspection().gui().informationMessage("Method " + classMethodActor.name() + " returned " + returnValue.toString());
+                inspection().gui().informationMessage("Method " + classMethodActor.name + " returned " + returnValue.toString());
             } catch (TeleInterpreterException teleInterpreterException) {
                 throw new InspectorError(teleInterpreterException);
             }

@@ -106,7 +106,7 @@ public final class BytecodeScanner {
         final StringBuilder buf = new StringBuilder();
         if (lineNumber != -1) {
             final ClassActor holder = classMethodActor.holder();
-            String sourceFileName = holder.sourceFileName();
+            String sourceFileName = holder.sourceFileName;
             if (sourceFileName == null) {
                 sourceFileName = "<unknown>";
             }

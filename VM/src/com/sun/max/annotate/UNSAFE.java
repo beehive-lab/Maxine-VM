@@ -97,7 +97,7 @@ public @interface UNSAFE {
         }
 
         private static boolean hasUnsafeSignature(MethodActor methodActor, ClassActor classActor, ClassLoader classLoader) {
-            if (methodActor instanceof VirtualMethodActor && isUnsafeType(methodActor.holder().typeDescriptor(), classActor, classLoader)) {
+            if (methodActor instanceof VirtualMethodActor && isUnsafeType(methodActor.holder().typeDescriptor, classActor, classLoader)) {
                 return true;
             }
             return isUnsafeSignature(methodActor.descriptor(), classActor, classLoader);
@@ -121,7 +121,7 @@ public @interface UNSAFE {
                 return false;
             }
             final ClassActor classActor = classMethodActor.holder();
-            final ClassLoader classLoader = classActor.classLoader();
+            final ClassLoader classLoader = classActor.classLoader;
             if (hasUnsafeSignature(classMethodActor, classActor, classLoader)) {
                 return true;
             }

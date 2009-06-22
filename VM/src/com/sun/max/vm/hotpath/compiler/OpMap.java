@@ -27,8 +27,8 @@ import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.type.*;
 
 public class OpMap {
-    private static GrowableMapping<Pair<Operation, Kind>, Snippet> _operationSnippets;
-    private static GrowableMapping<Pair<Operation, Kind>, Builtin> _operationBuiltins;
+    private static GrowableMapping<Pair<Operation, Kind>, Snippet> operationSnippets;
+    private static GrowableMapping<Pair<Operation, Kind>, Builtin> operationBuiltins;
     private static GrowableMapping<Pair<Kind, Kind>, Snippet> conversionSnippets;
     private static GrowableMapping<Pair<Kind, Kind>, Builtin> conversionBuiltins;
 
@@ -41,11 +41,11 @@ public class OpMap {
     }
 
     public static Snippet operationSnippet(Operation operation, Kind kind) {
-        return _operationSnippets.get(from(operation, kind));
+        return operationSnippets.get(from(operation, kind));
     }
 
     public static Builtin operationBuiltin(Operation operation, Kind kind) {
-        return _operationBuiltins.get(from(operation, kind));
+        return operationBuiltins.get(from(operation, kind));
     }
 
     public static Snippet conversionSnippet(Kind fromKind, Kind toKind) {
@@ -58,114 +58,114 @@ public class OpMap {
 
     static {
         // Operation Snippets
-        _operationSnippets = new OpenAddressingHashMapping<Pair<Operation, Kind>, Snippet>();
-        _operationSnippets.put(from(Operation.ALOAD, Kind.INT), ArrayGetSnippet.GetInt.SNIPPET);
-        _operationSnippets.put(from(Operation.ALOAD, Kind.LONG), ArrayGetSnippet.GetLong.SNIPPET);
-        _operationSnippets.put(from(Operation.ALOAD, Kind.FLOAT), ArrayGetSnippet.GetFloat.SNIPPET);
-        _operationSnippets.put(from(Operation.ALOAD, Kind.DOUBLE), ArrayGetSnippet.GetDouble.SNIPPET);
-        _operationSnippets.put(from(Operation.ALOAD, Kind.REFERENCE), ArrayGetSnippet.GetReference.SNIPPET);
-        _operationSnippets.put(from(Operation.ALOAD, Kind.BYTE), ArrayGetSnippet.GetByte.SNIPPET);
-        _operationSnippets.put(from(Operation.ALOAD, Kind.CHAR), ArrayGetSnippet.GetChar.SNIPPET);
-        _operationSnippets.put(from(Operation.ALOAD, Kind.SHORT), ArrayGetSnippet.GetShort.SNIPPET);
+        operationSnippets = new OpenAddressingHashMapping<Pair<Operation, Kind>, Snippet>();
+        operationSnippets.put(from(Operation.ALOAD, Kind.INT), ArrayGetSnippet.GetInt.SNIPPET);
+        operationSnippets.put(from(Operation.ALOAD, Kind.LONG), ArrayGetSnippet.GetLong.SNIPPET);
+        operationSnippets.put(from(Operation.ALOAD, Kind.FLOAT), ArrayGetSnippet.GetFloat.SNIPPET);
+        operationSnippets.put(from(Operation.ALOAD, Kind.DOUBLE), ArrayGetSnippet.GetDouble.SNIPPET);
+        operationSnippets.put(from(Operation.ALOAD, Kind.REFERENCE), ArrayGetSnippet.GetReference.SNIPPET);
+        operationSnippets.put(from(Operation.ALOAD, Kind.BYTE), ArrayGetSnippet.GetByte.SNIPPET);
+        operationSnippets.put(from(Operation.ALOAD, Kind.CHAR), ArrayGetSnippet.GetChar.SNIPPET);
+        operationSnippets.put(from(Operation.ALOAD, Kind.SHORT), ArrayGetSnippet.GetShort.SNIPPET);
 
-        _operationSnippets.put(from(Operation.ASTORE, Kind.INT), ArraySetSnippet.SetInt.SNIPPET);
-        _operationSnippets.put(from(Operation.ASTORE, Kind.LONG), ArraySetSnippet.SetLong.SNIPPET);
-        _operationSnippets.put(from(Operation.ASTORE, Kind.FLOAT), ArraySetSnippet.SetFloat.SNIPPET);
-        _operationSnippets.put(from(Operation.ASTORE, Kind.DOUBLE), ArraySetSnippet.SetDouble.SNIPPET);
-        _operationSnippets.put(from(Operation.ASTORE, Kind.REFERENCE), ArraySetSnippet.SetReference.SNIPPET);
-        _operationSnippets.put(from(Operation.ASTORE, Kind.BYTE), ArraySetSnippet.SetByte.SNIPPET);
-        _operationSnippets.put(from(Operation.ASTORE, Kind.CHAR), ArraySetSnippet.SetChar.SNIPPET);
-        _operationSnippets.put(from(Operation.ASTORE, Kind.SHORT), ArraySetSnippet.SetShort.SNIPPET);
+        operationSnippets.put(from(Operation.ASTORE, Kind.INT), ArraySetSnippet.SetInt.SNIPPET);
+        operationSnippets.put(from(Operation.ASTORE, Kind.LONG), ArraySetSnippet.SetLong.SNIPPET);
+        operationSnippets.put(from(Operation.ASTORE, Kind.FLOAT), ArraySetSnippet.SetFloat.SNIPPET);
+        operationSnippets.put(from(Operation.ASTORE, Kind.DOUBLE), ArraySetSnippet.SetDouble.SNIPPET);
+        operationSnippets.put(from(Operation.ASTORE, Kind.REFERENCE), ArraySetSnippet.SetReference.SNIPPET);
+        operationSnippets.put(from(Operation.ASTORE, Kind.BYTE), ArraySetSnippet.SetByte.SNIPPET);
+        operationSnippets.put(from(Operation.ASTORE, Kind.CHAR), ArraySetSnippet.SetChar.SNIPPET);
+        operationSnippets.put(from(Operation.ASTORE, Kind.SHORT), ArraySetSnippet.SetShort.SNIPPET);
 
-        _operationSnippets.put(from(Operation.MUL, Kind.LONG), Snippet.LongTimes.SNIPPET);
-        _operationSnippets.put(from(Operation.DIV, Kind.LONG), Snippet.LongDivided.SNIPPET);
+        operationSnippets.put(from(Operation.MUL, Kind.LONG), Snippet.LongTimes.SNIPPET);
+        operationSnippets.put(from(Operation.DIV, Kind.LONG), Snippet.LongDivided.SNIPPET);
 
-        _operationSnippets.put(from(Operation.REM, Kind.LONG), Snippet.LongRemainder.SNIPPET);
-        _operationSnippets.put(from(Operation.REM, Kind.FLOAT), Snippet.FloatRemainder.SNIPPET);
-        _operationSnippets.put(from(Operation.REM, Kind.DOUBLE), Snippet.DoubleRemainder.SNIPPET);
+        operationSnippets.put(from(Operation.REM, Kind.LONG), Snippet.LongRemainder.SNIPPET);
+        operationSnippets.put(from(Operation.REM, Kind.FLOAT), Snippet.FloatRemainder.SNIPPET);
+        operationSnippets.put(from(Operation.REM, Kind.DOUBLE), Snippet.DoubleRemainder.SNIPPET);
 
-        _operationSnippets.put(from(Operation.SHR, Kind.LONG), Snippet.LongSignedShiftedRight.SNIPPET);
+        operationSnippets.put(from(Operation.SHR, Kind.LONG), Snippet.LongSignedShiftedRight.SNIPPET);
 
-        _operationSnippets.put(from(Operation.CMP, Kind.LONG), Snippet.LongCompare.SNIPPET);
+        operationSnippets.put(from(Operation.CMP, Kind.LONG), Snippet.LongCompare.SNIPPET);
 
-        _operationSnippets.put(from(Operation.GETFIELD, Kind.BYTE), FieldReadSnippet.ReadByte.SNIPPET);
-        _operationSnippets.put(from(Operation.GETFIELD, Kind.BOOLEAN), FieldReadSnippet.ReadBoolean.SNIPPET);
-        _operationSnippets.put(from(Operation.GETFIELD, Kind.SHORT), FieldReadSnippet.ReadShort.SNIPPET);
-        _operationSnippets.put(from(Operation.GETFIELD, Kind.CHAR), FieldReadSnippet.ReadChar.SNIPPET);
-        _operationSnippets.put(from(Operation.GETFIELD, Kind.INT), FieldReadSnippet.ReadInt.SNIPPET);
-        _operationSnippets.put(from(Operation.GETFIELD, Kind.FLOAT), FieldReadSnippet.ReadFloat.SNIPPET);
-        _operationSnippets.put(from(Operation.GETFIELD, Kind.LONG), FieldReadSnippet.ReadLong.SNIPPET);
-        _operationSnippets.put(from(Operation.GETFIELD, Kind.DOUBLE), FieldReadSnippet.ReadDouble.SNIPPET);
-        _operationSnippets.put(from(Operation.GETFIELD, Kind.REFERENCE), FieldReadSnippet.ReadReference.SNIPPET);
+        operationSnippets.put(from(Operation.GETFIELD, Kind.BYTE), FieldReadSnippet.ReadByte.SNIPPET);
+        operationSnippets.put(from(Operation.GETFIELD, Kind.BOOLEAN), FieldReadSnippet.ReadBoolean.SNIPPET);
+        operationSnippets.put(from(Operation.GETFIELD, Kind.SHORT), FieldReadSnippet.ReadShort.SNIPPET);
+        operationSnippets.put(from(Operation.GETFIELD, Kind.CHAR), FieldReadSnippet.ReadChar.SNIPPET);
+        operationSnippets.put(from(Operation.GETFIELD, Kind.INT), FieldReadSnippet.ReadInt.SNIPPET);
+        operationSnippets.put(from(Operation.GETFIELD, Kind.FLOAT), FieldReadSnippet.ReadFloat.SNIPPET);
+        operationSnippets.put(from(Operation.GETFIELD, Kind.LONG), FieldReadSnippet.ReadLong.SNIPPET);
+        operationSnippets.put(from(Operation.GETFIELD, Kind.DOUBLE), FieldReadSnippet.ReadDouble.SNIPPET);
+        operationSnippets.put(from(Operation.GETFIELD, Kind.REFERENCE), FieldReadSnippet.ReadReference.SNIPPET);
 
-        _operationSnippets.put(from(Operation.PUTFIELD, Kind.BYTE), FieldWriteSnippet.WriteByte.SNIPPET);
-        _operationSnippets.put(from(Operation.PUTFIELD, Kind.BOOLEAN), FieldWriteSnippet.WriteBoolean.SNIPPET);
-        _operationSnippets.put(from(Operation.PUTFIELD, Kind.SHORT), FieldWriteSnippet.WriteShort.SNIPPET);
-        _operationSnippets.put(from(Operation.PUTFIELD, Kind.CHAR), FieldWriteSnippet.WriteChar.SNIPPET);
-        _operationSnippets.put(from(Operation.PUTFIELD, Kind.INT), FieldWriteSnippet.WriteInt.SNIPPET);
-        _operationSnippets.put(from(Operation.PUTFIELD, Kind.FLOAT), FieldWriteSnippet.WriteFloat.SNIPPET);
-        _operationSnippets.put(from(Operation.PUTFIELD, Kind.LONG), FieldWriteSnippet.WriteLong.SNIPPET);
-        _operationSnippets.put(from(Operation.PUTFIELD, Kind.DOUBLE), FieldWriteSnippet.WriteDouble.SNIPPET);
-        _operationSnippets.put(from(Operation.PUTFIELD, Kind.REFERENCE), FieldWriteSnippet.WriteReference.SNIPPET);
+        operationSnippets.put(from(Operation.PUTFIELD, Kind.BYTE), FieldWriteSnippet.WriteByte.SNIPPET);
+        operationSnippets.put(from(Operation.PUTFIELD, Kind.BOOLEAN), FieldWriteSnippet.WriteBoolean.SNIPPET);
+        operationSnippets.put(from(Operation.PUTFIELD, Kind.SHORT), FieldWriteSnippet.WriteShort.SNIPPET);
+        operationSnippets.put(from(Operation.PUTFIELD, Kind.CHAR), FieldWriteSnippet.WriteChar.SNIPPET);
+        operationSnippets.put(from(Operation.PUTFIELD, Kind.INT), FieldWriteSnippet.WriteInt.SNIPPET);
+        operationSnippets.put(from(Operation.PUTFIELD, Kind.FLOAT), FieldWriteSnippet.WriteFloat.SNIPPET);
+        operationSnippets.put(from(Operation.PUTFIELD, Kind.LONG), FieldWriteSnippet.WriteLong.SNIPPET);
+        operationSnippets.put(from(Operation.PUTFIELD, Kind.DOUBLE), FieldWriteSnippet.WriteDouble.SNIPPET);
+        operationSnippets.put(from(Operation.PUTFIELD, Kind.REFERENCE), FieldWriteSnippet.WriteReference.SNIPPET);
 
 
         // Operation Builtins
-        _operationBuiltins = new OpenAddressingHashMapping<Pair<Operation, Kind>, Builtin>();
-        _operationBuiltins.put(from(Operation.ADD, Kind.INT), JavaBuiltin.IntPlus.BUILTIN);
-        _operationBuiltins.put(from(Operation.ADD, Kind.LONG), JavaBuiltin.LongPlus.BUILTIN);
-        _operationBuiltins.put(from(Operation.ADD, Kind.FLOAT), JavaBuiltin.FloatPlus.BUILTIN);
-        _operationBuiltins.put(from(Operation.ADD, Kind.DOUBLE), JavaBuiltin.DoublePlus.BUILTIN);
+        operationBuiltins = new OpenAddressingHashMapping<Pair<Operation, Kind>, Builtin>();
+        operationBuiltins.put(from(Operation.ADD, Kind.INT), JavaBuiltin.IntPlus.BUILTIN);
+        operationBuiltins.put(from(Operation.ADD, Kind.LONG), JavaBuiltin.LongPlus.BUILTIN);
+        operationBuiltins.put(from(Operation.ADD, Kind.FLOAT), JavaBuiltin.FloatPlus.BUILTIN);
+        operationBuiltins.put(from(Operation.ADD, Kind.DOUBLE), JavaBuiltin.DoublePlus.BUILTIN);
 
-        _operationBuiltins.put(from(Operation.SUB, Kind.INT), JavaBuiltin.IntMinus.BUILTIN);
-        _operationBuiltins.put(from(Operation.SUB, Kind.LONG), JavaBuiltin.LongMinus.BUILTIN);
-        _operationBuiltins.put(from(Operation.SUB, Kind.FLOAT), JavaBuiltin.FloatMinus.BUILTIN);
-        _operationBuiltins.put(from(Operation.SUB, Kind.DOUBLE), JavaBuiltin.DoubleMinus.BUILTIN);
+        operationBuiltins.put(from(Operation.SUB, Kind.INT), JavaBuiltin.IntMinus.BUILTIN);
+        operationBuiltins.put(from(Operation.SUB, Kind.LONG), JavaBuiltin.LongMinus.BUILTIN);
+        operationBuiltins.put(from(Operation.SUB, Kind.FLOAT), JavaBuiltin.FloatMinus.BUILTIN);
+        operationBuiltins.put(from(Operation.SUB, Kind.DOUBLE), JavaBuiltin.DoubleMinus.BUILTIN);
 
-        _operationBuiltins.put(from(Operation.MUL, Kind.INT), JavaBuiltin.IntTimes.BUILTIN);
-        _operationBuiltins.put(from(Operation.MUL, Kind.LONG), JavaBuiltin.LongTimes.BUILTIN);
-        _operationBuiltins.put(from(Operation.MUL, Kind.FLOAT), JavaBuiltin.FloatTimes.BUILTIN);
-        _operationBuiltins.put(from(Operation.MUL, Kind.DOUBLE), JavaBuiltin.DoubleTimes.BUILTIN);
+        operationBuiltins.put(from(Operation.MUL, Kind.INT), JavaBuiltin.IntTimes.BUILTIN);
+        operationBuiltins.put(from(Operation.MUL, Kind.LONG), JavaBuiltin.LongTimes.BUILTIN);
+        operationBuiltins.put(from(Operation.MUL, Kind.FLOAT), JavaBuiltin.FloatTimes.BUILTIN);
+        operationBuiltins.put(from(Operation.MUL, Kind.DOUBLE), JavaBuiltin.DoubleTimes.BUILTIN);
 
-        _operationBuiltins.put(from(Operation.DIV, Kind.INT), JavaBuiltin.IntDivided.BUILTIN);
-        _operationBuiltins.put(from(Operation.DIV, Kind.LONG), JavaBuiltin.LongDivided.BUILTIN);
-        _operationBuiltins.put(from(Operation.DIV, Kind.FLOAT), JavaBuiltin.FloatDivided.BUILTIN);
-        _operationBuiltins.put(from(Operation.DIV, Kind.DOUBLE), JavaBuiltin.DoubleDivided.BUILTIN);
+        operationBuiltins.put(from(Operation.DIV, Kind.INT), JavaBuiltin.IntDivided.BUILTIN);
+        operationBuiltins.put(from(Operation.DIV, Kind.LONG), JavaBuiltin.LongDivided.BUILTIN);
+        operationBuiltins.put(from(Operation.DIV, Kind.FLOAT), JavaBuiltin.FloatDivided.BUILTIN);
+        operationBuiltins.put(from(Operation.DIV, Kind.DOUBLE), JavaBuiltin.DoubleDivided.BUILTIN);
 
-        _operationBuiltins.put(from(Operation.REM, Kind.INT), JavaBuiltin.IntRemainder.BUILTIN);
-        _operationBuiltins.put(from(Operation.REM, Kind.LONG), JavaBuiltin.LongRemainder.BUILTIN);
-        _operationBuiltins.put(from(Operation.REM, Kind.FLOAT), JavaBuiltin.FloatRemainder.BUILTIN);
-        _operationBuiltins.put(from(Operation.REM, Kind.DOUBLE), JavaBuiltin.DoubleRemainder.BUILTIN);
+        operationBuiltins.put(from(Operation.REM, Kind.INT), JavaBuiltin.IntRemainder.BUILTIN);
+        operationBuiltins.put(from(Operation.REM, Kind.LONG), JavaBuiltin.LongRemainder.BUILTIN);
+        operationBuiltins.put(from(Operation.REM, Kind.FLOAT), JavaBuiltin.FloatRemainder.BUILTIN);
+        operationBuiltins.put(from(Operation.REM, Kind.DOUBLE), JavaBuiltin.DoubleRemainder.BUILTIN);
 
-        _operationBuiltins.put(from(Operation.NEG, Kind.INT), JavaBuiltin.IntNegated.BUILTIN);
-        _operationBuiltins.put(from(Operation.NEG, Kind.LONG), JavaBuiltin.LongNegated.BUILTIN);
-        _operationBuiltins.put(from(Operation.NEG, Kind.FLOAT), JavaBuiltin.FloatNegated.BUILTIN);
-        _operationBuiltins.put(from(Operation.NEG, Kind.DOUBLE), JavaBuiltin.DoubleNegated.BUILTIN);
+        operationBuiltins.put(from(Operation.NEG, Kind.INT), JavaBuiltin.IntNegated.BUILTIN);
+        operationBuiltins.put(from(Operation.NEG, Kind.LONG), JavaBuiltin.LongNegated.BUILTIN);
+        operationBuiltins.put(from(Operation.NEG, Kind.FLOAT), JavaBuiltin.FloatNegated.BUILTIN);
+        operationBuiltins.put(from(Operation.NEG, Kind.DOUBLE), JavaBuiltin.DoubleNegated.BUILTIN);
 
-        _operationBuiltins.put(from(Operation.SHL, Kind.INT), JavaBuiltin.IntShiftedLeft.BUILTIN);
-        _operationBuiltins.put(from(Operation.SHL, Kind.LONG), JavaBuiltin.LongShiftedLeft.BUILTIN);
+        operationBuiltins.put(from(Operation.SHL, Kind.INT), JavaBuiltin.IntShiftedLeft.BUILTIN);
+        operationBuiltins.put(from(Operation.SHL, Kind.LONG), JavaBuiltin.LongShiftedLeft.BUILTIN);
 
-        _operationBuiltins.put(from(Operation.SHR, Kind.INT), JavaBuiltin.IntSignedShiftedRight.BUILTIN);
-        _operationBuiltins.put(from(Operation.SHR, Kind.LONG), JavaBuiltin.LongSignedShiftedRight.BUILTIN);
+        operationBuiltins.put(from(Operation.SHR, Kind.INT), JavaBuiltin.IntSignedShiftedRight.BUILTIN);
+        operationBuiltins.put(from(Operation.SHR, Kind.LONG), JavaBuiltin.LongSignedShiftedRight.BUILTIN);
 
-        _operationBuiltins.put(from(Operation.USHR, Kind.INT), JavaBuiltin.IntUnsignedShiftedRight.BUILTIN);
-        _operationBuiltins.put(from(Operation.USHR, Kind.LONG), JavaBuiltin.LongUnsignedShiftedRight.BUILTIN);
+        operationBuiltins.put(from(Operation.USHR, Kind.INT), JavaBuiltin.IntUnsignedShiftedRight.BUILTIN);
+        operationBuiltins.put(from(Operation.USHR, Kind.LONG), JavaBuiltin.LongUnsignedShiftedRight.BUILTIN);
 
-        _operationBuiltins.put(from(Operation.AND, Kind.INT), JavaBuiltin.IntAnd.BUILTIN);
-        _operationBuiltins.put(from(Operation.AND, Kind.LONG), JavaBuiltin.LongAnd.BUILTIN);
+        operationBuiltins.put(from(Operation.AND, Kind.INT), JavaBuiltin.IntAnd.BUILTIN);
+        operationBuiltins.put(from(Operation.AND, Kind.LONG), JavaBuiltin.LongAnd.BUILTIN);
 
-        _operationBuiltins.put(from(Operation.OR, Kind.INT), JavaBuiltin.IntOr.BUILTIN);
-        _operationBuiltins.put(from(Operation.OR, Kind.LONG), JavaBuiltin.LongOr.BUILTIN);
+        operationBuiltins.put(from(Operation.OR, Kind.INT), JavaBuiltin.IntOr.BUILTIN);
+        operationBuiltins.put(from(Operation.OR, Kind.LONG), JavaBuiltin.LongOr.BUILTIN);
 
-        _operationBuiltins.put(from(Operation.XOR, Kind.INT), JavaBuiltin.IntXor.BUILTIN);
-        _operationBuiltins.put(from(Operation.XOR, Kind.LONG), JavaBuiltin.LongXor.BUILTIN);
+        operationBuiltins.put(from(Operation.XOR, Kind.INT), JavaBuiltin.IntXor.BUILTIN);
+        operationBuiltins.put(from(Operation.XOR, Kind.LONG), JavaBuiltin.LongXor.BUILTIN);
 
-        _operationBuiltins.put(from(Operation.CMP, Kind.LONG), JavaBuiltin.LongCompare.BUILTIN);
+        operationBuiltins.put(from(Operation.CMP, Kind.LONG), JavaBuiltin.LongCompare.BUILTIN);
 
-        _operationBuiltins.put(from(Operation.CMPL, Kind.FLOAT), JavaBuiltin.FloatCompareL.BUILTIN);
-        _operationBuiltins.put(from(Operation.CMPL, Kind.DOUBLE), JavaBuiltin.DoubleCompareL.BUILTIN);
+        operationBuiltins.put(from(Operation.CMPL, Kind.FLOAT), JavaBuiltin.FloatCompareL.BUILTIN);
+        operationBuiltins.put(from(Operation.CMPL, Kind.DOUBLE), JavaBuiltin.DoubleCompareL.BUILTIN);
 
-        _operationBuiltins.put(from(Operation.CMPG, Kind.FLOAT), JavaBuiltin.FloatCompareG.BUILTIN);
-        _operationBuiltins.put(from(Operation.CMPG, Kind.DOUBLE), JavaBuiltin.DoubleCompareG.BUILTIN);
+        operationBuiltins.put(from(Operation.CMPG, Kind.FLOAT), JavaBuiltin.FloatCompareG.BUILTIN);
+        operationBuiltins.put(from(Operation.CMPG, Kind.DOUBLE), JavaBuiltin.DoubleCompareG.BUILTIN);
 
         // Conversion Snippets
         conversionSnippets = new OpenAddressingHashMapping<Pair<Kind, Kind>, Snippet>();

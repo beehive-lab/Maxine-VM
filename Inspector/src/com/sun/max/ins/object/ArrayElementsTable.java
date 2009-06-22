@@ -88,7 +88,7 @@ public final class ArrayElementsTable extends InspectorTable {
         _teleObject = objectInspector.teleObject();
         _objectReference = _teleObject.reference();
         _elementKind = kind;
-        _elementSize = kind.size();
+        _elementSize = kind.width.numberOfBytes;
         _startOffset = startOffset;
         _startIndex = startIndex;
         _arrayLength = length;

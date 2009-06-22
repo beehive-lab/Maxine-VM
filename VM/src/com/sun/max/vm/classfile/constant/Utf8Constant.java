@@ -40,11 +40,7 @@ public abstract class Utf8Constant extends AbstractPoolConstant<Utf8Constant> im
     }
 
     @INSPECTED
-    private final String string;
-
-    public final String string() {
-        return string;
-    }
+    public final String string;
 
     /**
      * Must only be called from {@link Utf8ConstantEntry#Utf8ConstantEntry(String)}.

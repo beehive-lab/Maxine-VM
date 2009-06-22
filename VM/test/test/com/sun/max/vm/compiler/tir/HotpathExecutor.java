@@ -48,12 +48,12 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
     private static Option<Integer> _hotpathThreshold = _optionSet.newIntegerOption("HP:T", 10, "Hotpath tracing threshold.");
 
     static {
-        _optionSet.addOptions(BirInterpreter._optionSet);
+        _optionSet.addOptions(BirInterpreter.optionSet);
         _optionSet.addOptions(HotpathProfiler.optionSet);
         _optionSet.addOptions(TirRecorder.optionSet);
         _optionSet.addOptions(Tracer.optionSet);
         _optionSet.addOptions(AsynchronousProfiler.optionSet);
-        _optionSet.addOptions(IrInterpreter._options);
+        _optionSet.addOptions(IrInterpreter.options);
     }
 
     public Object execute(JavaTestCase testCase, Object[] arguments) throws InvocationTargetException {

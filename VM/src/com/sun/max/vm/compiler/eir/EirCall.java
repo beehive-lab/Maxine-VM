@@ -107,7 +107,7 @@ public abstract class EirCall<EirInstructionVisitor_Type extends EirInstructionV
             for (EirOperand argument : arguments) {
                 if (argument.kind() == Kind.REFERENCE && argument.location() instanceof EirStackSlot) {
                     final EirStackSlot stackSlot = (EirStackSlot) argument.location();
-                    final int stackSlotBitIndex = stackSlot.offset() / stackSlotWidth.numberOfBytes();
+                    final int stackSlotBitIndex = stackSlot.offset() / stackSlotWidth.numberOfBytes;
                     map.set(stackSlotBitIndex);
                 }
             }

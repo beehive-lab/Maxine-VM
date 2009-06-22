@@ -33,30 +33,30 @@ public class TeleInterpreterRemoteTestClass {
     protected TeleInterpreterRemoteTestClass() { }
 
     protected TeleInterpreterRemoteTestClass(int y) {
-        _y = y;
+        this.y = y;
     }
 
     protected TeleInterpreterRemoteTestClass(String z) {
-        _z = z;
+        this.z = z;
     }
 
-    private String _z;
+    private String z;
 
-    private static int _x = 0xdeadbeef;
+    private static int x = 0xdeadbeef;
 
-    private static TeleInterpreterRemoteTestClass _i = new TeleInterpreterRemoteTestClass();
+    private static TeleInterpreterRemoteTestClass object = new TeleInterpreterRemoteTestClass();
 
-    private static TeleInterpreterRemoteTestChildClass _ic = new TeleInterpreterRemoteTestChildClass();
+    private static TeleInterpreterRemoteTestChildClass subclassObject = new TeleInterpreterRemoteTestChildClass();
 
-    private static Object[] _array = new Object[2];
+    private static Object[] array = new Object[2];
 
-    private static int[][] _iarray = {{0xba5eba11, 2}, {3, 4}};
+    private static int[][] iarray = {{0xba5eba11, 2}, {3, 4}};
 
-    public int _y = 0xcafebabe;
+    public int y = 0xcafebabe;
 
     @Override
     public String toString() {
-        return _z;
+        return z;
     }
 
     //just here for sanity check
@@ -65,28 +65,28 @@ public class TeleInterpreterRemoteTestClass {
     }
 
     public static int getstatic() {
-        final int y = _x;
+        final int y = x;
         return y;
     }
 
     public static int getfield() {
-        return _i._y;
+        return object.y;
     }
 
     public static int arraylength() {
-        return _array.length;
+        return array.length;
     }
 
     public static int iaload_aaload() {
-        return _iarray[0][0];
+        return iarray[0][0];
     }
 
     public static int getfield2(TeleInterpreterRemoteTestClass i) { //for use from inspector
-        return i._y;
+        return i.y;
     }
 
     public int return_y() {
-        return _y;
+        return y;
     }
 
     public int virtual_overriden(int a, int b, int c) {
@@ -98,31 +98,31 @@ public class TeleInterpreterRemoteTestClass {
     }
 
     public static int invokevirtual2() {
-        final TeleInterpreterRemoteTestClass i = _i;
+        final TeleInterpreterRemoteTestClass i = object;
         return i.virtual_overriden(1, 2, 3); //should return 3
     }
 
     public static int invokevirtual3() {
-        final TeleInterpreterRemoteTestClass i = _ic;
+        final TeleInterpreterRemoteTestClass i = subclassObject;
         return i.virtual_overriden(1, 2, 3); //should return 6
     }
 
 
     public static int new1() {
         final TeleInterpreterRemoteTestClass i = new TeleInterpreterRemoteTestClass();
-        return i._y;
+        return i.y;
     }
 
     public static int new2() {
         final TeleInterpreterRemoteTestClass i = new TeleInterpreterRemoteTestClass(0x80081355);
-        return i._y;
+        return i.y;
     }
 
     public static int putfield() {
         final TeleInterpreterRemoteTestClass i = new TeleInterpreterRemoteTestClass(0x80081355);
 
-        i._y = 666;
-        return i._y;
+        i.y = 666;
+        return i.y;
     }
 
     private static final String testString = new String("test");

@@ -560,7 +560,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     public Pointer getReturnAddress() {
         final StackFrame topFrame = frames().first();
         final StackFrame topFrameCaller = topFrame.callerFrame();
-        return topFrameCaller == null ? null : topFrameCaller.instructionPointer();
+        return topFrameCaller == null ? null : topFrameCaller.instructionPointer;
     }
 
     /* (non-Javadoc)
@@ -706,7 +706,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
             if (classMethodActor.codeAttribute().lineNumberTable().entries().length > 0) {
                 _position = classMethodActor.codeAttribute().lineNumberTable().entries()[0].position();
             } else {
-                LOGGER.warning("No line number table information for method " + classMethodActor.name().toString());
+                LOGGER.warning("No line number table information for method " + classMethodActor.name.toString());
                 _position = -1;
             }
         }
@@ -743,10 +743,10 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
                 l = targetLocations[slot];
             } else {
 
-                if (slot >= _frameDescriptor.locals().length) {
+                if (slot >= _frameDescriptor.locals.length) {
                     return IntValue.from(0xbadbabe);
                 }
-                l = _frameDescriptor.locals()[slot];
+                l = _frameDescriptor.locals[slot];
             }
 
             System.out.println("STACKFRAME ACCESS at " + slot + ", target=" + l);
@@ -775,8 +775,8 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
                 // TODO: Resolve this hack that uses a special function in the Java stack frame layout.
 
                 final JavaStackFrame javaStackFrame = (JavaStackFrame) _stackFrame;
-                int offset = index * Word.size() + javaStackFrame.layout().frameSize();
-                offset += javaStackFrame.layout().isReturnAddressPushedByCall() ? Word.size() : 0;
+                int offset = index * Word.size() + javaStackFrame.layout.frameSize();
+                offset += javaStackFrame.layout.isReturnAddressPushedByCall() ? Word.size() : 0;
 
                 return _teleVM.readValue(kind, slotBase, offset);
 
@@ -807,15 +807,15 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
             if (_isTopFrame) {
                 return instructionPointer().asAddress().toLong();
             }
-            return _stackFrame.instructionPointer().asAddress().toLong();
+            return _stackFrame.instructionPointer.asAddress().toLong();
         }
 
         public long getFramePointer() {
-            return _stackFrame.framePointer().asAddress().toLong();
+            return _stackFrame.framePointer.asAddress().toLong();
         }
 
         public long getStackPointer() {
-            return _stackFrame.stackPointer().asAddress().toLong();
+            return _stackFrame.stackPointer.asAddress().toLong();
         }
 
         public ThreadProvider getThread() {
@@ -832,7 +832,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         }
 
         public void setValue(int slot, VMValue value) {
-            final TargetLocation targetLocation = _frameDescriptor.locals()[slot];
+            final TargetLocation targetLocation = _frameDescriptor.locals[slot];
 
             // TODO: Implement writing to stack frames.
             LOGGER.warning("Stackframe write at " + slot + ", targetLocation=" + targetLocation + ", doing nothing");
@@ -873,7 +873,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
             for (final StackFrame stackFrame : frames()) {
                 z++;
 
-                final Address address = stackFrame.instructionPointer();
+                final Address address = stackFrame.instructionPointer;
                 TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(_teleVM, address);
                 if (teleTargetMethod == null) {
                     if (stackFrame.targetMethod() == null) {
@@ -898,7 +898,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
                 int index = -1;
                 if (stackFrame.targetMethod() != null) {
-                    index = stackFrame.targetMethod().findClosestStopIndex(stackFrame.instructionPointer().minus(1));
+                    index = stackFrame.targetMethod().findClosestStopIndex(stackFrame.instructionPointer.minus(1));
                 }
                 if (index != -1) {
                     final int stopIndex = index; // foundMethod.getJavaStopIndex(sf.instructionPointer().minus(1));

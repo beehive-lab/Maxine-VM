@@ -31,14 +31,14 @@ import com.sun.max.vm.code.*;
  * @author Laurent Daynes
  */
 public class ByteArrayCodeBuffer extends CodeBuffer {
-    private byte[] _buffer;
+    private byte[] buffer;
 
     public ByteArrayCodeBuffer(int capacityInBytes) {
         super();
         if (capacityInBytes < 0) {
             throw new IllegalArgumentException("Negative buffer size: " + capacityInBytes);
         }
-        _buffer = new byte[capacityInBytes];
+        buffer = new byte[capacityInBytes];
     }
 
     public ByteArrayCodeBuffer(byte[] prefix, int capacityInBytes) {
@@ -49,101 +49,101 @@ public class ByteArrayCodeBuffer extends CodeBuffer {
         if (capacityInBytes < prefix.length) {
             throw new IllegalArgumentException("Insufficient capacity for specified prefix: " + capacityInBytes);
         }
-        _buffer = new byte[capacityInBytes];
+        buffer = new byte[capacityInBytes];
         emit(prefix);
     }
 
     private void expand(int minSize) {
-        int newBufferCapacity = _buffer.length << 1;
+        int newBufferCapacity = buffer.length << 1;
         if (newBufferCapacity < minSize) {
             newBufferCapacity += minSize;
         }
         final byte[] newBuffer = new byte[newBufferCapacity];
-        Bytes.copy(_buffer, newBuffer, _currentPosition);
-        _buffer = newBuffer;
+        Bytes.copy(buffer, newBuffer, currentPosition);
+        buffer = newBuffer;
     }
 
     @Override
     public void copyTo(byte[] toArray) {
         final int length = toArray.length;
-        assert length <= _currentPosition;  // trusted client
-        Bytes.copy(_buffer, toArray, length);
+        assert length <= currentPosition;  // trusted client
+        Bytes.copy(buffer, toArray, length);
     }
 
     @Override
     public void emit(byte b) {
-        final int nextCurrentOffset = _currentPosition + 1;
-        if (nextCurrentOffset > _buffer.length) {
+        final int nextCurrentOffset = currentPosition + 1;
+        if (nextCurrentOffset > buffer.length) {
             expand(nextCurrentOffset);
         }
-        _buffer[_currentPosition] = b;
-        _currentPosition = nextCurrentOffset;
+        buffer[currentPosition] = b;
+        currentPosition = nextCurrentOffset;
     }
 
     @Override
     public void emit(byte[] bytes) {
         final int len = bytes.length;
-        final int nextCurrentOffset = _currentPosition + len;
-        if (nextCurrentOffset > _buffer.length) {
+        final int nextCurrentOffset = currentPosition + len;
+        if (nextCurrentOffset > buffer.length) {
             expand(nextCurrentOffset);
         }
-        Bytes.copy(bytes, 0, _buffer, _currentPosition, len);
-        _currentPosition = nextCurrentOffset;
+        Bytes.copy(bytes, 0, buffer, currentPosition, len);
+        currentPosition = nextCurrentOffset;
     }
 
     @Override
     public void reserve(int numBytes) {
-        final int nextCurrentOffset = _currentPosition + numBytes;
-        if (nextCurrentOffset > _buffer.length) {
+        final int nextCurrentOffset = currentPosition + numBytes;
+        if (nextCurrentOffset > buffer.length) {
             expand(nextCurrentOffset);
         }
-        _currentPosition = nextCurrentOffset;
+        currentPosition = nextCurrentOffset;
     }
 
     @Override
     public void fix(int startPosition, DisplacementModifier modifier, int disp32) throws AssemblyException {
-        modifier.fix(_buffer, startPosition, disp32);
+        modifier.fix(buffer, startPosition, disp32);
     }
 
     @Override
     public void fix(int startPosition, ImmediateConstantModifier modifier, byte imm8) throws AssemblyException {
-        modifier.fix(_buffer, startPosition, imm8);
+        modifier.fix(buffer, startPosition, imm8);
     }
 
     @Override
     public void fix(int startPosition, ImmediateConstantModifier modifier, int imm32) throws AssemblyException {
-        modifier.fix(_buffer, startPosition, imm32);
+        modifier.fix(buffer, startPosition, imm32);
     }
 
     @Override
     public void fix(int startPosition, ImmediateConstantModifier modifier, long imm64) throws AssemblyException {
-        modifier.fix(_buffer, startPosition, imm64);
+        modifier.fix(buffer, startPosition, imm64);
     }
 
     @Override
     public void fix(int startPosition, LiteralModifier modifier, int disp32) throws AssemblyException {
-        modifier.fix(_buffer, startPosition, disp32);
+        modifier.fix(buffer, startPosition, disp32);
     }
 
     @Override
     public void fix(int startPosition, BranchTargetModifier modifier, int disp32)  throws AssemblyException {
-        modifier.fix(_buffer, startPosition, disp32);
+        modifier.fix(buffer, startPosition, disp32);
     }
 
     @Override
     public void fix(int startPosition, byte[] code, int position, int size) throws AssemblyException {
-        if (startPosition + size > _buffer.length) {
+        if (startPosition + size > buffer.length) {
             throw new AssemblyException("CodeBuffer overflow. Incorrect fix specification");
         }
-        Bytes.copy(code, position, _buffer, startPosition, size);
+        Bytes.copy(code, position, buffer, startPosition, size);
     }
 
     @Override
     public void fix(int position, byte b) throws AssemblyException {
-        if (position >= _buffer.length) {
+        if (position >= buffer.length) {
             throw new AssemblyException("CodeBuffer overflow. Incorrect fix specification");
         }
-        _buffer[position] = b;
+        buffer[position] = b;
     }
 }
 

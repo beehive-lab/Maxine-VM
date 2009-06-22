@@ -74,7 +74,7 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     }
 
     public String name() {
-        return classMethodActor.name().toString();
+        return classMethodActor.name.toString();
     }
 
     public Word getEntryPoint(CallEntryPoint callEntryPoint) {
@@ -82,7 +82,7 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     }
 
     public String getQualifiedName() {
-        return classMethodActor.holder().name() + "." + name();
+        return classMethodActor.holder().name + "." + name();
     }
 
     public void cleanup() {

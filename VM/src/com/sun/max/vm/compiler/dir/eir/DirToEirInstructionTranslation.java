@@ -121,7 +121,7 @@ public abstract class DirToEirInstructionTranslation implements DirVisitor {
     public abstract void assignZero(Kind kind, EirValue variable);
 
     public EirValue dirToEirValue(DirValue dirValue) {
-        if (dirValue != null && dirValue.isZeroConstant() && (dirValue.kind().width() == WordWidth.BITS_64 || dirValue.kind() == Kind.FLOAT)) {
+        if (dirValue != null && dirValue.isZeroConstant() && (dirValue.kind().width == WordWidth.BITS_64 || dirValue.kind() == Kind.FLOAT)) {
             final EirVariable variable = createEirVariable(dirValue.kind());
             assignZero(dirValue.kind(), variable);
             return variable;

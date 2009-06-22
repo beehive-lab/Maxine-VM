@@ -23,18 +23,18 @@ package com.sun.max.vm.compiler.tir.pipeline;
 import com.sun.max.vm.compiler.tir.*;
 
 public class TirFork extends TirInstructionFilter  {
-    private final TirMessageSink _first;
-    private final TirMessageSink _second;
+    private final TirMessageSink first;
+    private final TirMessageSink second;
 
     public TirFork(TirMessageSink first, TirMessageSink second) {
         super(null);
-        _first = first;
-        _second = second;
+        this.first = first;
+        this.second = second;
     }
 
     @Override
     public void receive(TirMessage message) {
-        _first.receive(message);
-        _second.receive(message);
+        first.receive(message);
+        second.receive(message);
     }
 }

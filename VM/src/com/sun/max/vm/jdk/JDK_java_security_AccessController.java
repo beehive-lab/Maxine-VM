@@ -131,12 +131,12 @@ final class JDK_java_security_AccessController {
             if (stackFrame.isAdapter()) {
                 return true;
             }
-            final TargetMethod targetMethod = Code.codePointerToTargetMethod(stackFrame.instructionPointer());
+            final TargetMethod targetMethod = Code.codePointerToTargetMethod(stackFrame.instructionPointer);
             if (targetMethod == null) {
                 // native frame
                 return true;
             }
-            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer());
+            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer);
             if (bytecodeLocations == null) {
                 final ProtectionDomain protectionDomain = targetMethod.classMethodActor().holder().protectionDomain();
                 if (protectionDomain != null) {

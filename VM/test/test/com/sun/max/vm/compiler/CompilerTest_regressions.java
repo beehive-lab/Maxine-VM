@@ -135,7 +135,7 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
         final ClassActor stubClassActor = ClassActor.fromJava(method.makeInvocationStub().getClass());
         for (ClassMethodActor invoke : stubClassActor.localVirtualMethodActors()) {
             if (!invoke.isInitializer()) {
-                assert invoke.name().equals("invoke");
+                assert invoke.name.equals("invoke");
                 compileMethod(invoke);
             }
 

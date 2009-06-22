@@ -30,11 +30,11 @@ import com.sun.max.vm.runtime.*;
  * @author Laurent Daynes
  */
 public class RuntimeStubStackFrame extends StackFrame {
-    private RuntimeStub _stub;
+    private RuntimeStub stub;
 
     public RuntimeStubStackFrame(StackFrame callee, RuntimeStub stub, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
         super(callee, instructionPointer, framePointer, stackPointer);
-        _stub = stub;
+        this.stub = stub;
     }
 
     @Override
@@ -46,7 +46,7 @@ public class RuntimeStubStackFrame extends StackFrame {
     public boolean isSameFrame(StackFrame stackFrame) {
         if (stackFrame instanceof RuntimeStubStackFrame) {
             final RuntimeStubStackFrame runtimeStubStackFrame = (RuntimeStubStackFrame) stackFrame;
-            return _stub.equals(runtimeStubStackFrame._stub) && stackFrame.stackPointer().equals(stackPointer());
+            return stub.equals(runtimeStubStackFrame.stub) && stackFrame.stackPointer.equals(stackPointer);
         }
         return false;
     }
@@ -57,7 +57,7 @@ public class RuntimeStubStackFrame extends StackFrame {
     }
 
     public RuntimeStub stub() {
-        return _stub;
+        return stub;
     }
 
 }

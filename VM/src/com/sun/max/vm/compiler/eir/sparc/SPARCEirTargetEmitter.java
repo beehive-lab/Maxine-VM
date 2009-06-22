@@ -74,17 +74,17 @@ public final class SPARCEirTargetEmitter extends EirTargetEmitter<SPARCAssembler
 
     public static final class StackAddress {
         private final int offset;
-        private final GPR _base;
+        private final GPR base;
 
         StackAddress(int offset, GPR base) {
             this.offset = offset;
-            this._base = base;
+            this.base = base;
         }
         public int offset() {
             return offset;
         }
         public GPR base() {
-            return _base;
+            return base;
         }
     }
 

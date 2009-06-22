@@ -97,7 +97,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     }
 
     public String classMethodName() {
-        return methodTranslation.classMethodActor().name().toString();
+        return methodTranslation.classMethodActor().name.toString();
     }
 
     private CirContinuation makeExceptionContinuation(BlockState dispatcherState) {
@@ -365,7 +365,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             argumentIndex++;
         }
         if (receiverDescriptor != null) {
-            if (methodTranslation.classMethodActor().holder().kind() == Kind.WORD) {
+            if (methodTranslation.classMethodActor().holder().kind == Kind.WORD) {
                 // Don't check code in the Word subclasses as it contains casts between WORD and REFERENCE types that only executes in prototype mode.
             } else {
                 // Must be a non-static invocation - check the receiver

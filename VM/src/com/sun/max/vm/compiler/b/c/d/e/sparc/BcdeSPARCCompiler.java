@@ -35,10 +35,10 @@ import com.sun.max.vm.compiler.eir.sparc.*;
  */
 public class BcdeSPARCCompiler extends BcdeCompiler<SPARCEirGenerator> implements SPARCEirGeneratorScheme {
 
-    private DirToSPARCEirTranslator _dirToEirTranslator;
+    private DirToSPARCEirTranslator dirToEirTranslator;
 
     public SPARCEirGenerator eirGenerator() {
-        return _dirToEirTranslator;
+        return dirToEirTranslator;
     }
 
     public BcdeSPARCCompiler(VMConfiguration vmConfiguration) {
@@ -69,7 +69,7 @@ public class BcdeSPARCCompiler extends BcdeCompiler<SPARCEirGenerator> implement
             public void inspectWordWidth(WordWidth wordWidth) {
             }
         });
-        _dirToEirTranslator = new DirToSPARCEirTranslator(this);
+        dirToEirTranslator = new DirToSPARCEirTranslator(this);
     }
 
     @Override

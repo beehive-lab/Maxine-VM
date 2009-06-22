@@ -38,7 +38,7 @@ import com.sun.max.vm.reference.*;
 public final class ObjectReferenceValue extends ReferenceValue {
 
     @INSPECTED
-    private final Object _value;
+    private final Object value;
 
     public static final ObjectReferenceValue NULL_OBJECT = new ObjectReferenceValue(null);
 
@@ -50,12 +50,12 @@ public final class ObjectReferenceValue extends ReferenceValue {
     }
 
     private ObjectReferenceValue(Object value) {
-        _value = value;
+        this.value = value;
     }
 
     @Override
     public boolean isZero() {
-        return _value == null;
+        return value == null;
     }
 
     @Override
@@ -71,7 +71,7 @@ public final class ObjectReferenceValue extends ReferenceValue {
         }
         if (other instanceof ObjectReferenceValue) {
             final ObjectReferenceValue referenceValue = (ObjectReferenceValue) other;
-            return _value == referenceValue._value;
+            return value == referenceValue.value;
         }
         return false;
     }
@@ -85,48 +85,48 @@ public final class ObjectReferenceValue extends ReferenceValue {
 
     @Override
     public int hashCode() {
-        return System.identityHashCode(_value);
+        return System.identityHashCode(value);
     }
 
     @Override
     public String toString() {
-        if (_value == null) {
+        if (value == null) {
             return "null";
         }
-        if (StaticTuple.is(_value)) {
-            return StaticTuple.toString(_value);
+        if (StaticTuple.is(value)) {
+            return StaticTuple.toString(value);
         }
-        return _value.toString();
+        return value.toString();
     }
 
     @Override
     public Object asBoxedJavaValue() {
-        return _value;
+        return value;
     }
 
     @Override
     public Grip asGrip() {
-        return Grip.fromJava(_value);
+        return Grip.fromJava(value);
     }
 
     @Override
     public Reference asReference() {
-        return Reference.fromJava(_value);
+        return Reference.fromJava(value);
     }
 
     @Override
     public Object asObject() {
-        return _value;
+        return value;
     }
 
     @Override
     public Object unboxObject() {
-        return _value;
+        return value;
     }
 
     @Override
     public Word unboxWord() {
-        return UnsafeLoophole.referenceToWord(Reference.fromJava(_value));
+        return UnsafeLoophole.referenceToWord(Reference.fromJava(value));
     }
 
     @Override
@@ -141,17 +141,17 @@ public final class ObjectReferenceValue extends ReferenceValue {
 
     @Override
     public byte[] toBytes(DataModel dataModel) {
-        return dataModel.toBytes(UnsafeLoophole.referenceToWord(Reference.fromJava(_value)));
+        return dataModel.toBytes(UnsafeLoophole.referenceToWord(Reference.fromJava(value)));
     }
 
     @Override
     public ClassActor getClassActor() {
-        return ClassActor.fromJava(_value.getClass());
+        return ClassActor.fromJava(value.getClass());
     }
 
     @Override
     public void write(DataOutput stream) throws IOException {
-        if (_value == null) {
+        if (value == null) {
             Word.zero().write(stream);
         } else {
             super.write(stream);

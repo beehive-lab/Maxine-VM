@@ -253,7 +253,7 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
             writer.println(" // appended");
         } else {
             writer.println("// appended:");
-            for (int i = 0; i < parameter.width().numberOfBytes(); i++) {
+            for (int i = 0; i < parameter.width().numberOfBytes; i++) {
                 if (i > 0) {
                     writer.println(parameter.variableName() + " >>= 8;");
                 }
@@ -417,9 +417,9 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
 
     private String getValidSizesMaskExpression(Sequence<LabelWidthCase> labelWidthCases) {
         final Iterator<LabelWidthCase> iterator = labelWidthCases.iterator();
-        String mask = String.valueOf(iterator.next().width.numberOfBytes());
+        String mask = String.valueOf(iterator.next().width.numberOfBytes);
         while (iterator.hasNext()) {
-            mask += " | " + iterator.next().width.numberOfBytes();
+            mask += " | " + iterator.next().width.numberOfBytes;
         }
         return mask;
     }
@@ -463,7 +463,7 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
                     writer.println("final int labelSize = labelSize();");
                     String prefix = "";
                     for (LabelWidthCase labelWidthCase : labelWidthCases) {
-                        writer.println(prefix + "if (labelSize == " + labelWidthCase.width.numberOfBytes() + ") {");
+                        writer.println(prefix + "if (labelSize == " + labelWidthCase.width.numberOfBytes + ") {");
                         writer.indent();
                         super.printAssembleMethodBody(writer, labelWidthCase.template);
                         writer.outdent();

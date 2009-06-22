@@ -628,7 +628,7 @@ public class VmThread {
             Log.print(", name=\"");
             Log.print(name);
             Log.print("] Uncaught exception of type ");
-            Log.println(ObjectAccess.readClassActor(throwable).name());
+            Log.println(ObjectAccess.readClassActor(throwable).name);
             Log.unlock(lockDisabledSafepoints);
         }
     }

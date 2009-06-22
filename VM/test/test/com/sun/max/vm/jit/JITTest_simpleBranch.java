@@ -168,7 +168,7 @@ public class JITTest_simpleBranch extends CompilerTestCase<TargetMethod> {
                 confirmPresence();
             }
         };
-        Trace.line(1, method.classMethodActor().name());
+        Trace.line(1, method.classMethodActor().name);
     }
 
     public void test_unresolved_invokespecial() {

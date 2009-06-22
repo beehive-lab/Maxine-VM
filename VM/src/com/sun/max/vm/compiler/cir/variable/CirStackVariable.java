@@ -37,7 +37,7 @@ public class CirStackVariable extends CirSlotVariable {
 
     @Override
     public String toString() {
-        return "s" + kind().character() + slotIndex() + "-" + serial();
+        return "s" + kind().character + slotIndex() + "-" + serial();
     }
 
     @Override
@@ -46,7 +46,7 @@ public class CirStackVariable extends CirSlotVariable {
             return false;
         }
         final CirStackVariable otherStackVariable = (CirStackVariable) other;
-        return kind().character() == otherStackVariable.kind().character()
+        return kind().character == otherStackVariable.kind().character
             && slotIndex() == otherStackVariable.slotIndex()
             && serial() == otherStackVariable.serial();
     }

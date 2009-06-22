@@ -181,12 +181,12 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
             return null;
         }
 
-        final Reference hubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout().readHubReferenceAsWord(reference));
+        final Reference hubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
         final Reference classActorReference = teleVM().fields().Hub_classActor.readReference(hubReference);
         final ClassActor classActor = teleVM().makeClassActor(classActorReference);
 
         // Must check for the static tuple case first; it doesn't follow the usual rules
-        final Reference hubhubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout().readHubReferenceAsWord(hubReference));
+        final Reference hubhubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(hubReference));
         final Reference hubClassActorReference = teleVM().fields().Hub_classActor.readReference(hubhubReference);
         final ClassActor hubClassActor = teleVM().makeClassActor(hubClassActorReference);
         final Class hubJavaClass = hubClassActor.toJava();  // the class of this object's hub

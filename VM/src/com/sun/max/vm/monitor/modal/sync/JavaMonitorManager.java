@@ -63,22 +63,22 @@ public class JavaMonitorManager {
     public static final String UNBOUNDLIST_IMAGE_QTY_PROPERTY = "max.monitor.unboundpool.imagesize";
     public static final String UNBOUNDLIST_GROW_QTY_PROPERTY = "max.monitor.unboundpool.grow";
 
-    private static final int _UNBOUNDLIST_MIN_QTY = 25;      // minimum to keep in case gc or monitor allocation needs
-    private static final int _UNBOUNDLIST_IMAGE_QTY = 50; // Initial allocation in image
+    private static final int UNBOUNDLIST_MIN_QTY = 25;      // minimum to keep in case gc or monitor allocation needs
+    private static final int UNBOUNDLIST_IMAGE_QTY = 50; // Initial allocation in image
 
     // monitors
-    private static final int _UNBOUNDLIST_GROW_QTY_DEFAULT = 50;  // default
-    private static int _unBoundListGrowQty = _UNBOUNDLIST_GROW_QTY_DEFAULT;
-    private static int _numberOfUnboundMonitors = 0;
-    private static int _unBoundMonitorsHwm;
-    private static ManagedMonitor _unboundList;
-    private static ManagedMonitor[] _bindableMonitors = new ManagedMonitor[0];
-    private static ManagedMonitor[] _stickyMonitors = new ManagedMonitor[0];
-    private static int _numberOfBindableMonitors = 0;
-    private static int _numberOfStickyMonitors = 0;
-    private static boolean _inGlobalSafePoint = false;
+    private static final int UNBOUNDLIST_GROW_QTY_DEFAULT = 50;  // default
+    private static int unboundListGrowQty = UNBOUNDLIST_GROW_QTY_DEFAULT;
+    private static int numberOfUnboundMonitors = 0;
+    private static int unboundMonitorsHwm;
+    private static ManagedMonitor unboundList;
+    private static ManagedMonitor[] bindableMonitors = new ManagedMonitor[0];
+    private static ManagedMonitor[] stickyMonitors = new ManagedMonitor[0];
+    private static int numberOfBindableMonitors = 0;
+    private static int numberOfStickyMonitors = 0;
+    private static boolean inGlobalSafePoint = false;
 
-    private static boolean _gcDeadlockDetection = true;
+    private static boolean gcDeadlockDetection = true;
 
     /**
      * Lockword rewriting for objects in the process of being unbound is delegated to an UnboundMiscWordWriter.
@@ -91,10 +91,10 @@ public class JavaMonitorManager {
     }
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static UnboundMiscWordWriter _unboundMiscWordWriter;
+    private static UnboundMiscWordWriter unboundMiscWordWriter;
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static boolean _requireProxyAcquirableMonitors;
+    private static boolean requireProxyAcquirableMonitors;
 
     /**
      * Performs any initialization necessary for the given phase.
@@ -107,43 +107,43 @@ public class JavaMonitorManager {
             prototypeBindStickyMonitor(VmThreadMap.ACTIVE, new StandardJavaMonitor.VMThreadMapJavaMonitor());
             prototypeBindStickyMonitor(SpecialReferenceManager.LOCK, new StandardJavaMonitor());
 
-            if (_gcDeadlockDetection) {
+            if (gcDeadlockDetection) {
                 prototypeBindStickyMonitor(MaxineVM.hostOrTarget().configuration().heapScheme(), new StandardJavaMonitor.HeapSchemeDeadlockDetectionJavaMonitor());
             }
-            int unBoundListImageQty = _UNBOUNDLIST_IMAGE_QTY;
+            int unBoundListImageQty = UNBOUNDLIST_IMAGE_QTY;
             final String  unBoundListImageQtyProperty = System.getProperty(UNBOUNDLIST_IMAGE_QTY_PROPERTY);
             if (unBoundListImageQtyProperty != null) {
                 unBoundListImageQty = Integer.parseInt(unBoundListImageQtyProperty);
             }
             final String  unBoundListGrowQtyProperty = System.getProperty(UNBOUNDLIST_GROW_QTY_PROPERTY);
             if (unBoundListGrowQtyProperty != null) {
-                _unBoundListGrowQty = Integer.parseInt(unBoundListGrowQtyProperty);
+                unboundListGrowQty = Integer.parseInt(unBoundListGrowQtyProperty);
             }
             for (int i = 0; i < unBoundListImageQty; i++) {
                 final ManagedMonitor monitor = newManagedMonitor();
                 addToUnboundList(monitor);
                 prototypeAddToBindableMonitors(monitor);
             }
-            _unBoundMonitorsHwm = unBoundListImageQty;
+            unboundMonitorsHwm = unBoundListImageQty;
         } else if (phase == MaxineVM.Phase.PRIMORDIAL) {
             NativeMutexFactory.initialize();
             NativeConditionVariableFactory.initialize();
-            for (int i = 0; i < _numberOfBindableMonitors; i++) {
-                final ManagedMonitor monitor = _bindableMonitors[i];
+            for (int i = 0; i < numberOfBindableMonitors; i++) {
+                final ManagedMonitor monitor = bindableMonitors[i];
                 monitor.allocate();
             }
-            for (int i = 0; i < _numberOfStickyMonitors; i++) {
-                final ManagedMonitor monitor = _stickyMonitors[i];
+            for (int i = 0; i < numberOfStickyMonitors; i++) {
+                final ManagedMonitor monitor = stickyMonitors[i];
                 monitor.allocate();
                 monitor.setDisplacedMisc(ObjectAccess.readMisc(monitor.boundObject()));
                 monitor.refreshBoundObject();
             }
         } else if (phase == MaxineVM.Phase.STARTING) {
-            if (Monitor.traceMonitors() && _numberOfStickyMonitors > 0) {
+            if (Monitor.traceMonitors() && numberOfStickyMonitors > 0) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.println("Sticky monitors:");
-                for (int i = 0; i < _numberOfStickyMonitors; i++) {
-                    final ManagedMonitor monitor = _stickyMonitors[i];
+                for (int i = 0; i < numberOfStickyMonitors; i++) {
+                    final ManagedMonitor monitor = stickyMonitors[i];
                     Log.print("  ");
                     Log.print(i);
                     Log.print(": ");
@@ -165,7 +165,7 @@ public class JavaMonitorManager {
      */
     @PROTOTYPE_ONLY
     public static void setRequireProxyAcquirableMonitors(boolean requireProxyAcquirableMonitors) {
-        _requireProxyAcquirableMonitors = requireProxyAcquirableMonitors;
+        JavaMonitorManager.requireProxyAcquirableMonitors = requireProxyAcquirableMonitors;
     }
 
     /**
@@ -194,27 +194,27 @@ public class JavaMonitorManager {
 
     @PROTOTYPE_ONLY
     private static void prototypeAddToStickyMonitors(ManagedMonitor monitor) {
-        if (_numberOfStickyMonitors == _stickyMonitors.length) {
-            final ManagedMonitor[] newAllSticky = new ManagedMonitor[_stickyMonitors.length + 1];
-            System.arraycopy(_stickyMonitors, 0, newAllSticky, 0, _stickyMonitors.length);
-            _stickyMonitors = newAllSticky;
+        if (numberOfStickyMonitors == stickyMonitors.length) {
+            final ManagedMonitor[] newAllSticky = new ManagedMonitor[stickyMonitors.length + 1];
+            System.arraycopy(stickyMonitors, 0, newAllSticky, 0, stickyMonitors.length);
+            stickyMonitors = newAllSticky;
         }
-        _stickyMonitors[_numberOfStickyMonitors++] = monitor;
+        stickyMonitors[numberOfStickyMonitors++] = monitor;
     }
 
     @PROTOTYPE_ONLY
     private static void prototypeAddToBindableMonitors(ManagedMonitor monitor) {
-        if (_numberOfBindableMonitors == _bindableMonitors.length) {
-            final ManagedMonitor[] newAllBindable = new ManagedMonitor[_bindableMonitors.length + _unBoundListGrowQty];
-            System.arraycopy(_bindableMonitors, 0, newAllBindable, 0, _bindableMonitors.length);
-            _bindableMonitors = newAllBindable;
+        if (numberOfBindableMonitors == bindableMonitors.length) {
+            final ManagedMonitor[] newAllBindable = new ManagedMonitor[bindableMonitors.length + unboundListGrowQty];
+            System.arraycopy(bindableMonitors, 0, newAllBindable, 0, bindableMonitors.length);
+            bindableMonitors = newAllBindable;
         }
         addToAllBindable(monitor);
     }
 
     private static ManagedMonitor newManagedMonitor() {
         ManagedMonitor managedMonitor;
-        if (_requireProxyAcquirableMonitors) {
+        if (requireProxyAcquirableMonitors) {
             managedMonitor = new ProxyAcquirableJavaMonitor();
         } else {
             managedMonitor = new StandardJavaMonitor();
@@ -226,23 +226,23 @@ public class JavaMonitorManager {
     }
 
     private static void addToAllBindable(ManagedMonitor monitor) {
-        _bindableMonitors[_numberOfBindableMonitors++] = monitor;
+        bindableMonitors[numberOfBindableMonitors++] = monitor;
     }
 
     private static ManagedMonitor takeFromUnboundList() {
         // No safe points in here, so safe to touch the free list.
-        final ManagedMonitor monitor = _unboundList;
-        _unboundList = _unboundList.next();
+        final ManagedMonitor monitor = unboundList;
+        unboundList = unboundList.next();
         monitor.setNext(null);
-        _numberOfUnboundMonitors--;
+        numberOfUnboundMonitors--;
         return monitor;
     }
 
     private static void addToUnboundList(ManagedMonitor monitor) {
         // No safe points in here, so safe to touch the free list.
-        monitor.setNext(_unboundList);
-        _unboundList = monitor;
-        _numberOfUnboundMonitors++;
+        monitor.setNext(unboundList);
+        unboundList = monitor;
+        numberOfUnboundMonitors++;
     }
 
     /**
@@ -258,15 +258,15 @@ public class JavaMonitorManager {
      */
     public static JavaMonitor bindMonitor(Object object) {
         ManagedMonitor monitor;
-        if (_inGlobalSafePoint) {
+        if (inGlobalSafePoint) {
             monitor = takeFromUnboundList();
         } else {
             synchronized (JavaMonitorManager.class) {
-                if (_numberOfUnboundMonitors < _UNBOUNDLIST_MIN_QTY) {
+                if (numberOfUnboundMonitors < UNBOUNDLIST_MIN_QTY) {
                     System.gc();
                 }
                 // If we didn't free up enough such that we are at least midway between min and hwm, expand
-                if (_numberOfUnboundMonitors < (_unBoundMonitorsHwm - _UNBOUNDLIST_MIN_QTY) >> 1) {
+                if (numberOfUnboundMonitors < (unboundMonitorsHwm - UNBOUNDLIST_MIN_QTY) >> 1) {
                     expandUnboundList();
                 }
                 monitor = takeFromUnboundList();
@@ -295,7 +295,7 @@ public class JavaMonitorManager {
     public static void unbindMonitor(JavaMonitor monitor) {
         final ManagedMonitor bindableMonitor = (ManagedMonitor) monitor;
         bindableMonitor.reset();
-        if (_inGlobalSafePoint) {
+        if (inGlobalSafePoint) {
             addToUnboundList(bindableMonitor);
         } else {
             synchronized (JavaMonitorManager.class) {
@@ -307,10 +307,10 @@ public class JavaMonitorManager {
 
     private static void expandUnboundList() {
         ManagedMonitor newUnboundList = null;
-        final ManagedMonitor[] newAllBindable = new ManagedMonitor[_bindableMonitors.length + _unBoundListGrowQty];
+        final ManagedMonitor[] newAllBindable = new ManagedMonitor[bindableMonitors.length + unboundListGrowQty];
 
         // Create the new monitors
-        for (int i = 0; i < _unBoundListGrowQty; i++) {
+        for (int i = 0; i < unboundListGrowQty; i++) {
             final ManagedMonitor monitor = newManagedMonitor();
             monitor.setNext(newUnboundList);
             newUnboundList = monitor;
@@ -319,11 +319,11 @@ public class JavaMonitorManager {
         // This is the only place where we need to synchronise monitor list access
         // between a mutator thread and a gc thread which is performing unbinding.
         Safepoint.disable();
-        for (int i = 0; i < _bindableMonitors.length; i++) {
-            newAllBindable[i] = _bindableMonitors[i];
+        for (int i = 0; i < bindableMonitors.length; i++) {
+            newAllBindable[i] = bindableMonitors[i];
         }
-        _bindableMonitors = newAllBindable;
-        _unBoundMonitorsHwm = newAllBindable.length;
+        bindableMonitors = newAllBindable;
+        unboundMonitorsHwm = newAllBindable.length;
         ManagedMonitor monitor = newUnboundList;
         while (monitor != null) {
             newUnboundList = monitor.next();
@@ -353,7 +353,7 @@ public class JavaMonitorManager {
      * @param unbinder the lockword rewriter
      */
     public static void registerMonitorUnbinder(UnboundMiscWordWriter unbinder) {
-        _unboundMiscWordWriter = unbinder;
+        unboundMiscWordWriter = unbinder;
     }
 
     /**
@@ -361,7 +361,7 @@ public class JavaMonitorManager {
      * garbage collection has started.
      */
     public static void beforeGarbageCollection() {
-        _inGlobalSafePoint = true;
+        inGlobalSafePoint = true;
         unbindUnownedMonitors();
     }
 
@@ -371,7 +371,7 @@ public class JavaMonitorManager {
      */
     public static void afterGarbageCollection() {
         refreshAllBindings();
-        _inGlobalSafePoint = false;
+        inGlobalSafePoint = false;
     }
 
     private static class ProtectedMonitorGatherer implements Procedure<VmThread> {
@@ -386,23 +386,23 @@ public class JavaMonitorManager {
         }
     }
 
-    private static final ProtectedMonitorGatherer _protectedMonitorGatherer = new ProtectedMonitorGatherer();
+    private static final ProtectedMonitorGatherer protectedMonitorGatherer = new ProtectedMonitorGatherer();
 
     /**
      * Must only be called on a global safepoint.
      */
     private static void unbindUnownedMonitors() {
         // Mark all protected monitors
-        VmThreadMap.ACTIVE.forAllVmThreads(null, _protectedMonitorGatherer);
+        VmThreadMap.ACTIVE.forAllVmThreads(null, protectedMonitorGatherer);
         // Deflate all non-protected and non-sticky monitors with no owner
-        for (int i = 0; i < _numberOfBindableMonitors; i++) {
-            final ManagedMonitor monitor = _bindableMonitors[i];
+        for (int i = 0; i < numberOfBindableMonitors; i++) {
+            final ManagedMonitor monitor = bindableMonitors[i];
             if (monitor.isHardBound() && monitor.bindingProtection() == BindingProtection.PRE_ACQUIRE) {
                 monitor.setBindingProtection(BindingProtection.UNPROTECTED);
             }
             if (monitor.bindingProtection() == BindingProtection.UNPROTECTED) {
                 // Write the object's new misc word
-                _unboundMiscWordWriter.writeUnboundMiscWord(monitor.boundObject(), monitor.displacedMisc());
+                unboundMiscWordWriter.writeUnboundMiscWord(monitor.boundObject(), monitor.displacedMisc());
                 monitor.reset();
                 // Put the monitor back on the unbound list.
                 // This is thread-safe as mutator thread access to the free-list is
@@ -418,14 +418,14 @@ public class JavaMonitorManager {
      * Must only be called on a global safepoint.
      */
     private static void refreshAllBindings() {
-        for (int i = 0; i < _numberOfBindableMonitors; i++) {
-            final ManagedMonitor monitor = _bindableMonitors[i];
+        for (int i = 0; i < numberOfBindableMonitors; i++) {
+            final ManagedMonitor monitor = bindableMonitors[i];
             if (monitor.requiresPostGCRefresh()) {
                 monitor.refreshBoundObject();
             }
         }
-        for (int i = 0; i < _numberOfStickyMonitors; i++) {
-            final ManagedMonitor monitor = _stickyMonitors[i];
+        for (int i = 0; i < numberOfStickyMonitors; i++) {
+            final ManagedMonitor monitor = stickyMonitors[i];
             monitor.refreshBoundObject();
         }
     }

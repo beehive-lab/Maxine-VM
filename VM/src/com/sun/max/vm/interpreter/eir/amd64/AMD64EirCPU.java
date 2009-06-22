@@ -46,14 +46,14 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
     }
 
     private final Value[] generalRegisterContents;
-    private final Value[] _xmmRegisterContents;
+    private final Value[] xmmRegisterContents;
     private final boolean[] conditionFlags;
     private final Pointer vmThreadLocals;
 
     public AMD64EirCPU(AMD64EirInterpreter interpreter) {
         super(interpreter);
         generalRegisterContents = new Value[AMD64EirRegister.General.VALUES.length()];
-        _xmmRegisterContents = new Value[AMD64EirRegister.XMM.VALUES.length()];
+        xmmRegisterContents = new Value[AMD64EirRegister.XMM.VALUES.length()];
         conditionFlags = new boolean[ConditionFlag.VALUES.length()];
 
         final EirStack stack = stack();
@@ -85,7 +85,7 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
     private AMD64EirCPU(AMD64EirCPU cpu) {
         super(cpu);
         generalRegisterContents = cpu.generalRegisterContents.clone();
-        _xmmRegisterContents = cpu.generalRegisterContents.clone();
+        xmmRegisterContents = cpu.generalRegisterContents.clone();
         conditionFlags = cpu.conditionFlags.clone();
         vmThreadLocals = cpu.vmThreadLocals;
     }
@@ -108,7 +108,7 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
     }
 
     private Value read(AMD64EirRegister.XMM register) {
-        return _xmmRegisterContents[register.ordinal()];
+        return xmmRegisterContents[register.ordinal()];
     }
 
     @Override
@@ -132,7 +132,7 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
     }
 
     private void write(AMD64EirRegister.XMM register, Value value) {
-        _xmmRegisterContents[register.ordinal()] = value;
+        xmmRegisterContents[register.ordinal()] = value;
     }
 
     @Override
@@ -188,12 +188,12 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
 
     @Override
     protected void writeRegisterFloat(EirRegister register, float f) {
-        _xmmRegisterContents[register.ordinal()] = FloatValue.from(f);
+        xmmRegisterContents[register.ordinal()] = FloatValue.from(f);
     }
 
     @Override
     protected void writeRegisterDouble(EirRegister register, double d) {
-        _xmmRegisterContents[register.ordinal()] = DoubleValue.from(d);
+        xmmRegisterContents[register.ordinal()] = DoubleValue.from(d);
     }
 
     @Override
@@ -216,7 +216,7 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
 
         final TextTableColumn xmmRegisters = new TextTableColumn("XMM Registers:");
         for (AMD64EirRegister register : AMD64EirRegister.XMM.VALUES) {
-            final Value value = _xmmRegisterContents[register.ordinal()];
+            final Value value = xmmRegisterContents[register.ordinal()];
             xmmRegisters.add(Strings.padLengthWithSpaces(register.toString(), 5) + ": " + valueToString(value));
         }
 

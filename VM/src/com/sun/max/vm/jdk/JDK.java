@@ -103,7 +103,7 @@ public class JDK {
         @CONSTANT_WHEN_NOT_ZERO
         protected Class javaClass;
         @CONSTANT_WHEN_NOT_ZERO
-        protected ClassActor _classActor;
+        protected ClassActor classActor;
 
         public ClassRef(Class javaClass) {
             this.javaClass = javaClass;
@@ -123,10 +123,10 @@ public class JDK {
 
         @INLINE
         public final ClassActor classActor() {
-            if (_classActor == null) {
+            if (classActor == null) {
                 getClassActor();
             }
-            return _classActor;
+            return classActor;
         }
 
         public void resolveClassActor() {
@@ -139,10 +139,10 @@ public class JDK {
             final ClassActor classActor = ClassActor.fromJava(javaClass());
             // check again that the class actor has not already been set. Some ClassRefs will automatically be
             // updated when their classes are added to the VM class registry
-            if (_classActor == null) {
-                _classActor = classActor;
+            if (this.classActor == null) {
+                this.classActor = classActor;
             }
-            assert _classActor == classActor : "wrong class actor registered with this ClassRef";
+            assert this.classActor == classActor : "wrong class actor registered with this ClassRef";
         }
     }
 

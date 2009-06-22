@@ -42,7 +42,7 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
 
-    private final MonitorSchemeEntry _entryHandler;
+    private final MonitorSchemeEntry entryHandler;
 
     /**
      * Constructs a ModalMonitorScheme, setting the fastest-path mode
@@ -53,10 +53,10 @@ public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
      */
     public ModalMonitorScheme(VMConfiguration vmConfiguration, MonitorSchemeEntry entryHandler) {
         super(vmConfiguration);
-        _entryHandler = entryHandler;
+        this.entryHandler = entryHandler;
 
         // Inform all mode handlers about the current monitor scheme
-        ModeHandler handler = _entryHandler;
+        ModeHandler handler = entryHandler;
         while (handler != null) {
             handler.setMonitorScheme(this);
             handler = handler.delegate();
@@ -68,7 +68,7 @@ public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
         if (MaxineVM.isPrototyping()) {
             ProgramError.check(Word.width() == WordWidth.BITS_64, "ModalMonitorScheme requires a 64-bit word.");
         }
-        ModeHandler handler = _entryHandler;
+        ModeHandler handler = entryHandler;
         while (handler != null) {
             handler.initialize(phase);
             handler = handler.delegate();
@@ -82,7 +82,7 @@ public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
      * @return the fastest-path mode handler
      */
     protected final MonitorSchemeEntry entryHandler() {
-        return _entryHandler;
+        return entryHandler;
     }
 
     /**
@@ -113,52 +113,52 @@ public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
 
     @INLINE
     public final Word createMisc(Object object) {
-        return _entryHandler.createMisc(object);
+        return entryHandler.createMisc(object);
     }
 
     @INLINE
     public final int makeHashCode(Object object) {
-        return _entryHandler.makeHashCode(object);
+        return entryHandler.makeHashCode(object);
     }
 
     @INLINE
     public final void monitorEnter(Object object) {
-        _entryHandler.monitorEnter(object);
+        entryHandler.monitorEnter(object);
     }
 
     @INLINE
     public final void monitorExit(Object object) {
-        _entryHandler.monitorExit(object);
+        entryHandler.monitorExit(object);
     }
 
     @INLINE
     public final void monitorNotify(Object object) {
-        _entryHandler.monitorNotify(object, false);
+        entryHandler.monitorNotify(object, false);
     }
 
     @INLINE
     public final void monitorNotifyAll(Object object) {
-        _entryHandler.monitorNotify(object, true);
+        entryHandler.monitorNotify(object, true);
     }
 
     @INLINE
     public final void monitorWait(Object object, long timeout) throws InterruptedException {
-        _entryHandler.monitorWait(object, timeout);
+        entryHandler.monitorWait(object, timeout);
     }
 
     @INLINE
     public final boolean threadHoldsMonitor(Object object, VmThread thread) {
-        return _entryHandler.threadHoldsMonitor(object, thread);
+        return entryHandler.threadHoldsMonitor(object, thread);
     }
 
     @INLINE
     public final void beforeGarbageCollection() {
-        _entryHandler.beforeGarbageCollection();
+        entryHandler.beforeGarbageCollection();
     }
 
     @INLINE
     public final void afterGarbageCollection() {
-        _entryHandler.afterGarbageCollection();
+        entryHandler.afterGarbageCollection();
     }
 
     @INLINE

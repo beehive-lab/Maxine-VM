@@ -53,7 +53,7 @@ public class BirToCirMethodTranslation {
         final CirVariable[] parameters = CirClosure.newParameters(numberOfParameters + 2);
         int i = 0;
         if (!methodActor.isStatic()) {
-            parameters[i] = variableFactory.createMethodParameter(methodActor.holder().kind(), i);
+            parameters[i] = variableFactory.createMethodParameter(methodActor.holder().kind, i);
             i++;
         }
         int j = 0;

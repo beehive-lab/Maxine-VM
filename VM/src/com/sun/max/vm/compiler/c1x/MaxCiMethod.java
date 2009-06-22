@@ -71,7 +71,7 @@ public class MaxCiMethod implements CiMethod {
      */
     public String name() {
         if (methodActor != null) {
-            return methodActor.name().toString();
+            return methodActor.name.toString();
         }
         return methodRef.name(constantPool.constantPool).toString();
     }

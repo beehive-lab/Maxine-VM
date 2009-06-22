@@ -35,12 +35,12 @@ import com.sun.max.vm.trampoline.*;
  */
 public class TemplateBasedTrampolineScheme extends AbstractVMScheme implements DynamicTrampolineScheme {
 
-    private final DynamicTrampolineExit _dynamicTrampolineExit;
+    private final DynamicTrampolineExit dynamicTrampolineExit;
 
     @PROTOTYPE_ONLY
     public TemplateBasedTrampolineScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        _dynamicTrampolineExit = DynamicTrampolineExit.create(vmConfiguration);
+        dynamicTrampolineExit = DynamicTrampolineExit.create(vmConfiguration);
     }
 
     public boolean isDynamicTrampoline(ClassMethodActor classMethodActor) {
@@ -56,6 +56,6 @@ public class TemplateBasedTrampolineScheme extends AbstractVMScheme implements D
     }
 
     public DynamicTrampolineExit dynamicTrampolineExit() {
-        return _dynamicTrampolineExit;
+        return dynamicTrampolineExit;
     }
 }

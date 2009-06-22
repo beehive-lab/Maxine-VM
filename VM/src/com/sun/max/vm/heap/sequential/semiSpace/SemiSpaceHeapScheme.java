@@ -66,7 +66,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private final PointerIndexVisitor pointerIndexGripVerifier = new PointerIndexVisitor() {
         @Override
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
-            DebugHeap.verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.size(), pointer.getGrip(wordIndex), toSpace);
+            DebugHeap.verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.width.numberOfBytes, pointer.getGrip(wordIndex), toSpace);
         }
     };
 
@@ -120,8 +120,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     // The Sequential Heap Root Scanner is actually the "thread crawler" which will identify the
     // roots out of the threads' stacks. Here we create one for the actual scanning (_heapRootsScanner)
     // and one for the verification (_heapRootsVerifier)
-    private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(this, pointerIndexGripUpdater);
-    private final SequentialHeapRootsScanner heapRootsVerifier = new SequentialHeapRootsScanner(this, pointerIndexGripVerifier);
+    private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(pointerIndexGripUpdater);
+    private final SequentialHeapRootsScanner heapRootsVerifier = new SequentialHeapRootsScanner(pointerIndexGripVerifier);
 
     private StopTheWorldDaemon collectorThread;
 
@@ -412,7 +412,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 final boolean lockDisabledSafepoints = Log.lock();
                 final Hub hub = UnsafeLoophole.cast(Layout.readHubReference(grip).toJava());
                 Log.print("Forwarding ");
-                Log.print(hub.classActor().name().string());
+                Log.print(hub.classActor().name.string);
                 Log.print(" from ");
                 Log.print(fromCell);
                 Log.print(" to ");
@@ -679,7 +679,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     @INLINE
     @NO_SAFEPOINTS("initialization must be atomic")
     public Object createArray(DynamicHub dynamicHub, int length) {
-        final Size size = Layout.getArraySize(dynamicHub.classActor().componentClassActor().kind(), length);
+        final Size size = Layout.getArraySize(dynamicHub.classActor().componentClassActor().kind, length);
         final Pointer cell = allocate(size);
         return Cell.plantArray(cell, size, dynamicHub, length);
     }

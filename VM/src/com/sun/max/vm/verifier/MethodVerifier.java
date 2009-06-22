@@ -52,7 +52,7 @@ public abstract class MethodVerifier {
         this.classMethodActor = classMethodActor;
         this.constantPool = codeAttribute.constantPool();
         this.classLoader = constantPool.classLoader();
-        if (classVerifier.verbose()) {
+        if (classVerifier.verbose) {
             this.verbose = true;
         } else {
             this.verbose = traceVerifierOption.isPresent() && classMethodActor.format("%H.%n").contains(traceVerifierOption.getValue());
@@ -89,7 +89,7 @@ public abstract class MethodVerifier {
     }
 
     public ClassActor classActor() {
-        return classVerifier.classActor();
+        return classVerifier.classActor;
     }
 
     public MethodActor classMethodActor() {

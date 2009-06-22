@@ -152,7 +152,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
         if (traceFilters != null) {
             this.traceCpu = false;
             this.trace = false;
-            final String name = eirMethod.classMethodActor().holder().name() + eirMethod.name();
+            final String name = eirMethod.classMethodActor().holder().name + eirMethod.name();
             for (String filter : traceFilters) {
                 if (name.contains(filter)) {
                     this.traceCpu = savedTraceCpu;
@@ -162,8 +162,8 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
             }
         }
 
-        if (savedTrace && !_tracedMethods.contains(eirMethod.classMethodActor())) {
-            _tracedMethods.add(eirMethod.classMethodActor());
+        if (savedTrace && !tracedMethods.contains(eirMethod.classMethodActor())) {
+            tracedMethods.add(eirMethod.classMethodActor());
             Trace.stream().println(eirMethod.traceToString());
         }
 
@@ -371,7 +371,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
     private boolean trace;
     private boolean traceCpu;
     private boolean traceStack;
-    private final Set<ClassMethodActor> _tracedMethods = new HashSet<ClassMethodActor>();
+    private final Set<ClassMethodActor> tracedMethods = new HashSet<ClassMethodActor>();
 
     public boolean traceStack() {
         return traceStack;
@@ -456,7 +456,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
         if (value == null) {
             return value;
         }
-        switch (value.kind().asEnum()) {
+        switch (value.kind().asEnum) {
             case BYTE: {
                 return new WordValue(Address.fromInt(value.asByte() & 0xff));
             }

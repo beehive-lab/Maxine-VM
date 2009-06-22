@@ -197,9 +197,8 @@ public abstract class MethodActor extends MemberActor {
     }
 
     @INLINE
-    @Override
     public final SignatureDescriptor descriptor() {
-        return (SignatureDescriptor) super.descriptor();
+        return (SignatureDescriptor) descriptor;
     }
 
     /**
@@ -258,7 +257,7 @@ public abstract class MethodActor extends MemberActor {
         final Class[] checkedExceptionTypes = checkedExceptions == null ? new Class[0] : JavaTypeDescriptor.resolveToJavaClasses(checkedExceptions, holderClassLoader);
         final Method javaMethod = ReflectionFactory.getReflectionFactory().newMethod(
                         javaHolder,
-                        name().toString(),
+                        name.toString(),
                         parameterTypes,
                         returnType,
                         checkedExceptionTypes,
@@ -280,7 +279,7 @@ public abstract class MethodActor extends MemberActor {
         final Class<?> javaHolder = holder().toJava();
         final Class[] parameterTypes = descriptor().resolveParameterTypes(javaHolder.getClassLoader());
         final TypeDescriptor[] checkedExceptions = checkedExceptions();
-        final Class[] checkedExceptionTypes = checkedExceptions == null ? new Class[0] : JavaTypeDescriptor.resolveToJavaClasses(checkedExceptions, holder().classLoader());
+        final Class[] checkedExceptionTypes = checkedExceptions == null ? new Class[0] : JavaTypeDescriptor.resolveToJavaClasses(checkedExceptions, holder().classLoader);
         final Constructor javaConstructor = ReflectionFactory.getReflectionFactory().newConstructor(
                         javaHolder,
                         parameterTypes,
@@ -462,7 +461,7 @@ public abstract class MethodActor extends MemberActor {
             return descriptor().copyParameterKinds(null, 0);
         }
         final Kind[] kinds = descriptor().copyParameterKinds(null, 1);
-        kinds[0] = holder().kind() == Kind.WORD ? Kind.WORD : Kind.REFERENCE;
+        kinds[0] = holder().kind == Kind.WORD ? Kind.WORD : Kind.REFERENCE;
         return kinds;
     }
 

@@ -853,7 +853,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
             final DirConstant indexConstant = (DirConstant) dirIndex;
             final DirConstant displacementConstant = (DirConstant) dirDisplacement;
 
-            final long offset = (indexConstant.value().toInt() * kind.size()) + displacementConstant.value().toInt();
+            final long offset = (indexConstant.value().toInt() * kind.width.numberOfBytes) + displacementConstant.value().toInt();
 
             if (offset > Integer.MIN_VALUE && offset < Integer.MAX_VALUE) {
                 if (offset == 0) {
@@ -1036,7 +1036,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
             final DirConstant indexConstant = (DirConstant) dirIndex;
             final DirConstant displacementConstant = (DirConstant) dirDisplacement;
 
-            final long offset = (indexConstant.value().toInt() * kind.size()) + displacementConstant.value().toInt();
+            final long offset = (indexConstant.value().toInt() * kind.width.numberOfBytes) + displacementConstant.value().toInt();
 
             if (offset > Integer.MIN_VALUE && offset < Integer.MAX_VALUE) {
                 if (offset == 0) {
@@ -1340,7 +1340,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         final DirConstant dirConstant = (DirConstant) dirArguments[0];
         final Class<PoolSet<MemoryBarrier>> type = null;
         final PoolSet<MemoryBarrier> memoryBarriers = StaticLoophole.cast(type, dirConstant.value().asObject());
-        if (methodTranslation().memoryModel().barriers().containsAll(memoryBarriers)) {
+        if (methodTranslation().memoryModel().barriers.containsAll(memoryBarriers)) {
             return;
         }
         if (memoryBarriers.length() == 1) {

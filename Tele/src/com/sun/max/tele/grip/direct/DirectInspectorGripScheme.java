@@ -162,9 +162,9 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             final FieldActor fieldActor = staticTuple.findStaticFieldActor(offset);
             final Class javaClass = staticTuple.classActor().toJava();
             try {
-                return WithoutAccessCheck.getStaticField(javaClass, fieldActor.name().toString());
+                return WithoutAccessCheck.getStaticField(javaClass, fieldActor.name.toString());
             } catch (Throwable throwable) {
-                ProgramError.unexpected("could not access static field: " + fieldActor.name(), throwable);
+                ProgramError.unexpected("could not access static field: " + fieldActor.name, throwable);
             }
         }
         final Class javaClass = object.getClass();
@@ -176,9 +176,9 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
 
         final FieldActor fieldActor = classActor.findInstanceFieldActor(offset);
         try {
-            return WithoutAccessCheck.getInstanceField(object, fieldActor.name().toString());
+            return WithoutAccessCheck.getInstanceField(object, fieldActor.name.toString());
         } catch (Throwable throwable) {
-            throw ProgramError.unexpected("could not access field: " + fieldActor.name(), throwable);
+            throw ProgramError.unexpected("could not access field: " + fieldActor.name, throwable);
         }
     }
 
@@ -447,15 +447,15 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             final FieldActor fieldActor = staticTuple.findStaticFieldActor(offset);
             final Class javaClass = staticTuple.classActor().toJava();
             try {
-                WithoutAccessCheck.setStaticField(javaClass, fieldActor.name().toString(), value);
+                WithoutAccessCheck.setStaticField(javaClass, fieldActor.name.toString(), value);
             } catch (Throwable throwable) {
-                ProgramError.unexpected("could not access static field: " + fieldActor.name(), throwable);
+                ProgramError.unexpected("could not access static field: " + fieldActor.name, throwable);
             }
         } else {
             final Class javaClass = object.getClass();
             final TupleClassActor tupleClassActor = (TupleClassActor) ClassActor.fromJava(javaClass);
             final FieldActor fieldActor = tupleClassActor.findInstanceFieldActor(offset);
-            WithoutAccessCheck.setInstanceField(object, fieldActor.name().toString(), value);
+            WithoutAccessCheck.setInstanceField(object, fieldActor.name.toString(), value);
         }
     }
 

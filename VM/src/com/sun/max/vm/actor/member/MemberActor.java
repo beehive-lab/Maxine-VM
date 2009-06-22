@@ -40,17 +40,17 @@ import com.sun.max.vm.type.*;
  */
 public abstract class MemberActor extends Actor {
 
-    private final Descriptor descriptor;
+    public final Descriptor descriptor;
 
     protected MemberActor(Utf8Constant name, Descriptor descriptor, int flags) {
         super(name, flags);
         this.descriptor = descriptor;
     }
 
-    @INLINE(override = true)
-    public Descriptor descriptor() {
-        return descriptor;
-    }
+//    @INLINE(override = true)
+//    public Descriptor descriptor() {
+//        return descriptor;
+//    }
 
     @CONSTANT
     @INSPECTED
@@ -64,9 +64,9 @@ public abstract class MemberActor extends Actor {
     @Override
     public String qualifiedName() {
         if (holder == null) {
-            return name().string();
+            return name.string;
         }
-        return holder().qualifiedName() + "." + name();
+        return holder().qualifiedName() + "." + name;
     }
 
     /**
@@ -76,7 +76,7 @@ public abstract class MemberActor extends Actor {
      */
     @Override
     public int hashCode() {
-        return name().hashCode() ^ descriptor.hashCode();
+        return name.hashCode() ^ descriptor.hashCode();
     }
 
     @CONSTANT
@@ -105,7 +105,7 @@ public abstract class MemberActor extends Actor {
 
     @Override
     public String toString() {
-        final String string = holder() + ":" + name() + ":" + descriptor();
+        final String string = holder() + ":" + name + ":" + descriptor;
         final String flags = flagsString();
         if (!flags.isEmpty()) {
             return flags + " " + string;
@@ -116,7 +116,7 @@ public abstract class MemberActor extends Actor {
     public abstract boolean isHiddenToReflection();
 
     public final boolean matchesNameAndType(Utf8Constant name, Descriptor desc) {
-        return name() == name && descriptor() == desc;
+        return this.name == name && descriptor == desc;
     }
 
     @Override
@@ -131,7 +131,7 @@ public abstract class MemberActor extends Actor {
             return true;
         }
         if (isProtected()) {
-            return holder().isAssignableFrom(accessor.superClassActor());
+            return holder().isAssignableFrom(accessor.superClassActor);
         }
         return false;
     }

@@ -38,10 +38,10 @@ public final class BeltManager {
     private static final int MAX_INITIAL_BELTS = 5;
 
     // The List of Belts used
-    private static final List<Belt> _belts = new ArrayList<Belt>();
+    private static final List<Belt> belts = new ArrayList<Belt>();
 
     // The beltSize, currently static, but it will change in Appel style GCs
-    private static Size _beltSize;
+    private static Size beltSize;
 
     private static Belt applicationHeap = new Belt();
 
@@ -53,7 +53,7 @@ public final class BeltManager {
     @INLINE
     public void createBelts() {
         for (int i = 0; i < MAX_INITIAL_BELTS; i++) {
-            _belts.add(new Belt());
+            belts.add(new Belt());
         }
     }
 
@@ -79,11 +79,11 @@ public final class BeltManager {
     @INLINE
     private void initializeFirstBelt() {
         final Size size = calculateBeltSize(0);
-        _belts.get(0).setStart(BeltwayHeapSchemeConfiguration.getApplicationHeapStartAddress());
-        _belts.get(0).setEnd(_belts.get(0).start().plus(size));
-        _belts.get(0).setIndex(0);
-        _belts.get(0).setFramePercentageOfUsableMemory(BeltwayConfiguration.getPercentOfUsableMemoryPerBelt(0));
-        _belts.get(0).resetAllocationMark();
+        belts.get(0).setStart(BeltwayHeapSchemeConfiguration.getApplicationHeapStartAddress());
+        belts.get(0).setEnd(belts.get(0).start().plus(size));
+        belts.get(0).setIndex(0);
+        belts.get(0).setFramePercentageOfUsableMemory(BeltwayConfiguration.getPercentOfUsableMemoryPerBelt(0));
+        belts.get(0).resetAllocationMark();
         tempBelt.resetAllocationMark();
     }
 
@@ -92,21 +92,21 @@ public final class BeltManager {
         initializeFirstBelt();
         int i;
         for (i = 1; i < BeltwayConfiguration.getNumberOfBelts() - 1; i++) {
-            _belts.get(i).setStart(_belts.get(i - 1).end());
-            _belts.get(i).setEnd(_belts.get(i).start().plus(calculateBeltSize(i)));
-            _belts.get(i).setIndex(i);
-            _belts.get(i).resetAllocationMark();
-            _belts.get(i).setFramePercentageOfUsableMemory(BeltwayConfiguration.getPercentOfUsableMemoryPerBelt(i));
+            belts.get(i).setStart(belts.get(i - 1).end());
+            belts.get(i).setEnd(belts.get(i).start().plus(calculateBeltSize(i)));
+            belts.get(i).setIndex(i);
+            belts.get(i).resetAllocationMark();
+            belts.get(i).setFramePercentageOfUsableMemory(BeltwayConfiguration.getPercentOfUsableMemoryPerBelt(i));
         }
         // Initialise the last belt.
         // Because of the alignment the last belt will be a little bit smaller
         // than the previous ones, as it has to stop at the belt's boundaries
         if (i < BeltwayConfiguration.getNumberOfBelts()) {
-            _belts.get(i).setStart(_belts.get(i - 1).end());
-            _belts.get(i).setEnd(_belts.get(0).start().plus(BeltwayConfiguration.getMaxHeapSize().asAddress()));
-            _belts.get(i).setFramePercentageOfUsableMemory(BeltwayConfiguration.getPercentOfUsableMemoryPerBelt(i));
-            _belts.get(i).setIndex(i);
-            _belts.get(i).resetAllocationMark();
+            belts.get(i).setStart(belts.get(i - 1).end());
+            belts.get(i).setEnd(belts.get(0).start().plus(BeltwayConfiguration.getMaxHeapSize().asAddress()));
+            belts.get(i).setFramePercentageOfUsableMemory(BeltwayConfiguration.getPercentOfUsableMemoryPerBelt(i));
+            belts.get(i).setIndex(i);
+            belts.get(i).resetAllocationMark();
         }
     }
 
@@ -119,12 +119,12 @@ public final class BeltManager {
 
     @INLINE
     public Size getBeltSize() {
-        return _beltSize;
+        return beltSize;
     }
 
     @INLINE
     public Address getEnd() {
-        return _belts.get(BeltwayConfiguration.getNumberOfBelts() - 1).end();
+        return belts.get(BeltwayConfiguration.getNumberOfBelts() - 1).end();
     }
 
     @INLINE
@@ -153,7 +153,7 @@ public final class BeltManager {
 
     @INLINE
     public Belt getBelt(int index) {
-        return _belts.get(index);
+        return belts.get(index);
     }
 
     @INLINE
@@ -185,14 +185,14 @@ public final class BeltManager {
 
     public void printBeltsInfo() {
         for (int i = 0; i < BeltwayConfiguration.getNumberOfBelts(); i++) {
-            _belts.get(i).printInfo();
+            belts.get(i).printInfo();
         }
     }
 
     public Size reportFreeSpace() {
         Size freeSize = Size.zero();
         for (int i = 0; i < BeltwayConfiguration.getNumberOfBelts(); i++) {
-            freeSize = freeSize.plus(_belts.get(i).getRemainingMemorySize());
+            freeSize = freeSize.plus(belts.get(i).getRemainingMemorySize());
         }
         return freeSize;
     }
@@ -200,7 +200,7 @@ public final class BeltManager {
     public void printTotalMemory() {
         Size size = Heap.bootHeapRegion().size().plus(Code.bootCodeRegion().size()).plus(Code.getCodeSize());
         for (int i = 0; i < BeltwayConfiguration.getNumberOfBelts(); i++) {
-            size = size.plus(_belts.get(i).size());
+            size = size.plus(belts.get(i).size());
         }
         Log.print("Total Memory: ");
         Log.println(size.toLong());

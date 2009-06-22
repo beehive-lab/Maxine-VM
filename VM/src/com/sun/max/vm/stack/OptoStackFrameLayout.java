@@ -31,26 +31,26 @@ import com.sun.max.vm.collect.*;
  */
 public class OptoStackFrameLayout extends JavaStackFrameLayout {
 
-    private final int _frameSize;
-    private final boolean _isReturnAddressPushedByCall;
+    private final int frameSize;
+    private final boolean isReturnAddressPushedByCall;
 
     public OptoStackFrameLayout(int frameSize) {
         this(frameSize, MaxineVM.target().configuration().platform().processorKind().instructionSet().callsPushReturnAddressOnStack());
     }
 
     public OptoStackFrameLayout(int frameSize, boolean isReturnAddressPushedByCall) {
-        _frameSize = frameSize;
-        _isReturnAddressPushedByCall = isReturnAddressPushedByCall;
+        this.frameSize = frameSize;
+        this.isReturnAddressPushedByCall = isReturnAddressPushedByCall;
     }
 
     @Override
     public int frameSize() {
-        return _frameSize;
+        return frameSize;
     }
 
     @Override
     public boolean isReturnAddressPushedByCall() {
-        return _isReturnAddressPushedByCall;
+        return isReturnAddressPushedByCall;
     }
 
     @Override

@@ -43,7 +43,7 @@ public final class VMTeleMessenger extends AbstractTeleVMHolder implements TeleM
     private Pointer _infoPointer;
 
     public void enable() {
-        _infoPointer = teleVM().bootImageStart().plus(teleVM().bootImage().header()._messengerInfoOffset);
+        _infoPointer = teleVM().bootImageStart().plus(teleVM().bootImage().header().messengerInfoOffset);
         teleVM().dataAccess().writeWord(_infoPointer, Address.fromInt(1)); // setting to non-zero indicates enabling
     }
 

@@ -130,7 +130,7 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
         }
     };
 
-    private final Pointer.Procedure _fillLastTlabs = new Pointer.Procedure() {
+    private final Pointer.Procedure fillLastTlabs = new Pointer.Procedure() {
 
         public void run(Pointer localSpace) {
             if (!localSpace.isZero()) {
@@ -165,10 +165,10 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
         public void run() {
             synchronized (VmThreadMap.ACTIVE) {
                 BeltwayHeapScheme.inGC = true;
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCThreadLocalsOrCurrent, triggerSafepoint);
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCThreadLocalsOrCurrent, waitUntilNonMutating);
-                if (BeltwayConfiguration._useTLABS) {
-                    VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCThreadLocalsOrCurrent, _fillLastTlabs);
+                VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCThreadLocalsOrCurrent, triggerSafepoint);
+                VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCThreadLocalsOrCurrent, waitUntilNonMutating);
+                if (BeltwayConfiguration.useTLABS) {
+                    VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCThreadLocalsOrCurrent, fillLastTlabs);
                 }
                 if (BeltwayConfiguration.useGCTlabs) {
                     VmThreadMap.ACTIVE.forAllVmThreads(isGCOrStopTheWorldDaemonThread, tlabScavengerReset);
@@ -177,7 +177,7 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
                 VmThreadLocal.prepareCurrentStackReferenceMap();
                 procedure.run();
                 BeltwayHeapScheme.inGC = false;
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCThreadLocalsOrCurrent, resetSafepoint);
+                VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCThreadLocalsOrCurrent, resetSafepoint);
             }
         }
 
@@ -191,7 +191,7 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
         }
     };
 
-    private static final Pointer.Predicate _isNotGCThreadLocalsOrCurrent = new Pointer.Predicate() {
+    private static final Pointer.Predicate isNotGCThreadLocalsOrCurrent = new Pointer.Predicate() {
         public boolean evaluate(Pointer vmThreadLocals) {
             if (vmThreadLocals != VmThread.current().vmThreadLocals()) {
                 final Thread javaThread = VmThread.current(vmThreadLocals).javaThread();

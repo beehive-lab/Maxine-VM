@@ -50,7 +50,7 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
         if (phase == MaxineVM.Phase.PRISTINE) {
             final Size heapSize = calculateHeapSize();
             final Address address = allocateMemory(heapSize);
-            _beltwayConfiguration.initializeBeltWayConfiguration(address.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()), heapSize.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()).asSize(), 2,
+            beltwayConfiguration.initializeBeltWayConfiguration(address.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()), heapSize.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()).asSize(), 2,
                             percentages);
             beltManager.initializeBelts();
 
@@ -58,11 +58,11 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
                 beltManager.printBeltsInfo();
             }
             final Size coveredRegionSize = beltManager.getEnd().minus(Heap.bootHeapRegion().start()).asSize();
-            _cardRegion.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize));
-            sideTable.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize).plus(_cardRegion.cardTableSize()).roundedUpBy(
+            cardRegion.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize));
+            sideTable.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize).plus(cardRegion.cardTableSize()).roundedUpBy(
                             Platform.target().pageSize()));
-            BeltwayCardRegion.switchToRegularCardTable(_cardRegion.cardTableBase().asPointer());
-            adjustedCardTableAddress = BeltwayCardRegion.adjustedCardTableBase(_cardRegion.cardTableBase().asPointer());
+            BeltwayCardRegion.switchToRegularCardTable(cardRegion.cardTableBase().asPointer());
+            adjustedCardTableAddress = BeltwayCardRegion.adjustedCardTableBase(cardRegion.cardTableBase().asPointer());
             beltManager.swapBelts(getMatureSpace(), getNurserySpace());
             getMatureSpace().setExpandable(true);
             TeleHeapInfo.registerMemoryRegions(getNurserySpace(), getMatureSpace());
@@ -96,7 +96,7 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
         if (!MaxineVM.isRunning()) {
             return bumpAllocateSlowPath(getNurserySpace(), size);
         }
-        if (BeltwayConfiguration._useTLABS) {
+        if (BeltwayConfiguration.useTLABS) {
             return tlabAllocate(getNurserySpace(), size);
         }
         return heapAllocate(getNurserySpace(), size);
@@ -110,7 +110,7 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
                 result = majorCollect(requestedFreeSpace);
             }
         }
-        _cardRegion.clearAllCards();
+        cardRegion.clearAllCards();
         return result;
 
     }

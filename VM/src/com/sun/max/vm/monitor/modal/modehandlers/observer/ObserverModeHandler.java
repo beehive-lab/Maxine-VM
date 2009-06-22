@@ -42,8 +42,8 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
 
     enum Event {MONITOR_ENTER, MONITOR_EXIT, MAKE_HASHCODE, MONITOR_NOTIFY, MONITOR_NOTIFYALL, MONITOR_WAIT}
 
-    private MonitorObserver _observerList;
-    private MonitorObserver[] _observers = new MonitorObserver[0];
+    private MonitorObserver observerList;
+    private MonitorObserver[] observers = new MonitorObserver[0];
 
     private ObserverModeHandler(ModeDelegate delegate) {
         super(delegate);
@@ -57,14 +57,14 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
     }
 
     private void notifyObservers(Event event, Object object) {
-        for (int i = 0; i < _observers.length; i++) {
-            _observers[i].notify(event, object);
+        for (int i = 0; i < observers.length; i++) {
+            observers[i].notify(event, object);
         }
     }
 
     private boolean observerListContains(MonitorObserver observer) {
-        for (int i = 0; i < _observers.length; i++) {
-            if (_observers[i] == observer) {
+        for (int i = 0; i < observers.length; i++) {
+            if (observers[i] == observer) {
                 return true;
             }
         }
@@ -74,10 +74,10 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
     @PROTOTYPE_ONLY
     public synchronized void attach(MonitorObserver observer) {
         if (!observerListContains(observer)) {
-            final MonitorObserver[] newObservers = new MonitorObserver[_observers.length + 1];
-            System.arraycopy(_observers, 0, newObservers, 0, _observers.length);
-            newObservers[_observers.length] = observer;
-            _observers = newObservers;
+            final MonitorObserver[] newObservers = new MonitorObserver[observers.length + 1];
+            System.arraycopy(observers, 0, newObservers, 0, observers.length);
+            newObservers[observers.length] = observer;
+            observers = newObservers;
         }
     }
 
@@ -153,13 +153,13 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
         delegate().delegateMonitorWait(object, timeout, ModalLockWord64.from(ObjectAccess.readMisc(object)));
     }
 
-    private final boolean[] _threadHoldsMonitorResult = new boolean[1];
+    private final boolean[] threadHoldsMonitorResult = new boolean[1];
 
     public boolean threadHoldsMonitor(Object object, VmThread thread) {
         nullCheck(object);
         final ModalLockWord64 lockWord = ModalLockWord64.from(ObjectAccess.readMisc(object));
-        delegate().delegateThreadHoldsMonitor(object, lockWord, thread, encodeCurrentThreadIDForLockword(), _threadHoldsMonitorResult);
-        return _threadHoldsMonitorResult[0];
+        delegate().delegateThreadHoldsMonitor(object, lockWord, thread, encodeCurrentThreadIDForLockword(), threadHoldsMonitorResult);
+        return threadHoldsMonitorResult[0];
     }
 
 

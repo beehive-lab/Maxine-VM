@@ -42,17 +42,17 @@ public abstract class EirGenerator<EirGeneratorScheme_Type extends EirGeneratorS
         return eirABIsScheme;
     }
 
-    private final WordWidth _wordWidth;
+    private final WordWidth wordWidth;
 
     public WordWidth wordWidth() {
-        return _wordWidth;
+        return wordWidth;
     }
 
     protected EirGenerator(EirGeneratorScheme_Type eirGeneratorScheme) {
         super(eirGeneratorScheme, "EIR");
         final VMConfiguration vmConfiguration = compilerScheme().vmConfiguration();
         final Platform platform = vmConfiguration.platform();
-        _wordWidth = platform.processorKind().dataModel().wordWidth();
+        wordWidth = platform.processorKind().dataModel().wordWidth();
         final MaxPackage eirPackage = new com.sun.max.vm.compiler.eir.Package();
         final MaxPackage p = eirPackage.subPackage(platform.processorKind().instructionSet().name().toLowerCase(),
                                                    platform.operatingSystem().name().toLowerCase());
@@ -71,7 +71,7 @@ public abstract class EirGenerator<EirGeneratorScheme_Type extends EirGeneratorS
     public Kind eirKind(Kind kind) {
         final Kind k = kind.toStackKind();
         if (k == Kind.WORD) {
-            return (_wordWidth == WordWidth.BITS_64) ? Kind.LONG : Kind.INT;
+            return (wordWidth == WordWidth.BITS_64) ? Kind.LONG : Kind.INT;
         }
         return k;
     }

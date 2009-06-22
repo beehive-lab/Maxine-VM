@@ -28,19 +28,18 @@ import com.sun.max.vm.reference.*;
  */
 public class PrototypeReference extends Reference {
 
-    private final Grip _grip;
+    private final Grip grip;
 
     public Grip grip() {
-        return _grip;
+        return grip;
     }
 
     PrototypeReference(Grip grip) {
-        super();
-        _grip = grip;
+        this.grip = grip;
     }
 
     @Override
     public int hashCode() {
-        return _grip.hashCode();
+        return grip.hashCode();
     }
 }

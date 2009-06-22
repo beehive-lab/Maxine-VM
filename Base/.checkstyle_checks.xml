@@ -70,6 +70,7 @@
         </module>
         <module name="EmptyStatement"/>
         <module name="HiddenField">
+            <property name="severity" value="ignore"/>
             <property name="ignoreConstructorParameter" value="true"/>
             <property name="ignoreSetter" value="true"/>
             <property name="ignoreAbstractMethods" value="true"/>

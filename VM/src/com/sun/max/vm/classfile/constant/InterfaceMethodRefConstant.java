@@ -144,7 +144,7 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
                 final Class<?> javaClass = classActor.toJava();
                 final Class[] parameterTypes = signature.resolveParameterTypes(javaClass.getClassLoader());
                 final Class returnType = signature.resolveReturnType(javaClass.getClassLoader());
-                final Method method = Classes.resolveMethod(javaClass, returnType, name.string(), parameterTypes);
+                final Method method = Classes.resolveMethod(javaClass, returnType, name.string, parameterTypes);
                 if (MaxineVM.isPrototypeOnly(method)) {
                     throw new PrototypeOnlyMethodError(errorMessage);
                 }
@@ -153,7 +153,7 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
         }
 
         public MethodActor resolve(ConstantPool pool, int index) {
-            return resolve(pool, index, _holder, _name, signature());
+            return resolve(pool, index, holder, name, signature());
         }
 
         @Override
@@ -208,7 +208,7 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
         }
 
         public MethodActor resolve(ConstantPool pool, int index) {
-            final ClassActor classActor = pool.classAt(_classIndex).resolve(pool, _classIndex);
+            final ClassActor classActor = pool.classAt(classIndex).resolve(pool, classIndex);
             return Unresolved.resolve(pool, index, classActor, name(pool), signature(pool));
         }
 

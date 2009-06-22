@@ -364,7 +364,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         final List<TeleFieldActor> list = Sequence.Static.toList(this.getTeleFieldActors());
         final List<FieldProvider> result = new ArrayList<FieldProvider>();
         result.addAll(list);
-        if (this.classActor().superClassActor() == null) {
+        if (this.classActor().superClassActor == null) {
             result.add(0, _fakeAddressField);
             result.add(0, _fakeMiscField);
             result.add(0, _fakeHubField);
@@ -377,7 +377,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         final IdentityHashSet<InterfaceActor> interfaces = classActor().getAllInterfaceActors();
         final AppendableSequence<InterfaceProvider> result = new LinkSequence<InterfaceProvider>();
         for (InterfaceActor interfaceActor : interfaces) {
-            final InterfaceProvider interfaceProvider = (TeleInterfaceActor) teleVM().findTeleClassActor(interfaceActor.typeDescriptor());
+            final InterfaceProvider interfaceProvider = (TeleInterfaceActor) teleVM().findTeleClassActor(interfaceActor.typeDescriptor);
             if (interfaceProvider != this) {
                 result.append(interfaceProvider);
             }
@@ -393,7 +393,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         final ClassActor[] actors = classActor().innerClassActors();
         final ReferenceTypeProvider[] result = new ReferenceTypeProvider[actors.length];
         for (int i = 0; i < actors.length; i++) {
-            result[i] = teleVM().findTeleClassActor(actors[i].typeDescriptor());
+            result[i] = teleVM().findTeleClassActor(actors[i].typeDescriptor);
         }
         return result;
     }
@@ -404,11 +404,11 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     public String getName() {
-        return classActor().name().toString();
+        return classActor().name.toString();
     }
 
     public String getSignature() {
-        return classActor().typeDescriptor().toString();
+        return classActor().typeDescriptor.toString();
     }
 
     public String getSignatureWithGeneric() {
@@ -437,7 +437,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     public String getSourceFileName() {
-        return classActor().sourceFileName();
+        return classActor().sourceFileName;
     }
 
     public int getFlags() {
@@ -445,14 +445,14 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     public Type getType() {
-        return TeleVM.maxineKindToJDWPType(classActor().kind());
+        return TeleVM.maxineKindToJDWPType(classActor().kind);
     }
 
     public int majorVersion() {
-        return classActor().majorVersion();
+        return classActor().majorVersion;
     }
 
     public int minorVersion() {
-        return classActor().minorVersion();
+        return classActor().minorVersion;
     }
 }

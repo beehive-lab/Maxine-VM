@@ -49,34 +49,19 @@ public abstract class TemplateChooser {
     }
 
     public static class Selector {
-        private final Resolved _resolved;
-        private final Initialized _initialized;
-        private final Instrumented _instrumented;
-        private final Traced _traced;
+        public final Resolved resolved;
+        public final Initialized initialized;
+        public final Instrumented instrumented;
+        public final Traced traced;
 
         public Selector(Resolved resolved, Initialized initialized, Instrumented instrumented, Traced traced) {
-            _resolved = resolved;
-            _initialized = initialized;
-            _instrumented = instrumented;
-            _traced = traced;
-        }
-        public boolean matches(Resolved resolved, Initialized initialized, Instrumented instrumented, Traced traced) {
-            return resolved == _resolved && initialized == _initialized && instrumented == _instrumented && traced == _traced;
-        }
-        public Initialized initialized() {
-            return _initialized;
-        }
-        public Resolved resolved() {
-            return _resolved;
-        }
-        public Instrumented instrumented() {
-            return _instrumented;
-        }
-        public Traced traced() {
-            return _traced;
+            this.resolved = resolved;
+            this.initialized = initialized;
+            this.instrumented = instrumented;
+            this.traced = traced;
         }
         public Selector copyAndModifySelector(Traced traced) {
-            return new Selector(_resolved, _initialized, _instrumented, traced);
+            return new Selector(resolved, initialized, instrumented, traced);
         }
 
         public static final Selector RESOLVED = new Selector(Resolved.YES, Initialized.NO_ASSUMPTION, Instrumented.NO, Traced.NO);
@@ -90,7 +75,7 @@ public abstract class TemplateChooser {
 
         @Override
         public String toString() {
-            return "Resolved: " + _resolved.toString() + ", Initialized: " + _initialized.toString() + ", Instrumented: " + _instrumented.toString() + ", Traced: " + _traced.toString();
+            return "Resolved: " + resolved.toString() + ", Initialized: " + initialized.toString() + ", Instrumented: " + instrumented.toString() + ", Traced: " + traced.toString();
         }
     }
 

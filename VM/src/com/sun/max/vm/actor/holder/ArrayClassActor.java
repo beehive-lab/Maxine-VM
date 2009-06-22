@@ -56,13 +56,13 @@ public class ArrayClassActor<Value_Type extends Value<Value_Type>> extends Refer
 
     ArrayClassActor(ClassActor componentClassActor) {
         super(Kind.REFERENCE,
-              componentClassActor.kind().arrayLayout(Layout.layoutScheme()),
-              componentClassActor.classLoader(),
+              componentClassActor.kind.arrayLayout(Layout.layoutScheme()),
+              componentClassActor.classLoader,
               arrayTypeName(componentClassActor),
-              (char) componentClassActor.majorVersion(),
-              (char) componentClassActor.minorVersion(),
+              componentClassActor.majorVersion,
+              componentClassActor.minorVersion,
               createFlags(componentClassActor),
-              JavaTypeDescriptor.getArrayDescriptorForDescriptor(componentClassActor.typeDescriptor(), 1),
+              JavaTypeDescriptor.getArrayDescriptorForDescriptor(componentClassActor.typeDescriptor, 1),
               ClassActor.fromJava(Object.class),
               componentClassActor,
               getInterfaceActors(),
@@ -77,8 +77,8 @@ public class ArrayClassActor<Value_Type extends Value<Value_Type>> extends Refer
     }
 
     public static ArrayClassActor forComponentClassActor(ClassActor componentClassActor) {
-        final TypeDescriptor arrayTypeDescriptor = JavaTypeDescriptor.getArrayDescriptorForDescriptor(componentClassActor.typeDescriptor(), 1);
-        ArrayClassActor arrayClassActor = (ArrayClassActor) ClassRegistry.get(componentClassActor.classLoader(), arrayTypeDescriptor);
+        final TypeDescriptor arrayTypeDescriptor = JavaTypeDescriptor.getArrayDescriptorForDescriptor(componentClassActor.typeDescriptor, 1);
+        ArrayClassActor arrayClassActor = (ArrayClassActor) ClassRegistry.get(componentClassActor.classLoader, arrayTypeDescriptor);
         if (arrayClassActor == null) {
             arrayClassActor = ClassActorFactory.createArrayClassActor(componentClassActor);
         }
@@ -112,11 +112,11 @@ public class ArrayClassActor<Value_Type extends Value<Value_Type>> extends Refer
         final BitSet result = super.getSuperClassActorSerials();
         final int numberOfDimensions = numberOfDimensions();
         final ClassActor elementClassActor = elementClassActor();
-        result.set(id());
-        ClassActor superClassActor = elementClassActor.superClassActor();
+        result.set(id);
+        ClassActor superClassActor = elementClassActor.superClassActor;
         while (superClassActor != null) {
             result.set(superClassActor.makeID(numberOfDimensions));
-            superClassActor = superClassActor.superClassActor();
+            superClassActor = superClassActor.superClassActor;
         }
         for (InterfaceActor interfaceActor : elementClassActor.getAllInterfaceActors()) {
             result.set(interfaceActor.makeID(numberOfDimensions));

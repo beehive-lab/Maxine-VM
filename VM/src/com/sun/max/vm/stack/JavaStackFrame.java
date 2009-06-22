@@ -31,23 +31,19 @@ import com.sun.max.vm.compiler.target.*;
  */
 public abstract class JavaStackFrame<JavaStackFrameLayout_Type extends JavaStackFrameLayout> extends StackFrame {
 
-    protected final JavaStackFrameLayout_Type _layout;
+    public final JavaStackFrameLayout_Type layout;
 
-    private final TargetMethod _targetMethod;
+    private final TargetMethod targetMethod;
 
     public JavaStackFrame(StackFrame callee, JavaStackFrameLayout_Type layout, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
         super(callee, instructionPointer, framePointer, stackPointer);
-        _layout = layout;
-        _targetMethod = targetMethod;
+        this.layout = layout;
+        this.targetMethod = targetMethod;
     }
 
     @Override
     public TargetMethod targetMethod() {
-        return _targetMethod;
-    }
-
-    public JavaStackFrameLayout_Type layout() {
-        return _layout;
+        return targetMethod;
     }
 
     /**
@@ -72,7 +68,7 @@ public abstract class JavaStackFrame<JavaStackFrameLayout_Type extends JavaStack
 
     @Override
     public String toString() {
-        return _targetMethod.name();
+        return targetMethod.name();
     }
 
 }

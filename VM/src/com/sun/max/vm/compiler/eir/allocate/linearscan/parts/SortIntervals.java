@@ -43,7 +43,7 @@ public class SortIntervals extends AlgorithmPart {
         int z = 0;
         for (EirVariable variable : generation().variables()) {
 
-            final Interval interval = variable.interval();
+            final Interval interval = variable.interval;
             final int start = interval.getFirstRangeStart();
 
             int prev = z - 1;
@@ -64,7 +64,7 @@ public class SortIntervals extends AlgorithmPart {
     protected boolean assertPostconditions() {
 
         for (EirVariable variable : generation().variables()) {
-            assert Sequence.Static.containsIdentical(data().sortedIntervals(), variable.interval());
+            assert Sequence.Static.containsIdentical(data().sortedIntervals(), variable.interval);
         }
 
         int prev = Integer.MIN_VALUE;

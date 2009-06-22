@@ -40,9 +40,9 @@ import com.sun.max.vm.type.*;
  */
 public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
 
-    protected final int _numberOfLocalSlots;
-    protected final int _numberOfOperandStackSlots;
-    protected final int _numberOfParameterSlots;
+    protected final int numberOfLocalSlots;
+    protected final int numberOfOperandStackSlots;
+    protected final int numberOfParameterSlots;
 
     /**
      * Size of a stack slot maintained by JIT-ed code. It may differ from {@link JavaStackFrameLayout#STACK_SLOT_SIZE} due to alignment
@@ -78,7 +78,7 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
      * @return an offset in byte
      */
     public static int offsetWithinWord(Kind kind) {
-        return ENDIANNESS.offsetWithinWord(Kind.WORD.width(), kind.width());
+        return ENDIANNESS.offsetWithinWord(Kind.WORD.width, kind.width);
     }
 
     private static int getJitSlotSize() {
@@ -92,11 +92,11 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
 
     protected JitStackFrameLayout(ClassMethodActor classMethodActor) {
         final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
-        _numberOfOperandStackSlots = codeAttribute.maxStack();
-        _numberOfLocalSlots = codeAttribute.maxLocals();
-        _numberOfParameterSlots = classMethodActor.numberOfParameterSlots();
+        numberOfOperandStackSlots = codeAttribute.maxStack();
+        numberOfLocalSlots = codeAttribute.maxLocals();
+        numberOfParameterSlots = classMethodActor.numberOfParameterSlots();
 
-        assert _numberOfLocalSlots >= _numberOfParameterSlots : "incoming arguments cannot be greater than number of locals";
+        assert numberOfLocalSlots >= numberOfParameterSlots : "incoming arguments cannot be greater than number of locals";
     }
 
     public static int stackSlotSize(Kind kind) {
@@ -107,7 +107,7 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
     private static final int CATEGORY2_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.LONG);
 
     public static int offsetInStackSlot(Kind kind) {
-        if (kind.width().equals(WordWidth.BITS_64)) {
+        if (kind.width.equals(WordWidth.BITS_64)) {
             return CATEGORY2_OFFSET_WITHIN_WORD;
         }
         return CATEGORY1_OFFSET_WITHIN_WORD;
@@ -135,7 +135,7 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
      * Gets the number of stack slots occupied by the incoming parameters to this frame.
      */
     public int numberOfParameterSlots() {
-        return _numberOfParameterSlots;
+        return numberOfParameterSlots;
     }
 
     /**
@@ -156,7 +156,7 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
      * {@link CodeAttribute#maxLocals()}.
      */
     public int numberOfLocalSlots() {
-        return _numberOfLocalSlots;
+        return numberOfLocalSlots;
     }
 
     /**
@@ -164,7 +164,7 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
      * {@link CodeAttribute#maxStack()}.
      */
     public int numberOfOperandStackSlots() {
-        return _numberOfOperandStackSlots;
+        return numberOfOperandStackSlots;
     }
 
     /**
@@ -225,11 +225,11 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
     }
 
     public boolean isParameter(int localVariableIndex) {
-        return localVariableIndex < _numberOfParameterSlots;
+        return localVariableIndex < numberOfParameterSlots;
     }
 
     public int numberOfNonParameterSlots() {
-        return _numberOfLocalSlots - _numberOfParameterSlots;
+        return numberOfLocalSlots - numberOfParameterSlots;
     }
 
     /**
@@ -252,7 +252,7 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
             if (isParameter(localVariableIndex)) {
                 return "local " + localVariableIndex + " [parameter " + localVariableIndex + "]";
             }
-            return "local " + localVariableIndex + " [non-parameter " + (localVariableIndex - _numberOfParameterSlots) + "]";
+            return "local " + localVariableIndex + " [non-parameter " + (localVariableIndex - numberOfParameterSlots) + "]";
         }
 
         protected boolean isFillerSlot(int jitSlotOffset, int offset) {
@@ -269,7 +269,7 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
 
         @Override
         protected String nameOfSlot(int offset) {
-            for (int i = 0; i != _numberOfLocalSlots; ++i) {
+            for (int i = 0; i != numberOfLocalSlots; ++i) {
                 final int localVariableOffset = localVariableOffset(i);
                 if (offset == localVariableOffset) {
                     return nameOfLocal(i);
@@ -278,7 +278,7 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
                     return "local " + i + " [filler]";
                 }
             }
-            for (int i = 0; i != _numberOfOperandStackSlots; ++i) {
+            for (int i = 0; i != numberOfOperandStackSlots; ++i) {
                 final int operandStackOffset = operandStackOffset(i);
                 if (operandStackOffset == offset) {
                     return "operand stack " + i;

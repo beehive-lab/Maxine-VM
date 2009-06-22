@@ -24,9 +24,9 @@ package com.sun.max.vm.classfile.create;
  * A {@code MillCode} assembles the byte codes of one Java(TM) method.
  * This class contains what can be seen as templates for byte code assembly
  * language statements.
- * 
+ *
  * @see MillClass
- * 
+ *
  * @author Bernd Mathiske
  * @version 1.0
  */
@@ -37,7 +37,7 @@ public class MillCode {
 
     /**
      * Create a new byte code sequence and set basic stack information.
-     * 
+     *
      * @param nParameters
      *            The number of parameters of the method to which this byte code
      *            will belong.
@@ -58,7 +58,7 @@ public class MillCode {
 
     /**
      * Determine the accumulated number of bytes in this code when generated.
-     * 
+     *
      * @return The accumulated number of bytes in this code when generated.
      */
     public int nBytes() {
@@ -78,18 +78,18 @@ public class MillCode {
     void assemble(byte[] b, int offset) {
         int index = offset + n;
         while (operation != null) {
-            if (operation._constant != null) {
-                b[--index] = MillWord.byte0(operation._constant.index);
-                b[--index] = MillWord.byte1(operation._constant.index);
+            if (operation.constant != null) {
+                b[--index] = MillWord.byte0(operation.constant.index);
+                b[--index] = MillWord.byte1(operation.constant.index);
             }
-            b[--index] = operation._code;
-            operation = operation._next;
+            b[--index] = operation.code;
+            operation = operation.next;
         }
     }
 
     /**
      * Get the stack index of a local variable.
-     * 
+     *
      * @param The
      *            logical index among locals of the local we are interested in.
      * @return The stack index of the local.
@@ -110,7 +110,7 @@ public class MillCode {
 
     /**
      * Append an iconst byte code.
-     * 
+     *
      * @param x
      *            The operand of the iconst byte code.
      */
@@ -124,7 +124,7 @@ public class MillCode {
 
     /**
      * Append a bipush byte code.
-     * 
+     *
      * @param x
      *            The operand of the bipush byte code.
      */
@@ -135,7 +135,7 @@ public class MillCode {
 
     /**
      * Append an ldc_w byte code.
-     * 
+     *
      * @param _x
      *            The operand of the bipush byte code.
      */
@@ -479,11 +479,11 @@ public class MillCode {
 
     /**
      * Append a getfield byte code.
-     * 
+     *
      * @param fieldRef
      *            The operand of the getfield byte code: a field reference
      *            constant.
-     * 
+     *
      * @see MillFieldRefConstant
      * @see MillClass
      */
@@ -493,11 +493,11 @@ public class MillCode {
 
     /**
      * Append a putfield byte code.
-     * 
+     *
      * @param fieldRef
      *            The operand of the putfield byte code: a field reference
      *            constant.
-     * 
+     *
      * @see MillFieldRefConstant
      * @see MillClass
      */
@@ -507,11 +507,11 @@ public class MillCode {
 
     /**
      * Append an invokespecial byte code.
-     * 
+     *
      * @param methodRef
      *            The operand of the invokespecial byte code: a method reference
      *            constant.
-     * 
+     *
      * @see MillMethodRefConstant
      * @see MillClass
      */
@@ -521,11 +521,11 @@ public class MillCode {
 
     /**
      * Append an invokestatic byte code.
-     * 
+     *
      * @param methodRef
      *            The operand of the invokestatic byte code: a method reference
      *            constant.
-     * 
+     *
      * @see MillMethodRefConstant
      * @see MillClass
      */
@@ -545,11 +545,11 @@ public class MillCode {
      * Append a {@code new} byte code. This code is slightly renamed here
      * to avoid conflict with the {@code new} keyword in the Java(TM)
      * Programming Language.
-     * 
+     *
      * @param classRef
      *            The operand of the newObject byte code: a class reference
      *            constant.
-     * 
+     *
      * @see MillClassConstant
      * @see MillClass
      */
@@ -559,11 +559,11 @@ public class MillCode {
 
     /**
      * Append an anewarray byte code.
-     * 
+     *
      * @param classRef
      *            The operand of the anewarray byte code: a class reference
      *            constant.
-     * 
+     *
      * @see MillClassConstant
      * @see MillClass
      */
@@ -595,20 +595,20 @@ public class MillCode {
 
 class Operation {
 
-    final byte _code;
-    final MillConstant _constant;
-    final Operation _next;
+    final byte code;
+    final MillConstant constant;
+    final Operation next;
 
     Operation(byte code, Operation next) {
-        _code = code;
-        _constant = null;
-        _next = next;
+        this.code = code;
+        this.constant = null;
+        this.next = next;
     }
 
     Operation(byte code, MillConstant constant, Operation next) {
-        _code = code;
-        _constant = constant;
-        _next = next;
+        this.code = code;
+        this.constant = constant;
+        this.next = next;
     }
 
 }

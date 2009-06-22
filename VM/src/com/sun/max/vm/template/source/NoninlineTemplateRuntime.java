@@ -362,10 +362,10 @@ public class NoninlineTemplateRuntime {
 
     @NEVER_INLINE
     public static ClassActor resolveClass(ResolutionGuard guard) {
-        final ConstantPool constantPool = guard.constantPool();
-        final int index = guard.constantPoolIndex();
+        final ConstantPool constantPool = guard.constantPool;
+        final int index = guard.constantPoolIndex;
         final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
-        guard.set(classActor);
+        guard.value = classActor;
         return classActor;
     }
 

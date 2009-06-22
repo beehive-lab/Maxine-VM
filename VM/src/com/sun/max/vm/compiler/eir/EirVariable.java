@@ -259,20 +259,12 @@ public final class EirVariable extends EirValue implements Comparable<EirVariabl
 
     @Override
     public String toString() {
-        String s = kind.character() + "$" + serial;
+        String s = kind.character + "$" + serial;
         if (location() != null) {
             s += "@" + location();
         }
         return s;
     }
 
-    private Interval _interval;
-
-    public void setInterval(Interval interval) {
-        _interval = interval;
-    }
-
-    public Interval interval() {
-        return _interval;
-    }
+    public Interval interval;
 }

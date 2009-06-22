@@ -157,14 +157,14 @@ public abstract class SPARCEirRegister extends EirRegister {
             return EirLocationCategory.INTEGER_REGISTER;
         }
 
-        private String _name;
+        private String name;
 
         public String name() {
-            return _name;
+            return name;
         }
 
         public void setName(String name) {
-            _name = name;
+            this.name = name;
         }
 
         static {

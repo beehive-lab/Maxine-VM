@@ -67,35 +67,35 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
         return (frameSize + n) & ~n;
     }
 
-    private final RegisterRoleAssignment<IntegerRegister_Type, FloatingPointRegister_Type> _registerRoleAssignment;
+    private final RegisterRoleAssignment<IntegerRegister_Type, FloatingPointRegister_Type> registerRoleAssignment;
 
     public RegisterRoleAssignment<IntegerRegister_Type, FloatingPointRegister_Type> registerRoleAssignment() {
-        return _registerRoleAssignment;
+        return registerRoleAssignment;
     }
 
     @FOLD
     public IntegerRegister_Type stackPointer() {
-        return _registerRoleAssignment.integerRegisterActingAs(VMRegister.Role.ABI_STACK_POINTER);
+        return registerRoleAssignment.integerRegisterActingAs(VMRegister.Role.ABI_STACK_POINTER);
     }
 
     @FOLD
     public IntegerRegister_Type framePointer() {
-        return _registerRoleAssignment.integerRegisterActingAs(VMRegister.Role.ABI_FRAME_POINTER);
+        return registerRoleAssignment.integerRegisterActingAs(VMRegister.Role.ABI_FRAME_POINTER);
     }
 
     @FOLD
     public IntegerRegister_Type scratchRegister() {
-        return _registerRoleAssignment.integerRegisterActingAs(VMRegister.Role.ABI_SCRATCH);
+        return registerRoleAssignment.integerRegisterActingAs(VMRegister.Role.ABI_SCRATCH);
     }
 
     @FOLD
     public IntegerRegister_Type integerReturn() {
-        return _registerRoleAssignment.integerRegisterActingAs(VMRegister.Role.ABI_RETURN);
+        return registerRoleAssignment.integerRegisterActingAs(VMRegister.Role.ABI_RETURN);
     }
 
     @FOLD
     public IntegerRegister_Type literalBaseRegister() {
-        return _registerRoleAssignment.integerRegisterActingAs(VMRegister.Role.LITERAL_BASE_POINTER);
+        return registerRoleAssignment.integerRegisterActingAs(VMRegister.Role.LITERAL_BASE_POINTER);
     }
 
     private final IndexedSequence<IntegerRegister_Type> integerIncomingParameterRegisters;
@@ -112,7 +112,7 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
 
     @FOLD
     public FloatingPointRegister_Type floatingPointReturn() {
-        return _registerRoleAssignment.floatingPointRegisterActingAs(VMRegister.Role.ABI_RETURN);
+        return registerRoleAssignment.floatingPointRegisterActingAs(VMRegister.Role.ABI_RETURN);
     }
 
     private final IndexedSequence<FloatingPointRegister_Type> floatingPointParameterRegisters;
@@ -144,7 +144,7 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
                     IndexedSequence<IntegerRegister_Type> integerIncomingParameterRegisters,
                     IndexedSequence<IntegerRegister_Type> integerOutgoingParameterRegisters,
                     IndexedSequence<FloatingPointRegister_Type> floatingPointParameterRegisters, boolean useRegisterWindows, boolean callPushesReturnAddress, int stackFrameAlignment, int stackBias) {
-        this._registerRoleAssignment = registerRoleAssignment;
+        this.registerRoleAssignment = registerRoleAssignment;
         this.callEntryPoint = callEntryPoint;
         this.integerIncomingParameterRegisters = integerIncomingParameterRegisters;
         this.integerOutgoingParameterRegisters = integerOutgoingParameterRegisters;
@@ -158,7 +158,7 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
     public TargetABI(TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> original,
                     RegisterRoleAssignment<IntegerRegister_Type, FloatingPointRegister_Type> registerRoleAssignment,
                     CallEntryPoint callEntryPoint) {
-        this._registerRoleAssignment = registerRoleAssignment;
+        this.registerRoleAssignment = registerRoleAssignment;
         this.callEntryPoint = callEntryPoint;
         this.integerIncomingParameterRegisters = original.integerIncomingParameterRegisters;
         this.integerOutgoingParameterRegisters = original.integerOutgoingParameterRegisters;

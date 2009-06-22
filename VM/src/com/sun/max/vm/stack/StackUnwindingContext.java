@@ -33,13 +33,12 @@ public class StackUnwindingContext {
     /**
      * The cause of the stack unwinding.
      */
-    public final Throwable _throwable;
+    public final Throwable throwable;
 
     public StackUnwindingContext(Throwable throwable) {
-        _throwable = throwable;
+        this.throwable = throwable;
     }
 
     public void visitFrame(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
-
     }
 }

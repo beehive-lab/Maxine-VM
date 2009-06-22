@@ -61,8 +61,8 @@ public final class JDKInterceptor {
         "path.separator",
     };
 
-    private static final Unsafe _unsafe = (Unsafe) WithoutAccessCheck.getStaticField(Unsafe.class, "theUnsafe");
-    public static final Properties _initialSystemProperties = buildInitialSystemProperties();
+    private static final Unsafe unsafe = (Unsafe) WithoutAccessCheck.getStaticField(Unsafe.class, "theUnsafe");
+    public static final Properties initialSystemProperties = buildInitialSystemProperties();
 
     /**
      * Overrides the default VM library path with the specified new path.
@@ -81,7 +81,7 @@ public final class JDKInterceptor {
      * specially handled when building the prototype.
      */
     // Checkstyle: stop
-    private static final Object[] _interceptedFieldArray = {
+    private static final Object[] interceptedFieldArray = {
         JDK.java_lang_ApplicationShutdownHooks,
             new ValueField("hooks", ReferenceValue.from(new IdentityHashMap<Thread, Thread>())),
         JDK.java_lang_Class,
@@ -133,7 +133,7 @@ public final class JDKInterceptor {
             new ValueField("hooks", ReferenceValue.from(new ArrayList<Runnable>())),
         JDK.java_lang_System,
             "security",
-            new ValueField("props", ReferenceValue.from(_initialSystemProperties)),
+            new ValueField("props", ReferenceValue.from(initialSystemProperties)),
         JDK.java_lang_ref_Reference,
             "discovered",
             "pending",
@@ -197,7 +197,7 @@ public final class JDKInterceptor {
     };
     // Checkstyle: resume
 
-    private static final Map<String, Map<String, InterceptedField>> _interceptedFieldMap = buildInterceptedFieldMap(_interceptedFieldArray);
+    private static final Map<String, Map<String, InterceptedField>> interceptedFieldMap = buildInterceptedFieldMap(interceptedFieldArray);
 
     /**
      * Checks whether the specified field should be omitted.
@@ -216,17 +216,17 @@ public final class JDKInterceptor {
     }
 
     public static InterceptedField getInterceptedField(FieldActor fieldActor) {
-        final String className = fieldActor.holder().name().toString();
-        final Map<String, InterceptedField> map = _interceptedFieldMap.get(className);
+        final String className = fieldActor.holder().name.toString();
+        final Map<String, InterceptedField> map = interceptedFieldMap.get(className);
         if (map != null) {
-            return map.get(fieldActor.name().toString());
+            return map.get(fieldActor.name.toString());
         }
         return null;
     }
 
     public static InterceptedField getInterceptedField(Field field) {
         final String className = field.getDeclaringClass().getName();
-        final Map<String, InterceptedField> map = _interceptedFieldMap.get(className);
+        final Map<String, InterceptedField> map = interceptedFieldMap.get(className);
         if (map != null) {
             return map.get(field.getName());
         }
@@ -278,10 +278,10 @@ public final class JDKInterceptor {
      * @param fieldName the name of the field as a string
      */
     public static void resetField(Class javaClass, String fieldName) {
-        Map<String, InterceptedField> fieldMap = _interceptedFieldMap.get(javaClass.getName());
+        Map<String, InterceptedField> fieldMap = interceptedFieldMap.get(javaClass.getName());
         if (fieldMap == null) {
             fieldMap = new HashMap<String, InterceptedField>();
-            _interceptedFieldMap.put(javaClass.getName(), fieldMap);
+            interceptedFieldMap.put(javaClass.getName(), fieldMap);
         }
         fieldMap.put(fieldName, new ZeroField(fieldName));
     }
@@ -303,25 +303,25 @@ public final class JDKInterceptor {
      * reflection) written to the boot image.
      */
     public abstract static class InterceptedField {
-        private final String _name;
-        public FieldActor _fieldActor;
+        private final String name;
+        public FieldActor fieldActor;
         /**
          * Override of mutability: null:no-override, TRUE:mutable, FALSE:immutable.
          */
-        private final Boolean _mutabilityOverride;
+        private final Boolean mutabilityOverride;
         InterceptedField(String name) {
             final char lastChar = name.charAt(name.length() - 1);
             if (lastChar == '-' || lastChar == '+') {
-                _name = name.substring(0, name.length() - 1);
-                _mutabilityOverride = Boolean.valueOf(lastChar == '+');
+                this.name = name.substring(0, name.length() - 1);
+                mutabilityOverride = Boolean.valueOf(lastChar == '+');
             } else {
-                _name = name;
-                _mutabilityOverride = null;
+                this.name = name;
+                mutabilityOverride = null;
                 assert Character.isJavaIdentifierPart(lastChar) : "Invalid Java field name: " + name;
             }
         }
         public String getName() {
-            return _name;
+            return name;
         }
 
         /**
@@ -338,10 +338,10 @@ public final class JDKInterceptor {
          * @return whether the value of this field can be modified in the VM
          */
         boolean isMutable() {
-            if (_mutabilityOverride == null) {
-                return !_fieldActor.isConstant();
+            if (mutabilityOverride == null) {
+                return !fieldActor.isConstant();
             }
-            return _mutabilityOverride;
+            return mutabilityOverride;
         }
     }
 
@@ -350,14 +350,14 @@ public final class JDKInterceptor {
      * {@linkplain ValueField#ValueField(String, Value) constructor}.
      */
     private static class ValueField extends InterceptedField {
-        private final Value _value;
-        ValueField(String name, Value val) {
+        private final Value value;
+        ValueField(String name, Value value) {
             super(name);
-            _value = val;
+            this.value = value;
         }
         @Override
         public Value getValue(Object object, FieldActor field) {
-            return _value;
+            return value;
         }
     }
 
@@ -371,7 +371,7 @@ public final class JDKInterceptor {
         }
         @Override
         public Value getValue(Object object, FieldActor field) {
-            return field.kind().zeroValue();
+            return field.kind.zeroValue();
         }
     }
 
@@ -401,7 +401,7 @@ public final class JDKInterceptor {
                 // search the declared fields for a field with a matching offset
                 for (Field f : tclass.getDeclaredFields()) {
                     if ((f.getModifiers() & Modifier.STATIC) == 0) {
-                        final long fieldOffset = _unsafe.objectFieldOffset(f);
+                        final long fieldOffset = unsafe.objectFieldOffset(f);
                         if (fieldOffset == offset) {
                             return LongValue.from(FieldActor.fromJava(f).offset());
                         }
@@ -415,16 +415,16 @@ public final class JDKInterceptor {
     }
 
     private static class ExpiringCacheField extends InterceptedField {
-        private final Map<Object, Object> _newValues = new IdentityHashMap<Object, Object>();
+        private final Map<Object, Object> newValues = new IdentityHashMap<Object, Object>();
         ExpiringCacheField(String name) {
             super(name);
         }
         @Override
         public Value getValue(Object object, FieldActor fieldActor) {
-            Object result = _newValues.get(object);
+            Object result = newValues.get(object);
             if (result == null) {
                 result = WithoutAccessCheck.newInstance(JDK.java_io_ExpiringCache.javaClass());
-                _newValues.put(object, result);
+                newValues.put(object, result);
             }
             return ReferenceValue.from(result);
         }
@@ -435,17 +435,17 @@ public final class JDKInterceptor {
      * This facility is required to fix up field values obtained via {@link Unsafe#fieldOffset(Field)}.
      */
     private static class FieldOffsetRecomputation extends InterceptedField {
-        private final ClassRef _classRef;
-        private final String _fieldName;
+        private final ClassRef classRef;
+        private final String fieldName;
         FieldOffsetRecomputation(String offsetFieldName, ClassRef classRef, String fieldName) {
             super(offsetFieldName);
-            _fieldName = fieldName;
-            _classRef = classRef;
+            this.fieldName = fieldName;
+            this.classRef = classRef;
         }
         @Override
         public Value getValue(Object object, FieldActor fieldActor) {
             try {
-                final Field field = _classRef.javaClass().getDeclaredField(_fieldName);
+                final Field field = classRef.javaClass().getDeclaredField(fieldName);
                 return LongValue.from(FieldActor.fromJava(field).offset());
             } catch (SecurityException e) {
                 throw ProgramError.unexpected(e);

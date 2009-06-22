@@ -27,9 +27,9 @@ import com.sun.max.vm.type.*;
 
 public class TirLocal extends TirInstruction {
     public static final class Flags {
-        private Kind _kind = Kind.VOID;
+        private Kind kind = Kind.VOID;
         private boolean isRead;
-        private boolean _isWritten;
+        private boolean isWritten;
         private boolean isUndefined;
 
         private Flags() {
@@ -37,10 +37,10 @@ public class TirLocal extends TirInstruction {
         }
 
         private Flags(Flags flags) {
-            _kind = flags._kind;
-            isRead = flags.isRead;
-            _isWritten = flags._isWritten;
-            isUndefined = flags.isUndefined;
+            this.kind = flags.kind;
+            this.isRead = flags.isRead;
+            this.isWritten = flags.isWritten;
+            this.isUndefined = flags.isUndefined;
         }
 
         public boolean isRead() {
@@ -48,7 +48,7 @@ public class TirLocal extends TirInstruction {
         }
 
         public boolean isWritten() {
-            return _isWritten;
+            return isWritten;
         }
 
         public boolean isUndefined() {
@@ -57,11 +57,11 @@ public class TirLocal extends TirInstruction {
 
         @Override
         public String toString() {
-            String flags = "flags: " + _kind;
+            String flags = "flags: " + kind;
             if (isRead) {
                 flags += ", read";
             }
-            if (_isWritten) {
+            if (isWritten) {
                 flags += ", written";
             }
             if (isUndefined) {
@@ -71,7 +71,7 @@ public class TirLocal extends TirInstruction {
         }
 
         public void setWritten(boolean written) {
-            _isWritten = written;
+            isWritten = written;
         }
 
         public void setRead(boolean read) {
@@ -97,17 +97,17 @@ public class TirLocal extends TirInstruction {
 
     @Override
     public Kind kind() {
-        return flags()._kind;
+        return flags().kind;
     }
 
     // Checkstyle: stop
     @Override
     public void setKind(Kind kind) {
         flags().isRead = true;
-        if (flags()._kind == Kind.VOID) {
-            flags()._kind = kind;
+        if (flags().kind == Kind.VOID) {
+            flags().kind = kind;
         } else {
-            if (flags()._kind != kind) {
+            if (flags().kind != kind) {
                 ProgramError.unexpected("I don't remember what to do here!");
                 flags().isUndefined = true;
             }
@@ -151,13 +151,14 @@ public class TirLocal extends TirInstruction {
 
     public void complete(TirInstruction tail) {
         if (this != tail) {
-            flags().setWritten(true);
-            if (flags().isUndefined == false) {
-                if (flags()._kind == Kind.VOID) {
-                    flags()._kind = tail.kind();
+            final Flags flags = flags();
+            flags.setWritten(true);
+            if (flags.isUndefined == false) {
+                if (flags.kind == Kind.VOID) {
+                    flags.kind = tail.kind();
                 } else {
-                    if (flags()._kind != tail.kind()) {
-                        flags().isUndefined = true;
+                    if (flags.kind != tail.kind()) {
+                        flags.isUndefined = true;
                     }
                 }
             }

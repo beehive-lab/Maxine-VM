@@ -33,7 +33,7 @@ public class X86DisplacementParameter extends X86OffsetParameter {
 
     @Override
     public String variableName() {
-        return "disp" + width().numberOfBits();
+        return "disp" + width().numberOfBits;
     }
 
 }

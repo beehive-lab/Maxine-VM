@@ -157,9 +157,9 @@ final class JDK_java_lang_Class {
     public String getName() {
         final ClassActor thisClassActor = thisClassActor();
         if (thisClassActor.isArrayClassActor()) {
-            return Descriptor.dottified(thisClassActor.typeDescriptor().toString());
+            return Descriptor.dottified(thisClassActor.typeDescriptor.toString());
         }
-        return thisClassActor.name().toString();
+        return thisClassActor.name.toString();
     }
 
     /**
@@ -169,7 +169,7 @@ final class JDK_java_lang_Class {
      */
     @SUBSTITUTE
     ClassLoader getClassLoader0() {
-        final ClassLoader classLoader = thisClassActor().classLoader();
+        final ClassLoader classLoader = thisClassActor().classLoader;
         if (classLoader == VmClassLoader.VM_CLASS_LOADER) {
             return null;
         }
@@ -187,7 +187,7 @@ final class JDK_java_lang_Class {
         if (thisClassActor instanceof InterfaceActor) {
             return null;
         }
-        final ClassActor superClassActor = thisClassActor.superClassActor();
+        final ClassActor superClassActor = thisClassActor.superClassActor;
         return superClassActor == null ? null : superClassActor.mirror();
     }
 
@@ -246,7 +246,7 @@ final class JDK_java_lang_Class {
      */
     @SUBSTITUTE
     public Object[] getSigners() {
-        return thisClassActor().signers();
+        return thisClassActor().signers;
     }
 
     /**
@@ -256,7 +256,8 @@ final class JDK_java_lang_Class {
      */
     @SUBSTITUTE
     void setSigners(Object[] signers) {
-        thisClassActor().setSigners(signers);
+        final ClassActor classActor = thisClassActor();
+        classActor.signers = signers;
     }
 
     @SUBSTITUTE
@@ -264,7 +265,7 @@ final class JDK_java_lang_Class {
         final EnclosingMethodInfo enclosingMethodInfo = thisClassActor().enclosingMethodInfo();
         if (enclosingMethodInfo != null) {
             return new Object[]{
-                enclosingMethodInfo.holder().resolveType(thisClassActor().classLoader()),
+                enclosingMethodInfo.holder().resolveType(thisClassActor().classLoader),
                 enclosingMethodInfo.name(),
                 enclosingMethodInfo.descriptor()
             };
@@ -325,8 +326,8 @@ final class JDK_java_lang_Class {
     @SUBSTITUTE
     static Class getPrimitiveClass(String name) {
         for (Kind kind : Kind.PRIMITIVE_JAVA_CLASSES) {
-            if (kind.name().toString().equals(name)) {
-                return kind.toJava();
+            if (kind.name.toString().equals(name)) {
+                return kind.javaClass;
             }
         }
         return null;

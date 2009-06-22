@@ -332,7 +332,7 @@ public class C1XTest {
                     if (colonIndex == -1) {
                         // Class only: compile all methods in class
                         for (MethodActor actor : classActor.localStaticMethodActors()) {
-                            if (_clinit.getValue() || actor != classActor.classInitializer()) {
+                            if (_clinit.getValue() || actor != classActor.clinit) {
                                 methods.add(actor);
                             }
                         }
@@ -377,7 +377,7 @@ public class C1XTest {
 
     private static void addMatchingMethods(final List<MethodActor> methods, final ClassActor classActor, final PatternMatcher methodNamePattern, final SignatureDescriptor signature, MethodActor[] methodActors) {
         for (final MethodActor method : methodActors) {
-            if (methodNamePattern.matches(method.name().toString())) {
+            if (methodNamePattern.matches(method.name.toString())) {
                 final SignatureDescriptor methodSignature = method.descriptor();
                 if (signature == null || signature.equals(methodSignature)) {
                     methods.add(method);

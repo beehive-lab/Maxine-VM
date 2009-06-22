@@ -33,18 +33,16 @@ import com.sun.max.vm.thread.*;
  */
 public class SequentialHeapRootsScanner {
 
-    private PointerIndexVisitor _pointerIndexVisitor;
+    private PointerIndexVisitor pointerIndexVisitor;
     private RuntimeMemoryRegion fromSpace;
     private RuntimeMemoryRegion toSpace;
-    private HeapScheme _heapScheme;
 
-    public SequentialHeapRootsScanner(HeapScheme heapScheme, PointerIndexVisitor pointerIndexVisitor) {
-        _heapScheme = heapScheme;
-        _pointerIndexVisitor = pointerIndexVisitor;
+    public SequentialHeapRootsScanner(PointerIndexVisitor pointerIndexVisitor) {
+        this.pointerIndexVisitor = pointerIndexVisitor;
     }
 
     public void setPointerIndexVisitor(PointerIndexVisitor pointerIndexVisitor) {
-        _pointerIndexVisitor = pointerIndexVisitor;
+        this.pointerIndexVisitor = pointerIndexVisitor;
     }
 
     public void setFromSpace(RuntimeMemoryRegion fromSpace) {
@@ -58,7 +56,7 @@ public class SequentialHeapRootsScanner {
     private final Pointer.Procedure vmThreadLocalsScanner = new Pointer.Procedure() {
 
         public void run(Pointer vmThreadLocals) {
-            VmThreadLocal.scanReferences(vmThreadLocals, _pointerIndexVisitor);
+            VmThreadLocal.scanReferences(vmThreadLocals, pointerIndexVisitor);
         }
     };
 
@@ -72,7 +70,7 @@ public class SequentialHeapRootsScanner {
      */
     public void run() {
         VmThreadMap.ACTIVE.forAllVmThreadLocals(null, vmThreadLocalsScanner);
-        VMConfiguration.hostOrTarget().monitorScheme().scanReferences(_pointerIndexVisitor);
+        VMConfiguration.hostOrTarget().monitorScheme().scanReferences(pointerIndexVisitor);
     }
 
 }

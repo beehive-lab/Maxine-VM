@@ -94,33 +94,33 @@ import com.sun.max.vm.thread.*;
  */
 class ProxyAcquirableJavaMonitor extends StandardJavaMonitor {
 
-    private static final Mutex _proxyMutex = MutexFactory.create();
-    private static final ConditionVariable _proxyVar = ConditionVariableFactory.create();
+    private static final Mutex proxyMutex = MutexFactory.create();
+    private static final ConditionVariable proxyVar = ConditionVariableFactory.create();
 
-    private volatile boolean _ownerAcquired;
+    private volatile boolean ownerAcquired;
 
     private void ownerAcquire() {
         final VmThread currentThread = VmThread.current();
-        _proxyMutex.lock();
-        if (!_ownerAcquired) {
+        proxyMutex.lock();
+        if (!ownerAcquired) {
             if (currentThread == ownerThread) {
                 mutex.lock();
-                _ownerAcquired = true;
-                _proxyVar.threadNotify(true);
+                ownerAcquired = true;
+                proxyVar.threadNotify(true);
             } else {
-                while (!_ownerAcquired) {
+                while (!ownerAcquired) {
                     currentThread.setState(Thread.State.BLOCKED);
-                    _proxyVar.threadWait(_proxyMutex, 0);
+                    proxyVar.threadWait(proxyMutex, 0);
                     currentThread.setState(Thread.State.RUNNABLE);
                 }
             }
         }
-        _proxyMutex.unlock();
+        proxyMutex.unlock();
     }
 
     @Override
     public void monitorEnter() {
-        if (!_ownerAcquired) {
+        if (!ownerAcquired) {
             ownerAcquire();
         }
         super.monitorEnter();
@@ -128,7 +128,7 @@ class ProxyAcquirableJavaMonitor extends StandardJavaMonitor {
 
     @Override
     public void monitorExit() {
-        if (!_ownerAcquired) {
+        if (!ownerAcquired) {
             ownerAcquire();
         }
         super.monitorExit();
@@ -136,7 +136,7 @@ class ProxyAcquirableJavaMonitor extends StandardJavaMonitor {
 
     @Override
     public void monitorWait(long timeoutMilliSeconds) throws InterruptedException {
-        if (!_ownerAcquired) {
+        if (!ownerAcquired) {
             ownerAcquire();
         }
         super.monitorWait(timeoutMilliSeconds);
@@ -144,7 +144,7 @@ class ProxyAcquirableJavaMonitor extends StandardJavaMonitor {
 
     @Override
     public void monitorNotify(boolean all) {
-        if (!_ownerAcquired) {
+        if (!ownerAcquired) {
             ownerAcquire();
         }
         super.monitorNotify(all);
@@ -154,7 +154,7 @@ class ProxyAcquirableJavaMonitor extends StandardJavaMonitor {
     public void monitorPrivateAcquire(VmThread owner, int lockQty) {
         ownerThread = owner;
         recursionCount = lockQty;
-        _ownerAcquired = false;
+        ownerAcquired = false;
         bindingProtection = BindingProtection.PROTECTED;
     }
 
@@ -162,31 +162,31 @@ class ProxyAcquirableJavaMonitor extends StandardJavaMonitor {
     public void monitorPrivateRelease() {
         ownerThread = null;
         recursionCount = 0;
-        _ownerAcquired = true;
+        ownerAcquired = true;
         bindingProtection = BindingProtection.UNPROTECTED;
     }
 
     @Override
     public void allocate() {
         super.allocate();
-        _proxyMutex.init();
-        _proxyVar.init();
+        proxyMutex.init();
+        proxyVar.init();
     }
 
     @Override
     public final void reset() {
         super.reset();
-        _ownerAcquired = false;
+        ownerAcquired = false;
     }
 
     @Override
     public void dump() {
         super.dump();
         Log.print(" ownerAcquired=");
-        Log.print(_ownerAcquired);
+        Log.print(ownerAcquired);
         Log.print(" proxyMutex=");
-        Log.print(_proxyMutex.logId());
+        Log.print(proxyMutex.logId());
         Log.print(" proxyCondVar=");
-        Log.print(_proxyVar.logId());
+        Log.print(proxyVar.logId());
     }
 }

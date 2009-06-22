@@ -49,8 +49,8 @@ public final class CirJavaFrameDescriptorClipping extends CirTraversal.OutsideBl
     protected void visitJavaFrameDescriptor(CirJavaFrameDescriptor javaFrameDescriptor) {
         CirJavaFrameDescriptor j = javaFrameDescriptor;
         while (j != null) {
-            clipValues(j.locals());
-            clipValues(j.stackSlots());
+            clipValues(j.locals);
+            clipValues(j.stackSlots);
             j = j.parent();
         }
     }

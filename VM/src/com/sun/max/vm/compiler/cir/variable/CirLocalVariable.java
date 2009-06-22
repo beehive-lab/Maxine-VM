@@ -37,7 +37,7 @@ public class CirLocalVariable extends CirSlotVariable {
 
     @Override
     public String toString() {
-        String s = "l" + kind().character() + slotIndex() + "-" + serial();
+        String s = "l" + kind().character + slotIndex() + "-" + serial();
         if (CirNode.printingIds()) {
             s += "_" + id();
         }
@@ -50,7 +50,7 @@ public class CirLocalVariable extends CirSlotVariable {
             return false;
         }
         final CirLocalVariable otherLocalVariable = (CirLocalVariable) other;
-        return kind().character() == otherLocalVariable.kind().character()
+        return kind().character == otherLocalVariable.kind().character
             && slotIndex() == otherLocalVariable.slotIndex()
             && serial() == otherLocalVariable.serial();
     }

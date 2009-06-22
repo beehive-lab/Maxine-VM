@@ -28,39 +28,30 @@ import com.sun.max.vm.compiler.snippet.*;
  *
   * @author Laurent Daynes
   */
-public class StaticTrampolineContext implements StackFrameVisitor {
+public final class StaticTrampolineContext implements StackFrameVisitor {
 
-    private static Pointer _trampolineInstructionPointer;
+    private static Pointer trampolineInstructionPointer;
 
-    boolean _foundFirstTrampolineFrame;
-    Pointer _stackPointer;
-    Pointer _instructionPointer;
+    boolean foundFirstTrampolineFrame;
+    public Pointer stackPointer;
+    public Pointer instructionPointer;
 
     public boolean visitFrame(StackFrame stackFrame) {
         if (stackFrame.isTopFrame() || stackFrame.isAdapter()) {
             return true;
         }
-        final Pointer instructionPointer = stackFrame.instructionPointer();
-        if (_trampolineInstructionPointer.isZero() && Code.codePointerToTargetMethod(instructionPointer).classMethodActor().holder().toJava() == StaticTrampoline.class) {
-            _trampolineInstructionPointer = instructionPointer;
+        final Pointer instructionPointer = stackFrame.instructionPointer;
+        if (trampolineInstructionPointer.isZero() && Code.codePointerToTargetMethod(instructionPointer).classMethodActor().holder().toJava() == StaticTrampoline.class) {
+            StaticTrampolineContext.trampolineInstructionPointer = instructionPointer;
         }
-        if (instructionPointer == _trampolineInstructionPointer) {
-            _foundFirstTrampolineFrame = true;
-        } else if (_foundFirstTrampolineFrame) {
+        if (instructionPointer == trampolineInstructionPointer) {
+            this.foundFirstTrampolineFrame = true;
+        } else if (foundFirstTrampolineFrame) {
             // This is the first non-adapter frame before the trampoline.
-            _stackPointer = stackFrame.stackPointer();
-            _instructionPointer = instructionPointer;
+            this.stackPointer = stackFrame.stackPointer;
+            this.instructionPointer = instructionPointer;
             return false;
         }
         return true;
     }
-
-    public Pointer stackPointer() {
-        return _stackPointer;
-    }
-
-    public Pointer instructionPointer() {
-        return _instructionPointer;
-    }
-
 }

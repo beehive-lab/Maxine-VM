@@ -43,22 +43,18 @@ public interface ClassConstant extends PoolConstant<ClassConstant>, ValueConstan
     public static final class Resolved extends AbstractPoolConstant<ClassConstant> implements ClassConstant {
 
         @INSPECTED
-        private final ClassActor _classActor;
-
-        public ClassActor classActor() {
-            return _classActor;
-        }
+        public final ClassActor classActor;
 
         public Resolved(ClassActor classActor) {
-            _classActor = classActor;
+            this.classActor = classActor;
         }
 
         public TypeDescriptor typeDescriptor() {
-            return _classActor.typeDescriptor();
+            return classActor.typeDescriptor;
         }
 
         public ClassActor resolve(ConstantPool pool, int index) {
-            return _classActor;
+            return classActor;
         }
 
         public boolean isResolvableWithoutClassLoading(ConstantPool pool) {
@@ -90,7 +86,7 @@ public interface ClassConstant extends PoolConstant<ClassConstant>, ValueConstan
         }
 
         public Value value(ConstantPool pool, int index) {
-            return ReferenceValue.from(_classActor);
+            return ReferenceValue.from(classActor);
         }
 
         public String valueString(ConstantPool pool) {

@@ -46,7 +46,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         super(classVerifier, classMethodActor, codeAttribute);
         final int codeLength = codeAttribute.code().length;
         this.interpreter = new Interpreter();
-        this.thisObjectType = classVerifier.getObjectType(classActor().typeDescriptor());
+        this.thisObjectType = classVerifier.getObjectType(classActor().typeDescriptor);
         this.frame = createInitialFrame(classMethodActor);
         this.frameMap = initializeFrameMap(codeAttribute, frame.copy(), classVerifier);
         this.opcodeMap = new Bytecode[codeLength];
@@ -346,7 +346,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
      */
     class Interpreter extends BytecodeVisitor {
 
-        private boolean _constructorInvoked;
+        private boolean constructorInvoked;
 
         @Override
         public void opcodeDecoded() {
@@ -929,9 +929,9 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
             final TypeDescriptor fieldHolder = fieldRef.holder(constantPool());
 
-            ClassActor superClassActor = classActor().superClassActor();
+            ClassActor superClassActor = classActor().superClassActor;
             while (superClassActor != null) {
-                if (superClassActor.typeDescriptor().equals(fieldHolder)) {
+                if (superClassActor.typeDescriptor.equals(fieldHolder)) {
                     // Accessing a field from a super class of the current class.
                     final FieldActor fieldActor = fieldRef.resolve(constantPool(), index);
                     if (!fieldActor.isProtected()) {
@@ -943,7 +943,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                     // Accessing this field is okay
                     return;
                 }
-                superClassActor = superClassActor.superClassActor();
+                superClassActor = superClassActor.superClassActor;
             }
 
             // The field being accessed belongs to a class that isn't a superclass of the current class.
@@ -1218,15 +1218,15 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
             final TypeDescriptor methodHolder = methodRef.holder(constantPool());
 
-            ClassActor superClassActor = classActor().superClassActor();
+            ClassActor superClassActor = classActor().superClassActor;
             while (superClassActor != null) {
-                if (superClassActor.typeDescriptor().equals(methodHolder)) {
+                if (superClassActor.typeDescriptor.equals(methodHolder)) {
                     // Accessing a method from a super class of the current class.
                     final MethodActor methodActor = methodRef.resolve(constantPool(), index);
                     if (!methodActor.isProtected()) {
                         break;
                     } else if (!classActor().packageName().equals(methodActor.holder().packageName())) {
-                        if (receiver.isArray() && methodActor.holder() == ClassRegistry.javaLangObjectActor() && methodActor.name().toString().equals("clone")) {
+                        if (receiver.isArray() && methodActor.holder() == ClassRegistry.javaLangObjectActor() && methodActor.name.toString().equals("clone")) {
                             // Special case: arrays pretend to implement public Object clone().
                             break;
                         }
@@ -1236,7 +1236,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                     // Accessing this method is okay
                     return;
                 }
-                superClassActor = superClassActor.superClassActor();
+                superClassActor = superClassActor.superClassActor;
             }
 
             // The method being accessed belongs to a class that isn't a superclass of the current class.
@@ -1304,8 +1304,8 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                     initializedObject = getObjectType(getTypeDescriptorFromNewBytecode(object.position()));
                 } else {
                     assert uninitializedObject instanceof UninitializedThisType;
-                    initializedObject = getObjectType(classActor().typeDescriptor());
-                    _constructorInvoked = true;
+                    initializedObject = getObjectType(classActor().typeDescriptor);
+                    constructorInvoked = true;
                 }
 
                 frame.replaceStack(uninitializedObject, initializedObject);
@@ -1699,7 +1699,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         @Override
         public void newarray(int tag) {
             frame.pop(INTEGER);
-            final VerificationType arrayType = getVerificationType(Kind.fromNewArrayTag(tag).arrayClassActor().typeDescriptor());
+            final VerificationType arrayType = getVerificationType(Kind.fromNewArrayTag(tag).arrayClassActor().typeDescriptor);
             frame.push(arrayType);
         }
 
@@ -1794,7 +1794,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         public void vreturn() {
             performReturn(TOP);
 
-            if (classMethodActor().isInstanceInitializer() && thisObjectType != OBJECT && !_constructorInvoked) {
+            if (classMethodActor().isInstanceInitializer() && thisObjectType != OBJECT && !constructorInvoked) {
                 throw verifyError("Constructor must call super() or this()");
             }
         }

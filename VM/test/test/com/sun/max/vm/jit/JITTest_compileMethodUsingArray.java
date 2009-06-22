@@ -38,7 +38,7 @@ public class JITTest_compileMethodUsingArray extends JitCompilerTestCase {
     }
 
     String methodNameFor(Kind kind) {
-        final String kindName = kind.name().toString();
+        final String kindName = kind.name.toString();
         final String typeName = kindName.substring(0, 1).toUpperCase() +  kindName.substring(1).toLowerCase();
         return "use" + typeName + "Array";
     }

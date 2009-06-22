@@ -41,7 +41,7 @@ public class BeltwayCardRegion {
 
     public static final int CARD_SHIFT = 9;
     public static final int CARD_SLOT_LENGTH = 1;
-    private static final boolean _debug = false;
+    private static final boolean debug = false;
     private static Pointer adjustedCardTable = Pointer.zero();
     private static Size cardSize = Size.fromInt(1 << CARD_SHIFT);
 

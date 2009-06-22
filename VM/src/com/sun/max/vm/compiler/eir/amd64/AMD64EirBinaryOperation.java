@@ -57,18 +57,18 @@ public abstract class AMD64EirBinaryOperation extends AMD64EirUnaryOperation {
         return (AMD64EirRegister.XMM) destinationLocation();
     }
 
-    private final EirOperand _sourceOperand;
+    private final EirOperand sourceOperand;
 
     public EirOperand sourceOperand() {
-        return _sourceOperand;
+        return sourceOperand;
     }
 
     public EirValue sourceValue() {
-        return _sourceOperand.eirValue();
+        return sourceOperand.eirValue();
     }
 
     public EirLocation sourceLocation() {
-        return _sourceOperand.location();
+        return sourceOperand.location();
     }
 
     public AMD64EirRegister.General sourceGeneralRegister() {
@@ -82,14 +82,14 @@ public abstract class AMD64EirBinaryOperation extends AMD64EirUnaryOperation {
     public AMD64EirBinaryOperation(EirBlock block, EirValue destination, EirOperand.Effect destinationEffect, PoolSet<EirLocationCategory> destinationLocationCategories,
                                                    EirValue source, EirOperand.Effect sourceEffect, PoolSet<EirLocationCategory> sourceLocationCategories) {
         super(block, destination, destinationEffect, destinationLocationCategories);
-        _sourceOperand = new EirOperand(this, sourceEffect, sourceLocationCategories);
-        _sourceOperand.setEirValue(source);
+        sourceOperand = new EirOperand(this, sourceEffect, sourceLocationCategories);
+        sourceOperand.setEirValue(source);
     }
 
     @Override
     public void visitOperands(EirOperand.Procedure visitor) {
         super.visitOperands(visitor);
-        visitor.run(_sourceOperand);
+        visitor.run(sourceOperand);
     }
 
     @Override
@@ -304,7 +304,7 @@ public abstract class AMD64EirBinaryOperation extends AMD64EirUnaryOperation {
                     case IMMEDIATE_32:
                     case IMMEDIATE_64: {
                         final byte sourceImmediate = sourceLocation.asImmediate().value().unsignedToByte();
-                        if (sourceImmediate % kind.width().numberOfBits() == 1) {
+                        if (sourceImmediate % kind.width.numberOfBits == 1) {
                             switch (destinationLocation.category()) {
                                 case INTEGER_REGISTER: {
                                     emit_G_1(emitter, destinationGeneralRegister());

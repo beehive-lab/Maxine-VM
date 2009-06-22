@@ -36,7 +36,7 @@ import com.sun.max.vm.stack.*;
  */
 public class SPARCJitStackFrame extends JitStackFrame<SPARCJitStackFrameLayout> {
 
-    private final Pointer _localVariablesBase;
+    private final Pointer localVariablesBase;
 
     public SPARCJitStackFrame(StackFrame callee, TargetMethod targetMethod,
                     Pointer instructionPointer,
@@ -44,30 +44,30 @@ public class SPARCJitStackFrame extends JitStackFrame<SPARCJitStackFrameLayout> 
                     Pointer framePointer,
                     Pointer localVariablesBase) {
         super(callee, new SPARCJitStackFrameLayout(targetMethod), targetMethod, instructionPointer, framePointer, stackPointer);
-        _localVariablesBase = localVariablesBase;
+        this.localVariablesBase = localVariablesBase;
     }
 
     @Override
     public Pointer localsPointer(int index) {
-        return _localVariablesBase.plus(_layout.localVariableOffset(index));
+        return localVariablesBase.plus(layout.localVariableOffset(index));
     }
 
     @Override
     public Pointer operandStackPointer(int index) {
-        return _localVariablesBase.plus(_layout.operandStackOffset(index));
+        return localVariablesBase.plus(layout.operandStackOffset(index));
     }
 
     @Override
     public int operandStackDepth() {
         final Pointer operandStackBase = operandStackPointer(0);
-        return Unsigned.idiv(stackPointer().minus(operandStackBase).toInt(), JitStackFrameLayout.JIT_SLOT_SIZE);
+        return Unsigned.idiv(stackPointer.minus(operandStackBase).toInt(), JitStackFrameLayout.JIT_SLOT_SIZE);
     }
 
     @Override
     public boolean isSameFrame(StackFrame stackFrame) {
         if (stackFrame instanceof SPARCJitStackFrame) {
             final SPARCJitStackFrame jitStackFrame = (SPARCJitStackFrame) stackFrame;
-            return targetMethod().equals(stackFrame.targetMethod()) && _localVariablesBase.equals(jitStackFrame._localVariablesBase);
+            return targetMethod().equals(stackFrame.targetMethod()) && localVariablesBase.equals(jitStackFrame.localVariablesBase);
         }
         return false;
     }

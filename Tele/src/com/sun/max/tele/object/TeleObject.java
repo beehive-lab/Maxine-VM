@@ -163,7 +163,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      */
     public TeleHub getTeleHub() {
         if (_teleHub == null) {
-            final Reference hubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout().readHubReferenceAsWord(_reference));
+            final Reference hubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(_reference));
             _teleHub = (TeleHub) teleVM().makeTeleObject(hubReference);
         }
         return _teleHub;
@@ -173,7 +173,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * @return the "misc" word from the header of this object in the teleVM
      */
     public Word getMiscWord() {
-        return teleVM().layoutScheme().generalLayout().readMisc(_reference);
+        return teleVM().layoutScheme().generalLayout.readMisc(_reference);
     }
 
     /**
@@ -211,7 +211,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
             for (FieldActor fieldActor : classActor.localInstanceFieldActors()) {
                 instanceFieldActors.add(fieldActor);
             }
-            collectInstanceFieldActors(classActor.superClassActor(), instanceFieldActors);
+            collectInstanceFieldActors(classActor.superClassActor, instanceFieldActors);
         }
     }
 
@@ -351,14 +351,14 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
                 try {
                     final Value value = teleObject.readFieldValue(fieldActor);
                     final Object newJavaValue;
-                    if (fieldActor.kind() == Kind.REFERENCE) {
+                    if (fieldActor.kind == Kind.REFERENCE) {
                         final TeleObject teleFieldReferenceObject = teleObject.teleVM().makeTeleObject(value.asReference());
                         if (teleFieldReferenceObject == null) {
                             newJavaValue = null;
                         } else {
                             newJavaValue = teleFieldReferenceObject.makeDeepCopy(context);
                         }
-                    } else if (fieldActor.kind() == Kind.WORD) {
+                    } else if (fieldActor.kind == Kind.WORD) {
                         final Class<Class< ? extends Word>> type = null;
                         final Class< ? extends Word> wordType = StaticLoophole.cast(type, fieldActor.toJava().getType());
                         newJavaValue = value.asWord().as(wordType);
@@ -401,6 +401,6 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     public ReferenceTypeProvider getReferenceType() {
-        return teleVM().findTeleClassActor(classActorForType().typeDescriptor());
+        return teleVM().findTeleClassActor(classActorForType().typeDescriptor);
     }
 }

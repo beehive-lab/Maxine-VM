@@ -205,7 +205,7 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
                             bytecodeScanner.scanInstruction(bytecode, location.bytecodePosition());
                         }
                     } catch (Throwable throwable) {
-                        ProgramError.unexpected("could not scan byte code in " + targetMethod.classMethodActor().holder().name() + "." + targetMethod.classMethodActor().name(), throwable);
+                        ProgramError.unexpected("could not scan byte code in " + targetMethod.classMethodActor().holder().name + "." + targetMethod.classMethodActor().name, throwable);
                     }
                 }
             }

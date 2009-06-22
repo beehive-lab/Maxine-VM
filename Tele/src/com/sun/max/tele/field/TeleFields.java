@@ -297,12 +297,12 @@ public class TeleFields extends AbstractTeleVMHolder {
                 final Kind kind = Kind.fromJava(type);
                 final String holder = c.getName().substring(c.getPackage().getName().length() + 1);
                 final String name = field.getName();
-                final String kindName = kind.name().string();
+                final String kindName = kind.name.string;
                 final String inspectorFieldName = holder + (name.charAt(0) == '_' ? name : '_' + name);
                 final String inspectorFieldType = "Tele" + (isStatic ? "Static" : "Instance") + Strings.capitalizeFirst(kindName, true) + "FieldAccess";
                 writer.print("public final " + inspectorFieldType + " " + inspectorFieldName + " = ");
 
-                switch (kind.asEnum()) {
+                switch (kind.asEnum) {
                     case BOOLEAN:
                     case BYTE:
                     case CHAR:

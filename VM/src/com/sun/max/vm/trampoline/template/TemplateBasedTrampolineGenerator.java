@@ -42,22 +42,21 @@ import com.sun.max.vm.trampoline.*;
  */
 public abstract class TemplateBasedTrampolineGenerator extends TrampolineGenerator {
 
-    protected final ClassMethodActor _trampolineClassMethodActor;
+    protected final ClassMethodActor trampolineClassMethodActor;
 
     TemplateBasedTrampolineGenerator(ClassMethodActor trampolineClassMethodActor) {
-        super();
-        _trampolineClassMethodActor = trampolineClassMethodActor;
+        this.trampolineClassMethodActor = trampolineClassMethodActor;
     }
 
     @CONSTANT_WHEN_NOT_ZERO
-    private TargetMethod _template;
+    private TargetMethod template;
 
     private synchronized void generateTemplate() {
         if (MaxineVM.isPrototyping()) {
             // The template is created at prototyping time only.
-            if (_template == null) {
-                _template = CompilationScheme.Static.forceFreshCompile(_trampolineClassMethodActor, CompilationDirective.DEFAULT);
-                assert _template.referenceLiterals().length == 1;
+            if (template == null) {
+                template = CompilationScheme.Static.forceFreshCompile(trampolineClassMethodActor, CompilationDirective.DEFAULT);
+                assert template.referenceLiterals().length == 1;
             }
         }
     }
@@ -72,11 +71,11 @@ public abstract class TemplateBasedTrampolineGenerator extends TrampolineGenerat
      */
     @Override
     public DynamicTrampoline createTrampoline(int tableIndex) {
-        if (MaxineVM.isPrototyping() && _template == null) {
+        if (MaxineVM.isPrototyping() && template == null) {
             generateTemplate();
         }
         // Clone the template.
-        final TargetMethod trampoline = _template.duplicate();
+        final TargetMethod trampoline = template.duplicate();
         final DynamicTrampoline dynamicTrampoline = allocateTrampoline(tableIndex, trampoline);
         // Fix the clone's literal constant holding the index to the dispatch table
         final Object [] literals = trampoline.referenceLiterals();

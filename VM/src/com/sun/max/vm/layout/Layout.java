@@ -41,7 +41,7 @@ public final class Layout {
     @UNSAFE
     @FOLD
     public static GeneralLayout generalLayout() {
-        return layoutScheme().generalLayout();
+        return layoutScheme().generalLayout;
     }
 
     public enum HeaderField {
@@ -55,19 +55,19 @@ public final class Layout {
     @UNSAFE
     @FOLD
     public static TupleLayout tupleLayout() {
-        return layoutScheme().tupleLayout();
+        return layoutScheme().tupleLayout;
     }
 
     @UNSAFE
     @FOLD
     public static HybridLayout hybridLayout() {
-        return layoutScheme().hybridLayout();
+        return layoutScheme().hybridLayout;
     }
 
     @UNSAFE
     @FOLD
     public static ArrayHeaderLayout arrayHeaderLayout() {
-        return layoutScheme().arrayHeaderLayout();
+        return layoutScheme().arrayHeaderLayout;
     }
 
     @ACCESSOR(Pointer.class)
@@ -461,7 +461,7 @@ public final class Layout {
     @UNSAFE
     @FOLD
     public static ByteArrayLayout byteArrayLayout() {
-        return layoutScheme().byteArrayLayout();
+        return layoutScheme().byteArrayLayout;
     }
 
     @ACCESSOR(Reference.class)
@@ -503,7 +503,7 @@ public final class Layout {
     @UNSAFE
     @FOLD
     private static BooleanArrayLayout booleanArrayLayout() {
-        return layoutScheme().booleanArrayLayout();
+        return layoutScheme().booleanArrayLayout;
     }
 
     @ACCESSOR(Reference.class)
@@ -545,7 +545,7 @@ public final class Layout {
     @UNSAFE
     @FOLD
     private static ShortArrayLayout shortArrayLayout() {
-        return layoutScheme().shortArrayLayout();
+        return layoutScheme().shortArrayLayout;
     }
 
     @ACCESSOR(Reference.class)
@@ -587,7 +587,7 @@ public final class Layout {
     @UNSAFE
     @FOLD
     private static CharArrayLayout charArrayLayout() {
-        return layoutScheme().charArrayLayout();
+        return layoutScheme().charArrayLayout;
     }
 
     @ACCESSOR(Reference.class)
@@ -629,7 +629,7 @@ public final class Layout {
     @UNSAFE
     @FOLD
     private static IntArrayLayout intArrayLayout() {
-        return layoutScheme().intArrayLayout();
+        return layoutScheme().intArrayLayout;
     }
 
     @ACCESSOR(Reference.class)
@@ -671,7 +671,7 @@ public final class Layout {
     @UNSAFE
     @FOLD
     private static FloatArrayLayout floatArrayLayout() {
-        return layoutScheme().floatArrayLayout();
+        return layoutScheme().floatArrayLayout;
     }
 
     @ACCESSOR(Reference.class)
@@ -713,7 +713,7 @@ public final class Layout {
     @UNSAFE
     @FOLD
     private static LongArrayLayout longArrayLayout() {
-        return layoutScheme().longArrayLayout();
+        return layoutScheme().longArrayLayout;
     }
 
     @ACCESSOR(Reference.class)
@@ -755,7 +755,7 @@ public final class Layout {
     @UNSAFE
     @FOLD
     private static DoubleArrayLayout doubleArrayLayout() {
-        return layoutScheme().doubleArrayLayout();
+        return layoutScheme().doubleArrayLayout;
     }
 
     @ACCESSOR(Reference.class)
@@ -797,7 +797,7 @@ public final class Layout {
     @UNSAFE
     @FOLD
     private static WordArrayLayout wordArrayLayout() {
-        return layoutScheme().wordArrayLayout();
+        return layoutScheme().wordArrayLayout;
     }
 
     @ACCESSOR(Reference.class)
@@ -839,7 +839,7 @@ public final class Layout {
     @UNSAFE
     @FOLD
     public static ReferenceArrayLayout referenceArrayLayout() {
-        return layoutScheme().referenceArrayLayout();
+        return layoutScheme().referenceArrayLayout;
     }
 
     @ACCESSOR(Reference.class)

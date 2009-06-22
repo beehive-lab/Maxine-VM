@@ -126,19 +126,19 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
     public static final int CALL_SAVE_AREA_SLOTS = 2;
     public static final int CALL_SAVE_AREA_SIZE = CALL_SAVE_AREA_SLOTS * STACK_SLOT_SIZE;
 
-    private final int _numberOfTemplateSlots;
+    private final int numberOfTemplateSlots;
 
     public SPARCJitStackFrameLayout(TargetMethod targetMethod) {
         super(targetMethod.classMethodActor());
         final int frameSlots = Unsigned.idiv(targetMethod.frameSize(), STACK_SLOT_SIZE);
         // The extra JIT_SLOT_SIZE is the saving area for the literal base.
         final int nonTemplateSlots = CALL_SAVE_AREA_SLOTS + Unsigned.idiv(sizeOfLocalArea(), STACK_SLOT_SIZE);
-        _numberOfTemplateSlots = frameSlots - nonTemplateSlots;
+        numberOfTemplateSlots = frameSlots - nonTemplateSlots;
         assert targetMethod.frameSize() == frameSize();
     }
     public SPARCJitStackFrameLayout(ClassMethodActor classMethodActor, int numberOfTemplateSlots) {
         super(classMethodActor);
-        _numberOfTemplateSlots = numberOfTemplateSlots;
+        this.numberOfTemplateSlots = numberOfTemplateSlots;
     }
 
     @Override
@@ -188,14 +188,14 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
 
             // Local variables are accessed via FP, not SP.
             final int parameterStart = frameSize() - sizeOfLocalArea();
-            return parameterStart + JIT_SLOT_SIZE * (_numberOfParameterSlots - 1 - localVariableIndex);
+            return parameterStart + JIT_SLOT_SIZE * (numberOfParameterSlots - 1 - localVariableIndex);
         }
         // The slot index is at a negative offset from FP.
         // We need to count one extra-slot for LB
         //
         // | non-parameter locals | LB | template slots | caller FP | return address | parameters |
         //       ^ slot index          ^ FP
-        final int slotIndex = _numberOfParameterSlots - 2 - localVariableIndex;
+        final int slotIndex = numberOfParameterSlots - 2 - localVariableIndex;
         return slotIndex * JIT_SLOT_SIZE;
     }
 
@@ -214,14 +214,14 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
 
     @Override
     public int numberOfTemplateSlots() {
-        return _numberOfTemplateSlots;
+        return numberOfTemplateSlots;
     }
 
     @Override
     public int maximumSlotOffset() {
-        if (_numberOfParameterSlots == 0) {
+        if (numberOfParameterSlots == 0) {
             // if there are no parameters, return the offset to the end of the last template slot
-            return sizeOfLocalArea() + _numberOfTemplateSlots * STACK_SLOT_SIZE;
+            return sizeOfLocalArea() + numberOfTemplateSlots * STACK_SLOT_SIZE;
         }
         // return the end of the first parameter
         return localVariableOffset(0) + JIT_SLOT_SIZE;
@@ -229,7 +229,7 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
 
     @Override
     public int lowestSlotOffset() {
-        return operandStackOffset(_numberOfOperandStackSlots - 1);
+        return operandStackOffset(numberOfOperandStackSlots - 1);
     }
 
     @Override
@@ -271,7 +271,7 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
             @Override
             protected String nameOfSlot(int offset) {
                 final int templateSlotIndex = Unsigned.idiv(offset, STACK_SLOT_SIZE);
-                if (templateSlotIndex >= 0 && templateSlotIndex < _numberOfTemplateSlots) {
+                if (templateSlotIndex >= 0 && templateSlotIndex < numberOfTemplateSlots) {
                     return "template slot " + templateSlotIndex;
 
                 }

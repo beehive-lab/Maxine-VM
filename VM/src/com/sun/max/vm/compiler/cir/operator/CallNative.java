@@ -66,6 +66,6 @@ public class CallNative extends JavaOperator {
 
     @Override
     public String toString() {
-        return "CallNative:" + classMethodActor.name();
+        return "CallNative:" + classMethodActor.name;
     }
 }

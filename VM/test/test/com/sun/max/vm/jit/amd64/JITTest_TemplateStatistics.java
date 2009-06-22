@@ -48,7 +48,7 @@ public class JITTest_TemplateStatistics extends TemplateTableTestCase {
         final int [] maxStopPosition = new int[] {0 };
         final TemplateProcessor processor = new TemplateProcessor() {
             public void processTemplate(CompiledBytecodeTemplate template) {
-                final int numStopPositions = template.targetMethod().numberOfStopPositions();
+                final int numStopPositions = template.targetMethod.numberOfStopPositions();
                 if (numStopPositions > maxStopPosition[0]) {
                     maxStopPosition[0] = numStopPositions;
                 }
@@ -58,7 +58,7 @@ public class JITTest_TemplateStatistics extends TemplateTableTestCase {
                     stopPositionHistogram[stopPositionHistogram.length - 1]++;
                 }
                 if (numStopPositions > 0) {
-                    final TargetMethod targetTemplate = template.targetMethod();
+                    final TargetMethod targetTemplate = template.targetMethod;
                     Trace.stream().println(targetTemplate.name() + " comprises #"  + numStopPositions + "stop positions (#direct calls: " + targetTemplate.numberOfDirectCalls() +
                                     ", #indirect calls " + targetTemplate.numberOfIndirectCalls() + ")");
 

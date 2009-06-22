@@ -82,11 +82,11 @@ public class CirDeflation {
 
     class Folding extends CallTransformation {
 
-        final CirFoldable _foldable;
+        final CirFoldable foldable;
 
         Folding(CirCall call, CirFoldable foldable, CirValue[] arguments) {
             super(call, arguments);
-            _foldable = foldable;
+            this.foldable = foldable;
         }
 
         @Override
@@ -97,7 +97,7 @@ public class CirDeflation {
         @Override
         public boolean run() {
             try {
-                final CirCall newCall = _foldable.fold(optimizer, arguments);
+                final CirCall newCall = foldable.fold(optimizer, arguments);
                 call.setProcedure(newCall.procedure());
                 call.setArguments(newCall.arguments());
                 return true;
@@ -108,7 +108,7 @@ public class CirDeflation {
 
         @Override
         public String target() {
-            return _foldable.toString();
+            return foldable.toString();
         }
     }
 

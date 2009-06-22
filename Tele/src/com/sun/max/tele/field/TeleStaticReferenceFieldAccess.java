@@ -34,7 +34,7 @@ public class TeleStaticReferenceFieldAccess extends TeleStaticFieldAccess {
 
     public TeleStaticReferenceFieldAccess(Class holder, String name, Class type) {
         super(holder, name, Kind.fromJava(type));
-        ProgramError.check(ClassActor.fromJava(type).isAssignableFrom(fieldActor().descriptor().resolve(fieldActor().holder().classLoader())), "field has wrong type: " + name + " in class: " + holder);
+        ProgramError.check(ClassActor.fromJava(type).isAssignableFrom(fieldActor().descriptor().resolve(fieldActor().holder().classLoader)), "field has wrong type: " + name + " in class: " + holder);
     }
 
     public Reference readReference(TeleVM teleVM) {

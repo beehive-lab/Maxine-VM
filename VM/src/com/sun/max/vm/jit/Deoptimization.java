@@ -41,12 +41,12 @@ public abstract class Deoptimization implements StackFrameVisitor, TargetLocatio
         return parentFrame;
     }
 
-    private boolean _isParentFrameOptimized = true;
+    private boolean isParentFrameOptimized = true;
 
-    private final RandomAccessWordBuffer _buffer = new RandomAccessWordBuffer();
+    private final RandomAccessWordBuffer buffer = new RandomAccessWordBuffer();
 
     protected RandomAccessWordBuffer buffer() {
-        return _buffer;
+        return buffer;
     }
 
     protected Deoptimization() {
@@ -58,7 +58,7 @@ public abstract class Deoptimization implements StackFrameVisitor, TargetLocatio
             return true;
         }
         if (stackFrame.isAdapter()) {
-            _isParentFrameOptimized = false;
+            isParentFrameOptimized = false;
             return true;
         }
         parentFrame = stackFrame;
@@ -82,7 +82,7 @@ public abstract class Deoptimization implements StackFrameVisitor, TargetLocatio
             d = next;
             createJitFrame(d, Deoptimizer.Situation.SAFEPOINT);
         }
-        if (_isParentFrameOptimized) {
+        if (isParentFrameOptimized) {
             final ClassMethodActor classMethodActor = d.classMethodActor();
             if (!(classMethodActor.isStatic() && (classMethodActor.descriptor().numberOfParameters() == 0))) {
                 createAdapterFrame(d);

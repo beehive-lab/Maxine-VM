@@ -59,11 +59,11 @@ import com.sun.max.vm.type.*;
  */
 public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
 
-    private static final VMOption _versionOption = register(new VMOption(
+    private static final VMOption versionOption = register(new VMOption(
         "-version", "print product version and exit"), MaxineVM.Phase.STARTING);
-    private static final VMOption _showVersionOption = register(new VMOption(
+    private static final VMOption showVersionOption = register(new VMOption(
         "-showversion", "print product version and continue"), MaxineVM.Phase.STARTING);
-    private static final VMOption _D64Option = register(new VMOption("-d64",
+    private static final VMOption D64Option = register(new VMOption("-d64",
         "Selects the 64-bit data model if available. Currently ignored."), MaxineVM.Phase.PRISTINE);
 
     public JavaRunScheme(VMConfiguration vmConfiguration) {
@@ -73,7 +73,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     /**
      * JDK methods that need to be re-executed at startup, e.g. to re-register native methods.
      */
-    private StaticMethodActor[] _initIDMethods;
+    private StaticMethodActor[] initIDMethods;
 
     /**
      * At prototyping time, searches the class registry for non-Maxine classes that have methods called
@@ -85,15 +85,15 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         final AppendableSequence<StaticMethodActor> methods = new LinkSequence<StaticMethodActor>();
         final String maxinePackagePrefix = new com.sun.max.Package().name();
         for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
-            if (!classActor.name().toString().startsWith(maxinePackagePrefix)) { // non-Maxine class => JDK class
+            if (!classActor.name.toString().startsWith(maxinePackagePrefix)) { // non-Maxine class => JDK class
                 for (StaticMethodActor method : classActor.localStaticMethodActors()) {
-                    if (method.name().equals("initIDs") && (method.descriptor().numberOfParameters() == 0) && method.resultKind() == Kind.VOID) {
+                    if (method.name.equals("initIDs") && (method.descriptor().numberOfParameters() == 0) && method.resultKind() == Kind.VOID) {
                         methods.append(method);
                     }
                 }
             }
         }
-        _initIDMethods = Sequence.Static.toArray(methods, StaticMethodActor.class);
+        initIDMethods = Sequence.Static.toArray(methods, StaticMethodActor.class);
         return methods;
     }
 
@@ -102,7 +102,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
      */
     public void runNativeInitializationMethods() {
         final AppendableSequence<StaticMethodActor> methods = new LinkSequence<StaticMethodActor>();
-        for (StaticMethodActor method : _initIDMethods) {
+        for (StaticMethodActor method : initIDMethods) {
             try {
                 final MethodState methodState = method.methodState();
                 if (methodState == null || methodState.currentTargetMethod() == null) {
@@ -123,7 +123,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 ProgramError.unexpected(throwable);
             }
         }
-        _initIDMethods = Sequence.Static.toArray(methods, StaticMethodActor.class);
+        initIDMethods = Sequence.Static.toArray(methods, StaticMethodActor.class);
     }
 
     /**
@@ -224,11 +224,11 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
 
             error = false;
 
-            if (_versionOption.isPresent()) {
+            if (versionOption.isPresent()) {
                 sun.misc.Version.print();
                 return;
             }
-            if (_showVersionOption.isPresent()) {
+            if (showVersionOption.isPresent()) {
                 sun.misc.Version.print();
             }
 

@@ -108,7 +108,7 @@ public final class MaxineMessenger {
 
     private <Message_Type extends MaxineMessage> void consume(Message_Type message) {
         final Class<MaxineMessage.Receiver<Message_Type>> type = null;
-        final MaxineMessage.Receiver<Message_Type> receiver = StaticLoophole.cast(type, messageTagToReceiver.get(message.tag()));
+        final MaxineMessage.Receiver<Message_Type> receiver = StaticLoophole.cast(type, messageTagToReceiver.get(message.tag));
         assert receiver != null;
         receiver.consume(message);
     }

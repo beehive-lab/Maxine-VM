@@ -212,17 +212,17 @@ public final class Machine extends AbstractTeleVMHolder{
         final FieldRefConstant fieldRef = constantPool.fieldAt(cpIndex);
         if (teleVM() != null) {
             final FieldActor fieldActor = fieldRef.resolve(constantPool, cpIndex);
-            final TeleClassActor teleClassActor = teleVM().findTeleClassActor(fieldActor.holder().typeDescriptor());
+            final TeleClassActor teleClassActor = teleVM().findTeleClassActor(fieldActor.holder().typeDescriptor);
             final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
             final Reference staticTupleReference = teleStaticTuple.reference();
 
-            switch (fieldActor.kind().asEnum()) {
+            switch (fieldActor.kind.asEnum) {
                 case BOOLEAN:
                 case BYTE:
                 case CHAR:
                 case SHORT:
                 case INT: {
-                    final int intValue = fieldActor.kind().readValue(staticTupleReference, fieldActor.offset()).toInt();
+                    final int intValue = fieldActor.kind.readValue(staticTupleReference, fieldActor.offset()).toInt();
                     return IntValue.from(intValue);
                 }
                 case FLOAT: {
@@ -255,7 +255,7 @@ public final class Machine extends AbstractTeleVMHolder{
         } else {
             final ConstantPool cp = _currentThread.frame().constantPool();
             final FieldActor fieldActor = cp.fieldAt(cpIndex).resolve(cp, cpIndex);
-            fieldActor.writeValue(fieldActor.holder().staticTuple(), fieldActor.kind().convert(value));
+            fieldActor.writeValue(fieldActor.holder().staticTuple(), fieldActor.kind.convert(value));
         }
     }
 
@@ -263,7 +263,7 @@ public final class Machine extends AbstractTeleVMHolder{
         final ConstantPool constantPool = _currentThread.frame().constantPool();
         final FieldRefConstant fieldRef = constantPool.fieldAt(cpIndex);
         final FieldActor fieldActor = fieldRef.resolve(constantPool, cpIndex);
-        final Kind kind = fieldActor.kind();
+        final Kind kind = fieldActor.kind;
 
         if (kind.isExtendedPrimitiveValue()) {
             return widenIfNecessary(fieldActor.readValue(instance));
@@ -287,7 +287,7 @@ public final class Machine extends AbstractTeleVMHolder{
             if (value instanceof TeleReferenceValue) {
                 fieldActor.writeValue(instance, TeleReferenceValue.from(teleVM(), makeLocalReference((TeleReference) value.asReference())));
             } else {
-                final Value val = fieldActor.kind().convert(value);
+                final Value val = fieldActor.kind.convert(value);
                 fieldActor.writeValue(instance, val);
             }
         }
@@ -380,11 +380,11 @@ public final class Machine extends AbstractTeleVMHolder{
 
         final ClassActor remoteReferenceClassActor = teleVM().makeClassActorForTypeOf(remoteReference);
 
-        if (remoteReferenceClassActor.typeDescriptor().equals(JavaTypeDescriptor.STRING)) {
+        if (remoteReferenceClassActor.typeDescriptor.equals(JavaTypeDescriptor.STRING)) {
             return Reference.fromJava(teleVM().getString(remoteReference));
         } else if (remoteReferenceClassActor.isArrayClassActor() && remoteReferenceClassActor.componentClassActor().isPrimitiveClassActor()) {
             final int arrayLength = Layout.readArrayLength(remoteReference);
-            return Reference.fromJava(readRemoteArray(remoteReference, arrayLength, remoteReferenceClassActor.componentClassActor().typeDescriptor()));
+            return Reference.fromJava(readRemoteArray(remoteReference, arrayLength, remoteReferenceClassActor.componentClassActor().typeDescriptor));
         } else {
             //should put some tracing error message here
             return remoteReference;

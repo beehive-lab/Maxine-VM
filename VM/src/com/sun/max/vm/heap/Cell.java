@@ -56,7 +56,7 @@ public class Cell {
     @INLINE
     @NO_SAFEPOINTS("avoid inconsistent object contents")
     public static Object plantArray(Pointer cell, DynamicHub hub, int length) {
-        final Size size = Layout.getArraySize(hub.classActor().componentClassActor().kind(), length);
+        final Size size = Layout.getArraySize(hub.classActor().componentClassActor().kind, length);
         return plantArray(cell, size, hub, length);
     }
 

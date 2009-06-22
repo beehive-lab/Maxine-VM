@@ -111,7 +111,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                         VMRegister.getCpuStackPointer(),
                         VMRegister.getCpuFramePointer(),
                         context);
-        final Pointer callSite = context.instructionPointer();
+        final Pointer callSite = context.instructionPointer;
         // Get the target method that calls the static trampoline
         final TargetMethod caller = Code.codePointerToTargetMethod(callSite);
         // We can now search the caller for the ClassMethodActor corresponding to the direct call.
@@ -313,7 +313,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                 final Address catchAddress = targetMethod.throwAddressToCatchAddress(instructionPointer);
                 if (!catchAddress.isZero()) {
                     final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
-                    final Throwable throwable = stackUnwindingContext._throwable;
+                    final Throwable throwable = stackUnwindingContext.throwable;
                     if (!(throwable instanceof StackOverflowError) || VmThread.current().hasSufficentStackToReprotectGuardPage(stackPointer)) {
                         // Reset the stack walker
                         stackFrameWalker.reset();

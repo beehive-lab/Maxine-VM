@@ -57,8 +57,8 @@ public abstract class CirTraversal extends CirVisitor {
     protected void visitJavaFrameDescriptor(CirJavaFrameDescriptor javaFrameDescriptor) {
         CirJavaFrameDescriptor j = javaFrameDescriptor;
         while (j != null) {
-            addValues(j.locals());
-            addValues(j.stackSlots());
+            addValues(j.locals);
+            addValues(j.stackSlots);
             j = j.parent();
         }
     }

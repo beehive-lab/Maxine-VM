@@ -84,7 +84,7 @@ public class Frame {
     public String toString() {
         String name = "null";
         if (method != null) {
-            name = method.name().toString();
+            name = method.name.toString();
         }
         return name + " lp: " + lp + ", sp: " + sp + ", pc: " + pc;
     }

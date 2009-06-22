@@ -24,11 +24,11 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.tir.pipeline.*;
 
 public class TirMethodCall extends TirCall {
-    private TirState _state;
+    private TirState state;
 
     public TirMethodCall(ClassMethodActor method, TirState state, TirInstruction... arguments) {
         super(method, arguments);
-        _state = state;
+        this.state = state;
     }
 
     @Override
@@ -38,11 +38,11 @@ public class TirMethodCall extends TirCall {
 
     @Override
     public String toString() {
-        return "METHOD " + method.name().toString();
+        return "METHOD " + method.name.toString();
     }
 
     public TirState state() {
-        return _state;
+        return state;
     }
 
 }

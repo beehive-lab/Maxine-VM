@@ -50,17 +50,17 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
         if (phase == MaxineVM.Phase.PRISTINE) {
             final Size heapSize = calculateHeapSize();
             final Address address = allocateMemory(heapSize);
-            _beltwayConfiguration.initializeBeltWayConfiguration(address.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()), heapSize.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()).asSize(), 3,
+            beltwayConfiguration.initializeBeltWayConfiguration(address.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()), heapSize.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()).asSize(), 3,
                             percentages);
             beltManager.initializeBelts();
             if (Heap.verbose()) {
                 beltManager.printBeltsInfo();
             }
             final Size coveredRegionSize = beltManager.getEnd().minus(Heap.bootHeapRegion().start()).asSize();
-            _cardRegion.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize));
-            sideTable.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize).plus(_cardRegion.cardTableSize()).roundedUpBy(
+            cardRegion.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize));
+            sideTable.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize).plus(cardRegion.cardTableSize()).roundedUpBy(
                             Platform.target().pageSize()));
-            BeltwayCardRegion.switchToRegularCardTable(_cardRegion.cardTableBase().asPointer());
+            BeltwayCardRegion.switchToRegularCardTable(cardRegion.cardTableBase().asPointer());
             TeleHeapInfo.registerMemoryRegions(getEdenSpace(), getToSpace(), getMatureSpace());
         } else if (phase == MaxineVM.Phase.STARTING) {
             collectorThread = new BeltwayStopTheWorldDaemon("GC", beltCollector);
@@ -104,7 +104,7 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
         if (!MaxineVM.isRunning()) {
             return bumpAllocateSlowPath(getEdenSpace(), size);
         }
-        if (BeltwayConfiguration._useTLABS) {
+        if (BeltwayConfiguration.useTLABS) {
             return tlabAllocate(getEdenSpace(), size);
         }
         return heapAllocate(getEdenSpace(), size);
@@ -141,7 +141,7 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
             }
         }
 
-        _cardRegion.clearAllCards();
+        cardRegion.clearAllCards();
         return true;
     }
 

@@ -48,7 +48,7 @@ public class GCTracingObserver implements MonitorObserver {
                 Log.println("Null ClassActor");
                 return;
             }
-            final String sourceFileName = actor.sourceFileName();
+            final String sourceFileName = actor.sourceFileName;
             if (sourceFileName == null) {
                 Log.println("Null source file name");
                 return;

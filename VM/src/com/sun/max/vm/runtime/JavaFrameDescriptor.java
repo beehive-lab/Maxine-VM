@@ -54,11 +54,17 @@ public class JavaFrameDescriptor<Slot_Type> extends BytecodeLocation {
     /**
      * The Java frame state at the inlined call site of this frame.
      */
-    private final JavaFrameDescriptor<Slot_Type> _parent;
+    public final JavaFrameDescriptor<Slot_Type> parent;
 
-    private final Slot_Type[] _locals;
+    /**
+     * An array of locations mapping to the Java locals at the same index.
+     */
+    public final Slot_Type[] locals;
 
-    private final Slot_Type[] _stackSlots;
+    /**
+     * An array of locations mapping to the Java expression stack slots at the same index.
+     */
+    public final Slot_Type[] stackSlots;
 
     /**
      * Creates a Java frame descriptor.
@@ -72,9 +78,9 @@ public class JavaFrameDescriptor<Slot_Type> extends BytecodeLocation {
     public JavaFrameDescriptor(JavaFrameDescriptor<Slot_Type> parent, ClassMethodActor classMethodActor, int bytecodePosition, Slot_Type[] locals, Slot_Type[] stackSlots) {
         super(classMethodActor, bytecodePosition);
         assert classMethodActor != null;
-        _parent = parent;
-        _locals = locals;
-        _stackSlots = stackSlots;
+        this.parent = parent;
+        this.locals = locals;
+        this.stackSlots = stackSlots;
     }
 
     /**
@@ -84,7 +90,7 @@ public class JavaFrameDescriptor<Slot_Type> extends BytecodeLocation {
      */
     @Override
     public JavaFrameDescriptor<Slot_Type> parent() {
-        return _parent;
+        return parent;
     }
 
     /**
@@ -92,10 +98,10 @@ public class JavaFrameDescriptor<Slot_Type> extends BytecodeLocation {
      */
     public final int depth() {
         int result = 1;
-        JavaFrameDescriptor j = _parent;
+        JavaFrameDescriptor j = parent;
         while (j != null) {
             result++;
-            j = j._parent;
+            j = j.parent;
         }
         return result;
     }
@@ -107,16 +113,16 @@ public class JavaFrameDescriptor<Slot_Type> extends BytecodeLocation {
      */
     public Iterator<JavaFrameDescriptor<Slot_Type>> inlinedFrames() {
         return new Iterator<JavaFrameDescriptor<Slot_Type>>() {
-            JavaFrameDescriptor<Slot_Type> _next = JavaFrameDescriptor.this;
+            JavaFrameDescriptor<Slot_Type> next = JavaFrameDescriptor.this;
             public boolean hasNext() {
-                return _next != null;
+                return next != null;
             }
             public JavaFrameDescriptor<Slot_Type> next() {
                 if (!hasNext()) {
                     throw new NoSuchElementException();
                 }
-                final JavaFrameDescriptor<Slot_Type> next = _next;
-                _next = _next._parent;
+                final JavaFrameDescriptor<Slot_Type> next = this.next;
+                this.next = this.next.parent;
                 return next;
             }
             public void remove() {
@@ -125,22 +131,8 @@ public class JavaFrameDescriptor<Slot_Type> extends BytecodeLocation {
         };
     }
 
-    /**
-     * Gets an array of locations mapping to the Java locals at the same index.
-     */
-    public final Slot_Type[] locals() {
-        return _locals;
-    }
-
-    /**
-     * Gets an array of locations mapping to the Java expression stack slots at the same index.
-     */
-    public final Slot_Type[] stackSlots() {
-        return _stackSlots;
-    }
-
     public final int maxSlots() {
-        return Math.max(_stackSlots.length, _locals.length);
+        return Math.max(stackSlots.length, locals.length);
     }
 
     protected boolean slotsEqual(Slot_Type[] slots1, Slot_Type[] slots2) {
@@ -154,12 +146,12 @@ public class JavaFrameDescriptor<Slot_Type> extends BytecodeLocation {
             final JavaFrameDescriptor<Slot_Type> descriptor = StaticLoophole.cast(type, other);
             if (classMethodActor().equals(descriptor.classMethodActor()) &&
                             bytecodePosition() == descriptor.bytecodePosition() &&
-                            slotsEqual(_locals, descriptor._locals) &&
-                            slotsEqual(_stackSlots, descriptor._stackSlots)) {
-                if (_parent == null) {
+                            slotsEqual(locals, descriptor.locals) &&
+                            slotsEqual(stackSlots, descriptor.stackSlots)) {
+                if (parent == null) {
                     return descriptor.parent() == null;
                 }
-                return _parent.equals(descriptor._parent);
+                return parent.equals(descriptor.parent);
             }
         }
         return false;
@@ -176,12 +168,12 @@ public class JavaFrameDescriptor<Slot_Type> extends BytecodeLocation {
             final int bytecodePosition = javaFrameDescriptor.bytecodePosition();
             s += " where: " + classMethodActor.toStackTraceElement(bytecodePosition) + "@" + bytecodePosition;
             s += "\nlocals:";
-            for (int i = 0; i < javaFrameDescriptor._locals.length; i++) {
-                s += " [" + i + "]=" + javaFrameDescriptor._locals[i];
+            for (int i = 0; i < javaFrameDescriptor.locals.length; i++) {
+                s += " [" + i + "]=" + javaFrameDescriptor.locals[i];
             }
             s += "\n stack:";
-            for (int i = 0; i < javaFrameDescriptor._stackSlots.length; i++) {
-                s += " [" + i + "]=" + javaFrameDescriptor._stackSlots[i];
+            for (int i = 0; i < javaFrameDescriptor.stackSlots.length; i++) {
+                s += " [" + i + "]=" + javaFrameDescriptor.stackSlots[i];
             }
             javaFrameDescriptor = javaFrameDescriptor.parent();
         } while (javaFrameDescriptor != null);
@@ -199,8 +191,8 @@ public class JavaFrameDescriptor<Slot_Type> extends BytecodeLocation {
             final int bytecodePosition = javaFrameDescriptor.bytecodePosition();
             s += String.format("<<%s@%s locals:[%s] stack:[%s]>>", classMethodActor.format("%h.%n(%s)", bytecodePosition),
                             bytecodePosition,
-                            com.sun.max.lang.Arrays.toString(javaFrameDescriptor._locals, ", "),
-                            com.sun.max.lang.Arrays.toString(javaFrameDescriptor._stackSlots, ", "));
+                            com.sun.max.lang.Arrays.toString(javaFrameDescriptor.locals, ", "),
+                            com.sun.max.lang.Arrays.toString(javaFrameDescriptor.stackSlots, ", "));
             javaFrameDescriptor = javaFrameDescriptor.parent();
         } while (javaFrameDescriptor != null);
         return s;

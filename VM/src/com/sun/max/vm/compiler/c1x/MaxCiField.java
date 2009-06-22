@@ -50,7 +50,7 @@ public class MaxCiField implements CiField {
     public MaxCiField(MaxCiConstantPool constantPool, FieldActor fieldActor) {
         this.constantPool = constantPool;
         this.fieldActor = fieldActor;
-        this.basicType = MaxCiType.kindToBasicType(fieldActor.kind());
+        this.basicType = MaxCiType.kindToBasicType(fieldActor.kind);
     }
 
     /**
@@ -70,9 +70,9 @@ public class MaxCiField implements CiField {
      */
     public String name() {
         if (fieldActor != null) {
-            return fieldActor.name().toString();
+            return fieldActor.name.string;
         }
-        return fieldRef.name(constantPool.constantPool).toString();
+        return fieldRef.name(constantPool.constantPool).string;
     }
 
     /**

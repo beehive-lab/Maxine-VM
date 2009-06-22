@@ -144,8 +144,8 @@ public final class CirFreeVariableSearch {
                 addValues(call.arguments(), inspectionQueue, scope);
                 CirJavaFrameDescriptor javaFrameDescriptor = call.javaFrameDescriptor();
                 while (javaFrameDescriptor != null) {
-                    addValues(javaFrameDescriptor.locals(), inspectionQueue, scope);
-                    addValues(javaFrameDescriptor.stackSlots(), inspectionQueue, scope);
+                    addValues(javaFrameDescriptor.locals, inspectionQueue, scope);
+                    addValues(javaFrameDescriptor.stackSlots, inspectionQueue, scope);
                     javaFrameDescriptor = javaFrameDescriptor.parent();
                 }
                 currentNode = call.procedure();

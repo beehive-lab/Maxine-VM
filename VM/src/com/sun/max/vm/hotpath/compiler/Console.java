@@ -218,13 +218,13 @@ public class Console {
     }
 
     public static ColoredConsole err;
-    public static ColoredConsole _out;
+    public static ColoredConsole out;
     public static ColoredConsole debug;
 
     static {
         err = new ColoredPrintStream(System.err);
-        _out = new ColoredPrintStream(System.out);
-        debug = _out;
+        out = new ColoredPrintStream(System.out);
+        debug = out;
     }
 
     public static ColoredConsole err() {
@@ -232,7 +232,7 @@ public class Console {
     }
 
     public static ColoredConsole out() {
-        return _out;
+        return out;
     }
 
     public static ColoredConsole debug() {

@@ -37,36 +37,36 @@ public class HomArrayHeaderLayout extends HomGeneralLayout implements ArrayHeade
     /**
      * The offset of the first array element.
      */
-    final int _elementsOffset;
+    final int elementsOffset;
 
-    protected final int _headerSize;
+    protected final int headerSize;
 
     HomArrayHeaderLayout(GripScheme gripScheme) {
         super(gripScheme);
-        _elementsOffset = 0;
-        _headerSize = -_arrayLengthOffset;
+        elementsOffset = 0;
+        headerSize = -arrayLengthOffset;
     }
 
     @INLINE
     public final int headerSize() {
-        return _headerSize;
+        return headerSize;
     }
 
     @INLINE
     public final Size getArraySize(Kind kind, int length) {
-        return Size.fromInt(kind.size()).times(length).plus(_headerSize);
+        return Size.fromInt(kind.width.numberOfBytes).times(length).plus(headerSize);
     }
 
     @Override
     @INLINE
     public final Pointer cellToOrigin(Pointer cell) {
-        return cell.plus(-_arrayLengthOffset);
+        return cell.plus(-arrayLengthOffset);
     }
 
     @Override
     @INLINE
     public final Pointer originToCell(Pointer origin) {
-        return origin.plus(_arrayLengthOffset);
+        return origin.plus(arrayLengthOffset);
     }
 
     @Override
@@ -77,7 +77,7 @@ public class HomArrayHeaderLayout extends HomGeneralLayout implements ArrayHeade
     @INLINE
     public final Kind getElementKind(Accessor accessor) {
         final ArrayClassActor arrayClassActor = UnsafeLoophole.cast(readHubReference(accessor).toJava());
-        return arrayClassActor.componentClassActor().kind();
+        return arrayClassActor.componentClassActor().kind;
     }
 
     @Override
@@ -98,12 +98,12 @@ public class HomArrayHeaderLayout extends HomGeneralLayout implements ArrayHeade
 
     @INLINE
     public final int readLength(Accessor accessor) {
-        return wordToLength(accessor.readWord(_arrayLengthOffset));
+        return wordToLength(accessor.readWord(arrayLengthOffset));
     }
 
     @INLINE
     public final void writeLength(Accessor accessor, int length) {
-        accessor.writeWord(_arrayLengthOffset, lengthToWord(length));
+        accessor.writeWord(arrayLengthOffset, lengthToWord(length));
     }
 
 }

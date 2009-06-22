@@ -37,7 +37,7 @@ public abstract class DtInterpreterTemplateSet {
 
     public DtInterpreterTemplateSet() {
         final TemplateTable templateTable = templateTable();
-        maxFrameSlots = templateTable.maxFrameSlots();
+        maxFrameSlots = templateTable.maxFrameSlots;
         templates = new HashSet<CompiledBytecodeTemplate>();
         for (Bytecode bytecode : Bytecode.VALUES) {
             // isLegalInClassfile is named wrongly!

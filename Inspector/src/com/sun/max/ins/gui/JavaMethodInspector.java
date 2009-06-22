@@ -130,7 +130,7 @@ public class JavaMethodInspector extends MethodInspector {
         final StringBuilder sb = new StringBuilder(50);
         sb.append(classMethodActor.holder().simpleName());
         sb.append(".");
-        sb.append(classMethodActor.name().toString());
+        sb.append(classMethodActor.name.toString());
         sb.append(inspection().nameDisplay().methodCompilationID(_teleTargetMethod));
         sb.append(inspection().nameDisplay().methodSubstitutionShortAnnotation(_teleClassMethodActor));
         return sb.toString();

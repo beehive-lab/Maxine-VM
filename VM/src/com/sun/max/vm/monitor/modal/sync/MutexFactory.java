@@ -37,15 +37,15 @@ public abstract class MutexFactory {
      */
     public static final String MUTEX_FACTORY_CLASS_PROPERTY_NAME = "max.mutex.factory.class";
 
-    private static final MutexFactory _instance;
+    private static final MutexFactory instance;
 
     static {
         final String factoryClassName = System.getProperty(MUTEX_FACTORY_CLASS_PROPERTY_NAME);
         if (factoryClassName == null) {
-            _instance = new NativeMutexFactory();
+            instance = new NativeMutexFactory();
         } else {
             try {
-                _instance = (MutexFactory) Class.forName(factoryClassName).newInstance();
+                instance = (MutexFactory) Class.forName(factoryClassName).newInstance();
             } catch (Exception exception) {
                 throw ProgramError.unexpected("Error instantiating " + factoryClassName, exception);
             }
@@ -69,13 +69,13 @@ public abstract class MutexFactory {
      * @return a particular subclass of a Mutex
      */
     public static Mutex create() {
-        return _instance.newMutex();
+        return instance.newMutex();
     }
 
     /**
      * Initialize the mutex implementation.
      */
     public static void initialize() {
-        _instance.initializeImpl();
+        instance.initializeImpl();
     }
 }

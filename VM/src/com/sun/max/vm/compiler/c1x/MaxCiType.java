@@ -53,7 +53,7 @@ public class MaxCiType implements CiType {
     public MaxCiType(MaxCiConstantPool constantPool, ClassActor classActor) {
         this.constantPool = constantPool;
         this.classActor = classActor;
-        this.typeDescriptor = classActor.typeDescriptor();
+        this.typeDescriptor = classActor.typeDescriptor;
         this.basicType = kindToBasicType(typeDescriptor.toKind());
     }
 
@@ -77,7 +77,7 @@ public class MaxCiType implements CiType {
         this.constantPool = constantPool;
         if (typeDescriptor instanceof JavaTypeDescriptor.AtomicTypeDescriptor) {
             final JavaTypeDescriptor.AtomicTypeDescriptor atom = (JavaTypeDescriptor.AtomicTypeDescriptor) typeDescriptor;
-            this.classActor = ClassActor.fromJava(atom.getJavaClass());
+            this.classActor = ClassActor.fromJava(atom.javaClass);
         }
         this.typeDescriptor = typeDescriptor;
         this.basicType = kindToBasicType(typeDescriptor.toKind());
@@ -305,7 +305,7 @@ public class MaxCiType implements CiType {
      * @return the associated basic type
      */
     public static BasicType kindToBasicType(Kind kind) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case BYTE:
                 return BasicType.Byte;
             case BOOLEAN:

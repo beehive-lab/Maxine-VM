@@ -50,9 +50,9 @@ public final class BinaryImageMethodTree {
      */
     public static class Node {
 
-        private final String _name;
-        private AppendableSequence<Node> _referents;
-        private Relationship _relationshipToReferrer;
+        private final String name;
+        private AppendableSequence<Node> referents;
+        private Relationship relationshipToReferrer;
 
         /**
          * Creates a new node with the specified name.
@@ -60,7 +60,7 @@ public final class BinaryImageMethodTree {
          * @param name the name of the node
          */
         public Node(String name) {
-            _name = name;
+            this.name = name;
         }
 
         /**
@@ -70,11 +70,11 @@ public final class BinaryImageMethodTree {
          * @param relationshipToReferent the relationship that caused the child to be added
          */
         void addReferent(Node referent, Relationship relationshipToReferent) {
-            if (_referents == null) {
-                _referents = new ArrayListSequence<Node>();
+            if (referents == null) {
+                referents = new ArrayListSequence<Node>();
             }
-            _referents.append(referent);
-            referent._relationshipToReferrer = relationshipToReferent;
+            referents.append(referent);
+            referent.relationshipToReferrer = relationshipToReferent;
         }
 
         /**
@@ -83,10 +83,10 @@ public final class BinaryImageMethodTree {
          * @return a sequence of all the nodes that are children of this node
          */
         public Sequence<Node> referents() {
-            if (_referents == null) {
+            if (referents == null) {
                 return Sequence.Static.empty(Node.class);
             }
-            return _referents;
+            return referents;
         }
 
         /**
@@ -98,17 +98,17 @@ public final class BinaryImageMethodTree {
          * removed otherwise
          */
         public Node prune(Predicate<Node> predicate) {
-            final Node pruned = new Node(_name);
-            pruned._relationshipToReferrer = _relationshipToReferrer;
-            if (_referents != null) {
-                for (Node referent : _referents) {
+            final Node pruned = new Node(name);
+            pruned.relationshipToReferrer = relationshipToReferrer;
+            if (referents != null) {
+                for (Node referent : referents) {
                     final Node prunedReferent = referent.prune(predicate);
                     if (prunedReferent != null) {
-                        pruned.addReferent(prunedReferent, prunedReferent._relationshipToReferrer);
+                        pruned.addReferent(prunedReferent, prunedReferent.relationshipToReferrer);
                     }
                 }
             }
-            if (pruned._referents != null || predicate.evaluate(this)) {
+            if (pruned.referents != null || predicate.evaluate(this)) {
                 return pruned;
             }
             return null;
@@ -139,7 +139,7 @@ public final class BinaryImageMethodTree {
                         printTree(child, showTreeLines, printWriter, childPrefix, !iterator.hasNext());
                         printWriter.flush();
                     } else {
-                        ProgramWarning.message(node._name + " has itself as a referent");
+                        ProgramWarning.message(node.name + " has itself as a referent");
                     }
                 }
             }
@@ -152,10 +152,10 @@ public final class BinaryImageMethodTree {
         @Override
         public String toString() {
             final StringBuilder sb = new StringBuilder();
-            if (_relationshipToReferrer != null) {
-                sb.append(_relationshipToReferrer._asReferrer).append(' ');
+            if (relationshipToReferrer != null) {
+                sb.append(relationshipToReferrer.asReferrer).append(' ');
             }
-            sb.append(_name);
+            sb.append(name);
             return sb.toString();
         }
     }
@@ -298,12 +298,12 @@ public final class BinaryImageMethodTree {
         final Writer writer = new FileWriter(outputFile);
         final PrintWriter printWriter = new PrintWriter(new BufferedWriter(writer)) {
 
-            private int _counter;
+            private int counter;
 
             @Override
             public void println(String s) {
-                if (++_counter % 100000 == 0) {
-                    Trace.line(1, "node: " + _counter);
+                if (++counter % 100000 == 0) {
+                    Trace.line(1, "node: " + counter);
                 }
                 super.println(s);
             }

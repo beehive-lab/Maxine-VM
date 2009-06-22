@@ -253,7 +253,7 @@ public abstract class EirInstruction<EirInstructionVisitor_Type extends EirInstr
         locationFlags.set(index);
     }
 
-    private static final EirOperand.Procedure _operandCleanupProcedure = new EirOperand.Procedure() {
+    private static final EirOperand.Procedure operandCleanupProcedure = new EirOperand.Procedure() {
         public void run(EirOperand operand) {
             operand.cleanup();
         }
@@ -262,7 +262,7 @@ public abstract class EirInstruction<EirInstructionVisitor_Type extends EirInstr
     public void cleanup() {
         registers = null;
         locationFlags = null;
-        visitOperands(_operandCleanupProcedure);
+        visitOperands(operandCleanupProcedure);
     }
 
     public void cleanupAfterEmitting() {

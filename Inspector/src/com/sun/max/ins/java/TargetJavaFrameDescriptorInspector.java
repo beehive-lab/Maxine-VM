@@ -71,7 +71,7 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
     }
 
     private String shortString(BytecodeLocation bytecodeLocation) {
-        return bytecodeLocation.classMethodActor().name().toString() + " @ " + bytecodeLocation.bytecodePosition();
+        return bytecodeLocation.classMethodActor().name.toString() + " @ " + bytecodeLocation.bytecodePosition();
     }
 
     private String targetLocationToString(TargetLocation targetLocation) {
@@ -122,18 +122,18 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
         }
 
         final CodeAttribute codeAttribute = bytecodeLocation.classMethodActor().codeAttribute();
-        for (int i = 0; i < descriptor.locals().length; i++) {
+        for (int i = 0; i < descriptor.locals.length; i++) {
             String local = "local #" + i;
             final LocalVariableTable.Entry entry = codeAttribute.localVariableTable().findLocalVariable(i, bytecodeLocation.bytecodePosition());
             if (entry != null) {
                 local += ": " + entry.name(codeAttribute.constantPool());
             }
-            local += " = " + targetLocationToString(descriptor.locals()[i]);
+            local += " = " + targetLocationToString(descriptor.locals[i]);
             panel.add(new TextLabel(inspection(), local));
         }
-        for (int i = 0; i < descriptor.stackSlots().length; i++) {
+        for (int i = 0; i < descriptor.stackSlots.length; i++) {
             String stackSlot = "stack #" + i;
-            stackSlot += " = " + targetLocationToString(descriptor.stackSlots()[i]);
+            stackSlot += " = " + targetLocationToString(descriptor.stackSlots[i]);
             panel.add(new TextLabel(inspection(), stackSlot));
         }
         panel.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, style().defaultBorderColor()));

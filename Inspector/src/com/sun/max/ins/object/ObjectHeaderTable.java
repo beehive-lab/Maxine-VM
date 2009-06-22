@@ -78,9 +78,9 @@ public class ObjectHeaderTable extends InspectorTable {
         _inspection = objectInspector.inspection();
         _teleObject = objectInspector.teleObject();
         final LayoutScheme layoutScheme = maxVM().vmConfiguration().layoutScheme();
-        _hubReferenceOffset = layoutScheme.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt();
-        _miscWordOffset = layoutScheme.generalLayout().getOffsetFromOrigin(HeaderField.MISC).toInt();
-        _arrayLengthOffset = layoutScheme.arrayHeaderLayout().getOffsetFromOrigin(HeaderField.LENGTH).toInt();
+        _hubReferenceOffset = layoutScheme.generalLayout.getOffsetFromOrigin(HeaderField.HUB).toInt();
+        _miscWordOffset = layoutScheme.generalLayout.getOffsetFromOrigin(HeaderField.MISC).toInt();
+        _arrayLengthOffset = layoutScheme.arrayHeaderLayout.getOffsetFromOrigin(HeaderField.LENGTH).toInt();
 
         _model = new ObjectHeaderTableModel();
         _columns = new TableColumn[ObjectFieldColumnKind.VALUES.length()];

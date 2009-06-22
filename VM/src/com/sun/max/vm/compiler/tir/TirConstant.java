@@ -27,11 +27,11 @@ import com.sun.max.vm.value.*;
 
 
 public class TirConstant extends TirInstruction {
-    private final Value _value;
+    private final Value value;
 
     @Override
     public Kind kind() {
-        return _value.kind();
+        return value.kind();
     }
 
     public static TirConstant fromObject(Object object) {
@@ -43,7 +43,7 @@ public class TirConstant extends TirInstruction {
     }
 
     public TirConstant(Value value) {
-        _value = value;
+        this.value = value;
     }
 
     @Override
@@ -53,10 +53,10 @@ public class TirConstant extends TirInstruction {
 
     @Override
     public String toString() {
-        return "#" + _value.toString();
+        return "#" + value.toString();
     }
 
     public Value value() {
-        return _value;
+        return value;
     }
 }

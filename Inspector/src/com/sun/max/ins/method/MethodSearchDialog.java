@@ -57,7 +57,7 @@ public final class MethodSearchDialog extends FilteredListDialog<MethodKey> {
     protected void rebuildList(String filterText) {
         final String filter = filterText.toLowerCase();
         for (MethodKey methodKey : _methodKeys) {
-            final String methodName = methodKey.name().string();
+            final String methodName = methodKey.name().string;
             if (filter.endsWith(" ")) {
                 if (methodName.equalsIgnoreCase(Strings.chopSuffix(filter, 1))) {
                     _listModel.addElement(methodKey);

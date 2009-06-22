@@ -25,8 +25,8 @@ import static com.sun.max.vm.stack.JavaStackFrameLayout.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.template.generate.*;
 import com.sun.max.vm.type.*;
 
@@ -44,26 +44,21 @@ import com.sun.max.vm.type.*;
  * boolean instrumented flag.
  * The values defaults to Selector=NO_ASSUMPTION, Kind=VOID, Instrumented=NO, Traced=NO.
  *
- * @see com.sun.max.vm.bytecode
- * @see  com.sun.max.vm.type.Kind
+ * @see Kind
  * @see com.sun.max.vm.template.TemplateChooser
- * @see com.sun.max.annotate.TEMPLATE
- * @see com.sun.max.annotate.BYTECODE_TEMPLATE
+ * @see TEMPLATE
+ * @see BYTECODE_TEMPLATE
  *
  * @author Laurent Daynes
  * @author Aziz Ghuloum
  */
-public class TemplateTable {
-    private final int _maxFrameSlots;
+public final class TemplateTable {
+    public final int maxFrameSlots;
 
-    public int maxFrameSlots() {
-        return _maxFrameSlots;
-    }
-
-    private final TemplateChooser[] _templateChoosers;
+    private final TemplateChooser[] templateChoosers;
 
     public TemplateTable(Class... templateSources) {
-        _templateChoosers = new TemplateChooser[Bytecode.BREAKPOINT.ordinal() + 1];
+        templateChoosers = new TemplateChooser[Bytecode.BREAKPOINT.ordinal() + 1];
 
         final BytecodeTemplateGenerator templateGenerator = new BytecodeTemplateGenerator();
 
@@ -73,63 +68,64 @@ public class TemplateTable {
             templateGenerator.generateBytecodeTemplates(templateSource, templateSequence);
         }
 
-        _maxFrameSlots = Ints.roundUp(templateGenerator.maxTemplateFrameSize(), STACK_SLOT_SIZE) / STACK_SLOT_SIZE;
+        maxFrameSlots = Ints.roundUp(templateGenerator.maxTemplateFrameSize(), STACK_SLOT_SIZE) / STACK_SLOT_SIZE;
 
         for (CompiledBytecodeTemplate template : templateSequence) {
-            final Bytecode bytecode = template.bytecode();
+            final Bytecode bytecode = template.bytecode;
             final int index = bytecode.ordinal();
-            final TemplateChooser tc = _templateChoosers[index];
+            final TemplateChooser tc = templateChoosers[index];
 
             if (tc == null) {
-                _templateChoosers[index] = new SingleChoiceTemplateChooser(template);
+                templateChoosers[index] = new SingleChoiceTemplateChooser(template);
             } else {
-                _templateChoosers[index] = tc.extended(template);
+                templateChoosers[index] = tc.extended(template);
             }
         }
     }
 
+    @INLINE
     public CompiledBytecodeTemplate get(Bytecode bytecode) {
         return get(bytecode, Kind.VOID, TemplateChooser.Selector.NO_ASSUMPTION);
     }
 
+    @INLINE
     public CompiledBytecodeTemplate get(Bytecode bytecode, Kind kind) {
         return get(bytecode, kind, TemplateChooser.Selector.NO_ASSUMPTION);
     }
 
+    @INLINE
     public CompiledBytecodeTemplate get(Bytecode bytecode, TemplateChooser.Selector selector) {
         return get(bytecode, Kind.VOID, selector);
     }
 
     public CompiledBytecodeTemplate get(Bytecode bytecode, Kind kind, TemplateChooser.Selector selector) {
-
-        if (_templateChoosers.length <= bytecode.ordinal()) {
-            Log.println("To big: " + bytecode.ordinal() + " " + _templateChoosers.length);
+        final TemplateChooser templateChooser = templateChoosers[bytecode.ordinal()];
+        try {
+            final CompiledBytecodeTemplate template = templateChooser.select(kind, selector);
+            if (template == null) {
+                throw FatalError.unexpected("No template available for " + bytecode + " with selector " + selector.toString());
+            }
+            return template;
+        } catch (RuntimeException e) {
+            // Array bounds check or null pointer exception
+            throw FatalError.unexpected("No template chooser for " + bytecode + ": " + e);
         }
-        if (_templateChoosers[bytecode.ordinal()] == null) {
-            Log.println("Null: " + bytecode.ordinal());
-        }
-
-        final TemplateChooser templateChooser = _templateChoosers[bytecode.ordinal()];
-        assert templateChooser != null : "no template chooser for " + bytecode;
-        final CompiledBytecodeTemplate template = templateChooser.select(kind, selector);
-        assert template != null : "attempt to access non existent template for bytecode " + bytecode + " with selector " + selector.toString();
-        return template;
     }
 
     static class SingleChoiceTemplateChooser extends TemplateChooser {
-        final CompiledBytecodeTemplate _template;
+        final CompiledBytecodeTemplate template;
         SingleChoiceTemplateChooser(CompiledBytecodeTemplate template) {
-            _template = template;
+            this.template = template;
         }
 
         @Override
         public CompiledBytecodeTemplate select(Kind kind, Selector selector) {
-            if (selector.initialized() == _template.initialized() &&
-                selector.instrumented() == _template.instrumented() &&
-                selector.resolved() == _template.resolved() &&
-                selector.traced() == _template.traced() &&
-                kind == _template.kind()) {
-                return _template;
+            if (selector.initialized == template.initialized &&
+                selector.instrumented == template.instrumented &&
+                selector.resolved == template.resolved &&
+                selector.traced == template.traced &&
+                kind == template.kind) {
+                return template;
             }
             return null;
         }
@@ -137,15 +133,15 @@ public class TemplateTable {
         @Override
         public TemplateChooser extended(CompiledBytecodeTemplate template) {
             final MultipleChoiceTemplateChooser tc = new MultipleChoiceTemplateChooser();
-            return tc.extended(template).extended(_template);
+            return tc.extended(template).extended(this.template);
         }
     }
 
     static class MultipleChoiceTemplateChooser extends TemplateChooser {
-        final CompiledBytecodeTemplate[][][][][] _templates;
+        final CompiledBytecodeTemplate[][][][][] templates;
 
         public MultipleChoiceTemplateChooser() {
-            _templates = new CompiledBytecodeTemplate
+            templates = new CompiledBytecodeTemplate
               [KindEnum.VALUES.length()]
                [TemplateChooser.Instrumented.DEFAULT.ordinal()]
                 [TemplateChooser.Resolved.DEFAULT.ordinal()]
@@ -155,26 +151,26 @@ public class TemplateTable {
 
         @Override
         public TemplateChooser extended(CompiledBytecodeTemplate template) {
-            final int kindIndex = template.kind().asEnum().ordinal();
-            final int instrumentIndex = template.instrumented().ordinal();
-            final int resolvedIndex = template.resolved().ordinal();
-            final int initializedIndex = template.initialized().ordinal();
-            final int tracedIndex = template.traced().ordinal();
+            final int kindIndex = template.kind.asEnum.ordinal();
+            final int instrumentIndex = template.instrumented.ordinal();
+            final int resolvedIndex = template.resolved.ordinal();
+            final int initializedIndex = template.initialized.ordinal();
+            final int tracedIndex = template.traced.ordinal();
 
             // We need to override templates with tracing versions, therefore this assertion is bogus.
             // assert _templates[kindIndex][instrumentIndex][resolvedIndex][initializedIndex][tracedIndex] == null : "attempt to override template";
-            _templates[kindIndex][instrumentIndex][resolvedIndex][initializedIndex][tracedIndex] = template;
+            templates[kindIndex][instrumentIndex][resolvedIndex][initializedIndex][tracedIndex] = template;
             return this;
         }
 
         @Override
         public CompiledBytecodeTemplate select(Kind kind, Selector selector) {
-            final int kindIndex = kind.asEnum().ordinal();
-            final int instrumentIndex = selector.instrumented().ordinal();
-            final int resolvedIndex = selector.resolved().ordinal();
-            final int initializedIndex = selector.initialized().ordinal();
-            final int tracedIndex = selector.traced().ordinal();
-            final CompiledBytecodeTemplate template = _templates[kindIndex][instrumentIndex][resolvedIndex][initializedIndex][tracedIndex];
+            final int kindIndex = kind.asEnum.ordinal();
+            final int instrumentIndex = selector.instrumented.ordinal();
+            final int resolvedIndex = selector.resolved.ordinal();
+            final int initializedIndex = selector.initialized.ordinal();
+            final int tracedIndex = selector.traced.ordinal();
+            final CompiledBytecodeTemplate template = templates[kindIndex][instrumentIndex][resolvedIndex][initializedIndex][tracedIndex];
             return template;
         }
     }
