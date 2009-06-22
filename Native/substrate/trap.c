@@ -252,9 +252,12 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
 	 trapInfo[3] = ucontext->uc_mcontext.gregs[REG_G2];
 	 /* set the safepoint latch register of the trapped frame to the disable state */
 	 ucontext->uc_mcontext.gregs[REG_G2] = disabledVmThreadLocals;
-#elif isa_AMD64 && (os_SOLARIS || os_LINUX || os_DARWIN)
+#elif isa_AMD64 && (os_SOLARIS || os_LINUX)
 	 trapInfo[3] = ucontext->uc_mcontext.gregs[REG_R14];
 	 ucontext->uc_mcontext.gregs[REG_R14] = disabledVmThreadLocals;
+#elif isa_AMD64 && os_DARWIN
+	 trapInfo[3] = ucontext->uc_mcontext->__ss.__r14;
+	 ucontext->uc_mcontext->__ss.__r14 = disabledVmThreadLocals;
 #else
     c_UNIMPLEMENTED();
 #endif
