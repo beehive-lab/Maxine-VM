@@ -155,7 +155,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     }
 
     @Override
-    public void breakpointSetChanged() {
+    public void breakpointStateChanged() {
         refreshView(true);
     }
 

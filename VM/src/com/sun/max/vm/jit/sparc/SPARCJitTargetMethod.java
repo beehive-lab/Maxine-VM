@@ -27,7 +27,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.sparc.*;
 import com.sun.max.vm.jit.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.sparc.*;
 
@@ -44,7 +43,7 @@ public class SPARCJitTargetMethod extends JitTargetMethod implements SPARCTarget
 
     @Override
     public void forwardTo(TargetMethod newTargetMethod) {
-        FatalError.unimplemented();
+        SPARCTargetMethod.Static.forwardTo(this, newTargetMethod);
     }
 
     @Override

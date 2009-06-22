@@ -33,4 +33,5 @@ syntax: regexp
 ^trace.*
 ^dist/
 ^xref/
+^javadoc/
 ^out/

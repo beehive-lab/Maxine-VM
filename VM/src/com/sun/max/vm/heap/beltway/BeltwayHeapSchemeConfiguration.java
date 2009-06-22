@@ -30,13 +30,11 @@ import com.sun.max.unsafe.*;
 public class BeltwayHeapSchemeConfiguration {
 
     protected static Address _applicationHeapStartAddress;
-    protected static Address _applicationHeapEndAddress;
-
     protected static Size _applicationHeapMaxSize;
 
     public static final Size TLAB_SIZE = BeltwayCardRegion.cardSize().times(512).asSize();
     public static final Size GC_TLAB_SIZE = BeltwayCardRegion.cardSize().times(1).asSize();
-    public static final int ALLIGNMENT = BeltwayCardRegion.cardSize().toInt();
+    public static final int ALIGNMENT = BeltwayCardRegion.cardSize().toInt();
 
     public BeltwayHeapSchemeConfiguration(Address applicationHeapStartAddress, Size applicationHeapMaxSize) {
         _applicationHeapStartAddress = applicationHeapStartAddress;

@@ -33,10 +33,17 @@ import com.sun.max.vm.tele.*;
 
 /**
  * @author Christos Kotselidis
+ *
+ * A Beltway collector configured as a generational heap.
+ * Configured with three belts: one for an nursery (the eden space); one for the tenured generation (the mature space);
  */
-
 public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
 
+    /**
+     * Default sizing of each belt, expressed as percentage of the total heap.
+     * Each entry in the array correspond to the percentage of heap taken by the corresponding belt
+     * (e.g., belt 0, i.e., the eden, is allocated _percentages[0] percent of the heap.
+     */
     private static int[] _percentages = new int[] {10, 40, 50};
     protected static BeltwayGenerationalCollector _beltCollectorGenerational = new BeltwayGenerationalCollector();
 
@@ -50,7 +57,8 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
         if (phase == MaxineVM.Phase.PRISTINE) {
             final Size heapSize = calculateHeapSize();
             final Address address = allocateMemory(heapSize);
-            _beltwayConfiguration.initializeBeltWayConfiguration(address.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()), heapSize.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()).asSize(), 3,
+            _beltwayConfiguration.initializeBeltWayConfiguration(address.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()),
+                heapSize.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()).asSize(), 3,
                             _percentages);
             _beltManager.initializeBelts();
             if (Heap.verbose()) {

@@ -75,6 +75,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
         assert !isTransient() : "cannot disable a transient breakpoint: " + this;
         if (enabled != _enabled) {
             _enabled = enabled;
+            _factory.announceStateChange();
             return true;
         }
         return false;
@@ -170,11 +171,18 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
                     if (maxVMState.processState() == ProcessState.TERMINATED) {
                         _breakpoints.clear();
                         _transientBreakpoints.clear();
-                        setChanged();
-                        notifyObservers();
+                        announceStateChange();
                     }
                 }
             });
+        }
+
+        /**
+         * Notify all observers that there has been a state change concerning these breakpoints.
+         */
+        private void announceStateChange() {
+            setChanged();
+            notifyObservers();
         }
 
         /**
@@ -264,8 +272,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
             if (!isTransient) {
                 final TeleTargetBreakpoint oldBreakpoint = _breakpoints.put(address.toLong(), breakpoint);
                 assert oldBreakpoint == null;
-                setChanged();
-                notifyObservers();
+                announceStateChange();
             } else {
                 final TeleTargetBreakpoint oldBreakpoint = _transientBreakpoints.put(address.toLong(), breakpoint);
                 assert oldBreakpoint == null;
@@ -331,8 +338,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
          */
         private synchronized void removeBreakpointAt(Address address) {
             _breakpoints.remove(address.toLong());
-            setChanged();
-            notifyObservers();
+            announceStateChange();
         }
 
         /**

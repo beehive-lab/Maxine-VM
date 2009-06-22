@@ -357,7 +357,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
         Log.println(size().toLong());
         Log.print("Frame percentage of usable memory: ");
         Log.println(_framePercentageOfUsableMemory);
-        if (start().isAligned(BeltwayHeapSchemeConfiguration.ALLIGNMENT)) {
+        if (start().isAligned(BeltwayHeapSchemeConfiguration.ALIGNMENT)) {
             Log.println("true");
         }
 

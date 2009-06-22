@@ -46,6 +46,7 @@ import com.sun.max.vm.thread.*;
  * @author Aritra Bandyopadhyay
  * @author Doug Simon
  * @author Michael Van De Vanter
+ * @author Hannes Payer
  */
 public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO {
 
@@ -623,7 +624,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         return 0;
     }
 
-    protected boolean activateWatchpoint(MemoryRegion memoryRegion) {
+    protected boolean activateWatchpoint(TeleWatchpoint teleWatchpoint) {
         return false;
     }
 
@@ -631,5 +632,11 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         return false;
     }
 
+    protected long readWatchpointAddress() {
+        return 0;
+    }
 
+    protected int readWatchpointAccessCode() {
+        return 0;
+    }
 }
