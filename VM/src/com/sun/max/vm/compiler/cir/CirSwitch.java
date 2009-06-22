@@ -111,7 +111,7 @@ public class CirSwitch extends CirProcedure implements CirFoldable, CirReducible
     }
 
     public boolean isFoldable(CirOptimizer cirOptimizer, CirValue[] arguments) {
-        assert arguments.length >= 3;
+        assert arguments.length >= 2;
         final CirValue tag = arguments[0];
         if (!(tag instanceof CirConstant)) {
             return false;
