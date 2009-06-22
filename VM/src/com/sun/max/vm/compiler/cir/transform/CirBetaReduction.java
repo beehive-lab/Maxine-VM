@@ -151,8 +151,8 @@ public abstract class CirBetaReduction {
 
                 CirJavaFrameDescriptor javaFrameDescriptor = call.javaFrameDescriptor();
                 while (javaFrameDescriptor != null) {
-                    transformValues(javaFrameDescriptor.locals(), inspectionList);
-                    transformValues(javaFrameDescriptor.stackSlots(), inspectionList);
+                    transformValues(javaFrameDescriptor.locals, inspectionList);
+                    transformValues(javaFrameDescriptor.stackSlots, inspectionList);
                     javaFrameDescriptor = javaFrameDescriptor.parent();
                 }
             } else if (currentNode instanceof CirClosure) {

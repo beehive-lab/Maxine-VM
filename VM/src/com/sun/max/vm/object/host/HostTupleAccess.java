@@ -74,17 +74,17 @@ public final class HostTupleAccess {
         }
         // is the field annotated with @RESET?
         if (fieldActor.isReset()) {
-            return fieldActor.kind().zeroValue();
+            return fieldActor.kind.zeroValue();
         }
         // try to read the field's value via reflection
         try {
             final Field field = fieldActor.toJava();
             field.setAccessible(true);
             Object boxedJavaValue = field.get(tuple);
-            if (fieldActor.kind() == Kind.REFERENCE) {
+            if (fieldActor.kind == Kind.REFERENCE) {
                 boxedJavaValue = HostObjectAccess.hostToTarget(boxedJavaValue);
             }
-            return fieldActor.kind().asValue(boxedJavaValue);
+            return fieldActor.kind.asValue(boxedJavaValue);
         } catch (IllegalAccessException illegalAcessexception) {
             accessError(fieldActor);
             return null;

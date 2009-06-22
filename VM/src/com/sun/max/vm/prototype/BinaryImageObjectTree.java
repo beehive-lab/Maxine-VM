@@ -82,14 +82,14 @@ public final class BinaryImageObjectTree {
      */
     public static class Node {
 
-        private final String _className;
-        private final int _address;
-        private final long _size;
-        private long _aggregateSize = 0L;
-        private final String _toString;
+        private final String className;
+        private final int address;
+        private final long size;
+        private long aggregateSize = 0L;
+        private final String toString;
 
-        private AppendableSequence<Node> _children;
-        private String _parentLink;
+        private AppendableSequence<Node> children;
+        private String parentLink;
 
         /**
          * Creates a new node with the specified class name, address, size, and verbose string.
@@ -100,10 +100,10 @@ public final class BinaryImageObjectTree {
          * @param toString the verbose string for this object
          */
         public Node(String className, int address, long size, String toString) {
-            _className = className;
-            _address = address;
-            _size = size;
-            _toString = toString;
+            this.className = className;
+            this.address = address;
+            this.size = size;
+            this.toString = toString;
         }
 
         /**
@@ -114,11 +114,11 @@ public final class BinaryImageObjectTree {
          * the name of an object field
          */
         void addChild(Node child, String link) {
-            if (_children == null) {
-                _children = new ArrayListSequence<Node>();
+            if (children == null) {
+                children = new ArrayListSequence<Node>();
             }
-            _children.append(child);
-            child._parentLink = link;
+            children.append(child);
+            child.parentLink = link;
         }
 
         /**
@@ -127,7 +127,7 @@ public final class BinaryImageObjectTree {
          * @return a sequence of the children
          */
         public Sequence<Node> children() {
-            return _children == null ? Sequence.Static.empty(Node.class) : _children;
+            return children == null ? Sequence.Static.empty(Node.class) : children;
         }
 
         /**
@@ -140,18 +140,18 @@ public final class BinaryImageObjectTree {
          * the predicate matches this node or a child node
          */
         public Node prune(Predicate<Node> predicate) {
-            final Node pruned = new Node(_className, _address, _size, _toString);
-            pruned._parentLink = _parentLink;
-            pruned._aggregateSize = aggregateSize();
-            if (_children != null) {
-                for (Node child : _children) {
+            final Node pruned = new Node(className, address, size, toString);
+            pruned.parentLink = parentLink;
+            pruned.aggregateSize = aggregateSize();
+            if (children != null) {
+                for (Node child : children) {
                     final Node prunedChild = child.prune(predicate);
                     if (prunedChild != null) {
-                        pruned.addChild(prunedChild, prunedChild._parentLink);
+                        pruned.addChild(prunedChild, prunedChild.parentLink);
                     }
                 }
             }
-            if (pruned._children != null || predicate.evaluate(this)) {
+            if (pruned.children != null || predicate.evaluate(this)) {
                 return pruned;
             }
             return null;
@@ -163,13 +163,13 @@ public final class BinaryImageObjectTree {
          * @return the size of this node plus the sum of the sizes of all its children nodes
          */
         public long aggregateSize() {
-            if (_aggregateSize == 0) {
-                _aggregateSize = _size;
+            if (aggregateSize == 0) {
+                aggregateSize = size;
                 for (Node child : children()) {
-                    _aggregateSize += child.aggregateSize();
+                    aggregateSize += child.aggregateSize();
                 }
             }
-            return _aggregateSize;
+            return aggregateSize;
         }
 
         private static final String OTHER_SIBLING_PREFIX = "`-- ";
@@ -217,13 +217,13 @@ public final class BinaryImageObjectTree {
          */
         public String toString(int addressRadix, long relocation) {
             final StringBuilder sb = new StringBuilder();
-            if (_parentLink != null) {
-                sb.append(_parentLink).append(' ');
+            if (parentLink != null) {
+                sb.append(parentLink).append(' ');
             }
-            sb.append(_className).append('@').append(Long.toString(_address + relocation, addressRadix));
-            sb.append(" size=").append(_size).append(" aggregateSize=").append(aggregateSize());
-            if (_toString != null) {
-                sb.append("   toString=").append(_toString.replace('\n', '0'));
+            sb.append(className).append('@').append(Long.toString(address + relocation, addressRadix));
+            sb.append(" size=").append(size).append(" aggregateSize=").append(aggregateSize());
+            if (toString != null) {
+                sb.append("   toString=").append(toString.replace('\n', '0'));
             }
             return sb.toString();
         }
@@ -307,7 +307,7 @@ public final class BinaryImageObjectTree {
                 if (link == null) {
                     dataOutputStream.writeInt(0);
                 } else {
-                    final int parent = objectPool.get(link._parent);
+                    final int parent = objectPool.get(link.parent);
                     final String name = link.name();
                     dataOutputStream.writeInt(parent);
                     dataOutputStream.writeUTF(name);
@@ -447,12 +447,12 @@ public final class BinaryImageObjectTree {
         final Writer writer = new FileWriter(outputFile);
         final PrintWriter printWriter = new PrintWriter(new BufferedWriter(writer)) {
 
-            private int _counter;
+            private int counter;
 
             @Override
             public void println(String s) {
-                if (++_counter % 100000 == 0) {
-                    Trace.line(1, "node: " + _counter);
+                if (++counter % 100000 == 0) {
+                    Trace.line(1, "node: " + counter);
                 }
                 super.println(s);
             }

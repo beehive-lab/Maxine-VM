@@ -38,7 +38,7 @@ import com.sun.max.vm.compiler.ir.*;
  */
 public class IrProcessingObserver extends IrObserverAdapter {
 
-    protected static final IndentWriter _out = IndentWriter.traceStreamWriter();
+    protected static final IndentWriter out = IndentWriter.traceStreamWriter();
 
     private final int traceLevel;
 
@@ -83,41 +83,41 @@ public class IrProcessingObserver extends IrObserverAdapter {
     @Override
     public void observeAllocation(IrMethod irMethod) {
         if (hasLevel(allocationTraceLevel())) {
-            _out.println("ALLOCATED " + methodName(irMethod));
+            out.println("ALLOCATED " + methodName(irMethod));
         }
     }
 
     @Override
     public void observeBeforeGeneration(IrMethod irMethod, IrGenerator irGenerator) {
         if (hasLevel(afterGenerationTraceLevel())) {
-            _out.println(methodName(irMethod) + " BEGIN generation");
-            _out.indent();
-            _out.flush();
+            out.println(methodName(irMethod) + " BEGIN generation");
+            out.indent();
+            out.flush();
         }
     }
 
     @Override
     public void observeAfterGeneration(IrMethod irMethod, IrGenerator irGenerator) {
         if (hasLevel(afterGenerationTraceLevel())) {
-            _out.outdent();
-            _out.println(methodName(irMethod) + "   END generation");
-            _out.flush();
+            out.outdent();
+            out.println(methodName(irMethod) + "   END generation");
+            out.flush();
         }
     }
 
     @Override
     public void observeBeforeTransformation(IrMethod irMethod, Object context, Object transform) {
         if (hasLevel(transformTraceLevel(transform))) {
-            _out.println(methodName(irMethod) + " BEGIN " + ": " + transform);
-            _out.indent();
+            out.println(methodName(irMethod) + " BEGIN " + ": " + transform);
+            out.indent();
         }
     }
 
     @Override
     public void observeAfterTransformation(IrMethod irMethod, Object context, Object transform) {
         if (hasLevel(transformTraceLevel(transform))) {
-            _out.outdent();
-            _out.println(methodName(irMethod) + "   END " + ": " + transform);
+            out.outdent();
+            out.println(methodName(irMethod) + "   END " + ": " + transform);
         }
     }
 }

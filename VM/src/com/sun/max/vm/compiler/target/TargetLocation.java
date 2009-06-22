@@ -258,7 +258,7 @@ public abstract class TargetLocation {
 
         private final int implicitOperand;
 
-        private Tag _wideOperandTag;
+        private Tag wideOperandTag;
 
         private final Range implicitOperandTagsRange;
         private final Tag[] implicitOperandTags;
@@ -666,57 +666,57 @@ public abstract class TargetLocation {
             return Tag.IMMEDIATE;
         }
 
-        final Value _value;
+        final Value value;
 
         public Value value() {
-            return _value;
+            return value;
         }
 
         public Immediate(Value value) {
-            _value = value;
+            this.value = value;
         }
 
         @Override
         public void write(DataOutput stream) throws IOException {
-            if (_value.kind() != Kind.REFERENCE) {
-                final int intValue = _value.toInt();
-                if (valueFromInt(_value.kind().asEnum(), intValue).equals(_value)) {
+            if (value.kind() != Kind.REFERENCE) {
+                final int intValue = value.toInt();
+                if (valueFromInt(value.kind().asEnum, intValue).equals(value)) {
                     final Tag implicitOperandTag = tag().implicitOperandTag(intValue);
                     if (implicitOperandTag != null) {
                         stream.write(implicitOperandTag.ordinal());
-                        stream.write(_value.kind().asEnum().ordinal());
+                        stream.write(value.kind().asEnum.ordinal());
                         return;
                     }
                 }
             } else {
-                if (_value.isZero()) {
+                if (value.isZero()) {
                     stream.write(Tag.IMMEDIATE_0.ordinal());
                     stream.write(KindEnum.REFERENCE.ordinal());
                     return;
                 }
             }
             stream.write(tag().ordinal());
-            stream.write(_value.kind().asEnum().ordinal());
-            _value.write(stream);
+            stream.write(value.kind().asEnum.ordinal());
+            value.write(stream);
         }
 
         @Override
         public boolean equals(Object other) {
             if (other instanceof Immediate) {
                 final Immediate immediate = (Immediate) other;
-                return _value.equals(immediate._value);
+                return value.equals(immediate.value);
             }
             return false;
         }
 
         @Override
         public int hashCode() {
-            return _value.hashCode();
+            return value.hashCode();
         }
 
         @Override
         public String toString() {
-            return _value.kind().toString() + ":" + _value.toString();
+            return value.kind().toString() + ":" + value.toString();
         }
 
         @Override

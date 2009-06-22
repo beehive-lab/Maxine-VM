@@ -219,10 +219,10 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
     }
 
     abstract class Resolvable {
-        final ResolutionSnippet _snippet;
+        final ResolutionSnippet snippet;
 
         public Resolvable(ResolutionSnippet resolutionSnippet) {
-            _snippet = resolutionSnippet;
+            snippet = resolutionSnippet;
         }
 
         abstract CirCall makeCall(CirValue resolvedAndInitialized);
@@ -248,7 +248,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
             return resolvable.makeCall(actor);
         }
 
-        final CirVariable actor = variableFactory().createTemporary(resolvable._snippet.resultKind());
+        final CirVariable actor = variableFactory().createTemporary(resolvable.snippet.resultKind());
 
         final CirCall innerCall;
         if (operator.requiresClassInitialization() && !operator.isClassInitialized()) {
@@ -263,8 +263,8 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
             innerCall = resolvable.makeCall(actor);
         }
 
-        final CirConstant guard = CirConstant.fromObject(operator.constantPool().makeResolutionGuard(operator.index(), resolvable._snippet));
-        final CirSnippet resolve = CirSnippet.get(resolvable._snippet);
+        final CirConstant guard = CirConstant.fromObject(operator.constantPool().makeResolutionGuard(operator.index(), resolvable.snippet));
+        final CirSnippet resolve = CirSnippet.get(resolvable.snippet);
         return call(
             resolve,
             guard,

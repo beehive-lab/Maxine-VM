@@ -56,9 +56,9 @@ public class JITTest_adapterFrameGenerator extends CompilerTestCase {
         final EirABIsScheme eirABIsScheme = eirGenerator.eirABIsScheme();
         final EirABI eirAbi = eirABIsScheme.getABIFor(classMethodActor);
 
-        Trace.line(1, "JIT => optimizing adapter for method " + classMethodActor.name());
+        Trace.line(1, "JIT => optimizing adapter for method " + classMethodActor.name);
         generateAdapters(new AMD64Assembler(), AMD64AdapterFrameGenerator.jitToOptimizingCompilerAdapterFrameGenerator(classMethodActor, eirAbi));
-        Trace.line(1, "\n\nOptimizing => JIT  adapter for method " + classMethodActor.name());
+        Trace.line(1, "\n\nOptimizing => JIT  adapter for method " + classMethodActor.name);
         generateAdapters(new AMD64Assembler(), AMD64AdapterFrameGenerator.optimizingToJitCompilerAdapterFrameGenerator(classMethodActor, eirAbi));
     }
 
@@ -98,7 +98,7 @@ public class JITTest_adapterFrameGenerator extends CompilerTestCase {
         final CriticalMethod[] jniFunctions = JniNativeInterface.jniFunctions();
         final CompilerScheme compiler = VMConfiguration.target().compilerScheme();
         for (CriticalMethod m : jniFunctions) {
-            final ClassMethodActor classMethodActor = m.classMethodActor();
+            final ClassMethodActor classMethodActor = m.classMethodActor;
             final TargetMethod targetMethod = (TargetMethod) compiler.compile(classMethodActor, CompilationDirective.DEFAULT);
             final Pointer entryPoint = targetMethod.getEntryPoint(CallEntryPoint.C_ENTRY_POINT).asPointer();
             assert targetMethod.abi().callEntryPoint().equals(CallEntryPoint.C_ENTRY_POINT);

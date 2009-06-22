@@ -57,14 +57,14 @@ public abstract class Hybrid<Hybrid_Type extends Hybrid> {
      */
     @PROTOTYPE_ONLY
     private static class Expansion {
-        final Hybrid _hybrid;
-        final Word[] _words;
-        final int[] _ints;
+        final Hybrid hybrid;
+        final Word[] words;
+        final int[] ints;
 
         Expansion(Hybrid hybrid, int length) {
-            _hybrid = hybrid;
-            _words = new Word[length];
-            _ints = new int[(length * Word.size()) / Ints.SIZE];
+            this.hybrid = hybrid;
+            this.words = new Word[length];
+            this.ints = new int[(length * Word.size()) / Ints.SIZE];
         }
     }
 
@@ -72,7 +72,7 @@ public abstract class Hybrid<Hybrid_Type extends Hybrid> {
      * A map that stores the association between a hybrid and its expansion, used only at prototyping time.
      */
     @PROTOTYPE_ONLY
-    private static final Map<Hybrid, Expansion> _hybridToExpansion = Collections.synchronizedMap(new IdentityHashMap<Hybrid, Expansion>());
+    private static final Map<Hybrid, Expansion> hybridToExpansion = Collections.synchronizedMap(new IdentityHashMap<Hybrid, Expansion>());
 
     protected Hybrid() {
     }
@@ -85,7 +85,7 @@ public abstract class Hybrid<Hybrid_Type extends Hybrid> {
      */
     public final Hybrid expand(int length) {
         if (MaxineVM.isPrototyping()) {
-            final Expansion oldValue = _hybridToExpansion.put(this, new Expansion(this, length));
+            final Expansion oldValue = hybridToExpansion.put(this, new Expansion(this, length));
             assert oldValue == null;
             return this;
         }
@@ -105,7 +105,7 @@ public abstract class Hybrid<Hybrid_Type extends Hybrid> {
     @INLINE
     public final int length() {
         if (MaxineVM.isPrototyping()) {
-            return _hybridToExpansion.get(this)._words.length;
+            return hybridToExpansion.get(this).words.length;
         }
         return ArrayAccess.readArrayLength(this);
     }
@@ -119,8 +119,8 @@ public abstract class Hybrid<Hybrid_Type extends Hybrid> {
     public final void setWord(int wordIndex, Word value) {
         if (MaxineVM.isPrototyping()) {
             assert wordIndex >= firstWordIndex();
-            final Expansion expansion = _hybridToExpansion.get(this);
-            WordArray.set(expansion._words, wordIndex, value);
+            final Expansion expansion = hybridToExpansion.get(this);
+            WordArray.set(expansion.words, wordIndex, value);
         } else {
             ArrayAccess.setWord(this, wordIndex, value);
         }
@@ -135,8 +135,8 @@ public abstract class Hybrid<Hybrid_Type extends Hybrid> {
     public final Word getWord(int wordIndex) {
         if (MaxineVM.isPrototyping()) {
             assert wordIndex >= firstWordIndex();
-            final Expansion expansion = _hybridToExpansion.get(this);
-            return WordArray.get(expansion._words, wordIndex);
+            final Expansion expansion = hybridToExpansion.get(this);
+            return WordArray.get(expansion.words, wordIndex);
         }
         return ArrayAccess.getWord(this, wordIndex);
     }
@@ -150,8 +150,8 @@ public abstract class Hybrid<Hybrid_Type extends Hybrid> {
     public final void setInt(int intIndex, int value) {
         if (MaxineVM.isPrototyping()) {
             assert intIndex >= firstIntIndex();
-            final Expansion expansion = _hybridToExpansion.get(this);
-            expansion._ints[intIndex] = value;
+            final Expansion expansion = hybridToExpansion.get(this);
+            expansion.ints[intIndex] = value;
         } else {
             ArrayAccess.setInt(this, intIndex, value);
         }
@@ -166,12 +166,12 @@ public abstract class Hybrid<Hybrid_Type extends Hybrid> {
     public final int getInt(int intIndex) {
         if (MaxineVM.isPrototyping()) {
             assert intIndex >= firstIntIndex();
-            final Expansion expansion = _hybridToExpansion.get(this);
+            final Expansion expansion = hybridToExpansion.get(this);
             try {
-                return expansion._ints[intIndex];
+                return expansion.ints[intIndex];
             } catch (RuntimeException e) {
-                for (Map.Entry<Hybrid, Expansion> entry : _hybridToExpansion.entrySet()) {
-                    Trace.line(1, entry.getKey() + " -> Word[" + entry.getValue()._words.length + "], int[" + entry.getValue()._ints.length + "]");
+                for (Map.Entry<Hybrid, Expansion> entry : hybridToExpansion.entrySet()) {
+                    Trace.line(1, entry.getKey() + " -> Word[" + entry.getValue().words.length + "], int[" + entry.getValue().ints.length + "]");
                 }
                 throw ProgramError.unexpected("Error while accessing expansion for " + this, e);
             }

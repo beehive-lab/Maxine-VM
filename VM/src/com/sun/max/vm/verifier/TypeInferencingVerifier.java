@@ -48,7 +48,7 @@ public class TypeInferencingVerifier extends ClassVerifier {
         // The methods in class files whose version is greater than or equal to 50.0 are required to
         // have stack maps. This method is mostly like being verified with the type inferencing verifier
         // to update the stack maps after bytecode preprocessing.
-        final boolean addStackMapAttribute = classMethodActor.holder().majorVersion() >= 50;
+        final boolean addStackMapAttribute = classMethodActor.holder().majorVersion >= 50;
         return verify(classMethodActor, originalCodeAttribute, addStackMapAttribute);
     }
 

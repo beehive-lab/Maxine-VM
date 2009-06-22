@@ -68,7 +68,7 @@ public class AMD64InstructionEditor implements AssemblyInstructionEditor {
 
     public  int getIntDisplacement(WordWidth displacementWidth) throws AssemblyException {
         // Displacement always appended in the end. Same as immediate
-        final int displacementOffset = startPosition + size - displacementWidth.numberOfBytes();
+        final int displacementOffset = startPosition + size - displacementWidth.numberOfBytes;
         switch(displacementWidth) {
             case BITS_8:
                 return code[displacementOffset];
@@ -82,7 +82,7 @@ public class AMD64InstructionEditor implements AssemblyInstructionEditor {
     }
 
     public int getIntImmediate(WordWidth immediateWidth) throws AssemblyException {
-        final int immediateOffset = startPosition + size - immediateWidth.numberOfBytes();
+        final int immediateOffset = startPosition + size - immediateWidth.numberOfBytes;
         switch(immediateWidth) {
             case BITS_8:
                 return code[immediateOffset];
@@ -100,7 +100,7 @@ public class AMD64InstructionEditor implements AssemblyInstructionEditor {
         // instruction here has a displacement of the specified width
 
         // Displacement always appended in the end.
-        final int displacementOffset = startPosition + size - displacementWidth.numberOfBytes();
+        final int displacementOffset = startPosition + size - displacementWidth.numberOfBytes;
 
         // low order byte come first, so we write the offset value first, regardless of the width of the original offset.
         code[displacementOffset] = disp8;
@@ -175,16 +175,16 @@ public class AMD64InstructionEditor implements AssemblyInstructionEditor {
             throw new AssemblyException("Invalid offset width. Can't");
         }
         // index to the first byte displacement parameter (it's always appended in the end).
-        final int displacementStart = startPosition + size - displacementWidth.numberOfBytes();
+        final int displacementStart = startPosition + size - displacementWidth.numberOfBytes;
         fixImm32(displacementStart, disp32);
     }
 
     public void fixBranchRelativeDisplacement(WordWidth displacementWidth, int disp32) throws AssemblyException {
         final WordWidth effectiveDispWidth = WordWidth.signedEffective(disp32);
-        if  (effectiveDispWidth.numberOfBits() > displacementWidth.numberOfBits()) {
+        if  (effectiveDispWidth.numberOfBits > displacementWidth.numberOfBits) {
             throw new AssemblyException("Width of displacement too long for instruction.");
         }
-        final int displacementStart = startPosition + size - displacementWidth.numberOfBytes();
+        final int displacementStart = startPosition + size - displacementWidth.numberOfBytes;
         if (displacementWidth == WordWidth.BITS_8) {
             fixImm8(displacementStart, disp32);
         } else {
@@ -200,7 +200,7 @@ public class AMD64InstructionEditor implements AssemblyInstructionEditor {
     }
 
     public void fixImmediateOperand(WordWidth operandWidth, byte imm8) {
-        final int numBytes = operandWidth.numberOfBytes();
+        final int numBytes = operandWidth.numberOfBytes;
         final int immediateStart = startPosition + size - numBytes;
         code[immediateStart] = imm8;
         zeroFillFrom(immediateStart + 1);
@@ -210,9 +210,9 @@ public class AMD64InstructionEditor implements AssemblyInstructionEditor {
         // The Eir to AMD64 code generation uses only two width for immediate operands: 8 bits, or 32 bits.
         final WordWidth effectiveOperandWidth =  (operandWidth == WordWidth.BITS_8) ? WordWidth.BITS_8 : WordWidth.BITS_32;
         // index to the first byte of the immediate value
-        final int immediateStart = startPosition + size - effectiveOperandWidth.numberOfBytes();
+        final int immediateStart = startPosition + size - effectiveOperandWidth.numberOfBytes;
         fixImm16(immediateStart, imm16);
-        zeroFillFrom(immediateStart + operandWidth.numberOfBytes());
+        zeroFillFrom(immediateStart + operandWidth.numberOfBytes);
     }
 
     /*
@@ -220,7 +220,7 @@ public class AMD64InstructionEditor implements AssemblyInstructionEditor {
      */
     public void fixSingleShortOperand(short imm16) {
         // index to the first byte of the immediate value
-        final int immediateStart = startPosition + size - WordWidth.BITS_16.numberOfBytes();
+        final int immediateStart = startPosition + size - WordWidth.BITS_16.numberOfBytes;
         fixImm16(immediateStart, imm16);
     }
 
@@ -234,11 +234,11 @@ public class AMD64InstructionEditor implements AssemblyInstructionEditor {
         // The Eir to AMD64 code generation uses only two width for immediate operands: 8 bits, or 32 bits.
         if (operandWidth == WordWidth.BITS_8) {
             // index to the first byte of the immediate value
-            final int immediateStart = startPosition + size - WordWidth.BITS_8.numberOfBytes();
+            final int immediateStart = startPosition + size - WordWidth.BITS_8.numberOfBytes;
             fixImm8(immediateStart, imm32);
         } else {
             // index to the first byte of the immediate value
-            final int immediateStart = startPosition + size - WordWidth.BITS_32.numberOfBytes();
+            final int immediateStart = startPosition + size - WordWidth.BITS_32.numberOfBytes;
             fixImm32(immediateStart, imm32);
         }
     }
@@ -251,13 +251,13 @@ public class AMD64InstructionEditor implements AssemblyInstructionEditor {
      */
     public void fixImmediateOperand(int imm32) {
         // index to the first byte of the immediate value
-        final int immediateStart = startPosition + size - WordWidth.BITS_32.numberOfBytes();
+        final int immediateStart = startPosition + size - WordWidth.BITS_32.numberOfBytes;
         fixImm32(immediateStart, imm32);
     }
 
     public void fixImmediateOperand(long imm64) {
         // index to the first byte of the immediate value
-        final int immediateStart = startPosition + size - WordWidth.BITS_64.numberOfBytes();
+        final int immediateStart = startPosition + size - WordWidth.BITS_64.numberOfBytes;
         fixImm64(immediateStart, imm64);
     }
 

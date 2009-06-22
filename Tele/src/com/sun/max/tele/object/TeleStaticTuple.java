@@ -45,7 +45,7 @@ public class TeleStaticTuple extends TeleTupleObject {
             for (FieldActor fieldActor : classActor.localStaticFieldActors()) {
                 staticFieldActors.add(fieldActor);
             }
-            collectStaticFieldActors(classActor.superClassActor(), staticFieldActors);
+            collectStaticFieldActors(classActor.superClassActor, staticFieldActors);
         }
     }
 

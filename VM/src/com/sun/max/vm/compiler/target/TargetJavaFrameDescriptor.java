@@ -329,8 +329,8 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
             final int methodSerial = methodToSerial.get(descriptor.classMethodActor());
             writeSerial(methodSerial);
             stream.writeShort(descriptor.bytecodePosition());
-            writeTargetLocations(stream, descriptor.locals());
-            writeTargetLocations(stream, descriptor.stackSlots());
+            writeTargetLocations(stream, descriptor.locals);
+            writeTargetLocations(stream, descriptor.stackSlots);
         }
 
         protected final void writeTargetLocations(DataOutput dos, TargetLocation[] targetLocations) throws IOException {

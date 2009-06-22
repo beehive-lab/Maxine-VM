@@ -36,25 +36,24 @@ import com.sun.max.vm.trampoline.*;
  */
 public abstract class RecompileTrampolineGenerator extends TrampolineGenerator {
 
-    private static final CompilerScheme _compilerScheme = VMConfiguration.target().compilerScheme();
+    private static final CompilerScheme compilerScheme = VMConfiguration.target().compilerScheme();
 
     protected RecompileTrampolineGenerator() {
     }
 
     public static class VtableTrampolineGenerator extends RecompileTrampolineGenerator {
 
-        protected final ClassMethodActor _trampolineClassMethodActor;
+        protected final ClassMethodActor trampolineClassMethodActor;
 
         public VtableTrampolineGenerator(ClassMethodActor trampolineClassMethodActor) {
-            super();
-            _trampolineClassMethodActor = trampolineClassMethodActor;
+            this.trampolineClassMethodActor = trampolineClassMethodActor;
         }
 
         @Override
         public DynamicTrampoline createTrampoline(int dispatchTableIndex) {
             final DynamicTrampoline vTableTrampoline = new VTableTrampoline(dispatchTableIndex, null);
             VTableTrampolineSnippet.fixTrampoline(vTableTrampoline);
-            vTableTrampoline.initTrampoline(CompilationScheme.Static.forceFreshCompile(_trampolineClassMethodActor, CompilationDirective.DEFAULT));
+            vTableTrampoline.initTrampoline(CompilationScheme.Static.forceFreshCompile(trampolineClassMethodActor, CompilationDirective.DEFAULT));
             return vTableTrampoline;
         }
 
@@ -63,22 +62,21 @@ public abstract class RecompileTrampolineGenerator extends TrampolineGenerator {
     public static class ItableTrampolineGenerator extends RecompileTrampolineGenerator  {
 
         @CONSTANT
-        private static DynamicTrampoline _iTableTrampoline = new ITableTrampoline(0, null);
+        private static DynamicTrampoline iTableTrampoline = new ITableTrampoline(0, null);
         @INLINE
         public static DynamicTrampoline iTableTrampoline() {
-            return _iTableTrampoline;
+            return iTableTrampoline;
         }
-        protected final ClassMethodActor _trampolineClassMethodActor;
+        protected final ClassMethodActor trampolineClassMethodActor;
 
         public ItableTrampolineGenerator(ClassMethodActor trampolineClassMethodActor) {
-            super();
-            _trampolineClassMethodActor = trampolineClassMethodActor;
+            this.trampolineClassMethodActor = trampolineClassMethodActor;
         }
         @Override
         public DynamicTrampoline createTrampoline(int dispatchTableIndex) {
-            _iTableTrampoline = new ITableTrampoline(dispatchTableIndex, null);
-            _iTableTrampoline.initTrampoline(CompilationScheme.Static.forceFreshCompile(_trampolineClassMethodActor, CompilationDirective.DEFAULT));
-            return _iTableTrampoline;
+            iTableTrampoline = new ITableTrampoline(dispatchTableIndex, null);
+            iTableTrampoline.initTrampoline(CompilationScheme.Static.forceFreshCompile(trampolineClassMethodActor, CompilationDirective.DEFAULT));
+            return iTableTrampoline;
         }
     }
 }

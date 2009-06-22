@@ -50,7 +50,7 @@ public class DirMethodValue extends DirValue {
 
     @Override
     public int hashCodeForBlock() {
-        return classMethodActor.name().hashCode();
+        return classMethodActor.name.hashCode();
     }
 
     @Override
@@ -64,6 +64,6 @@ public class DirMethodValue extends DirValue {
 
     @Override
     public String toString() {
-        return classMethodActor.name().toString();
+        return classMethodActor.name.toString();
     }
 }

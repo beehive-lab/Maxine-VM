@@ -76,10 +76,10 @@ public abstract class DirValueVisitor implements DirVisitor {
     }
 
     public void visitSafepoint(DirSafepoint dirSafepoint) {
-        for (DirValue value : dirSafepoint.javaFrameDescriptor().locals()) {
+        for (DirValue value : dirSafepoint.javaFrameDescriptor().locals) {
             visitUse(value);
         }
-        for (DirValue value : dirSafepoint.javaFrameDescriptor().stackSlots()) {
+        for (DirValue value : dirSafepoint.javaFrameDescriptor().stackSlots) {
             visitUse(value);
         }
     }

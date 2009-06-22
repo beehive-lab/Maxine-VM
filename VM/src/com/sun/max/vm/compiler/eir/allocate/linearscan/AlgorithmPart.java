@@ -35,7 +35,7 @@ public abstract class AlgorithmPart {
 
     private Timer timer;
     private String name;
-    private AlgorithmData _data;
+    private AlgorithmData data;
 
 
     public AlgorithmPart(int phase) {
@@ -74,7 +74,7 @@ public abstract class AlgorithmPart {
      * @param data the data object that provides access to the data required for register allocation
      */
     public final void run(AlgorithmData data) {
-        _data = data;
+        this.data = data;
 
         if (LinearScanRegisterAllocator.PHASE_TIMING) {
             timer.start();
@@ -94,14 +94,14 @@ public abstract class AlgorithmPart {
      * @return the current data object the algorithm is operating on
      */
     public final AlgorithmData data() {
-        return _data;
+        return data;
     }
 
     /**
      * @return the method generation object of the current method
      */
     public final EirMethodGeneration generation() {
-        return _data.generation();
+        return data.generation();
     }
 
     /**

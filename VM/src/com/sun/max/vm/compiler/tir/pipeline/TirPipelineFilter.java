@@ -27,12 +27,12 @@ import com.sun.max.vm.compiler.tir.TirMessage.*;
 
 
 public class TirPipelineFilter extends TirInstructionFilter {
-    private TirTree _tree;
+    private TirTree tree;
     private TirTrace trace;
     private TirPipelineOrder order;
 
     public TirTree tree() {
-        return _tree;
+        return tree;
     }
 
     public TirTrace trace() {
@@ -47,7 +47,7 @@ public class TirPipelineFilter extends TirInstructionFilter {
     @Override
     public final void visit(TirTreeBegin treeBegin) {
         ProgramError.check(treeBegin.order() == order);
-        _tree = treeBegin.tree();
+        tree = treeBegin.tree();
         beginTree();
         super.visit(treeBegin);
     }
@@ -69,7 +69,7 @@ public class TirPipelineFilter extends TirInstructionFilter {
     @Override
     public final void visit(TirTreeEnd treeEnd) {
         endTree();
-        _tree = null;
+        tree = null;
         super.visit(treeEnd);
     }
 

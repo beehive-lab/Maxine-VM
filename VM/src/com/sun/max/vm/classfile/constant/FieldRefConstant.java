@@ -101,11 +101,11 @@ public interface FieldRefConstant extends PoolConstant<FieldRefConstant>, Member
         }
 
         public TypeDescriptor holder() {
-            return fieldActor.holder().typeDescriptor();
+            return fieldActor.holder().typeDescriptor;
         }
 
         public Utf8Constant name() {
-            return fieldActor.name();
+            return fieldActor.name;
         }
 
         public TypeDescriptor type() {
@@ -170,7 +170,7 @@ public interface FieldRefConstant extends PoolConstant<FieldRefConstant>, Member
             if (MaxineVM.isPrototyping()) {
                 final Class<?> javaClass = holder.toJava();
                 final Class fieldType = type.resolveType(javaClass.getClassLoader());
-                final Field field = Classes.resolveField(javaClass, fieldType, name.string());
+                final Field field = Classes.resolveField(javaClass, fieldType, name.string);
                 if (MaxineVM.isPrototypeOnly(field)) {
                     throw new PrototypeOnlyFieldError(errorMessage);
                 }
@@ -180,7 +180,7 @@ public interface FieldRefConstant extends PoolConstant<FieldRefConstant>, Member
         }
 
         public FieldActor resolve(ConstantPool pool, int index) {
-            return resolve(pool, index, _holder, _name, type());
+            return resolve(pool, index, holder, name, type());
         }
 
         @Override
@@ -240,7 +240,7 @@ public interface FieldRefConstant extends PoolConstant<FieldRefConstant>, Member
         }
 
         public FieldActor resolve(ConstantPool pool, int index) {
-            final ClassActor classActor = pool.classAt(_classIndex).resolve(pool, _classIndex);
+            final ClassActor classActor = pool.classAt(classIndex).resolve(pool, classIndex);
             return Unresolved.resolve(pool, index, classActor, name(pool), type(pool));
         }
 

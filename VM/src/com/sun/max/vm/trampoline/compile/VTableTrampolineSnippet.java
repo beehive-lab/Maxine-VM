@@ -32,7 +32,7 @@ import com.sun.max.vm.trampoline.*;
 /**
  * Implements dynamic linking of calls through vTables
  * by vTable element updating and then returning to right before the respective call instruction.
- * 
+ *
  * @author Bernd Mathiske
  */
 public final class VTableTrampolineSnippet extends NonFoldableSnippet {
@@ -42,30 +42,30 @@ public final class VTableTrampolineSnippet extends NonFoldableSnippet {
     }
 
     @CONSTANT
-    private static DynamicTrampoline _vTableTrampoline = new VTableTrampoline(0, null);
+    private static DynamicTrampoline vTableTrampoline = new VTableTrampoline(0, null);
 
     static void fixTrampoline(DynamicTrampoline vTableTrampoline) {
-        _vTableTrampoline = vTableTrampoline;
+        VTableTrampolineSnippet.vTableTrampoline = vTableTrampoline;
     }
 
 
-    private static final VTableTrampolineSnippet _snippet = new VTableTrampolineSnippet();
+    private static final VTableTrampolineSnippet snippet = new VTableTrampolineSnippet();
 
-    private static final TrampolineGenerator _trampolineGenerator = new RecompileTrampolineGenerator.VtableTrampolineGenerator(_snippet.classMethodActor());
+    private static final TrampolineGenerator trampolineGenerator = new RecompileTrampolineGenerator.VtableTrampolineGenerator(snippet.classMethodActor());
 
     @SNIPPET
     @TRAMPOLINE(invocation = TRAMPOLINE.Invocation.VIRTUAL)
     private static Address vTableTrampolineSnippet(Object receiver) throws Throwable {
-        return _vTableTrampoline.trampolineReturnAddress(receiver, VMRegister.getCpuStackPointer());
+        return vTableTrampoline.trampolineReturnAddress(receiver, VMRegister.getCpuStackPointer());
     }
 
 
     public static synchronized Address makeCallEntryPoint(int vTableIndex) {
-        return _trampolineGenerator.makeCallEntryPoint(vTableIndex);
+        return trampolineGenerator.makeCallEntryPoint(vTableIndex);
     }
 
     public static synchronized boolean isVTableTrampoline(MethodActor classMethodActor) {
-        return classMethodActor == _snippet.classMethodActor();
+        return classMethodActor == snippet.classMethodActor();
     }
 
     public static synchronized boolean isVTableTrampolineInstructionPointer(Address instructionPointer) {
@@ -73,6 +73,6 @@ public final class VTableTrampolineSnippet extends NonFoldableSnippet {
         if (targetMethod == null) {
             return false;
         }
-        return targetMethod.classMethodActor() == _snippet.classMethodActor();
+        return targetMethod.classMethodActor() == snippet.classMethodActor();
     }
 }

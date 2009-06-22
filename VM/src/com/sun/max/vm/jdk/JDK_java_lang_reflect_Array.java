@@ -93,7 +93,7 @@ final class JDK_java_lang_reflect_Array {
     @SUBSTITUTE
     public static Object get(Object array, int index) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
         checkIndex(array, index);
-        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind();
+        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind;
         return elementKind.getValue(array, index).asBoxedJavaValue();
     }
 
@@ -109,7 +109,7 @@ final class JDK_java_lang_reflect_Array {
     @SUBSTITUTE
     public static boolean getBoolean(Object array, int index) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
         checkIndex(array, index);
-        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind();
+        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind;
         final Value value = elementKind.getValue(array, index);
         return value.toBoolean();
     }
@@ -126,7 +126,7 @@ final class JDK_java_lang_reflect_Array {
     @SUBSTITUTE
     public static byte getByte(Object array, int index) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
         checkIndex(array, index);
-        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind();
+        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind;
         final Value value = elementKind.getValue(array, index);
         return value.toByte();
     }
@@ -143,7 +143,7 @@ final class JDK_java_lang_reflect_Array {
     @SUBSTITUTE
     public static char getChar(Object array, int index) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
         checkIndex(array, index);
-        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind();
+        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind;
         final Value value = elementKind.getValue(array, index);
         return value.toChar();
     }
@@ -160,7 +160,7 @@ final class JDK_java_lang_reflect_Array {
     @SUBSTITUTE
     public static short getShort(Object array, int index) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
         checkIndex(array, index);
-        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind();
+        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind;
         final Value value = elementKind.getValue(array, index);
         return value.toShort();
     }
@@ -177,7 +177,7 @@ final class JDK_java_lang_reflect_Array {
     @SUBSTITUTE
     public static int getInt(Object array, int index) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
         checkIndex(array, index);
-        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind();
+        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind;
         final Value value = elementKind.getValue(array, index);
         return value.toInt();
     }
@@ -194,7 +194,7 @@ final class JDK_java_lang_reflect_Array {
     @SUBSTITUTE
     public static long getLong(Object array, int index) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
         checkIndex(array, index);
-        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind();
+        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind;
         final Value value = elementKind.getValue(array, index);
         return value.toLong();
     }
@@ -211,7 +211,7 @@ final class JDK_java_lang_reflect_Array {
     @SUBSTITUTE
     public static float getFloat(Object array, int index) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
         checkIndex(array, index);
-        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind();
+        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind;
         final Value value = elementKind.getValue(array, index);
         return value.toFloat();
     }
@@ -228,7 +228,7 @@ final class JDK_java_lang_reflect_Array {
     @SUBSTITUTE
     public static double getDouble(Object array, int index) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
         checkIndex(array, index);
-        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind();
+        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind;
         final Value value = elementKind.getValue(array, index);
         return value.toDouble();
     }
@@ -245,7 +245,7 @@ final class JDK_java_lang_reflect_Array {
     @SUBSTITUTE
     public static void set(Object array, int index, Object value) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
         checkIndex(array, index);
-        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind();
+        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind;
         if (elementKind == Kind.REFERENCE) {
             ArrayAccess.setObject(array, index, value);
         } else {
@@ -265,7 +265,7 @@ final class JDK_java_lang_reflect_Array {
     @SUBSTITUTE
     public static void setBoolean(Object array, int index, boolean value) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
         checkIndex(array, index);
-        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind();
+        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind;
         elementKind.setErasedValue(array, index, elementKind.convert(BooleanValue.from(value)));
     }
 
@@ -281,7 +281,7 @@ final class JDK_java_lang_reflect_Array {
     @SUBSTITUTE
     public static void setByte(Object array, int index, byte value) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
         checkIndex(array, index);
-        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind();
+        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind;
         elementKind.setErasedValue(array, index, elementKind.convert(ByteValue.from(value)));
     }
 
@@ -297,7 +297,7 @@ final class JDK_java_lang_reflect_Array {
     @SUBSTITUTE
     public static void setChar(Object array, int index, char value) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
         checkIndex(array, index);
-        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind();
+        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind;
         elementKind.setErasedValue(array, index, elementKind.convert(CharValue.from(value)));
     }
 
@@ -313,7 +313,7 @@ final class JDK_java_lang_reflect_Array {
     @SUBSTITUTE
     public static void setShort(Object array, int index, short value) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
         checkIndex(array, index);
-        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind();
+        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind;
         elementKind.setErasedValue(array, index, elementKind.convert(ShortValue.from(value)));
     }
 
@@ -329,7 +329,7 @@ final class JDK_java_lang_reflect_Array {
     @SUBSTITUTE
     public static void setInt(Object array, int index, int value) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
         checkIndex(array, index);
-        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind();
+        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind;
         elementKind.setErasedValue(array, index, elementKind.convert(IntValue.from(value)));
     }
 
@@ -345,7 +345,7 @@ final class JDK_java_lang_reflect_Array {
     @SUBSTITUTE
     public static void setLong(Object array, int index, long value) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
         checkIndex(array, index);
-        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind();
+        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind;
         elementKind.setErasedValue(array, index, elementKind.convert(LongValue.from(value)));
     }
 
@@ -361,7 +361,7 @@ final class JDK_java_lang_reflect_Array {
     @SUBSTITUTE
     public static void setFloat(Object array, int index, float value) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
         checkIndex(array, index);
-        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind();
+        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind;
         elementKind.setErasedValue(array, index, elementKind.convert(FloatValue.from(value)));
     }
 
@@ -377,7 +377,7 @@ final class JDK_java_lang_reflect_Array {
     @SUBSTITUTE
     public static void setDouble(Object array, int index, double value) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
         checkIndex(array, index);
-        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind();
+        final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind;
         elementKind.setErasedValue(array, index, elementKind.convert(DoubleValue.from(value)));
     }
 

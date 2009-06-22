@@ -37,34 +37,34 @@ public class EirLiteralPool {
         return new ArraySequence<EirLiteral>(referenceLiterals.values());
     }
 
-    private Map<Value, EirLiteral> _scalarLiterals = new LinkedHashMap<Value, EirLiteral>();
+    private Map<Value, EirLiteral> scalarLiterals = new LinkedHashMap<Value, EirLiteral>();
 
     public Sequence<EirLiteral> scalarLiterals() {
-        return new ArraySequence<EirLiteral>(_scalarLiterals.values());
+        return new ArraySequence<EirLiteral>(scalarLiterals.values());
     }
 
     public boolean hasLiterals() {
-        return !(referenceLiterals.isEmpty() && _scalarLiterals.isEmpty());
+        return !(referenceLiterals.isEmpty() && scalarLiterals.isEmpty());
     }
 
-    private int _nextReferenceLiteralIndex;
+    private int nextReferenceLiteralIndex;
     private int nextScalarLiteralByteIndex;
 
     public EirLiteral makeLiteral(Value value) {
         if (value.kind() == Kind.REFERENCE) {
             EirLiteral literal = referenceLiterals.get(value);
             if (literal == null) {
-                literal = new EirLiteral(_nextReferenceLiteralIndex, value);
-                _nextReferenceLiteralIndex++;
+                literal = new EirLiteral(nextReferenceLiteralIndex, value);
+                nextReferenceLiteralIndex++;
                 referenceLiterals.put(value, literal);
             }
             return literal;
         }
-        EirLiteral literal = _scalarLiterals.get(value);
+        EirLiteral literal = scalarLiterals.get(value);
         if (literal == null) {
             literal = new EirLiteral(nextScalarLiteralByteIndex, value);
-            nextScalarLiteralByteIndex += value.kind().size();
-            _scalarLiterals.put(value, literal);
+            nextScalarLiteralByteIndex += value.kind().width.numberOfBytes;
+            scalarLiterals.put(value, literal);
         }
         return literal;
     }

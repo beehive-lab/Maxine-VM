@@ -39,18 +39,18 @@ public class AlarmCounter extends Counter {
      * The threshold, or the number of times the increment operation can be applied before
      * triggering the alarm.
      */
-    private int _threshold;
+    private int threshold;
 
     /**
      * Stores whether the runnable has been triggered, which is used to reliably trigger
      * the runnable only once.
      */
-    private boolean _triggered;
+    private boolean triggered;
 
     /**
      * The runnable to run when the threshold is reached.
      */
-    private final Runnable _runnable;
+    private final Runnable runnable;
 
     /**
      * Creates a new alarm counter with the specified threshold.
@@ -60,8 +60,8 @@ public class AlarmCounter extends Counter {
      */
     public AlarmCounter(int threshold, Runnable runnable) {
         super(threshold);
-        this._threshold = threshold;
-        this._runnable = runnable;
+        this.threshold = threshold;
+        this.runnable = runnable;
     }
 
     /**
@@ -70,7 +70,7 @@ public class AlarmCounter extends Counter {
      */
     @Override
     public final void increment() {
-        if (--_count == 0) {
+        if (--value == 0) {
             triggerAlarm();
         }
     }
@@ -81,9 +81,9 @@ public class AlarmCounter extends Counter {
     private void triggerAlarm() {
         // trigger the runnable only once.
         synchronized (this) {
-            if (!_triggered) {
-                _triggered = true;
-                _runnable.run();
+            if (!triggered) {
+                triggered = true;
+                runnable.run();
             }
         }
     }
@@ -93,7 +93,7 @@ public class AlarmCounter extends Counter {
      * @return the number of increments
      */
     public int getCount() {
-        return _threshold - _count;
+        return threshold - value;
     }
 
     /**
@@ -101,7 +101,7 @@ public class AlarmCounter extends Counter {
      * @return
      */
     public int getThreshold() {
-        return _threshold;
+        return threshold;
     }
 
     /**
@@ -110,9 +110,9 @@ public class AlarmCounter extends Counter {
      */
     public void reset(int threshold) {
         synchronized (this) {
-            _threshold = threshold;
-            _count = threshold;
-            _triggered = false;
+            this.threshold = threshold;
+            value = threshold;
+            this.triggered = false;
         }
     }
 
@@ -121,7 +121,7 @@ public class AlarmCounter extends Counter {
      */
     @Override
     public void reset() {
-        _count = _threshold;
-        _triggered = false;
+        value = threshold;
+        triggered = false;
     }
 }

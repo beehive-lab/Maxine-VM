@@ -39,13 +39,13 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
     private boolean isMoveResolverBlock;
 
     private PoolSet<EirVariable> liveGen;
-    private PoolSet<EirVariable> _liveKill;
+    private PoolSet<EirVariable> liveKill;
     private PoolSet<EirVariable> inverseLiveKill;
     private PoolSet<EirVariable> liveIn;
     private PoolSet<EirVariable> liveOut;
 
     public void setLiveKill(PoolSet<EirVariable> liveKill) {
-        _liveKill = liveKill;
+        this.liveKill = liveKill;
 
         inverseLiveKill = PoolSet.allOf(liveKill.pool());
         for (EirVariable variable : liveKill) {
@@ -346,8 +346,8 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
             printSet(writer, "liveOut", liveOut);
         }
 
-        if (_liveKill != null) {
-            printSet(writer, "liveKill", _liveKill);
+        if (liveKill != null) {
+            printSet(writer, "liveKill", liveKill);
         }
 
         if (liveGen != null) {

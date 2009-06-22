@@ -42,7 +42,7 @@ import com.sun.max.vm.value.*;
 public class TirInterpreter extends IrInterpreter<TirTree> {
     private VariableMapping<TirInstruction, Value> contextValues = new IdentityHashMapping<TirInstruction, Value>();
     private VariableMapping<TirInstruction, Value> invariantValues = new IdentityHashMapping<TirInstruction, Value>();
-    private VariableMapping<TirInstruction, Value> _variantValues = new IdentityHashMapping<TirInstruction, Value>();
+    private VariableMapping<TirInstruction, Value> variantValues = new IdentityHashMapping<TirInstruction, Value>();
     private VariableMapping<TirTreeCall, BirState> callResults = new IdentityHashMapping<TirTreeCall, BirState>();
 
     private static ClassMethodActor createTupleOrHybridMethodActor = ClassMethodActor.findStatic(CreateTupleOrHybrid.class, "createTupleOrHybrid");
@@ -108,7 +108,7 @@ public class TirInterpreter extends IrInterpreter<TirTree> {
             final BirState state = callResults.get(local.call());
             return state.getOne(local.slot());
         }
-        Value value = _variantValues.get(instruction);
+        Value value = variantValues.get(instruction);
         if (value == null) {
             value = invariantValues.get(instruction);
         }
@@ -135,7 +135,7 @@ public class TirInterpreter extends IrInterpreter<TirTree> {
         if (isInvariant) {
             invariantValues.put(instruction, value);
         } else {
-            _variantValues.put(instruction, value);
+            variantValues.put(instruction, value);
         }
     }
 
@@ -176,7 +176,7 @@ public class TirInterpreter extends IrInterpreter<TirTree> {
             }
         });
         contextValues = newContext;
-        _variantValues.clear();
+        variantValues.clear();
         tree.profile().iterations++;
     }
 

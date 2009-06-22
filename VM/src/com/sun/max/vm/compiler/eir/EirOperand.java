@@ -58,7 +58,7 @@ public final class EirOperand implements IrValue {
         switch (effect) {
             case DEFINITION:
             case UPDATE: {
-                _eirValue.recordDefinition(this);
+                eirValue.recordDefinition(this);
                 break;
             }
             default: {
@@ -71,7 +71,7 @@ public final class EirOperand implements IrValue {
         switch (effect) {
             case USE:
             case UPDATE: {
-                _eirValue.recordUse(this);
+                eirValue.recordUse(this);
                 break;
             }
             default: {
@@ -86,28 +86,28 @@ public final class EirOperand implements IrValue {
         return locationCategories;
     }
 
-    private EirValue _eirValue;
+    private EirValue eirValue;
 
     public EirValue eirValue() {
-        return _eirValue;
+        return eirValue;
     }
 
     public void clearEirValue() {
-        if (_eirValue != null) {
-            _eirValue.removeOperand(this);
-            _eirValue = null;
+        if (eirValue != null) {
+            eirValue.removeOperand(this);
+            eirValue = null;
         }
     }
 
     void setEirValueWithoutUpdate(EirValue eirValue) {
         assert !eirValue.isLocationFixed() || locationCategories.contains(eirValue.location().category());
-        _eirValue = eirValue;
+        this.eirValue = eirValue;
     }
 
     public void setEirValue(EirValue eirValue) {
         clearEirValue();
         assert !eirValue.isLocationFixed() || locationCategories.contains(eirValue.location().category());
-        _eirValue = eirValue;
+        this.eirValue = eirValue;
         eirValue.addOperand(this);
     }
 
@@ -138,15 +138,15 @@ public final class EirOperand implements IrValue {
         preferredRegister = register;
     }
 
-    private EirRegister _requiredRegister;
+    private EirRegister requiredRegister;
 
     public EirRegister requiredRegister() {
-        return _requiredRegister;
+        return requiredRegister;
     }
 
     public void setRequiredRegister(EirRegister register) {
         assert locationCategories.contains(register.category());
-        _requiredRegister = register;
+        requiredRegister = register;
         setPreferredRegister(register);
     }
 
@@ -165,34 +165,34 @@ public final class EirOperand implements IrValue {
     }
 
     public EirLocation location() {
-        return _eirValue.location();
+        return eirValue.location();
     }
 
     public boolean isConstant() {
-        return _eirValue.isConstant();
+        return eirValue.isConstant();
     }
 
     public Value value() {
-        return _eirValue.value();
+        return eirValue.value();
     }
 
     public Kind kind() {
-        return _eirValue.kind();
+        return eirValue.kind();
     }
 
     public void cleanup() {
         locationCategories = null;
-        _eirValue.cleanup();
+        eirValue.cleanup();
     }
 
     @Override
     public String toString() {
-        if (_eirValue == null) {
+        if (eirValue == null) {
             if (effect == null) {
                 return null;
             }
             return effect.name();
         }
-        return _eirValue.toString();
+        return eirValue.toString();
     }
 }

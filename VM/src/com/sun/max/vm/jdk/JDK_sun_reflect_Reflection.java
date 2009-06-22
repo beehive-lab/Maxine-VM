@@ -45,7 +45,7 @@ final class JDK_sun_reflect_Reflection {
     private JDK_sun_reflect_Reflection() {
     }
 
-    private static final CriticalMethod _javaLangReflectMethodInvoke = new CriticalMethod(Method.class, "invoke",
+    private static final CriticalMethod javaLangReflectMethodInvoke = new CriticalMethod(Method.class, "invoke",
         SignatureDescriptor.create(Object.class, Object.class, Object[].class));
 
     /**
@@ -54,10 +54,10 @@ final class JDK_sun_reflect_Reflection {
      */
     private static class Context implements StackFrameVisitor {
         MethodActor result;
-        int _realFramesToSkip;
+        int realFramesToSkip;
 
         Context(int realFramesToSkip) {
-            _realFramesToSkip = realFramesToSkip;
+            this.realFramesToSkip = realFramesToSkip;
         }
 
         public boolean visitFrame(StackFrame stackFrame) {
@@ -72,7 +72,7 @@ final class JDK_sun_reflect_Reflection {
             final TargetMethod targetMethod = stackFrame.targetMethod();
             if (targetMethod == null) {
                 // native frame
-                _realFramesToSkip--; // TODO: find out whether this is according to getCallerClass' intended "spec"
+                realFramesToSkip--; // TODO: find out whether this is according to getCallerClass' intended "spec"
                 return true;
             }
             // according to sun.reflect.Reflection, getCallerClass() should ignore java.lang.reflect.Method.invoke
@@ -80,23 +80,23 @@ final class JDK_sun_reflect_Reflection {
                 return true;
             }
 
-            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer());
+            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer);
             if (bytecodeLocations == null) {
-                if (_realFramesToSkip == 0) {
+                if (realFramesToSkip == 0) {
                     result = targetMethod.classMethodActor();
                     return false;
                 }
-                _realFramesToSkip--;
+                realFramesToSkip--;
             } else {
                 while (bytecodeLocations.hasNext()) {
                     final BytecodeLocation bytecodeLocation = bytecodeLocations.next();
                     final MethodActor classMethodActor = bytecodeLocation.classMethodActor().original();
                     if (!classMethodActor.isWrapper() && !classMethodActor.holder().isGenerated()) {
-                        if (_realFramesToSkip == 0) {
+                        if (realFramesToSkip == 0) {
                             result = classMethodActor;
                             return false;
                         }
-                        _realFramesToSkip--;
+                        realFramesToSkip--;
                     }
                 }
             }
@@ -105,7 +105,7 @@ final class JDK_sun_reflect_Reflection {
     }
 
     private static boolean isReflectionMethod(TargetMethod targetMethod) {
-        return targetMethod.classMethodActor() == _javaLangReflectMethodInvoke.classMethodActor();
+        return targetMethod.classMethodActor() == javaLangReflectMethodInvoke.classMethodActor;
     }
 
     /**

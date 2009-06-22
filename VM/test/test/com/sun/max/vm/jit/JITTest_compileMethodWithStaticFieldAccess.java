@@ -52,7 +52,7 @@ public class JITTest_compileMethodWithStaticFieldAccess extends JitCompilerTestC
     }
 
     String methodNameForKind(Kind kind, boolean resolved) {
-        final String kindName = kind.name().toString();
+        final String kindName = kind.name.toString();
         return  methodNameFor(kindName.substring(0, 1).toUpperCase() +  kindName.substring(1).toLowerCase(), resolved);
     }
 

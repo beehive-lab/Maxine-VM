@@ -36,16 +36,16 @@ import com.sun.max.vm.value.*;
  */
 public abstract class OhmArrayLayout<Value_Type extends Value<Value_Type>> extends OhmArrayHeaderLayout implements ArrayLayout<Value_Type> {
 
-    protected final Kind<Value_Type> _elementKind;
+    protected final Kind<Value_Type> elementKind;
 
     public OhmArrayLayout(GripScheme gripScheme, Kind<Value_Type> elementKind) {
         super(gripScheme);
-        _elementKind = elementKind;
+        this.elementKind = elementKind;
     }
 
     @INLINE
     public final Kind<Value_Type> elementKind() {
-        return _elementKind;
+        return elementKind;
     }
 
     public Layout.Category category() {
@@ -54,13 +54,13 @@ public abstract class OhmArrayLayout<Value_Type extends Value<Value_Type>> exten
 
     @Override
     public final boolean isReferenceArrayLayout() {
-        final Kind rawKind = _elementKind;
+        final Kind rawKind = elementKind;
         return rawKind == Kind.REFERENCE;
     }
 
     @INLINE
     public final int elementSize() {
-        return elementKind().size();
+        return elementKind().width.numberOfBytes;
     }
 
     @INLINE
@@ -93,14 +93,14 @@ public abstract class OhmArrayLayout<Value_Type extends Value<Value_Type>> exten
     @Override
     public void visitHeader(ObjectCellVisitor visitor, Object array) {
         super.visitHeader(visitor, array);
-        visitor.visitHeaderField(_lengthOffset, "length", JavaTypeDescriptor.INT, IntValue.from(HostObjectAccess.getArrayLength(array)));
+        visitor.visitHeaderField(lengthOffset, "length", JavaTypeDescriptor.INT, IntValue.from(HostObjectAccess.getArrayLength(array)));
     }
 
     @PROTOTYPE_ONLY
     private void visitElements(ObjectCellVisitor visitor, Object array) {
         final int length = Array.getLength(array);
         final Hub hub = HostObjectAccess.readHub(array);
-        final Kind elementKind = hub.classActor().componentClassActor().kind();
+        final Kind elementKind = hub.classActor().componentClassActor().kind;
         if (elementKind == Kind.REFERENCE) {
             for (int i = 0; i < length; i++) {
                 final Object object = Array.get(array, i);
@@ -122,28 +122,28 @@ public abstract class OhmArrayLayout<Value_Type extends Value<Value_Type>> exten
     }
 
     public Value readValue(Kind kind, ObjectMirror mirror, int offset) {
-        if (offset == _lengthOffset) {
+        if (offset == lengthOffset) {
             return mirror.readArrayLength();
         }
         final Value value = readHeaderValue(mirror, offset);
         if (value != null) {
             return value;
         }
-        assert kind.isPrimitiveOfSameSizeAs(_elementKind);
-        final int index = (offset - headerSize()) / kind.size();
+        assert kind.isPrimitiveOfSameSizeAs(elementKind);
+        final int index = (offset - headerSize()) / kind.width.numberOfBytes;
         return mirror.readElement(kind, index);
     }
 
     public void writeValue(Kind kind, ObjectMirror mirror, int offset, Value value) {
         assert kind.isPrimitiveOfSameSizeAs(value.kind());
-        if (offset == _lengthOffset) {
+        if (offset == lengthOffset) {
             mirror.writeArrayLength(value);
             return;
         }
         if (writeHeaderValue(mirror, offset, value)) {
             return;
         }
-        assert kind.isPrimitiveOfSameSizeAs(_elementKind);
+        assert kind.isPrimitiveOfSameSizeAs(elementKind);
         final int index = (offset - headerSize()) / elementSize();
         mirror.writeElement(kind, index, value);
     }

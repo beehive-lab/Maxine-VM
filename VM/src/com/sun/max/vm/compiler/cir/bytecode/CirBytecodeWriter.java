@@ -197,7 +197,7 @@ public class CirBytecodeWriter extends CirVisitor {
     }
 
     private void writeKind(Kind kind) {
-        writeUnsignedInt(kind.character());
+        writeUnsignedInt(kind.character);
     }
 
     private void writeEnum(Enum value) {
@@ -226,8 +226,8 @@ public class CirBytecodeWriter extends CirVisitor {
             do {
                 writeConstant(jfd.classMethodActor());
                 writeUnsignedInt(jfd.bytecodePosition());
-                writeUnsignedInt(jfd.locals().length);
-                writeUnsignedInt(jfd.stackSlots().length);
+                writeUnsignedInt(jfd.locals.length);
+                writeUnsignedInt(jfd.stackSlots.length);
                 jfd = jfd.parent();
             } while (jfd != null);
         }

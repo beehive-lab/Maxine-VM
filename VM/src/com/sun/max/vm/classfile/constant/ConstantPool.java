@@ -675,7 +675,7 @@ public final class ConstantPool {
     }
 
     public String stringAt(int index) {
-        return stringConstantAt(index).value();
+        return stringConstantAt(index).value;
     }
 
     public Class[] resolveClassesAtToJava(char[] indexes) {

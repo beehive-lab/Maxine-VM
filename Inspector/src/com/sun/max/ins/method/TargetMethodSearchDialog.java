@@ -52,7 +52,7 @@ public final class TargetMethodSearchDialog extends TeleObjectSearchDialog {
 
         for (TeleClassMethodActor teleClassMethodActor : _localTeleClassMethodActors) {
             final MethodActor methodActor = teleClassMethodActor.methodActor();
-            final String methodNameLowerCase = methodActor.name().toString().toLowerCase();
+            final String methodNameLowerCase = methodActor.name.toString().toLowerCase();
             if (filterLowerCase.isEmpty() ||
                 (filterLowerCase.endsWith(" ") && methodNameLowerCase.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
                 methodNameLowerCase.contains(filterLowerCase)) {

@@ -47,19 +47,19 @@ public class TirRecorder {
     private final BytecodeRecorder visitor = new BytecodeRecorder();
     private final BytecodeScanner scanner = new BytecodeScanner(visitor);
     private final TirTrace trace;
-    private final TirState _state;
+    private final TirState state;
     private final Tracer tracer;
     private final Scope scope;
 
     public TirRecorder(Tracer tracer, Scope scope, TirState state, TirTrace trace) {
         this.tracer = tracer;
         this.trace = trace;
-        this._state = state;
+        this.state = state;
         this.scope = scope;
     }
 
     public void record(BytecodeLocation location) {
-        _state.last().setPc(location.bytecodePosition());
+        state.last().setPc(location.bytecodePosition());
         visitor.setMethod(location.classMethodActor());
         final byte[] bytecode = location.classMethodActor().codeAttribute().code();
         scanner.scanInstruction(bytecode, location.bytecodePosition());
@@ -82,15 +82,15 @@ public class TirRecorder {
             public void visit(TirInstruction exit, TirInstruction entry) {
                 final TirNestedLocal nestedLocal = new TirNestedLocal(call, index);
                 nestedLocal.setKind(exit.kind());
-                _state.store(index, nestedLocal);
+                TirRecorder.this.state.store(index, nestedLocal);
                 append(nestedLocal);
             }
         });
-        _state.append(bailout.guard().state().frames());
+        this.state.append(bailout.guard().state().frames());
     }
 
     private void push(TirInstruction instruction) {
-        _state.push(instruction);
+        state.push(instruction);
     }
 
     private void push(Value value) {
@@ -98,7 +98,7 @@ public class TirRecorder {
     }
 
     private TirInstruction pop(Kind kind) {
-        return _state.pop(kind);
+        return state.pop(kind);
     }
 
     private void append(TirInstruction instruction) {
@@ -112,7 +112,7 @@ public class TirRecorder {
 
     private void call(ClassMethodActor target, TirState state) {
         final Kind[] parameterKinds = target.getParameterKinds();
-        final TirInstruction[] arguments = _state.popMany(parameterKinds);
+        final TirInstruction[] arguments = this.state.popMany(parameterKinds);
         final TirCall call = new TirMethodCall(target, state, arguments);
         append(call);
         if (call.kind() != Kind.VOID) {
@@ -130,7 +130,7 @@ public class TirRecorder {
 
     private void call(Builtin builtin) {
         final Kind[] parameterKinds = builtin.parameterKinds();
-        final TirInstruction[] arguments = _state.popMany(parameterKinds);
+        final TirInstruction[] arguments = state.popMany(parameterKinds);
         final TirCall builtinCall = new TirBuiltinCall(builtin, arguments);
         append(builtinCall);
         if (builtinCall.kind() != Kind.VOID) {
@@ -140,13 +140,13 @@ public class TirRecorder {
 
     private void peekAndCall(Snippet snippet, int stackDepth) {
         final Kind[] parameterKinds = snippet.parameterKinds();
-        final TirInstruction[] arguments = _state.peekMany(stackDepth, parameterKinds);
+        final TirInstruction[] arguments = state.peekMany(stackDepth, parameterKinds);
         call(snippet, arguments);
     }
 
     private void call(Snippet snippet) {
         final Kind[] parameterKinds = snippet.parameterKinds();
-        final TirInstruction[] arguments = _state.popMany(parameterKinds);
+        final TirInstruction[] arguments = state.popMany(parameterKinds);
         call(snippet, arguments);
     }
 
@@ -186,10 +186,10 @@ public class TirRecorder {
 
 
     public class BytecodeRecorder extends BytecodeAggregatingVisitor {
-        private ClassMethodActor _method = null;
+        private ClassMethodActor method;
 
         public void setMethod(ClassMethodActor method) {
-            _method = method;
+            this.method = method;
         }
 
         @Override
@@ -199,12 +199,12 @@ public class TirRecorder {
 
         @Override
         protected void store(Kind kind, int index) {
-            _state.store(kind, index);
+            state.store(kind, index);
         }
 
         @Override
         protected void load(Kind kind, int slot) {
-            _state.load(kind, slot);
+            state.load(kind, slot);
         }
 
         @Override
@@ -216,10 +216,10 @@ public class TirRecorder {
             if (fieldActor.isStatic()) {
                 reference = TirConstant.fromObject(fieldActor.holder().staticTuple());
             } else {
-                reference = _state.pop(Kind.REFERENCE);
+                reference = state.pop(Kind.REFERENCE);
             }
 
-            final Snippet snippet = OpMap.operationSnippet(Operation.GETFIELD, fieldActor.kind());
+            final Snippet snippet = OpMap.operationSnippet(Operation.GETFIELD, fieldActor.kind);
             call(snippet, reference, fieldActorConstant);
         }
 
@@ -227,14 +227,14 @@ public class TirRecorder {
         protected void putField(FieldRefConstant resolvedField, int index) {
             final FieldActor fieldActor = resolvedField.resolve(constantPool(), index);
             final TirConstant fieldActorConstant = TirConstant.fromObject(fieldActor);
-            final TirInstruction value = _state.pop(fieldActor.kind());
+            final TirInstruction value = state.pop(fieldActor.kind);
             final TirInstruction reference;
             if (fieldActor.isStatic()) {
                 reference = TirConstant.fromObject(fieldActor.holder().staticTuple());
             } else {
-                reference = _state.pop(Kind.REFERENCE);
+                reference = state.pop(Kind.REFERENCE);
             }
-            final Snippet snippet = OpMap.operationSnippet(Operation.PUTFIELD, fieldActor.kind());
+            final Snippet snippet = OpMap.operationSnippet(Operation.PUTFIELD, fieldActor.kind);
             call(snippet, reference, fieldActorConstant, value);
         }
 
@@ -279,18 +279,18 @@ public class TirRecorder {
 
         @Override
         protected void arrayLoad(Kind kind) {
-            final TirInstruction[] arguments = _state.peekMany(0, Kind.REFERENCE, Kind.INT);
+            final TirInstruction[] arguments = state.peekMany(0, Kind.REFERENCE, Kind.INT);
             final TirInstruction array = arguments[0];
             final TirInstruction index = arguments[1];
             checkNullPointer(array);
             checkArrayIndex(array, index);
-            _state.popMany(Kind.REFERENCE, Kind.INT);
+            state.popMany(Kind.REFERENCE, Kind.INT);
             call(OpMap.operationSnippet(Operation.ALOAD, kind), array, index);
         }
 
         @Override
         protected void arrayStore(Kind kind) {
-            final TirInstruction[] arguments = _state.peekMany(0, Kind.REFERENCE, Kind.INT, kind);
+            final TirInstruction[] arguments = state.peekMany(0, Kind.REFERENCE, Kind.INT, kind);
             final TirInstruction array = arguments[0];
             final TirInstruction index = arguments[1];
             final TirInstruction value = arguments[2];
@@ -299,14 +299,14 @@ public class TirRecorder {
             if (kind == Kind.REFERENCE) {
                 checkArrayStore(array, value);
             }
-            _state.popMany(Kind.REFERENCE, Kind.INT, kind);
+            state.popMany(Kind.REFERENCE, Kind.INT, kind);
             call(OpMap.operationSnippet(Operation.ASTORE, kind), array, index, value);
         }
 
         @Override
         protected void allocateArray(ClassConstant classConstant, int index) {
             final Resolved resolvedClass = (Resolved) classConstant;
-            final TirConstant constant = TirConstant.fromObject(resolvedClass.classActor());
+            final TirConstant constant = TirConstant.fromObject(resolvedClass.classActor);
             final TirInstruction length = TirRecorder.this.pop(Kind.INT);
             call(NonFoldableSnippet.CreateReferenceArray.SNIPPET, constant, length);
         }
@@ -326,7 +326,7 @@ public class TirRecorder {
         @Override
         protected void allocate(ClassConstant classConstant, int index) {
             final Resolved resolvedClass = (Resolved) classConstant;
-            final TirConstant constant = TirConstant.fromObject(resolvedClass.classActor());
+            final TirConstant constant = TirConstant.fromObject(resolvedClass.classActor);
             call(NonFoldableSnippet.CreateTupleOrHybrid.SNIPPET, constant);
         }
 
@@ -360,13 +360,13 @@ public class TirRecorder {
         @Override
         protected void instanceOf(ClassConstant classConstant, int index) {
             final ClassActor cls = classConstant.resolve(constantPool(), index);
-            final TirInstruction obj = _state.pop(Kind.REFERENCE);
+            final TirInstruction obj = state.pop(Kind.REFERENCE);
             call(Snippet.InstanceOf.SNIPPET, TirConstant.fromObject(cls), obj);
         }
 
         @Override
         protected void execute(Bytecode bytecode) {
-            _state.execute(bytecode);
+            state.execute(bytecode);
         }
 
         @Override
@@ -398,7 +398,7 @@ public class TirRecorder {
         @Override
         protected void branch(BranchCondition condition, int offset) {
             final TirState state = takeSnapshot();
-            final TirInstruction opearand0 = _state.pop(Kind.INT);
+            final TirInstruction opearand0 = TirRecorder.this.state.pop(Kind.INT);
             final TirInstruction opearand1 = new TirConstant(IntValue.ZERO);
             final boolean observedResult = tracer.evaluateBranch(condition);
             BranchCondition observedCondition = condition;
@@ -416,8 +416,8 @@ public class TirRecorder {
         @Override
         protected void icmpBranch(BranchCondition condition, int offset) {
             final TirState state = takeSnapshot();
-            final TirInstruction opearand1 = _state.pop(Kind.INT);
-            final TirInstruction opearand0 = _state.pop(Kind.INT);
+            final TirInstruction opearand1 = TirRecorder.this.state.pop(Kind.INT);
+            final TirInstruction opearand0 = TirRecorder.this.state.pop(Kind.INT);
             final boolean observedResult = tracer.evaluateIcmpBranch(condition);
             BranchCondition observedCondition = condition;
 
@@ -434,7 +434,7 @@ public class TirRecorder {
         @Override
         protected void nullBranch(BranchCondition condition, int offset) {
             final TirState state = takeSnapshot();
-            final TirInstruction opearand0 = _state.pop(Kind.REFERENCE);
+            final TirInstruction opearand0 = TirRecorder.this.state.pop(Kind.REFERENCE);
             final TirInstruction opearand1 = new TirConstant(ReferenceValue.NULL);
             final boolean observedResult = tracer.evaluateNullBranch(condition);
             BranchCondition observedCondition = condition;
@@ -453,7 +453,7 @@ public class TirRecorder {
         protected void tableSwitch(int defaultOffset, int lowMatch, int highMatch, int[] switchOffsets) {
             final TirState state = takeSnapshot();
             final int observedIndex = tracer.evaluateInt(0);
-            final TirInstruction index = _state.pop(Kind.INT);
+            final TirInstruction index = TirRecorder.this.state.pop(Kind.INT);
 
             // We need to guard that we're following the observed control flow. For switch cases we guard that
             // the index matches the observed index. For the default case we need to check the index against the
@@ -485,7 +485,7 @@ public class TirRecorder {
 
         @Override
         protected void invokeVirtualMethod(MethodActor method) {
-            final TirInstruction receiver = _state.peek(Kind.REFERENCE, method.descriptor().computeNumberOfSlots());
+            final TirInstruction receiver = state.peek(Kind.REFERENCE, method.descriptor().computeNumberOfSlots());
             final Object receiverObject = tracer.evaluateObject(method.descriptor().computeNumberOfSlots());
             checkType(ClassActor.fromJava(receiverObject.getClass()), receiver);
             invokeTarget(InvocationTarget.findInvokeVirtualTarget(method, receiverObject));
@@ -493,7 +493,7 @@ public class TirRecorder {
 
         @Override
         protected void invokeInterfaceMethod(MethodActor method) {
-            final TirInstruction receiver = _state.peek(Kind.REFERENCE, method.descriptor().computeNumberOfSlots());
+            final TirInstruction receiver = state.peek(Kind.REFERENCE, method.descriptor().computeNumberOfSlots());
             final Object receiverObject = tracer.evaluateObject(method.descriptor().computeNumberOfSlots());
             checkType(ClassActor.fromJava(receiverObject.getClass()), receiver);
             invokeTarget(InvocationTarget.findInvokeInterfaceTarget(method, receiverObject));
@@ -510,7 +510,7 @@ public class TirRecorder {
                 call(target, takeSnapshot());
             } else {
                 final int invokeReturnPosition = currentBytePosition();
-                _state.enter(target, invokeReturnPosition);
+                state.enter(target, invokeReturnPosition);
                 if (printState.getValue()) {
                     Console.println(Color.LIGHTRED, "invoked: method: " + method.toString());
                 }
@@ -519,8 +519,8 @@ public class TirRecorder {
 
         @Override
         protected void methodReturn(Kind kind) {
-            if (_state.frames().length() > 1) {
-                _state.leave();
+            if (state.frames().length() > 1) {
+                state.leave();
             } else {
                 tracer.abort(AbortReason.BREACHED_SCOPE);
             }
@@ -528,31 +528,31 @@ public class TirRecorder {
 
         @Override
         protected ConstantPool constantPool() {
-            return _method.codeAttribute().constantPool();
+            return method.codeAttribute().constantPool();
         }
 
         protected ClassActor classActor() {
-            return _method.holder();
+            return method.holder();
         }
 
         @Override
         protected void opcodeDecoded() {
             append(new TirInstruction.Placeholder("RECORDING: " + currentOpcode().toString()));
             if (printState.getValue()) {
-                _state.println(NameMap.COMPACT);
+                state.println(NameMap.COMPACT);
                 Console.println();
-                Console.println(Color.LIGHTRED, "recording opcode: method: " + _state.last().method() + " pc: " + currentOpcodePosition() + ", op: " + currentOpcode());
+                Console.println(Color.LIGHTRED, "recording opcode: method: " + state.last().method() + " pc: " + currentOpcodePosition() + ", op: " + currentOpcode());
             }
         }
 
     }
 
     public TirState state() {
-        return _state;
+        return state;
     }
 
     public TirState takeSnapshot() {
-        return _state.copy();
+        return state.copy();
     }
 
     /**
@@ -561,7 +561,7 @@ public class TirRecorder {
      * This method is typically used whenever a snapshot is taken without a call to {@link #record(BytecodeLocation)}.
      */
     public TirState takeSnapshot(TreeAnchor anchor) {
-        final TirState state = _state.copy();
+        final TirState state = this.state.copy();
         state.last().setPc(anchor.location().bytecodePosition());
         return state;
     }

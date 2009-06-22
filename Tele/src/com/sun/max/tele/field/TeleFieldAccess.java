@@ -46,7 +46,7 @@ public abstract class TeleFieldAccess {
     protected TeleFieldAccess(Class holder, String name, Kind kind) {
         _fieldActor = findFieldActor(holder, name);
         ProgramError.check(_fieldActor != null, "could not find field: " + name + " in class: " + holder);
-        ProgramError.check(_fieldActor.kind() == kind, "field has wrong kind: " + name + " in class: " + holder);
+        ProgramError.check(_fieldActor.kind == kind, "field has wrong kind: " + name + " in class: " + holder);
     }
 
     @Override

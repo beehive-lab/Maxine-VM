@@ -224,7 +224,7 @@ public class FieldReadSnippet extends BuiltinsSnippet {
     }
 
     public static FieldReadSnippet selectSnippet(Kind kind) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case BYTE:
                 return FieldReadSnippet.ReadByte.SNIPPET;
             case BOOLEAN:

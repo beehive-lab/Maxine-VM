@@ -59,11 +59,11 @@ public abstract class TemplateTableTestCase extends CompilerTestCase<TargetMetho
         if (fieldActor instanceof InjectedReferenceFieldActor) {
             sb.append("<InjectedFieldActor.holder>");
         } else {
-            sb.append(fieldActor.holder().name());
+            sb.append(fieldActor.holder().name);
         }
         sb.append('.');
 
-        sb.append(fieldActor.name());
+        sb.append(fieldActor.name);
         sb.append(" (offset = ");
         sb.append(fieldActor.offset());
         sb.append(')');
@@ -142,7 +142,7 @@ public abstract class TemplateTableTestCase extends CompilerTestCase<TargetMetho
         int _maxFrameSize = 0;
 
         void update(CompiledBytecodeTemplate template) {
-            final int len = template.targetMethod().codeLength();
+            final int len = template.targetMethod.codeLength();
             _bytesCount += len;
             _templateCount++;
             if (len <= _minSize) {
@@ -161,7 +161,7 @@ public abstract class TemplateTableTestCase extends CompilerTestCase<TargetMetho
                     _maxSizeCount = 1;
                 }
             }
-            final int frameSize = template.targetMethod().frameSize();
+            final int frameSize = template.targetMethod.frameSize();
 
             if (frameSize > _maxFrameSize) {
                 _maxFrameSize = frameSize;
@@ -192,7 +192,7 @@ public abstract class TemplateTableTestCase extends CompilerTestCase<TargetMetho
                 if (bytecode == Bytecode.LDC2_W) {
                     kinds = new Kind[]{Kind.LONG, Kind.DOUBLE};
                 } else {
-                    if (selector.resolved() == TemplateChooser.Resolved.YES) {
+                    if (selector.resolved == TemplateChooser.Resolved.YES) {
                         kinds = new Kind[] {Kind.REFERENCE};
                     } else {
                         kinds = new Kind[]{Kind.INT, Kind.FLOAT};
@@ -223,12 +223,12 @@ public abstract class TemplateTableTestCase extends CompilerTestCase<TargetMetho
 
         final TemplateProcessor processor = new TemplateProcessor() {
             public void processTemplate(CompiledBytecodeTemplate template) {
-                final Bytecode bytecode = template.bytecode();
-                final TargetMethod targetMethod = template.targetMethod();
-                final Kind kind = template.kind();
+                final Bytecode bytecode = template.bytecode;
+                final TargetMethod targetMethod = template.targetMethod;
+                final Kind kind = template.kind;
                 String numOperands = "";
                 if (bytecode == Bytecode.MULTIANEWARRAY) {
-                    final String suffix = template.targetMethod().name().substring(bytecode.name().length());
+                    final String suffix = template.targetMethod.name().substring(bytecode.name().length());
                     if (suffix.length() > 0) {
                         numOperands = "[:" + suffix + "] ";
                     }
@@ -236,7 +236,7 @@ public abstract class TemplateTableTestCase extends CompilerTestCase<TargetMetho
                 Trace.line(1, "Generated Template for " + bytecode + (kind == null ? " (" : " [" + kind + "] (") + numOperands + targetMethod.codeLength() + " bytes)");
                 if (targetMethod.code().length > 0) {
                     traceBundleAndDisassemble(targetMethod);
-                    if (template.targetMethod().numberOfCatchRanges() > 0) {
+                    if (template.targetMethod.numberOfCatchRanges() > 0) {
                         Trace.line(1, "\t*** WARNING: template has exception handlers: " + targetMethod.numberOfCatchRanges() + " catch ranges");
                     }
                 }

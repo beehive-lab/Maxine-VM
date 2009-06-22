@@ -31,20 +31,24 @@ import com.sun.max.vm.compiler.target.*;
  */
 public abstract class StackFrame {
 
-    private final Pointer _instructionPointer;
-    private final Pointer _framePointer;
-    private final Pointer _stackPointer;
-    private final StackFrame _callee;
-    private StackFrame _caller;
+    /**
+     * The address of the current execution point in this frame (i.e. the address of the next instruction that will
+     * be executed in the frame).
+     */
+    public final Pointer instructionPointer;
+    public final Pointer framePointer;
+    public final Pointer stackPointer;
+    public final StackFrame callee;
+    private StackFrame caller;
 
     protected StackFrame(StackFrame callee, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
-        _callee = callee;
+        this.callee = callee;
         if (callee != null) {
-            callee._caller = this;
+            callee.caller = this;
         }
-        _instructionPointer = instructionPointer;
-        _framePointer = framePointer;
-        _stackPointer = stackPointer;
+        this.instructionPointer = instructionPointer;
+        this.framePointer = framePointer;
+        this.stackPointer = stackPointer;
     }
 
     /**
@@ -55,28 +59,12 @@ public abstract class StackFrame {
     public abstract TargetMethod targetMethod();
 
     /**
-     * Gets the address of the current execution point in this frame (i.e. the address of the next instruction that will
-     * be executed in the frame).
-     */
-    public Pointer instructionPointer() {
-        return _instructionPointer;
-    }
-
-    public Pointer framePointer() {
-        return _framePointer;
-    }
-
-    public Pointer stackPointer() {
-        return _stackPointer;
-    }
-
-    /**
      * Gets the base address of all stack slots. This provides a convenience for stack frame visitors that need to see all stack slot as
      * located at a positive offset from some base pointer (e.g., stack inspectors etc...)
      * By default this is the frame pointer.
      */
     public Pointer slotBase() {
-        return _framePointer;
+        return framePointer;
     }
 
     /**
@@ -110,7 +98,7 @@ public abstract class StackFrame {
      * @return null if this is the {@linkplain #isTopFrame() top} frame
      */
     public final StackFrame calleeFrame() {
-        return _callee;
+        return callee;
     }
 
     /**
@@ -119,14 +107,14 @@ public abstract class StackFrame {
      * @return null if this is the bottom frame (i.e. the last frame traversed in a {@linkplain StackFrameWalker stack walk}).
      */
     public final StackFrame callerFrame() {
-        return _caller;
+        return caller;
     }
 
     /**
      * Determines if this is the top frame. The top frame is the first frame traversed in a {@linkplain StackFrameWalker stack walk}.
      */
     public boolean isTopFrame() {
-        return _callee == null;
+        return callee == null;
     }
 
     /**

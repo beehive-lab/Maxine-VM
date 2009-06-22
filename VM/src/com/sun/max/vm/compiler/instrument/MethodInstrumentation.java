@@ -154,7 +154,7 @@ public class MethodInstrumentation {
     public int estimateInvocationCount() {
         int total = 0;
         for (RecompilationAlarm alarm : recompilationAlarms) {
-            if (alarm._entryPoint) {
+            if (alarm.entryPoint) {
                 total += alarm.counter.getCount();
             }
         }
@@ -173,7 +173,7 @@ public class MethodInstrumentation {
          * Records whether this recompilation alarm was inserted at the entrypoint of a method;
          * if so, then it serves as an approximation of the invocation count.
          */
-        private final boolean _entryPoint;
+        private final boolean entryPoint;
 
         /**
          * The alarm counter object which is used to trigger recompilation.
@@ -181,7 +181,7 @@ public class MethodInstrumentation {
         private final AlarmCounter counter;
 
         public RecompilationAlarm(int executions, boolean entryPoint) {
-            _entryPoint = entryPoint;
+            this.entryPoint = entryPoint;
             counter = new AlarmCounter(executions, this);
         }
 

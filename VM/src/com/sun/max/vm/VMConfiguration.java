@@ -100,7 +100,7 @@ public final class VMConfiguration {
     }
 
     @CONSTANT_WHEN_NOT_ZERO
-    private LayoutScheme layoutScheme = null;
+    private LayoutScheme layoutScheme;
 
     @INLINE
     public LayoutScheme layoutScheme() {
@@ -114,11 +114,11 @@ public final class VMConfiguration {
     private final VMPackage heapPackage;
 
     @CONSTANT_WHEN_NOT_ZERO
-    private HeapScheme _heapScheme = null;
+    private HeapScheme heapScheme = null;
 
     @INLINE
     public HeapScheme heapScheme() {
-        return _heapScheme;
+        return heapScheme;
     }
 
     private final VMPackage monitorPackage;
@@ -142,11 +142,11 @@ public final class VMConfiguration {
     }
 
     @CONSTANT_WHEN_NOT_ZERO
-    private CompilerScheme _compilerScheme = null;
+    private CompilerScheme compilerScheme = null;
 
     @INLINE
     public CompilerScheme compilerScheme() {
-        return _compilerScheme;
+        return compilerScheme;
     }
 
     private final VMPackage jitPackage;
@@ -292,7 +292,7 @@ public final class VMConfiguration {
             this.offsetsToCallEntryPoints = new int[CallEntryPoint.VALUES.length()];
             this.offsetsToCalleeEntryPoints = new int[CallEntryPoint.VALUES.length()];
         } else {
-            final int offsetToOptimizedEntryPoint = WordWidth.BITS_8.numberOfBytes() * 8;
+            final int offsetToOptimizedEntryPoint = WordWidth.BITS_8.numberOfBytes * 8;
             final int offsetToJitEntryPoint = 0;
             final int offsetToVtableEntryPoint = offsetToOptimizedEntryPoint;
             final int offsetToCEntryPoint = 0;
@@ -328,15 +328,15 @@ public final class VMConfiguration {
         referenceScheme = loadAndInstantiateScheme(referencePackage(), ReferenceScheme.class, this);
         layoutScheme = loadAndInstantiateScheme(layoutPackage, LayoutScheme.class, this, gripScheme);
         monitorScheme = loadAndInstantiateScheme(monitorPackage(), MonitorScheme.class, this);
-        _heapScheme = loadAndInstantiateScheme(heapPackage(), HeapScheme.class, this);
+        heapScheme = loadAndInstantiateScheme(heapPackage(), HeapScheme.class, this);
         targetABIsScheme = loadAndInstantiateScheme(targetABIsPackage(), TargetABIsScheme.class, this);
-        _compilerScheme = loadAndInstantiateScheme(compilerPackage(), CompilerScheme.class, this);
+        compilerScheme = loadAndInstantiateScheme(compilerPackage(), CompilerScheme.class, this);
         trampolineScheme = loadAndInstantiateScheme(trampolinePackage(), DynamicTrampolineScheme.class, this);
         if (jitPackage() != null) {
             jitScheme = loadAndInstantiateScheme(jitPackage(), DynamicCompilerScheme.class, this);
         } else {
             // no JIT, always using the optimizing compiler
-            jitScheme = _compilerScheme;
+            jitScheme = compilerScheme;
         }
         interpreterScheme = loadAndInstantiateScheme(interpreterPackage(), InterpreterScheme.class, this);
 

@@ -38,23 +38,23 @@ public class AMD64OptimizedToJitAdapterFrame extends AdapterStackFrame<AdapterSt
     /**
      * Cache the value of the RIP address on the stack. This is used frequently for walking stacks and comparing stack frame.
      */
-    private final Pointer _ripPointer;
+    private final Pointer ripPointer;
 
     public Pointer ripPointer() {
-        return _ripPointer;
+        return ripPointer;
     }
 
     public Pointer callerFramePointer() {
-        return framePointer();
+        return framePointer;
     }
 
     public AMD64OptimizedToJitAdapterFrame(StackFrame callee, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
         super(callee, new AdapterStackFrameLayout(targetMethod.classMethodActor().numberOfParameterSlots() * JitStackFrameLayout.JIT_SLOT_SIZE, true), targetMethod, instructionPointer, framePointer, stackPointer);
         // Initialize the cache of caller stack pointer
-        if (isFrameless() && instructionPointer().equals(entryPoint())) {
-            _ripPointer = stackPointer;
+        if (isFrameless() && instructionPointer.equals(entryPoint())) {
+            ripPointer = stackPointer;
         } else {
-            _ripPointer = stackPointer.plus(AMD64JitCompiler.adapterFrameSize(targetMethod().classMethodActor()));
+            ripPointer = stackPointer.plus(AMD64JitCompiler.adapterFrameSize(targetMethod().classMethodActor()));
         }
     }
 
@@ -77,7 +77,7 @@ public class AMD64OptimizedToJitAdapterFrame extends AdapterStackFrame<AdapterSt
      * Return true if stack frame is partial.
      */
     public boolean isPartial() {
-        return instructionPointer().equals(entryPoint()) && !isFrameless();
+        return instructionPointer.equals(entryPoint()) && !isFrameless();
     }
 
     @Override

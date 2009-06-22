@@ -101,11 +101,11 @@ public abstract class Value<Value_Type extends Value<Value_Type>> implements Cla
      * @throws IllegalArgumentException if the semantics of comparison for this value's kind are undefined
      */
     public int compareTo(Value other) {
-        final int kindCompare = kind().asEnum().ordinal() - other.kind().asEnum().ordinal();
+        final int kindCompare = kind().asEnum.ordinal() - other.kind().asEnum.ordinal();
         if (kindCompare != 0) {
             return kindCompare;
         }
-        return compareSameKind(kind().valueClass().cast(other));
+        return compareSameKind(kind().valueClass.cast(other));
     }
 
     /**
@@ -133,7 +133,7 @@ public abstract class Value<Value_Type extends Value<Value_Type>> implements Cla
         if (kind() != other.kind()) {
             throw new IllegalArgumentException("Cannot perform unsigned comparison between values of different kinds");
         }
-        return unsignedCompareSameKind(kind().valueClass().cast(other));
+        return unsignedCompareSameKind(kind().valueClass.cast(other));
     }
 
     /**

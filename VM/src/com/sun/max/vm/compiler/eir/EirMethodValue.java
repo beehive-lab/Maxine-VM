@@ -38,10 +38,10 @@ import com.sun.max.vm.compiler.target.*;
  */
 public final class EirMethodValue extends EirValue {
 
-    private ClassMethodActor _classMethodActor;
+    private ClassMethodActor classMethodActor;
 
     public ClassMethodActor classMethodActor() {
-        return _classMethodActor;
+        return classMethodActor;
     }
 
     @Override
@@ -51,11 +51,11 @@ public final class EirMethodValue extends EirValue {
 
     @Override
     public String toString() {
-        return "<" + _classMethodActor.name() + ">";
+        return "<" + classMethodActor.name + ">";
     }
 
     public EirMethodValue(ClassMethodActor classMethodActor) {
-        _classMethodActor = classMethodActor;
+        this.classMethodActor = classMethodActor;
         fixLocation(new Location());
     }
 
@@ -66,7 +66,7 @@ public final class EirMethodValue extends EirValue {
         }
 
         public MethodActor classMethodActor() {
-            return _classMethodActor;
+            return classMethodActor;
         }
 
         @Override
@@ -76,12 +76,12 @@ public final class EirMethodValue extends EirValue {
 
         @Override
         public String toString() {
-            return "<method:" + _classMethodActor + ">";
+            return "<method:" + classMethodActor + ">";
         }
 
         @Override
         public TargetLocation toTargetLocation() {
-            return new TargetLocation.Method(_classMethodActor);
+            return new TargetLocation.Method(classMethodActor);
         }
     }
 

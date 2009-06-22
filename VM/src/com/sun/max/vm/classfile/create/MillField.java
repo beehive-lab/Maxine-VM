@@ -36,8 +36,8 @@ class MillField {
         this.modifiers = modifiers;
         this.nameIndex = millClass.makeUtf8Constant(name).index;
         this.descriptorIndex = millClass.makeUtf8Constant(descriptor).index;
-        this.next = millClass._fieldList;
-        millClass._fieldList = this;
+        this.next = millClass.fieldList;
+        millClass.fieldList = this;
     }
 
 }

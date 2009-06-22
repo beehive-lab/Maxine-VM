@@ -204,7 +204,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
             // TODO: Check if generic signature can be retrieved!
             final String genericSignature = signature;
 
-            result[i] = new VariableTableEntry(entries[i].startPosition(), entries[i].length(), entries[i].name(classMethodActor.codeAttribute().constantPool()).string(), entries[i].slot(),
+            result[i] = new VariableTableEntry(entries[i].startPosition(), entries[i].length(), entries[i].name(classMethodActor.codeAttribute().constantPool()).string, entries[i].slot(),
                             signature, genericSignature);
         }
 

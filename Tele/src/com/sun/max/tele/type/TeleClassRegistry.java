@@ -126,7 +126,7 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
             } else {
                 final Reference typeDescriptorToClassActorReference = teleVM().fields().ClassRegistry_typeDescriptorToClassActor.readReference(classRegistryReference);
                 final Reference tableReference = teleVM().fields().ChainedHashMapping_table.readReference(typeDescriptorToClassActorReference);
-                final int length = teleVM().layoutScheme().arrayHeaderLayout().readLength(tableReference);
+                final int length = teleVM().layoutScheme().arrayHeaderLayout.readLength(tableReference);
                 for (int i = 0; i < length; i++) {
                     Reference entryReference = teleVM().readReference(tableReference, i);
                     while (!entryReference.isZero()) {

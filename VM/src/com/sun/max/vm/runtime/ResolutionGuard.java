@@ -25,62 +25,39 @@ import com.sun.max.vm.actor.*;
 import com.sun.max.vm.classfile.constant.*;
 
 /**
- * A token that "guards" the {@linkplain PoolConstant#callWithResolutionAndfClassInitialization(ConstantPool, int) resolution} of a constant pool entry to an {@link Actor}.
+ * A token that "guards" the {@linkplain PoolConstant#callWithResolutionAndfClassInitialization(ConstantPool, int)
+ * resolution} of a constant pool entry to an {@link Actor}.
  *
  * This pattern of use is intended:
  *
- * if (guard.isClear()) { guard.set(...); } return guard.value();
+ * if (guard.value == null) { guard.value = ... } return guard.value;
  *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
 public final class ResolutionGuard {
 
-    private final ConstantPool _constantPool;
+    public final ConstantPool constantPool;
 
-    public ConstantPool constantPool() {
-        return _constantPool;
-    }
-
-    private final int _constantPoolIndex;
+    public final int constantPoolIndex;
 
     @CONSTANT_WHEN_NOT_ZERO
-    private Actor _value = null;
+    public Actor value;
 
     public ResolutionGuard(ConstantPool constantPool, int constantPoolIndex) {
-        _constantPool = constantPool;
-        _constantPoolIndex = constantPoolIndex;
-    }
-
-    @INLINE
-    public void set(Actor value) {
-        _value = value;
-    }
-
-    @INLINE
-    public Actor get() {
-        return _value;
-    }
-
-    @INLINE
-    public int constantPoolIndex() {
-        return _constantPoolIndex;
-    }
-
-    @INLINE
-    public boolean isClear() {
-        return _value == null;
+        this.constantPool = constantPool;
+        this.constantPoolIndex = constantPoolIndex;
     }
 
     /**
      * Gets the pool constant whose resolution is guarded by this object.
      */
     public PoolConstant poolConstant() {
-        return constantPool().at(constantPoolIndex());
+        return constantPool.at(constantPoolIndex);
     }
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "[" + poolConstant().valueString(constantPool()) + "]";
+        return getClass().getSimpleName() + "[" + poolConstant().valueString(constantPool) + "]";
     }
 }

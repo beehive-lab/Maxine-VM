@@ -31,12 +31,12 @@ package com.sun.max.vm.classfile.create;
  */
 abstract class MillRefConstant extends MillConstant {
 
-    final int _classIndex;
+    final int classIndex;
     final int nameAndTypeIndex;
 
     protected MillRefConstant(byte tag, MillClassConstant clazz, MillNameAndTypeConstant nameAndType) {
         super(tag, 5, clazz.hashValue ^ nameAndType.hashValue);
-        this._classIndex = clazz.index;
+        this.classIndex = clazz.index;
         this.nameAndTypeIndex = nameAndType.index;
     }
 
@@ -53,7 +53,7 @@ abstract class MillRefConstant extends MillConstant {
             return false;
         }
         final MillRefConstant c = (MillRefConstant) obj;
-        return tag == c.tag && _classIndex == c._classIndex && nameAndTypeIndex == c.nameAndTypeIndex;
+        return tag == c.tag && classIndex == c.classIndex && nameAndTypeIndex == c.nameAndTypeIndex;
     }
 
 }

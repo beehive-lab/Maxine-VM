@@ -46,19 +46,19 @@ public class InvokeVirtual_02 {
         }
     }
 
-    static A _a = new A();
-    static A _b = new B();
-    static A _c = new C();
+    static A objectA = new A();
+    static A objectB = new B();
+    static A objectC = new C();
 
     public static long test(long a) {
         if (a == 0) {
-            return _a.plus(a);
+            return objectA.plus(a);
         }
         if (a == 1) {
-            return _b.plus(a);
+            return objectB.plus(a);
         }
         if (a == 2) {
-            return _c.plus(a);
+            return objectC.plus(a);
         }
         return 42;
     }

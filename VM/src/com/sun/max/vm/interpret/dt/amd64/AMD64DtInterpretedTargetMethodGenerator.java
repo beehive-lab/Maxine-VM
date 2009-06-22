@@ -50,18 +50,18 @@ import com.sun.max.vm.type.*;
  */
 class AMD64DtInterpretedTargetMethodGenerator implements InterpretedTargetMethodGenerator {
 
-    private static final TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> _targetABI;
+    private static final TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> targetABI;
 
     private static final boolean needsAdapterFrame;
 
     static {
         final Class<TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>> type = null;
-        _targetABI = StaticLoophole.cast(type, VMConfiguration.target().targetABIsScheme().interpreterABI());
+        targetABI = StaticLoophole.cast(type, VMConfiguration.target().targetABIsScheme().interpreterABI());
         needsAdapterFrame = VMConfiguration.target().compilerScheme() instanceof BcdeTargetAMD64Compiler;
     }
 
     private final AMD64Assembler asm = new AMD64Assembler();
-    private final PrependableSequence<Object> _referenceLiterals = new LinkSequence<Object>();
+    private final PrependableSequence<Object> referenceLiterals = new LinkSequence<Object>();
     private final AMD64DtInterpreter interpreter;
 
     protected AMD64DtInterpretedTargetMethodGenerator(AMD64DtInterpreter interpreter) {
@@ -73,26 +73,26 @@ class AMD64DtInterpretedTargetMethodGenerator implements InterpretedTargetMethod
     }
 
     private int createReferenceLiteral(Object literal) {
-        int literalOffset = computeReferenceLiteralOffset(1 + _referenceLiterals.length());
-        _referenceLiterals.prepend(literal);
+        int literalOffset = computeReferenceLiteralOffset(1 + referenceLiterals.length());
+        referenceLiterals.prepend(literal);
         if (VMConfiguration.target().debugging()) {
             // Account for the DebugHeap tag in front of the code object:
-            literalOffset += VMConfiguration.target().wordWidth().numberOfBytes();
+            literalOffset += VMConfiguration.target().wordWidth().numberOfBytes;
         }
         return -literalOffset;
     }
 
     private Object[] packReferenceLiterals() {
-        if (_referenceLiterals.isEmpty()) {
+        if (referenceLiterals.isEmpty()) {
             return null;
         }
         if (MaxineVM.isPrototyping()) {
-            return Sequence.Static.toArray(_referenceLiterals, Object.class);
+            return Sequence.Static.toArray(referenceLiterals, Object.class);
         }
         // Must not cause checkcast here, since some reference literals may be static tuples.
-        final Object[] result = new Object[_referenceLiterals.length()];
+        final Object[] result = new Object[referenceLiterals.length()];
         int i = 0;
-        for (Object literal : _referenceLiterals) {
+        for (Object literal : referenceLiterals) {
             ArrayAccess.setObject(result, i, literal);
             i++;
         }
@@ -128,7 +128,7 @@ class AMD64DtInterpretedTargetMethodGenerator implements InterpretedTargetMethod
             asm.nop();
             asm.nop();
             asm.nop();
-            dir.align(Kind.BYTE.size() * 4);  // forcing alignment to the next 4-bytes will always provide an 8-bytes long prologue.
+            dir.align(Kind.BYTE.width.numberOfBytes * 4);  // forcing alignment to the next 4-bytes will always provide an 8-bytes long prologue.
             final Label adapterCodeStart = new Label();
             asm.bindLabel(adapterCodeStart);
             adapterFrameGenerator.emitPrologue(asm);
@@ -145,8 +145,8 @@ class AMD64DtInterpretedTargetMethodGenerator implements InterpretedTargetMethod
         asm.mov(AMD64DtInterpreterABI.nonParameterlocalsSize(), stackFrameLayout.sizeOfNonParameterLocals());
 
         // Call the interpreter
-        asm.mov(_targetABI.scratchRegister(), interpreter.entryPoint().toLong());
-        asm.call(_targetABI.scratchRegister());
+        asm.mov(targetABI.scratchRegister(), interpreter.entryPoint().toLong());
+        asm.call(targetABI.scratchRegister());
         asm.ret();
 
         // Produce target method
@@ -156,7 +156,7 @@ class AMD64DtInterpretedTargetMethodGenerator implements InterpretedTargetMethod
         targetMethod.setSize(targetBundleLayout.bundleSize());
         Code.allocate(targetMethod);
         try {
-            targetMethod.setGenerated(new TargetBundle(targetBundleLayout, targetMethod.start()), null, null, null, null, null, 0, 0, 0, null, null, referenceLiterals, asm.toByteArray(), null, 0, 0, _targetABI, -1);
+            targetMethod.setGenerated(new TargetBundle(targetBundleLayout, targetMethod.start()), null, null, null, null, null, 0, 0, 0, null, null, referenceLiterals, asm.toByteArray(), null, 0, 0, targetABI, -1);
         } catch (AssemblyException e) {
             ProgramError.unexpected(e);
         }

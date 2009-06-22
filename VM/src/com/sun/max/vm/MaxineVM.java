@@ -96,7 +96,7 @@ public final class MaxineVM {
     }
 
     public static void initialize(VMConfiguration hostVMConfiguration, VMConfiguration targetVMConfiguration) {
-        _host = new MaxineVM(hostVMConfiguration);
+        host = new MaxineVM(hostVMConfiguration);
         target = new MaxineVM(targetVMConfiguration);
     }
 
@@ -127,27 +127,27 @@ public final class MaxineVM {
      * object as the boot image is being generated.
      */
     @CONSTANT
-    private static MaxineVM _host;
+    private static MaxineVM host;
 
     @PROTOTYPE_ONLY
     public static boolean isHostInitialized() {
-        return _host != null;
+        return host != null;
     }
 
     /**
      * @return the host VM that is currently running on the underlying hardware or simulator
      */
     public static MaxineVM host() {
-        if (_host == null) {
+        if (host == null) {
             Prototype.initializeHost();
         }
-        return _host;
+        return host;
     }
 
     @UNSAFE
     @SURROGATE
     private static MaxineVM host_() {
-        return _host;
+        return host;
     }
 
     /**
@@ -378,7 +378,7 @@ public final class MaxineVM {
      * Determines if a given class actor denotes a class that is part of the Maxine code base.
      */
     public static boolean isMaxineClass(ClassActor classActor) {
-        return isMaxineClass(classActor.typeDescriptor());
+        return isMaxineClass(classActor.typeDescriptor);
     }
 
     private static int exitCode = 0;
@@ -505,7 +505,7 @@ public final class MaxineVM {
 
     @PROTOTYPE_ONLY
     public static void registerCriticalMethod(CriticalMethod criticalEntryPoint) {
-        registerImageMethod(criticalEntryPoint.classMethodActor());
+        registerImageMethod(criticalEntryPoint.classMethodActor);
     }
 
     /*

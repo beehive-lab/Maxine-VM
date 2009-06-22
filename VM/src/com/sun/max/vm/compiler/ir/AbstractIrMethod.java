@@ -45,7 +45,7 @@ public abstract class AbstractIrMethod implements IrMethod {
     }
 
     public String name() {
-        return classMethodActor().name().toString();
+        return classMethodActor().name.toString();
     }
 
     public boolean isNative() {

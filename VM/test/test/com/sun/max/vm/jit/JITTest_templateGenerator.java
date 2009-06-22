@@ -35,8 +35,8 @@ public class JITTest_templateGenerator extends TemplateTableTestCase {
         Trace.line(1, "Generated Template:");
 
         for (CompiledBytecodeTemplate t : templates) {
-            Trace.line(1, t.targetMethod().classMethodActor().name());
-            traceBundleAndDisassemble(t.targetMethod());
+            Trace.line(1, t.targetMethod.classMethodActor().name);
+            traceBundleAndDisassemble(t.targetMethod);
         }
     }
 

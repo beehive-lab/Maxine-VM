@@ -37,10 +37,10 @@ import com.sun.max.vm.jit.*;
  * @author Laurent Daynes
  */
 public abstract class CodeBuffer {
-    protected int _currentPosition;
+    protected int currentPosition;
 
     public CodeBuffer() {
-        _currentPosition = 0;
+        currentPosition = 0;
     }
 
     /**
@@ -49,7 +49,7 @@ public abstract class CodeBuffer {
      */
     @INLINE
     public final int currentPosition() {
-        return _currentPosition;
+        return currentPosition;
     }
 
     /**
@@ -59,7 +59,7 @@ public abstract class CodeBuffer {
      */
     public void emit(CompiledBytecodeTemplate template, DisplacementModifier modifier, int disp32) throws AssemblyException {
         final int startOfTemplate = currentPosition();
-        emit(template.targetMethod().code());
+        emit(template.targetMethod.code());
         fix(startOfTemplate, modifier, disp32);
     }
 
@@ -70,7 +70,7 @@ public abstract class CodeBuffer {
      */
     public void emit(CompiledBytecodeTemplate template, ImmediateConstantModifier modifier, byte imm8) throws AssemblyException {
         final int startOfTemplate = currentPosition();
-        emit(template.targetMethod().code());
+        emit(template.targetMethod.code());
         fix(startOfTemplate, modifier, imm8);
     }
 
@@ -81,7 +81,7 @@ public abstract class CodeBuffer {
      */
     public void emit(CompiledBytecodeTemplate template, ImmediateConstantModifier modifier, int imm32) throws AssemblyException {
         final int startOfTemplate = currentPosition();
-        emit(template.targetMethod().code());
+        emit(template.targetMethod.code());
         fix(startOfTemplate, modifier, imm32);
     }
 
@@ -92,7 +92,7 @@ public abstract class CodeBuffer {
      */
     public void emit(CompiledBytecodeTemplate template, ImmediateConstantModifier modifier, long imm64) throws AssemblyException {
         final int startOfTemplate = currentPosition();
-        emit(template.targetMethod().code());
+        emit(template.targetMethod.code());
         fix(startOfTemplate, modifier, imm64);
     }
 
@@ -103,7 +103,7 @@ public abstract class CodeBuffer {
      * @param template to emit in the code buffer
      */
     public void emit(CompiledBytecodeTemplate template) {
-        emit(template.targetMethod().code());
+        emit(template.targetMethod.code());
     }
 
     /**
@@ -113,11 +113,11 @@ public abstract class CodeBuffer {
      */
     public abstract void copyTo(byte[] toArray);
 
-    private OutputStream _outputStream;
+    private OutputStream outputStream;
 
     public OutputStream outputStream() {
-        if (_outputStream == null) {
-            _outputStream = new OutputStream() {
+        if (outputStream == null) {
+            outputStream = new OutputStream() {
                 @Override
                 public void write(byte[] b) throws IOException {
                     emit(b);
@@ -128,7 +128,7 @@ public abstract class CodeBuffer {
                 }
             };
         }
-        return _outputStream;
+        return outputStream;
     }
 
     /**
@@ -175,9 +175,9 @@ public abstract class CodeBuffer {
      *            be used as the replacement code
      */
     public void fix(int startPosition, Assembler assembler) throws AssemblyException {
-        final int savedPosition = _currentPosition;
-        _currentPosition = startPosition;
+        final int savedPosition = currentPosition;
+        currentPosition = startPosition;
         emitCodeFrom(assembler);
-        _currentPosition = savedPosition;
+        currentPosition = savedPosition;
     }
 }

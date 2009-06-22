@@ -93,7 +93,7 @@ public interface MethodKey  {
         protected final SignatureDescriptor signature;
 
         public DefaultMethodKey(MethodActor methodActor) {
-            this(methodActor.holder().typeDescriptor(), methodActor.name(), methodActor.descriptor());
+            this(methodActor.holder().typeDescriptor, methodActor.name, methodActor.descriptor());
         }
 
         public DefaultMethodKey(TypeDescriptor holder, Utf8Constant name, SignatureDescriptor signature) {
@@ -123,11 +123,11 @@ public interface MethodKey  {
         }
 
         public TypeDescriptor holder() {
-            return methodActor.holder().typeDescriptor();
+            return methodActor.holder().typeDescriptor;
         }
 
         public Utf8Constant name() {
-            return methodActor.name();
+            return methodActor.name;
         }
 
         public SignatureDescriptor signature() {

@@ -257,7 +257,7 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
             case IMMEDIATE_64:
                 try {
                     final long value = sourceLocation().asImmediate().value().toLong();
-                    if (Longs.numberOfEffectiveSignedBits(value) < Kind.INT.width().numberOfBits()) {
+                    if (Longs.numberOfEffectiveSignedBits(value) < Kind.INT.width.numberOfBits) {
                         emit_G_I32(emitter, generalBinOpEmitter, destinationRegister, (int) value);
                     } else {
                         final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
@@ -484,7 +484,7 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
                         case IMMEDIATE_64:
                             try {
                                 final long value = sourceLocation().asImmediate().value().toLong();
-                                if (Longs.numberOfEffectiveSignedBits(value) >= Kind.INT.width().numberOfBits()) {
+                                if (Longs.numberOfEffectiveSignedBits(value) >= Kind.INT.width.numberOfBits) {
                                     final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
                                     // O7 is a secondary scratch register we can use if NOT in a leaf function.
                                     emitter.assembler().setx(value, GPR.O7, scratchRegister.as());

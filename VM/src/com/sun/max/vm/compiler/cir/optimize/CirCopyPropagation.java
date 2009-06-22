@@ -56,11 +56,11 @@ public class CirCopyPropagation{
     private void processCall(CirCall call) {
         CirJavaFrameDescriptor fd = call.javaFrameDescriptor();
         while (fd != null) {
-            final CirValue[] local = fd.locals();
+            final CirValue[] local = fd.locals;
             for (int i = 0; i < local.length; i++) {
                 local[i] = processValue(local[i]);
             }
-            final CirValue[] stack = fd.stackSlots();
+            final CirValue[] stack = fd.stackSlots;
             for (int i = 0; i < stack.length; i++) {
                 stack[i] = processValue(stack[i]);
             }

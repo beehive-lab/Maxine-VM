@@ -31,7 +31,7 @@ import com.sun.max.vm.type.*;
  */
 public final class DoubleValue extends PrimitiveValue<DoubleValue> {
 
-    final double _value;
+    final double value;
 
     public static DoubleValue from(double value) {
         return new DoubleValue(value);
@@ -46,7 +46,7 @@ public final class DoubleValue extends PrimitiveValue<DoubleValue> {
     }
 
     private DoubleValue(double value) {
-        _value = value;
+        this.value = value;
     }
 
     public static final DoubleValue ZERO = DoubleValue.from(0.0);
@@ -59,87 +59,87 @@ public final class DoubleValue extends PrimitiveValue<DoubleValue> {
 
     @Override
     public boolean isZero() {
-        return _value == 0.0;
+        return value == 0.0;
     }
 
     @Override
     public boolean isAllOnes() {
-        return UnsafeLoophole.doubleToLong(_value) == -1L;
+        return UnsafeLoophole.doubleToLong(value) == -1L;
     }
 
     @Override
     public boolean equals(Object other) {
-        return other == this || ((other instanceof DoubleValue) && (Double.doubleToLongBits(((DoubleValue) other)._value) == Double.doubleToLongBits(_value)));
+        return other == this || ((other instanceof DoubleValue) && (Double.doubleToLongBits(((DoubleValue) other).value) == Double.doubleToLongBits(value)));
     }
 
     @Override
     protected int compareSameKind(DoubleValue other) {
-        return _value < other._value ? -1 : (_value == other._value ? 0 : 1);
+        return value < other.value ? -1 : (value == other.value ? 0 : 1);
     }
 
     @Override
     public String toString() {
-        return Double.toString(_value);
+        return Double.toString(value);
     }
 
     @Override
     public Double asBoxedJavaValue() {
-        return new Double(_value);
+        return new Double(value);
     }
 
     @Override
     public byte toByte() {
-        return (byte) _value;
+        return (byte) value;
     }
 
     @Override
     public boolean toBoolean() {
-        return (_value != 0.0) ? true : false;
+        return (value != 0.0) ? true : false;
     }
 
     @Override
     public short toShort() {
-        return (short) _value;
+        return (short) value;
     }
 
     @Override
     public char toChar() {
-        return (char) _value;
+        return (char) value;
     }
 
     @Override
     public int toInt() {
-        return (int) _value;
+        return (int) value;
     }
 
     @Override
     public float toFloat() {
-        return (float) _value;
+        return (float) value;
     }
 
     @Override
     public long toLong() {
-        return (long) _value;
+        return (long) value;
     }
 
     @Override
     public double asDouble() {
-        return _value;
+        return value;
     }
 
     @Override
     public double unboxDouble() {
-        return _value;
+        return value;
     }
 
     @Override
     public double toDouble() {
-        return _value;
+        return value;
     }
 
     @Override
     public Word toWord() {
-        return Offset.fromLong((long) _value);
+        return Offset.fromLong((long) value);
     }
 
     @Override
@@ -154,11 +154,11 @@ public final class DoubleValue extends PrimitiveValue<DoubleValue> {
 
     @Override
     public byte[] toBytes(DataModel dataModel) {
-        return dataModel.toBytes(_value);
+        return dataModel.toBytes(value);
     }
 
     @Override
     public void write(DataOutput stream) throws IOException {
-        stream.writeDouble(_value);
+        stream.writeDouble(value);
     }
 }

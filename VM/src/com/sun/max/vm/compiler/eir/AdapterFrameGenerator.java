@@ -33,7 +33,7 @@ import com.sun.max.vm.type.*;
 public abstract class AdapterFrameGenerator<Assembler_Type extends Assembler> {
     private final MethodActor classMethodActor;
 
-    protected final Label _methodEntryPoint = new Label();
+    protected final Label methodEntryPoint = new Label();
     protected final  Label adapterStart = new Label();
 
     private final Label adapterReturnPoint = new Label();
@@ -104,6 +104,6 @@ public abstract class AdapterFrameGenerator<Assembler_Type extends Assembler> {
         final Kind[] parametersKinds = classMethodActor.getParameterKinds();
         final EirLocation[] parameterLocations = optimizedABI.getParameterLocations(adapterArgumentPurpose(), parametersKinds);
         assembler().bindLabel(adapterStart);
-        emit(parametersKinds, parameterLocations, adapterReturnPoint, _methodEntryPoint);
+        emit(parametersKinds, parameterLocations, adapterReturnPoint, methodEntryPoint);
     }
 }

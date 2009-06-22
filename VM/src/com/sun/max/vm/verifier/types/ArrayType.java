@@ -30,7 +30,7 @@ import com.sun.max.vm.verifier.*;
  */
 public class ArrayType extends ObjectType {
 
-    VerificationType _componentType;
+    VerificationType componentType;
 
     public ArrayType(TypeDescriptor typeDescriptor, Verifier verifier) {
         super(typeDescriptor, verifier);
@@ -38,17 +38,17 @@ public class ArrayType extends ObjectType {
 
     @Override
     public VerificationType componentType() {
-        if (_componentType == null) {
-            _componentType = _verifier.getVerificationType(typeDescriptor().componentTypeDescriptor());
+        if (componentType == null) {
+            componentType = verifier.getVerificationType(typeDescriptor().componentTypeDescriptor());
         }
-        return _componentType;
+        return componentType;
     }
 
     /**
      * Gets the {@linkplain ClassActor#elementClassActor() element type} of this array type.
      */
     public VerificationType elementType() {
-        return _verifier.getVerificationType(typeDescriptor().elementTypeDescriptor());
+        return verifier.getVerificationType(typeDescriptor().elementTypeDescriptor());
     }
 
     @Override
@@ -109,7 +109,7 @@ public class ArrayType extends ObjectType {
             if (thisDimension == 0) {
                 return mergedElement;
             }
-            return _verifier.getObjectType(JavaTypeDescriptor.getArrayDescriptorForDescriptor(mergedElement.typeDescriptor(), thisDimension));
+            return verifier.getObjectType(JavaTypeDescriptor.getArrayDescriptorForDescriptor(mergedElement.typeDescriptor(), thisDimension));
         }
 
         // Arrays of different dimensions. Result is java.lang.Object,
@@ -119,6 +119,6 @@ public class ArrayType extends ObjectType {
             return OBJECT;
         }
 
-        return _verifier.getVerificationType(JavaTypeDescriptor.getArrayDescriptorForDescriptor(JavaTypeDescriptor.OBJECT, newDimension));
+        return verifier.getVerificationType(JavaTypeDescriptor.getArrayDescriptorForDescriptor(JavaTypeDescriptor.OBJECT, newDimension));
     }
 }

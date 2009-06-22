@@ -80,7 +80,7 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
         final Pointer address = pointer.plus(offset);
         final int heapWordIndex = address.minus(start()).dividedBy(Word.size()).toInt();
         final Address value = address.readWord(0).asAddress();
-        final int bitsPerMapWord = Word.width().numberOfBits();
+        final int bitsPerMapWord = Word.width().numberOfBits;
 
         final boolean isWordTagged;
         final int referenceMapWordIndex = Unsigned.idiv(heapWordIndex, bitsPerMapWord);
@@ -162,7 +162,7 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
                 int bitIndex = 0;
                 while (!refmapWord.isZero()) {
                     if (!refmapWord.and(1).isZero()) {
-                        final int heapWordIndex = (i * Word.width().numberOfBits()) + bitIndex;
+                        final int heapWordIndex = (i * Word.width().numberOfBits) + bitIndex;
                         if (tracing) {
                             final Pointer address = start().asPointer().plus(heapWordIndex * Word.size());
                             final Address value = address.readWord(0).asAddress();

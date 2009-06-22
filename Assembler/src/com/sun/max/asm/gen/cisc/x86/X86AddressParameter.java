@@ -30,7 +30,7 @@ public class X86AddressParameter extends X86NumericalParameter implements Addres
 
     public X86AddressParameter(X86Operand.Designation designation, WordWidth width) {
         super(designation, width);
-        setVariableName("m" + width().numberOfBits());
+        setVariableName("m" + width().numberOfBits);
     }
 
 }

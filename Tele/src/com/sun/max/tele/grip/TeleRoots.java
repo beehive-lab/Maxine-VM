@@ -40,7 +40,7 @@ public final class TeleRoots extends AbstractTeleVMHolder{
     TeleRoots(TeleGripScheme teleGripScheme) {
         super(teleGripScheme.teleVM());
         _teleGripScheme = teleGripScheme;
-        _wordArrayLayout = teleGripScheme.teleVM().layoutScheme().wordArrayLayout();
+        _wordArrayLayout = teleGripScheme.teleVM().layoutScheme().wordArrayLayout;
     }
 
     // Points to the static field {@link TeleHeap#_roots TeleHeap._roots} in the {@link TeleVM}, assuming that the

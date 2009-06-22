@@ -31,16 +31,16 @@ import com.sun.max.vm.compiler.eir.*;
  */
 public class VerificationRunResult {
 
-    private VariableMapping<EirOperand, VariableSequence<EirOperand>> _map;
+    private VariableMapping<EirOperand, VariableSequence<EirOperand>> map;
     private VariableSequence<String> blockSequence;
 
     public VerificationRunResult() {
-        _map = new ChainedHashMapping<EirOperand, VariableSequence<EirOperand>>();
+        map = new ChainedHashMapping<EirOperand, VariableSequence<EirOperand>>();
         blockSequence = new ArrayListSequence<String>();
     }
 
     public VariableMapping<EirOperand, VariableSequence<EirOperand>> map() {
-        return _map;
+        return map;
     }
 
     public VariableSequence<String> blockSequence() {

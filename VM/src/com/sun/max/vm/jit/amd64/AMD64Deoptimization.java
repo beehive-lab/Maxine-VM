@@ -53,7 +53,7 @@ public final class AMD64Deoptimization extends Deoptimization {
         final JitTargetMethod jitTargetMethod = (JitTargetMethod) VMConfiguration.target().jitScheme().compile(classMethodActor, CompilationDirective.DEFAULT);
         final AMD64JitStackFrameLayout layout = (AMD64JitStackFrameLayout) jitTargetMethod.stackFrameLayout();
 
-        int numberOfStackSlots = javaFrameDescriptor.stackSlots().length;
+        int numberOfStackSlots = javaFrameDescriptor.stackSlots.length;
         int numberOfDescribedStackSlots = numberOfStackSlots;
         Kind resultKind = Kind.VOID;
         if (situation != Deoptimizer.Situation.SAFEPOINT) {
@@ -85,10 +85,10 @@ public final class AMD64Deoptimization extends Deoptimization {
         final int incomingParametersPosition = currentCallSaveAreaPosition + layout.numberOfParameterSlots() * JitStackFrameLayout.JIT_SLOT_SIZE;
         buffer().extend(incomingParametersPosition);
 
-        if (javaFrameDescriptor.stackSlots() != null) {
+        if (javaFrameDescriptor.stackSlots != null) {
             for (int i = 1; i <= numberOfDescribedStackSlots; i++) {
                 buffer().setPosition(stackBottomPosition - (i * JitStackFrameLayout.JIT_SLOT_SIZE));
-                javaFrameDescriptor.stackSlots()[i - 1].acceptVisitor(this);
+                javaFrameDescriptor.stackSlots[i - 1].acceptVisitor(this);
             }
         }
 
@@ -102,14 +102,14 @@ public final class AMD64Deoptimization extends Deoptimization {
             }
         }
 
-        if (javaFrameDescriptor.locals() != null) {
-            for (int i = 1; i <= javaFrameDescriptor.locals().length; i++) {
+        if (javaFrameDescriptor.locals != null) {
+            for (int i = 1; i <= javaFrameDescriptor.locals.length; i++) {
                 if (i < layout.numberOfParameterSlots()) {
                     buffer().setPosition(incomingParametersPosition - (i * JitStackFrameLayout.JIT_SLOT_SIZE));
                 } else {
                     buffer().setPosition(framePointerPosition - ((i - incomingParametersPosition) * JitStackFrameLayout.JIT_SLOT_SIZE));
                 }
-                javaFrameDescriptor.locals()[i - 1].acceptVisitor(this);
+                javaFrameDescriptor.locals[i - 1].acceptVisitor(this);
             }
         }
 
@@ -180,13 +180,13 @@ public final class AMD64Deoptimization extends Deoptimization {
 
     private Pointer stackPointer;
     private Pointer instructionPointer;
-    private Pointer _framePointer;
+    private Pointer framePointer;
 
     @Override
     protected void fixCallChain() {
-        stackPointer = parentFrame().stackPointer().minus(buffer().size());
-        instructionPointer = parentFrame().instructionPointer();
-        _framePointer = parentFrame().framePointer();
+        stackPointer = parentFrame().stackPointer.minus(buffer().size());
+        instructionPointer = parentFrame().instructionPointer;
+        framePointer = parentFrame().framePointer;
         for (JitStackFrameInfo info : jitStackFrameInfos) {
             buffer().setPosition(info.callSaveAreaPosition() - JavaStackFrameLayout.STACK_SLOT_SIZE);
             buffer().writeWord(instructionPointer);
@@ -194,8 +194,8 @@ public final class AMD64Deoptimization extends Deoptimization {
 
             if (!info.isAdapterFrame()) {
                 buffer().setPosition(info.callSaveAreaPosition() - (2 * JavaStackFrameLayout.STACK_SLOT_SIZE));
-                buffer().writeWord(_framePointer);
-                _framePointer = stackPointer.plus(info.framePointerPosition());
+                buffer().writeWord(framePointer);
+                framePointer = stackPointer.plus(info.framePointerPosition());
             }
         }
     }
@@ -210,6 +210,6 @@ public final class AMD64Deoptimization extends Deoptimization {
         }
         buffer().copyToMemory(stackPointer);
         Safepoint.enable();
-        AMD64JitCompiler.unwind(instructionPointer, stackPointer, _framePointer);
+        AMD64JitCompiler.unwind(instructionPointer, stackPointer, framePointer);
     }
 }

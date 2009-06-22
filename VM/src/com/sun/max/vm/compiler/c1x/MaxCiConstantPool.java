@@ -279,7 +279,7 @@ public class MaxCiConstantPool implements CiConstantPool {
 
     private MaxCiType typeFrom(ClassConstant constant) {
         if (constant instanceof ClassConstant.Resolved) {
-            return canonicalCiType(((ClassConstant.Resolved) constant).classActor());
+            return canonicalCiType(((ClassConstant.Resolved) constant).classActor);
         }
         // no canonicalization necessary for unresolved constants
         return new MaxCiType(this, constant);
@@ -316,9 +316,9 @@ public class MaxCiConstantPool implements CiConstantPool {
         final MaxCiMethod method = new MaxCiMethod(this, methodActor);
         synchronized (runtime) {
             // all resolved methods are canonicalized per runtime instance
-            final MaxCiMethod previous = runtime._methods.get(method);
+            final MaxCiMethod previous = runtime.methods.get(method);
             if (previous == null) {
-                runtime._methods.put(method, method);
+                runtime.methods.put(method, method);
                 return method;
             }
             return previous;

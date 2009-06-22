@@ -102,10 +102,10 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         currentEirBlock = eirBlock;
     }
 
-    private final AppendableSequence<Label> _catchRangeLabels = new LinkSequence<Label>();
+    private final AppendableSequence<Label> catchRangeLabels = new LinkSequence<Label>();
 
     public Sequence<Label> catchRangeLabels() {
-        return _catchRangeLabels;
+        return catchRangeLabels;
     }
 
     private final AppendableIndexedSequence<EirBlock> catchBlocks = new ArrayListSequence<EirBlock>();
@@ -123,14 +123,14 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         currentCatchBlock = catchBlock;
         final Label label = new Label();
         assembler.bindLabel(label);
-        _catchRangeLabels.append(label);
+        catchRangeLabels.append(label);
         catchBlocks.append(catchBlock);
     }
 
-    final AppendableSequence<Label> _directCallLabels = new LinkSequence<Label>();
+    final AppendableSequence<Label> directCallLabels = new LinkSequence<Label>();
 
     public Sequence<Label> directCallLabels() {
-        return _directCallLabels;
+        return directCallLabels;
     }
 
     private final AppendableSequence<EirCall> directCalls = new LinkSequence<EirCall>();
@@ -149,20 +149,20 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         return result;
     }
 
-    private final GrowableMapping<EirJavaFrameDescriptor, TargetJavaFrameDescriptor> _eirToTargetJavaFrameDescriptor = HashMapping.createEqualityMapping();
+    private final GrowableMapping<EirJavaFrameDescriptor, TargetJavaFrameDescriptor> eirToTargetJavaFrameDescriptor = HashMapping.createEqualityMapping();
 
     private TargetJavaFrameDescriptor eirToTargetJavaFrameDescriptor(EirJavaFrameDescriptor eirJavaFrameDescriptor) {
         if (eirJavaFrameDescriptor == null) {
             return null;
         }
-        TargetJavaFrameDescriptor targetJavaFrameDescriptor = _eirToTargetJavaFrameDescriptor.get(eirJavaFrameDescriptor);
+        TargetJavaFrameDescriptor targetJavaFrameDescriptor = eirToTargetJavaFrameDescriptor.get(eirJavaFrameDescriptor);
         if (targetJavaFrameDescriptor == null) {
             targetJavaFrameDescriptor = new TargetJavaFrameDescriptor(eirToTargetJavaFrameDescriptor(eirJavaFrameDescriptor.parent()),
                                                                       eirJavaFrameDescriptor.classMethodActor(),
                                                                       eirJavaFrameDescriptor.bytecodePosition(),
-                                                                      eirToTargetLocations(eirJavaFrameDescriptor.locals()),
-                                                                      eirToTargetLocations(eirJavaFrameDescriptor.stackSlots()));
-            _eirToTargetJavaFrameDescriptor.put(eirJavaFrameDescriptor, targetJavaFrameDescriptor);
+                                                                      eirToTargetLocations(eirJavaFrameDescriptor.locals),
+                                                                      eirToTargetLocations(eirJavaFrameDescriptor.stackSlots));
+            eirToTargetJavaFrameDescriptor.put(eirJavaFrameDescriptor, targetJavaFrameDescriptor);
         }
         return targetJavaFrameDescriptor;
     }
@@ -173,7 +173,7 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         if (call.result() != null && call.result().eirValue().kind() == Kind.REFERENCE) {
             directReferenceCalls.set(directCalls.length());
         }
-        _directCallLabels.append(label);
+        directCallLabels.append(label);
         directCalls.append(call);
     }
 
@@ -214,17 +214,17 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         return safepointLabels;
     }
 
-    private final AppendableSequence<EirSafepoint> _safepoints = new LinkSequence<EirSafepoint>();
+    private final AppendableSequence<EirSafepoint> safepoints = new LinkSequence<EirSafepoint>();
 
     Sequence<EirSafepoint> safepoints() {
-        return _safepoints;
+        return safepoints;
     }
 
     public void addSafepoint(EirSafepoint eirSafepoint) {
         final Label label = new Label();
         assembler.bindLabel(label);
         safepointLabels.append(label);
-        _safepoints.append(eirSafepoint);
+        safepoints.append(eirSafepoint);
     }
 
     private final AppendableSequence<EirGuardpoint> guardpoints = new LinkSequence<EirGuardpoint>();
@@ -246,10 +246,10 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
     }
 
     private Sequence<TargetJavaFrameDescriptor> getTargetJavaFrameDescriptors() {
-        final AppendableSequence<TargetJavaFrameDescriptor> descriptors = new ArrayListSequence<TargetJavaFrameDescriptor>(directCalls.length() + indirectCalls.length() + _safepoints.length() + guardpoints.length());
+        final AppendableSequence<TargetJavaFrameDescriptor> descriptors = new ArrayListSequence<TargetJavaFrameDescriptor>(directCalls.length() + indirectCalls.length() + safepoints.length() + guardpoints.length());
         appendTargetJavaFrameDescriptors(directCalls, descriptors);
         appendTargetJavaFrameDescriptors(indirectCalls, descriptors);
-        appendTargetJavaFrameDescriptors(_safepoints, descriptors);
+        appendTargetJavaFrameDescriptors(safepoints, descriptors);
         appendTargetJavaFrameDescriptors(guardpoints, descriptors);
         return descriptors;
     }
@@ -261,14 +261,14 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
     protected abstract boolean isCall(byte[] code, int offset);
 
     protected boolean isSafepoint(byte[] code, int offset) {
-        return Bytes.equals(code, offset, safepoint.code());
+        return Bytes.equals(code, offset, safepoint.code);
     }
 
     /**
      * Tests whether all call labels are still pointing at CALL instructions.
      */
     private boolean areLabelsValid(byte[] code, Address startAddress) throws AssemblyException {
-        for (Label label : _directCallLabels) {
+        for (Label label : directCallLabels) {
             if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isCall(code, label.position())) {
                 if (MaxineVM.isPrototyping()) {
                     Disassemble.disassemble(System.out, code, VMConfiguration.hostOrTarget().platform().processorKind(), startAddress, InlineDataDecoder.createFrom(inlineDataRecorder), null);

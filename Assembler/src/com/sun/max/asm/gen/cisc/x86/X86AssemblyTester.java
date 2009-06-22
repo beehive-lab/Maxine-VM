@@ -126,9 +126,9 @@ public abstract class X86AssemblyTester<Template_Type extends X86Template, Disas
     protected void assembleExternally(IndentWriter stream, Template_Type template, Sequence<Argument> argumentList, String label) {
         final WordWidth externalCodeSizeAttribute = template.externalCodeSizeAttribute();
         if (externalCodeSizeAttribute != null) {
-            stream.println(".code" + externalCodeSizeAttribute.numberOfBits());
+            stream.println(".code" + externalCodeSizeAttribute.numberOfBits);
         } else {
-            stream.println(".code" + addressWidth().numberOfBits());
+            stream.println(".code" + addressWidth().numberOfBits);
         }
         final Queue<X86Operand> operandQueue = new MutableQueue<X86Operand>(template.operands());
         final Queue<Argument> argumentQueue = new MutableQueue<Argument>(argumentList);

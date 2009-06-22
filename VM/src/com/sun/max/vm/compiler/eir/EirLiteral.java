@@ -57,7 +57,7 @@ public class EirLiteral extends EirLocation.Constant {
 
     @Override
     public String toString() {
-        return value().kind().character() + ":" + index + "(" + value().toString() + ")";
+        return value().kind().character + ":" + index + "(" + value().toString() + ")";
     }
 
     public Label asLabel() {

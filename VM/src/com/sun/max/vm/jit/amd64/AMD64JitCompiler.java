@@ -389,7 +389,7 @@ public class AMD64JitCompiler extends JitCompiler {
         final Address catchAddress = targetMethod.throwAddressToCatchAddress(throwAddress);
         if (!catchAddress.isZero()) {
             final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
-            final Throwable throwable = stackUnwindingContext._throwable;
+            final Throwable throwable = stackUnwindingContext.throwable;
             final Pointer localVariablesBase = framePointerState.localVariablesBase(stackFrameWalker, targetMethod);
             if (!(throwable instanceof StackOverflowError) || VmThread.current().hasSufficentStackToReprotectGuardPage(localVariablesBase)) {
                 // The Java operand stack of the method that handles the exception is always cleared before pushing the

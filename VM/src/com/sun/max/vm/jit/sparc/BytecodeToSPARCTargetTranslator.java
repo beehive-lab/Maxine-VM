@@ -89,16 +89,16 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
      * There are two templates. The second one differs from the first one in that it has an extra instruction to adjust the tag register.
      * The second must be used when the low match isn't zero.
      */
-    private static final byte[][]  _tableSwitchTemplates = new byte[2][];
+    private static final byte[][]  tableSwitchTemplates = new byte[2][];
     /**
      * Offset to the instruction within the table switch template that branch to the default target.
      */
-    private static final int _offsetToTableSwitchBranchToDefaultTarget;
+    private static final int offsetToTableSwitchBranchToDefaultTarget;
 
     /**
      * Template of the instruction that branch to the default target. Used to fix the 19-bits displacement of the branch instruction.
      */
-    private static final int _tableSwitchBranchToDefaultTargetTemplate;
+    private static final int tableSwitchBranchToDefaultTargetTemplate;
 
     /**
      * Template to the lookup switch bytecode.
@@ -112,7 +112,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
     /**
      * Template of the instruction that branch to the default target. Used to fix the 19-bits displacement of the branch instruction.
      */
-    private static final int _lookupSwitchBranchToDefaultTargetTemplate;
+    private static final int lookupSwitchBranchToDefaultTargetTemplate;
 
     public static final int RET_TEMPLATE;
 
@@ -123,7 +123,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
 
     private final SPARCAssembler asm;
 
-    private final SPARCAdapterFrameGenerator _adapterFrameGenerator;
+    private final SPARCAdapterFrameGenerator adapterFrameGenerator;
 
     /**
      * Offset in bytes, from the beginning of the emitted code,  to the instruction in the prologue that set the literal base.
@@ -132,20 +132,20 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
     private int offsetToSetLiteralBaseInstruction;
 
     public BytecodeToSPARCTargetTranslator(ClassMethodActor classMethodActor, CodeBuffer codeBuffer, TemplateTable templateTable, SPARCEirABI optimizingCompilerAbi, boolean trace) {
-        super(classMethodActor, codeBuffer, templateTable, new SPARCJitStackFrameLayout(classMethodActor, templateTable.maxFrameSlots()), trace);
+        super(classMethodActor, codeBuffer, templateTable, new SPARCJitStackFrameLayout(classMethodActor, templateTable.maxFrameSlots), trace);
         asm = optimizingCompilerAbi.createAssembler();
         SPARCAdapterFrameGenerator adapterFrameGenerator = null;
         if (optimizingCompilerAbi != null) {
             adapterFrameGenerator = SPARCAdapterFrameGenerator.optimizedToJitCompilerAdapterFrameGenerator(classMethodActor, optimizingCompilerAbi);
         }
-        _adapterFrameGenerator = adapterFrameGenerator;
+        this.adapterFrameGenerator = adapterFrameGenerator;
     }
 
     @Override
     public int adapterReturnPosition() {
         try {
-            if (_adapterFrameGenerator.adapterReturnPoint().state() == Label.State.BOUND) {
-                return _adapterFrameGenerator.adapterReturnPoint().position();
+            if (adapterFrameGenerator.adapterReturnPoint().state() == Label.State.BOUND) {
+                return adapterFrameGenerator.adapterReturnPoint().position();
             }
             return -1;
         } catch (AssemblyException assemblyException) {
@@ -376,13 +376,13 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
 
         // The default target is expressed as an offset from the lookup switch bytecode.
         // Compute the default target's position relative to the beginning of the method.
-        final int defaultTargetTargetCodePosition = bytecodeToTargetCodePosition(lookupSwitch._defaultTargetBytecodePosition);
+        final int defaultTargetTargetCodePosition = bytecodeToTargetCodePosition(lookupSwitch.defaultTargetBytecodePosition);
 
         // Fix the branch target in the template.
         final int offsetToBranchInstruction = templateTargetCodePosition + offsetToLookupSwitchBranchToDefaultTarget;
 
         final int offsetToDefaultTarget = defaultTargetTargetCodePosition - offsetToBranchInstruction;
-        fixBranchLabel(offsetToBranchInstruction, offsetToDefaultTarget, _lookupSwitchBranchToDefaultTargetTemplate);
+        fixBranchLabel(offsetToBranchInstruction, offsetToDefaultTarget, lookupSwitchBranchToDefaultTargetTemplate);
 
         final int matchOffsetPairTableAddress =  templateTargetCodePosition  + lookupSwitchTemplate.length;
         fixMatchOffsetPairTable(lookupSwitch, matchOffsetPairTableAddress);
@@ -451,11 +451,11 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
             }
             final int templatePrefixSize = asm.currentPosition();
             codeBuffer.emitCodeFrom(asm);
-            codeBuffer.emit(_tableSwitchTemplates[templateIndex]);
+            codeBuffer.emit(tableSwitchTemplates[templateIndex]);
 
             final InlineDataDescriptor.JumpTable32 jumpTable32 = new InlineDataDescriptor.JumpTable32(codeBuffer.currentPosition(), lowMatch, highMatch);
             inlineDataRecorder.add(jumpTable32);
-            assert jumpTable32.size() == numberOfCases * WordWidth.BITS_32.numberOfBytes();
+            assert jumpTable32.size() == numberOfCases * WordWidth.BITS_32.numberOfBytes;
             codeBuffer.reserve(jumpTable32.size());
 
             // Remember the location of the tableSwitch bytecode and the area in the code buffer where the targets will be written.
@@ -476,20 +476,20 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
         try {
             final int templateTargetCodePosition = bytecodeToTargetCodePosition(tableSwitch.opcodePosition) + tableSwitch.templatePrefixSize();
             // The default target is expressed as an offset from the tableswitch bytecode. Compute the default target's position relative to the beginning of the method.
-            final int defaultTargetTargetCodePosition = bytecodeToTargetCodePosition(tableSwitch._defaultTargetBytecodePosition);
+            final int defaultTargetTargetCodePosition = bytecodeToTargetCodePosition(tableSwitch.defaultTargetBytecodePosition);
             // Fix the branch target in the template.
-            final int offsetToBranchInstruction = templateTargetCodePosition + _offsetToTableSwitchBranchToDefaultTarget +
+            final int offsetToBranchInstruction = templateTargetCodePosition + offsetToTableSwitchBranchToDefaultTarget +
                 tableSwitch.templateIndex * SPARCStackFrameLayout.SPARC_INSTRUCTION_WIDTH;
 
             final int offsetToDefaultTarget = defaultTargetTargetCodePosition - offsetToBranchInstruction;
-            fixBranchLabel(offsetToBranchInstruction, offsetToDefaultTarget, _tableSwitchBranchToDefaultTargetTemplate);
+            fixBranchLabel(offsetToBranchInstruction, offsetToDefaultTarget, tableSwitchBranchToDefaultTargetTemplate);
 
             // We generate a jump table using the inlining support of the assembler. The resulting table is then used to fix the
             // reserved space in the code buffer. The jump table comprises only offsets relative to the table itself.
             // This avoids having to deal with relocation.
             asm.reset();
             final Directives directives = asm.directives();
-            final int jumpTableAddress =  templateTargetCodePosition + _tableSwitchTemplates[tableSwitch.templateIndex].length;
+            final int jumpTableAddress =  templateTargetCodePosition + tableSwitchTemplates[tableSwitch.templateIndex].length;
             for (int targetBytecodePosition : tableSwitch.targetBytecodePositions) {
                 final int targetTargetCodeOffset = bytecodeToTargetCodePosition(targetBytecodePosition) - jumpTableAddress;
                 directives.inlineInt(targetTargetCodeOffset);
@@ -547,7 +547,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
     protected void loadTemplateArgumentRelativeToInstructionPointer(Kind kind, int parameterIndex, int offsetFromLiteralBase) {
         final GPR literalBaseRegister = targetABI.literalBaseRegister();
         asm.reset();
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case LONG:
             case WORD:
             case REFERENCE:
@@ -599,7 +599,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
 
     @Override
     protected int emitPrologue() {
-        if (_adapterFrameGenerator != null) {
+        if (adapterFrameGenerator != null) {
             final GPR stackPointerRegister = targetABI.stackPointer();
             final GPR framePointerRegister = targetABI.framePointer();
             final GPR ripPointer = GPR.O7;
@@ -622,8 +622,8 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
             final int offsetToCallSaveArea = offsetToSpillSlots + offsetToCallSaveAreaFromFP;
             final boolean largeFrame = !SPARCAssembler.isSimm13(jitedCodeFrameSize);
             final boolean largeOffsets = !SPARCAssembler.isSimm13(offsetToCallSaveArea + 2 * STACK_SLOT_SIZE);
-            _adapterFrameGenerator.setJitedCodeFrameSize(jitedCodeFrameSize);
-            _adapterFrameGenerator.setJitEntryPoint(jitEntryPoint);
+            adapterFrameGenerator.setJitedCodeFrameSize(jitedCodeFrameSize);
+            adapterFrameGenerator.setJitEntryPoint(jitEntryPoint);
             try {
                 asm.reset();
                 // Skip over the frame adapter for calls from jit code
@@ -636,8 +636,8 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
                 // Entry point to the optimized code
                 final Label adapterCodeStart = new Label();
                 asm.bindLabel(adapterCodeStart);
-                _adapterFrameGenerator.emitPrologue(asm);
-                _adapterFrameGenerator.emitEpilogue(asm);
+                adapterFrameGenerator.emitPrologue(asm);
+                adapterFrameGenerator.emitEpilogue(asm);
 
                 assert jitEntryPoint.state().equals(Label.State.BOUND);
 
@@ -694,7 +694,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
         final Class<TargetABI<GPR, FPR>> type = null;
         targetABI = StaticLoophole.cast(type, VMConfiguration.target().targetABIsScheme().jitABI());
         cpuFramePointer = targetABI.registerRoleAssignment().integerRegisterActingAs(Role.CPU_FRAME_POINTER);
-        safepointTemplate = VMConfiguration.target().safepoint().code();
+        safepointTemplate = VMConfiguration.target().safepoint().code;
         assert safepointTemplate.length == SPARCStackFrameLayout.SPARC_INSTRUCTION_WIDTH;
         final Endianness endianness = VMConfiguration.target().platform().processorKind().dataModel().endianness();
         final SPARCAssembler asm =  SPARCAssembler.createAssembler(VMConfiguration.target().platform().processorKind().dataModel().wordWidth());
@@ -703,11 +703,11 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
 
         // Table switch templates creation.
         Label branchToDefaultTarget = new Label();
-        _tableSwitchTemplates[0] = buildTableSwitchTemplate(asm, branchToDefaultTarget, false);
-        _offsetToTableSwitchBranchToDefaultTarget = toPosition(branchToDefaultTarget);
+        tableSwitchTemplates[0] = buildTableSwitchTemplate(asm, branchToDefaultTarget, false);
+        offsetToTableSwitchBranchToDefaultTarget = toPosition(branchToDefaultTarget);
         branchToDefaultTarget = new Label();
-        _tableSwitchTemplates[1] = buildTableSwitchTemplate(asm, branchToDefaultTarget, true);
-        assert _offsetToTableSwitchBranchToDefaultTarget == toPosition(branchToDefaultTarget) - SPARCStackFrameLayout.SPARC_INSTRUCTION_WIDTH;
+        tableSwitchTemplates[1] = buildTableSwitchTemplate(asm, branchToDefaultTarget, true);
+        assert offsetToTableSwitchBranchToDefaultTarget == toPosition(branchToDefaultTarget) - SPARCStackFrameLayout.SPARC_INSTRUCTION_WIDTH;
 
         // Lookup switch template creation
         branchToDefaultTarget = new Label();
@@ -731,14 +731,14 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
         branchTemplates.put(NONE, toByteArrayAndReset(asm));
 
         try {
-            final ByteArrayInputStream bin = new ByteArrayInputStream(_tableSwitchTemplates[0]);
-            bin.skip(_offsetToTableSwitchBranchToDefaultTarget);
-            _tableSwitchBranchToDefaultTargetTemplate = endianness.readInt(bin);
+            final ByteArrayInputStream bin = new ByteArrayInputStream(tableSwitchTemplates[0]);
+            bin.skip(offsetToTableSwitchBranchToDefaultTarget);
+            tableSwitchBranchToDefaultTargetTemplate = endianness.readInt(bin);
 
             for (BranchCondition branchCondition : BranchCondition.values()) {
                 branchTemplateInstruction[branchCondition.ordinal()] = endianness.readInt(new ByteArrayInputStream(branchTemplates.get(branchCondition)));
             }
-            _lookupSwitchBranchToDefaultTargetTemplate = branchTemplateInstruction[NONE.ordinal()];
+            lookupSwitchBranchToDefaultTargetTemplate = branchTemplateInstruction[NONE.ordinal()];
 
             asm.jmpl(GPR.O7, 8, GPR.G0);
             RET_TEMPLATE = endianness.readInt(new ByteArrayInputStream(toByteArrayAndReset(asm)));

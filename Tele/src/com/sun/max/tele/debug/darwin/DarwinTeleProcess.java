@@ -102,7 +102,7 @@ public final class DarwinTeleProcess extends TeleProcess {
 
     @Override
     protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
-        final Word threadSpecificsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header()._threadSpecificsListOffset));
+        final Word threadSpecificsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header().threadSpecificsListOffset));
         nativeGatherThreads(_task, threads, threadSpecificsList.asAddress().toLong());
     }
 

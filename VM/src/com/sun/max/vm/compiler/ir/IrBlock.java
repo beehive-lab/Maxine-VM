@@ -32,15 +32,15 @@ public interface IrBlock {
         NORMAL("block"),
         EXCEPTION_DISPATCHER("catch");
 
-        private final String _string;
+        private final String string;
 
         private Role(String string) {
-            _string = string;
+            this.string = string;
         }
 
         @Override
         public String toString() {
-            return _string;
+            return string;
         }
     }
 

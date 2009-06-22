@@ -105,31 +105,27 @@ public class Subroutine extends Category1Type {
     /**
      * The position at which the subroutine was entered (i.e. the target of one or more JSR instructions).
      */
-    private int _entryPosition;
+    public final int entryPosition;
 
     /**
      * The positions of the successors of all the JSR instructions that enter this subroutine.
      */
-    private int[] _retTargets = {};
+    private int[] retTargets = {};
 
     /**
      * The positions of the RET instructions that effect a return from this subroutine.
      */
-    private int[] _retInstructions = {};
+    private int[] retInstructions = {};
 
     /**
      * A mask of local variables mask denoting those accessed (i.e. read or written) within the subroutine.
      */
-    private boolean[] _accessedVariableMask;
+    private final boolean[] accessedVariableMask;
 
     public Subroutine(int entryPosition, int maxLocals) {
         assert SUBROUTINE == null || entryPosition != -1;
-        _entryPosition = entryPosition;
-        _accessedVariableMask = new boolean[maxLocals];
-    }
-
-    public int entryPosition() {
-        return _entryPosition;
+        this.entryPosition = entryPosition;
+        this.accessedVariableMask = new boolean[maxLocals];
     }
 
     /**
@@ -138,40 +134,40 @@ public class Subroutine extends Category1Type {
      * @return the bytecode positions to which this subroutine returns
      */
     public int[] retTargets() {
-        return _retTargets;
+        return retTargets;
     }
 
     /**
      * Gets the positions of the RET instructions that effect a return from this subroutine.
      */
     public int[] retInstructions() {
-        return _retInstructions;
+        return retInstructions;
     }
 
     /**
      * Records that the local variable at a given index is accessed (i.e. read or written) within this subroutine.
      */
     public void accessesVariable(int index) {
-        _accessedVariableMask[index] = true;
+        accessedVariableMask[index] = true;
     }
 
     /**
      * Determines if the local variable at a given index is accessed (i.e. read or written) within this subroutine.
      */
     public boolean isVariableAccessed(int index) {
-        return _accessedVariableMask[index];
+        return accessedVariableMask[index];
     }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("subroutine{entry = ").
-            append(_entryPosition).
-            append(", ret instructions = " + Arrays.toString(_retInstructions)).
-            append(", ret targets = " + Arrays.toString(_retTargets)).
+            append(entryPosition).
+            append(", ret instructions = " + Arrays.toString(retInstructions)).
+            append(", ret targets = " + Arrays.toString(retTargets)).
             append(", accessed variables = [");
         String separator = "";
-        for (int i = 0; i < _accessedVariableMask.length; i++) {
-            if (_accessedVariableMask[i]) {
+        for (int i = 0; i < accessedVariableMask.length; i++) {
+            if (accessedVariableMask[i]) {
                 sb.append(separator).append(i);
                 separator = ",";
             }
@@ -184,12 +180,12 @@ public class Subroutine extends Category1Type {
      */
     public void addRetTarget(int position) {
         assert !containsRetTarget(position);
-        _retTargets = Arrays.copyOf(_retTargets, _retTargets.length + 1);
-        _retTargets[_retTargets.length - 1] = position;
+        retTargets = Arrays.copyOf(retTargets, retTargets.length + 1);
+        retTargets[retTargets.length - 1] = position;
     }
 
     public boolean containsRetTarget(int position) {
-        for (int retTarget : _retTargets) {
+        for (int retTarget : retTargets) {
             if (retTarget == position) {
                 return true;
             }
@@ -202,13 +198,13 @@ public class Subroutine extends Category1Type {
      */
     public void addRetInstruction(int position) {
         if (!containsRetInstruction(position)) {
-            _retInstructions = Arrays.copyOf(_retInstructions, _retInstructions.length + 1);
-            _retInstructions[_retInstructions.length - 1] = position;
+            retInstructions = Arrays.copyOf(retInstructions, retInstructions.length + 1);
+            retInstructions[retInstructions.length - 1] = position;
         }
     }
 
     public boolean containsRetInstruction(int position) {
-        for (int retInstruction : _retInstructions) {
+        for (int retInstruction : retInstructions) {
             if (retInstruction == position) {
                 return true;
             }

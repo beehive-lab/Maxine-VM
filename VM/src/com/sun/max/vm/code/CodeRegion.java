@@ -119,7 +119,7 @@ public class CodeRegion extends LinearAllocatorHeapRegion {
      * @return true if space was successfully allocated for the safepoint stub
      */
     public boolean allocateRuntimeStub(RuntimeStub stub) {
-        final ByteArrayLayout byteArrayLayout = VMConfiguration.hostOrTarget().layoutScheme().byteArrayLayout();
+        final ByteArrayLayout byteArrayLayout = VMConfiguration.hostOrTarget().layoutScheme().byteArrayLayout;
         final int size = stub.size().toInt();
         final Size allocationSize = byteArrayLayout.getArraySize(size);
         final Pointer cell = allocateCell(allocationSize);

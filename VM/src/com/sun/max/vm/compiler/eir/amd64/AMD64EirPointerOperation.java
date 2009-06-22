@@ -60,7 +60,7 @@ public abstract class AMD64EirPointerOperation extends AMD64EirBinaryOperation {
     }
 
     private static PoolSet<EirLocationCategory> offsetLocationCategories(Kind kind) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case INT:
                 return G_I8_I32;
             case LONG:
@@ -175,9 +175,9 @@ public abstract class AMD64EirPointerOperation extends AMD64EirBinaryOperation {
             return "[" + pointerOperand() + " + " + offsetOperand() + "]";
         }
         if (offsetOperand() == null) {
-            return pointerOperand() + "[" + indexOperand() + " * " + kind().size() + "]";
+            return pointerOperand() + "[" + indexOperand() + " * " + kind().width.numberOfBytes + "]";
         }
-        return pointerOperand() + "[" + indexOperand() + " * " + kind().size() + " + " + offsetOperand() + "]";
+        return pointerOperand() + "[" + indexOperand() + " * " + kind().width.numberOfBytes + " + " + offsetOperand() + "]";
     }
 
     protected abstract void translateWithoutOffsetWithoutIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister);

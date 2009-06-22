@@ -179,7 +179,7 @@ public class FieldWriteSnippet extends BuiltinsSnippet {
     }
 
     public static final FieldWriteSnippet selectSnippetByKind(Kind kind) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case BYTE:
                 return FieldWriteSnippet.WriteByte.SNIPPET;
             case BOOLEAN:

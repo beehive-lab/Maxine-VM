@@ -35,7 +35,7 @@ import com.sun.max.vm.type.*;
 public final class AMD64EirLoad extends AMD64EirPointerOperation {
 
     private static PoolSet<EirLocationCategory> destinationLocationCategories(Kind kind) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case FLOAT:
             case DOUBLE:
                 return F;
@@ -62,12 +62,12 @@ public final class AMD64EirLoad extends AMD64EirPointerOperation {
 
     @Override
     public String toString() {
-        return "load-" + kind().character() + " " + destinationOperand() + " := " + addressString();
+        return "load-" + kind().character + " " + destinationOperand() + " := " + addressString();
     }
 
     @Override
     protected void translateWithoutOffsetWithoutIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister) {
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case BYTE: {
                 emitter.assembler().movsxb(destinationGeneralRegister().as64(), pointerRegister.indirect());
                 break;
@@ -111,7 +111,7 @@ public final class AMD64EirLoad extends AMD64EirPointerOperation {
     @Override
     protected void translateWithoutOffsetWithIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister, AMD64GeneralRegister64 indexRegister) {
         final Scale scale = getScale(kind());
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case BYTE: {
                 emitter.assembler().movsxb(destinationGeneralRegister().as64(), pointerRegister.base(), indexRegister.index(), scale);
                 break;
@@ -155,7 +155,7 @@ public final class AMD64EirLoad extends AMD64EirPointerOperation {
     @Override
     protected void translateWithRegisterOffsetWithoutIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister, AMD64GeneralRegister64 offsetRegister) {
         final Scale scale = Scale.SCALE_1;
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case BYTE: {
                 emitter.assembler().movsxb(destinationGeneralRegister().as64(), pointerRegister.base(), offsetRegister.index(), scale);
                 break;
@@ -203,7 +203,7 @@ public final class AMD64EirLoad extends AMD64EirPointerOperation {
         final AMD64GeneralRegister64 scratchRegister = eirScratchRegister.as64();
         emitter.assembler().mov(scratchRegister, pointerRegister);
         emitter.assembler().add(scratchRegister, offsetRegister);
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case BYTE: {
                 emitter.assembler().movsxb(destinationGeneralRegister().as64(), scratchRegister.base(), indexRegister.index(), scale);
                 break;
@@ -246,7 +246,7 @@ public final class AMD64EirLoad extends AMD64EirPointerOperation {
 
     @Override
     protected void translateWithImmediateOffset8WithoutIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister, byte offset8) {
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case BYTE: {
                 emitter.assembler().movsxb(destinationGeneralRegister().as64(), offset8, pointerRegister.indirect());
                 break;
@@ -290,7 +290,7 @@ public final class AMD64EirLoad extends AMD64EirPointerOperation {
     @Override
     protected void translateWithImmediateOffset8WithIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister, byte offset8, AMD64GeneralRegister64 indexRegister) {
         final Scale scale = getScale(kind());
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case BYTE: {
                 emitter.assembler().movsxb(destinationGeneralRegister().as64(), offset8, pointerRegister.base(), indexRegister.index(), scale);
                 break;
@@ -333,7 +333,7 @@ public final class AMD64EirLoad extends AMD64EirPointerOperation {
 
     @Override
     protected void translateWithImmediateOffset32WithoutIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister, int offset32) {
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case BYTE: {
                 emitter.assembler().movsxb(destinationGeneralRegister().as64(), offset32, pointerRegister.indirect());
                 break;
@@ -377,7 +377,7 @@ public final class AMD64EirLoad extends AMD64EirPointerOperation {
     @Override
     protected void translateWithImmediateOffset32WithIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister, int offset32, AMD64GeneralRegister64 indexRegister) {
         final Scale scale = getScale(kind());
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case BYTE: {
                 emitter.assembler().movsxb(destinationGeneralRegister().as64(), offset32, pointerRegister.base(), indexRegister.index(), scale);
                 break;
@@ -424,7 +424,7 @@ public final class AMD64EirLoad extends AMD64EirPointerOperation {
     }
 
     public static Scale getScale(Kind k) {
-        switch (k.asEnum()) {
+        switch (k.asEnum) {
             case BYTE: {
                 return Scale.SCALE_1;
             }

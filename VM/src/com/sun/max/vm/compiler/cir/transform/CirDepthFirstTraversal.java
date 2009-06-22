@@ -148,8 +148,8 @@ public final class CirDepthFirstTraversal extends CirVisitor {
 
         CirJavaFrameDescriptor javaFrameDescriptor = call.javaFrameDescriptor();
         while (javaFrameDescriptor != null) {
-            traverseValues(javaFrameDescriptor.locals(), childDepth);
-            traverseValues(javaFrameDescriptor.stackSlots(), childDepth);
+            traverseValues(javaFrameDescriptor.locals, childDepth);
+            traverseValues(javaFrameDescriptor.stackSlots, childDepth);
             javaFrameDescriptor = javaFrameDescriptor.parent();
         }
 

@@ -129,7 +129,7 @@ public abstract class BytecodeTest_subtype<Method_Type extends IrMethod> extends
 
         for (Kind kind : Kind.VALUES) {
             if (kind != Kind.WORD) {
-                classes.add(kind.toJava());
+                classes.add(kind.javaClass);
             }
         }
 
@@ -235,7 +235,7 @@ public abstract class BytecodeTest_subtype<Method_Type extends IrMethod> extends
             final String valueTypeName = value == null ? "null" : valueType.getSimpleName();
             final ClassActor arrayClassActor = ClassActor.fromJava(array.getClass());
             final ClassActor componentClassActor = arrayClassActor.componentClassActor();
-            final boolean expectArrayStoreException = componentClassActor.kind() == Kind.WORD || (value != null && !componentClassActor.isAssignableFrom(ClassActor.fromJava(value.getClass())));
+            final boolean expectArrayStoreException = componentClassActor.kind == Kind.WORD || (value != null && !componentClassActor.isAssignableFrom(ClassActor.fromJava(value.getClass())));
             try {
                 executeWithException(method, ReferenceValue.from(array), ReferenceValue.from(value));
                 if (expectArrayStoreException) {
@@ -308,8 +308,8 @@ public abstract class BytecodeTest_subtype<Method_Type extends IrMethod> extends
                 final ClassActor toTypeActor = ClassActor.fromJava(toType);
                 final boolean apiAnswer = toType.isAssignableFrom(fromType);
                 final boolean actorAnswer = toTypeActor.isAssignableFrom(fromTypeActor);
-                if (fromTypeActor.kind() == Kind.WORD) {
-                    if (toTypeActor.kind() != Kind.WORD) {
+                if (fromTypeActor.kind == Kind.WORD) {
+                    if (toTypeActor.kind != Kind.WORD) {
                         if (toType != Accessor.class && toType != UnsafeBox.class && actorAnswer == true) {
                             toTypeActor.isAssignableFrom(fromTypeActor);
                             fail(fromType + " should not be assignable to non-word type " + toType);

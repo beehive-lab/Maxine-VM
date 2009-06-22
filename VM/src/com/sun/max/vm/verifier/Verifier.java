@@ -36,23 +36,23 @@ import com.sun.max.vm.verifier.types.*;
  */
 public class Verifier implements VerificationRegistry {
 
-    private final ConstantPool _constantPool;
+    private final ConstantPool constantPool;
 
-    private final Map<TypeDescriptor, ObjectType> _objectTypes;
+    private final Map<TypeDescriptor, ObjectType> objectTypes;
 
-    private final IntHashMap<UninitializedNewType> _uninitializedNewTypes;
+    private final IntHashMap<UninitializedNewType> uninitializedNewTypes;
 
-    private IntHashMap<Subroutine> _subroutines;
+    private IntHashMap<Subroutine> subroutines;
 
-    private boolean _verbose;
+    public boolean verbose;
 
     public Verifier(ConstantPool constantPool) {
-        _constantPool = constantPool;
-        _objectTypes = new HashMap<TypeDescriptor, ObjectType>();
-        _uninitializedNewTypes = new IntHashMap<UninitializedNewType>();
+        this.constantPool = constantPool;
+        this.objectTypes = new HashMap<TypeDescriptor, ObjectType>();
+        this.uninitializedNewTypes = new IntHashMap<UninitializedNewType>();
 
         for (ObjectType objectType : PREDEFINED_OBJECT_TYPES) {
-            _objectTypes.put(objectType.typeDescriptor(), objectType);
+            objectTypes.put(objectType.typeDescriptor(), objectType);
         }
     }
 
@@ -60,40 +60,40 @@ public class Verifier implements VerificationRegistry {
         if (JavaTypeDescriptor.isPrimitive(typeDescriptor)) {
             return null;
         }
-        ObjectType objectType = _objectTypes.get(typeDescriptor);
+        ObjectType objectType = objectTypes.get(typeDescriptor);
         if (objectType == null) {
             objectType = JavaTypeDescriptor.isArray(typeDescriptor) ? new ArrayType(typeDescriptor, this) : new ObjectType(typeDescriptor, this);
-            _objectTypes.put(typeDescriptor, objectType);
+            objectTypes.put(typeDescriptor, objectType);
         }
         return objectType;
     }
 
     public UninitializedNewType getUninitializedNewType(int position) {
-        UninitializedNewType uninitializedNewType = _uninitializedNewTypes.get(position);
+        UninitializedNewType uninitializedNewType = uninitializedNewTypes.get(position);
         if (uninitializedNewType == null) {
             uninitializedNewType = new UninitializedNewType(position);
-            _uninitializedNewTypes.put(position, uninitializedNewType);
+            uninitializedNewTypes.put(position, uninitializedNewType);
         }
         return uninitializedNewType;
     }
 
     public int clearSubroutines() {
-        if (_subroutines != null) {
-            final int count = _subroutines.count();
-            _subroutines = null;
+        if (subroutines != null) {
+            final int count = subroutines.count();
+            subroutines = null;
             return count;
         }
         return 0;
     }
 
     public Subroutine getSubroutine(int entryPosition, int maxLocals) {
-        if (_subroutines == null) {
-            _subroutines = new IntHashMap<Subroutine>();
+        if (subroutines == null) {
+            subroutines = new IntHashMap<Subroutine>();
         }
-        Subroutine subroutine = _subroutines.get(entryPosition);
+        Subroutine subroutine = subroutines.get(entryPosition);
         if (subroutine == null) {
             subroutine = new Subroutine(entryPosition, maxLocals);
-            _subroutines.put(entryPosition, subroutine);
+            subroutines.put(entryPosition, subroutine);
         }
         return subroutine;
     }
@@ -103,11 +103,11 @@ public class Verifier implements VerificationRegistry {
     }
 
     public ConstantPool constantPool() {
-        return _constantPool;
+        return constantPool;
     }
 
     public static ClassVerifier verifierFor(ClassActor classActor) {
-        final int majorVersion = classActor.majorVersion();
+        final int majorVersion = classActor.majorVersion;
         if (majorVersion >= 50) {
             return new TypeCheckingVerifier(classActor);
         }
@@ -119,13 +119,5 @@ public class Verifier implements VerificationRegistry {
      */
     public ClassActor resolve(TypeDescriptor type) {
         return ClassActor.fromJava(type.resolveType(constantPool().classLoader()));
-    }
-
-    public boolean verbose() {
-        return _verbose;
-    }
-
-    public void setVerbose(boolean flag) {
-        _verbose = flag;
     }
 }

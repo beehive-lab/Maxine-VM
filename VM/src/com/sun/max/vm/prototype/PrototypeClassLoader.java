@@ -42,10 +42,10 @@ public final class PrototypeClassLoader extends ClassLoader {
     /**
      * The default classpath for loading prototype classes.
      */
-    private static Classpath _classpath;
+    private static Classpath classpath;
 
-    private static final Set<String> _omittedClasses = new HashSet<String>();
-    private static final Set<String> _omittedPackages = new HashSet<String>();
+    private static final Set<String> omittedClasses = new HashSet<String>();
+    private static final Set<String> omittedPackages = new HashSet<String>();
 
     /**
      * Adds a class that must not be loaded into the VM class registry. Calling {@link #loadClass(String, boolean)} for
@@ -66,7 +66,7 @@ public final class PrototypeClassLoader extends ClassLoader {
     public static void omitClass(TypeDescriptor typeDescriptor) {
         final String className = typeDescriptor.toJavaString();
         ProgramError.check(!ClassRegistry.vmClassRegistry().contains(typeDescriptor), "Cannot omit a class already in VM class registry: " + className);
-        _omittedClasses.add(className);
+        omittedClasses.add(className);
     }
 
     /**
@@ -77,9 +77,9 @@ public final class PrototypeClassLoader extends ClassLoader {
      */
     public static void omitPackage(String packageName) {
         for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
-            ProgramError.check(!classActor.packageName().equals(packageName), "Cannot omit a package that contains a class already in VM class registry: " + classActor.name());
+            ProgramError.check(!classActor.packageName().equals(packageName), "Cannot omit a package that contains a class already in VM class registry: " + classActor.name);
         }
-        _omittedPackages.add(packageName);
+        omittedPackages.add(packageName);
     }
 
     /**
@@ -91,7 +91,7 @@ public final class PrototypeClassLoader extends ClassLoader {
      */
     public static boolean isOmittedType(TypeDescriptor typeDescriptor) {
         final String className = typeDescriptor.toJavaString();
-        return _omittedClasses.contains(className) || _omittedPackages.contains(Classes.getPackageName(className));
+        return omittedClasses.contains(className) || omittedPackages.contains(Classes.getPackageName(className));
     }
 
     /**
@@ -103,8 +103,8 @@ public final class PrototypeClassLoader extends ClassLoader {
      *                the classpath to use
      */
     public static void setClasspath(Classpath classpath) {
-        ProgramWarning.check(_classpath == null, "overriding prototype class loader's classpath: old value=\"" + _classpath + "\", new value=\"" + classpath + "\"");
-        _classpath = classpath;
+        ProgramWarning.check(PrototypeClassLoader.classpath == null, "overriding prototype class loader's classpath: old value=\"" + PrototypeClassLoader.classpath + "\", new value=\"" + classpath + "\"");
+        PrototypeClassLoader.classpath = classpath;
     }
 
     /**
@@ -113,10 +113,10 @@ public final class PrototypeClassLoader extends ClassLoader {
      * @return an object representing the classpath of this loader
      */
     public Classpath classpath() {
-        if (_classpath == null) {
+        if (classpath == null) {
             setClasspath(Classpath.fromSystem());
         }
-        return _classpath;
+        return classpath;
     }
 
     /**

@@ -37,7 +37,7 @@ public class NameMap {
             from.accept(new TirInstructionAdapter() {
                 @Override
                 public void visit(TirLocal local) {
-                    result.setValue(Color.color(NameMap.LOCAL_COLOR, local.kind().typeDescriptor() + "$" + local.slot()));
+                    result.setValue(Color.color(NameMap.LOCAL_COLOR, local.kind().typeDescriptor + "$" + local.slot()));
                 }
 
                 @Override
@@ -52,12 +52,12 @@ public class NameMap {
 
                 @Override
                 public void visit(TirBuiltinCall call) {
-                    result.setValue(call.builtin().classMethodActor().name().toString());
+                    result.setValue(call.builtin().classMethodActor().name.toString());
                 }
 
                 @Override
                 public void visit(TirDirCall call) {
-                    result.setValue(call.method().name().toString());
+                    result.setValue(call.method().name.toString());
                 }
 
                 @Override

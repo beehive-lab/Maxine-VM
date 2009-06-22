@@ -45,18 +45,18 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
         return kind;
     }
 
-    private Type _type = Type.NORMAL;
+    private Type type = Type.NORMAL;
 
     public Type type() {
-        return _type;
+        return type;
     }
 
     public void setType(Type type) {
-        _type = type;
+        this.type = type;
     }
 
     private static PoolSet<EirLocationCategory> destinationLocationCategories(Kind kind) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case INT:
             case LONG:
             case WORD:
@@ -72,7 +72,7 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
     }
 
     private static PoolSet<EirLocationCategory> sourceLocationCategories(Kind kind) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case INT:
                 return G_I32_L_S;
             case LONG:
@@ -165,7 +165,7 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
 
     private void emit_L_GF(SPARCEirTargetEmitter emitter) {
         final SPARCEirRegister.GeneralPurpose literalBase =  ((SPARCEirABI) emitter.abi()).literalBaseRegister();
-        switch(kind().asEnum()) {
+        switch(kind().asEnum) {
             case LONG:
             case WORD:
             case REFERENCE:
@@ -184,7 +184,7 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
 
     private void emit_L_S(SPARCEirTargetEmitter emitter) {
         final SPARCEirRegister.GeneralPurpose literalBase = ((SPARCEirABI) emitter.abi()).literalBaseRegister();
-        switch(kind().asEnum()) {
+        switch(kind().asEnum) {
             case LONG:
             case WORD:
             case REFERENCE: {
@@ -219,7 +219,7 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
      * @return
      */
     private static EirRegister stackSlotScratch(SPARCEirTargetEmitter emitter, Kind kind) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case BYTE:
             case BOOLEAN:
             case SHORT:
@@ -382,7 +382,7 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
 
     @Override
     public void emit(SPARCEirTargetEmitter emitter) {
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case BYTE:
             case BOOLEAN:
             case SHORT:

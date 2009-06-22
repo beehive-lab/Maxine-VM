@@ -50,7 +50,7 @@ import com.sun.max.vm.value.*;
  */
 public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends MemberActor {
 
-    private final Kind<Value_Type> kind;
+    public final Kind<Value_Type> kind;
 
     protected FieldActor(Kind<Value_Type> kind,
                     Utf8Constant name,
@@ -92,17 +92,8 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
     }
 
     @INLINE
-    @Override
     public final TypeDescriptor descriptor() {
-        return (TypeDescriptor) super.descriptor();
-    }
-
-    public Kind<Value_Type> kind() {
-        return kind;
-    }
-
-    public int valueSize() {
-        return kind.size();
+        return (TypeDescriptor) descriptor;
     }
 
     /**
@@ -118,7 +109,7 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
      * Gets the actor for this field's type.
      */
     public ClassActor type() {
-        return descriptor().resolve(holder().classLoader());
+        return descriptor().resolve(holder().classLoader);
     }
 
     @CONSTANT
@@ -164,7 +155,7 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
             return JavaPrototype.javaPrototype().toJava(this);
         }
         final Class javaHolder = holder().toJava();
-        final Field javaField = ReflectionFactory.getReflectionFactory().newField(javaHolder, name().toString(), type().toJava(), flags(), memberIndex(), genericSignatureString(), runtimeVisibleAnnotationsBytes());
+        final Field javaField = ReflectionFactory.getReflectionFactory().newField(javaHolder, name.toString(), type().toJava(), flags(), memberIndex(), genericSignatureString(), runtimeVisibleAnnotationsBytes());
         Field_fieldActor.writeObject(javaField, this);
         return javaField;
     }

@@ -30,7 +30,7 @@ public class TirBufferedSink extends TirInstructionAdapter implements TirMessage
     private VariableSequence<TirMessage> messages = new ArrayListSequence<TirMessage>();
 
     private TirTreeBegin treeBegin;
-    private TirTreeEnd _treeEnd;
+    private TirTreeEnd treeEnd;
     private boolean inTrace;
 
     public void receive(TirMessage message) {
@@ -44,7 +44,7 @@ public class TirBufferedSink extends TirInstructionAdapter implements TirMessage
 
     @Override
     public void visit(TirTreeEnd message) {
-        _treeEnd = message;
+        treeEnd = message;
     }
 
     @Override
@@ -83,7 +83,7 @@ public class TirBufferedSink extends TirInstructionAdapter implements TirMessage
                 forward(receiver, message);
             }
         }
-        forward(receiver, _treeEnd);
+        forward(receiver, treeEnd);
     }
 
     private void forward(TirMessageSink receiver, TirMessage message) {

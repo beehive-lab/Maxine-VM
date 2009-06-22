@@ -66,7 +66,7 @@ public class FieldActorNameLabel extends InspectorLabel {
             setText("");
             setToolTipText("");
         } else {
-            setText(_fieldActor.name().toString());
+            setText(_fieldActor.name.toString());
             setToolTipText("Type: " + _fieldActor.descriptor().toJavaString(true) + " in " + _fieldActor.holder().qualifiedName());
         }
     }

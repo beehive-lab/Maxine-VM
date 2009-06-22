@@ -52,22 +52,22 @@ public abstract class TypeDescriptor extends Descriptor {
         TypeDescriptorEntry(String value) {
             super(value);
             ProgramError.check(value.length() > 0);
-            assert !_canonicalTypeDescriptors.containsKey(value);
-            _canonicalTypeDescriptors.put(value, this);
+            assert !canonicalTypeDescriptors.containsKey(value);
+            canonicalTypeDescriptors.put(value, this);
         }
 
         public String key() {
             return toString();
         }
 
-        private Entry<String, TypeDescriptorEntry> _next;
+        private Entry<String, TypeDescriptorEntry> next;
 
         public Entry<String, TypeDescriptorEntry> next() {
-            return _next;
+            return next;
         }
 
         public void setNext(Entry<String, TypeDescriptorEntry> next) {
-            _next = next;
+            this.next = next;
         }
 
         public void setValue(TypeDescriptorEntry value) {
@@ -83,7 +83,7 @@ public abstract class TypeDescriptor extends Descriptor {
      * Searching and adding entries to this map is only performed by
      * {@linkplain #makeTypeDescriptor(String) one method} which synchronizes on the map before using it.
      */
-    private static final GrowableMapping<String, TypeDescriptorEntry> _canonicalTypeDescriptors = new ChainingValueChainedHashMapping<String, TypeDescriptorEntry>();
+    private static final GrowableMapping<String, TypeDescriptorEntry> canonicalTypeDescriptors = new ChainingValueChainedHashMapping<String, TypeDescriptorEntry>();
 
     static {
         Classes.initialize(JavaTypeDescriptor.class);
@@ -95,14 +95,14 @@ public abstract class TypeDescriptor extends Descriptor {
     }
 
     public static TypeDescriptor lookup(String string) {
-        synchronized (_canonicalTypeDescriptors) {
-            return _canonicalTypeDescriptors.get(string);
+        synchronized (canonicalTypeDescriptors) {
+            return canonicalTypeDescriptors.get(string);
         }
     }
 
     static TypeDescriptor makeTypeDescriptor(String string) {
-        synchronized (_canonicalTypeDescriptors) {
-            TypeDescriptorEntry typeDescriptorEntry = _canonicalTypeDescriptors.get(string);
+        synchronized (canonicalTypeDescriptors) {
+            TypeDescriptorEntry typeDescriptorEntry = canonicalTypeDescriptors.get(string);
             if (typeDescriptorEntry == null) {
                 // creating the type descriptor entry will add it to the canonical mapping.
                 typeDescriptorEntry = new TypeDescriptorEntry(string);
@@ -112,7 +112,7 @@ public abstract class TypeDescriptor extends Descriptor {
     }
 
     public static int numberOfDescriptors() {
-        return _canonicalTypeDescriptors.length();
+        return canonicalTypeDescriptors.length();
     }
 
     /**
@@ -150,7 +150,7 @@ public abstract class TypeDescriptor extends Descriptor {
             case '[':
                 return stringToJava(string.substring(1)) + "[]";
             default:
-                return KindTypeDescriptor.toKind(string).name().toString();
+                return KindTypeDescriptor.toKind(string).name.toString();
         }
     }
 
@@ -211,7 +211,7 @@ public abstract class TypeDescriptor extends Descriptor {
      * This just reduces repetition of identical warning messages.
      */
     @PROTOTYPE_ONLY
-    private static Map<ClassActor, Set<TypeDescriptor>> _suspiciousReferencesByHolder;
+    private static Map<ClassActor, Set<TypeDescriptor>> suspiciousReferencesByHolder;
 
     /**
      * Determines if this constant can be resolved without causing class loading.

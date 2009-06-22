@@ -52,10 +52,10 @@ public final class DynamicHub extends Hub {
 
         // Reserve iTable space for interface method entries:
         for (InterfaceActor interfaceActor : allInterfaceActors) {
-            final int mTableIndex = getMTableIndex(interfaceActor.id());
+            final int mTableIndex = getMTableIndex(interfaceActor.id);
             setInt(mTableIndex, iTableIndex);
             assert getWord(iTableIndex).isZero();
-            setWord(iTableIndex, Address.fromInt(interfaceActor.id()));
+            setWord(iTableIndex, Address.fromInt(interfaceActor.id));
             iTableIndex++;
             if (classActor().isReferenceClassActor()) {
                 for (InterfaceMethodActor interfaceMethodActor : interfaceActor.localInterfaceMethodActors()) {
@@ -64,7 +64,7 @@ public final class DynamicHub extends Hub {
                     iTableIndex++;
                 }
             }
-            superClassActorSerials.clear(interfaceActor.id());
+            superClassActorSerials.clear(interfaceActor.id);
         }
         for (int serial = superClassActorSerials.nextSetBit(0); serial >= 0; serial = superClassActorSerials.nextSetBit(serial + 1)) {
             final int mTableIndex = getMTableIndex(serial);
@@ -96,7 +96,7 @@ public final class DynamicHub extends Hub {
     void initializeITable(Iterable<InterfaceActor> allInterfaceActors, Mapping<MethodActor, VirtualMethodActor> methodLookup) {
         if (classActor().isReferenceClassActor()) {
             for (InterfaceActor interfaceActor : allInterfaceActors) {
-                final int interfaceIndex = getITableIndex(interfaceActor.id());
+                final int interfaceIndex = getITableIndex(interfaceActor.id);
                 for (InterfaceMethodActor interfaceMethodActor : interfaceActor.localInterfaceMethodActors()) {
                     final VirtualMethodActor dynamicMethodActor = methodLookup.get(interfaceMethodActor);
                     final int iTableIndex = interfaceIndex + interfaceMethodActor.iIndexInInterface();

@@ -42,17 +42,17 @@ public enum Boxing {
      */
     JAVA {
 
-        private final SignatureDescriptor _invokeSignature = SignatureDescriptor.fromJava(getDeclaredMethod(Method.class, "invoke", Object.class, Object[].class));
-        private final SignatureDescriptor _newInstanceSignature = SignatureDescriptor.fromJava(getDeclaredMethod(Constructor.class, "newInstance", Object[].class));
+        private final SignatureDescriptor invokeSignature = SignatureDescriptor.fromJava(getDeclaredMethod(Method.class, "invoke", Object.class, Object[].class));
+        private final SignatureDescriptor newInstanceSignature = SignatureDescriptor.fromJava(getDeclaredMethod(Constructor.class, "newInstance", Object[].class));
 
         @Override
         public SignatureDescriptor invokeSignature() {
-            return _invokeSignature;
+            return invokeSignature;
         }
 
         @Override
         public SignatureDescriptor newInstanceSignature() {
-            return _newInstanceSignature;
+            return newInstanceSignature;
         }
 
         @Override
@@ -69,7 +69,7 @@ public enum Boxing {
                     if (returnKind == Kind.WORD) {
                         throw new IllegalArgumentException("cannot reflectively invoke method with a Word return type");
                     }
-                    asm.invokestatic(JAVA_BOX_PRIMITIVE.get(returnKind.asEnum()), returnKind.stackSlots(), 1);
+                    asm.invokestatic(JAVA_BOX_PRIMITIVE.get(returnKind.asEnum), returnKind.stackSlots(), 1);
                 }
             }
         }
@@ -83,7 +83,7 @@ public enum Boxing {
                 if (parameterKind == Kind.WORD) {
                     throw new IllegalArgumentException("cannot reflectively invoke method with Word type parameter");
                 }
-                asm.invokestatic(JAVA_UNBOX_PRIMITIVE.get(parameterKind.asEnum()), 1, parameterKind.stackSlots());
+                asm.invokestatic(JAVA_UNBOX_PRIMITIVE.get(parameterKind.asEnum), 1, parameterKind.stackSlots());
             }
         }
 
@@ -105,7 +105,7 @@ public enum Boxing {
                         throw new IllegalArgumentException("cannot reflectively invoke method with a Word return type");
                     }
 
-                    final ClassMethodRefConstant boxMethod = pool.classMethodAt(JAVA_BOX_PRIMITIVE.get(returnKind.asEnum()));
+                    final ClassMethodRefConstant boxMethod = pool.classMethodAt(JAVA_BOX_PRIMITIVE.get(returnKind.asEnum));
                     return boxMethod.holder(pool).toJavaString(false) + "." + boxMethod.name(pool) + "(" + value + ")";
                 }
             }
@@ -122,7 +122,7 @@ public enum Boxing {
                 throw new IllegalArgumentException("cannot reflectively invoke method with Word type parameter");
             }
 
-            final ClassMethodRefConstant unboxMethod = pool.classMethodAt(JAVA_UNBOX_PRIMITIVE.get(parameterKind.asEnum()));
+            final ClassMethodRefConstant unboxMethod = pool.classMethodAt(JAVA_UNBOX_PRIMITIVE.get(parameterKind.asEnum));
             return unboxMethod.holder(pool).toJavaString(false) + "." + unboxMethod.name(pool) + "(" + parameter + ")";
         }
     },
@@ -132,17 +132,17 @@ public enum Boxing {
      */
     VALUE {
 
-        private final SignatureDescriptor _invokeSignature = SignatureDescriptor.fromJava(getDeclaredMethod(GeneratedMethodStub.class, "invoke", Value[].class));
-        private final SignatureDescriptor _newInstanceSignature = SignatureDescriptor.fromJava(getDeclaredMethod(GeneratedConstructorStub.class, "newInstance", Value[].class));
+        private final SignatureDescriptor invokeSignature = SignatureDescriptor.fromJava(getDeclaredMethod(GeneratedMethodStub.class, "invoke", Value[].class));
+        private final SignatureDescriptor newInstanceSignature = SignatureDescriptor.fromJava(getDeclaredMethod(GeneratedConstructorStub.class, "newInstance", Value[].class));
 
         @Override
         public SignatureDescriptor invokeSignature() {
-            return _invokeSignature;
+            return invokeSignature;
         }
 
         @Override
         public SignatureDescriptor newInstanceSignature() {
-            return _newInstanceSignature;
+            return newInstanceSignature;
         }
 
         @Override
@@ -156,17 +156,17 @@ public enum Boxing {
                 if (returnKind == Kind.VOID) {
                     asm.getstatic(VoidValue_VOID);
                 } else {
-                    asm.invokestatic(VALUE_BOX.get(returnKind.asEnum()), returnKind.stackSlots(), 1);
+                    asm.invokestatic(VALUE_BOX.get(returnKind.asEnum), returnKind.stackSlots(), 1);
                 }
             } else {
-                asm.invokestatic(VALUE_BOX.get(Kind.REFERENCE.asEnum()), 1, 1);
+                asm.invokestatic(VALUE_BOX.get(Kind.REFERENCE.asEnum), 1, 1);
             }
         }
 
         @Override
         void unbox(BytecodeAssembler asm, Class parameterType, int parameterTypePoolConstantIndex) {
             final Kind parameterKind = Kind.fromJava(parameterType);
-            asm.invokevirtual(VALUE_UNBOX.get(parameterKind.asEnum()), 1, parameterKind.stackSlots());
+            asm.invokevirtual(VALUE_UNBOX.get(parameterKind.asEnum), 1, parameterKind.stackSlots());
             if (parameterKind == Kind.REFERENCE) {
                 // cast against Object is unneccessary AND causes problems with values that are StaticTuples
                 if (parameterType != Object.class) {
@@ -196,10 +196,10 @@ public enum Boxing {
                     return "VoidValue.VOID";
                 }
 
-                final ClassMethodRefConstant boxMethod = pool.classMethodAt(VALUE_BOX.get(returnKind.asEnum()));
+                final ClassMethodRefConstant boxMethod = pool.classMethodAt(VALUE_BOX.get(returnKind.asEnum));
                 return boxMethod.holder(pool).toJavaString(false) + "." + boxMethod.name(pool) + "(" + value + ")";
             }
-            final ClassMethodRefConstant boxMethod = pool.classMethodAt(VALUE_BOX.get(Kind.REFERENCE.asEnum()));
+            final ClassMethodRefConstant boxMethod = pool.classMethodAt(VALUE_BOX.get(Kind.REFERENCE.asEnum));
             return boxMethod.holder(pool).toJavaString(false) + "." + boxMethod.name(pool) + "(" + value + ")";
         }
 
@@ -207,7 +207,7 @@ public enum Boxing {
         String sourceUnbox(ConstantPool pool, Class parameterType, String parameter) {
             final Kind parameterKind = Kind.fromJava(parameterType);
 
-            final ClassMethodRefConstant unboxMethod = pool.classMethodAt(VALUE_UNBOX.get(parameterKind.asEnum()));
+            final ClassMethodRefConstant unboxMethod = pool.classMethodAt(VALUE_UNBOX.get(parameterKind.asEnum));
             final String unboxedParameter = parameter + "." + unboxMethod.name(pool) + "()";
             if (parameterKind == Kind.REFERENCE) {
                 return "(" + parameterType.getSimpleName() + ") " + unboxedParameter;

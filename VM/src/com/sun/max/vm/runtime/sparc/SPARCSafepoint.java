@@ -81,11 +81,11 @@ public final class SPARCSafepoint extends Safepoint {
         FatalError.unexpected("setReturnValue() not yet implemented");
     }
 
-    private final boolean _is32Bit;
+    private final boolean is32Bit;
 
     public SPARCSafepoint(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        _is32Bit = vmConfiguration.platform().processorKind().dataModel().wordWidth() == WordWidth.BITS_32;
+        is32Bit = vmConfiguration.platform().processorKind().dataModel().wordWidth() == WordWidth.BITS_32;
     }
 
     /**
@@ -94,9 +94,9 @@ public final class SPARCSafepoint extends Safepoint {
     public static final GPR LATCH_REGISTER = G2;
 
     public static final Symbolizer<GPR> TRAP_SAVED_GLOBAL_SYMBOLIZER = Symbolizer.Static.fromSymbolizer(GLOBAL_SYMBOLIZER, new com.sun.max.util.Predicate<GPR>() {
-        private final Collection<SPARCEirRegister> _reservedGlobalRegisters = SPARCEirABI.integerSystemReservedGlobalRegisters().toCollection();
+        private final Collection<SPARCEirRegister> reservedGlobalRegisters = SPARCEirABI.integerSystemReservedGlobalRegisters().toCollection();
         public boolean evaluate(GPR register) {
-            return !_reservedGlobalRegisters.contains(SPARCEirRegister.GeneralPurpose.from(register));
+            return !reservedGlobalRegisters.contains(SPARCEirRegister.GeneralPurpose.from(register));
         }
     });
 
@@ -127,7 +127,7 @@ public final class SPARCSafepoint extends Safepoint {
     }
 
     private SPARCAssembler createAssembler() {
-        if (_is32Bit) {
+        if (is32Bit) {
             return new SPARC32Assembler(0);
         }
         return new SPARC64Assembler(0);
@@ -137,7 +137,7 @@ public final class SPARCSafepoint extends Safepoint {
     protected byte[] createCode() {
         final SPARCAssembler asm = createAssembler();
         try {
-            if (_is32Bit) {
+            if (is32Bit) {
                 asm.lduw(LATCH_REGISTER, G0, LATCH_REGISTER);
             } else {
                 asm.ldx(LATCH_REGISTER, G0, LATCH_REGISTER);

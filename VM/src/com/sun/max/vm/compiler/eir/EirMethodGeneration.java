@@ -74,15 +74,15 @@ public abstract class EirMethodGeneration {
         return floatingPointRegisterRoleValues[registerRole.ordinal()];
     }
 
-    private EirVariable[] _registerVariables;
+    private EirVariable[] registerVariables;
 
     public EirVariable makeRegisterVariable(EirRegister register) {
         final int index = register.serial();
-        if (_registerVariables[index] == null) {
-            _registerVariables[index] = createEirVariable(register.kind());
-            _registerVariables[index].fixLocation(register);
+        if (registerVariables[index] == null) {
+            registerVariables[index] = createEirVariable(register.kind());
+            registerVariables[index].fixLocation(register);
         }
-        return _registerVariables[index];
+        return registerVariables[index];
     }
 
     protected EirMethodGeneration(EirGenerator eirGenerator, EirABI abi, boolean isTemplate) {
@@ -98,7 +98,7 @@ public abstract class EirMethodGeneration {
             floatingPointRegisterRoleValues[role.ordinal()] = preallocate(abi.floatingPointRegisterActingAs(role), role.kind());
         }
 
-        this._registerVariables = new EirVariable[eirGenerator.eirABIsScheme().registerPool().length()];
+        this.registerVariables = new EirVariable[eirGenerator.eirABIsScheme().registerPool().length()];
     }
 
     public abstract MethodActor classMethodActor();
@@ -240,7 +240,7 @@ public abstract class EirMethodGeneration {
 
     private VariableSequence<EirVariable> variables = new ArrayListSequence<EirVariable>();
 
-    private Pool<EirVariable> _variablePool;
+    private Pool<EirVariable> variablePool;
 
     /**
      * Gets the {@linkplain #createEirVariable(Kind) allocated variables} as a pool.
@@ -249,14 +249,14 @@ public abstract class EirMethodGeneration {
      * call to {@link EirMethodGeneration#createEirVariable(Kind)} after a call to this method.</b>
      */
     public Pool<EirVariable> variablePool() {
-        if (_variablePool == null) {
-            _variablePool = new ArrayPool<EirVariable>(Sequence.Static.toArray(variables, EirVariable.class));
+        if (variablePool == null) {
+            variablePool = new ArrayPool<EirVariable>(Sequence.Static.toArray(variables, EirVariable.class));
         }
-        return _variablePool;
+        return variablePool;
     }
 
     public void clearVariablePool() {
-        _variablePool = null;
+        variablePool = null;
     }
 
     /**
@@ -267,7 +267,7 @@ public abstract class EirMethodGeneration {
     }
 
     public void setVariables(IterableWithLength<EirVariable> variables) {
-        assert _variablePool == null : "can't allocate EIR variables once a variable pool exists";
+        assert variablePool == null : "can't allocate EIR variables once a variable pool exists";
         this.variables = new ArrayListSequence<EirVariable>(variables);
 
         for (int i = 0; i < variables.length(); i++) {
@@ -276,22 +276,22 @@ public abstract class EirMethodGeneration {
     }
 
     public EirVariable createEirVariable(Kind kind) {
-        assert _variablePool == null : "can't allocate EIR variables once a variable pool exists";
+        assert variablePool == null : "can't allocate EIR variables once a variable pool exists";
         final int serial = variables.length();
         final EirVariable eirVariable = new EirVariable(eirGenerator().eirKind(kind), serial);
         variables.append(eirVariable);
         return eirVariable;
     }
 
-    private final AppendableSequence<EirConstant> _constants = new ArrayListSequence<EirConstant>();
+    private final AppendableSequence<EirConstant> constants = new ArrayListSequence<EirConstant>();
 
     public Sequence<EirConstant> constants() {
-        return _constants;
+        return constants;
     }
 
     public EirConstant createEirConstant(Value value) {
-        final EirConstant constant = (value.kind() == Kind.REFERENCE) ? new EirConstant.Reference(value, _constants.length()) : new EirConstant(value);
-        _constants.append(constant);
+        final EirConstant constant = (value.kind() == Kind.REFERENCE) ? new EirConstant.Reference(value, constants.length()) : new EirConstant(value);
+        constants.append(constant);
         return constant;
     }
 
@@ -328,41 +328,41 @@ public abstract class EirMethodGeneration {
     // Used when one wants generated code to perform a jump at the end of
     // the generated code region instead of a return instruction. This is most
     // useful for generating templates of a JIT or an interpreter.
-    private EirBlock _eirEpilogueBlock;
+    private EirBlock eirEpilogueBlock;
 
     public EirBlock eirEpilogueBlock() {
-        if (_eirEpilogueBlock == null) {
-            _eirEpilogueBlock = createEirBlock(IrBlock.Role.NORMAL);
+        if (eirEpilogueBlock == null) {
+            eirEpilogueBlock = createEirBlock(IrBlock.Role.NORMAL);
         }
-        return _eirEpilogueBlock;
+        return eirEpilogueBlock;
     }
 
     public boolean hasEirEpilogueBlock() {
-        return _eirEpilogueBlock != null;
+        return eirEpilogueBlock != null;
     }
 
-    private EirEpilogue _eirEpilogue;
+    private EirEpilogue eirEpilogue;
 
     public void addResultValue(EirValue resultValue) {
         makeEpilogue();
-        _eirEpilogue.addResultValue(resultValue);
+        eirEpilogue.addResultValue(resultValue);
     }
 
     public void addEpilogueUse(EirValue useValue) {
         makeEpilogue();
-        _eirEpilogue.addUse(useValue);
+        eirEpilogue.addUse(useValue);
     }
 
     public void addEpilogueStackSlotUse(EirValue useValue) {
         makeEpilogue();
-        _eirEpilogue.addStackSlotUse(useValue);
+        eirEpilogue.addStackSlotUse(useValue);
     }
 
     public abstract EirEpilogue createEpilogueAndReturn(EirBlock eirBlock);
 
     public EirBlock makeEpilogue() {
-        if (_eirEpilogue == null) {
-            _eirEpilogue = createEpilogueAndReturn(eirEpilogueBlock());
+        if (eirEpilogue == null) {
+            eirEpilogue = createEpilogueAndReturn(eirEpilogueBlock());
         }
         return eirEpilogueBlock();
     }
@@ -426,9 +426,9 @@ public abstract class EirMethodGeneration {
         final EirBlock head = gatherUnconditionalSuccessors(eirBlocks.first(), rest, result);
 
         PrependableSequence<EirBlock> tail = null;
-        if (_eirEpilogueBlock != null) {
+        if (eirEpilogueBlock != null) {
             tail = new ArrayListSequence<EirBlock>();
-            gatherUnconditionalPredecessors(_eirEpilogueBlock, rest, tail);
+            gatherUnconditionalPredecessors(eirEpilogueBlock, rest, tail);
         }
         gatherSuccessors(head, rest, result);
 

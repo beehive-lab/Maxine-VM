@@ -45,30 +45,30 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements HeapScheme, Allocator {
 
-    protected static Action _copyAction;
+    protected static Action copyAction;
     protected static Action verifyAction = new VerifyActionImpl();
     protected final BeltWayCellVisitor beltwayCellVisitor = new BeltwayCellVisitorImpl();
 
     static {
         if (BeltwayConfiguration.parallelScavenging) {
-            _copyAction = new ParallelCopyActionImpl();
+            copyAction = new ParallelCopyActionImpl();
         } else {
-            _copyAction = new CopyActionImpl();
+            copyAction = new CopyActionImpl();
         }
     }
 
     private final BeltWayPointerOffsetVisitor pointerOffsetGripVerifier = new PointerOffsetVisitorImpl(verifyAction);
     private final BeltWayPointerIndexVisitor pointerIndexGripVerifier = new PointerIndexVisitorImpl(verifyAction);
 
-    private final BeltWayPointerOffsetVisitor _pointerOffsetGripUpdater = new PointerOffsetVisitorImpl(_copyAction);
-    private final BeltWayPointerIndexVisitor pointerIndexGripUpdater = new PointerIndexVisitorImpl(_copyAction);
+    private final BeltWayPointerOffsetVisitor pointerOffsetGripUpdater = new PointerOffsetVisitorImpl(copyAction);
+    private final BeltWayPointerIndexVisitor pointerIndexGripUpdater = new PointerIndexVisitorImpl(copyAction);
 
     public BeltWayCellVisitor beltwayCellVisitor() {
         return beltwayCellVisitor;
     }
 
     public Action getAction() {
-        return _copyAction;
+        return copyAction;
     }
 
     public BeltWayPointerOffsetVisitor pointerOffsetGripVerifier() {
@@ -84,10 +84,10 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     }
 
     public BeltWayPointerOffsetVisitor pointerOffsetGripUpdater() {
-        return _pointerOffsetGripUpdater;
+        return pointerOffsetGripUpdater;
     }
 
-    protected final BeltwayCardRegion _cardRegion = new BeltwayCardRegion();
+    protected final BeltwayCardRegion cardRegion = new BeltwayCardRegion();
 
     @INLINE
     public final int adjustedCardTableShift() {
@@ -102,7 +102,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     private static final BeltwaySequentialHeapRootsScanner heapRootsScanner = new BeltwaySequentialHeapRootsScanner();
     public static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
 
-    protected static BeltwayConfiguration _beltwayConfiguration = new BeltwayConfiguration();
+    protected static BeltwayConfiguration beltwayConfiguration = new BeltwayConfiguration();
     protected static BeltManager beltManager = new BeltManager();
     protected static BeltwayCollector beltCollector = new BeltwayCollector();
     protected static BeltwayStopTheWorldDaemon collectorThread;
@@ -133,7 +133,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
             for (int i = 0; i < BeltwayConfiguration.numberOfGCThreads; i++) {
                 JavaMonitorManager.prototypeBindStickyMonitor(BeltwayCollectorThread.tokens[i], new StandardJavaMonitor());
             }
-            JavaMonitorManager.prototypeBindStickyMonitor(BeltwayCollectorThread._callerToken, new StandardJavaMonitor());
+            JavaMonitorManager.prototypeBindStickyMonitor(BeltwayCollectorThread.callerToken, new StandardJavaMonitor());
         } else if (phase == MaxineVM.Phase.RUNNING) {
             if (BeltwayConfiguration.parallelScavenging) {
                 createGCThreads();
@@ -211,38 +211,38 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
 
     private class BootHeapCellVisitor implements CellVisitor {
         RuntimeMemoryRegion from;
-        RuntimeMemoryRegion _to;
+        RuntimeMemoryRegion to;
 
         public Pointer visitCell(Pointer cell) {
-            return beltwayCellVisitor().visitCell(cell, _copyAction, from, _to);
+            return beltwayCellVisitor().visitCell(cell, copyAction, from, to);
         }
     }
 
-    private final BootHeapCellVisitor _cellVisitor = new BootHeapCellVisitor();
+    private final BootHeapCellVisitor cellVisitor = new BootHeapCellVisitor();
 
     public void scanBootHeap(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        _cellVisitor.from = from;
-        _cellVisitor._to = to;
-        Heap.bootHeapRegion().visitCells(_cellVisitor);
+        cellVisitor.from = from;
+        cellVisitor.to = to;
+        Heap.bootHeapRegion().visitCells(cellVisitor);
     }
 
     public void printCardTable() {
-        final int startCardIndex = _cardRegion.getCardIndexFromHeapAddress(Heap.bootHeapRegion().start());
-        final int endCardIndex = _cardRegion.getCardIndexFromHeapAddress(beltManager.getEnd());
+        final int startCardIndex = cardRegion.getCardIndexFromHeapAddress(Heap.bootHeapRegion().start());
+        final int endCardIndex = cardRegion.getCardIndexFromHeapAddress(beltManager.getEnd());
         for (int i = startCardIndex; i < endCardIndex; i++) {
-            if (_cardRegion.isCardMarked(i)) {
+            if (cardRegion.isCardMarked(i)) {
                 Log.print("0");
             } else {
                 Log.print("1");
             }
             Log.print(" -- ");
-            Log.println(_cardRegion.getHeapAddressFromCardIndex(i));
+            Log.println(cardRegion.getHeapAddressFromCardIndex(i));
         }
     }
 
     public void testCardAllignment(Pointer address) {
-        final int boundaryIndex = _cardRegion.getCardIndexFromHeapAddress(address);
-        final int prevIndex = _cardRegion.getCardIndexFromHeapAddress(address.minusWords(1));
+        final int boundaryIndex = cardRegion.getCardIndexFromHeapAddress(address);
+        final int prevIndex = cardRegion.getCardIndexFromHeapAddress(address.minusWords(1));
         if (boundaryIndex == prevIndex) {
             Log.println("Error in TLAB allignment");
             Log.println("Erroneous Address");
@@ -257,15 +257,15 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     }
 
     public final void scanCards(RuntimeMemoryRegion origin, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        final int startCardIndex = _cardRegion.getCardIndexFromHeapAddress(origin.start());
-        final int endCardIndex = _cardRegion.getCardIndexFromHeapAddress(origin.end());
+        final int startCardIndex = cardRegion.getCardIndexFromHeapAddress(origin.start());
+        final int endCardIndex = cardRegion.getCardIndexFromHeapAddress(origin.end());
         for (int i = startCardIndex; i < endCardIndex; i++) {
-            if (_cardRegion.isCardMarked(i)) {
-                final Address heapStartAddress = _cardRegion.getHeapAddressFromCardIndex(i);
+            if (cardRegion.isCardMarked(i)) {
+                final Address heapStartAddress = cardRegion.getHeapAddressFromCardIndex(i);
                 final Pointer gcTLABStart = getGCTLABStartFromAddress(heapStartAddress);
                 if (!gcTLABStart.isZero()) {
                     final Pointer gcTLABEnd = getGCTLABEndFromStart(gcTLABStart);
-                    BeltwayCellVisitorImpl.linearVisitAllCellsTLAB(beltwayCellVisitor(), _copyAction, gcTLABStart, gcTLABEnd, from, to);
+                    BeltwayCellVisitorImpl.linearVisitAllCellsTLAB(beltwayCellVisitor(), copyAction, gcTLABStart, gcTLABEnd, from, to);
                     SideTable.markScavengeSideTable(gcTLABStart);
                 }
             }
@@ -274,16 +274,16 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     }
 
     public void testCards(RuntimeMemoryRegion origin, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        final int startCardIndex = _cardRegion.getCardIndexFromHeapAddress(origin.start());
-        final int endCardIndex = _cardRegion.getCardIndexFromHeapAddress(origin.end());
+        final int startCardIndex = cardRegion.getCardIndexFromHeapAddress(origin.start());
+        final int endCardIndex = cardRegion.getCardIndexFromHeapAddress(origin.end());
 
         for (int i = startCardIndex; i < endCardIndex; i++) {
-            if (_cardRegion.isCardMarked(i)) {
+            if (cardRegion.isCardMarked(i)) {
                 Log.print("Card: ");
                 Log.print(i);
                 Log.println("  is Dirty ");
 
-                final Address heapStartAddress = _cardRegion.getHeapAddressFromCardIndex(i);
+                final Address heapStartAddress = cardRegion.getHeapAddressFromCardIndex(i);
 
                 Log.print("Correspoding heap Address: ");
                 Log.println(heapStartAddress);
@@ -292,17 +292,17 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     }
 
     public final void linearScanRegion(RuntimeMemoryRegion origin, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        BeltwayCellVisitorImpl.linearVisitAllCells(beltwayCellVisitor(), _copyAction, origin, from, to);
+        BeltwayCellVisitorImpl.linearVisitAllCells(beltwayCellVisitor(), copyAction, origin, from, to);
     }
 
     public final void linearScanRegionBelt(Belt origin, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        BeltwayCellVisitorImpl.linearVisitAllCellsBelt(beltwayCellVisitor(), _copyAction, origin, from, to);
+        BeltwayCellVisitorImpl.linearVisitAllCellsBelt(beltwayCellVisitor(), copyAction, origin, from, to);
     }
 
     public void scanCode(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        _cellVisitor.from = from;
-        _cellVisitor._to = to;
-        Code.visitCells(_cellVisitor, true);
+        cellVisitor.from = from;
+        cellVisitor.to = to;
+        Code.visitCells(cellVisitor, true);
     }
 
     @INLINE
@@ -544,7 +544,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     @INLINE
     @NO_SAFEPOINTS("TODO")
     public final Object createArray(DynamicHub dynamicHub, int length) {
-        final Size size = Layout.getArraySize(dynamicHub.classActor().componentClassActor().kind(), length);
+        final Size size = Layout.getArraySize(dynamicHub.classActor().componentClassActor().kind, length);
         final Pointer cell = allocate(size);
         return Cell.plantArray(cell, size, dynamicHub, length);
     }
@@ -648,7 +648,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
         }
     }
 
-    private static final StopTheWorldTLABReset _stopTheWorldReset = new StopTheWorldTLABReset();
+    private static final StopTheWorldTLABReset stopTheWorldReset = new StopTheWorldTLABReset();
 
     public Pointer getGCTLABStartFromAddress(Address address) {
         Address tlabAddress = address;

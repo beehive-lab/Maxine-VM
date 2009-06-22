@@ -40,9 +40,9 @@ import com.sun.max.vm.hotpath.compiler.Console.*;
 public abstract class Tracer {
     public static OptionSet optionSet = new OptionSet();
     public static Option<Integer> resetThreshold = optionSet.newIntegerOption("RS", 1000, "Reset threhold.");
-    public static Option<Integer> _recordingThreshold = optionSet.newIntegerOption("RT", 10, "Record threhold.");
+    public static Option<Integer> recordingThreshold = optionSet.newIntegerOption("RT", 10, "Record threhold.");
     public static Option<Integer> numberOfRecordingTriesAllowed = optionSet.newIntegerOption("TR", 3, "Tries.");
-    public static Option<Integer> _numberOfCyclesAllowed = optionSet.newIntegerOption("CYCLES", 0, "Number of times to unroll hotpaths.");
+    public static Option<Integer> numberOfCyclesAllowed = optionSet.newIntegerOption("CYCLES", 0, "Number of times to unroll hotpaths.");
     public static Option<Integer> numberOfBackwardJumpsAllowed = optionSet.newIntegerOption("BJUMPS", 3, "Number of times to inner cycles.");
     public static Option<Integer> numberOfBytecodesAllowed = optionSet.newIntegerOption("LEN", 1024, "Number of bytecodes allowed.");
     public static Option<Boolean> nestTrees = optionSet.newBooleanOption("NEST", true, "Nest trees.");
@@ -50,7 +50,7 @@ public abstract class Tracer {
     public static Option<Integer> numberOfBranchesAllowed = optionSet.newIntegerOption("BRANCHES", 64, "Number of branch traces allowed.");
     public static Option<Integer> maxTries = optionSet.newIntegerOption("TRIES", 16, "Number of tries.");
 
-    public static Option<Integer> _branchMetricThreshold = optionSet.newIntegerOption("BRANCH_METRIC", 16, "Brach metric threshold.");
+    public static Option<Integer> branchMetricThreshold = optionSet.newIntegerOption("BRANCH_METRIC", 16, "Brach metric threshold.");
 
     public enum AbortReason {
         FAILED_LENGTH_METRIC, UNSUPPORTED_BYTECODE, EXCEEDED_NUMBER_OF_BACKWARD_JUMPS_ALLOWED, REACHED_TREE_ANCHOR, BREACHED_SCOPE, UNEXPECTED_EXCEPTION, FAILED_BRANCH_METRIC
@@ -84,11 +84,11 @@ public abstract class Tracer {
     }
 
     private static boolean evaluateBranchMetric(Scope scope) {
-        return scope.branchMetric < _branchMetricThreshold.getValue();
+        return scope.branchMetric < branchMetricThreshold.getValue();
     }
 
     private static boolean evaluateLengthMetric(Scope scope) {
-        return scope._numberOfBytecodes < numberOfBytecodesAllowed.getValue();
+        return scope.numberOfBytecodes < numberOfBytecodesAllowed.getValue();
     }
 
     public abstract class Scope {
@@ -98,7 +98,7 @@ public abstract class Tracer {
 
         private int numberOfCycles;
         private int numberOfBackwardJumps;
-        private int _numberOfBytecodes;
+        private int numberOfBytecodes;
 
         protected int branchMetric;
 
@@ -195,7 +195,7 @@ public abstract class Tracer {
     }
 
     private VariableSequence<Scope> scopes = new ArrayListSequence<Scope>();
-    private BytecodeLocation _currentLocation;
+    private BytecodeLocation currentLocation;
 
     protected Scope active() {
         return scopes.last();
@@ -254,7 +254,7 @@ public abstract class Tracer {
                 final Scope scope = scopes.get(i);
                 if (scope.isRecording) {
                     if (scope.treeAnchor == anchor) {
-                        if (scope.numberOfCycles++ >= _numberOfCyclesAllowed.getValue()) {
+                        if (scope.numberOfCycles++ >= numberOfCyclesAllowed.getValue()) {
                             scope.completeRecording(anchor);
                         }
                         return;
@@ -291,8 +291,8 @@ public abstract class Tracer {
             if (anchor.frequency() >= resetThreshold.getValue()) {
                 anchor.resetFrequency();
             }
-            if (anchor.frequency() >= _recordingThreshold.getValue() &&
-                anchor.frequency() < _recordingThreshold.getValue() + numberOfRecordingTriesAllowed.getValue()) {
+            if (anchor.frequency() >= recordingThreshold.getValue() &&
+                anchor.frequency() < recordingThreshold.getValue() + numberOfRecordingTriesAllowed.getValue()) {
                 createScope(anchor);
             }
         }
@@ -313,7 +313,7 @@ public abstract class Tracer {
                         continue;
                     }
 
-                    scope._numberOfBytecodes++;
+                    scope.numberOfBytecodes++;
                     scope.record(location);
                 }
             }
@@ -325,11 +325,11 @@ public abstract class Tracer {
     }
 
     private void setCurrentLocation(BytecodeLocation location) {
-        _currentLocation = location;
+        currentLocation = location;
     }
 
     protected BytecodeLocation currentLocation() {
-        return _currentLocation;
+        return currentLocation;
     }
 
     private void createScope(Bailout bailout) {

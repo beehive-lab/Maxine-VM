@@ -47,15 +47,11 @@ public final class JavaTypeDescriptor {
     }
 
     public abstract static class AtomicTypeDescriptor extends TypeDescriptorEntry {
-        final Class _javaClass;
+        public final Class javaClass;
 
         AtomicTypeDescriptor(String name, Class javaClass) {
             super(name);
-            _javaClass = javaClass;
-        }
-
-        public Class getJavaClass() {
-            return _javaClass;
+            this.javaClass = javaClass;
         }
 
         @Override
@@ -75,12 +71,12 @@ public final class JavaTypeDescriptor {
 
         @Override
         public Class resolveType(ClassLoader classLoader) {
-            return _javaClass;
+            return javaClass;
         }
 
         @Override
         public String toJavaString() {
-            return toKind().name().toString();
+            return toKind().name.toString();
         }
 
         @Override
@@ -255,7 +251,7 @@ public final class JavaTypeDescriptor {
      */
     public static Class resolveToJavaClass(TypeDescriptor descriptor, ClassLoader classLoader) {
         if (descriptor instanceof AtomicTypeDescriptor) {
-            return ((AtomicTypeDescriptor) descriptor)._javaClass;
+            return ((AtomicTypeDescriptor) descriptor).javaClass;
         }
 
         final String string = descriptor.toString();
@@ -345,7 +341,7 @@ public final class JavaTypeDescriptor {
             }
             return getDescriptorForTupleType(javaClass);
         }
-        return ClassActor.fromJava(javaClass).typeDescriptor();
+        return ClassActor.fromJava(javaClass).typeDescriptor;
     }
 
     /**
@@ -530,10 +526,10 @@ public final class JavaTypeDescriptor {
     public static boolean isSubclass(TypeDescriptor target, ClassActor sourceClass) {
         ClassActor superClassActor = sourceClass;
         while (superClassActor != null) {
-            if (superClassActor.typeDescriptor() == target) {
+            if (superClassActor.typeDescriptor == target) {
                 return true;
             }
-            superClassActor = superClassActor.superClassActor();
+            superClassActor = superClassActor.superClassActor;
         }
         return false;
     }
@@ -560,7 +556,7 @@ public final class JavaTypeDescriptor {
 
     private static AtomicTypeDescriptor findAtomicTypeDescriptor(String name) {
         for (AtomicTypeDescriptor atom : ATOMIC_DESCRIPTORS) {
-            if (name.equals(atom._javaClass.getName())) {
+            if (name.equals(atom.javaClass.getName())) {
                 return atom;
             }
         }
@@ -569,7 +565,7 @@ public final class JavaTypeDescriptor {
 
     private static AtomicTypeDescriptor findAtomicTypeDescriptor(Class javaClass) {
         for (AtomicTypeDescriptor atom : ATOMIC_DESCRIPTORS) {
-            if (atom._javaClass == javaClass) {
+            if (atom.javaClass == javaClass) {
                 return atom;
             }
         }

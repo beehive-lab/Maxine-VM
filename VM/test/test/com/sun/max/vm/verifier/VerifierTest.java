@@ -155,7 +155,7 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
                 while (classActorIndex != classActors.length) {
                     final ClassActor classActor = classActors[classActorIndex++];
                     if (classActor.isTupleClassActor()) {
-                        final String name = classActor.name().toString();
+                        final String name = classActor.name.toString();
                         if (!_verifiedClasses.contains(name) && name.startsWith("com.") || name.startsWith("java.")) {
                             verify(name, true);
                             ++numberOfClassesVerified;
@@ -251,12 +251,12 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
         // Only repeat the very last failure
         if (_failedTestThreshold == 1) {
             if (classVerifier != null) {
-                classVerifier.setVerbose(true);
+                classVerifier.verbose = true;
                 if (extendedVerifyError != null) {
                     System.out.println(extendedVerifyError.getMessage());
                     extendedVerifyError.printCode(System.out);
                     System.out.flush();
-                    classVerifier.verify(extendedVerifyError.classMethodActor(), extendedVerifyError.codeAttribute());
+                    classVerifier.verify(extendedVerifyError.classMethodActor, extendedVerifyError.codeAttribute);
                 } else {
                     classVerifier.verify();
                 }
@@ -309,7 +309,7 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
             }
         }.classMethodActor(Object.class);
 
-        verify(classMethodActor.holder().name().toString(), true);
+        verify(classMethodActor.holder().name.toString(), true);
 
         assertTrue(classMethodActor.toJava().invoke(null).equals(42));
     }
@@ -345,7 +345,7 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
         };
         try {
             final MethodActor classMethodActor = asm.classMethodActor(Object.class);
-            verify(classMethodActor.holder().name().toString(), false);
+            verify(classMethodActor.holder().name.toString(), false);
         } catch (VerifyError verifyError) {
             // success
         }

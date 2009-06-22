@@ -299,8 +299,8 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
                                           dirToEirJavaFrameDescriptor(dirJavaFrameDescriptor.parent(), instruction),
                                           dirJavaFrameDescriptor.classMethodActor(),
                                           dirJavaFrameDescriptor.bytecodePosition(),
-                                          dirToEirValues(dirJavaFrameDescriptor.locals()),
-                                          dirToEirValues(dirJavaFrameDescriptor.stackSlots()));
+                                          dirToEirValues(dirJavaFrameDescriptor.locals),
+                                          dirToEirValues(dirJavaFrameDescriptor.stackSlots));
     }
 
     protected abstract DirToEirInstructionTranslation createInstructionTranslation(EirBlock eirBlock);

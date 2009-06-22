@@ -92,7 +92,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * The compiler that is used as the default at prototyping time.
      */
     @PROTOTYPE_ONLY
-    protected final CompilerScheme _prototypeCompiler;
+    protected final CompilerScheme prototypeCompiler;
 
     /**
      * The baseline (JIT) compiler.
@@ -160,8 +160,8 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      */
     public AdaptiveCompilationScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        _prototypeCompiler = vmConfiguration.compilerScheme();
-        optimizingCompiler = _prototypeCompiler;
+        prototypeCompiler = vmConfiguration.compilerScheme();
+        optimizingCompiler = prototypeCompiler;
         jitCompiler = vmConfiguration.jitScheme();
     }
 
@@ -314,9 +314,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
 
     /**
      * This method allows an observer to be notified before the compilation of a method begins.
-     * @param classMethodActor the method being compiled
-     * @param directive the directive controlling the compilation
-     * @param compiler the compiler performing the compilation
      */
     public synchronized void addObserver(CompilationObserver observer) {
         if (observers == null) {
@@ -327,11 +324,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
 
     /**
      * This method allows an observer to be notified after the compilation of a method completes.
-     * @param classMethodActor the method being compiled
-     * @param directive the directive controlling the compilation
-     * @param compiler the compiler performing the compilation
-     * @param targetMethod the target method produced by the compilation; <code>null</code> if the compilation
-     * was aborted or failed to produce a target method
      */
     public synchronized void removeObserver(CompilationObserver observer) {
         if (observers != null) {
@@ -413,7 +405,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             if (CompiledPrototype.jitCompile(classMethodActor)) {
                 return jitCompiler;
             }
-            return _prototypeCompiler;
+            return prototypeCompiler;
         }
 
         // templates should only be compiled at prototyping time

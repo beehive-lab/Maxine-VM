@@ -86,11 +86,11 @@ public abstract class ResolvedMethodRefConstant<PoolConstant_Type extends PoolCo
     }
 
     public final TypeDescriptor holder() {
-        return methodActor.holder().typeDescriptor();
+        return methodActor.holder().typeDescriptor;
     }
 
     public final Utf8Constant name() {
-        return methodActor.name();
+        return methodActor.name;
     }
 
     public final SignatureDescriptor signature() {

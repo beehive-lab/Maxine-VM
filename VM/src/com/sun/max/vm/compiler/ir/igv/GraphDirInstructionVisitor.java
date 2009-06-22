@@ -52,7 +52,7 @@ class GraphDirInstructionVisitor extends DirAdapter {
 
     private final GraphWriter.Graph graph;
     private final GrowableMapping<DirValue, Integer> mapping = new IdentityHashMapping<DirValue, Integer>();
-    private GraphWriter.Block _valueBlock;
+    private GraphWriter.Block valueBlock;
 
     GraphDirInstructionVisitor(GraphWriter.Graph graph) {
         this.graph = graph;
@@ -66,16 +66,16 @@ class GraphDirInstructionVisitor extends DirAdapter {
             node.getProperties().setProperty("name", value.toString());
             node.getProperties().setProperty("short_name", value.toString());
             node.getProperties().setProperty("class", value.getClass().toString());
-            if (_valueBlock == null) {
-                _valueBlock = graph.createBlock("Values");
+            if (valueBlock == null) {
+                valueBlock = graph.createBlock("Values");
                 for (GraphWriter.Block block : graph.getBlocks()) {
                     if (block.getPredecessors().length() == 0) {
-                        _valueBlock.addSuccessor(block);
+                        valueBlock.addSuccessor(block);
                     }
                 }
 
             }
-            _valueBlock.addNode(node);
+            valueBlock.addNode(node);
         }
         return mapping.get(value);
     }

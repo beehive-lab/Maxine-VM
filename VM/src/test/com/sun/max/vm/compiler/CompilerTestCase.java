@@ -85,11 +85,11 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
         super(name);
     }
 
-    private final AppendableSequence<ClassMethodActor> _compiledMethods = new LinkSequence<ClassMethodActor>();
+    private final AppendableSequence<ClassMethodActor> compiledMethods = new LinkSequence<ClassMethodActor>();
 
     @Override
     public void tearDown() {
-        for (ClassMethodActor classMethodActor : _compiledMethods) {
+        for (ClassMethodActor classMethodActor : compiledMethods) {
             CompilationScheme.Static.resetMethodState(classMethodActor);
         }
     }
@@ -100,11 +100,11 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
      */
     public abstract class TestBytecodeAssembler extends BytecodeAssembler {
 
-        private final boolean _isStatic;
-        private final Utf8Constant _methodName;
-        private final Utf8Constant _className;
-        private final SignatureDescriptor _signature;
-        private ClassMethodActor _classMethodActor;
+        private final boolean isStatic;
+        private final Utf8Constant methodName;
+        private final Utf8Constant className;
+        private final SignatureDescriptor signature;
+        private ClassMethodActor classMethodActor;
 
         /**
          * Generates a class method actor via bytecode assembly.
@@ -117,11 +117,11 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
          */
         public TestBytecodeAssembler(boolean isStatic, String className, String methodName, SignatureDescriptor signature) {
             super(new ConstantPool(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER).edit());
-            _isStatic = isStatic;
-            _methodName = makeSymbol(methodName);
-            _className = className == null ? null : makeSymbol(className);
-            _signature = signature;
-            _codeStream = new SeekableByteArrayOutputStream();
+            this.isStatic = isStatic;
+            this.methodName = makeSymbol(methodName);
+            this.className = className == null ? null : makeSymbol(className);
+            this.signature = signature;
+            this.codeStream = new SeekableByteArrayOutputStream();
             allocateParameters(isStatic, signature);
         }
 
@@ -129,22 +129,22 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
             this(isStatic, null, methodName, signature);
         }
 
-        private final SeekableByteArrayOutputStream _codeStream;
+        private final SeekableByteArrayOutputStream codeStream;
 
         @Override
         protected void setWritePosition(int position) {
-            _codeStream.seek(position);
+            codeStream.seek(position);
         }
 
         @Override
         protected void writeByte(byte b) {
-            _codeStream.write(b);
+            codeStream.write(b);
         }
 
         @Override
         public byte[] code() {
             fixup();
-            return _codeStream.toByteArray();
+            return codeStream.toByteArray();
         }
 
         protected abstract void generateCode();
@@ -186,7 +186,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
          * @param superClass the super class of generated holder for the generated class method actor
          */
         public ClassMethodActor classMethodActor(Class superClass) {
-            if (_classMethodActor == null) {
+            if (classMethodActor == null) {
                 generateCode();
                 final CodeAttribute codeAttribute = new CodeAttribute(
                                 constantPool(),
@@ -197,24 +197,24 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
                                 LineNumberTable.EMPTY,
                                 LocalVariableTable.EMPTY,
                                 null);
-                _classMethodActor = _isStatic ?
+                classMethodActor = isStatic ?
                     new StaticMethodActor(
-                                    _methodName,
-                                    _signature,
+                                    methodName,
+                                    signature,
                                     Modifier.PUBLIC | Modifier.STATIC,
                                     codeAttribute) :
                     new VirtualMethodActor(
-                                    _methodName,
-                                    _signature,
+                                    methodName,
+                                    signature,
                                     Modifier.PUBLIC,
                                     codeAttribute);
-                final Utf8Constant className = _className == null ? makeSymbol(superClass.getName() + "_$GENERATED$_" + _methodName) : _className;
+                final Utf8Constant className = this.className == null ? makeSymbol(superClass.getName() + "_$GENERATED$_" + methodName) : this.className;
                 final ClassMethodActor defaultConstructor = generateDefaultConstructor(superClass);
                 final ClassMethodActor[] classMethodActors;
                 if (defaultConstructor != null) {
-                    classMethodActors = new ClassMethodActor[]{_classMethodActor, defaultConstructor};
+                    classMethodActors = new ClassMethodActor[]{classMethodActor, defaultConstructor};
                 } else {
-                    classMethodActors = new ClassMethodActor[]{_classMethodActor};
+                    classMethodActors = new ClassMethodActor[]{classMethodActor};
                 }
                 final ClassActor classActor = ClassActorFactory.createTupleOrHybridClassActor(
                     constantPool(),
@@ -240,7 +240,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
                 }
                 constantPoolEditor().release();
             }
-            return _classMethodActor;
+            return classMethodActor;
         }
 
         public Method_Type compile(Class superClass) {
@@ -341,7 +341,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
     }
 
     protected Method_Type compileMethod(final ClassMethodActor classMethodActor) {
-        _compiledMethods.append(classMethodActor);
+        compiledMethods.append(classMethodActor);
         return MaxineVM.usingTarget(new Function<Method_Type>() {
             public Method_Type call() {
                 try {
@@ -415,19 +415,19 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
      * reported without short-circuiting compilation of other methods in the enclosing class/package being tested.
      * Of course this will not apply to test cases that only compile one method and execute it.
      */
-    private TestResult _testResult;
+    private TestResult testResult;
 
     protected void addTestError(Throwable error) {
-        _testResult.addError(this, error);
+        testResult.addError(this, error);
     }
 
     @Override
     public void run(TestResult result) {
-        _testResult = result;
+        testResult = result;
         try {
             super.run(result);
         } finally {
-            _testResult = null;
+            testResult = null;
         }
     }
 
@@ -435,7 +435,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
         for (MethodActor methodActor : classActor.getLocalMethodActors()) {
             if (!methodActor.isAbstract() && !methodActor.isBuiltin()) {
                 final ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
-                if (classMethodActor.isClassInitializer() && classMethodActor.holder().name().toString().contains("HexByte")) {
+                if (classMethodActor.isClassInitializer() && classMethodActor.holder().name.toString().contains("HexByte")) {
                     continue;
                 }
 
@@ -583,7 +583,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
             } else {
                 assertTrue(returnValue.asObject() == VoidValue.VOID);
             }
-        } else if (classMethodActor.resultKind().toJava().isPrimitive()) {
+        } else if (classMethodActor.resultKind().javaClass.isPrimitive()) {
             returnValue = Value.fromBoxedJavaValue(returnValue.asBoxedJavaValue());
         }
         return returnValue;

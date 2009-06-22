@@ -482,7 +482,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         public String referenceToolTipText(TeleObject teleObject) {
             final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject;
             final ClassActor classActorForType = teleArrayObject.classActorForType();
-            final String name = classActorForType.name().toString();
+            final String name = classActorForType.name.toString();
             final int length = teleArrayObject.getLength();
             return objectReference(null, teleArrayObject, null, name.substring(0, name.length() - 1) + length + "]");
         }
@@ -526,7 +526,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
             final TeleTupleObject teleTupleObject = (TeleTupleObject) teleObject;
             final ClassActor classActorForType = teleTupleObject.classActorForType();
             if (classActorForType != null) {
-                return objectReference(null, teleTupleObject, null, classActorForType.name().toString());
+                return objectReference(null, teleTupleObject, null, classActorForType.name.toString());
             }
             return null;
         }
@@ -552,7 +552,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         public String referenceLabelText(TeleObject teleObject) {
             final TeleMethodActor teleMethodActor = (TeleMethodActor) teleObject;
             final MethodActor methodActor = teleMethodActor.methodActor();
-            return objectReference(null, teleObject, teleObject.maxineTerseRole(), methodActor.name().toString() + "()")  + methodSubstitutionShortAnnotation(teleMethodActor);
+            return objectReference(null, teleObject, teleObject.maxineTerseRole(), methodActor.name.toString() + "()")  + methodSubstitutionShortAnnotation(teleMethodActor);
         }
 
         public String referenceToolTipText(TeleObject teleObject) {
@@ -567,7 +567,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         public String referenceLabelText(TeleObject teleObject) {
             final TeleFieldActor teleFieldActor = (TeleFieldActor) teleObject;
             final FieldActor fieldActor = teleFieldActor.fieldActor();
-            return objectReference(null, teleObject, teleObject.maxineTerseRole(), fieldActor.name().toString());
+            return objectReference(null, teleObject, teleObject.maxineTerseRole(), fieldActor.name.toString());
         }
 
         public String referenceToolTipText(TeleObject teleObject) {
@@ -588,7 +588,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         public String referenceToolTipText(TeleObject teleObject) {
             final TeleClassActor teleClassActor = (TeleClassActor) teleObject;
             final ClassActor classActor = teleClassActor.classActor();
-            return objectReference(null, teleObject, teleObject.maxineRole(), classActor.name().toString());
+            return objectReference(null, teleObject, teleObject.maxineRole(), classActor.name.toString());
         }
     }
 
@@ -755,7 +755,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         public String referenceToolTipText(TeleObject teleObject) {
             final TeleConstantPool teleConstantPool = (TeleConstantPool) teleObject;
             final ClassActor classActor = teleConstantPool.getTeleHolder().classActor();
-            return objectReference(null, teleObject, teleObject.maxineRole(), classActor.name().toString());
+            return objectReference(null, teleObject, teleObject.maxineRole(), classActor.name.toString());
         }
     }
 
@@ -770,7 +770,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         public String referenceToolTipText(TeleObject teleObject) {
             final TeleClassConstant.Resolved teleClassConstantResolved = (TeleClassConstant.Resolved) teleObject;
             final ClassActor classActor = teleClassConstantResolved.getTeleClassActor().classActor();
-            return objectReference(null, teleObject, teleObject.maxineRole(), classActor.name().toString());
+            return objectReference(null, teleObject, teleObject.maxineRole(), classActor.name.toString());
         }
     }
 
@@ -779,7 +779,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         public String referenceLabelText(TeleObject teleObject) {
             final TeleFieldRefConstant.Resolved teleFieldRefConstantResolved = (TeleFieldRefConstant.Resolved) teleObject;
             final FieldActor fieldActor = teleFieldRefConstantResolved.getTeleFieldActor().fieldActor();
-            return objectReference(null, teleObject, teleObject.maxineTerseRole(), fieldActor.name().toString());
+            return objectReference(null, teleObject, teleObject.maxineTerseRole(), fieldActor.name.toString());
         }
 
         public String referenceToolTipText(TeleObject teleObject) {
@@ -794,7 +794,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         public String referenceLabelText(TeleObject teleObject) {
             final TeleClassMethodRefConstant.Resolved teleClassMethodRefConstantResolved = (TeleClassMethodRefConstant.Resolved) teleObject;
             final MethodActor methodActor = teleClassMethodRefConstantResolved.getTeleClassMethodActor().methodActor();
-            return objectReference(null, teleObject, teleObject.maxineTerseRole(), methodActor.name().toString());
+            return objectReference(null, teleObject, teleObject.maxineTerseRole(), methodActor.name.toString());
         }
 
         public String referenceToolTipText(TeleObject teleObject) {
@@ -808,7 +808,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         public String referenceLabelText(TeleObject teleObject) {
             final TeleInterfaceMethodRefConstant.Resolved teleInterfaceMethodRefConstantResolved = (TeleInterfaceMethodRefConstant.Resolved) teleObject;
             final MethodActor methodActor = teleInterfaceMethodRefConstantResolved.getTeleInterfaceMethodActor().methodActor();
-            return objectReference(null, teleObject, teleObject.maxineTerseRole(), methodActor.name().toString());
+            return objectReference(null, teleObject, teleObject.maxineTerseRole(), methodActor.name.toString());
         }
 
         public String referenceToolTipText(TeleObject teleObject) {

@@ -89,7 +89,7 @@ public final class ObjectFieldsTable extends InspectorTable {
         if (fieldActors.size() > 0) {
             _startOffset =  _fieldActors[0].offset();
             final FieldActor lastFieldActor = _fieldActors[_fieldActors.length - 1];
-            _endOffset = lastFieldActor.offset() + lastFieldActor.valueSize();
+            _endOffset = lastFieldActor.offset() + lastFieldActor.kind.width.numberOfBytes;
         } else {
             // moot if there aren't any field actors
             _startOffset = 0;
@@ -240,7 +240,7 @@ public final class ObjectFieldsTable extends InspectorTable {
         }
 
         public String rowToName(int row) {
-            return _fieldActors[row].name().string();
+            return _fieldActors[row].name.string;
         }
 
         /**
@@ -261,7 +261,7 @@ public final class ObjectFieldsTable extends InspectorTable {
                 if (offset >= _startOffset && offset < _endOffset) {
                     int currentOffset = _startOffset;
                     for (int row = 0; row < _fieldActors.length; row++) {
-                        final int nextOffset = currentOffset + _fieldActors[row].valueSize();
+                        final int nextOffset = currentOffset + _fieldActors[row].kind.width.numberOfBytes;
                         if (offset < nextOffset) {
                             return row;
                         }
@@ -387,25 +387,25 @@ public final class ObjectFieldsTable extends InspectorTable {
             InspectorLabel label = _labels[row];
             if (label == null) {
                 final FieldActor fieldActor = (FieldActor) value;
-                if (fieldActor.kind() == Kind.REFERENCE) {
+                if (fieldActor.kind == Kind.REFERENCE) {
                     label = new WordValueLabel(_inspection, WordValueLabel.ValueMode.REFERENCE, ObjectFieldsTable.this) {
                         @Override
                         public Value fetchValue() {
                             return _teleObject.readFieldValue(fieldActor);
                         }
                     };
-                } else if (fieldActor.kind() == Kind.WORD) {
+                } else if (fieldActor.kind == Kind.WORD) {
                     label = new WordValueLabel(_inspection, WordValueLabel.ValueMode.WORD, ObjectFieldsTable.this) {
                         @Override
                         public Value fetchValue() {
                             return _teleObject.readFieldValue(fieldActor);
                         }
                     };
-                } else if (_isTeleActor && fieldActor.name().toString().equals("_flags")) {
+                } else if (_isTeleActor && fieldActor.name.toString().equals("_flags")) {
                     final TeleActor teleActor = (TeleActor) _teleObject;
                     label = new ActorFlagsValueLabel(_inspection, teleActor);
                 } else {
-                    label = new PrimitiveValueLabel(_inspection, fieldActor.kind()) {
+                    label = new PrimitiveValueLabel(_inspection, fieldActor.kind) {
                         @Override
                         public Value fetchValue() {
                             return _teleObject.readFieldValue(fieldActor);

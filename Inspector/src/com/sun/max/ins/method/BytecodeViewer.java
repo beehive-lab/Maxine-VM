@@ -212,7 +212,7 @@ public abstract class BytecodeViewer extends CodeViewer {
                 int stackPosition = 0;
                 StackFrameInfo stackFrameInfo = null;
                 for (StackFrame frame : frames) {
-                    if (rowContainsAddress(row, frame.instructionPointer())) {
+                    if (rowContainsAddress(row, frame.instructionPointer)) {
                         stackFrameInfo = new StackFrameInfo(frame, thread, stackPosition);
                         break;
                     }
@@ -345,7 +345,7 @@ public abstract class BytecodeViewer extends CodeViewer {
 
         @Override
         protected void printKind(Kind kind) {
-            _operand1 = new BytecodeOperandLabel(inspection(), kind.name().toString());
+            _operand1 = new BytecodeOperandLabel(inspection(), kind.name.toString());
         }
 
         @Override

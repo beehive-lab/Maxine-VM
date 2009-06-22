@@ -32,18 +32,18 @@ import com.sun.max.vm.tele.*;
 public class BeltwayGenerationalCollector extends BeltwayCollector {
 
     // /Dependency injection of the corresponding heap scheme
-    private static HeapScheme _beltwayHeapScheme;
+    private static HeapScheme beltwayHeapScheme;
 
     public static long edenCollections = 0;
     public static long majorCollections = 0;
     public static long toCollections = 0;
 
     public void setBeltwayHeapScheme(HeapScheme beltwayHeapScheme) {
-        _beltwayHeapScheme = beltwayHeapScheme;
+        BeltwayGenerationalCollector.beltwayHeapScheme = beltwayHeapScheme;
     }
 
     public HeapScheme getBeltwayHeapScheme() {
-        return _beltwayHeapScheme;
+        return beltwayHeapScheme;
     }
 
     public BeltwayGenerationalCollector() {
@@ -62,7 +62,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 Log.print("Major Collection: ");
                 Log.println(majorCollections);
             }
-            final BeltwayHeapSchemeGenerational beltwayHeapSchemeGen = (BeltwayHeapSchemeGenerational) _beltwayHeapScheme;
+            final BeltwayHeapSchemeGenerational beltwayHeapSchemeGen = (BeltwayHeapSchemeGenerational) beltwayHeapScheme;
 
             if (Heap.verbose()) {
                 Log.print("Mature Space Start: ");
@@ -260,7 +260,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 Log.print("To Collection: ");
                 Log.println(toCollections);
             }
-            final BeltwayHeapSchemeGenerational beltwayHeapSchemeGen = (BeltwayHeapSchemeGenerational) _beltwayHeapScheme;
+            final BeltwayHeapSchemeGenerational beltwayHeapSchemeGen = (BeltwayHeapSchemeGenerational) beltwayHeapScheme;
 
             if (Heap.verbose()) {
                 Log.print("To Space Start: ");
@@ -364,7 +364,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 Log.print("Eden Collection: ");
                 Log.println(edenCollections);
             }
-            final BeltwayHeapSchemeGenerational beltwayHeapSchemeGen = (BeltwayHeapSchemeGenerational) _beltwayHeapScheme;
+            final BeltwayHeapSchemeGenerational beltwayHeapSchemeGen = (BeltwayHeapSchemeGenerational) beltwayHeapScheme;
 
             if (Heap.verbose()) {
                 Log.print("Eden Space Start: ");

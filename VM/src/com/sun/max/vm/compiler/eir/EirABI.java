@@ -81,7 +81,7 @@ public abstract class EirABI<EirRegister_Type extends EirRegister> {
 
     private EirLocation getResultLocation(Kind kind, VMRegister.Role role) {
         if (kind != null) {
-            switch (kind.asEnum()) {
+            switch (kind.asEnum) {
                 case VOID:
                     return null;
                 case BYTE:
@@ -132,7 +132,7 @@ public abstract class EirABI<EirRegister_Type extends EirRegister> {
     }
 
     public EirRegister_Type getScratchRegister(Kind kind) {
-        switch (kind.asEnum()) {
+        switch (kind.asEnum) {
             case BYTE:
             case BOOLEAN:
             case SHORT:

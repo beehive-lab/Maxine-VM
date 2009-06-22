@@ -51,7 +51,7 @@ public final class BootMemory {
     /**
      * The offset of the byte array data from the byte array object's origin.
      */
-    private static final Offset dataOffset = VMConfiguration.target().layoutScheme().byteArrayLayout().getElementOffsetFromOrigin(0);
+    private static final Offset dataOffset = VMConfiguration.target().layoutScheme().byteArrayLayout.getElementOffsetFromOrigin(0);
 
     /**
      * A single byte buffer with a fixed address.

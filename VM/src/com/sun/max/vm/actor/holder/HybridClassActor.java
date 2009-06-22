@@ -78,6 +78,6 @@ public class HybridClassActor extends ReferenceClassActor {
     @Override
     protected Size layoutFields(SpecificLayout specificLayout) {
         final HybridLayout hybridLayout = (HybridLayout) specificLayout;
-        return hybridLayout.layoutFields(superClassActor(), localInstanceFieldActors());
+        return hybridLayout.layoutFields(superClassActor, localInstanceFieldActors());
     }
 }

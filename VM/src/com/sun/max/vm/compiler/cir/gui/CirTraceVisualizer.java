@@ -372,7 +372,7 @@ final class CirTraceVisualizer extends JPanel {
                         }
                         if (nodeCheck.isSelected()) {
                             final VariableSequence<Range> leftNodeRanges = getSearchStringRanges(currentCir, currentCir.trace(), nodeText.getText(), true);
-                            showSearchResults(_leftTracePane, leftNodeRanges);
+                            showSearchResults(leftTracePane, leftNodeRanges);
                             if (currentCir2 != null) {
                                 final VariableSequence<Range> rightNodeRanges = getSearchStringRanges(currentCir2, currentCir2.trace(), nodeText.getText(), true);
                                 showSearchResults(rightTracePane, rightNodeRanges);
@@ -397,7 +397,7 @@ final class CirTraceVisualizer extends JPanel {
                         }
                         if (nodeCheck.isSelected()) {
                             final VariableSequence<Range> leftNodeRanges = getSearchStringRanges(currentCir, currentCir.trace(), nodeText.getText(), true);
-                            showSearchResults(_leftTracePane, leftNodeRanges);
+                            showSearchResults(leftTracePane, leftNodeRanges);
                             if (currentCir2 != null) {
                                 final VariableSequence<Range> rightNodeRanges = getSearchStringRanges(currentCir2, currentCir2.trace(), nodeText.getText(), true);
                                 showSearchResults(rightTracePane, rightNodeRanges);
@@ -428,7 +428,7 @@ final class CirTraceVisualizer extends JPanel {
 
     private CirAnnotatedTrace currentCir;
     private CirAnnotatedTrace currentCir2;
-    private final CirTracePane _leftTracePane = new CirTracePane(new CirStyledDocument(null));
+    private final CirTracePane leftTracePane = new CirTracePane(new CirStyledDocument(null));
     private final CirTracePane rightTracePane = new CirTracePane(new CirStyledDocument(null));
 
     private final Map<ClassMethodActor, List<CirAnnotatedTrace>> traceMap = new HashMap<ClassMethodActor, List<CirAnnotatedTrace>>();
@@ -540,7 +540,7 @@ final class CirTraceVisualizer extends JPanel {
         SpringUtilities.makeCompactGrid(filterPanel, 3);
         add(filterPanel, BorderLayout.NORTH);
 
-        leftTrace = new TracePanel(_leftTracePane);
+        leftTrace = new TracePanel(leftTracePane);
         rightTrace = new TracePanel(rightTracePane);
         splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftTrace, rightTrace);
 
@@ -608,37 +608,37 @@ final class CirTraceVisualizer extends JPanel {
         searchPanel.setVisible(false);
         add(southPanel, BorderLayout.SOUTH);
 
-        traceHighlighter = _leftTracePane.getHighlighter();
+        traceHighlighter = leftTracePane.getHighlighter();
 
         final MouseInputAdapter mouseInputAdapter = new MouseInputAdapter() {
-            private ParenthesisElement _dualRangeElement;
-            private String  _hiddenTrace = new String();
-            private String  _hiddenTrace2 = new String();
-            private IntHashMap<Element> _oldOffsetToElement;
-            private IntHashMap<Element> _oldOffsetToElement2;
-            private IntHashMap<Element> _tempOffsetToElement;
-            private IntHashMap<Element> _newOffsetToElement;
-            private int _oldNoOffsets;
-            private Bag<CirNode, Element, Sequence<Element>> _oldElementsPerNode;
-            private Bag<CirNode, Element, Sequence<Element>> _oldElementsPerNode2;
-            private Bag<CirNode, Element, Sequence<Element>> _newElementsPerNode;
-            private Element _currentOccurrenceElement;
-            private Highlighter.HighlightPainter _secondaryHighlighterPainter = new DefaultHighlighter.DefaultHighlightPainter(_leftTracePane.getSelectionColor().darker());
-            private final VariableSequence<Object> _occurrenceHighlights = new ArrayListSequence<Object>();
+            private ParenthesisElement dualRangeElement;
+            private String  hiddenTrace = new String();
+            private String  hiddenTrace2 = new String();
+            private IntHashMap<Element> oldOffsetToElement;
+            private IntHashMap<Element> oldOffsetToElement2;
+            private IntHashMap<Element> tempOffsetToElement;
+            private IntHashMap<Element> newOffsetToElement;
+            private int oldNoOffsets;
+            private Bag<CirNode, Element, Sequence<Element>> oldElementsPerNode;
+            private Bag<CirNode, Element, Sequence<Element>> oldElementsPerNode2;
+            private Bag<CirNode, Element, Sequence<Element>> newElementsPerNode;
+            private Element currentOccurrenceElement;
+            private Highlighter.HighlightPainter secondaryHighlighterPainter = new DefaultHighlighter.DefaultHighlightPainter(leftTracePane.getSelectionColor().darker());
+            private final VariableSequence<Object> occurrenceHighlights = new ArrayListSequence<Object>();
 
             /**
              * Clears all highlights marking the occurrence(s) of the CIR node last denoted by a mouse movement.
              */
             private void clearOccurrenceHighlights() {
-                for (Object highlight : _occurrenceHighlights) {
+                for (Object highlight : occurrenceHighlights) {
                     traceHighlighter.removeHighlight(highlight);
                 }
-                _occurrenceHighlights.clear();
+                occurrenceHighlights.clear();
             }
 
             private CirTracePane tracePane(MouseEvent event) {
-                if (event.getSource() == _leftTracePane) {
-                    return _leftTracePane;
+                if (event.getSource() == leftTracePane) {
+                    return leftTracePane;
                 } else if (event.getSource() == rightTracePane) {
                     return rightTracePane;
                 }
@@ -667,11 +667,11 @@ final class CirTraceVisualizer extends JPanel {
             @Override
             public void mouseMoved(MouseEvent event) {
                 final Element element = element(event);
-                if (element != _currentOccurrenceElement) {
+                if (element != currentOccurrenceElement) {
                     CirStyledDocument document = null;
-                    if (event.getSource() == _leftTracePane) {
-                        document = _leftTracePane.cirDocument();
-                        traceHighlighter = _leftTracePane.getHighlighter();
+                    if (event.getSource() == leftTracePane) {
+                        document = leftTracePane.cirDocument();
+                        traceHighlighter = leftTracePane.getHighlighter();
                     } else if (event.getSource() == rightTracePane) {
                         document = rightTracePane.cirDocument();
                         traceHighlighter = rightTracePane.getHighlighter();
@@ -681,7 +681,7 @@ final class CirTraceVisualizer extends JPanel {
                         element.visitAssociatedRanges(new RangeVisitor() {
                             public void visitRange(Range range) {
                                 try {
-                                    _occurrenceHighlights.append(traceHighlighter.addHighlight(range.start(), range.end(), _secondaryHighlighterPainter));
+                                    occurrenceHighlights.append(traceHighlighter.addHighlight(range.start(), range.end(), secondaryHighlighterPainter));
                                     //System.err.printAddress("secondary range: " + range);
                                 } catch (BadLocationException badLocationException) {
                                     ProgramWarning.message("error highlighting element range " + range);
@@ -692,7 +692,7 @@ final class CirTraceVisualizer extends JPanel {
                             occurrence.visitRanges(new RangeVisitor() {
                                 public void visitRange(Range range) {
                                     try {
-                                        _occurrenceHighlights.append(traceHighlighter.addHighlight(range.start(), range.end(), DefaultHighlighter.DefaultPainter));
+                                        occurrenceHighlights.append(traceHighlighter.addHighlight(range.start(), range.end(), DefaultHighlighter.DefaultPainter));
                                         //System.err.printAddress("primary range: " + range);
                                     } catch (BadLocationException badLocationException) {
                                         ProgramWarning.message("error highlighting element range " + range);
@@ -701,27 +701,27 @@ final class CirTraceVisualizer extends JPanel {
                             });
                         }
                     }
-                    _currentOccurrenceElement = element;
+                    currentOccurrenceElement = element;
                     currentDocument = document;
                 }
             }
-            int _foldStart = -1;
-            int _foldEnd = -1;
+            int foldStart = -1;
+            int foldEnd = -1;
 
             @Override
             public void mouseReleased(MouseEvent event) {
                 final Element element = element(event);
-                if (event.getSource() == _leftTracePane) {
-                    traceHighlighter = _leftTracePane.getHighlighter();
+                if (event.getSource() == leftTracePane) {
+                    traceHighlighter = leftTracePane.getHighlighter();
                 } else if (event.getSource() == rightTracePane) {
                     traceHighlighter = rightTracePane.getHighlighter();
                 }
                 if (element instanceof ParenthesisElement) {
-                    _dualRangeElement = (ParenthesisElement) element;
+                    dualRangeElement = (ParenthesisElement) element;
                 }
                 if (element != selectedElement || element instanceof ParenthesisElement) {
                     // Remove all highlights
-                    _leftTracePane.getHighlighter().removeAllHighlights();
+                    leftTracePane.getHighlighter().removeAllHighlights();
                     rightTracePane.getHighlighter().removeAllHighlights();
                     if (element != null) {
                         final CirNode node = element.node();
@@ -737,118 +737,118 @@ final class CirTraceVisualizer extends JPanel {
                             });
                         } else {
                             if (currentDocument.collapsedOffset == -1) {
-                                currentDocument.collapsedDual = _dualRangeElement;
-                                _newOffsetToElement = new IntHashMap<Element>();
-                                _newElementsPerNode = new SequenceBag<CirNode, Element>(SequenceBag.MapType.IDENTITY);
-                                _foldStart = ((ParenthesisElement) element).firstRange().start();
-                                _foldEnd = ((ParenthesisElement) element).secondRange().start();
-                                _oldNoOffsets = currentDocument.getLength();
-                                if (event.getSource() == _leftTracePane) {
-                                    _oldOffsetToElement = currentDocument.offsetToElement;
-                                    _tempOffsetToElement = _oldOffsetToElement;
-                                    _oldElementsPerNode = currentDocument.elementsPerNode;
+                                currentDocument.collapsedDual = dualRangeElement;
+                                newOffsetToElement = new IntHashMap<Element>();
+                                newElementsPerNode = new SequenceBag<CirNode, Element>(SequenceBag.MapType.IDENTITY);
+                                foldStart = ((ParenthesisElement) element).firstRange().start();
+                                foldEnd = ((ParenthesisElement) element).secondRange().start();
+                                oldNoOffsets = currentDocument.getLength();
+                                if (event.getSource() == leftTracePane) {
+                                    oldOffsetToElement = currentDocument.offsetToElement;
+                                    tempOffsetToElement = oldOffsetToElement;
+                                    oldElementsPerNode = currentDocument.elementsPerNode;
                                     try {
-                                        _hiddenTrace = currentDocument.getText(_dualRangeElement.firstRange().start() + 1, _dualRangeElement.secondRange().start() - _dualRangeElement.firstRange().start() - 1);
+                                        hiddenTrace = currentDocument.getText(dualRangeElement.firstRange().start() + 1, dualRangeElement.secondRange().start() - dualRangeElement.firstRange().start() - 1);
                                     } catch (BadLocationException ble) {
                                         System.err.println("Bad Location while folding trace in the left pane");
                                     }
                                 } else if (event.getSource() == rightTracePane) {
-                                    _oldOffsetToElement2 = currentDocument.offsetToElement;
-                                    _tempOffsetToElement = _oldOffsetToElement2;
-                                    _oldElementsPerNode2 = currentDocument.elementsPerNode;
+                                    oldOffsetToElement2 = currentDocument.offsetToElement;
+                                    tempOffsetToElement = oldOffsetToElement2;
+                                    oldElementsPerNode2 = currentDocument.elementsPerNode;
                                     try {
-                                        _hiddenTrace2 = currentDocument.getText(_dualRangeElement.firstRange().start() + 1, _dualRangeElement.secondRange().start() - _dualRangeElement.firstRange().start() - 1);
+                                        hiddenTrace2 = currentDocument.getText(dualRangeElement.firstRange().start() + 1, dualRangeElement.secondRange().start() - dualRangeElement.firstRange().start() - 1);
                                     } catch (BadLocationException ble) {
                                         System.err.println("Bad Location while folding trace in the right pane");
                                     }
                                 }
-                                currentDocument.collapsedOffset = _foldStart;
+                                currentDocument.collapsedOffset = foldStart;
                                 int newMapIndex = 0;
                                 int flag = 0;
                                 SimpleElement currSimple = null;
                                 ParenthesisElement currDual = null;
-                                for (int i = 0; i <= _oldNoOffsets; i++) {
-                                    if (i > _foldStart && i < _foldEnd) {
+                                for (int i = 0; i <= oldNoOffsets; i++) {
+                                    if (i > foldStart && i < foldEnd) {
                                         if (flag == 0) {
                                             newMapIndex = newMapIndex + 3;
                                             flag = 1;
                                         }
                                         continue;
                                     }
-                                    if (_tempOffsetToElement.get(i) == null) {
+                                    if (tempOffsetToElement.get(i) == null) {
                                         newMapIndex++;
                                     }
 
-                                    if (i <= _foldStart) {
-                                        if (_tempOffsetToElement.get(i) instanceof SimpleElement) {
-                                            final Range simpleRange = new Range(((SimpleElement) _tempOffsetToElement.get(i)).range().start(),
-                                                                            ((SimpleElement) _tempOffsetToElement.get(i)).range().end());
-                                            currSimple = new SimpleElement(_tempOffsetToElement.get(i).node(), simpleRange);
-                                            _newOffsetToElement.put(newMapIndex++, currSimple);
-                                            _newElementsPerNode.add(_tempOffsetToElement.get(i).node(), currSimple);
+                                    if (i <= foldStart) {
+                                        if (tempOffsetToElement.get(i) instanceof SimpleElement) {
+                                            final Range simpleRange = new Range(((SimpleElement) tempOffsetToElement.get(i)).range().start(),
+                                                                            ((SimpleElement) tempOffsetToElement.get(i)).range().end());
+                                            currSimple = new SimpleElement(tempOffsetToElement.get(i).node(), simpleRange);
+                                            newOffsetToElement.put(newMapIndex++, currSimple);
+                                            newElementsPerNode.add(tempOffsetToElement.get(i).node(), currSimple);
                                         }
-                                        if (_tempOffsetToElement.get(i) instanceof ParenthesisElement) {
-                                            final Range firstRange = new Range(((ParenthesisElement) _tempOffsetToElement.get(i)).firstRange().start());
+                                        if (tempOffsetToElement.get(i) instanceof ParenthesisElement) {
+                                            final Range firstRange = new Range(((ParenthesisElement) tempOffsetToElement.get(i)).firstRange().start());
                                             Range secondRange = null;
-                                            if (((ParenthesisElement) _tempOffsetToElement.get(i)).secondRange().start() < _foldStart) {
-                                                secondRange = new Range(((ParenthesisElement) _tempOffsetToElement.get(i)).secondRange().start());
+                                            if (((ParenthesisElement) tempOffsetToElement.get(i)).secondRange().start() < foldStart) {
+                                                secondRange = new Range(((ParenthesisElement) tempOffsetToElement.get(i)).secondRange().start());
                                             }
-                                            if (((ParenthesisElement) _tempOffsetToElement.get(i)).secondRange().start() >= _foldEnd) {
-                                                secondRange = new Range(((ParenthesisElement) _tempOffsetToElement.get(i)).secondRange().start() - (_foldEnd - _foldStart - 4));
+                                            if (((ParenthesisElement) tempOffsetToElement.get(i)).secondRange().start() >= foldEnd) {
+                                                secondRange = new Range(((ParenthesisElement) tempOffsetToElement.get(i)).secondRange().start() - (foldEnd - foldStart - 4));
                                             }
 
                                             currDual = new ParenthesisElement(firstRange, secondRange);
-                                            _newOffsetToElement.put(newMapIndex++, currDual);
+                                            newOffsetToElement.put(newMapIndex++, currDual);
                                         }
                                     }
-                                    if (i >= _foldEnd) {
-                                        if (_tempOffsetToElement.get(i) instanceof SimpleElement) {
-                                            final Range simpleRange = new Range(((SimpleElement) _tempOffsetToElement.get(i)).range().start() - (_foldEnd - _foldStart - 4),
-                                                                            ((SimpleElement) _tempOffsetToElement.get(i)).range().end());
-                                            currSimple = new SimpleElement(_tempOffsetToElement.get(i).node(), simpleRange);
+                                    if (i >= foldEnd) {
+                                        if (tempOffsetToElement.get(i) instanceof SimpleElement) {
+                                            final Range simpleRange = new Range(((SimpleElement) tempOffsetToElement.get(i)).range().start() - (foldEnd - foldStart - 4),
+                                                                            ((SimpleElement) tempOffsetToElement.get(i)).range().end());
+                                            currSimple = new SimpleElement(tempOffsetToElement.get(i).node(), simpleRange);
 
-                                            _newOffsetToElement.put(newMapIndex++, currSimple);
-                                            _newElementsPerNode.add(_tempOffsetToElement.get(i).node(), currSimple);
+                                            newOffsetToElement.put(newMapIndex++, currSimple);
+                                            newElementsPerNode.add(tempOffsetToElement.get(i).node(), currSimple);
                                         }
-                                        if (_tempOffsetToElement.get(i) instanceof ParenthesisElement) {
+                                        if (tempOffsetToElement.get(i) instanceof ParenthesisElement) {
                                             Range firstRange = null;
-                                            final Range secondRange = new Range(((ParenthesisElement) _tempOffsetToElement.get(i)).secondRange().start() - (_foldEnd - _foldStart - 4));
-                                            if (((ParenthesisElement) _tempOffsetToElement.get(i)).firstRange().start() <= _foldStart) {
-                                                firstRange = new Range(((ParenthesisElement) _tempOffsetToElement.get(i)).firstRange().start());
+                                            final Range secondRange = new Range(((ParenthesisElement) tempOffsetToElement.get(i)).secondRange().start() - (foldEnd - foldStart - 4));
+                                            if (((ParenthesisElement) tempOffsetToElement.get(i)).firstRange().start() <= foldStart) {
+                                                firstRange = new Range(((ParenthesisElement) tempOffsetToElement.get(i)).firstRange().start());
                                             }
-                                            if (((ParenthesisElement) _tempOffsetToElement.get(i)).firstRange().start() > _foldEnd) {
-                                                firstRange = new Range(((ParenthesisElement) _tempOffsetToElement.get(i)).firstRange().start() - (_foldEnd - _foldStart - 4));
+                                            if (((ParenthesisElement) tempOffsetToElement.get(i)).firstRange().start() > foldEnd) {
+                                                firstRange = new Range(((ParenthesisElement) tempOffsetToElement.get(i)).firstRange().start() - (foldEnd - foldStart - 4));
                                             }
 
                                             currDual = new ParenthesisElement(firstRange, secondRange);
-                                            _newOffsetToElement.put(newMapIndex++, currDual);
+                                            newOffsetToElement.put(newMapIndex++, currDual);
                                         }
                                     }
                                 }
                                 try {
-                                    currentDocument.remove(_dualRangeElement.firstRange().start() + 1, _dualRangeElement.secondRange().start() - _dualRangeElement.firstRange().start() - 1);
-                                    currentDocument.insertString(_dualRangeElement.firstRange().start() + 1, "...", null);
+                                    currentDocument.remove(dualRangeElement.firstRange().start() + 1, dualRangeElement.secondRange().start() - dualRangeElement.firstRange().start() - 1);
+                                    currentDocument.insertString(dualRangeElement.firstRange().start() + 1, "...", null);
                                 } catch (BadLocationException ble) {
                                     System.err.println("Bad Location while folding trace");
                                 }
 
                                 final Style style = currentDocument.addStyle(null, NORMAL);
                                 StyleConstants.setFontSize(style, fontSizeSlider.getValue());
-                                currentDocument.setCharacterAttributes(_dualRangeElement.firstRange().start() + 1, 3, style, true);
+                                currentDocument.setCharacterAttributes(dualRangeElement.firstRange().start() + 1, 3, style, true);
 
-                                currentDocument.offsetToElement = _newOffsetToElement;
-                                currentDocument.elementsPerNode = _newElementsPerNode;
-                            } else if (_dualRangeElement.firstRange().start() == currentDocument.collapsedOffset) {
+                                currentDocument.offsetToElement = newOffsetToElement;
+                                currentDocument.elementsPerNode = newElementsPerNode;
+                            } else if (dualRangeElement.firstRange().start() == currentDocument.collapsedOffset) {
                                 try {
-                                    currentDocument.remove(_dualRangeElement.firstRange().start() + 1, 3);
-                                    if (event.getSource() == _leftTracePane) {
-                                        currentDocument.insertString(_dualRangeElement.firstRange().start() + 1, _hiddenTrace, null);
-                                        currentDocument.offsetToElement = _oldOffsetToElement;
-                                        currentDocument.elementsPerNode = _oldElementsPerNode;
+                                    currentDocument.remove(dualRangeElement.firstRange().start() + 1, 3);
+                                    if (event.getSource() == leftTracePane) {
+                                        currentDocument.insertString(dualRangeElement.firstRange().start() + 1, hiddenTrace, null);
+                                        currentDocument.offsetToElement = oldOffsetToElement;
+                                        currentDocument.elementsPerNode = oldElementsPerNode;
                                     } else if (event.getSource() == rightTracePane) {
-                                        currentDocument.insertString(_dualRangeElement.firstRange().start() + 1, _hiddenTrace2, null);
-                                        currentDocument.offsetToElement = _oldOffsetToElement2;
-                                        currentDocument.elementsPerNode = _oldElementsPerNode2;
+                                        currentDocument.insertString(dualRangeElement.firstRange().start() + 1, hiddenTrace2, null);
+                                        currentDocument.offsetToElement = oldOffsetToElement2;
+                                        currentDocument.elementsPerNode = oldElementsPerNode2;
                                     }
                                 } catch (BadLocationException ble) {
                                     System.err.println("Bad Location while expanding trace");
@@ -858,7 +858,7 @@ final class CirTraceVisualizer extends JPanel {
 
                                 final Style style = currentDocument.addStyle(null, NORMAL);
                                 StyleConstants.setFontSize(style, fontSizeSlider.getValue());
-                                final ParenthesisElement newDual = (ParenthesisElement) currentDocument.offsetToElement.get(_dualRangeElement.firstRange().start());
+                                final ParenthesisElement newDual = (ParenthesisElement) currentDocument.offsetToElement.get(dualRangeElement.firstRange().start());
 
                                 currentDocument.setCharacterAttributes(
                                     newDual.firstRange().start() + 1,
@@ -872,8 +872,8 @@ final class CirTraceVisualizer extends JPanel {
                 }
             }
         };
-        _leftTracePane.addMouseListener(mouseInputAdapter);
-        _leftTracePane.addMouseMotionListener(mouseInputAdapter);
+        leftTracePane.addMouseListener(mouseInputAdapter);
+        leftTracePane.addMouseMotionListener(mouseInputAdapter);
         rightTracePane.addMouseListener(mouseInputAdapter);
         rightTracePane.addMouseMotionListener(mouseInputAdapter);
     }
@@ -1045,7 +1045,7 @@ final class CirTraceVisualizer extends JPanel {
                 ProgramWarning.message("could not update CIR visualizer: " + e);
                 return;
             }
-            _leftTracePane.setDocument(document);
+            leftTracePane.setDocument(document);
             rightTracePane.setDocument(document2);
             headerPanel.update(currentCir, currentCir2);
             leftTrace.update(currentCir);
@@ -1058,7 +1058,7 @@ final class CirTraceVisualizer extends JPanel {
                 final Style style = document.addStyle(null, NORMAL);
                 StyleConstants.setFontSize(style, fontSizeSlider.getValue());
                 document.insertString(0, currentCir.trace(), style);
-                _leftTracePane.setDocument(document);
+                leftTracePane.setDocument(document);
             } catch (BadLocationException e) {
                 ProgramWarning.message("could not update CIR visualizer: " + e);
                 return;
@@ -1092,7 +1092,7 @@ final class CirTraceVisualizer extends JPanel {
             }
         } else {
             if (fontChangeFlag) {
-                document = _leftTracePane.cirDocument();
+                document = leftTracePane.cirDocument();
                 final Style style = document.addStyle(null, NORMAL);
                 StyleConstants.setFontSize(style, fontSizeSlider.getValue());
                 document.setCharacterAttributes(0, document.getLength(), style, true);
@@ -1118,7 +1118,7 @@ final class CirTraceVisualizer extends JPanel {
             detailPane.setText(NO_SELECTED_NODE_DETAIL);
             if (currentDocument.collapsedOffset == -1) {
                 if (numTraces >= 2) {
-                    document = _leftTracePane.cirDocument();
+                    document = leftTracePane.cirDocument();
                     document2 = rightTracePane.cirDocument();
                     final Diff diff = currentDiffs;
                     showDiffs(document, leftElements, diff.deletions(), DIFF_DELETION);
@@ -1453,7 +1453,7 @@ final class CirTraceVisualizer extends JPanel {
     private void clearSearchHighlights() {
         isCurrentHighlighted = false;
         if (!searchPanel.nodeCheck.isSelected()) {
-            _leftTracePane.getHighlighter().removeAllHighlights();
+            leftTracePane.getHighlighter().removeAllHighlights();
             rightTracePane.getHighlighter().removeAllHighlights();
         }
         if (!searchPanel.actorCheck.isSelected()) {

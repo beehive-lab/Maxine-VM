@@ -31,24 +31,24 @@ import com.sun.max.vm.type.*;
  */
 public final class CharValue extends PrimitiveValue<CharValue> {
 
-    final char _value;
+    final char value;
 
     private static final class Cache {
         private Cache() {
         }
 
-        static final CharValue[] _cache = new CharValue[127 + 1];
+        static final CharValue[] cache = new CharValue[127 + 1];
 
         static {
-            for (int i = 0; i < _cache.length; i++) {
-                _cache[i] = new CharValue((char) i);
+            for (int i = 0; i < cache.length; i++) {
+                cache[i] = new CharValue((char) i);
             }
         }
     }
 
     public static CharValue from(char value) {
         if (value <= 127) { // must cache
-            return Cache._cache[value];
+            return Cache.cache[value];
         }
         return new CharValue(value);
     }
@@ -62,8 +62,7 @@ public final class CharValue extends PrimitiveValue<CharValue> {
     }
 
     private CharValue(char value) {
-        super();
-        _value = value;
+        this.value = value;
     }
 
     @Override
@@ -73,12 +72,12 @@ public final class CharValue extends PrimitiveValue<CharValue> {
 
     @Override
     public boolean isZero() {
-        return _value == (char) 0;
+        return value == (char) 0;
     }
 
     @Override
     public boolean isAllOnes() {
-        return _value == (char) -1;
+        return value == (char) -1;
     }
 
     public static final CharValue ZERO = CharValue.from('\0');
@@ -99,22 +98,22 @@ public final class CharValue extends PrimitiveValue<CharValue> {
             return false;
         }
         final CharValue charValue = (CharValue) other;
-        return _value == charValue.asChar();
+        return value == charValue.asChar();
     }
 
     @Override
     public String toString() {
-        return Character.toString(_value);
+        return Character.toString(value);
     }
 
     @Override
     public Character asBoxedJavaValue() {
-        return new Character(_value);
+        return new Character(value);
     }
 
     @Override
     public byte toByte() {
-        return (byte) _value;
+        return (byte) value;
     }
 
     @Override
@@ -124,12 +123,12 @@ public final class CharValue extends PrimitiveValue<CharValue> {
 
     @Override
     public boolean toBoolean() {
-        return (_value != '\0') ? true : false;
+        return (value != '\0') ? true : false;
     }
 
     @Override
     public short toShort() {
-        return (short) _value;
+        return (short) value;
     }
 
     @Override
@@ -139,12 +138,12 @@ public final class CharValue extends PrimitiveValue<CharValue> {
 
     @Override
     public char asChar() {
-        return _value;
+        return value;
     }
 
     @Override
     public char unboxChar() {
-        return _value;
+        return value;
     }
 
     @Override
@@ -154,56 +153,56 @@ public final class CharValue extends PrimitiveValue<CharValue> {
 
     @Override
     public char toChar() {
-        return _value;
+        return value;
     }
 
     @Override
     public int toInt() {
-        return _value;
+        return value;
     }
 
     @Override
     public int unsignedToInt() {
-        return _value;
+        return value;
     }
 
     @Override
     public float toFloat() {
-        return _value;
+        return value;
     }
 
     @Override
     public long toLong() {
-        return _value;
+        return value;
     }
 
     @Override
     public double toDouble() {
-        return _value;
+        return value;
     }
 
     @Override
     public Word toWord() {
-        return Address.fromInt(_value);
+        return Address.fromInt(value);
     }
 
     @Override
     public WordWidth signedEffectiveWidth() {
-        return WordWidth.signedEffective((short) _value);
+        return WordWidth.signedEffective((short) value);
     }
 
     @Override
     public WordWidth unsignedEffectiveWidth() {
-        return WordWidth.unsignedEffective(_value);
+        return WordWidth.unsignedEffective(value);
     }
 
     @Override
     public byte[] toBytes(DataModel dataModel) {
-        return dataModel.toBytes(_value);
+        return dataModel.toBytes(value);
     }
 
     @Override
     public void write(DataOutput stream) throws IOException {
-        stream.writeChar(_value);
+        stream.writeChar(value);
     }
 }

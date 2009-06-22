@@ -47,14 +47,14 @@ public class TirToDirTranslator extends TirPipelineFilter  {
         private int serial = 0;
         private VariableSequence<DirVariable> [] dirtyStacks = UnsafeLoophole.cast(Arrays.newInstance(VariableSequence.class, KindEnum.VALUES.length()));
         private VariableSequence<DirVariable> dirtyStack(Kind kind) {
-            return dirtyStacks[kind.asEnum().ordinal()];
+            return dirtyStacks[kind.asEnum.ordinal()];
         }
 
         private VariableMapping<TirInstruction, DirVariable> bindings = new IdentityHashMapping<TirInstruction, DirVariable>();
 
         public VariableAllocator() {
             for (Kind kind : new Kind[] {Kind.INT, Kind.FLOAT, Kind.LONG, Kind.DOUBLE, Kind.REFERENCE, Kind.VOID}) {
-                dirtyStacks[kind.asEnum().ordinal()] = new ArrayListSequence<DirVariable>();
+                dirtyStacks[kind.asEnum.ordinal()] = new ArrayListSequence<DirVariable>();
             }
         }
 
@@ -118,12 +118,10 @@ public class TirToDirTranslator extends TirPipelineFilter  {
      * ===========================
      */
 
-    private DirBlock _localBlock = new DirBlock(Role.NORMAL);
-    private DirBlock _prologueBlock = new DirBlock(Role.NORMAL);
+    private DirBlock localBlock = new DirBlock(Role.NORMAL);
+    private DirBlock prologueBlock = new DirBlock(Role.NORMAL);
     private DirBlock bailoutBlock = new DirBlock(Role.NORMAL);
     private DirVariable bailoutGuard = allocator.allocate(Kind.REFERENCE, VariableType.CLEAN);
-
-    private int _serial;
 
     public TirToDirTranslator() {
         super(TirPipelineOrder.REVERSE, TirVoidSink.SINK);
@@ -254,8 +252,8 @@ public class TirToDirTranslator extends TirPipelineFilter  {
     @Override
     public void endTree() {
         patchLoops();
-        emitBlockIfNotEmpty(_prologueBlock);
-        emitBlockIfNotEmpty(_localBlock);
+        emitBlockIfNotEmpty(prologueBlock);
+        emitBlockIfNotEmpty(localBlock);
         dirTree.setGenerated(parameters, new ArrayListSequence<DirBlock>(blocks));
     }
 

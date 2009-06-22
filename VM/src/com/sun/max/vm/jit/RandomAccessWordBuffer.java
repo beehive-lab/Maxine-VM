@@ -37,24 +37,24 @@ public class RandomAccessWordBuffer {
     RandomAccessWordBuffer() {
     }
 
-    private Word[] _words = new Word[32];
+    private Word[] words = new Word[32];
 
-    private int _size;
+    private int size;
 
     public int size() {
-        return _size;
+        return size;
     }
 
     private void grow() {
-        final Word[] newWords = new Word[_size * 2];
-        WordArray.copyAll(_words, newWords);
-        _words = newWords;
+        final Word[] newWords = new Word[size * 2];
+        WordArray.copyAll(words, newWords);
+        words = newWords;
     }
 
     public void extend(int size) {
-        if (size > _size) {
-            _size = size;
-            if (_words.length * Word.size() < _size) {
+        if (size > this.size) {
+            this.size = size;
+            if (words.length * Word.size() < this.size) {
                 grow();
             }
         }
@@ -70,12 +70,12 @@ public class RandomAccessWordBuffer {
     public void writeWord(Word value) {
         extend(position + Word.size());
         final int index = Unsigned.idiv(position, Word.size());
-        WordArray.set(_words, index, value);
+        WordArray.set(words, index, value);
     }
 
     public void copyToMemory(Pointer destination) {
-        for (int i = 0; i < _size; i++) {
-            destination.setWord(i, WordArray.get(_words, i));
+        for (int i = 0; i < size; i++) {
+            destination.setWord(i, WordArray.get(words, i));
         }
     }
 }

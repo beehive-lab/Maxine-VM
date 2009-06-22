@@ -182,10 +182,10 @@ public final class DynamicLinker {
         dlclose(handle);
     }
 
-    private static Word _javaHandle;
+    private static Word javaHandle;
 
     public static void loadJavaLibrary(String path) {
-        _javaHandle = DynamicLinker.load(path + File.separator + System.mapLibraryName("java"));
+        javaHandle = DynamicLinker.load(path + File.separator + System.mapLibraryName("java"));
     }
 
     /**
@@ -218,9 +218,9 @@ public final class DynamicLinker {
                 // TODO: This could be removed if ClassLoader.findNative could find symbols in the boot image
                 symbolAddress = lookupSymbol(Word.zero(), symbol);
                 if (symbolAddress.isZero()) {
-                    final ClassLoader classLoader = classMethodActor.holder().classLoader();
-                    if (classLoader == VmClassLoader.VM_CLASS_LOADER && !_javaHandle.isZero()) {
-                        symbolAddress = lookupSymbol(_javaHandle, symbol);
+                    final ClassLoader classLoader = classMethodActor.holder().classLoader;
+                    if (classLoader == VmClassLoader.VM_CLASS_LOADER && !javaHandle.isZero()) {
+                        symbolAddress = lookupSymbol(javaHandle, symbol);
                         if (!symbolAddress.isZero()) {
                             return symbolAddress;
                         }

@@ -65,7 +65,7 @@ public class NewArray extends JavaResolvableOperator<ArrayClassActor> {
     @Override
     public String toString() {
         if (primitiveElementKind != null) {
-            return "New" + Strings.capitalizeFirst(primitiveElementKind.name().string(), true) + "Array";
+            return "New" + Strings.capitalizeFirst(primitiveElementKind.name.string, true) + "Array";
         }
         return super.toString();
     }

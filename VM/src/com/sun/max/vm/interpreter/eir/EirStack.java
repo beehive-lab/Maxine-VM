@@ -49,17 +49,17 @@ public class EirStack {
      */
     private final Address ceiling;
 
-    private Address _sp;
+    private Address sp;
 
     public EirStack() {
         ceiling = VmThread.stackSize();
         assert !ceiling.isZero();
-        _sp = ceiling;
+        sp = ceiling;
     }
 
     protected EirStack(EirStack copy) {
         ceiling = copy.ceiling;
-        _sp = copy._sp;
+        sp = copy.sp;
         slots = new ArrayListSequence<Value>(copy.slots);
     }
 
@@ -85,18 +85,18 @@ public class EirStack {
      * without throwing a {@link StackAddressOutOfBoundsException}.
      */
     public Address sp() {
-        return _sp;
+        return sp;
     }
 
     public void setSP(Address address) {
-        _sp = address;
+        sp = address;
     }
 
     private List<Value> slots = new ArrayListSequence<Value>();
 
     private int addressToSlotIndex(Address address) {
-        if (address.lessThan(_sp) || address.greaterEqual(ceiling)) {
-            final String message = address.toLong() + " < " + _sp.toLong() + " || " + address.toLong() + " >= " + ceiling.toLong();
+        if (address.lessThan(sp) || address.greaterEqual(ceiling)) {
+            final String message = address.toLong() + " < " + sp.toLong() + " || " + address.toLong() + " >= " + ceiling.toLong();
             throw new StackAddressOutOfBoundsException(message);
         }
         final int index = ceiling.minus(address).dividedBy(8).toInt();

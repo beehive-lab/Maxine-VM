@@ -103,7 +103,7 @@ public class TupleClassActor extends ReferenceClassActor {
     @Override
     protected Size layoutFields(SpecificLayout specificLayout) {
         final TupleLayout tupleLayout = (TupleLayout) specificLayout;
-        return tupleLayout.layoutFields(superClassActor(), localInstanceFieldActors());
+        return tupleLayout.layoutFields(superClassActor, localInstanceFieldActors());
     }
 
     public static TupleClassActor fromJava(final Class javaClass) {

@@ -1752,7 +1752,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     private final InspectorAction _viewRunMethodCodeInBootImage =
-        new ViewMethodCodeInBootImageAction(maxVM().bootImage().header()._vmRunMethodOffset, MaxineVM.class, "run", MaxineVM.runMethodParameterTypes());
+        new ViewMethodCodeInBootImageAction(maxVM().bootImage().header().vmRunMethodOffset, MaxineVM.class, "run", MaxineVM.runMethodParameterTypes());
 
     /**
      * @return an Action that displays in the {@link MethodInspector} the code of
@@ -1763,7 +1763,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     private final InspectorAction _viewThreadRunMethodCodeInBootImage =
-        new ViewMethodCodeInBootImageAction(maxVM().bootImage().header()._vmThreadRunMethodOffset, VmThread.class, "run", int.class, Address.class, Pointer.class,
+        new ViewMethodCodeInBootImageAction(maxVM().bootImage().header().vmThreadRunMethodOffset, VmThread.class, "run", int.class, Address.class, Pointer.class,
                     Pointer.class, Pointer.class, Pointer.class, Pointer.class, Pointer.class, Pointer.class, Pointer.class);
 
     /**
@@ -1775,7 +1775,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     private final InspectorAction _viewSchemeRunMethodCodeInBootImage =
-        new ViewMethodCodeInBootImageAction(maxVM().bootImage().header()._runSchemeRunMethodOffset, maxVM().vmConfiguration().runPackage().schemeTypeToImplementation(RunScheme.class), "run");
+        new ViewMethodCodeInBootImageAction(maxVM().bootImage().header().runSchemeRunMethodOffset, maxVM().vmConfiguration().runPackage().schemeTypeToImplementation(RunScheme.class), "run");
 
     /**
      * @return an Action that displays in the {@link MethodInspector} the code of
@@ -2271,7 +2271,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 final ClassActor classActor = teleClassActor.classActor();
                 if (classActor.localVirtualMethodActors() != null) {
                     for (VirtualMethodActor virtualMethodActor : classActor.localVirtualMethodActors()) {
-                        if (virtualMethodActor.name() == SymbolTable.INIT) {
+                        if (virtualMethodActor.name == SymbolTable.INIT) {
                             final TeleClassMethodActor teleClassMethodActor = maxVM().findTeleMethodActor(TeleClassMethodActor.class, virtualMethodActor);
                             if (teleClassMethodActor != null) {
                                 TeleTargetBreakpoint teleTargetBreakpoint = null;

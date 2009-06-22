@@ -132,7 +132,7 @@ public class InliningAndAlignmentTest extends MaxTestCase {
         } else if (asm.wordWidth() == WordWidth.BITS_64) {
             assertTrue(ByteUtils.checkBytes(ByteUtils.toBigEndByteArray(startAddress + labelValue.position()), asmBytes, inlinedLabel.position()));
         }
-        assertEquals(asm.wordWidth().numberOfBytes(), inlinedPaddingByte.position() - inlinedLabel.position());
+        assertEquals(asm.wordWidth().numberOfBytes, inlinedPaddingByte.position() - inlinedLabel.position());
 
         return asmBytes;
     }

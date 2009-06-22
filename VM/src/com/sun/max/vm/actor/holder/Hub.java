@@ -258,7 +258,7 @@ public abstract class Hub extends Hybrid {
         this.layoutCategory = specificLayout.category();
         switch (layoutCategory) {
             case ARRAY:
-                this.elementKind = classActor.componentClassActor().kind();
+                this.elementKind = classActor.componentClassActor().kind;
                 break;
             case HYBRID:
                 this.elementKind = Kind.WORD;
@@ -297,7 +297,7 @@ public abstract class Hub extends Hybrid {
             // the common case of an exact type match
             return true;
         }
-        final int serial = testClassActor.id();
+        final int serial = testClassActor.id;
         final int iTableIndex = getITableIndex(serial);
         return getWord(iTableIndex).equals(Address.fromInt(serial));
     }

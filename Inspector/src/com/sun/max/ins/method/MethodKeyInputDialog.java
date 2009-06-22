@@ -169,7 +169,7 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
         final String returnTypeName = _returnTypeField.getText();
         if (!returnTypeName.isEmpty()) {
             try {
-                returnType = JavaTypeDescriptor.getDescriptorForJavaString(returnTypeName).string();
+                returnType = JavaTypeDescriptor.getDescriptorForJavaString(returnTypeName).string;
             } catch (ClassFormatError e) {
                 returnType = null;
                 _methodKeyMessage.setMessage(true, "Invalid name for return type");
@@ -188,7 +188,7 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
                     if (n == null || n.isEmpty()) {
                         throw new ClassFormatError();
                     }
-                    parameterTypes += JavaTypeDescriptor.getDescriptorForJavaString(n).string();
+                    parameterTypes += JavaTypeDescriptor.getDescriptorForJavaString(n).string;
                 } catch (ClassFormatError classFormatError) {
                     parameterTypes = null;
                     _methodKeyMessage.setMessage(true, "Invalid name for parameter " + (i + 1));

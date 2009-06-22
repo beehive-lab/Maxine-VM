@@ -100,7 +100,7 @@ public final class JniFunctions {
         return slashifiedName.replace('/', '.');
     }
 
-    private static final Class[] _defineClassParameterTypes = {String.class, byte[].class, int.class, int.class};
+    private static final Class[] defineClassParameterTypes = {String.class, byte[].class, int.class, int.class};
 
     @JNI_FUNCTION
     private static JniHandle DefineClass(Pointer env, Pointer slashifiedName, JniHandle classLoader, Pointer buffer, int length) throws ClassFormatError {
@@ -113,7 +113,7 @@ public final class JniFunctions {
             if (cl == null) {
                 cl = VmClassLoader.VM_CLASS_LOADER;
             }
-            return JniHandles.createLocalHandle(WithoutAccessCheck.invokeVirtual(cl, "defineClass", _defineClassParameterTypes, arguments));
+            return JniHandles.createLocalHandle(WithoutAccessCheck.invokeVirtual(cl, "defineClass", defineClassParameterTypes, arguments));
         } catch (Utf8Exception utf8Exception) {
             throw classFormatError("Invalid class name");
         } catch (NoSuchMethodException noSuchMethodException) {
@@ -405,11 +405,11 @@ public final class JniFunctions {
 
         // This is equivalent to sizeof(jvalue) in C and gives us the size of each slot in a jvalue array.
         // Note that the size of the data in any given array element will be *at most* this size.
-        final int jvalueSize = Kind.LONG.size();
+        final int jvalueSize = Kind.LONG.width.numberOfBytes;
 
         for (int i = 0; i < signature.numberOfParameters(); i++) {
             final int j = startIndex + i;
-            switch (signature.parameterDescriptorAt(i).toKind().asEnum()) {
+            switch (signature.parameterDescriptorAt(i).toKind().asEnum) {
                 case BYTE: {
                     argumentValues[j] = ByteValue.from((byte) a.readInt(0));
                     break;
@@ -1453,7 +1453,7 @@ public final class JniFunctions {
     private static Pointer getByteArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
         setCopyPointer(isCopy, true);
         final byte[] a = (byte[]) array.unhand();
-        final Pointer pointer = Memory.mustAllocate(a.length * Kind.BYTE.size());
+        final Pointer pointer = Memory.mustAllocate(a.length * Kind.BYTE.width.numberOfBytes);
         for (int i = 0; i < a.length; i++) {
             pointer.setByte(i, a[i]);
         }
@@ -1468,7 +1468,7 @@ public final class JniFunctions {
     private static Pointer getCharArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
         setCopyPointer(isCopy, true);
         final char[] a = (char[]) array.unhand();
-        final Pointer pointer = Memory.mustAllocate(a.length * Kind.CHAR.size());
+        final Pointer pointer = Memory.mustAllocate(a.length * Kind.CHAR.width.numberOfBytes);
         for (int i = 0; i < a.length; i++) {
             pointer.setChar(i, a[i]);
         }
@@ -1483,7 +1483,7 @@ public final class JniFunctions {
     private static Pointer getShortArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
         setCopyPointer(isCopy, true);
         final short[] a = (short[]) array.unhand();
-        final Pointer pointer = Memory.mustAllocate(a.length * Kind.SHORT.size());
+        final Pointer pointer = Memory.mustAllocate(a.length * Kind.SHORT.width.numberOfBytes);
         for (int i = 0; i < a.length; i++) {
             pointer.setShort(i, a[i]);
         }
@@ -1498,7 +1498,7 @@ public final class JniFunctions {
     private static Pointer getIntArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
         setCopyPointer(isCopy, true);
         final int[] a = (int[]) array.unhand();
-        final Pointer pointer = Memory.mustAllocate(a.length * Kind.INT.size());
+        final Pointer pointer = Memory.mustAllocate(a.length * Kind.INT.width.numberOfBytes);
         for (int i = 0; i < a.length; i++) {
             pointer.setInt(i, a[i]);
         }
@@ -1513,7 +1513,7 @@ public final class JniFunctions {
     private static Pointer getLongArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
         setCopyPointer(isCopy, true);
         final long[] a = (long[]) array.unhand();
-        final Pointer pointer = Memory.mustAllocate(a.length * Kind.LONG.size());
+        final Pointer pointer = Memory.mustAllocate(a.length * Kind.LONG.width.numberOfBytes);
         for (int i = 0; i < a.length; i++) {
             pointer.setLong(i, a[i]);
         }
@@ -1528,7 +1528,7 @@ public final class JniFunctions {
     private static Pointer getFloatArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
         setCopyPointer(isCopy, true);
         final float[] a = (float[]) array.unhand();
-        final Pointer pointer = Memory.mustAllocate(a.length * Kind.FLOAT.size());
+        final Pointer pointer = Memory.mustAllocate(a.length * Kind.FLOAT.width.numberOfBytes);
         for (int i = 0; i < a.length; i++) {
             pointer.setFloat(i, a[i]);
         }
@@ -1543,7 +1543,7 @@ public final class JniFunctions {
     private static Pointer getDoubleArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
         setCopyPointer(isCopy, true);
         final double[] a = (double[]) array.unhand();
-        final Pointer pointer = Memory.mustAllocate(a.length * Kind.DOUBLE.size());
+        final Pointer pointer = Memory.mustAllocate(a.length * Kind.DOUBLE.width.numberOfBytes);
         for (int i = 0; i < a.length; i++) {
             pointer.setDouble(i, a[i]);
         }
@@ -1810,7 +1810,7 @@ public final class JniFunctions {
     private static int RegisterNatives(Pointer env, JniHandle javaType, Pointer methods, int numberOfMethods) {
         Pointer a = methods;
 
-        final int pointerSize = Word.width().numberOfBytes();
+        final int pointerSize = Word.width().numberOfBytes;
         final int NAME = 0 * pointerSize;
         final int SIGNATURE = 1 * pointerSize;
         final int FNPTR = 2 * pointerSize;
@@ -1832,7 +1832,7 @@ public final class JniFunctions {
                 if (classMethodActor == null || !classMethodActor.isNative()) {
                     throw new NoSuchMethodError();
                 }
-                classMethodActor.nativeFunction().setAddress(fnPtr);
+                classMethodActor.nativeFunction.setAddress(fnPtr);
 
             } catch (Utf8Exception e) {
                 throw new NoSuchMethodError();
@@ -1849,7 +1849,7 @@ public final class JniFunctions {
         final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
         classActor.forAllClassMethodActors(new Procedure<ClassMethodActor>() {
             public void run(ClassMethodActor classMethodActor) {
-                classMethodActor.nativeFunction().setAddress(Word.zero());
+                classMethodActor.nativeFunction.setAddress(Word.zero());
             }
         });
         return 0;
@@ -2033,7 +2033,7 @@ public final class JniFunctions {
         final SignatureDescriptor signature = methodActor.descriptor();
         for (int i = 0; i < signature.numberOfParameters(); ++i) {
             final Kind kind = signature.parameterDescriptorAt(i).toKind();
-            kinds.setByte(i, (byte) kind.asEnum().ordinal());
+            kinds.setByte(i, (byte) kind.asEnum.ordinal());
         }
     }
 

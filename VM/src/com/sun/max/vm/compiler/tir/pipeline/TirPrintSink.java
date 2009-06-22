@@ -45,21 +45,21 @@ public class TirPrintSink extends TirBufferedSink {
     }
 
     private class PrintSink extends TirInstructionFilter {
-        private GrowableMapping<TirMessage, String> _labelMap = new IdentityHashMapping<TirMessage, String>();
+        private GrowableMapping<TirMessage, String> labelMap = new IdentityHashMapping<TirMessage, String>();
         private OperandVisitor operandVisitor = new OperandVisitor();
         private TirTreeBegin treeBegin;
-        private TirTraceBegin _traceBegin;
+        private TirTraceBegin traceBegin;
 
         private MapFunction<TirInstruction, String> defLabelMap = new MapFunction<TirInstruction, String>() {
             public String map(TirInstruction instruction) {
-                assert _labelMap.containsKey(instruction) == false;
-                final String name = "(" + _labelMap.length() + ")";
-                _labelMap.put(instruction, name);
+                assert labelMap.containsKey(instruction) == false;
+                final String name = "(" + labelMap.length() + ")";
+                labelMap.put(instruction, name);
                 return name;
             }
         };
 
-        private MapFunction<TirInstruction, String> _useLabelMap = new MapFunction<TirInstruction, String>() {
+        private MapFunction<TirInstruction, String> useLabelMap = new MapFunction<TirInstruction, String>() {
             public String map(TirInstruction instruction) {
                 if (instruction == Placeholder.FILLER) {
                     return "%";
@@ -71,10 +71,10 @@ public class TirPrintSink extends TirBufferedSink {
                     final String variableName = localVar((TirLocal) instruction, treeBegin.tree());
                     return variableName;
                 }
-                String name = _labelMap.get(instruction);
+                String name = labelMap.get(instruction);
                 if (name == null) {
-                    name = "(" + _labelMap.length() + ")";
-                    _labelMap.put(instruction, name);
+                    name = "(" + labelMap.length() + ")";
+                    labelMap.put(instruction, name);
                 }
                 return name;
             }
@@ -86,24 +86,24 @@ public class TirPrintSink extends TirBufferedSink {
 
         @Override
         public void visit(TirTreeBegin treeBegin) {
-            NameMap.updateLabelMap(treeBegin.tree(), _useLabelMap);
+            NameMap.updateLabelMap(treeBegin.tree(), useLabelMap);
             assert treeBegin.order() == TirPipelineOrder.FORWARD;
             this.treeBegin = treeBegin;
             Console.printDivider("TREE " + NameMap.nameOf(treeBegin.tree()), '=', 6);
             Console.print("entry state: ");
-            treeBegin.tree().entryState().println(_useLabelMap);
+            treeBegin.tree().entryState().println(useLabelMap);
             Console.println("anchor: " + treeBegin.tree().anchor().toString());
             Console.printDivider('-');
         }
 
         @Override
         public void visit(TirTraceBegin traceBegin) {
-            _traceBegin = traceBegin;
+            this.traceBegin = traceBegin;
             final String title;
-            if (_traceBegin.trace().anchor() == null) {
+            if (this.traceBegin.trace().anchor() == null) {
                 title = "TRUNK";
             } else {
-                title = "BRANCH AT " + _useLabelMap.map(_traceBegin.trace().anchor().guard());
+                title = "BRANCH AT " + useLabelMap.map(this.traceBegin.trace().anchor().guard());
             }
             Console.printDivider(title, '-', 6);
         }
@@ -112,7 +112,7 @@ public class TirPrintSink extends TirBufferedSink {
         public void visit(TirTraceEnd traceEnd) {
             Console.printDivider("TRACE END", '-', 6);
             Console.print("tail state: ");
-            _traceBegin.trace().tailState().println(_useLabelMap);
+            traceBegin.trace().tailState().println(useLabelMap);
         }
 
         @Override
@@ -142,7 +142,7 @@ public class TirPrintSink extends TirBufferedSink {
         public void visit(TirTreeCall call) {
             printPrefix(call);
             Console.print(" " + NameMap.nameOf(call.tree()) + " state: ");
-            call.state().println(_useLabelMap);
+            call.state().println(useLabelMap);
         }
 
         @Override
@@ -150,19 +150,19 @@ public class TirPrintSink extends TirBufferedSink {
             printPrefix(call);
             printOperands(call);
             Console.print(" state: ");
-            call.state().println(_useLabelMap);
+            call.state().println(useLabelMap);
         }
 
         @Override
         public void visit(TirGuard guard) {
             printPrefix(guard);
             Console.print(" #" + treeBegin.tree().getNumber(guard));
-            Console.print(", " + _useLabelMap.map(guard.operand0()) + " " + guard.valueComparator().symbol() + " " + _useLabelMap.map(guard.operand1()));
+            Console.print(", " + useLabelMap.map(guard.operand0()) + " " + guard.valueComparator().symbol() + " " + useLabelMap.map(guard.operand1()));
             if (guard.thorwable() != null) {
                 Console.print(", " + guard.thorwable().getSimpleName());
             }
             Console.print(", state: ");
-            guard.state().println(_useLabelMap);
+            guard.state().println(useLabelMap);
         }
 
         @Override
@@ -193,7 +193,7 @@ public class TirPrintSink extends TirBufferedSink {
         public class OperandVisitor extends TirInstructionAdapter {
             @Override
             public void visit(TirInstruction instruction) {
-                Console.print(" " + _useLabelMap.map(instruction));
+                Console.print(" " + useLabelMap.map(instruction));
             }
         }
     }

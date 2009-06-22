@@ -70,50 +70,50 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
         return false;
     }
 
-    private final GripScheme _gripScheme;
+    private final GripScheme gripScheme;
 
     /**
      * The offset of the hub pointer.
      */
-    final int _hubOffset;
+    final int hubOffset;
 
     /**
      * The offset of the extras (i.e. monitor and hashcode info).
      */
-    final int _miscOffset;
+    final int miscOffset;
 
     /**
      * The offset of the array length.
      */
-    protected final int _arrayLengthOffset;
+    protected final int arrayLengthOffset;
 
     public HomGeneralLayout(GripScheme gripScheme) {
-        _gripScheme = gripScheme;
-        _miscOffset = 0 - Word.size();
-        _hubOffset = _miscOffset - Word.size();
-        _arrayLengthOffset = _hubOffset - Word.size();
+        this.gripScheme = gripScheme;
+        this.miscOffset = 0 - Word.size();
+        this.hubOffset = miscOffset - Word.size();
+        this.arrayLengthOffset = hubOffset - Word.size();
     }
 
-    public GripScheme gripScheme() {
-        return _gripScheme;
+    public final GripScheme gripScheme() {
+        return gripScheme;
     }
 
     @INLINE(override = true)
     public Pointer cellToOrigin(Pointer cell) {
-        return cell.isBitSet(0) ? cell.plus(-_arrayLengthOffset) : cell.plus(-_miscOffset);
+        return cell.isBitSet(0) ? cell.plus(-arrayLengthOffset) : cell.plus(-miscOffset);
     }
 
     @ACCESSOR(Pointer.class)
     @INLINE(override = true)
     public Pointer originToCell(Pointer origin) {
-        return isArray(origin) ? origin.plus(_arrayLengthOffset) : origin.plus(_hubOffset);
+        return isArray(origin) ? origin.plus(arrayLengthOffset) : origin.plus(hubOffset);
     }
 
     public Offset getOffsetFromOrigin(HeaderField headerField) {
         if (headerField == HeaderField.HUB) {
-            return Offset.fromInt(_hubOffset);
+            return Offset.fromInt(hubOffset);
         } else if (headerField == HeaderField.MISC) {
-            return Offset.fromInt(_miscOffset);
+            return Offset.fromInt(miscOffset);
         }
         throw new IllegalArgumentException(getClass().getSimpleName() + " does not know about header field: " + headerField);
     }
@@ -155,97 +155,97 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
 
     @INLINE
     public final Reference readHubReference(Accessor accessor) {
-        return accessor.readReference(_hubOffset);
+        return accessor.readReference(hubOffset);
     }
 
     @INLINE
     public final Word readHubReferenceAsWord(Accessor accessor) {
-        return accessor.readWord(_hubOffset);
+        return accessor.readWord(hubOffset);
     }
 
     @INLINE
     public final void writeHubReference(Accessor accessor, Reference referenceClassReference) {
-        accessor.writeReference(_hubOffset, referenceClassReference);
+        accessor.writeReference(hubOffset, referenceClassReference);
     }
 
     @INLINE
     public final Word readMisc(Accessor accessor) {
-        return accessor.readWord(_miscOffset);
+        return accessor.readWord(miscOffset);
     }
 
     @INLINE
     public final void writeMisc(Accessor accessor, Word value) {
-        accessor.writeWord(_miscOffset, value);
+        accessor.writeWord(miscOffset, value);
     }
 
     @INLINE
     public final Word compareAndSwapMisc(Accessor accessor, Word suspectedValue, Word newValue) {
-        return accessor.compareAndSwapWord(_miscOffset, suspectedValue, newValue);
+        return accessor.compareAndSwapWord(miscOffset, suspectedValue, newValue);
     }
 
     @INLINE
     public final Grip forwarded(Grip grip) {
         if (grip.isMarked()) {
-            return grip.readGrip(_hubOffset).unmarked();
+            return grip.readGrip(hubOffset).unmarked();
         }
         return grip;
     }
 
     @INLINE
     public Grip readForwardGrip(Accessor accessor) {
-        final Grip forwardGrip = accessor.readGrip(_hubOffset);
+        final Grip forwardGrip = accessor.readGrip(hubOffset);
         if (forwardGrip.isMarked()) {
             return forwardGrip.unmarked();
         }
         // no forward reference has been stored
-        return _gripScheme.zero();
+        return gripScheme.zero();
     }
 
     @INLINE
     public Grip readForwardGripValue(Accessor accessor) {
-        final Grip forwardGrip = accessor.readGrip(_hubOffset);
+        final Grip forwardGrip = accessor.readGrip(hubOffset);
         if (forwardGrip.isMarked()) {
             return forwardGrip.unmarked();
         }
         // no forward reference has been stored
-        return _gripScheme.zero();
+        return gripScheme.zero();
     }
 
     @INLINE
     public void writeForwardGrip(Accessor accessor, Grip forwardGrip) {
-        accessor.writeGrip(_hubOffset, forwardGrip.marked());
+        accessor.writeGrip(hubOffset, forwardGrip.marked());
     }
 
     @INLINE
     public final Grip compareAndSwapForwardGrip(Accessor accessor, Grip suspectedGrip, Grip forwardGrip) {
-        return UnsafeLoophole.referenceToGrip(accessor.compareAndSwapReference(_hubOffset, UnsafeLoophole.gripToReference(suspectedGrip), UnsafeLoophole.gripToReference(forwardGrip.marked())));
+        return UnsafeLoophole.referenceToGrip(accessor.compareAndSwapReference(hubOffset, UnsafeLoophole.gripToReference(suspectedGrip), UnsafeLoophole.gripToReference(forwardGrip.marked())));
     }
 
     @PROTOTYPE_ONLY
     public void visitHeader(ObjectCellVisitor visitor, Object object) {
         final Hub hub = HostObjectAccess.readHub(object);
-        final int origin = hub.specificLayout().isTupleLayout() ? -_miscOffset : -_arrayLengthOffset;
-        visitor.visitHeaderField(origin + _hubOffset, "hub", JavaTypeDescriptor.forJavaClass(hub.getClass()), ReferenceValue.from(hub));
-        visitor.visitHeaderField(origin + _miscOffset, "misc", JavaTypeDescriptor.WORD, new WordValue(gripScheme().vmConfiguration().monitorScheme().createMisc(object)));
+        final int origin = hub.specificLayout().isTupleLayout() ? -miscOffset : -arrayLengthOffset;
+        visitor.visitHeaderField(origin + hubOffset, "hub", JavaTypeDescriptor.forJavaClass(hub.getClass()), ReferenceValue.from(hub));
+        visitor.visitHeaderField(origin + miscOffset, "misc", JavaTypeDescriptor.WORD, new WordValue(gripScheme().vmConfiguration().monitorScheme().createMisc(object)));
     }
 
     protected Value readHeaderValue(ObjectMirror mirror, int offset) {
-        if (offset == _hubOffset) {
+        if (offset == hubOffset) {
             return mirror.readHub();
-        } else if (offset == _arrayLengthOffset) {
+        } else if (offset == arrayLengthOffset) {
             return mirror.readArrayLength();
-        } else if (offset == _miscOffset) {
+        } else if (offset == miscOffset) {
             return mirror.readMisc();
         }
         return null;
     }
 
     protected boolean writeHeaderValue(ObjectMirror mirror, int offset, Value value) {
-        if (offset == _hubOffset) {
+        if (offset == hubOffset) {
             mirror.writeHub(value);
-        } else if (offset == _arrayLengthOffset) {
+        } else if (offset == arrayLengthOffset) {
             mirror.writeArrayLength(value);
-        } else if (offset == _miscOffset) {
+        } else if (offset == miscOffset) {
             mirror.writeMisc(value);
         } else {
             return false;

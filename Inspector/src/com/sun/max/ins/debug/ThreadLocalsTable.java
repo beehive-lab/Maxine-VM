@@ -331,7 +331,7 @@ public final class ThreadLocalsTable extends InspectorTable {
             if (label == null) {
                 final String name = VmThreadLocal.NAMES.get(row);
                 final VmThreadLocal local = row < VmThreadLocal.VALUES.length() ? VmThreadLocal.VALUES.get(row) : null;
-                final ValueMode valueMode = local != null && local.kind() == Kind.REFERENCE ? ValueMode.REFERENCE : ValueMode.WORD;
+                final ValueMode valueMode = local != null && local.kind == Kind.REFERENCE ? ValueMode.REFERENCE : ValueMode.WORD;
                 label = new WordValueLabel(inspection(), valueMode, ThreadLocalsTable.this) {
                     @Override
                     public Value fetchValue() {

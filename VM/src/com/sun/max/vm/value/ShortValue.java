@@ -31,17 +31,17 @@ import com.sun.max.vm.type.*;
  */
 public final class ShortValue extends PrimitiveValue<ShortValue> {
 
-    private final short _value;
+    private final short value;
 
     private static final class Cache {
         private Cache() {
         }
 
-        static final ShortValue[] _cache = new ShortValue[-(-128) + 127 + 1];
+        static final ShortValue[] cache = new ShortValue[-(-128) + 127 + 1];
 
         static {
-            for (int i = 0; i < _cache.length; i++) {
-                _cache[i] = new ShortValue((short) (i - 128));
+            for (int i = 0; i < cache.length; i++) {
+                cache[i] = new ShortValue((short) (i - 128));
             }
         }
     }
@@ -50,7 +50,7 @@ public final class ShortValue extends PrimitiveValue<ShortValue> {
         final int offset = 128;
         final int valueAsInt = value;
         if (valueAsInt >= -128 && valueAsInt <= 127) { // must cache
-            return Cache._cache[valueAsInt + offset];
+            return Cache.cache[valueAsInt + offset];
         }
         return new ShortValue(value);
     }
@@ -64,7 +64,7 @@ public final class ShortValue extends PrimitiveValue<ShortValue> {
     }
 
     private ShortValue(short value) {
-        _value = value;
+        this.value = value;
     }
 
     @Override
@@ -74,12 +74,12 @@ public final class ShortValue extends PrimitiveValue<ShortValue> {
 
     @Override
     public boolean isZero() {
-        return _value == (short) 0;
+        return value == (short) 0;
     }
 
     @Override
     public boolean isAllOnes() {
-        return _value == (short) -1;
+        return value == (short) -1;
     }
 
     public static final ShortValue ZERO = ShortValue.from((short) 0);
@@ -99,42 +99,42 @@ public final class ShortValue extends PrimitiveValue<ShortValue> {
             return false;
         }
         final ShortValue shortValue = (ShortValue) other;
-        return _value == shortValue.asShort();
+        return value == shortValue.asShort();
     }
 
     @Override
     public String toString() {
-        return Short.toString(_value);
+        return Short.toString(value);
     }
 
     @Override
     public Short asBoxedJavaValue() {
-        return new Short(_value);
+        return new Short(value);
     }
 
     @Override
     public byte toByte() {
-        return (byte) _value;
+        return (byte) value;
     }
 
     @Override
     public byte unsignedToByte() {
-        return (byte) (_value & 0xff);
+        return (byte) (value & 0xff);
     }
 
     @Override
     public boolean toBoolean() {
-        return (_value != (short) 0) ? true : false;
+        return (value != (short) 0) ? true : false;
     }
 
     @Override
     public short asShort() {
-        return _value;
+        return value;
     }
 
     @Override
     public short unboxShort() {
-        return _value;
+        return value;
     }
 
     @Override
@@ -144,66 +144,66 @@ public final class ShortValue extends PrimitiveValue<ShortValue> {
 
     @Override
     public short toShort() {
-        return _value;
+        return value;
     }
 
     @Override
     public short unsignedToShort() {
-        return _value;
+        return value;
     }
 
     @Override
     public char toChar() {
-        return (char) _value;
+        return (char) value;
     }
 
     @Override
     public int toInt() {
-        return _value;
+        return value;
     }
 
     @Override
     public int unsignedToInt() {
-        return _value & 0xffff;
+        return value & 0xffff;
     }
 
     @Override
     public float toFloat() {
-        return _value;
+        return value;
     }
 
     @Override
     public long toLong() {
-        return _value;
+        return value;
     }
 
     @Override
     public double toDouble() {
-        return _value;
+        return value;
     }
 
     @Override
     public Word toWord() {
-        return Offset.fromInt(_value);
+        return Offset.fromInt(value);
     }
 
     @Override
     public WordWidth signedEffectiveWidth() {
-        return WordWidth.signedEffective(_value);
+        return WordWidth.signedEffective(value);
     }
 
     @Override
     public WordWidth unsignedEffectiveWidth() {
-        return WordWidth.unsignedEffective(_value & 0xffff);
+        return WordWidth.unsignedEffective(value & 0xffff);
     }
 
     @Override
     public byte[] toBytes(DataModel dataModel) {
-        return dataModel.toBytes(_value);
+        return dataModel.toBytes(value);
     }
 
     @Override
     public void write(DataOutput stream) throws IOException {
-        stream.writeShort(_value);
+        stream.writeShort(value);
     }
 }

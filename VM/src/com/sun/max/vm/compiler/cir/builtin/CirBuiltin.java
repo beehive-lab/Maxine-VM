@@ -127,7 +127,7 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
     }
 
     @CONSTANT
-    protected FoldableVariant _foldableVariant;
+    protected FoldableVariant foldableVariant;
 
     /**
      * Same idea as {@link FoldableVariant} above, but restricted to uses of {@link CONSTANT_WHEN_NOT_ZERO}.
@@ -169,13 +169,13 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
     }
 
     private void initialize() {
-        _foldableVariant = new FoldableVariant(this);
+        foldableVariant = new FoldableVariant(this);
         foldableWhenNotZeroVariant = new FoldableWhenNotZeroVariant(this);
 
-        _foldableVariant._foldableVariant = _foldableVariant;
-        _foldableVariant.foldableWhenNotZeroVariant = foldableWhenNotZeroVariant;
+        foldableVariant.foldableVariant = foldableVariant;
+        foldableVariant.foldableWhenNotZeroVariant = foldableWhenNotZeroVariant;
 
-        foldableWhenNotZeroVariant._foldableVariant = _foldableVariant;
+        foldableWhenNotZeroVariant.foldableVariant = foldableVariant;
         foldableWhenNotZeroVariant.foldableWhenNotZeroVariant = foldableWhenNotZeroVariant;
     }
 
@@ -184,7 +184,7 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
     }
 
     public final CirBuiltin foldableVariant() {
-        return _foldableVariant;
+        return foldableVariant;
     }
 
     public final CirBuiltin foldableWhenNotZeroVariant() {

@@ -60,7 +60,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         Address a = address;
         for (EirLiteral literal : literals) {
             emitter.fixLabel(literal.asLabel(), a);
-            a = a.plus(literal.value().kind().size());
+            a = a.plus(literal.value().kind().width.numberOfBytes);
         }
         return a;
     }
@@ -70,7 +70,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
             return null;
         }
         final EirLiteral lastLiteral = scalarLiterals.last();
-        final ByteArrayOutputStream stream = new ByteArrayOutputStream(lastLiteral.index() + lastLiteral.value().kind().size());
+        final ByteArrayOutputStream stream = new ByteArrayOutputStream(lastLiteral.index() + lastLiteral.value().kind().width.numberOfBytes);
         for (EirLiteral literal : scalarLiterals) {
             try {
                 assert literal.index() == stream.size();
@@ -214,7 +214,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         return targetMethod;
     }
 
-    private static final TimerMetric _timer = GlobalMetrics.newTimer("Translate-EirToTarget", Clock.SYSTEM_MILLISECONDS);
+    private static final TimerMetric timer = GlobalMetrics.newTimer("Translate-EirToTarget", Clock.SYSTEM_MILLISECONDS);
 
     @Override
     protected void generateIrMethod(TargetMethod targetMethod, CompilationDirective compilationDirective) {
@@ -222,9 +222,9 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         final EirGenerator<?> eirGenerator = eirGeneratorScheme.eirGenerator();
         final EirMethod eirMethod = eirGenerator.makeIrMethod(targetMethod.classMethodActor());
 
-        _timer.start();
+        timer.start();
         generateTarget(targetMethod, eirMethod);
-        _timer.stop();
+        timer.stop();
     }
 
     private void generateTarget(TargetMethod targetMethod, final EirMethod eirMethod) throws ProgramError {

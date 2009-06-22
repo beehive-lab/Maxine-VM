@@ -186,7 +186,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public Word getWord(Address address, int displacement, int index) {
-        return readWord(address.plus(displacement).plus(index * _wordWidth.numberOfBytes()));
+        return readWord(address.plus(displacement).plus(index * _wordWidth.numberOfBytes));
     }
 
     public void writeBuffer(Address address, ByteBuffer buffer) {
@@ -338,7 +338,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public void setWord(Address address, int displacement, int index, Word value) {
-        writeWord(address.plus(displacement).plus(index * _wordWidth.numberOfBytes()), value);
+        writeWord(address.plus(displacement).plus(index * _wordWidth.numberOfBytes), value);
     }
 }
 

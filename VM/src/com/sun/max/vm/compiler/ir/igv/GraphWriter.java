@@ -72,14 +72,14 @@ public class GraphWriter {
 
     private static class PropertyObject {
 
-        private Properties _properties;
+        private Properties properties;
 
         public PropertyObject() {
-            _properties = new Properties();
+            properties = new Properties();
         }
 
         public Properties getProperties() {
-            return _properties;
+            return properties;
         }
 
         @Override
@@ -186,14 +186,14 @@ public class GraphWriter {
 
         private Graph graph;
         private String name;
-        private AppendableSequence<Block> _successors;
+        private AppendableSequence<Block> successors;
         private AppendableSequence<Block> predecessors;
         private AppendableSequence<Node> nodes;
 
         private Block(Graph graph, String name) {
             this.graph = graph;
             this.name = name;
-            _successors = new LinkSequence<Block>();
+            successors = new LinkSequence<Block>();
             predecessors = new LinkSequence<Block>();
             nodes = new LinkSequence<Node>();
         }
@@ -207,7 +207,7 @@ public class GraphWriter {
         }
 
         public Sequence<Block> getSuccessors() {
-            return _successors;
+            return successors;
         }
 
         public Sequence<Block> getPredecessors() {
@@ -222,9 +222,9 @@ public class GraphWriter {
         }
 
         public void addSuccessor(Block b) {
-            assert !Sequence.Static.containsIdentical(_successors, b);
+            assert !Sequence.Static.containsIdentical(successors, b);
             assert b.getGraph() == graph;
-            _successors.append(b);
+            successors.append(b);
         }
 
         public void addPredecessor(Block b) {
@@ -240,27 +240,27 @@ public class GraphWriter {
 
     public static final class Graph extends PropertyObject {
 
-        private Set<Node> _nodes;
+        private Set<Node> nodes;
         private Set<Edge> edges;
         private AppendableSequence<Block> blocks;
         private GrowableMapping<Integer, Node> nodesMapping;
 
         private Graph(String name) {
             this.getProperties().setProperty(GRAPH_NAME_PROPERTY, name);
-            _nodes = new HashSet<Node>();
+            nodes = new HashSet<Node>();
             edges = new HashSet<Edge>();
             blocks = new LinkSequence<Block>();
             nodesMapping = new ChainedHashMapping<Integer, Node>();
         }
 
         public Collection<Node> getNodes() {
-            return _nodes;
+            return nodes;
         }
 
         public Node createNode(int id) {
             assert !nodesMapping.containsKey(id);
             final Node n = new Node(this, id);
-            _nodes.add(n);
+            nodes.add(n);
             nodesMapping.put(id, n);
             return n;
         }
@@ -296,22 +296,22 @@ public class GraphWriter {
 
     public static class Group extends PropertyObject {
 
-        private AppendableSequence<Graph> _graphs;
+        private AppendableSequence<Graph> graphs;
         private Method method;
 
         public Group(String name) {
             this.getProperties().setProperty(METHOD_NAME_PROPERTY, name);
-            _graphs = new LinkSequence<Graph>();
+            graphs = new LinkSequence<Graph>();
         }
 
         public Graph createGraph(String name) {
             final Graph g = new Graph(name);
-            _graphs.append(g);
+            graphs.append(g);
             return g;
         }
 
         public Sequence<Graph> getGraphs() {
-            return _graphs;
+            return graphs;
         }
 
         public Method getMethod() {
@@ -393,10 +393,10 @@ public class GraphWriter {
         }
     }
 
-    private XMLWriter _out;
+    private XMLWriter out;
 
     public GraphWriter(Writer out) {
-        this._out = new XMLWriter(out);
+        this.out = new XMLWriter(out);
     }
 
     public static Document createDocument() {
@@ -404,16 +404,16 @@ public class GraphWriter {
     }
 
     public void write(Document d) throws IOException {
-        _out.begin(TOP_ELEMENT);
+        out.begin(TOP_ELEMENT);
         writeProperties(d.getProperties());
         for (Group g : d.getGroups()) {
             writeGroup(g);
         }
-        _out.end(TOP_ELEMENT);
+        out.end(TOP_ELEMENT);
     }
 
     public void close() throws IOException {
-        this._out.close();
+        this.out.close();
     }
 
     private void writeMethod(Method m) throws IOException {
@@ -421,25 +421,25 @@ public class GraphWriter {
         p.setProperty(METHOD_BCI_PROPERTY, Integer.toString(m.getBci()));
         p.setProperty(METHOD_NAME_PROPERTY, m.getName());
         p.setProperty(METHOD_SHORT_NAME_PROPERTY, m.getShortName());
-        _out.begin(METHOD_ELEMENT, p);
+        out.begin(METHOD_ELEMENT, p);
 
         if (m.getInlinedMethods().length() > 0) {
-            _out.begin(INLINE_ELEMENT);
+            out.begin(INLINE_ELEMENT);
             for (Method im : m.getInlinedMethods()) {
                 writeMethod(im);
             }
-            _out.end(INLINE_ELEMENT);
+            out.end(INLINE_ELEMENT);
         }
 
-        _out.begin(BYTECODES_ELEMENT);
-        _out.writeData(m.getBytecodes());
-        _out.end(BYTECODES_ELEMENT);
+        out.begin(BYTECODES_ELEMENT);
+        out.writeData(m.getBytecodes());
+        out.end(BYTECODES_ELEMENT);
 
-        _out.end(METHOD_ELEMENT);
+        out.end(METHOD_ELEMENT);
     }
 
     private void writeGroup(Group g) throws IOException {
-        _out.begin(GROUP_ELEMENT, DIFFERENCE_PROPERTY, TRUE_VALUE);
+        out.begin(GROUP_ELEMENT, DIFFERENCE_PROPERTY, TRUE_VALUE);
         writeProperties(g.getProperties());
 
         Graph previous = null;
@@ -452,13 +452,13 @@ public class GraphWriter {
             writeMethod(g.getMethod());
         }
 
-        _out.end(GROUP_ELEMENT);
+        out.end(GROUP_ELEMENT);
     }
 
     private void writeNode(Node n) throws IOException {
-        _out.begin(NODE_ELEMENT, NODE_ID_PROPERTY, Integer.toString(n.getId()));
+        out.begin(NODE_ELEMENT, NODE_ID_PROPERTY, Integer.toString(n.getId()));
         writeProperties(n.getProperties());
-        _out.end(NODE_ELEMENT);
+        out.end(NODE_ELEMENT);
     }
 
     private void writeEdge(Edge e, String elementName) throws IOException {
@@ -467,18 +467,18 @@ public class GraphWriter {
         p.setProperty(FROM_INDEX_PROPERTY, Integer.toString(e.getFromIndex()));
         p.setProperty(TO_PROPERTY, Integer.toString(e.getTo()));
         p.setProperty(TO_INDEX_PROPERTY, Integer.toString(e.getToIndex()));
-        _out.simple(elementName, p);
+        out.simple(elementName, p);
     }
 
     private void writeNodeRemoval(Node n) throws IOException {
-        _out.simple(REMOVE_NODE_ELEMENT, NODE_ID_PROPERTY, Integer.toString(n.getId()));
+        out.simple(REMOVE_NODE_ELEMENT, NODE_ID_PROPERTY, Integer.toString(n.getId()));
     }
 
     private void writeGraph(Graph g, Graph previous) throws IOException {
-        _out.begin(GRAPH_ELEMENT);
+        out.begin(GRAPH_ELEMENT);
         writeProperties(g.getProperties());
 
-        _out.begin(NODES_ELEMENT);
+        out.begin(NODES_ELEMENT);
         for (Node n : g.getNodes()) {
             Node prev = null;
             if (previous != null) {
@@ -497,8 +497,8 @@ public class GraphWriter {
             }
         }
 
-        _out.end(NODES_ELEMENT);
-        _out.begin(EDGES_ELEMENT);
+        out.end(NODES_ELEMENT);
+        out.begin(EDGES_ELEMENT);
 
         for (Edge e : g.getEdges()) {
             if (previous == null || !previous.getEdges().contains(e)) {
@@ -514,36 +514,36 @@ public class GraphWriter {
             }
         }
 
-        _out.end(EDGES_ELEMENT);
+        out.end(EDGES_ELEMENT);
 
-        _out.begin(CONTROL_FLOW_ELEMENT);
+        out.begin(CONTROL_FLOW_ELEMENT);
         for (Block b : g.getBlocks()) {
             writeBlock(b);
         }
-        _out.end(CONTROL_FLOW_ELEMENT);
+        out.end(CONTROL_FLOW_ELEMENT);
 
-        _out.end(GRAPH_ELEMENT);
+        out.end(GRAPH_ELEMENT);
     }
 
     private void writeBlock(Block b) throws IOException {
-        _out.begin(BLOCK_ELEMENT, BLOCK_NAME_PROPERTY, b.getName());
-        _out.begin(SUCCESSORS_ELEMENT);
+        out.begin(BLOCK_ELEMENT, BLOCK_NAME_PROPERTY, b.getName());
+        out.begin(SUCCESSORS_ELEMENT);
         for (Block s : b.getSuccessors()) {
-            _out.simple(SUCCESSORS_ELEMENT, BLOCK_NAME_PROPERTY, s.getName());
+            out.simple(SUCCESSORS_ELEMENT, BLOCK_NAME_PROPERTY, s.getName());
         }
-        _out.end(SUCCESSORS_ELEMENT);
-        _out.begin(NODES_ELEMENT);
+        out.end(SUCCESSORS_ELEMENT);
+        out.begin(NODES_ELEMENT);
         for (Node n : b.getNodes()) {
-            _out.simple(NODE_ELEMENT, NODE_ID_PROPERTY, Integer.toString(n.getId()));
+            out.simple(NODE_ELEMENT, NODE_ID_PROPERTY, Integer.toString(n.getId()));
         }
-        _out.end(NODES_ELEMENT);
-        _out.end(BLOCK_ELEMENT);
+        out.end(NODES_ELEMENT);
+        out.end(BLOCK_ELEMENT);
     }
 
     private void writeProperty(String name, String value) throws IOException {
-        _out.begin(PROPERTY_ELEMENT, PROPERTY_NAME_PROPERTY, name);
-        _out.write(value);
-        _out.end(PROPERTY_ELEMENT);
+        out.begin(PROPERTY_ELEMENT, PROPERTY_NAME_PROPERTY, name);
+        out.write(value);
+        out.end(PROPERTY_ELEMENT);
 
     }
 
@@ -553,12 +553,12 @@ public class GraphWriter {
             return;
         }
 
-        _out.begin(PROPERTIES_ELEMENT);
+        out.begin(PROPERTIES_ELEMENT);
         final Enumeration e = properties.propertyNames();
         while (e.hasMoreElements()) {
             final String propertyName = (String) e.nextElement();
             writeProperty(propertyName, properties.getProperty(propertyName));
         }
-        _out.end(PROPERTIES_ELEMENT);
+        out.end(PROPERTIES_ELEMENT);
     }
 }

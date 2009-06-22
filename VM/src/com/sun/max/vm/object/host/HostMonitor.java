@@ -31,12 +31,12 @@ import com.sun.max.unsafe.*;
 @PROTOTYPE_ONLY
 public final class HostMonitor {
 
-    protected static final Unsafe _unsafe = (Unsafe) WithoutAccessCheck.getStaticField(Unsafe.class, "theUnsafe");
+    protected static final Unsafe unsafe = (Unsafe) WithoutAccessCheck.getStaticField(Unsafe.class, "theUnsafe");
 
     private HostMonitor() {
     }
 
-    private static final Map<Object, Monitor> _monitorMap = new IdentityHashMap<Object, Monitor>();
+    private static final Map<Object, Monitor> monitorMap = new IdentityHashMap<Object, Monitor>();
 
     private static class Monitor extends ReentrantLock {
         @Override
@@ -47,10 +47,10 @@ public final class HostMonitor {
     }
 
     private static Monitor getMonitor(Object object) {
-        Monitor lock = _monitorMap.get(object);
+        Monitor lock = monitorMap.get(object);
         if (lock == null) {
             lock = new Monitor();
-            _monitorMap.put(object, lock);
+            monitorMap.put(object, lock);
         }
         return lock;
     }
@@ -63,23 +63,23 @@ public final class HostMonitor {
     }
 
     public static void enter(Object object) {
-        if (_unsafe != null) {
-            _unsafe.monitorEnter(object);
+        if (unsafe != null) {
+            unsafe.monitorEnter(object);
         } else {
             getMonitor(object).lock();
         }
     }
 
     public static void exit(Object object) {
-        if (_unsafe != null) {
-            _unsafe.monitorExit(object);
+        if (unsafe != null) {
+            unsafe.monitorExit(object);
         } else {
             checkOwner(getMonitor(object)).unlock();
         }
     }
 
     public static void wait(Object object, long timeout) throws InterruptedException {
-        if (_unsafe != null) {
+        if (unsafe != null) {
             object.wait(timeout);
         } else {
             final Monitor monitor = checkOwner(getMonitor(object));
@@ -94,7 +94,7 @@ public final class HostMonitor {
     }
 
     public static void notify(Object object) {
-        if (_unsafe != null) {
+        if (unsafe != null) {
             object.notify();
         } else {
             final Monitor monitor = checkOwner(getMonitor(object));
@@ -108,7 +108,7 @@ public final class HostMonitor {
     }
 
     public static void notifyAll(Object object) {
-        if (_unsafe != null) {
+        if (unsafe != null) {
             object.notifyAll();
         } else {
             final Monitor monitor = checkOwner(getMonitor(object));

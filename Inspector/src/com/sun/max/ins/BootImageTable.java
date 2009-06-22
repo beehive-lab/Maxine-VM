@@ -147,16 +147,16 @@ public class BootImageTable extends InspectorTable {
             final DataModel processorDataModel = processorKind.dataModel();
             _dummyLabel = new PlainLabel(inspection, "");
 
-            addRow("identification:", new DataLabel.IntAsHex(inspection(), header._identification), null);
-            addRow("version:", new DataLabel.IntAsDecimal(inspection(),  header._version), null);
-            addRow("random ID:", new DataLabel.IntAsHex(inspection(), header._randomID), null);
+            addRow("identification:", new DataLabel.IntAsHex(inspection(), header.identification), null);
+            addRow("version:", new DataLabel.IntAsDecimal(inspection(),  header.version), null);
+            addRow("random ID:", new DataLabel.IntAsHex(inspection(), header.randomID), null);
 
             addRow("build level:", new DataLabel.EnumAsText(inspection(), vmConfiguration.buildLevel()), null);
 
             addRow("processor model:", new DataLabel.EnumAsText(inspection(), processorKind.processorModel()), null);
             addRow("instruction set:", new DataLabel.EnumAsText(inspection(), processorKind.instructionSet()), null);
 
-            addRow("bits/word:", new DataLabel.IntAsDecimal(inspection(), processorDataModel.wordWidth().numberOfBits()), null);
+            addRow("bits/word:", new DataLabel.IntAsDecimal(inspection(), processorDataModel.wordWidth().numberOfBits), null);
             addRow("endianness:", new DataLabel.EnumAsText(inspection(), processorDataModel.endianness()), null);
             addRow("alignment:", new DataLabel.IntAsDecimal(inspection(), processorDataModel.alignment().numberOfBytes()), null);
 
@@ -176,9 +176,9 @@ public class BootImageTable extends InspectorTable {
             addRow("target ABIs scheme:", new JavaNameLabel(inspection(), vmConfiguration.targetABIsScheme().name(), vmConfiguration.targetABIsScheme().getClass().getName()), null);
             addRow("run scheme:", new JavaNameLabel(inspection(), vmConfiguration.runScheme().name(), vmConfiguration.runScheme().getClass().getName()), null);
 
-            addRow("relocation scheme:", new DataLabel.IntAsHex(inspection(), header._relocationScheme), null);
-            addRow("relocation data size:", new DataLabel.IntAsHex(inspection(), header._relocationDataSize), null);
-            addRow("string data size:", new DataLabel.IntAsHex(inspection(), header._stringInfoSize), null);
+            addRow("relocation scheme:", new DataLabel.IntAsHex(inspection(), header.relocationScheme), null);
+            addRow("relocation data size:", new DataLabel.IntAsHex(inspection(), header.relocationDataSize), null);
+            addRow("string data size:", new DataLabel.IntAsHex(inspection(), header.stringInfoSize), null);
 
             final Pointer bootImageStart = maxVM().bootImageStart();
 
@@ -196,26 +196,26 @@ public class BootImageTable extends InspectorTable {
             addRow("boot code size:", new DataLabel.IntAsHex(inspection(), header.bootCodeSize), null);
             addRow("boot code end:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeEnd, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootCodeEnd));
 
-            addRow("code cache size:", new DataLabel.IntAsHex(inspection(), header._codeCacheSize), null);
-            addRow("thread local space size:", new DataLabel.IntAsHex(inspection(), header._vmThreadLocalsSize), null);
+            addRow("code cache size:", new DataLabel.IntAsHex(inspection(), header.codeCacheSize), null);
+            addRow("thread local space size:", new DataLabel.IntAsHex(inspection(), header.vmThreadLocalsSize), null);
 
-            final Pointer runMethodPointer = bootImageStart.plus(header._vmRunMethodOffset);
+            final Pointer runMethodPointer = bootImageStart.plus(header.vmRunMethodOffset);
             addRow("vmStartupMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT,  runMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), runMethodPointer));
-            final Pointer threadRunMethodPointer = bootImageStart.plus(header._vmThreadRunMethodOffset);
+            final Pointer threadRunMethodPointer = bootImageStart.plus(header.vmThreadRunMethodOffset);
             addRow("vmThreadRunMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, threadRunMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), threadRunMethodPointer));
-            final Pointer runSchemeRunMethodPointer = bootImageStart.plus(header._runSchemeRunMethodOffset);
+            final Pointer runSchemeRunMethodPointer = bootImageStart.plus(header.runSchemeRunMethodOffset);
             addRow("runSchemeRunMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, runSchemeRunMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), runSchemeRunMethodPointer));
 
-            final Pointer classRegistryPointer = bootHeapStart.plus(header._classRegistryOffset);
+            final Pointer classRegistryPointer = bootHeapStart.plus(header.classRegistryOffset);
             addRow("class registry:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, classRegistryPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), classRegistryPointer));
-            final Pointer bootHeapPointer = bootHeapStart.plus(header._heapRegionsPointerOffset);
+            final Pointer bootHeapPointer = bootHeapStart.plus(header.heapRegionsPointerOffset);
             addRow("heap regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootHeapPointer));
-            final Pointer bootCodePointer = bootCodeStart.plus(header._codeRegionsPointerOffset);
+            final Pointer bootCodePointer = bootCodeStart.plus(header.codeRegionsPointerOffset);
             addRow("code regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodePointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootCodePointer));
 
-            final Pointer messengerInfoPointer = bootImageStart.plus(header._messengerInfoOffset);
+            final Pointer messengerInfoPointer = bootImageStart.plus(header.messengerInfoOffset);
             addRow("messenger info pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, messengerInfoPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), messengerInfoPointer));
-            final Pointer threadSpecificsListPointer = bootImageStart.plus(header._threadSpecificsListOffset);
+            final Pointer threadSpecificsListPointer = bootImageStart.plus(header.threadSpecificsListOffset);
             addRow("thread specifics list pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, threadSpecificsListPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), threadSpecificsListPointer));
 
 

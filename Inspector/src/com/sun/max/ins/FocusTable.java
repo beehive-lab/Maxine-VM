@@ -279,7 +279,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
                         setValue(null, "No stack frame focus");
                     } else {
                         final TargetMethod targetMethod = stackFrame.targetMethod();
-                        final String name = targetMethod == null ? "nativeMethod: 0x" + stackFrame.instructionPointer().toHexString() : targetMethod.toString();
+                        final String name = targetMethod == null ? "nativeMethod: 0x" + stackFrame.instructionPointer.toHexString() : targetMethod.toString();
                         setValue(name, "Stack frame focus = " + name);
                     }
                 }

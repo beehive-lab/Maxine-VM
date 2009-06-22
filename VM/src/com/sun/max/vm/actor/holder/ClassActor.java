@@ -171,11 +171,11 @@ public abstract class ClassActor extends Actor {
         final GrowableMapping<MethodActor, VirtualMethodActor> methodLookup = new ChainedHashMapping<MethodActor, VirtualMethodActor>(maxVtableSize) {
             @Override
             public boolean equivalent(MethodActor methodActor1, MethodActor methodActor2) {
-                return methodActor1.matchesNameAndType(methodActor2.name(), methodActor2.descriptor());
+                return methodActor1.matchesNameAndType(methodActor2.name, methodActor2.descriptor());
             }
             @Override
             public int hashCode(MethodActor methodActor) {
-                return methodActor.name().hashCode() ^ methodActor.descriptor().hashCode();
+                return methodActor.name.hashCode() ^ methodActor.descriptor().hashCode();
             }
         };
 
@@ -262,7 +262,7 @@ public abstract class ClassActor extends Actor {
 
     @Override
     public int hashCode() {
-        return name().hashCode();
+        return name.hashCode();
     }
 
     public boolean isPrimitiveClassActor() {
@@ -398,18 +398,13 @@ public abstract class ClassActor extends Actor {
      * Unique class actor identifier. Simplifies the implementation of type checking, interface dispatch, etc.
      */
     @INSPECTED
-    private final int id;
-
-    @INLINE
-    public final int id() {
-        return id;
-    }
+    public final int id;
 
     @INSPECTED
-    private final ClassLoader classLoader;
+    public final ClassLoader classLoader;
 
     @INSPECTED
-    private final TypeDescriptor typeDescriptor;
+    public final TypeDescriptor typeDescriptor;
 
     @INSPECTED
     @CONSTANT_WHEN_NOT_ZERO
@@ -425,23 +420,11 @@ public abstract class ClassActor extends Actor {
         return classRegistry().get(RUNTIME_VISIBLE_ANNOTATION_BYTES, this);
     }
 
-    private final ClassActor superClassActor;
+    public final ClassActor superClassActor;
 
-    public final ClassActor superClassActor() {
-        return superClassActor;
-    }
+    public final char majorVersion;
 
-    private final char majorVersion;
-
-    public final int majorVersion() {
-        return majorVersion;
-    }
-
-    private final char minorVersion;
-
-    public final int minorVersion() {
-        return minorVersion;
-    }
+    public final char minorVersion;
 
     private final InterfaceActor[] localInterfaceActors;
 
@@ -467,7 +450,7 @@ public abstract class ClassActor extends Actor {
 
     public final FieldActor findLocalStaticFieldActor(Utf8Constant name) {
         for (FieldActor fieldActor : localStaticFieldActors) {
-            if (fieldActor.name() == name) {
+            if (fieldActor.name == name) {
                 return fieldActor;
             }
         }
@@ -476,7 +459,7 @@ public abstract class ClassActor extends Actor {
 
     public final FieldActor findLocalStaticFieldActor(String name) {
         for (FieldActor fieldActor : localStaticFieldActors) {
-            if (fieldActor.name().toString().equals(name)) {
+            if (fieldActor.name.toString().equals(name)) {
                 return fieldActor;
             }
         }
@@ -494,7 +477,7 @@ public abstract class ClassActor extends Actor {
     private static <MemberActor_Type extends MemberActor> MemberActor_Type findMemberActor(MemberActor_Type[] memberActors, Utf8Constant name, Descriptor descriptor) {
         for (MemberActor_Type memberActor : memberActors) {
             if (descriptor == null) {
-                if (memberActor.name() == name) {
+                if (memberActor.name == name) {
                     return memberActor;
                 }
             } else {
@@ -533,7 +516,7 @@ public abstract class ClassActor extends Actor {
                     return interfaceResult;
                 }
             }
-            holder = holder.superClassActor();
+            holder = holder.superClassActor;
         } while (holder != null);
         return null;
     }
@@ -551,7 +534,7 @@ public abstract class ClassActor extends Actor {
                     return interfaceResult;
                 }
             }
-            holder = holder.superClassActor();
+            holder = holder.superClassActor;
         } while (holder != null);
         return null;
     }
@@ -569,7 +552,7 @@ public abstract class ClassActor extends Actor {
                     return interfaceResult;
                 }
             }
-            holder = holder.superClassActor();
+            holder = holder.superClassActor;
         } while (holder != null);
         return null;
     }
@@ -583,7 +566,7 @@ public abstract class ClassActor extends Actor {
 
     public final FieldActor findLocalInstanceFieldActor(Utf8Constant name) {
         for (FieldActor fieldActor : localInstanceFieldActors()) {
-            if (fieldActor.name() == name) {
+            if (fieldActor.name == name) {
                 return fieldActor;
             }
         }
@@ -592,7 +575,7 @@ public abstract class ClassActor extends Actor {
 
     public final FieldActor findLocalInstanceFieldActor(String name) {
         for (FieldActor fieldActor : localInstanceFieldActors()) {
-            if (fieldActor.name().toString().equals(name)) {
+            if (fieldActor.name.toString().equals(name)) {
                 return fieldActor;
             }
         }
@@ -627,7 +610,7 @@ public abstract class ClassActor extends Actor {
             if (result != null) {
                 return result;
             }
-            holder = holder.superClassActor();
+            holder = holder.superClassActor;
         } while (holder != null);
         return null;
     }
@@ -639,7 +622,7 @@ public abstract class ClassActor extends Actor {
             if (result != null) {
                 return result;
             }
-            holder = holder.superClassActor();
+            holder = holder.superClassActor;
         } while (holder != null);
         return null;
     }
@@ -670,7 +653,7 @@ public abstract class ClassActor extends Actor {
                     return fieldActor;
                 }
             }
-            holder = holder.superClassActor();
+            holder = holder.superClassActor;
         } while (holder != null);
         return null;
     }
@@ -696,7 +679,7 @@ public abstract class ClassActor extends Actor {
                     return fieldActor;
                 }
             }
-            holder = holder.superClassActor();
+            holder = holder.superClassActor;
         } while (holder != null);
         return null;
     }
@@ -704,7 +687,7 @@ public abstract class ClassActor extends Actor {
     /**
      * The class initializer for this class or null if this class has not class initializer.
      */
-    private final StaticMethodActor clinit;
+    public final StaticMethodActor clinit;
 
     @INSPECTED
     private final StaticMethodActor[] localStaticMethodActors;
@@ -725,7 +708,7 @@ public abstract class ClassActor extends Actor {
                     return false;
                 }
             }
-            classActor = classActor.superClassActor();
+            classActor = classActor.superClassActor;
         } while (classActor != null);
         return true;
     }
@@ -736,7 +719,7 @@ public abstract class ClassActor extends Actor {
             for (StaticMethodActor staticMethodActor : classActor.localStaticMethodActors()) {
                 procedure.run(staticMethodActor);
             }
-            classActor = classActor.superClassActor();
+            classActor = classActor.superClassActor;
         } while (classActor != null);
     }
 
@@ -747,7 +730,7 @@ public abstract class ClassActor extends Actor {
             if (result != null) {
                 return result;
             }
-            holder = holder.superClassActor();
+            holder = holder.superClassActor;
         } while (holder != null);
         return null;
     }
@@ -773,12 +756,12 @@ public abstract class ClassActor extends Actor {
     }
 
     public final VirtualMethodActor findLocalVirtualMethodActor(MethodActor declaredMethod) {
-        return findLocalVirtualMethodActor(declaredMethod.name(), declaredMethod.descriptor());
+        return findLocalVirtualMethodActor(declaredMethod.name, declaredMethod.descriptor());
     }
 
     public final VirtualMethodActor findLocalVirtualMethodActor(Utf8Constant name) {
         for (VirtualMethodActor dynamicMethodActor : localVirtualMethodActors) {
-            if (dynamicMethodActor.name().equals(name)) {
+            if (dynamicMethodActor.name.equals(name)) {
                 return dynamicMethodActor;
             }
         }
@@ -787,7 +770,7 @@ public abstract class ClassActor extends Actor {
 
     public final VirtualMethodActor findLocalVirtualMethodActor(String name) {
         for (VirtualMethodActor dynamicMethodActor : localVirtualMethodActors) {
-            if (dynamicMethodActor.name().toString().equals(name)) {
+            if (dynamicMethodActor.name.toString().equals(name)) {
                 return dynamicMethodActor;
             }
         }
@@ -821,7 +804,7 @@ public abstract class ClassActor extends Actor {
     }
 
     public final VirtualMethodActor findVirtualMethodActor(MethodActor declaredMethod) {
-        return findVirtualMethodActor(declaredMethod.name(), declaredMethod.descriptor());
+        return findVirtualMethodActor(declaredMethod.name, declaredMethod.descriptor());
     }
 
     public final VirtualMethodActor getVirtualMethodActorByVTableIndex(int vTableIndex) {
@@ -857,7 +840,7 @@ public abstract class ClassActor extends Actor {
         // Old style for loop so this can be used in the primordial VM phase:
         for (int i = 0; i < localStaticMethodActors.length; i++) {
             final StaticMethodActor staticMethodActor = localStaticMethodActors[i];
-            if (staticMethodActor.name().equals(name)) {
+            if (staticMethodActor.name.equals(name)) {
                 return staticMethodActor;
             }
         }
@@ -869,7 +852,7 @@ public abstract class ClassActor extends Actor {
     }
 
     public final MethodActor findLocalClassMethodActor(MethodActor declaredMethod) {
-        return findLocalClassMethodActor(declaredMethod.name(), declaredMethod.descriptor());
+        return findLocalClassMethodActor(declaredMethod.name, declaredMethod.descriptor());
     }
 
     public final boolean forAllClassMethodActors(Predicate<ClassMethodActor> predicate) {
@@ -913,7 +896,7 @@ public abstract class ClassActor extends Actor {
                     return methodActor;
                 }
             }
-            holder = holder.superClassActor();
+            holder = holder.superClassActor;
         } while (holder != null);
         return null;
     }
@@ -928,13 +911,13 @@ public abstract class ClassActor extends Actor {
             if (name.equals(SymbolTable.INIT) || name.equals(SymbolTable.CLINIT)) {
                 return null;
             }
-            classActor = classActor.superClassActor();
+            classActor = classActor.superClassActor;
         } while (classActor != null);
         return null;
     }
 
     public final ClassMethodActor findClassMethodActor(MethodActor declaredMethod) {
-        return findClassMethodActor(declaredMethod.name(), declaredMethod.descriptor());
+        return findClassMethodActor(declaredMethod.name, declaredMethod.descriptor());
     }
 
     @INSPECTED
@@ -1013,8 +996,8 @@ public abstract class ClassActor extends Actor {
         int vTableIndex = Hub.vTableStartIndex();
 
         // Copy the super class' dynamic methods:
-        if (superClassActor() != null) {
-            for (VirtualMethodActor dynamicMethodActor : superClassActor().allVirtualMethodActors()) {
+        if (superClassActor != null) {
+            for (VirtualMethodActor dynamicMethodActor : superClassActor.allVirtualMethodActors()) {
                 result.append(dynamicMethodActor);
                 if (!dynamicMethodActor.isInstanceInitializer() && !dynamicMethodActor.isPrivate()) {
                     lookup.put(dynamicMethodActor, dynamicMethodActor);
@@ -1036,7 +1019,7 @@ public abstract class ClassActor extends Actor {
                     vTableIndex++;
                 } else {
                     if (superMethod.isFinal() && superMethod.isAccessibleBy(this)) {
-                        throw verifyError("Class " + name() + " overrides final method: " + superMethod.format("%r %H.%n(%p)"));
+                        throw verifyError("Class " + name + " overrides final method: " + superMethod.format("%r %H.%n(%p)"));
                     }
                     result.set(superMethod.vTableIndex() - Hub.vTableStartIndex(), dynamicMethodActor);
                     dynamicMethodActor.setVTableIndex(superMethod.vTableIndex());
@@ -1152,20 +1135,14 @@ public abstract class ClassActor extends Actor {
         return innerClassActors;
     }
 
-    private final String sourceFileName;
-
     /**
-     * Gets the value of the SourceFile class file attribute associated with this class actor.
-     *
-     * @return null if there is no SourceFile attribute associated with this class actor
+     * The value of the SourceFile class file attribute associated with this class actor.
      */
-    public final String sourceFileName() {
-        return sourceFileName;
-    }
+    public final String sourceFileName;
 
     /**
      * Gets a file path for the source file of this class. The file path returned is based on the package containing
-     * this class and the value of the {@linkplain #sourceFileName() SourceFile attribute} associated with this class
+     * this class and the value of the {@linkplain #sourceFileName SourceFile attribute} associated with this class
      * actor. If the latter is null, then the source file name is derived from the top level class associated with this
      * class.
      */
@@ -1231,16 +1208,8 @@ public abstract class ClassActor extends Actor {
         return dynamicHub.tupleSize();
     }
 
-    public final ClassLoader classLoader() {
-        return classLoader;
-    }
-
     public final ClassRegistry classRegistry() {
         return ClassRegistry.makeRegistry(classLoader);
-    }
-
-    public final TypeDescriptor typeDescriptor() {
-        return typeDescriptor;
     }
 
     /**
@@ -1249,11 +1218,11 @@ public abstract class ClassActor extends Actor {
      * @return "" if this class is in the unnamed package
      */
     public final String packageName() {
-        return Classes.getPackageName(name().toString());
+        return Classes.getPackageName(name.toString());
     }
 
     public final boolean isInSameRuntimePackageAs(ClassActor other) {
-        return classLoader() == other.classLoader() && packageName().equals(other.packageName());
+        return classLoader == other.classLoader && packageName().equals(other.packageName());
     }
 
     @Override
@@ -1367,7 +1336,7 @@ public abstract class ClassActor extends Actor {
 
     @Override
     public final String javaSignature(boolean qualified) {
-        return typeDescriptor().toJavaString(qualified);
+        return typeDescriptor.toJavaString(qualified);
     }
 
     @Override
@@ -1375,21 +1344,7 @@ public abstract class ClassActor extends Actor {
         return javaSignature(true);
     }
 
-    private final Kind kind;
-
-    @INLINE
-    public final Kind kind() {
-        return kind;
-    }
-
-    @INLINE
-    public final int valueSize() {
-        return kind().size();
-    }
-
-    public final ArrayLayout arrayLayout() {
-        return kind().arrayLayout(Layout.layoutScheme());
-    }
+    public final Kind kind;
 
     @PROTOTYPE_ONLY
     private static final Map<Class, ClassActor> classToClassActorMap = new HashMap<Class, ClassActor>();
@@ -1423,16 +1378,16 @@ public abstract class ClassActor extends Actor {
 
     protected BitSet getSuperClassActorSerials() {
         final BitSet result = new BitSet();
-        result.set(id());
+        result.set(id);
         if (superClassActor != null) {
-            result.or(superClassActor().getSuperClassActorSerials());
+            result.or(superClassActor.getSuperClassActorSerials());
         }
         for (InterfaceActor interfaceActor : localInterfaceActors()) {
             result.or(interfaceActor.getSuperClassActorSerials());
         }
         if (MaxineVM.isPrototyping()) {
-            if (kind() == Kind.WORD) {
-                result.clear(ClassRegistry.javaLangObjectActor().id());
+            if (kind == Kind.WORD) {
+                result.clear(ClassRegistry.javaLangObjectActor().id);
             }
         }
         return result;
@@ -1474,10 +1429,6 @@ public abstract class ClassActor extends Actor {
      */
     public final boolean hasClassInitializer() {
         return clinit != null;
-    }
-
-    public final StaticMethodActor classInitializer() {
-        return clinit;
     }
 
     public void callInitializer() {
@@ -1570,15 +1521,7 @@ public abstract class ClassActor extends Actor {
         }
     }
 
-    private Object[] signers;
-
-    public Object[] signers() {
-        return signers;
-    }
-
-    public void setSigners(Object[] signers) {
-        this.signers = signers;
-    }
+    public Object[] signers;
 
     private ProtectionDomain protectionDomain;
 
@@ -1626,13 +1569,13 @@ public abstract class ClassActor extends Actor {
     public String toString() {
         final String flags = flagsString();
         if (flags.isEmpty()) {
-            return name().toString() + " [" + flags + "]";
+            return name.toString() + " [" + flags + "]";
         }
-        return name().toString();
+        return name.toString();
     }
 
     public void write(DataOutputStream stream) throws IOException {
-        stream.writeInt(id());
+        stream.writeInt(id);
     }
 
     public static ClassActor read(DataInputStream stream) throws IOException {
@@ -1641,13 +1584,5 @@ public abstract class ClassActor extends Actor {
 
     // Inspector support for generated stubs:
     @INSPECTED
-    private byte[] _classfile;
-
-    public final byte[] classfile() {
-        return _classfile;
-    }
-
-    public void setClassfile(byte[] classfile) {
-        _classfile = classfile;
-    }
+    public byte[] classfile;
 }

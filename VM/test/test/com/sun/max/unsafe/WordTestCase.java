@@ -47,7 +47,7 @@ public abstract class WordTestCase extends MaxTestCase {
     protected Address _addressTiny;
     protected Address _addressLow;
     protected Address _addressMedium;
-    protected Address _addressHigh;
+    protected Address addressHigh;
     protected Address _addressMax;
     protected Address _addressMax32;
 
@@ -108,11 +108,11 @@ public abstract class WordTestCase extends MaxTestCase {
         _addressMax32 = Address.fromLong(LOW_32_BITS_MASK);
         switch (wordWidth()) {
             case BITS_64:
-                _addressHigh = Address.fromLong(_high);
+                addressHigh = Address.fromLong(_high);
                 _addressMax = Offset.fromLong(-1L).asAddress();
                 break;
             case BITS_32:
-                _addressHigh = Address.fromLong(((int) _high) & LOW_32_BITS_MASK);
+                addressHigh = Address.fromLong(((int) _high) & LOW_32_BITS_MASK);
                 _addressMax = Address.fromLong(LOW_32_BITS_MASK);
                 break;
             default:
@@ -125,7 +125,7 @@ public abstract class WordTestCase extends MaxTestCase {
         _sizeTiny = _addressTiny.asSize();
         _sizeLow = _addressLow.asSize();
         _sizeMedium = _addressMedium.asSize();
-        _sizeHigh = _addressHigh.asSize();
+        _sizeHigh = addressHigh.asSize();
         _sizeMax = _addressMax.asSize();
         _sizeMax32 = _addressMax32.asSize();
 
@@ -134,7 +134,7 @@ public abstract class WordTestCase extends MaxTestCase {
         _pointerTiny = _addressTiny.asPointer();
         _pointerLow = _addressLow.asPointer();
         _pointerMedium = _addressMedium.asPointer();
-        _pointerHigh = _addressHigh.asPointer();
+        _pointerHigh = addressHigh.asPointer();
         _pointerMax = _addressMax.asPointer();
         _pointerMax32 = _addressMax32.asPointer();
 

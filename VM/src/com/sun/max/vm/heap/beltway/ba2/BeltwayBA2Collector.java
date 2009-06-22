@@ -53,7 +53,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
     public void run() {
     }
 
-    private final Runnable _majorGC = new Runnable() {
+    private final Runnable majorGC = new Runnable() {
 
         public void run() {
             majorCollections++;
@@ -264,7 +264,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
     }
 
     public Runnable getMajorGC() {
-        return _majorGC;
+        return majorGC;
     }
 
     private final Runnable minorGC = new Runnable() {

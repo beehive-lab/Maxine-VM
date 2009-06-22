@@ -69,28 +69,28 @@ public final class NativeStubGenerator extends BytecodeAssembler {
 
     public NativeStubGenerator(ConstantPoolEditor constantPoolEditor, MethodActor classMethodActor) {
         super(constantPoolEditor);
-        _classMethodActor = classMethodActor;
+        this.classMethodActor = classMethodActor;
         allocateParameters(classMethodActor.isStatic(), classMethodActor.descriptor());
         generateCode(classMethodActor.isCFunction(), classMethodActor.isStatic(), classMethodActor.holder(), classMethodActor.descriptor());
     }
 
-    private final SeekableByteArrayOutputStream _codeStream = new SeekableByteArrayOutputStream();
-    private final MethodActor _classMethodActor;
+    private final SeekableByteArrayOutputStream codeStream = new SeekableByteArrayOutputStream();
+    private final MethodActor classMethodActor;
 
     @Override
     public void writeByte(byte b) {
-        _codeStream.write(b);
+        codeStream.write(b);
     }
 
     @Override
     protected void setWritePosition(int position) {
-        _codeStream.seek(position);
+        codeStream.seek(position);
     }
 
     @Override
     public byte[] code() {
         fixup();
-        return _codeStream.toByteArray();
+        return codeStream.toByteArray();
     }
 
     public CodeAttribute codeAttribute() {
@@ -107,20 +107,20 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     /**
      * These methods may be called from a generated native stub.
      */
-    private static final ClassMethodRefConstant _currentJniEnvironmentPointer = createClassMethodConstant(VmThread.class, makeSymbol("currentJniEnvironmentPointer"));
-    private static final ClassMethodRefConstant _currentThread = createClassMethodConstant(VmThread.class, makeSymbol("current"));
-    private static final ClassMethodRefConstant _traceCurrentThreadPrefix = createClassMethodConstant(NativeStubGenerator.class, makeSymbol("traceCurrentThreadPrefix"));
-    private static final ClassMethodRefConstant _throwPendingException = createClassMethodConstant(VmThread.class, makeSymbol("throwPendingException"));
-    private static final ClassMethodRefConstant _createStackHandle = createClassMethodConstant(JniHandles.class, makeSymbol("createStackHandle"), Object.class);
-    private static final ClassMethodRefConstant _nullHandle = createClassMethodConstant(JniHandle.class, makeSymbol("zero"));
-    private static final ClassMethodRefConstant _unhandHandle = createClassMethodConstant(JniHandle.class, makeSymbol("unhand"));
-    private static final ClassMethodRefConstant _handles = createClassMethodConstant(VmThread.class, makeSymbol("jniHandles"));
-    private static final ClassMethodRefConstant _handlesTop = createClassMethodConstant(JniHandles.class, makeSymbol("top"));
-    private static final ClassMethodRefConstant _resetHandlesTop = createClassMethodConstant(JniHandles.class, makeSymbol("resetTop"), int.class);
-    private static final ClassMethodRefConstant _logPrintln_String = createClassMethodConstant(Log.class, makeSymbol("println"), String.class);
-    private static final ClassMethodRefConstant _logPrint_String = createClassMethodConstant(Log.class, makeSymbol("print"), String.class);
-    private static final ClassMethodRefConstant _traceJNI = createClassMethodConstant(ClassMethodActor.class, makeSymbol("traceJNI"));
-    private static final StringConstant _threadLabelPrefix = PoolConstantFactory.createStringConstant("[Thread \"");
+    private static final ClassMethodRefConstant currentJniEnvironmentPointer = createClassMethodConstant(VmThread.class, makeSymbol("currentJniEnvironmentPointer"));
+    private static final ClassMethodRefConstant currentThread = createClassMethodConstant(VmThread.class, makeSymbol("current"));
+    private static final ClassMethodRefConstant traceCurrentThreadPrefix = createClassMethodConstant(NativeStubGenerator.class, makeSymbol("traceCurrentThreadPrefix"));
+    private static final ClassMethodRefConstant throwPendingException = createClassMethodConstant(VmThread.class, makeSymbol("throwPendingException"));
+    private static final ClassMethodRefConstant createStackHandle = createClassMethodConstant(JniHandles.class, makeSymbol("createStackHandle"), Object.class);
+    private static final ClassMethodRefConstant nullHandle = createClassMethodConstant(JniHandle.class, makeSymbol("zero"));
+    private static final ClassMethodRefConstant unhandHandle = createClassMethodConstant(JniHandle.class, makeSymbol("unhand"));
+    private static final ClassMethodRefConstant handles = createClassMethodConstant(VmThread.class, makeSymbol("jniHandles"));
+    private static final ClassMethodRefConstant handlesTop = createClassMethodConstant(JniHandles.class, makeSymbol("top"));
+    private static final ClassMethodRefConstant resetHandlesTop = createClassMethodConstant(JniHandles.class, makeSymbol("resetTop"), int.class);
+    private static final ClassMethodRefConstant logPrintln_String = createClassMethodConstant(Log.class, makeSymbol("println"), String.class);
+    private static final ClassMethodRefConstant logPrint_String = createClassMethodConstant(Log.class, makeSymbol("print"), String.class);
+    private static final ClassMethodRefConstant traceJNI = createClassMethodConstant(ClassMethodActor.class, makeSymbol("traceJNI"));
+    private static final StringConstant threadLabelPrefix = PoolConstantFactory.createStringConstant("[Thread \"");
 
     private void generateCode(boolean isCFunction, boolean isStatic, ClassActor holder, SignatureDescriptor signatureDescriptor) {
         final TypeDescriptor resultDescriptor = signatureDescriptor.resultDescriptor();
@@ -138,7 +138,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         if (!isCFunction) {
 
             // Cache current thread in a local variable
-            invokestatic(_currentThread, 0, 1);
+            invokestatic(NativeStubGenerator.currentThread, 0, 1);
             currentThread = allocateLocal(Kind.REFERENCE);
             astore(currentThread);
 
@@ -148,20 +148,20 @@ public final class NativeStubGenerator extends BytecodeAssembler {
             jniHandles = allocateLocal(Kind.REFERENCE);
             top = allocateLocal(Kind.INT);
             aload(currentThread);
-            invokevirtual(_handles, 1, 1);
+            invokevirtual(handles, 1, 1);
             astore(jniHandles);
             aload(jniHandles);
-            invokevirtual(_handlesTop, 1, 1);
+            invokevirtual(handlesTop, 1, 1);
             istore(top);
 
             // Push the JNI environment variable
-            invokestatic(_currentJniEnvironmentPointer, 0, 1);
+            invokestatic(currentJniEnvironmentPointer, 0, 1);
 
-            final TypeDescriptor jniEnvDescriptor = _currentJniEnvironmentPointer.signature(constantPool()).resultDescriptor();
+            final TypeDescriptor jniEnvDescriptor = currentJniEnvironmentPointer.signature(constantPool()).resultDescriptor();
             nativeFunctionDescriptor.append(jniEnvDescriptor);
             nativeFunctionArgSlots += jniEnvDescriptor.toKind().stackSlots();
 
-            final TypeDescriptor stackHandleDescriptor = _createStackHandle.signature(constantPool()).resultDescriptor();
+            final TypeDescriptor stackHandleDescriptor = createStackHandle.signature(constantPool()).resultDescriptor();
             if (isStatic) {
                 // Push the class for a static method
                 ldc(createClassConstant(holder.toJava()));
@@ -169,7 +169,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
                 // Push the receiver for a non-static method
                 aload(parameterLocalIndex++);
             }
-            invokestatic(_createStackHandle, 1, 1);
+            invokestatic(createStackHandle, 1, 1);
             nativeFunctionDescriptor.append(stackHandleDescriptor);
             nativeFunctionArgSlots += stackHandleDescriptor.toKind().stackSlots();
         } else {
@@ -180,7 +180,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         for (int i = 0; i < signatureDescriptor.numberOfParameters(); i++) {
             final TypeDescriptor parameterDescriptor = signatureDescriptor.parameterDescriptorAt(i);
             TypeDescriptor nativeParameterDescriptor = parameterDescriptor;
-            switch (parameterDescriptor.toKind().asEnum()) {
+            switch (parameterDescriptor.toKind().asEnum) {
                 case BYTE:
                 case BOOLEAN:
                 case SHORT:
@@ -216,11 +216,11 @@ public final class NativeStubGenerator extends BytecodeAssembler {
                     aload(parameterLocalIndex);
                     ifnull(nullHandle);
                     aload(parameterLocalIndex);
-                    invokestatic(_createStackHandle, 1, 1);
+                    invokestatic(createStackHandle, 1, 1);
                     goto_(join);
                     decStack();
                     nullHandle.bind();
-                    invokestatic(_nullHandle, 0, 1);
+                    invokestatic(NativeStubGenerator.nullHandle, 0, 1);
                     join.bind();
                     nativeParameterDescriptor = JavaTypeDescriptor.JNI_HANDLE;
                     break;
@@ -241,19 +241,19 @@ public final class NativeStubGenerator extends BytecodeAssembler {
             // Unwrap a reference result from its enclosing JNI handle. This must be done
             // *before* the JNI frame is restored.
             if (resultKind == Kind.REFERENCE) {
-                invokevirtual(_unhandHandle, 1, 1);
+                invokevirtual(unhandHandle, 1, 1);
             }
 
             // Restore JNI frame.
             aload(jniHandles);
             iload(top);
-            invokevirtual(_resetHandlesTop, 2, 0);
+            invokevirtual(resetHandlesTop, 2, 0);
 
             verboseJniExit();
 
             // throw (and clear) any pending exception
             aload(currentThread);
-            invokevirtual(_throwPendingException, 1, 0);
+            invokevirtual(throwPendingException, 1, 0);
         }
 
         // Return result
@@ -275,7 +275,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     private void verboseJniEntry() {
         if (MaxineVM.isPrototyping()) {
             // Stubs generated while prototyping need to test the "-verbose" VM program argument
-            invokestatic(_traceJNI, 0, 1);
+            invokestatic(traceJNI, 0, 1);
             final Label noTracing = newLabel();
             ifeq(noTracing);
             traceJniEntry();
@@ -288,9 +288,9 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     }
 
     private void traceJniEntry() {
-        invokestatic(_traceCurrentThreadPrefix, 0, 0);
-        ldc(PoolConstantFactory.createStringConstant("\" --> JNI: " + _classMethodActor.format("%H.%n(%P)") + "]"));
-        invokestatic(_logPrintln_String, 1, 0);
+        invokestatic(traceCurrentThreadPrefix, 0, 0);
+        ldc(PoolConstantFactory.createStringConstant("\" --> JNI: " + classMethodActor.format("%H.%n(%P)") + "]"));
+        invokestatic(logPrintln_String, 1, 0);
     }
 
     /**
@@ -299,7 +299,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     private void verboseJniExit() {
         if (MaxineVM.isPrototyping()) {
             // Stubs generated while prototyping need to test the "-verbose" VM program argument
-            invokestatic(_traceJNI, 0, 1);
+            invokestatic(traceJNI, 0, 1);
             final Label notVerbose = newLabel();
             ifeq(notVerbose);
             traceJniExit();
@@ -312,9 +312,9 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     }
 
     private void traceJniExit() {
-        invokestatic(_traceCurrentThreadPrefix, 0, 0);
-        ldc(PoolConstantFactory.createStringConstant("\" <-- JNI: " + _classMethodActor.format("%H.%n(%P)") + "]"));
-        invokestatic(_logPrintln_String, 1, 0);
+        invokestatic(traceCurrentThreadPrefix, 0, 0);
+        ldc(PoolConstantFactory.createStringConstant("\" <-- JNI: " + classMethodActor.format("%H.%n(%P)") + "]"));
+        invokestatic(logPrintln_String, 1, 0);
     }
 
     private static void traceCurrentThreadPrefix() {

@@ -57,11 +57,11 @@ public final class MethodActorSearchDialog extends TeleObjectSearchDialog {
         while (teleMethodActors.hasNext()) {
             final TeleMethodActor teleMethodActor = teleMethodActors.next();
             final MethodActor methodActor = teleMethodActor.methodActor();
-            final String methodNameLowerCase = methodActor.name().toString().toLowerCase();
+            final String methodNameLowerCase = methodActor.name.toString().toLowerCase();
             if (filterLowerCase.isEmpty() ||
                 (filterLowerCase.endsWith(" ") && methodNameLowerCase.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
                 methodNameLowerCase.contains(filterLowerCase)) {
-                final String signature = methodActor.name() + methodActor.descriptor().toJavaString(false, true);
+                final String signature = methodActor.name + methodActor.descriptor().toJavaString(false, true);
                 methods[i++] = new NamedTeleObject(signature, teleMethodActor);
             }
         }

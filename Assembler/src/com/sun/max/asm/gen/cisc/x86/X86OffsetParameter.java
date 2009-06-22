@@ -30,6 +30,6 @@ public class X86OffsetParameter extends X86NumericalParameter implements OffsetP
 
     public X86OffsetParameter(X86Operand.Designation designation, WordWidth width) {
         super(designation, width);
-        setVariableName("rel" + width.numberOfBits());
+        setVariableName("rel" + width.numberOfBits);
     }
 }

@@ -48,10 +48,10 @@ public final class InliningAnnotationsValidator {
             return;
         }
         final Method javaMethod = classMethodActor.toJava();
-        if (_checked.contains(javaMethod)) {
+        if (checked.contains(javaMethod)) {
             return;
         }
-        _checked.add(javaMethod);
+        checked.add(javaMethod);
 
         final INLINE annotation = javaMethod.getAnnotation(INLINE.class);
 
@@ -142,5 +142,5 @@ public final class InliningAnnotationsValidator {
         ProgramError.check(condition, errorMessage);
     }
 
-    private static IdentityHashSet<Method> _checked = new IdentityHashSet<Method>();
+    private static IdentityHashSet<Method> checked = new IdentityHashSet<Method>();
 }

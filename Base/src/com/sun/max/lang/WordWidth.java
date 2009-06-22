@@ -20,9 +20,7 @@
  */
 package com.sun.max.lang;
 
-import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
-
 
 /**
  * A word width value describes many bits there are in a machine word.
@@ -38,58 +36,34 @@ public enum WordWidth {
 
     public static final IndexedSequence<WordWidth> VALUES = new ArraySequence<WordWidth>(values());
 
-    private final int numberOfBits;
-    private final int numberOfBytes;
-    private final Class canonicalPrimitiveType;
-    private final long min;
-    private final long max;
+    public final int numberOfBits;
+    public final int numberOfBytes;
+    public final Class canonicalPrimitiveType;
+    public final long min;
+    public final long max;
 
     private WordWidth(int numberOfBits, Class canonicalPrimitiveType, long min, long max) {
         this.numberOfBits = numberOfBits;
-        numberOfBytes = numberOfBits / 8;
+        this.numberOfBytes = numberOfBits / 8;
         this.canonicalPrimitiveType = canonicalPrimitiveType;
         this.min = min;
         this.max = max;
     }
 
-    @INLINE
-    public final int numberOfBits() {
-        return numberOfBits;
-    }
-
-    @INLINE
-    public final int numberOfBytes() {
-        return numberOfBytes;
-    }
-
-    public Class canonicalPrimitiveType() {
-        return canonicalPrimitiveType;
-    }
-
-    @INLINE
-    public final long min() {
-        return min;
-    }
-
-    @INLINE
-    public final long max() {
-        return max;
-    }
-
     public boolean lessThan(WordWidth other) {
-        return numberOfBits() < other.numberOfBits();
+        return numberOfBits < other.numberOfBits;
     }
 
     public boolean lessEqual(WordWidth other) {
-        return numberOfBits() <= other.numberOfBits();
+        return numberOfBits <= other.numberOfBits;
     }
 
     public boolean greaterThan(WordWidth other) {
-        return numberOfBits() > other.numberOfBits();
+        return numberOfBits > other.numberOfBits;
     }
 
     public boolean greaterEqual(WordWidth other) {
-        return numberOfBits() >= other.numberOfBits();
+        return numberOfBits >= other.numberOfBits;
     }
 
     @Override

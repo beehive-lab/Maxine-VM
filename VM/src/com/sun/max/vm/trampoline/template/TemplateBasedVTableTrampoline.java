@@ -49,17 +49,17 @@ import com.sun.max.vm.trampoline.*;
  */
 public final class TemplateBasedVTableTrampoline extends NonFoldableSnippet {
 
-    private CriticalMethod _classMethodActor = new CriticalMethod(classMethodActor(), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    private CriticalMethod classMethodActor = new CriticalMethod(classMethodActor(), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
 
     private TemplateBasedVTableTrampoline() {
         super();
     }
 
-    private static final TemplateBasedVTableTrampoline _snippet = new TemplateBasedVTableTrampoline();
+    private static final TemplateBasedVTableTrampoline snippet = new TemplateBasedVTableTrampoline();
     /**
      * Template-based generator for trampoline code.
      */
-    private static final TrampolineGenerator _trampolineGenerator = new TemplateBasedTrampolineGenerator.VtableTrampolineGenerator(_snippet.classMethodActor());
+    private static final TrampolineGenerator trampolineGenerator = new TemplateBasedTrampolineGenerator.VtableTrampolineGenerator(snippet.classMethodActor());
 
     /*
      * Template for a dynamic trampoline.
@@ -74,11 +74,11 @@ public final class TemplateBasedVTableTrampoline extends NonFoldableSnippet {
     }
 
     public static synchronized Address makeCallEntryPoint(int vTableIndex) {
-        return _trampolineGenerator.makeCallEntryPoint(vTableIndex);
+        return trampolineGenerator.makeCallEntryPoint(vTableIndex);
     }
 
     public static boolean isVTableTrampoline(MethodActor classMethodActor) {
-        return classMethodActor == _snippet.classMethodActor();
+        return classMethodActor == snippet.classMethodActor();
     }
 
     public static boolean isVTableTrampolineInstructionPointer(Address instructionPointer) {
@@ -86,6 +86,6 @@ public final class TemplateBasedVTableTrampoline extends NonFoldableSnippet {
         if (targetMethod == null) {
             return false;
         }
-        return targetMethod.classMethodActor() == _snippet.classMethodActor();
+        return targetMethod.classMethodActor() == snippet.classMethodActor();
     }
 }

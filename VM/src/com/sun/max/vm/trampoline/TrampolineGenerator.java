@@ -35,7 +35,7 @@ public abstract class TrampolineGenerator {
     /**
      * Indexed sequence of available trampolines. The trampoline for a method with index i is the ith element of the sequence.
      */
-    private final AppendableIndexedSequence<DynamicTrampoline> _trampolines = new ArrayListSequence<DynamicTrampoline>();
+    private final AppendableIndexedSequence<DynamicTrampoline> trampolines = new ArrayListSequence<DynamicTrampoline>();
 
     private void traceDynamicTrampolines(int i) {
         if (i % 1000 == 0 && i != 0) {
@@ -46,13 +46,13 @@ public abstract class TrampolineGenerator {
     public abstract DynamicTrampoline createTrampoline(int dispatchTableIndex);
 
     public synchronized Address makeCallEntryPoint(int dispatchTableIndex) {
-        if (_trampolines.length() <= dispatchTableIndex) {
-            for (int i = _trampolines.length(); i <= dispatchTableIndex; i++) {
+        if (trampolines.length() <= dispatchTableIndex) {
+            for (int i = trampolines.length(); i <= dispatchTableIndex; i++) {
                 traceDynamicTrampolines(i);
-                _trampolines.append(createTrampoline(i));
+                trampolines.append(createTrampoline(i));
             }
         }
-        return VTABLE_ENTRY_POINT.in(_trampolines.get(dispatchTableIndex).trampolineTargetMethod());
+        return VTABLE_ENTRY_POINT.in(trampolines.get(dispatchTableIndex).trampolineTargetMethod());
     }
 
 }

@@ -85,7 +85,7 @@ public class SPARCEirCompareAndSwap extends SPARCEirUnaryOperation {
 
     @Override
     public void emit(SPARCEirTargetEmitter emitter) {
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case LONG:
             case WORD:
             case REFERENCE:

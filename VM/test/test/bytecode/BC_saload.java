@@ -26,9 +26,9 @@ package test.bytecode;
  */
 public class BC_saload {
 
-    static short[] _array = {0, -1, 4, 10000};
+    static short[] array = {0, -1, 4, 10000};
 
     public static short test(int arg) {
-        return _array[arg];
+        return array[arg];
     }
 }

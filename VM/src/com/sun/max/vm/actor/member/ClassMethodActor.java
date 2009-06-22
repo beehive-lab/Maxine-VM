@@ -89,16 +89,11 @@ public abstract class ClassMethodActor extends MethodActor {
 
     private ClassMethodActor compilee;
 
-    private final NativeFunction nativeFunction;
-
     /**
-     * Gets the object representing the linkage of this native method actor to a native machine code address.
-     *
-     * @return {@code null} if this method is not {@linkplain #isNative() native}
+     * The object representing the linkage of this native method actor to a native machine code address.
+     * This value is {@code null} if this method is not {@linkplain #isNative() native}
      */
-    public final NativeFunction nativeFunction() {
-        return nativeFunction;
-    }
+    public final NativeFunction nativeFunction;
 
     /**
      * Determines if JNI activity should be traced at a level useful for debugging.
@@ -191,12 +186,12 @@ public abstract class ClassMethodActor extends MethodActor {
 
             final ClassActor holder = compilee.holder();
             if (MaxineVM.isPrototyping()) {
-                if (holder.kind() != Kind.WORD) {
+                if (holder.kind != Kind.WORD) {
                     // We simply verify all methods during boot image build time as the overhead should be acceptable.
                     verifier = modified ? new TypeInferencingVerifier(holder) : Verifier.verifierFor(holder);
                 }
             } else {
-                if (holder().majorVersion() < 50) {
+                if (holder().majorVersion < 50) {
                     // The compiler/JIT/interpreter cannot handle JSR or RET instructions. However, these instructions
                     // can legally appear in class files whose version number is less than 50.0. So, we inline them
                     // with the type inferencing verifier if they appear in the bytecode of a pre-version-50.0 class file.
@@ -229,7 +224,7 @@ public abstract class ClassMethodActor extends MethodActor {
      */
     public StackTraceElement toStackTraceElement(int bytecodePosition) {
         final ClassActor holder = holder();
-        return new StackTraceElement(holder.name().string(), name().string(), holder.sourceFileName(), sourceLineNumber(bytecodePosition));
+        return new StackTraceElement(holder.name.string, name.string, holder.sourceFileName, sourceLineNumber(bytecodePosition));
     }
 
     /**
@@ -247,7 +242,7 @@ public abstract class ClassMethodActor extends MethodActor {
      * @return null if a source file name is not available
      */
     public String sourceFileName() {
-        return holder().sourceFileName();
+        return holder().sourceFileName;
     }
 
     /**

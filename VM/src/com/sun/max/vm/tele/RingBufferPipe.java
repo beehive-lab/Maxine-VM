@@ -27,42 +27,42 @@ import com.sun.max.unsafe.*;
 
 /**
  * A pipe supported by a ring buffer in memory.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class RingBufferPipe {
 
-    private final DataAccess _dataAccess;
-    private final Address _data;
-    private final Address _buffer;
-    private final Address _end;
+    private final DataAccess dataAccess;
+    private final Address data;
+    private final Address buffer;
+    private final Address end;
 
     public RingBufferPipe(DataAccess dataAccess, Address data, int size) {
-        _dataAccess = dataAccess;
-        _data = data;
-        _buffer = _data.plus(2 * Word.size());
-        _end = _data.plus(size);
+        this.dataAccess = dataAccess;
+        this.data = data;
+        this.buffer = data.plus(2 * Word.size());
+        this.end = data.plus(size);
     }
 
     private Address getReadAddress() {
-        return _dataAccess.getWord(_data, 0, 0).asAddress();
+        return dataAccess.getWord(data, 0, 0).asAddress();
     }
 
     private void setReadAddress(Address position) {
-        _dataAccess.setWord(_data, 0, 0, position);
+        dataAccess.setWord(data, 0, 0, position);
     }
 
     private Address getWriteAddress() {
-        return _dataAccess.getWord(_data, 0, 1).asAddress();
+        return dataAccess.getWord(data, 0, 1).asAddress();
     }
 
     private void setWriteAddress(Address position) {
-        _dataAccess.setWord(_data, 0, 1, position);
+        dataAccess.setWord(data, 0, 1, position);
     }
 
     public void reset() {
-        setReadAddress(_buffer);
-        setWriteAddress(_buffer);
+        setReadAddress(buffer);
+        setWriteAddress(buffer);
     }
 
     private int read() throws IOException {
@@ -70,10 +70,10 @@ public class RingBufferPipe {
         if (r.equals(getWriteAddress())) {
             return -1;
         }
-        final int result = _dataAccess.readByte(r) & Bytes.MASK;
+        final int result = dataAccess.readByte(r) & Bytes.MASK;
         r = r.plus(1);
-        if (r.greaterEqual(_end)) {
-            setReadAddress(_buffer);
+        if (r.greaterEqual(end)) {
+            setReadAddress(buffer);
         } else {
             setReadAddress(r);
         }
@@ -83,13 +83,13 @@ public class RingBufferPipe {
     private void write(int value) throws IOException {
         final Address current = getWriteAddress();
         Address next = current.plus(1);
-        if (next.greaterEqual(_end)) {
-            next = _buffer;
+        if (next.greaterEqual(end)) {
+            next = buffer;
         }
         if (next.equals(getReadAddress())) {
             throw new IOException();
         }
-        _dataAccess.writeByte(current, (byte) (value & 0xff));
+        dataAccess.writeByte(current, (byte) (value & 0xff));
         setWriteAddress(next);
     }
 
@@ -102,7 +102,7 @@ public class RingBufferPipe {
                 if (w.greaterEqual(r)) {
                     return w.minus(r).toInt();
                 }
-                return _end.minus(r).plus(w.minus(_buffer)).toInt();
+                return end.minus(r).plus(w.minus(buffer)).toInt();
             }
 
             @Override

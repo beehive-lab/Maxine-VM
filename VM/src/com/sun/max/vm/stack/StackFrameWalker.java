@@ -48,10 +48,10 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class StackFrameWalker {
 
-    private CompilerScheme _compilerScheme;
+    private final CompilerScheme compilerScheme;
 
     protected StackFrameWalker(CompilerScheme compilerScheme) {
-        _compilerScheme = compilerScheme;
+        this.compilerScheme = compilerScheme;
     }
 
     public enum Purpose {
@@ -59,39 +59,39 @@ public abstract class StackFrameWalker {
         REFERENCE_MAP_PREPARING(StackReferenceMapPreparer.class),
         INSPECTING(StackFrameVisitor.class);
 
-        private final Class _contextType;
+        private final Class contextType;
 
         private Purpose(Class contextType) {
-            _contextType = contextType;
+            this.contextType = contextType;
         }
 
         /**
          * Determines if a given context object is of the type expected by this purpose.
          */
         public final boolean isValidContext(Object context) {
-            return _contextType.isInstance(context);
+            return contextType.isInstance(context);
         }
     }
 
     protected static class CallerFrameCollector implements StackFrameVisitor {
-        int _count;
-        StackFrame _result;
+        int count;
+        StackFrame result;
 
         public boolean visitFrame(StackFrame frame) {
-            if (_count++ == 2) {
-                _result = frame;
+            if (count++ == 2) {
+                result = frame;
                 return false;
             }
             return true;
         }
     }
 
-    private Purpose _purpose = null;
-    private Pointer _stackPointer = Pointer.zero();
-    private Pointer _framePointer;
-    private Pointer _instructionPointer;
-    private StackFrame _calleeStackFrame;
-    private Pointer _trapState;
+    private Purpose purpose = null;
+    private Pointer stackPointer = Pointer.zero();
+    private Pointer framePointer;
+    private Pointer instructionPointer;
+    private StackFrame calleeStackFrame;
+    private Pointer trapState;
 
     private static final CriticalMethod MaxineVM_run = new CriticalMethod(MaxineVM.class, "run", MaxineVM.RUN_METHOD_SIGNATURE);
     private static final CriticalMethod VmThread_run = new CriticalMethod(VmThread.class, "run", VmThread.RUN_METHOD_SIGNATURE);
@@ -114,11 +114,11 @@ public abstract class StackFrameWalker {
 
         checkPurpose(purpose, context);
 
-        _trapState = Pointer.zero();
-        _purpose = purpose;
-        _instructionPointer = instructionPointer;
-        _framePointer = framePointer;
-        _stackPointer = stackPointer;
+        this.trapState = Pointer.zero();
+        this.purpose = purpose;
+        this.instructionPointer = instructionPointer;
+        this.framePointer = framePointer;
+        this.stackPointer = stackPointer;
         boolean isTopFrame = true;
         boolean inNative = isThreadInNative();
 
@@ -126,8 +126,8 @@ public abstract class StackFrameWalker {
         Pointer lastJavaCalleeStackPointer = Pointer.zero();
         Pointer lastJavaCalleeFramePointer = Pointer.zero();
 
-        while (!_stackPointer.isZero()) {
-            final TargetMethod targetMethod = targetMethodFor(_instructionPointer);
+        while (!this.stackPointer.isZero()) {
+            final TargetMethod targetMethod = targetMethodFor(this.instructionPointer);
             if (targetMethod != null && (!inNative || purpose == INSPECTING)) {
                 // Java frame
                 checkVmEntrypointCaller(lastJavaCallee, targetMethod);
@@ -135,18 +135,18 @@ public abstract class StackFrameWalker {
                 final DynamicCompilerScheme compilerScheme = targetMethod.compilerScheme();
                 // Record the last Java callee to be the current frame *before* the compiler scheme
                 // updates the current frame during the call to walkJavaFrame()
-                lastJavaCalleeStackPointer = _stackPointer;
-                lastJavaCalleeFramePointer = _framePointer;
+                lastJavaCalleeStackPointer = this.stackPointer;
+                lastJavaCalleeFramePointer = this.framePointer;
                 lastJavaCallee = targetMethod;
 
                 if (!compilerScheme.walkFrame(this, isTopFrame, targetMethod, purpose, context)) {
                     return;
                 }
                 if (!targetMethod.classMethodActor().isTrapStub()) {
-                    _trapState = Pointer.zero();
+                    trapState = Pointer.zero();
                 }
             } else {
-                final RuntimeStub stub = runtimeStubFor(_instructionPointer);
+                final RuntimeStub stub = runtimeStubFor(this.instructionPointer);
                 if (stub != null && (!inNative || purpose == INSPECTING)) {
                     if (!stub.walkFrame(this, isTopFrame, purpose, context)) {
                         return;
@@ -154,7 +154,7 @@ public abstract class StackFrameWalker {
                 } else {
                     if (purpose == INSPECTING) {
                         final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
-                        if (!stackFrameVisitor.visitFrame(new NativeStackFrame(_calleeStackFrame, _instructionPointer, _framePointer, _stackPointer))) {
+                        if (!stackFrameVisitor.visitFrame(new NativeStackFrame(calleeStackFrame, this.instructionPointer, this.framePointer, this.stackPointer))) {
                             return;
                         }
                     }
@@ -187,10 +187,10 @@ public abstract class StackFrameWalker {
                                 }
                             } else {
                                 Log.print("Native code called/entered a Java method not annotated with @C_FUNCTION: ");
-                                Log.print(lastJavaCalleeMethodActor.name().string());
-                                Log.print(lastJavaCalleeMethodActor.descriptor().string());
+                                Log.print(lastJavaCalleeMethodActor.name.string);
+                                Log.print(lastJavaCalleeMethodActor.descriptor().string);
                                 Log.print(" in ");
-                                Log.println(lastJavaCalleeMethodActor.holder().name().string());
+                                Log.println(lastJavaCalleeMethodActor.holder().name.string);
                                 FatalError.unexpected("Native code called/entered a Java method that is not a JNI function, a Java trap stub");
                             }
                         }
@@ -210,16 +210,16 @@ public abstract class StackFrameWalker {
                 Log.print(lastJavaCallee.name());
                 Log.print("\" is not native code: ");
                 Log.print(targetMethod.name());
-                Log.print(targetMethod.classMethodActor().descriptor().string());
+                Log.print(targetMethod.classMethodActor().descriptor().string);
                 Log.print(" in ");
-                Log.println(targetMethod.classMethodActor().holder().name().string());
+                Log.println(targetMethod.classMethodActor().holder().name.string);
                 FatalError.unexpected("Caller of a VM entry point (@C_FUNCTION method) must be native code");
             }
         }
     }
 
     private boolean isRunMethod(final ClassMethodActor lastJavaCalleeMethodActor) {
-        return lastJavaCalleeMethodActor.equals(MaxineVM_run.classMethodActor()) || lastJavaCalleeMethodActor.equals(VmThread_run.classMethodActor());
+        return lastJavaCalleeMethodActor.equals(MaxineVM_run.classMethodActor) || lastJavaCalleeMethodActor.equals(VmThread_run.classMethodActor);
     }
 
     /**
@@ -234,7 +234,7 @@ public abstract class StackFrameWalker {
     private boolean advanceCFunctionFrame(Purpose purpose, TargetMethod lastJavaCallee, Pointer lastJavaCalleeStackPointer, Pointer lastJavaCalleeFramePointer, Object context) {
         final ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
         if (lastJavaCalleeMethodActor.isJniFunction()) {
-            final Pointer namedVariablesBasePointer = _compilerScheme.namedVariablesBasePointer(lastJavaCalleeStackPointer, lastJavaCalleeFramePointer);
+            final Pointer namedVariablesBasePointer = compilerScheme.namedVariablesBasePointer(lastJavaCalleeStackPointer, lastJavaCalleeFramePointer);
             final Word lastJavaCallerInstructionPointer = readWord(savedLastJavaCallerInstructionPointer().address(lastJavaCallee, namedVariablesBasePointer), 0);
             final Word lastJavaCallerStackPointer = readWord(savedLastJavaCallerStackPointer().address(lastJavaCallee, namedVariablesBasePointer), 0);
             final Word lastJavaCallerFramePointer = readWord(savedLastJavaCallerFramePointer().address(lastJavaCallee, namedVariablesBasePointer), 0);
@@ -282,11 +282,11 @@ public abstract class StackFrameWalker {
             FatalError.unexpected("Invalid stack walk context");
         }
 
-        if (!_stackPointer.isZero()) {
+        if (!stackPointer.isZero()) {
             Log.print("Stack walker already in use for ");
-            Log.println(_purpose.name());
-            _stackPointer = Pointer.zero();
-            _purpose = null;
+            Log.println(this.purpose.name());
+            stackPointer = Pointer.zero();
+            this.purpose = null;
             FatalError.unexpected("Stack walker already in use");
         }
     }
@@ -342,8 +342,8 @@ public abstract class StackFrameWalker {
         // Wraps the visit operation to record the visited frame as the parent of the next frame to be visited.
         final StackFrameVisitor wrapper = new StackFrameVisitor() {
             public boolean visitFrame(StackFrame stackFrame) {
-                if (_calleeStackFrame == null || !stackFrame.isSameFrame(_calleeStackFrame)) {
-                    _calleeStackFrame = stackFrame;
+                if (calleeStackFrame == null || !stackFrame.isSameFrame(calleeStackFrame)) {
+                    calleeStackFrame = stackFrame;
                 } else {
                     Log.println("Same frame being visited twice: " + stackFrame);
                 }
@@ -351,7 +351,7 @@ public abstract class StackFrameWalker {
             }
         };
         walk(instructionPointer, stackPointer, framePointer, INSPECTING, wrapper);
-        _calleeStackFrame = null;
+        calleeStackFrame = null;
         reset();
     }
 
@@ -359,7 +359,7 @@ public abstract class StackFrameWalker {
      * Walks a thread's stack for the purpose of raising an exception.
      */
     public final void unwind(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, Throwable throwable) {
-        walk(instructionPointer, stackPointer, framePointer, EXCEPTION_HANDLING, _compilerScheme.makeStackUnwindingContext(stackPointer, framePointer, throwable));
+        walk(instructionPointer, stackPointer, framePointer, EXCEPTION_HANDLING, compilerScheme.makeStackUnwindingContext(stackPointer, framePointer, throwable));
     }
 
     /**
@@ -376,9 +376,9 @@ public abstract class StackFrameWalker {
      */
     @INLINE
     public final void reset() {
-        _trapState = Pointer.zero();
-        _stackPointer = Pointer.zero();
-        _purpose = null;
+        trapState = Pointer.zero();
+        stackPointer = Pointer.zero();
+        purpose = null;
     }
 
     /**
@@ -387,7 +387,7 @@ public abstract class StackFrameWalker {
      * the callee frame of the next frame to be visited.
      */
     public final StackFrame calleeStackFrame() {
-        return _calleeStackFrame;
+        return calleeStackFrame;
     }
 
     public abstract boolean isThreadInNative();
@@ -400,29 +400,29 @@ public abstract class StackFrameWalker {
      * Determines if this stack walker is currently in use. This is useful for detecting if an exception is being thrown as part of exception handling.
      */
     public final boolean isInUse() {
-        return !_stackPointer.isZero();
+        return !stackPointer.isZero();
     }
 
     @INLINE
     public final Pointer stackPointer() {
-        return _stackPointer;
+        return stackPointer;
     }
 
     @INLINE
     public final void advance(Word instructionPointer, Word stackPointer, Word framePointer) {
-        _instructionPointer = instructionPointer.asPointer();
-        _stackPointer = stackPointer.asPointer();
-        _framePointer = framePointer.asPointer();
+        this.instructionPointer = instructionPointer.asPointer();
+        this.stackPointer = stackPointer.asPointer();
+        this.framePointer = framePointer.asPointer();
     }
 
     @INLINE
     public final Pointer framePointer() {
-        return _framePointer;
+        return framePointer;
     }
 
     @INLINE
     public final Pointer instructionPointer() {
-        return _instructionPointer;
+        return instructionPointer;
     }
 
     /**
@@ -432,7 +432,7 @@ public abstract class StackFrameWalker {
      * @param trapState the state pertinent to a trap
      */
     public void setTrapState(Pointer trapState) {
-        _trapState = trapState;
+        this.trapState = trapState;
     }
 
     /**
@@ -442,7 +442,7 @@ public abstract class StackFrameWalker {
      * @return {@link Pointer#zero()} if the current frame is not a frame in which a trap occurred
      */
     public Pointer trapState() {
-        return _trapState;
+        return trapState;
     }
 
     /**
@@ -494,12 +494,12 @@ public abstract class StackFrameWalker {
             if (stackFrame.isAdapter() && !adapterFrames) {
                 continue;
             }
-            final TargetMethod targetMethod = Code.codePointerToTargetMethod(stackFrame.instructionPointer());
+            final TargetMethod targetMethod = Code.codePointerToTargetMethod(stackFrame.instructionPointer);
             if (targetMethod == null) {
                 // native frame
                 continue;
             }
-            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer());
+            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer);
             if (bytecodeLocations == null) {
                 appendClassMethodActor(result, targetMethod.classMethodActor(), invisibleFrames);
             } else {
@@ -560,6 +560,6 @@ public abstract class StackFrameWalker {
     public StackFrame getCallerFrame() {
         final CallerFrameCollector visitor = new CallerFrameCollector();
         walk(VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), INSPECTING, visitor);
-        return visitor._result;
+        return visitor.result;
     }
 }

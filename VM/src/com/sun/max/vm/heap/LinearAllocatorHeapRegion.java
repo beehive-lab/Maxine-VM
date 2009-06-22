@@ -48,7 +48,7 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
     }
 
     public Size allocationSize(Size cellSize) {
-        return VMConfiguration.target().debugging() ? cellSize.plus(VMConfiguration.target().wordWidth().numberOfBytes()) : cellSize;
+        return VMConfiguration.target().debugging() ? cellSize.plus(VMConfiguration.target().wordWidth().numberOfBytes) : cellSize;
     }
 
     public Pointer allocateCell(Size cellSize) {

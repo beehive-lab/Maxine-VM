@@ -26,7 +26,7 @@ package test.hotpath;
 public class HP_allocate03 {
     public static int test(int count) {
         @SuppressWarnings("unused")
-        int sum = 0;
+        final int sum = 0;
         String text = "";
         for (int i = 0; i < count; i++) {
             text += '.';

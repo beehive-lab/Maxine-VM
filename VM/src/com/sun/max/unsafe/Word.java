@@ -120,12 +120,12 @@ public abstract class Word {
 
     @FOLD
     public static int numberOfBits() {
-        return width().numberOfBits();
+        return width().numberOfBits;
     }
 
     @FOLD
     public static int size() {
-        return width().numberOfBytes();
+        return width().numberOfBytes;
     }
 
     @UNSAFE_CAST

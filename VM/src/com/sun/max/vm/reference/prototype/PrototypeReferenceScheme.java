@@ -33,25 +33,25 @@ import com.sun.max.vm.reference.*;
  */
 public class PrototypeReferenceScheme extends AbstractVMScheme implements ReferenceScheme {
 
-    private final GripScheme _gripScheme;
+    private final GripScheme gripScheme;
 
     @FOLD
     public GripScheme gripScheme() {
-        return _gripScheme;
+        return gripScheme;
     }
 
     public PrototypeReferenceScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        _gripScheme = vmConfiguration.gripScheme();
+        gripScheme = vmConfiguration.gripScheme();
     }
 
     public Reference fromJava(Object object) {
-        return new PrototypeReference(_gripScheme.fromJava(object));
+        return new PrototypeReference(gripScheme.fromJava(object));
     }
 
     public Object toJava(Reference reference) {
         final PrototypeReference prototypeReference = (PrototypeReference) reference;
-        return _gripScheme.toJava(prototypeReference.grip());
+        return gripScheme.toJava(prototypeReference.grip());
     }
 
     public Reference fromGrip(Grip grip) {

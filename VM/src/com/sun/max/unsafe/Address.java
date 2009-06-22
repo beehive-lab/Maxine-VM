@@ -470,7 +470,7 @@ public abstract class Address extends Word {
     public final WordWidth effectiveWidth() {
         final int bit = numberOfEffectiveBits();
         for (WordWidth width : WordWidth.VALUES) {
-            if (bit < width.numberOfBits()) {
+            if (bit < width.numberOfBits) {
                 return width;
             }
         }

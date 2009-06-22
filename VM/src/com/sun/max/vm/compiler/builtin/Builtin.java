@@ -144,7 +144,7 @@ public abstract class Builtin extends IrRoutine implements Comparable<Builtin>, 
 
     @Override
     public String toString() {
-        return "<" + foldingMethodActor().name() + ">";
+        return "<" + foldingMethodActor().name + ">";
     }
 
     /**

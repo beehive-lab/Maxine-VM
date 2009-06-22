@@ -106,7 +106,7 @@ public @interface METHOD_SUBSTITUTIONS {
             // These two checks make it impossible for method substitutions holders to have instance fields.
             // A substitute non-static method could never access such a field given that the receiver is
             // cast (via UnsafeLoophole) to be an instance of the substitutee.
-            ProgramError.check(substitutor.superClassActor().typeDescriptor() == JavaTypeDescriptor.OBJECT, "method substitution class must directly subclass java.lang.Object");
+            ProgramError.check(substitutor.superClassActor.typeDescriptor == JavaTypeDescriptor.OBJECT, "method substitution class must directly subclass java.lang.Object");
             ProgramError.check(substitutor.localInstanceFieldActors().length == 0, "method substitution class cannot declare any dynamic fields");
 
             Class holder = null;
@@ -114,11 +114,11 @@ public @interface METHOD_SUBSTITUTIONS {
             final AnnotationInfo.NameElementPair outerClassNameElementPair = nameElementPairs[0];
             if (outerClassNameElementPair.name().equals("value")) {
                 final AnnotationInfo.TypeElement typeElement = (AnnotationInfo.TypeElement) outerClassNameElementPair.element();
-                holder = typeElement.typeDescriptor().resolveType(substitutor.classLoader());
+                holder = typeElement.typeDescriptor().resolveType(substitutor.classLoader);
             } else {
                 assert outerClassNameElementPair.name().equals("hiddenClass");
                 final AnnotationInfo.StringElement stringElement = (AnnotationInfo.StringElement) outerClassNameElementPair.element();
-                holder = Classes.forName(stringElement.string(), false, substitutor.classLoader());
+                holder = Classes.forName(stringElement.string(), false, substitutor.classLoader);
             }
             if (nameElementPairs.length > 1) {
                 final AnnotationInfo.NameElementPair innerClassNameElementPair = nameElementPairs[1];

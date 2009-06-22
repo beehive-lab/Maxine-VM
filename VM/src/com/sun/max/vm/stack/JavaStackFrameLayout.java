@@ -104,41 +104,24 @@ public abstract class JavaStackFrameLayout {
      * Describes a stack slot.
      */
     public static class Slot {
-        final int _offset;
-        final String _name;
-        final int _referenceMapIndex;
+        public final int offset;
+        public final String name;
+
+        /**
+         * The frame reference map index that corresponds with this slot. If this slot in not covered by a frame
+         * reference map, then this field has the value {@code -1}.
+         */
+        public final int referenceMapIndex;
 
         public Slot(int offset, String name, int referenceMapIndex) {
-            _name = name;
-            _offset = offset;
-            _referenceMapIndex = referenceMapIndex;
-        }
-
-        /**
-         * Gets the frame pointer relative offset of this slot.
-         */
-        public int offset() {
-            return _offset;
-        }
-
-        /**
-         * Gets a descriptive name for this slot.
-         */
-        public String name() {
-            return _name;
-        }
-
-        /**
-         * Gets the frame reference map index that corresponds with this slot. If this slot in not covered by a frame
-         * reference map, then -1 is returned.
-         */
-        public int referenceMapIndex() {
-            return _referenceMapIndex;
+            this.name = name;
+            this.offset = offset;
+            this.referenceMapIndex = referenceMapIndex;
         }
 
         @Override
         public String toString() {
-            return String.format("FP%+d[bit=%d,name=%s]", offset(), referenceMapIndex(), name());
+            return String.format("FP%+d[bit=%d,name=%s]", offset, referenceMapIndex, name);
         }
     }
 
@@ -149,18 +132,18 @@ public abstract class JavaStackFrameLayout {
      */
     public class Slots implements IterableWithLength<Slot> {
 
-        protected final Slot[] _slots;
+        protected final Slot[] slots;
 
         protected Slots() {
             final int maximumSlotOffset = maximumSlotOffset();
             final int lowestSlotOffset = lowestSlotOffset();
             assert maximumSlotOffset >= lowestSlotOffset;
             final int slotCount = Unsigned.idiv(maximumSlotOffset - lowestSlotOffset, STACK_SLOT_SIZE);
-            _slots = new Slot[slotCount];
+            slots = new Slot[slotCount];
 
             int index = 0;
             for (int offset = maximumSlotOffset - STACK_SLOT_SIZE; offset >= lowestSlotOffset; offset -= STACK_SLOT_SIZE) {
-                _slots[index++] = new Slot(offset, nameOfSlot(offset), referenceMapIndexForSlot(offset));
+                slots[index++] = new Slot(offset, nameOfSlot(offset), referenceMapIndexForSlot(offset));
             }
         }
 
@@ -197,7 +180,7 @@ public abstract class JavaStackFrameLayout {
         }
 
         public int length() {
-            return _slots.length;
+            return slots.length;
         }
 
         /**
@@ -209,7 +192,7 @@ public abstract class JavaStackFrameLayout {
          * @throws IndexOutOfBoundsException if {@code index < 0 || index >= length()}
          */
         public final Slot slot(int index) throws IndexOutOfBoundsException {
-            return _slots[index];
+            return slots[index];
         }
 
         /**
@@ -220,10 +203,10 @@ public abstract class JavaStackFrameLayout {
          */
         public final Slot slotAtOffset(int offset) {
             final int index = Unsigned.idiv(maximumSlotOffset() - offset, STACK_SLOT_SIZE);
-            if (index < 0 || index >= _slots.length) {
+            if (index < 0 || index >= slots.length) {
                 return null;
             }
-            return _slots[index];
+            return slots[index];
         }
 
         /**
@@ -232,7 +215,7 @@ public abstract class JavaStackFrameLayout {
          * @return an iterator of the slots that iterates over the slots in descending order of their {@linkplain Slot#offset() offsets}
          */
         public Iterator<Slot> iterator() {
-            return Arrays.iterator(_slots);
+            return Arrays.iterator(slots);
         }
 
         /**
@@ -245,7 +228,7 @@ public abstract class JavaStackFrameLayout {
             final StringBuilder sb = new StringBuilder();
             sb.append(String.format("-- Offset --+ Bit %s+-- Name --%n", referenceMap == null ? "" : "+ IsRef "));
             for (Slot slot : this) {
-                final String referenceMapIndex = slot.referenceMapIndex() == -1 ? "" : String.valueOf(slot.referenceMapIndex());
+                final String referenceMapIndex = slot.referenceMapIndex == -1 ? "" : String.valueOf(slot.referenceMapIndex);
                 final String slotIsReference;
                 if (referenceMap == null) {
                     slotIsReference = "";
@@ -253,10 +236,10 @@ public abstract class JavaStackFrameLayout {
                     if (referenceMapIndex.isEmpty()) {
                         slotIsReference = "|       ";
                     } else {
-                        slotIsReference = referenceMap.isSet(slot.referenceMapIndex()) ? "|  yes  " : "|  no   ";
+                        slotIsReference = referenceMap.isSet(slot.referenceMapIndex) ? "|  yes  " : "|  no   ";
                     }
                 }
-                sb.append(String.format("   FP%+-6d | %-3s %s| %s%n", slot.offset(), referenceMapIndex, slotIsReference, slot.name()));
+                sb.append(String.format("   FP%+-6d | %-3s %s| %s%n", slot.offset, referenceMapIndex, slotIsReference, slot.name));
             }
             return sb.toString();
         }

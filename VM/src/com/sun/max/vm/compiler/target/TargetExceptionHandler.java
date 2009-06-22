@@ -90,17 +90,17 @@ public class TargetExceptionHandler {
      */
     public boolean handlesException(Object throwable) {
         assert throwable != null;
-        if (declaredExceptionResolutionGuard.isClear()) {
+        if (declaredExceptionResolutionGuard.value == null) {
             // Guard isn't set. Either the class hasn't been loaded yet (in which case the
             // exception cannot be thrown), or it hasn't been resolved yet by guard.
-            final ConstantPool constantPool = declaredExceptionResolutionGuard.constantPool();
-            final int index = declaredExceptionResolutionGuard.constantPoolIndex();
+            final ConstantPool constantPool = declaredExceptionResolutionGuard.constantPool;
+            final int index = declaredExceptionResolutionGuard.constantPoolIndex;
             if (!constantPool.classAt(index).isResolvableWithoutClassLoading(constantPool)) {
                 return false;
             }
-            declaredExceptionResolutionGuard.set(constantPool.classAt(index).resolve(constantPool, index));
+            declaredExceptionResolutionGuard.value = constantPool.classAt(index).resolve(constantPool, index);
         }
-        final ClassActor declaredExceptionClassActor = (ClassActor) declaredExceptionResolutionGuard.get();
+        final ClassActor declaredExceptionClassActor = (ClassActor) declaredExceptionResolutionGuard.value;
         if (MaxineVM.isPrototyping()) {
             return declaredExceptionClassActor.toJava().isInstance(throwable);
         }
@@ -108,8 +108,8 @@ public class TargetExceptionHandler {
     }
 
     public String declaredExceptionName() {
-        final ConstantPool constantPool = declaredExceptionResolutionGuard.constantPool();
-        final int index = declaredExceptionResolutionGuard.constantPoolIndex();
+        final ConstantPool constantPool = declaredExceptionResolutionGuard.constantPool;
+        final int index = declaredExceptionResolutionGuard.constantPoolIndex;
         return constantPool.classAt(index).valueString(constantPool);
     }
 

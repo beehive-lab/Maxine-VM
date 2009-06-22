@@ -82,14 +82,14 @@ public class AMD64TreeEirInterpreter extends AMD64EirInterpreter {
         final EirJavaFrameDescriptor descriptor = descriptors.get(tree.getNumber(guard));
         Console.println("EXITED AT: " + descriptor.toMultiLineString());
 
-        for (int i = 0; i < descriptor.locals().length; i++) {
-            Console.println(Color.TEAL, "SLOT: " + i + " <== " + cpu().read(descriptor.locals()[i].location()) + " from " + descriptor.locals()[i].location());
-            executionState.store(i, cpu().read(descriptor.locals()[i].location()));
+        for (int i = 0; i < descriptor.locals.length; i++) {
+            Console.println(Color.TEAL, "SLOT: " + i + " <== " + cpu().read(descriptor.locals[i].location()) + " from " + descriptor.locals[i].location());
+            executionState.store(i, cpu().read(descriptor.locals[i].location()));
         }
 
-        for (int i = 0; i < descriptor.stackSlots().length; i++) {
-            Console.println(Color.TEAL, "SLOT: " + (i + descriptor.locals().length) + " <== " + cpu().read(descriptor.stackSlots()[i].location()) + " from " + descriptor.stackSlots()[i].location());
-            executionState.store(i + descriptor.locals().length, cpu().read(descriptor.stackSlots()[i].location()));
+        for (int i = 0; i < descriptor.stackSlots.length; i++) {
+            Console.println(Color.TEAL, "SLOT: " + (i + descriptor.locals.length) + " <== " + cpu().read(descriptor.stackSlots[i].location()) + " from " + descriptor.stackSlots[i].location());
+            executionState.store(i + descriptor.locals.length, cpu().read(descriptor.stackSlots[i].location()));
         }
 
         executionState.println();

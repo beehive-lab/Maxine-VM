@@ -67,7 +67,7 @@ public class AMD64DtInterpreterGenerator {
     private int maxCompiledTemplateSize() {
         int maxCodeSize = 0;
         for (CompiledBytecodeTemplate template : templateSet.templates()) {
-            final int codeSize = template.targetMethod().codeLength();
+            final int codeSize = template.targetMethod.codeLength();
             if (codeSize > maxCodeSize) {
                 maxCodeSize = codeSize;
             }
@@ -89,7 +89,7 @@ public class AMD64DtInterpreterGenerator {
 
         final AMD64Assembler asm = new AMD64Assembler();
 
-        final int firstBytecodeArrayElementOffset = MaxineVM.target().configuration().layoutScheme().byteArrayLayout().getElementOffsetFromOrigin(0).toInt();
+        final int firstBytecodeArrayElementOffset = MaxineVM.target().configuration().layoutScheme().byteArrayLayout.getElementOffsetFromOrigin(0).toInt();
 
         // Load up the scratch reg with the next bytecode
         asm.movzxb(targetABI.scratchRegister(), firstBytecodeArrayElementOffset,
@@ -205,9 +205,9 @@ public class AMD64DtInterpreterGenerator {
         // Generate the template array
         final TemplateArrayCodeBuffer templateArrayCodeBuffer = new TemplateArrayCodeBuffer(templateSlotSize);
         for (CompiledBytecodeTemplate template : templateSet.templates()) {
-            final Bytecode bytecode = template.bytecode();
+            final Bytecode bytecode = template.bytecode;
             templateArrayCodeBuffer.setPositionToSlotStart(bytecode);
-            templateArrayCodeBuffer.emit(template.targetMethod().code());
+            templateArrayCodeBuffer.emit(template.targetMethod.code());
             if (bytecode.is(Bytecode.Flags.RETURN_)) {
                 templateArrayCodeBuffer.emit(epilogueStub);
             } else {
@@ -237,7 +237,8 @@ public class AMD64DtInterpreterGenerator {
     private static class TemplateArrayCodeBuffer {
         private final byte[] templateArray;
         private final int slotSize;
-        private int _position = 0;
+        private int position = 0;
+
         public TemplateArrayCodeBuffer(int templateSlotSize) {
             slotSize = templateSlotSize;
             templateArray = new byte[slotSize * Bytecode.BREAKPOINT.ordinal()];
@@ -249,11 +250,11 @@ public class AMD64DtInterpreterGenerator {
             return templateArray;
         }
         public void setPositionToSlotStart(Bytecode bytecode) {
-            _position = slotSize * bytecode.ordinal();
+            position = slotSize * bytecode.ordinal();
         }
         public void emit(byte[] code) {
-            System.arraycopy(code, 0, templateArray, _position, code.length);
-            _position += code.length;
+            System.arraycopy(code, 0, templateArray, position, code.length);
+            position += code.length;
         }
     }
 

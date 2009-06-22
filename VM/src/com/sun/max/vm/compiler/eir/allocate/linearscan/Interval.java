@@ -49,7 +49,7 @@ public final class Interval {
 
         public int from;
         public int to;
-        public Range _next;
+        public Range next;
 
         public Range(int from, int to) {
             this.from = from;
@@ -80,15 +80,15 @@ public final class Interval {
     public static enum UsePositionKind {
         NONE('N'), LOOP_END_MARKER('L'), SHOULD_HAVE_REGISTER('Y'), MUST_HAVE_REGISTER('X');
 
-        private char _shortCut;
+        private char shortCut;
 
         UsePositionKind(char shortCut) {
-            _shortCut = shortCut;
+            this.shortCut = shortCut;
         }
 
         @Override
         public String toString() {
-            return Character.toString(_shortCut);
+            return Character.toString(shortCut);
         }
 
         public static UsePositionKind stronger(UsePositionKind a, UsePositionKind b) {
@@ -164,7 +164,7 @@ public final class Interval {
             firstRange.merge(r);
         } else {
             assert firstRange.biggerThan(r);
-            r._next = firstRange;
+            r.next = firstRange;
             firstRange = r;
         }
     }
@@ -207,7 +207,7 @@ public final class Interval {
         Range curRange = firstRange;
         while (curRange != null) {
             result.append("[" + curRange.from + ", " + curRange.to + "[ ");
-            curRange = curRange._next;
+            curRange = curRange.next;
         }
 
         UsePosition curUsePosition = firstUsePosition;
@@ -235,7 +235,7 @@ public final class Interval {
 
             if (curRange != null && curRange.to == i) {
                 inInterval = false;
-                curRange = curRange._next;
+                curRange = curRange.next;
             }
 
             if (curUsePosition != null && curUsePosition.pos == i) {
@@ -280,7 +280,7 @@ public final class Interval {
             if (cur.from <= position && cur.to >= position) {
                 return true;
             }
-            cur = cur._next;
+            cur = cur.next;
         }
 
         return false;
@@ -310,7 +310,7 @@ public final class Interval {
                 assert covers(position);
                 return true;
             }
-            cur = cur._next;
+            cur = cur.next;
         }
 
         assert !covers(position);
@@ -324,7 +324,7 @@ public final class Interval {
             if (cur.to > position) {
                 return true;
             }
-            cur = cur._next;
+            cur = cur.next;
         }
 
         return false;
@@ -367,14 +367,14 @@ public final class Interval {
             if (r1.from < r2.from) {
                 if (r1.to <= r2.from) {
                     // Move r1 on
-                    r1 = r1._next;
+                    r1 = r1.next;
                 } else {
                     return r2.from;
                 }
             } else if (r2.from < r1.from) {
                 if (r2.to <= r1.from) {
                     // Move r2 on
-                    r2 = r2._next;
+                    r2 = r2.next;
                 } else {
                     return r1.from;
                 }
@@ -452,7 +452,7 @@ public final class Interval {
             if (cur == lastCoverRange) {
                 return true;
             }
-            cur = cur._next;
+            cur = cur.next;
         }
 
         return false;
@@ -469,14 +469,14 @@ public final class Interval {
         Range cur = firstRange;
         while (cur != null && cur.to <= pos) {
             prev = cur;
-            cur = cur._next;
+            cur = cur.next;
         }
 
         assert cur != null : "split interval after end of last range";
 
         if (cur.from < pos) {
             result.firstRange = new Range(pos, cur.to);
-            result.firstRange._next = cur._next;
+            result.firstRange.next = cur.next;
             if (cur == lastRange) {
                 result.lastRange = result.firstRange;
             } else {
@@ -484,13 +484,13 @@ public final class Interval {
             }
 
             cur.to = pos;
-            cur._next = null;
+            cur.next = null;
             lastRange = cur;
         } else {
             assert prev != null : "split before start of first range";
             result.firstRange = cur;
             result.lastRange = lastRange;
-            prev._next = null;
+            prev.next = null;
             lastRange = prev;
         }
 
@@ -553,7 +553,7 @@ public final class Interval {
                 }
 
                 prev = cur;
-                cur = cur._next;
+                cur = cur.next;
             }
 
             assert prev == lastRange;

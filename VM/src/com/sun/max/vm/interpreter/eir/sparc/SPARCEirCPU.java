@@ -124,8 +124,8 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
     private final Value[] generalRegisterContents;
     private final Value[] sFPRegisterContents;
     private final Value[] dFPRegisterContents;
-    private final boolean[] _icc;
-    private final boolean[] _xcc;
+    private final boolean[] icc;
+    private final boolean[] xcc;
     private final FCCValue [] fcc;
     private final Pointer vmThreadLocals;
     private final boolean usesRegisterWindow;
@@ -144,8 +144,8 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
         final int numberOfNonOverlappingDoubleRegister = SPARCEirRegister.FloatingPoint.DOUBLE_PRECISION_VALUES.length() - SPARCEirRegister.FloatingPoint.SINGLE_PRECISION_VALUES.length()  / 2;
         dFPRegisterContents = new Value[numberOfNonOverlappingDoubleRegister];
 
-        _icc = new boolean[IntegerConditionFlag.VALUES.length()];
-        _xcc = new boolean[IntegerConditionFlag.VALUES.length()];
+        icc = new boolean[IntegerConditionFlag.VALUES.length()];
+        xcc = new boolean[IntegerConditionFlag.VALUES.length()];
         fcc = new FCCValue[FCCOperand.all().length];
 
         final EirABI abi = interpreter.abi();
@@ -175,8 +175,8 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
         generalRegisterContents = cpu.generalRegisterContents.clone();
         sFPRegisterContents = cpu.sFPRegisterContents.clone();
         dFPRegisterContents = cpu.dFPRegisterContents.clone();
-        _icc = cpu._icc;
-        _xcc = cpu._xcc;
+        icc = cpu.icc;
+        xcc = cpu.xcc;
         fcc = cpu.fcc;
         vmThreadLocals = cpu.vmThreadLocals;
         usesRegisterWindow = cpu.usesRegisterWindow;
@@ -197,10 +197,10 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
 
         final TextTableColumn conditionFlags = new TextTableColumn("Condition flags:");
         for (IntegerConditionFlag flag : IntegerConditionFlag.VALUES) {
-            conditionFlags.add("xcc[ " + flag + " ]: " + _xcc[flag.ordinal()]);
+            conditionFlags.add("xcc[ " + flag + " ]: " + xcc[flag.ordinal()]);
         }
         for (IntegerConditionFlag flag : IntegerConditionFlag.VALUES) {
-            conditionFlags.add("icc[ " + flag + " ] : " + _icc[flag.ordinal()]);
+            conditionFlags.add("icc[ " + flag + " ] : " + icc[flag.ordinal()]);
         }
         for (FCCOperand fccOperand : FCCOperand.all()) {
             conditionFlags.add(fccOperand + " : " + this.fcc[fccOperand.value()]);
@@ -235,14 +235,14 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
     }
 
     public boolean test(IntegerConditionFlag flag, ICCOperand cc) {
-        return cc == ICCOperand.ICC ? _icc[flag.ordinal()] : _xcc[flag.ordinal()];
+        return cc == ICCOperand.ICC ? icc[flag.ordinal()] : xcc[flag.ordinal()];
     }
 
     public void set(IntegerConditionFlag flag, ICCOperand cc, boolean value) {
         if (cc == ICCOperand.ICC) {
-            _icc[flag.ordinal()] = value;
+            icc[flag.ordinal()] = value;
         } else {
-            _xcc[flag.ordinal()] = value;
+            xcc[flag.ordinal()] = value;
         }
     }
 

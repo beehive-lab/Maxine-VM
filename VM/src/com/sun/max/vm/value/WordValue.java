@@ -35,15 +35,14 @@ import com.sun.max.vm.type.*;
  */
 public final class WordValue extends Value<WordValue> {
 
-    private final Word _value;
+    private final Word value;
 
     public static WordValue from(Word value) {
         return new WordValue(value);
     }
 
     public WordValue(Word value) {
-        super();
-        _value = value;
+        this.value = value;
     }
 
     @Override
@@ -53,12 +52,12 @@ public final class WordValue extends Value<WordValue> {
 
     @Override
     public boolean isZero() {
-        return _value.isZero();
+        return value.isZero();
     }
 
     @Override
     public boolean isAllOnes() {
-        return _value.isAllOnes();
+        return value.isAllOnes();
     }
 
     public static final WordValue ZERO = new WordValue(Word.zero());
@@ -73,7 +72,7 @@ public final class WordValue extends Value<WordValue> {
             return false;
         }
         final WordValue wordValue = (WordValue) other;
-        return _value.equals(wordValue._value);
+        return value.equals(wordValue.value);
     }
 
     /**
@@ -83,7 +82,7 @@ public final class WordValue extends Value<WordValue> {
      */
     @Override
     protected int compareSameKind(WordValue other) {
-        return _value.asAddress().compareTo(other._value.asAddress());
+        return value.asAddress().compareTo(other.value.asAddress());
     }
 
     @Override
@@ -94,53 +93,53 @@ public final class WordValue extends Value<WordValue> {
 
     @Override
     public int hashCode() {
-        return _value.asOffset().toInt();
+        return value.asOffset().toInt();
     }
 
     @Override
     public byte toByte() {
-        return (byte) _value.asOffset().toInt();
+        return (byte) value.asOffset().toInt();
     }
 
     @Override
     public byte unsignedToByte() {
-        return (byte) (_value.asAddress().toInt() & 0xff);
+        return (byte) (value.asAddress().toInt() & 0xff);
     }
 
     @Override
     public short toShort() {
-        return (short) _value.asOffset().toInt();
+        return (short) value.asOffset().toInt();
     }
 
     @Override
     public short unsignedToShort() {
-        return (short) (_value.asAddress().toInt() & 0xffff);
+        return (short) (value.asAddress().toInt() & 0xffff);
     }
 
     @Override
     public int toInt() {
-        return _value.asOffset().toInt();
+        return value.asOffset().toInt();
     }
 
     @Override
     public int unsignedToInt() {
-        return _value.asAddress().toInt();
+        return value.asAddress().toInt();
     }
 
     @Override
     public long toLong() {
-        return _value.asOffset().toLong();
+        return value.asOffset().toLong();
     }
 
     @Override
     public String toString() {
-        return _value.toString();
+        return value.toString();
     }
 
     // Substituted by asBoxedJavaValue_()
     @Override
     public Object asBoxedJavaValue() {
-        return _value;
+        return value;
     }
 
     @SURROGATE
@@ -150,12 +149,12 @@ public final class WordValue extends Value<WordValue> {
 
     @Override
     public Word asWord() {
-        return _value;
+        return value;
     }
 
     @Override
     public Word unboxWord() {
-        return _value;
+        return value;
     }
 
     @Override
@@ -176,26 +175,26 @@ public final class WordValue extends Value<WordValue> {
 
     @Override
     public Word toWord() {
-        return _value;
+        return value;
     }
 
     @Override
     public WordWidth signedEffectiveWidth() {
-        return WordWidth.signedEffective(_value.asOffset().toLong());
+        return WordWidth.signedEffective(value.asOffset().toLong());
     }
 
     @Override
     public WordWidth unsignedEffectiveWidth() {
-        return WordWidth.unsignedEffective(_value.asAddress().toLong());
+        return WordWidth.unsignedEffective(value.asAddress().toLong());
     }
 
     @Override
     public byte[] toBytes(DataModel dataModel) {
-        return dataModel.toBytes(_value);
+        return dataModel.toBytes(value);
     }
 
     @Override
     public void write(DataOutput stream) throws IOException {
-        _value.write(stream);
+        value.write(stream);
     }
 }

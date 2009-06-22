@@ -40,7 +40,7 @@ public class InvocationTarget {
     public static VirtualMethodActor findInvokeSpecialTarget(ClassActor classActor, MethodActor method) {
         VirtualMethodActor dynamicMethodActor = (VirtualMethodActor) method;
         if (ResolutionSnippet.isSpecial(dynamicMethodActor, classActor)) {
-            dynamicMethodActor = classActor.superClassActor().findVirtualMethodActor(dynamicMethodActor);
+            dynamicMethodActor = classActor.superClassActor.findVirtualMethodActor(dynamicMethodActor);
             if (dynamicMethodActor == null) {
                 throw new AbstractMethodError();
             }

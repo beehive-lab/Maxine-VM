@@ -42,10 +42,10 @@ public class BeltwayCollectorThread extends Thread {
     private RuntimeMemoryRegion to;
     private static volatile int runningGCThreads = 0;
     private int id;
-    private static volatile boolean _start = false;
-    public static final Object _callerToken = new Object();
+    private static volatile boolean start = false;
+    public static final Object callerToken = new Object();
     public static Object[] tokens = new Object[BeltwayConfiguration.numberOfGCThreads];
-    private TLAB _currentTLAB;
+    private TLAB currentTLAB;
     static {
         for (int i = 0; i < BeltwayConfiguration.numberOfGCThreads; i++) {
             tokens[i] = new Object();
@@ -77,7 +77,7 @@ public class BeltwayCollectorThread extends Thread {
                 }
 
                 while (true) {
-                    if (_start) {
+                    if (start) {
                         if (scavenge) {
                             scavenge(from, to);
                             scavenge = false;
@@ -92,9 +92,9 @@ public class BeltwayCollectorThread extends Thread {
     }
 
     private void exit() {
-        synchronized (_callerToken) {
-            if (_currentTLAB.isSet()) {
-                _currentTLAB.fillTLAB();
+        synchronized (callerToken) {
+            if (currentTLAB.isSet()) {
+                currentTLAB.fillTLAB();
             }
             runningGCThreads--;
             VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
@@ -102,8 +102,8 @@ public class BeltwayCollectorThread extends Thread {
                 if (Heap.verbose()) {
                     Log.println("Resuming Stop the World Daemon");
                 }
-                _start = false;
-                _callerToken.notify();
+                start = false;
+                callerToken.notify();
             }
         }
     }
@@ -116,15 +116,15 @@ public class BeltwayCollectorThread extends Thread {
     }
 
     private void enter() {
-        synchronized (_callerToken) {
+        synchronized (callerToken) {
             runningGCThreads++;
             if (runningGCThreads == BeltwayConfiguration.numberOfGCThreads) {
                 try {
                     if (Heap.verbose()) {
                         Log.println("Pausing Stop The World Daemon");
                     }
-                    _start = true;
-                    _callerToken.wait();
+                    start = true;
+                    callerToken.wait();
                 } catch (InterruptedException interruptedException) {
                     FatalError.unexpected("Error with exception");
 
@@ -164,9 +164,9 @@ public class BeltwayCollectorThread extends Thread {
             startScavengingAddress = beltwayHeapScheme.getNextAvailableGCTask(searchIndex, stopSearchIndex);
         }
 
-        _currentTLAB = VmThread.current().getTLAB();
-        while (!SideTable.isScavenged(SideTable.getChunkIndexFromHeapAddress(_currentTLAB.start()))) {
-            SideTable.markScavengeSideTable(_currentTLAB.start());
+        currentTLAB = VmThread.current().getTLAB();
+        while (!SideTable.isScavenged(SideTable.getChunkIndexFromHeapAddress(currentTLAB.start()))) {
+            SideTable.markScavengeSideTable(currentTLAB.start());
             //final Pointer endScavengingAddress = _currentTLAB.end().asPointer();
             //BeltwayHeapScheme._retrievedTLABS++;
             //Debug.lock();
@@ -178,10 +178,10 @@ public class BeltwayCollectorThread extends Thread {
             //Debug.println(endScavengingAddress);
             //Debug.unlock();
 
-            BeltwayCellVisitorImpl.linearVisitTLAB(_currentTLAB, ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).beltwayCellVisitor(), ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).getAction(), from, to);
+            BeltwayCellVisitorImpl.linearVisitTLAB(currentTLAB, ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).beltwayCellVisitor(), ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).getAction(), from, to);
             final TLAB newTLAB = VmThread.current().getTLAB();
-            if (!newTLAB.start().equals(_currentTLAB.start())) {
-                _currentTLAB = newTLAB;
+            if (!newTLAB.start().equals(currentTLAB.start())) {
+                currentTLAB = newTLAB;
             }
         }
 
@@ -196,6 +196,6 @@ public class BeltwayCollectorThread extends Thread {
     }
 
     public TLAB getScavengeTLAB() {
-        return _currentTLAB;
+        return currentTLAB;
     }
 }

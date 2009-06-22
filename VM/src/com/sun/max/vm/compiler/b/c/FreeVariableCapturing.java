@@ -161,8 +161,8 @@ final class FreeVariableCapturing {
                 addValues(call.arguments(), inspectionList, binding);
                 CirJavaFrameDescriptor javaFrameDescriptor = call.javaFrameDescriptor();
                 while (javaFrameDescriptor != null) {
-                    addValues(javaFrameDescriptor.locals(), inspectionList, binding);
-                    addValues(javaFrameDescriptor.stackSlots(), inspectionList, binding);
+                    addValues(javaFrameDescriptor.locals, inspectionList, binding);
+                    addValues(javaFrameDescriptor.stackSlots, inspectionList, binding);
                     javaFrameDescriptor = javaFrameDescriptor.parent();
                 }
                 node = call.procedure();

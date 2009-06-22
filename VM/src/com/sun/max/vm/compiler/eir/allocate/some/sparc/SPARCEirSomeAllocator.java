@@ -35,11 +35,11 @@ import com.sun.max.vm.type.*;
  */
 public final class SPARCEirSomeAllocator extends EirSomeAllocator<SPARCEirRegister> {
 
-    private final PoolSet<SPARCEirRegister> _noRegisters = PoolSet.noneOf(SPARCEirRegister.pool());
+    private final PoolSet<SPARCEirRegister> noRegisters = PoolSet.noneOf(SPARCEirRegister.pool());
 
     @Override
     protected PoolSet<SPARCEirRegister> noRegisters() {
-        return _noRegisters;
+        return noRegisters;
     }
 
     private final PoolSet<SPARCEirRegister> allocatableIntegerRegisters;

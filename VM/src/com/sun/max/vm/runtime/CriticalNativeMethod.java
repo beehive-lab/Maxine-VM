@@ -37,12 +37,12 @@ import com.sun.max.vm.compiler.*;
  */
 public class CriticalNativeMethod extends CriticalMethod {
 
-    private static CriticalNativeMethod[] _criticalNativeMethods = {};
+    private static CriticalNativeMethod[] criticalNativeMethods = {};
 
     @PROTOTYPE_ONLY
     private static void registerCriticalNativeMethod(CriticalNativeMethod criticalNativeMethod) {
-        _criticalNativeMethods = Arrays.copyOf(_criticalNativeMethods, _criticalNativeMethods.length + 1);
-        _criticalNativeMethods[_criticalNativeMethods.length - 1] = criticalNativeMethod;
+        criticalNativeMethods = Arrays.copyOf(criticalNativeMethods, criticalNativeMethods.length + 1);
+        criticalNativeMethods[criticalNativeMethods.length - 1] = criticalNativeMethod;
     }
 
     /**
@@ -57,7 +57,7 @@ public class CriticalNativeMethod extends CriticalMethod {
     public CriticalNativeMethod(Class javaClass, String methodName) {
         super(javaClass, methodName, null, CallEntryPoint.C_ENTRY_POINT);
         registerCriticalNativeMethod(this);
-        _classMethodActor.nativeFunction().makeSymbol();
+        classMethodActor.nativeFunction.makeSymbol();
     }
 
     /**
@@ -68,14 +68,14 @@ public class CriticalNativeMethod extends CriticalMethod {
     public CriticalNativeMethod(ClassMethodActor classMethodActor) {
         super(classMethodActor, CallEntryPoint.C_ENTRY_POINT);
         registerCriticalNativeMethod(this);
-        _classMethodActor.nativeFunction().makeSymbol();
+        classMethodActor.nativeFunction.makeSymbol();
     }
 
     /**
      * Links the critical native methods in the image.
      */
     public static void linkAll() {
-        for (CriticalNativeMethod method : _criticalNativeMethods) {
+        for (CriticalNativeMethod method : criticalNativeMethods) {
             method.link();
         }
     }
@@ -85,6 +85,6 @@ public class CriticalNativeMethod extends CriticalMethod {
      * @return the address of the native function's implementation
      */
     public Address link() {
-        return _classMethodActor.nativeFunction().link().asAddress();
+        return classMethodActor.nativeFunction.link().asAddress();
     }
 }

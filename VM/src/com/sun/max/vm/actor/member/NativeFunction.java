@@ -53,7 +53,7 @@ public class NativeFunction {
     private boolean isOverloadedByNativeMethod() {
         return classMethodActor.holder().forAllClassMethodActors(new Predicate<ClassMethodActor>() {
             public boolean evaluate(ClassMethodActor cma) {
-                return classMethodActor != cma && cma.isNative() && cma.name().equals(classMethodActor.name());
+                return classMethodActor != cma && cma.isNative() && cma.name.equals(classMethodActor.name);
             }
         });
     }
@@ -67,7 +67,7 @@ public class NativeFunction {
     public String makeSymbol() {
         if (symbol == null) {
             final ClassMethodActor m = classMethodActor;
-            symbol = m.isCFunction() ? m.name().toString() : Mangle.mangleMethod(m.holder().typeDescriptor(), m.name().toString(), isOverloadedByNativeMethod() ? m.descriptor() : null);
+            symbol = m.isCFunction() ? m.name.toString() : Mangle.mangleMethod(m.holder().typeDescriptor, m.name.toString(), isOverloadedByNativeMethod() ? m.descriptor() : null);
         }
         return symbol;
     }
@@ -87,7 +87,7 @@ public class NativeFunction {
             address = DynamicLinker.lookup(classMethodActor, makeSymbol());
             if (!MaxineVM.isPrimordialOrPristine()) {
                 if (JniNativeInterface.verbose()) {
-                    Log.println("[Dynamic-linking native method " + classMethodActor.holder().name() + "." + classMethodActor.name() + " = " + address.toHexString() + "]");
+                    Log.println("[Dynamic-linking native method " + classMethodActor.holder().name + "." + classMethodActor.name + " = " + address.toHexString() + "]");
                 }
             }
         }
@@ -101,7 +101,7 @@ public class NativeFunction {
         this.address = address;
         if (!MaxineVM.isPrimordialOrPristine()) {
             if (JniNativeInterface.verbose()) {
-                Log.println("[" + (address.isZero() ? "Unregistering" : "Registering") + " JNI native method " + classMethodActor.holder().name() + "." + classMethodActor.name() + "]");
+                Log.println("[" + (address.isZero() ? "Unregistering" : "Registering") + " JNI native method " + classMethodActor.holder().name + "." + classMethodActor.name + "]");
             }
         }
     }

@@ -27,32 +27,32 @@ import com.sun.max.vm.runtime.*;
 
 public abstract class DynamicTrampoline {
 
-    final int _dispatchTableIndex;
+    final int dispatchTableIndex;
 
     @CONSTANT_WHEN_NOT_ZERO
-    private TargetMethod _trampoline;
+    private TargetMethod trampoline;
 
     public DynamicTrampoline(int dispatchTableIndex, TargetMethod trampoline) {
-        _dispatchTableIndex = dispatchTableIndex;
-        _trampoline =  trampoline;
+        this.dispatchTableIndex = dispatchTableIndex;
+        this.trampoline =  trampoline;
     }
 
     public void initTrampoline(TargetMethod trampoline) {
-        _trampoline = trampoline;
+        this.trampoline = trampoline;
     }
 
     public TargetMethod trampolineTargetMethod() {
-        return _trampoline;
+        return trampoline;
     }
 
     protected abstract Address getMethodEntryPoint(Object receiver);
 
     public int dispatchTableIndex() {
-        return _dispatchTableIndex;
+        return dispatchTableIndex;
     }
 
     private DynamicTrampolineExit trampolineExit() {
-        return _trampoline.compilerScheme().vmConfiguration().trampolineScheme().dynamicTrampolineExit();
+        return trampoline.compilerScheme().vmConfiguration().trampolineScheme().dynamicTrampolineExit();
     }
 
     /**

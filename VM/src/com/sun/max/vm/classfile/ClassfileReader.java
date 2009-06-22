@@ -86,11 +86,11 @@ public final class ClassfileReader {
         }
         @Override
         public boolean equivalent(MemberActor memberActor1, MemberActor memberActor2) {
-            return memberActor1.matchesNameAndType(memberActor2.name(), memberActor2.descriptor());
+            return memberActor1.matchesNameAndType(memberActor2.name, memberActor2.descriptor);
         }
         @Override
         public int hashCode(MemberActor memberActor) {
-            return memberActor.name().hashCode() ^ memberActor.descriptor().hashCode();
+            return memberActor.name.hashCode() ^ memberActor.descriptor.hashCode();
         }
 
         /**
@@ -153,7 +153,7 @@ public final class ClassfileReader {
     }
 
     public static boolean isValidFieldName(Utf8Constant name) {
-        return parseIdentifier(name.string(), 0) == name.string().length();
+        return parseIdentifier(name.string, 0) == name.string.length();
     }
 
     public static boolean isValidMethodName(Utf8Constant name, boolean allowClinit) {
@@ -163,7 +163,7 @@ public final class ClassfileReader {
         if (allowClinit && name.equals(SymbolTable.CLINIT)) {
             return true;
         }
-        return parseIdentifier(name.string(), 0) == name.string().length();
+        return parseIdentifier(name.string, 0) == name.string.length();
     }
 
     /**
@@ -439,7 +439,7 @@ public final class ClassfileReader {
                 final FieldActor<?> fieldActor = kind.createFieldActor(name, descriptor, flags);
 
                 if (constantValueIndex != 0) {
-                    switch (fieldActor.kind().asEnum()) {
+                    switch (fieldActor.kind.asEnum) {
                         case BYTE: {
                             classRegistry.set(CONSTANT_VALUE, fieldActor, ByteValue.from((byte) constantPool.intAt(constantValueIndex)));
                             break;
@@ -844,7 +844,7 @@ public final class ClassfileReader {
                                 if (substituteeName != null) {
                                     for (int j = nextMethodIndex - 1; j >= 0; --j) {
                                         final MethodActor substituteeActor = methodActors[j];
-                                        if (substituteeActor.name().equals(substituteeName) && substituteeActor.descriptor().equals(descriptor)) {
+                                        if (substituteeActor.name.equals(substituteeName) && substituteeActor.descriptor().equals(descriptor)) {
                                             ProgramError.check(isStatic == substituteeActor.isStatic());
                                             Trace.line(1, "Substituted " + classDescriptor.toJavaString() + "." + substituteeName + descriptor);
                                             Trace.line(1, "       with " + classDescriptor.toJavaString() + "." + name + descriptor);
@@ -1070,7 +1070,7 @@ public final class ClassfileReader {
              * The superclass cannot be final.
              */
             if (superClassActor.isFinal()) {
-                throw verifyError("Cannot extend a final class " + superClassActor.name());
+                throw verifyError("Cannot extend a final class " + superClassActor.name);
             }
         } else {
             if (!classDescriptor.equals(OBJECT)) {
@@ -1180,9 +1180,9 @@ public final class ClassfileReader {
             // find the "referent" field and mark it as a special reference too.
             for (int i = 0; i < fieldActors.length; i++) {
                 final FieldActor fieldActor = fieldActors[i];
-                if (fieldActor instanceof ReferenceFieldActor && fieldActor.name().equals("referent")) {
+                if (fieldActor instanceof ReferenceFieldActor && fieldActor.name.equals("referent")) {
                     // replace the field actor with a new one that has the flag set
-                    fieldActors[i] = new ReferenceFieldActor(fieldActor.name(), fieldActor.descriptor(), fieldActor.flags() | Actor.SPECIAL_REFERENCE);
+                    fieldActors[i] = new ReferenceFieldActor(fieldActor.name, fieldActor.descriptor(), fieldActor.flags() | Actor.SPECIAL_REFERENCE);
                     break;
                 }
             }
@@ -1255,13 +1255,13 @@ public final class ClassfileReader {
         return classActor;
     }
 
-    private static final VMOption _verboseOption = register(new VMOption("-verbose:class",
+    private static final VMOption verboseOption = register(new VMOption("-verbose:class",
         "Display information about each class loaded."), MaxineVM.Phase.PRISTINE);
 
     private ClassActor loadClass(final Utf8Constant name, Object source) {
         try {
             String optSource = null;
-            if (_verboseOption.isPresent()) {
+            if (verboseOption.isPresent()) {
                 if (source != null) {
                     Log.println("[Loading " + name + " from " + source + "]");
                 } else {
@@ -1277,7 +1277,7 @@ public final class ClassfileReader {
             });
             final ClassActor classActor = loadClass0(name);
 
-            if (_verboseOption.isPresent()) {
+            if (verboseOption.isPresent()) {
                 if (source != null) {
                     Log.println("[Loaded " + name + " from " + source + "]");
                 } else {

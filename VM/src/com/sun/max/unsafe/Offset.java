@@ -368,7 +368,7 @@ public abstract class Offset extends Word {
     public final WordWidth effectiveWidth() {
         final int bit = numberOfEffectiveBits();
         for (WordWidth width : WordWidth.values()) {
-            if (bit < width.numberOfBits()) {
+            if (bit < width.numberOfBits) {
                 return width;
             }
         }

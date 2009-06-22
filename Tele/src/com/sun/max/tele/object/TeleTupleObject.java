@@ -52,7 +52,7 @@ public class TeleTupleObject extends TeleObject {
 
     @Override
     public Value readFieldValue(FieldActor fieldActor) {
-        if (fieldActor.kind() == Kind.REFERENCE) {
+        if (fieldActor.kind == Kind.REFERENCE) {
             return TeleReferenceValue.from(teleVM(), teleVM().wordToReference(reference().readWord(fieldActor.offset())));
         }
         return fieldActor.readValue(reference());
@@ -77,7 +77,7 @@ public class TeleTupleObject extends TeleObject {
             ClassActor holderClassActor = classActor;
             do {
                 for (FieldActor fieldActor : holderClassActor.localInstanceFieldActors()) {
-                    if (!(fieldActor.kind() == Kind.REFERENCE || fieldActor.isInjected())) {
+                    if (!(fieldActor.kind == Kind.REFERENCE || fieldActor.isInjected())) {
                         final Field field = fieldActor.toJava();
                         field.setAccessible(true);
                         final Value fieldValue = readFieldValue(fieldActor);
@@ -91,7 +91,7 @@ public class TeleTupleObject extends TeleObject {
                         }
                     }
                 }
-                holderClassActor = holderClassActor.superClassActor();
+                holderClassActor = holderClassActor.superClassActor;
             } while (holderClassActor != null);
             return newTupleObject;
         } catch (InstantiationException instantiationException) {
@@ -112,7 +112,7 @@ public class TeleTupleObject extends TeleObject {
                 for (FieldActor fieldActor : holderClassActor.localInstanceFieldActors()) {
                     copyField(context, this, newTuple, fieldActor);
                 }
-                holderClassActor = holderClassActor.superClassActor();
+                holderClassActor = holderClassActor.superClassActor;
             } while (holderClassActor != null);
             return newTuple;
         } catch (InstantiationException instantiationException) {

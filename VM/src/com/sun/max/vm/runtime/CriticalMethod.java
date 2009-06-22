@@ -39,9 +39,9 @@ import com.sun.max.vm.type.*;
  * @author Ben L. Titzer
  */
 public class CriticalMethod {
-    protected final ClassMethodActor _classMethodActor;
-    protected final CallEntryPoint _callEntryPoint;
-    protected Address _address;
+    public final ClassMethodActor classMethodActor;
+    private final CallEntryPoint callEntryPoint;
+    protected Address address;
 
     /**
      * Create a new critical entrypoint for the method specified by the java class and its name
@@ -78,8 +78,8 @@ public class CriticalMethod {
         if (classMethodActor == null) {
             throw new NoSuchMethodError(methodName);
         }
-        _classMethodActor = classMethodActor;
-        _callEntryPoint = callEntryPoint;
+        this.classMethodActor = classMethodActor;
+        this.callEntryPoint = callEntryPoint;
         MaxineVM.registerCriticalMethod(this);
     }
 
@@ -91,8 +91,8 @@ public class CriticalMethod {
      */
     @PROTOTYPE_ONLY
     public CriticalMethod(ClassMethodActor classMethodActor, CallEntryPoint callEntryPoint) {
-        _classMethodActor = classMethodActor;
-        _callEntryPoint = callEntryPoint;
+        this.classMethodActor = classMethodActor;
+        this.callEntryPoint = callEntryPoint;
         MaxineVM.registerCriticalMethod(this);
     }
 
@@ -102,14 +102,10 @@ public class CriticalMethod {
      * @return the address of the first instruction of the compiled code of this method
      */
     public Address address() {
-        if (_address.isZero()) {
-            _address = CompilationScheme.Static.getCriticalEntryPoint(_classMethodActor, _callEntryPoint);
+        if (address.isZero()) {
+            address = CompilationScheme.Static.getCriticalEntryPoint(classMethodActor, callEntryPoint);
         }
-        return _address;
-    }
-
-    public ClassMethodActor classMethodActor() {
-        return _classMethodActor;
+        return address;
     }
 
     /**
@@ -118,6 +114,6 @@ public class CriticalMethod {
      * @return {@code null} if this critical method has not been compiled.
      */
     public TargetMethod targetMethod() {
-        return CompilationScheme.Static.getCurrentTargetMethod(_classMethodActor);
+        return CompilationScheme.Static.getCurrentTargetMethod(classMethodActor);
     }
 }

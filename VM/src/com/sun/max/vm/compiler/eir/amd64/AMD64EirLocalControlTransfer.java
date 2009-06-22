@@ -28,28 +28,28 @@ import com.sun.max.vm.compiler.eir.*;
  */
 public abstract class AMD64EirLocalControlTransfer extends AMD64EirOperation implements EirControlTransfer {
 
-    private EirBlock _target;
+    private EirBlock target;
 
     public EirBlock target() {
-        return _target;
+        return target;
     }
 
     protected AMD64EirLocalControlTransfer(EirBlock block, EirBlock target) {
         super(block);
-        _target = target;
-        _target.addPredecessor(block);
+        this.target = target;
+        this.target.addPredecessor(block);
     }
 
     @Override
     public void visitSuccessorBlocks(EirBlock.Procedure procedure) {
-        procedure.run(_target);
+        procedure.run(target);
     }
 
     @Override
     public void substituteSuccessorBlocks(Mapping<EirBlock, EirBlock> map) {
         super.substituteSuccessorBlocks(map);
-        if (map.containsKey(_target)) {
-            _target = map.get(_target);
+        if (map.containsKey(target)) {
+            target = map.get(target);
         }
     }
 
@@ -65,8 +65,8 @@ public abstract class AMD64EirLocalControlTransfer extends AMD64EirOperation imp
     @Override
     public String toString() {
         String s = getClass().getSimpleName();
-        if (_target != null) {
-            s += " -> #" + _target.serial();
+        if (target != null) {
+            s += " -> #" + target.serial();
         }
         return s;
     }

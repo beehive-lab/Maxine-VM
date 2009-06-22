@@ -52,7 +52,7 @@ public class DirVariable extends DirValue {
 
     @Override
     public String toString() {
-        return Character.toString(kind.character()) + serial;
+        return Character.toString(kind.character) + serial;
     }
 
 }

@@ -102,7 +102,7 @@ public class CirSwitch extends CirProcedure implements CirFoldable, CirReducible
     }
 
     public String name() {
-        return "<" + comparisonKind.name() + "_" + valueComparator.name() + "_" + numberOfMatches() + ">";
+        return "<" + comparisonKind.name + "_" + valueComparator.name() + "_" + numberOfMatches() + ">";
     }
 
     @Override

@@ -37,7 +37,7 @@ public class CirMethodParameter extends CirSlotVariable {
 
     @Override
     public String toString() {
-        String s = "p" + kind().character() + slotIndex() + "-" + serial();
+        String s = "p" + kind().character + slotIndex() + "-" + serial();
         if (CirNode.printingIds()) {
             s += "_" + id();
         }
@@ -50,7 +50,7 @@ public class CirMethodParameter extends CirSlotVariable {
             return false;
         }
         final CirMethodParameter otherMethodParameter = (CirMethodParameter) other;
-        return kind().character() == otherMethodParameter.kind().character() && slotIndex() == otherMethodParameter.slotIndex() && serial() == otherMethodParameter.serial();
+        return kind().character == otherMethodParameter.kind().character && slotIndex() == otherMethodParameter.slotIndex() && serial() == otherMethodParameter.serial();
     }
 
     @Override

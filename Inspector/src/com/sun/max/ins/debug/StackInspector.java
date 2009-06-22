@@ -89,20 +89,20 @@ public class StackInspector extends Inspector {
     }
 
     static class TruncatedStackFrame extends StackFrame {
-        private StackFrame _truncatedStackFrame;
+        private StackFrame truncatedStackFrame;
 
         TruncatedStackFrame(StackFrame callee, StackFrame truncatedStackFrame) {
-            super(callee, truncatedStackFrame.instructionPointer(), truncatedStackFrame.framePointer(), truncatedStackFrame.stackPointer());
-            _truncatedStackFrame = truncatedStackFrame;
+            super(callee, truncatedStackFrame.instructionPointer, truncatedStackFrame.framePointer, truncatedStackFrame.stackPointer);
+            this.truncatedStackFrame = truncatedStackFrame;
         }
 
         StackFrame getTruncatedStackFrame() {
-            return _truncatedStackFrame;
+            return truncatedStackFrame;
         }
 
         @Override
         public TargetMethod targetMethod() {
-            return _truncatedStackFrame.targetMethod();
+            return truncatedStackFrame.targetMethod();
         }
 
         @Override
@@ -114,7 +114,7 @@ public class StackInspector extends Inspector {
         public boolean isSameFrame(StackFrame stackFrame) {
             if (stackFrame instanceof TruncatedStackFrame) {
                 final TruncatedStackFrame other = (TruncatedStackFrame) stackFrame;
-                return _truncatedStackFrame.isSameFrame(other._truncatedStackFrame);
+                return truncatedStackFrame.isSameFrame(other.truncatedStackFrame);
             }
             return false;
         }
@@ -169,7 +169,7 @@ public class StackInspector extends Inspector {
             Component component;
             if (stackFrame instanceof JavaStackFrame) {
                 final JavaStackFrame javaStackFrame = (JavaStackFrame) stackFrame;
-                final Address address = javaStackFrame.instructionPointer();
+                final Address address = javaStackFrame.instructionPointer;
                 final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
                 if (teleTargetMethod != null) {
                     name = inspection().nameDisplay().veryShortName(teleTargetMethod);
@@ -204,7 +204,7 @@ public class StackInspector extends Inspector {
                 toolTip = name;
             } else {
                 ProgramWarning.check(stackFrame instanceof NativeStackFrame, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
-                final Pointer instructionPointer = stackFrame.instructionPointer();
+                final Pointer instructionPointer = stackFrame.instructionPointer;
                 final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, instructionPointer);
                 if (teleNativeTargetRoutine != null) {
                     // native that we know something about
@@ -407,13 +407,13 @@ public class StackInspector extends Inspector {
             final String frameClassName = adapterStackFrame.getClass().getSimpleName();
             final JPanel header = new InspectorPanel(inspection(), new SpringLayout());
             addLabel(header, new TextLabel(inspection(), "Frame size:", frameClassName));
-            addLabel(header, new DataLabel.IntAsDecimal(inspection(), adapterStackFrame.layout().frameSize()));
+            addLabel(header, new DataLabel.IntAsDecimal(inspection(), adapterStackFrame.layout.frameSize()));
             addLabel(header, new TextLabel(inspection(), "Frame pointer:", frameClassName));
-            addLabel(header, new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, adapterStackFrame.framePointer(), this));
+            addLabel(header, new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, adapterStackFrame.framePointer, this));
             addLabel(header, new TextLabel(inspection(), "Stack pointer:", frameClassName));
-            addLabel(header, new DataLabel.AddressAsHex(inspection(), adapterStackFrame.stackPointer()));
+            addLabel(header, new DataLabel.AddressAsHex(inspection(), adapterStackFrame.stackPointer));
             addLabel(header, new TextLabel(inspection(), "Instruction pointer:", frameClassName));
-            addLabel(header, new WordValueLabel(inspection(), ValueMode.INTEGER_REGISTER, adapterStackFrame.instructionPointer(), this));
+            addLabel(header, new WordValueLabel(inspection(), ValueMode.INTEGER_REGISTER, adapterStackFrame.instructionPointer, this));
             SpringUtilities.makeCompactGrid(header, 2);
 
             add(header, BorderLayout.NORTH);
@@ -456,13 +456,13 @@ public class StackInspector extends Inspector {
             final Address slotBase = javaStackFrame.slotBase();
             _targetMethod = javaStackFrame.targetMethod();
             _codeAttribute = _targetMethod.classMethodActor().codeAttribute();
-            final int frameSize = javaStackFrame.layout().frameSize();
+            final int frameSize = javaStackFrame.layout.frameSize();
 
             final JPanel header = new InspectorPanel(inspection(), new SpringLayout());
             _instructionPointerLabel = new WordValueLabel(inspection(), ValueMode.INTEGER_REGISTER, this) {
                 @Override
                 public Value fetchValue() {
-                    return WordValue.from(stackFrame().instructionPointer());
+                    return WordValue.from(stackFrame().instructionPointer);
                 }
             };
 
@@ -471,8 +471,8 @@ public class StackInspector extends Inspector {
 
             final TextLabel framePointerLabel = new TextLabel(inspection(), "Frame pointer:", frameClassName);
             final TextLabel stackPointerLabel = new TextLabel(inspection(), "Stack pointer:", frameClassName);
-            final Pointer framePointer = javaStackFrame.framePointer();
-            final Pointer stackPointer = javaStackFrame.stackPointer();
+            final Pointer framePointer = javaStackFrame.framePointer;
+            final Pointer stackPointer = javaStackFrame.stackPointer;
             final STACK_BIAS bias = javaStackFrame.bias();
 
             header.add(framePointerLabel);
@@ -488,13 +488,13 @@ public class StackInspector extends Inspector {
             final JPanel slotsPanel = new InspectorPanel(inspection(), new SpringLayout());
             slotsPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-            _slots = javaStackFrame.layout().slots();
+            _slots = javaStackFrame.layout.slots();
             _slotLabels = new TextLabel[_slots.length()];
             _slotValues = new WordValueLabel[_slots.length()];
             int slotIndex = 0;
             for (Slot slot : _slots) {
-                final int offset = slot.offset();
-                final TextLabel slotLabel = new TextLabel(inspection(), slot.name() + ":");
+                final int offset = slot.offset;
+                final TextLabel slotLabel = new TextLabel(inspection(), slot.name + ":");
                 slotsPanel.add(slotLabel);
                 final WordValueLabel slotValue = new WordValueLabel(inspection(), WordValueLabel.ValueMode.INTEGER_REGISTER, this) {
                     @Override
@@ -537,7 +537,7 @@ public class StackInspector extends Inspector {
         public void refresh(boolean force) {
             _instructionPointerLabel.refresh(force);
             final boolean isTopFrame = _stackFrame.isTopFrame();
-            final Pointer instructionPointer = _stackFrame.instructionPointer();
+            final Pointer instructionPointer = _stackFrame.instructionPointer;
             final Pointer instructionPointerForStopPosition = isTopFrame ?  instructionPointer.plus(1) :  instructionPointer;
             int stopIndex = _targetMethod.findClosestStopIndex(instructionPointerForStopPosition);
             if (stopIndex != -1 && isTopFrame) {
@@ -555,8 +555,8 @@ public class StackInspector extends Inspector {
                 final TextLabel slotLabel = _slotLabels[slotIndex];
                 updateSlotLabel(slot, slotLabel);
                 _slotValues[slotIndex].refresh(force);
-                if (slot.referenceMapIndex() != -1) {
-                    if (referenceMap != null && referenceMap.isSet(slot.referenceMapIndex())) {
+                if (slot.referenceMapIndex != -1) {
+                    if (referenceMap != null && referenceMap.isSet(slot.referenceMapIndex)) {
                         slotLabel.setForeground(style().wordValidObjectReferenceDataColor());
                     } else {
                         slotLabel.setForeground(style().textLabelColor());
@@ -574,8 +574,8 @@ public class StackInspector extends Inspector {
          */
         private void updateSlotLabel(Slot slot, TextLabel slotLabel) {
             final String sourceVariableName = sourceVariableName(slot);
-            final int offset = slot.offset();
-            final String name = _showSlotAddresses.isSelected() ? _stackFrame.slotBase().plus(offset).toHexString() : slot.name();
+            final int offset = slot.offset;
+            final String name = _showSlotAddresses.isSelected() ? _stackFrame.slotBase().plus(offset).toHexString() : slot.name;
             slotLabel.setText(name + ":");
             String otherInfo = "";
             final STACK_BIAS bias = _stackFrame.bias();
@@ -595,15 +595,15 @@ public class StackInspector extends Inspector {
         private String sourceVariableName(Slot slot) {
             if (_targetMethod instanceof JitTargetMethod) {
                 final JitTargetMethod jitTargetMethod = (JitTargetMethod) _targetMethod;
-                final JitStackFrameLayout jitLayout = (JitStackFrameLayout) _stackFrame.layout();
-                final int bytecodePosition = jitTargetMethod.bytecodePositionFor(_stackFrame.instructionPointer());
+                final JitStackFrameLayout jitLayout = (JitStackFrameLayout) _stackFrame.layout;
+                final int bytecodePosition = jitTargetMethod.bytecodePositionFor(_stackFrame.instructionPointer);
                 if (bytecodePosition != -1) {
                     for (int localVariableIndex = 0; localVariableIndex < _codeAttribute.maxLocals(); ++localVariableIndex) {
                         final int localVariableOffset = jitLayout.localVariableOffset(localVariableIndex);
-                        if (slot.offset() == localVariableOffset) {
+                        if (slot.offset == localVariableOffset) {
                             final Entry entry = _codeAttribute.localVariableTable().findLocalVariable(localVariableIndex, bytecodePosition);
                             if (entry != null) {
-                                return entry.name(_codeAttribute.constantPool()).string();
+                                return entry.name(_codeAttribute.constantPool()).string;
                             }
                         }
                     }

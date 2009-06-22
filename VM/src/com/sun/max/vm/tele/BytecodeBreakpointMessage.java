@@ -41,19 +41,19 @@ public final class BytecodeBreakpointMessage extends MaxineMessage<BytecodeBreak
         public static final IndexedSequence<Action> VALUES = new ArraySequence<Action>(values());
     }
 
-    private Action _action;
-    private MethodKey _methodKey;
+    private Action action;
+    private MethodKey methodKey;
 
-    private int _bytecodePosition;
+    private int bytecodePosition;
 
     public BytecodeBreakpointMessage() {
         super(Tag.BYTECODE_BREAKPOINT);
     }
 
     public static void writeMethodKey(DataOutputStream dataOutputStream, MethodKey methodKey) throws IOException {
-        dataOutputStream.writeUTF(methodKey.holder().string());
-        dataOutputStream.writeUTF(methodKey.name().string());
-        dataOutputStream.writeUTF(methodKey.signature().string());
+        dataOutputStream.writeUTF(methodKey.holder().string);
+        dataOutputStream.writeUTF(methodKey.name().string);
+        dataOutputStream.writeUTF(methodKey.signature().string);
     }
 
     public static MethodKey readMethodKey(DataInputStream dataInputStream) throws IOException {
@@ -65,9 +65,9 @@ public final class BytecodeBreakpointMessage extends MaxineMessage<BytecodeBreak
 
     @Override
     public void readData(DataInputStream dataInputStream) throws IOException {
-        _action = Action.VALUES.get(dataInputStream.readInt());
-        _methodKey = readMethodKey(dataInputStream);
-        _bytecodePosition = dataInputStream.readInt();
+        action = Action.VALUES.get(dataInputStream.readInt());
+        methodKey = readMethodKey(dataInputStream);
+        bytecodePosition = dataInputStream.readInt();
     }
 
     /**
@@ -75,34 +75,34 @@ public final class BytecodeBreakpointMessage extends MaxineMessage<BytecodeBreak
      */
     public BytecodeBreakpointMessage(Action action, MethodKey methodKey, int bytecodePosition) {
         super(Tag.BYTECODE_BREAKPOINT);
-        _action = action;
-        _methodKey = methodKey;
-        _bytecodePosition = bytecodePosition;
+        this.action = action;
+        this.methodKey = methodKey;
+        this.bytecodePosition = bytecodePosition;
     }
 
     @Override
     public void writeData(DataOutputStream dataOutputStream) throws IOException {
-        dataOutputStream.writeInt(_action.ordinal());
-        writeMethodKey(dataOutputStream, _methodKey);
-        dataOutputStream.writeInt(_bytecodePosition);
+        dataOutputStream.writeInt(action.ordinal());
+        writeMethodKey(dataOutputStream, methodKey);
+        dataOutputStream.writeInt(bytecodePosition);
     }
 
-    private static final Bag<MethodKey, Integer, Sequence<Integer>> _signatureToBytecodePositions = new SequenceBag<MethodKey, Integer>(SequenceBag.MapType.HASHED);
+    private static final Bag<MethodKey, Integer, Sequence<Integer>> signatureToBytecodePositions = new SequenceBag<MethodKey, Integer>(SequenceBag.MapType.HASHED);
 
     public static boolean isActiveFor(ClassMethodActor classMethodActor) {
         final MethodKey methodKey = new MethodActorKey(classMethodActor);
-        return !_signatureToBytecodePositions.get(methodKey).isEmpty();
+        return !signatureToBytecodePositions.get(methodKey).isEmpty();
     }
 
     static {
         MaxineMessenger.subscribe(MaxineMessage.Tag.BYTECODE_BREAKPOINT, new MaxineMessage.Receiver<BytecodeBreakpointMessage>() {
             public void consume(BytecodeBreakpointMessage message) {
-                switch (message._action) {
+                switch (message.action) {
                     case MAKE:
-                        _signatureToBytecodePositions.add(message._methodKey, message._bytecodePosition);
+                        signatureToBytecodePositions.add(message.methodKey, message.bytecodePosition);
                         break;
                     case DELETE:
-                        _signatureToBytecodePositions.remove(message._methodKey, message._bytecodePosition);
+                        signatureToBytecodePositions.remove(message.methodKey, message.bytecodePosition);
                         break;
                 }
             }
@@ -115,7 +115,7 @@ public final class BytecodeBreakpointMessage extends MaxineMessage<BytecodeBreak
     public static void makeTargetBreakpoints(TargetMethod targetMethod) {
         MaxineMessenger.messenger().flush();
         final MethodKey methodKey = new MethodActorKey(targetMethod.classMethodActor());
-        final Sequence<Integer> bytecodePositions = _signatureToBytecodePositions.get(methodKey);
+        final Sequence<Integer> bytecodePositions = signatureToBytecodePositions.get(methodKey);
         if (!bytecodePositions.isEmpty()) {
             if (targetMethod instanceof JitTargetMethod) {
                 final JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod;

@@ -226,7 +226,7 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
             assembler.nop();
             assembler.nop();
             dir.align(4); // align to four bytes
-            assembler.bindLabel(_methodEntryPoint);
+            assembler.bindLabel(methodEntryPoint);
         }
 
         @Override
@@ -292,7 +292,7 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
 
         @Override
         void adapt(Kind kind, AMD64EirRegister.General destinationRegister, int offset32) {
-            switch (kind.asEnum()) {
+            switch (kind.asEnum) {
                 case BYTE: {
                     assembler().movsxb(destinationRegister.as64(), offset32, stackPointer().indirect());
                     break;
@@ -327,7 +327,7 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
 
         @Override
         void adapt(Kind kind, AMD64EirRegister.XMM destinationRegister, int offset32) {
-            switch (kind.asEnum()) {
+            switch (kind.asEnum) {
                 case FLOAT:
                     assembler().movss(destinationRegister.as(), offset32, stackPointer().indirect());
                     break;
@@ -404,7 +404,7 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
 
         @Override
         void adapt(Kind kind, AMD64EirRegister.General parameterRegister, int offset32) {
-            switch (kind.asEnum()) {
+            switch (kind.asEnum) {
                 case BYTE:
                 case BOOLEAN:
                 case SHORT:
@@ -428,7 +428,7 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
 
         @Override
         void adapt(Kind kind, AMD64EirRegister.XMM parameterRegister, int offset32) {
-            switch (kind.asEnum()) {
+            switch (kind.asEnum) {
                 case FLOAT:
                     assembler().movss(offset32, stackPointer().indirect(), parameterRegister.as());
                     break;

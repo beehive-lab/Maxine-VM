@@ -141,9 +141,9 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     }
 
     public void dump() {
-        Log.print(ObjectAccess.readClassActor(this).name().string());
+        Log.print(ObjectAccess.readClassActor(this).name.string);
         Log.print(" boundTo=");
-        Log.print(boundObject() == null ? "null" : ObjectAccess.readClassActor(boundObject()).name().string());
+        Log.print(boundObject() == null ? "null" : ObjectAccess.readClassActor(boundObject()).name.string);
         Log.print(" owner=");
         Log.print(ownerThread == null ? "null" : ownerThread.getName());
         Log.print(" recursion=");

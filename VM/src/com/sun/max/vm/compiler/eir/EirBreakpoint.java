@@ -41,6 +41,6 @@ public class EirBreakpoint<EirInstructionVisitor_Type extends EirInstructionVisi
 
     @Override
     public void emit(EirTargetEmitter_Type emitter) {
-        emitter.assembler().directives().inlineByteArray(TargetBreakpoint.breakpointCode());
+        emitter.assembler().directives().inlineByteArray(TargetBreakpoint.breakpointCode);
     }
 }

@@ -39,7 +39,7 @@ public class ImmediateConstantModifier extends ConstantModifier {
     }
 
     public WordWidth constantWidth() throws AssemblyException {
-        switch (kind().asEnum()) {
+        switch (kind().asEnum) {
             case BYTE:
                 return WordWidth.BITS_8;
             case SHORT:
@@ -109,6 +109,6 @@ public class ImmediateConstantModifier extends ConstantModifier {
 
     public int getImmediateConstant(byte[] codeRegion, int offsetToCode) throws AssemblyException {
         final AssemblyInstructionEditor editor =  createAssemblyInstructionEditor(codeRegion, offsetToCode + startPosition(), size());
-        return editor.getIntImmediate(kind().width());
+        return editor.getIntImmediate(kind().width);
     }
 }

@@ -160,7 +160,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
 
 
     public void visit(EirAssignment assignment) {
-        switch (assignment.kind().asEnum()) {
+        switch (assignment.kind().asEnum) {
             case INT: {
                 final int value = cpu.readInt(assignment.sourceOperand().location());
                 cpu.writeInt(assignment.destinationOperand().location(), value);
@@ -205,7 +205,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         if (loadKind == value.kind()) {
             return value;
         }
-        switch (loadKind.asEnum()) {
+        switch (loadKind.asEnum) {
             case INT: {
                 if (value.kind() == Kind.FLOAT) {
                     return IntValue.from((int) value.asFloat());
@@ -252,7 +252,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
             // This must be a load from the stack
             assert load.indexOperand() == null;
             final int offset = load.offsetOperand() != null ? cpu.read(load.offsetOperand().location()).asInt() : 0;
-            value = toLoadKind(cpu.stack().read(pointer.asWord().asAddress().plus(offset)), load.kind());
+            value = toLoadKind(cpu.stack().read(pointer.asWord().asAddress().plus(offset)), load.kind);
         } else {
             final Value[] arguments = (load.indexOperand() != null) ? new Value[3] : new Value[2];
             arguments[0] = pointer;
@@ -264,9 +264,9 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
             if (load.indexOperand() != null) {
                 arguments[2] = IntValue.from(cpu.readInt(load.indexOperand().location()));
             }
-            value = pointerLoad(load.kind(), arguments);
+            value = pointerLoad(load.kind, arguments);
         }
-        switch (load.kind().asEnum()) {
+        switch (load.kind.asEnum) {
             case BYTE: {
                 cpu.writeWord(load.destinationLocation(), Address.fromInt(value.toInt()));
                 break;
@@ -309,14 +309,14 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         final Value pointer = cpu.read(store.pointerOperand().location());
         if (pointer.kind() == Kind.WORD) {
             // This must be a store to the stack: don't type check the load
-            final Value value = store.kind() == Kind.WORD ?
+            final Value value = store.kind == Kind.WORD ?
                             cpu.read(store.valueOperand().location()) :
-                            cpu.read(store.kind(), store.valueOperand().location());
+                            cpu.read(store.kind, store.valueOperand().location());
             assert store.indexOperand() == null;
             final int offset = store.offsetOperand() != null ? cpu.read(store.offsetOperand().location()).asInt() : 0;
             cpu.stack().write(pointer.asWord().asAddress().plus(offset), value);
         } else {
-            final Value value = cpu.read(store.kind(), store.valueOperand().location());
+            final Value value = cpu.read(store.kind, store.valueOperand().location());
             final Value[] arguments = (store.indexOperand() != null) ? new Value[4] : new Value[3];
             arguments[0] = pointer;
             if (store.offsetOperand() != null) {
@@ -330,7 +330,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
             } else {
                 arguments[2] = value;
             }
-            pointerStore(store.kind(), arguments);
+            pointerStore(store.kind, arguments);
         }
     }
 
@@ -1086,7 +1086,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
 
         for (int i = 0; i < instruction.matches().length; i++) {
             if (a == instruction.matches() [i].value().asInt()) {
-                cpu.gotoBlock(instruction.targets()[i]);
+                cpu.gotoBlock(instruction.targets[i]);
                 return;
             }
         }
@@ -1110,7 +1110,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
     }
 
     public void visit(ZERO instruction) {
-        switch (instruction.kind().asEnum()) {
+        switch (instruction.kind.asEnum) {
             case INT:
             case LONG:
             case WORD:

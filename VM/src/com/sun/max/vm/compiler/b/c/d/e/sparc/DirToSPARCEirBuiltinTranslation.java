@@ -487,7 +487,7 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
 
 
     private MembarOperand toMembarOperand(PoolSet<MemoryBarrier> memoryBarriers) {
-        final PoolSet<MemoryBarrier> memoryModelBarriers = methodTranslation().memoryModel().barriers();
+        final PoolSet<MemoryBarrier> memoryModelBarriers = methodTranslation().memoryModel().barriers;
         MembarOperand operand = MembarOperand.NO_MEMBAR;
         for (MemoryBarrier b : memoryBarriers) {
             if (!memoryModelBarriers.contains(b)) {
@@ -523,7 +523,7 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
         final DirConstant dirConstant = (DirConstant) dirArguments[0];
         final Class<PoolSet<MemoryBarrier>> type = null;
         final PoolSet<MemoryBarrier> memoryBarriers = StaticLoophole.cast(type, dirConstant.value().asObject());
-        if (methodTranslation().memoryModel().barriers().containsAll(memoryBarriers)) {
+        if (methodTranslation().memoryModel().barriers.containsAll(memoryBarriers)) {
             return;
         }
         final MembarOperand membarOperand = toMembarOperand(memoryBarriers);
@@ -939,7 +939,7 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
             final DirConstant indexConstant = (DirConstant) dirIndex;
             final DirConstant displacementConstant = (DirConstant) dirDisplacement;
 
-            final long offset = (indexConstant.value().toInt() * kind.size()) + displacementConstant.value().toInt();
+            final long offset = (indexConstant.value().toInt() * kind.width.numberOfBytes) + displacementConstant.value().toInt();
             if (offset > Integer.MIN_VALUE && offset < Integer.MAX_VALUE) {
                 if (offset == 0) {
                     addInstruction(new SPARCEirLoad(eirBlock(), kind, result, pointer));
@@ -1129,7 +1129,7 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
             final DirConstant indexConstant = (DirConstant) dirIndex;
             final DirConstant displacementConstant = (DirConstant) dirDisplacement;
 
-            final long offset = (indexConstant.value().toInt() * kind.size()) + displacementConstant.value().toInt();
+            final long offset = (indexConstant.value().toInt() * kind.width.numberOfBytes) + displacementConstant.value().toInt();
 
             if (offset > Integer.MIN_VALUE && offset < Integer.MAX_VALUE) {
                 if (offset == 0) {
@@ -1377,7 +1377,7 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
         addInstruction(new SPARCEirInstruction.ADD_I64(eirBlock(), registerPointerValue, delta));
     }
 
-    private static final LongValue STACK_SLOT_SIZE = LongValue.from(Word.width().numberOfBytes());
+    private static final LongValue STACK_SLOT_SIZE = LongValue.from(Word.width().numberOfBytes);
 
     @Override
     public void visitGetFloatingPointRegister(GetFloatingPointRegister builtin, DirValue dirResult, DirValue[] dirArguments) {

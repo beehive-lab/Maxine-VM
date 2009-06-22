@@ -40,7 +40,7 @@ import com.sun.max.vm.template.*;
 public class Stops {
 
     public final int[] stopPositions;
-    public final ClassMethodActor[] _directCallees;
+    public final ClassMethodActor[] directCallees;
     public final int numberOfIndirectCalls;
     public final int numberOfSafepoints;
     public final byte[] referenceMaps;
@@ -54,7 +54,7 @@ public class Stops {
            int[] stopPositions,
            BytecodeStopsIterator bytecodeStopsIterator,
            byte[] referenceMaps) {
-        this._directCallees = directCallees;
+        this.directCallees = directCallees;
         this.isDirectCallToRuntime = isDirectCallToRuntime;
         this.numberOfIndirectCalls = numberOfIndirectCalls;
         this.numberOfSafepoints = numberOfSafepoints;
@@ -64,7 +64,7 @@ public class Stops {
     }
 
     public int numberOfDirectCalls() {
-        return _directCallees == null ? 0 : _directCallees.length;
+        return directCallees == null ? 0 : directCallees.length;
     }
 
     /**
@@ -78,7 +78,7 @@ public class Stops {
         private final int[] stopTypeCount;
         private Stop[] stops;
         private int uniqueBytecodePositions = 1;
-        private int _count;
+        private int count;
 
         public StopsBuilder(int initialCapacity) {
             stops = new Stop[initialCapacity];
@@ -99,27 +99,27 @@ public class Stops {
         }
 
         private void addNoCheck(Stop stop) {
-            stops[_count] = stop;
+            stops[count] = stop;
             stopTypeCount[stop.type().ordinal()]++;
             final int bytecodePosition = stop.bytecodePosition;
-            if (_count > 0) {
-                final int previousBytecodePosition = stops[_count - 1].bytecodePosition;
+            if (count > 0) {
+                final int previousBytecodePosition = stops[count - 1].bytecodePosition;
                 if (bytecodePosition > previousBytecodePosition) {
                     uniqueBytecodePositions++;
                 } else {
                     assert bytecodePosition == previousBytecodePosition : "Stops must be accumulated in bytecode order";
                 }
             }
-            _count++;
+            count++;
         }
 
         public void add(Stop stop) {
-            ensureCapacity(_count + 1);
+            ensureCapacity(count + 1);
             addNoCheck(stop);
         }
 
         public void add(CompiledBytecodeTemplate template, int targetCodePosition, int bytecodePosition) {
-            final TargetMethod targetMethod = template.targetMethod();
+            final TargetMethod targetMethod = template.targetMethod;
             if (targetMethod.numberOfStopPositions() == 0) {
                 return;
             }
@@ -127,7 +127,7 @@ public class Stops {
             final int numberOfIndirectCalls = targetMethod.numberOfIndirectCalls();
             final int numberOfSafepoints = targetMethod.numberOfSafepoints();
 
-            ensureCapacity(_count + numberOfDirectCalls + numberOfIndirectCalls + numberOfSafepoints);
+            ensureCapacity(count + numberOfDirectCalls + numberOfIndirectCalls + numberOfSafepoints);
 
             for (int i = 0; i < numberOfDirectCalls; i++) {
                 final int stopPosition = targetCodePosition + DIRECT_CALL.stopPosition(targetMethod, i);
@@ -147,7 +147,7 @@ public class Stops {
             final int numberOfDirectCalls = stopTypeCount[DIRECT_CALL.ordinal()];
             final int numberOfIndirectCalls = stopTypeCount[INDIRECT_CALL.ordinal()];
             final int numberOfSafepoints = stopTypeCount[SAFEPOINT.ordinal()];
-            final int numberOfStopPositions = _count;
+            final int numberOfStopPositions = count;
             final int numberOfCalls = numberOfDirectCalls + numberOfIndirectCalls;
             assert numberOfStopPositions == numberOfCalls + numberOfSafepoints;
 

@@ -50,24 +50,24 @@ public final class OhmHybridLayout extends OhmWordArrayLayout implements HybridL
         return false;
     }
 
-    private final OhmTupleLayout _tupleLayout;
-    private final IntArrayLayout _intArrayLayout;
+    private final OhmTupleLayout tupleLayout;
+    private final IntArrayLayout intArrayLayout;
 
 
     OhmHybridLayout(GripScheme gripScheme) {
         super(gripScheme);
-        _tupleLayout = new OhmTupleLayout(gripScheme);
-        _intArrayLayout = new OhmIntArrayLayout(gripScheme);
+        tupleLayout = new OhmTupleLayout(gripScheme);
+        intArrayLayout = new OhmIntArrayLayout(gripScheme);
     }
 
     public Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors) {
-        final Size tupleSize = _tupleLayout.layoutFields(superClassActor, fieldActors, headerSize());
+        final Size tupleSize = tupleLayout.layoutFields(superClassActor, fieldActors, headerSize());
         return getArraySize(firstAvailableWordArrayIndex(tupleSize));
     }
 
     @INLINE
     public int getFieldOffsetInCell(FieldActor fieldActor) {
-        return _tupleLayout.getFieldOffsetInCell(fieldActor);
+        return tupleLayout.getFieldOffsetInCell(fieldActor);
     }
 
     public int firstAvailableWordArrayIndex(Size tupleSize) {
@@ -79,14 +79,14 @@ public final class OhmHybridLayout extends OhmWordArrayLayout implements HybridL
     public void visitObjectCell(Object object, ObjectCellVisitor visitor) {
         final Hybrid hybrid = (Hybrid) object;
         visitHeader(visitor, hybrid);
-        _tupleLayout.visitFields(visitor, hybrid);
+        tupleLayout.visitFields(visitor, hybrid);
 
         for (int wordIndex = hybrid.firstWordIndex(); wordIndex <= hybrid.lastWordIndex(); wordIndex++) {
             visitor.visitElement(getElementOffsetInCell(wordIndex).toInt(), wordIndex, new WordValue(hybrid.getWord(wordIndex)));
         }
 
         for (int intIndex = hybrid.firstIntIndex(); intIndex <= hybrid.lastIntIndex(); intIndex++) {
-            visitor.visitElement(_intArrayLayout.getElementOffsetInCell(intIndex).toInt(), intIndex, IntValue.from(hybrid.getInt(intIndex)));
+            visitor.visitElement(intArrayLayout.getElementOffsetInCell(intIndex).toInt(), intIndex, IntValue.from(hybrid.getInt(intIndex)));
         }
     }
 
@@ -96,12 +96,12 @@ public final class OhmHybridLayout extends OhmWordArrayLayout implements HybridL
         if (value != null) {
             return value;
         }
-        final int index = (offset - headerSize()) / kind.size();
+        final int index = (offset - headerSize()) / kind.width.numberOfBytes;
         if ((kind == Kind.INT && index >= mirror.firstIntIndex()) ||
             (kind == Kind.WORD && index >= mirror.firstWordIndex())) {
             return mirror.readElement(kind, index);
         }
-        return _tupleLayout.readValue(kind, mirror, offset);
+        return tupleLayout.readValue(kind, mirror, offset);
     }
 
     @Override
@@ -114,7 +114,7 @@ public final class OhmHybridLayout extends OhmWordArrayLayout implements HybridL
             (kind == Kind.WORD && index >= mirror.firstWordIndex())) {
             super.writeValue(kind, mirror, offset, value);
         } else {
-            _tupleLayout.writeValue(kind, mirror, offset, value);
+            tupleLayout.writeValue(kind, mirror, offset, value);
         }
     }
 }

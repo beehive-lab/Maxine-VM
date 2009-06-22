@@ -53,7 +53,7 @@ import com.sun.max.vm.value.*;
  */
 public class ClassfileWriter {
 
-    final ConstantPoolEditor _constantPoolEditor;
+    final ConstantPoolEditor constantPoolEditor;
     DataOutputStream dataOutputStream;
 
     /**
@@ -66,9 +66,9 @@ public class ClassfileWriter {
     public static void saveGeneratedClass(ClassInfo classInfo, final ConstantPoolEditor constantPoolEditor) throws IOException {
         final byte[] classfile = toByteArray(classInfo, constantPoolEditor);
         if (MaxineVM.isPrototyping()) {
-            VmClassLoader.VM_CLASS_LOADER.saveGeneratedClassfile(classInfo.actor.name().string(), classfile);
+            VmClassLoader.VM_CLASS_LOADER.saveGeneratedClassfile(classInfo.actor.name.string, classfile);
         } else {
-            classInfo.actor.setClassfile(classfile);
+            classInfo.actor.classfile = classfile;
         }
     }
 
@@ -128,16 +128,17 @@ public class ClassfileWriter {
      *
      * @param classInfo the class to be written as a class file
      * @param constantPoolEditor an editor on a constant pool associated with {@code classInfo}.
-     *            <p>
+     *
      *            <b>It's imperative that this constant pool editor was obtained AFTER {@code classInfo} was constructed
      *            as the construction of a ClassInfo object may add more entries to the given class actor's constant
      *            pool.</b>
+     *
      * @param outputStream where to write the class file
      * @throws IOException if an IO error occurs while writing to {@code outputStream}
      */
     public ClassfileWriter(ClassInfo classInfo, ConstantPoolEditor constantPoolEditor, OutputStream outputStream) throws IOException {
-        _constantPoolEditor = constantPoolEditor;
-        _constantPoolEditor.append(makeUtf8Constant("--- START OF CONSTANTS ADDED FOR CLASS FILE GENERATION ---"));
+        this.constantPoolEditor = constantPoolEditor;
+        this.constantPoolEditor.append(makeUtf8Constant("--- START OF CONSTANTS ADDED FOR CLASS FILE GENERATION ---"));
 
         // Initially write nothing: this is just to flesh out the creation of constant pool entries
         dataOutputStream = new DataOutputStream(new NullOutputStream());
@@ -152,7 +153,7 @@ public class ClassfileWriter {
      * @see ConstantPoolEditor#indexOf(PoolConstant)
      */
     protected int indexOf(PoolConstant poolConstant) {
-        return _constantPoolEditor.indexOf(poolConstant);
+        return constantPoolEditor.indexOf(poolConstant);
     }
 
     protected int indexOfUtf8(Utf8Constant utf8Constant) {
@@ -164,11 +165,11 @@ public class ClassfileWriter {
     }
 
     protected int indexOfUtf8(Descriptor descriptor) {
-        return indexOfUtf8(makeUtf8Constant(descriptor.string()));
+        return indexOfUtf8(makeUtf8Constant(descriptor.string));
     }
 
     protected int indexOfClass(ClassActor classActor) {
-        return indexOf(createClassConstant(classActor.typeDescriptor()));
+        return indexOf(createClassConstant(classActor.typeDescriptor));
     }
 
     protected int indexOfClass(TypeDescriptor typeDescriptor) {
@@ -262,7 +263,7 @@ public class ClassfileWriter {
                 } else {
                     holder = ((MemberActor) actor).holder();
                 }
-                if (holder.majorVersion() < 49) {
+                if (holder.majorVersion < 49) {
                     attributes.append(new Attribute("Synthetic"));
                 } else {
                     // The ACC_SYNTHETIC flag was introduced in version 49 of the class file format
@@ -337,7 +338,7 @@ public class ClassfileWriter {
             final TypeDescriptor outerClass = classActor.outerClassDescriptor();
             final TypeDescriptor[] innerClasses = classActor.innerClassDescriptors();
             final EnclosingMethodInfo enclosingMethod = classActor.enclosingMethodInfo();
-            final String sourceFileName = classActor.sourceFileName();
+            final String sourceFileName = classActor.sourceFileName;
 
             if (sourceFileName != null) {
                 attributes.append(new Attribute("SourceFile") {
@@ -370,13 +371,13 @@ public class ClassfileWriter {
                     protected void writeData(ClassfileWriter cf) throws IOException {
                         cf.writeUnsigned2((outerClass == null ? 0 : 1) + (innerClasses == null ? 0 : innerClasses.length));
                         if (outerClass != null) {
-                            cf.writeUnsigned2(cf.indexOfClass(actor.typeDescriptor()));
+                            cf.writeUnsigned2(cf.indexOfClass(actor.typeDescriptor));
                             cf.writeUnsigned2(cf.indexOfClass(outerClass));
-                            cf.writeUnsigned2(cf.innerClassNameIndex(actor.typeDescriptor()));
+                            cf.writeUnsigned2(cf.innerClassNameIndex(actor.typeDescriptor));
                             cf.writeUnsigned2(actor.flags() & Actor.JAVA_CLASS_FLAGS);
                         }
                         if (innerClasses != null) {
-                            final int outerClassIndex = cf.indexOfClass(actor.typeDescriptor());
+                            final int outerClassIndex = cf.indexOfClass(actor.typeDescriptor);
                             for (TypeDescriptor innerClass : innerClasses) {
                                 // Not really correct: would require resolving inner classes first
                                 final int innerClassFlags = 0;
@@ -394,15 +395,15 @@ public class ClassfileWriter {
 
         @Override
         protected void write(ClassfileWriter cf) throws IOException {
-            final String className = actor.name().string();
+            final String className = actor.name.string;
             final TypeDescriptor classDescriptor = JavaTypeDescriptor.getDescriptorForWellFormedTupleName(className);
             final int thisClassIndex = cf.indexOf(createClassConstant(classDescriptor));
-            final ClassActor superClassActor = actor.superClassActor();
-            final int superClassIndex = superClassActor == null ? 0 : cf.indexOf(createClassConstant(superClassActor.typeDescriptor()));
+            final ClassActor superClassActor = actor.superClassActor;
+            final int superClassIndex = superClassActor == null ? 0 : cf.indexOf(createClassConstant(superClassActor.typeDescriptor));
             cf.writeUnsigned4(0xcafebabe);
-            cf.writeUnsigned2(actor.minorVersion());
-            cf.writeUnsigned2(actor.majorVersion());
-            cf._constantPoolEditor.write(cf.dataOutputStream);
+            cf.writeUnsigned2(actor.minorVersion);
+            cf.writeUnsigned2(actor.majorVersion);
+            cf.constantPoolEditor.write(cf.dataOutputStream);
 
             cf.writeUnsigned2(actor.flags() & Actor.JAVA_CLASS_FLAGS);
             cf.writeUnsigned2(thisClassIndex);
@@ -441,8 +442,8 @@ public class ClassfileWriter {
         @Override
         protected void write(ClassfileWriter cf) throws IOException {
             cf.writeUnsigned2(classfileFlags());
-            cf.writeUnsigned2(cf.indexOfUtf8(actor.name()));
-            cf.writeUnsigned2(cf.indexOfUtf8(actor.descriptor()));
+            cf.writeUnsigned2(cf.indexOfUtf8(actor.name));
+            cf.writeUnsigned2(cf.indexOfUtf8(actor.descriptor));
             cf.writeAttributes(attributes);
         }
     }
@@ -503,7 +504,7 @@ public class ClassfileWriter {
                 attributes.append(new Attribute("LineNumberTable") {
                     @Override
                     protected void writeData(ClassfileWriter cf) throws IOException {
-                        lineNumberTable.writeAttributeInfo(cf.dataOutputStream, cf._constantPoolEditor);
+                        lineNumberTable.writeAttributeInfo(cf.dataOutputStream, cf.constantPoolEditor);
                     }
                 });
             }
@@ -511,7 +512,7 @@ public class ClassfileWriter {
                 attributes.append(new Attribute("LocalVariableTable") {
                     @Override
                     protected void writeData(ClassfileWriter cf) throws IOException {
-                        localVariableTable.writeLocalVariableTableAttributeInfo(cf.dataOutputStream, cf._constantPoolEditor);
+                        localVariableTable.writeLocalVariableTableAttributeInfo(cf.dataOutputStream, cf.constantPoolEditor);
                     }
                 });
             }
@@ -519,7 +520,7 @@ public class ClassfileWriter {
                 attributes.append(new Attribute("LocalVariableTypeTable") {
                     @Override
                     protected void writeData(ClassfileWriter cf) throws IOException {
-                        localVariableTable.writeLocalVariableTypeTableAttributeInfo(cf.dataOutputStream, cf._constantPoolEditor);
+                        localVariableTable.writeLocalVariableTypeTableAttributeInfo(cf.dataOutputStream, cf.constantPoolEditor);
                     }
                 });
             }
@@ -527,7 +528,7 @@ public class ClassfileWriter {
                 attributes.append(new Attribute("StackMapTable") {
                     @Override
                     protected void writeData(ClassfileWriter cf) throws IOException {
-                        stackMapTable.writeAttributeInfo(cf.dataOutputStream, cf._constantPoolEditor);
+                        stackMapTable.writeAttributeInfo(cf.dataOutputStream, cf.constantPoolEditor);
                     }
                 });
             }
@@ -592,7 +593,7 @@ public class ClassfileWriter {
                 attributes.append(new Attribute("ConstantValue") {
                     @Override
                     protected void writeData(ClassfileWriter cf) throws IOException {
-                        switch (actor.kind().asEnum()) {
+                        switch (actor.kind.asEnum) {
                             case BOOLEAN:
                             case BYTE:
                             case CHAR:
@@ -624,7 +625,7 @@ public class ClassfileWriter {
                                 break;
                             }
                             default: {
-                                throw classFormatError("Cannot have ConstantValue for fields of type " + actor.kind());
+                                throw classFormatError("Cannot have ConstantValue for fields of type " + actor.kind);
                             }
                         }
                     }
@@ -708,7 +709,7 @@ public class ClassfileWriter {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
         final byte[] classfileBytes = toByteArray(new ClassInfo(classActor));
 
-        final File classfileFile = new File(outputDirectory, classActor.name().string().replace(".", File.separator) + ".class").getAbsoluteFile();
+        final File classfileFile = new File(outputDirectory, classActor.name.string.replace(".", File.separator) + ".class").getAbsoluteFile();
         BufferedOutputStream bs = null;
         try {
             final File classfileDirectory = classfileFile.getParentFile();
@@ -748,7 +749,7 @@ public class ClassfileWriter {
             final URL[] urls = {outputDirectory.toURI().toURL()};
             final ClassLoader urlClassLoader = URLClassLoader.newInstance(urls);
             final TestClassLoader testClassLoader = new TestClassLoader();
-            ClassRegistry._classLoaderToRegistryMap.put(testClassLoader, null);
+            ClassRegistry.classLoaderToRegistryMap.put(testClassLoader, null);
             for (Map.Entry<String, byte[]> entry : classNameToClassfileMap.entrySet()) {
                 final String className = entry.getKey();
                 final byte[] classfileBytes = entry.getValue();

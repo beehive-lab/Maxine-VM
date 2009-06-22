@@ -128,7 +128,7 @@ public final class JniNativeInterface {
 
         for (int i = 0; i != jniFunctionActors.length; ++i) {
             final String jniFunctionName = jniFunctionNames.get(i);
-            final String jniFunctionActorName = jniFunctionActors[i].name().toString();
+            final String jniFunctionActorName = jniFunctionActors[i].name.toString();
             ProgramError.check(jniFunctionName.equals(jniFunctionActorName), "JNI function " + jniFunctionName + " at index " + i + " does not match JNI function actor " + jniFunctionActorName);
         }
 
@@ -141,20 +141,20 @@ public final class JniNativeInterface {
         return jniFunctions;
     }
 
-    private static Pointer _pointer = Pointer.zero();
+    private static Pointer pointer = Pointer.zero();
 
     public static Pointer pointer() {
-        if (_pointer.isZero()) {
-            _pointer = Memory.mustAllocate(jniFunctions.length * Word.size());
+        if (pointer.isZero()) {
+            pointer = Memory.mustAllocate(jniFunctions.length * Word.size());
         }
-        return _pointer;
+        return pointer;
     }
 
     /**
-     * Patches the {@link #_pointer} array for certain JNI functions that are implemented in C for
+     * Patches the {@link #pointer} array for certain JNI functions that are implemented in C for
      * portability reasons (i.e. handling of varargs).
      *
-     * {@link #_pointer} is implicitly passed down to the implementing C function by means of its 'JNIEnv' parameter.
+     * {@link #pointer} is implicitly passed down to the implementing C function by means of its 'JNIEnv' parameter.
      */
     @C_FUNCTION
     private static native void nativeInitializeJniInterface(Pointer jniEnvironment);
@@ -192,13 +192,13 @@ public final class JniNativeInterface {
 
     private static void check(StackVariable stackVariable) {
         for (CriticalMethod jniFunction : jniFunctions) {
-            final ClassMethodActor classMethodActor = jniFunction.classMethodActor();
+            final ClassMethodActor classMethodActor = jniFunction.classMethodActor;
             final Integer offset = stackVariable.offset(classMethodActor);
             if (offset == null) {
                 Log.print("The offset of stack variable ");
                 Log.print(stackVariable);
                 Log.print(" in ");
-                Log.printMethodActor(jniFunction.classMethodActor(), false);
+                Log.printMethodActor(jniFunction.classMethodActor, false);
                 Log.println(" has not been recorded.");
                 FatalError.unexpected("The offset for a stack variable has not been recorded");
             }

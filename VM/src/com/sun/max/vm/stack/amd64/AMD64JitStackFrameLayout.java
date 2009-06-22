@@ -88,24 +88,24 @@ public class AMD64JitStackFrameLayout extends JitStackFrameLayout {
      */
     public static final int CALL_SAVE_AREA_SLOTS = 2;
 
-    private final int _numberOfTemplateSlots;
+    private final int numberOfTemplateSlots;
 
     public AMD64JitStackFrameLayout(TargetMethod targetMethod) {
         super(targetMethod.classMethodActor());
         final int frameSlots = Unsigned.idiv(targetMethod.frameSize(), STACK_SLOT_SIZE);
         final int nonTemplateSlots = 1 + Unsigned.idiv(sizeOfNonParameterLocals(), STACK_SLOT_SIZE);
-        _numberOfTemplateSlots = frameSlots - nonTemplateSlots;
+        numberOfTemplateSlots = frameSlots - nonTemplateSlots;
         assert targetMethod.frameSize() == frameSize();
     }
 
     public AMD64JitStackFrameLayout(ClassMethodActor classMethodActor, int numberOfTemplateSlots) {
         super(classMethodActor);
-        _numberOfTemplateSlots = numberOfTemplateSlots;
+        this.numberOfTemplateSlots = numberOfTemplateSlots;
     }
 
     @Override
     public int frameSize() {
-        final int numberOfSlots = 1 + _numberOfTemplateSlots; // one extra word for the caller RBP
+        final int numberOfSlots = 1 + numberOfTemplateSlots; // one extra word for the caller RBP
         final int unalignedSize = numberOfSlots * STACK_SLOT_SIZE + sizeOfNonParameterLocals();
         return JIT_ABI.alignFrameSize(unalignedSize);
     }
@@ -118,12 +118,12 @@ public class AMD64JitStackFrameLayout extends JitStackFrameLayout {
             // | <-------------------- frameSize() --------------> |
             //                        ^ RBP                                         ^ parameterStart
             final int parameterStart = returnAddressOffset() + Word.size();
-            return parameterStart + JIT_SLOT_SIZE * (_numberOfParameterSlots - 1 - localVariableIndex);
+            return parameterStart + JIT_SLOT_SIZE * (numberOfParameterSlots - 1 - localVariableIndex);
         }
         // The slot index is at a negative offset from RBP.
         // | non-parameter locals | template slots | call save area | return address | parameters |
         //       ^ slot index     ^ RBP
-        final int slotIndex = _numberOfParameterSlots - 1 - localVariableIndex;
+        final int slotIndex = numberOfParameterSlots - 1 - localVariableIndex;
         return slotIndex * JIT_SLOT_SIZE;
     }
 
@@ -142,9 +142,9 @@ public class AMD64JitStackFrameLayout extends JitStackFrameLayout {
 
     @Override
     public int maximumSlotOffset() {
-        if (_numberOfParameterSlots == 0) {
+        if (numberOfParameterSlots == 0) {
             // if there are no parameters, return the offset to the end of the last template slot
-            return sizeOfNonParameterLocals() + _numberOfTemplateSlots * STACK_SLOT_SIZE;
+            return sizeOfNonParameterLocals() + numberOfTemplateSlots * STACK_SLOT_SIZE;
         }
         // return the end of the first parameter
         return localVariableOffset(0) + JIT_SLOT_SIZE;
@@ -154,12 +154,12 @@ public class AMD64JitStackFrameLayout extends JitStackFrameLayout {
     public int lowestSlotOffset() {
         // return the offset of the topmost operand on the Java stack
         // if the operand stack size is 0, this will return the offset to the last local variable
-        return operandStackOffset(_numberOfOperandStackSlots - 1);
+        return operandStackOffset(numberOfOperandStackSlots - 1);
     }
 
     @Override
     public int numberOfTemplateSlots() {
-        return _numberOfTemplateSlots;
+        return numberOfTemplateSlots;
     }
 
     @Override
@@ -201,7 +201,7 @@ public class AMD64JitStackFrameLayout extends JitStackFrameLayout {
             @Override
             protected String nameOfSlot(int offset) {
                 final int templateSlotIndex = Unsigned.idiv(offset, STACK_SLOT_SIZE);
-                if (templateSlotIndex >= 0 && templateSlotIndex < _numberOfTemplateSlots) {
+                if (templateSlotIndex >= 0 && templateSlotIndex < numberOfTemplateSlots) {
                     return "template slot " + templateSlotIndex;
 
                 }

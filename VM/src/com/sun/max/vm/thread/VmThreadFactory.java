@@ -38,15 +38,15 @@ public class VmThreadFactory {
      */
     public static final String VMTHREAD_FACTORY_CLASS_PROPERTY_NAME = "max.vmthread.factory.class";
 
-    private static final VmThreadFactory _instance;
+    private static final VmThreadFactory instance;
 
     static {
         final String factoryClassName = System.getProperty(VMTHREAD_FACTORY_CLASS_PROPERTY_NAME);
         if (factoryClassName == null) {
-            _instance = new VmThreadFactory();
+            instance = new VmThreadFactory();
         } else {
             try {
-                _instance = (VmThreadFactory) Class.forName(factoryClassName).newInstance();
+                instance = (VmThreadFactory) Class.forName(factoryClassName).newInstance();
             } catch (Exception exception) {
                 throw ProgramError.unexpected("Error instantiating " + factoryClassName, exception);
             }
@@ -70,6 +70,6 @@ public class VmThreadFactory {
      * @return a VmThread object implementing the VM specific semantics of the given Java thread
      */
     public static VmThread create(Thread javaThread) {
-        return _instance.newVmThread(javaThread);
+        return instance.newVmThread(javaThread);
     }
 }

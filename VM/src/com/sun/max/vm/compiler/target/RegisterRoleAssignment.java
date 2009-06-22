@@ -38,11 +38,11 @@ public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, F
         return integerRegisters[role.ordinal()];
     }
 
-    private final FloatingPointRegister_Type[] _floatingPointRegisters;
+    private final FloatingPointRegister_Type[] floatingPointRegisters;
 
     @FOLD
     public FloatingPointRegister_Type floatingPointRegisterActingAs(VMRegister.Role role) {
-        return _floatingPointRegisters[role.ordinal()];
+        return floatingPointRegisters[role.ordinal()];
     }
 
     public RegisterRoleAssignment(Class<IntegerRegister_Type> integerRegisterType,
@@ -71,10 +71,10 @@ public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, F
         integerRegisters[VMRegister.Role.CALL_INSTRUCTION_ADDRESS.ordinal()] = callInstructionAddress;
         integerRegisters[VMRegister.Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS.ordinal()] = framelessCallInstructionAddress;
 
-        _floatingPointRegisters = Arrays.newInstance(floatingPointRegisterType, VMRegister.Role.values().length);
-        _floatingPointRegisters[VMRegister.Role.ABI_RETURN.ordinal()] = floatingPointReturn;
-        _floatingPointRegisters[VMRegister.Role.ABI_RESULT.ordinal()] = floatingPointReturn;
-        _floatingPointRegisters[VMRegister.Role.ABI_SCRATCH.ordinal()] = floatingPointScratch;
+        floatingPointRegisters = Arrays.newInstance(floatingPointRegisterType, VMRegister.Role.values().length);
+        floatingPointRegisters[VMRegister.Role.ABI_RETURN.ordinal()] = floatingPointReturn;
+        floatingPointRegisters[VMRegister.Role.ABI_RESULT.ordinal()] = floatingPointReturn;
+        floatingPointRegisters[VMRegister.Role.ABI_SCRATCH.ordinal()] = floatingPointScratch;
     }
 
 
@@ -97,7 +97,7 @@ public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, F
                                   VMRegister.Role role, IntegerRegister_Type newIntegerRegister) {
         integerRegisters = original.integerRegisters.clone();
         integerRegisters[role.ordinal()] = newIntegerRegister;
-        _floatingPointRegisters = original._floatingPointRegisters;
+        floatingPointRegisters = original.floatingPointRegisters;
     }
 
 }

@@ -467,7 +467,7 @@ public abstract class State<Element_Type extends Classifiable> {
             int locals = 0;
             String methodName = "null";
             if (method != null) {
-                methodName = method.name().toString();
+                methodName = method.name.toString();
                 locals = method.numberOfParameterSlots();
             }
             Console.printf("method: %-10s lp:%2d, sp:%2d, pc:%3d, stack: ", methodName, frame.lp, frame.sp, frame.pc);
@@ -495,7 +495,7 @@ public abstract class State<Element_Type extends Classifiable> {
             final ClassMethodActor method = frame.method;
             String methodName = "null";
             if (method != null) {
-                methodName = method.name().toString();
+                methodName = method.name.toString();
             }
             framesString += methodName;
 

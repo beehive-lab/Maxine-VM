@@ -41,38 +41,38 @@ public class TargetBuffer {
     private static final int INITIAL_OFFSET_SIZE = 16;
 
     private Pointer codeStart;
-    private int _codeSize;
+    private int codeSize;
 
-    private byte[] _codeBuffer;
-    private int[] _safepointOffsets;
+    private byte[] codeBuffer;
+    private int[] safepointOffsets;
     private int safepointCursor;
     private int[] directCallOffsets;
-    private int _directCallCursor;
+    private int directCallCursor;
     private int[] dynamicCallOffsets;
-    private int _dynamicCallCursor;
+    private int dynamicCallCursor;
 
     public TargetBuffer() {
-        _codeBuffer = new byte[INITIAL_CODEBUF_SIZE];
-        _safepointOffsets = new int[INITIAL_OFFSET_SIZE];
+        codeBuffer = new byte[INITIAL_CODEBUF_SIZE];
+        safepointOffsets = new int[INITIAL_OFFSET_SIZE];
         directCallOffsets = new int[INITIAL_OFFSET_SIZE];
         dynamicCallOffsets = new int[INITIAL_OFFSET_SIZE];
     }
 
     public void addSafePoint(int offset) {
         final int cursor = safepointCursor++;
-        _safepointOffsets = grow(_safepointOffsets, safepointCursor);
-        _safepointOffsets[cursor] = offset;
+        safepointOffsets = grow(safepointOffsets, safepointCursor);
+        safepointOffsets[cursor] = offset;
     }
 
     public void addDirectCall(int offset) {
-        final int cursor = _directCallCursor++;
-        directCallOffsets = grow(directCallOffsets, _directCallCursor);
+        final int cursor = directCallCursor++;
+        directCallOffsets = grow(directCallOffsets, directCallCursor);
         directCallOffsets[cursor] = offset;
     }
 
     public void addDynamicCall(int offset) {
-        final int cursor = _dynamicCallCursor++;
-        dynamicCallOffsets = grow(dynamicCallOffsets, _dynamicCallCursor);
+        final int cursor = dynamicCallCursor++;
+        dynamicCallOffsets = grow(dynamicCallOffsets, dynamicCallCursor);
         dynamicCallOffsets[cursor] = offset;
     }
 
@@ -97,6 +97,6 @@ public class TargetBuffer {
     }
 
     public int getCodeSize() {
-        return _codeSize;
+        return codeSize;
     }
 }

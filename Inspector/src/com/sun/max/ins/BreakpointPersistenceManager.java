@@ -145,9 +145,9 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
         for (TeleBytecodeBreakpoint breakpoint : _inspection.maxVM().bytecodeBreakpoints()) {
             final String prefix = BYTECODE_BREAKPOINT_KEY + index++;
             final TeleBytecodeBreakpoint.Key key = breakpoint.key();
-            settings.save(prefix + "." + METHOD_HOLDER_KEY, key.holder().string());
-            settings.save(prefix + "." + METHOD_NAME_KEY, key.name().string());
-            settings.save(prefix + "." + METHOD_SIGNATURE_KEY, key.signature().string());
+            settings.save(prefix + "." + METHOD_HOLDER_KEY, key.holder().string);
+            settings.save(prefix + "." + METHOD_NAME_KEY, key.name().string);
+            settings.save(prefix + "." + METHOD_SIGNATURE_KEY, key.signature().string);
             settings.save(prefix + "." + POSITION_KEY, key.position());
             settings.save(prefix + "." + ENABLED_KEY, breakpoint.isEnabled());
         }

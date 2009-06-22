@@ -189,8 +189,8 @@ public final class CirCall extends CirNode {
             CirJavaFrameDescriptor otherJavaFrameDescriptor = call.javaFrameDescriptor();
             while (thisJavaFrameDescriptor != null) {
                 if (otherJavaFrameDescriptor == null ||
-                        !areValuesEqual(thisJavaFrameDescriptor.locals(), otherJavaFrameDescriptor.locals(), renaming) ||
-                        !areValuesEqual(thisJavaFrameDescriptor.stackSlots(), otherJavaFrameDescriptor.stackSlots(), renaming)) {
+                        !areValuesEqual(thisJavaFrameDescriptor.locals, otherJavaFrameDescriptor.locals, renaming) ||
+                        !areValuesEqual(thisJavaFrameDescriptor.stackSlots, otherJavaFrameDescriptor.stackSlots, renaming)) {
                     return false;
                 }
                 thisJavaFrameDescriptor = thisJavaFrameDescriptor.parent();
@@ -207,18 +207,18 @@ public final class CirCall extends CirNode {
     }
 
     @RESET
-    private int _hashcode = 0;
+    private int hashcode = 0;
     private static int hashcodeCounter = 0;
 
     @Override
     public int hashCode() {
-        if (_hashcode == 0) {
-            _hashcode = hashcodeCounter++;
-            if (_hashcode == 0) {  /* overflow */
+        if (hashcode == 0) {
+            hashcode = hashcodeCounter++;
+            if (hashcode == 0) {  /* overflow */
                 return hashCode(); /* try again */
             }
         }
-        return _hashcode;
+        return hashcode;
     }
 
     @Override

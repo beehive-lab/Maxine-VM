@@ -43,7 +43,7 @@ public class TupleReferenceMap {
      */
     public TupleReferenceMap(FieldActor[] staticFieldActors) {
         for (FieldActor staticFieldActor : staticFieldActors) {
-            if (staticFieldActor.kind() == Kind.REFERENCE) {
+            if (staticFieldActor.kind == Kind.REFERENCE) {
                 offsets.append(staticFieldActor.offset());
             }
         }
@@ -58,11 +58,11 @@ public class TupleReferenceMap {
         ClassActor c = classActor;
         do {
             for (FieldActor instanceFieldActor : c.localInstanceFieldActors()) {
-                if (instanceFieldActor.kind() == Kind.REFERENCE && !instanceFieldActor.isSpecialReference()) {
+                if (instanceFieldActor.kind == Kind.REFERENCE && !instanceFieldActor.isSpecialReference()) {
                     offsets.append(instanceFieldActor.offset());
                 }
             }
-            c = c.superClassActor();
+            c = c.superClassActor;
         } while (c != null);
     }
 

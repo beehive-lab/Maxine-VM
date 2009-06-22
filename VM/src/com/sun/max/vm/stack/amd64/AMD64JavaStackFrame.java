@@ -38,7 +38,7 @@ public class AMD64JavaStackFrame extends JavaStackFrame<OptoStackFrameLayout> {
     @Override
     public boolean isSameFrame(StackFrame stackFrame) {
         if (stackFrame instanceof AMD64JavaStackFrame) {
-            return targetMethod().equals(stackFrame.targetMethod()) && stackPointer().equals(stackFrame.stackPointer());
+            return targetMethod().equals(stackFrame.targetMethod()) && stackPointer.equals(stackFrame.stackPointer);
         }
         return false;
     }

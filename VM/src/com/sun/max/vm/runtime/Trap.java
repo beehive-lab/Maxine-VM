@@ -74,7 +74,7 @@ public final class Trap {
         }
     }
 
-    private static VMBooleanXXOption _dumpStackOnTrap =
+    private static VMBooleanXXOption dumpStackOnTrap =
         register(new VMBooleanXXOption("-XX:-DumpStackOnTrap", "Reports a stack trace for every trap, regardless of the cause."), MaxineVM.Phase.PRISTINE);
 
     /**
@@ -82,12 +82,12 @@ public final class Trap {
      * frame code generated for it. As such, it's entry point is at it's first compiled instruction which corresponds
      * with it's entry point it it were to be called from C code.
      */
-    private static final CriticalMethod _trapStub = new CriticalMethod(Trap.class, "trapStub", null, CallEntryPoint.C_ENTRY_POINT);
+    private static final CriticalMethod trapStub = new CriticalMethod(Trap.class, "trapStub", null, CallEntryPoint.C_ENTRY_POINT);
 
-    private static final CriticalMethod _nativeExit = new CriticalNativeMethod(MaxineVM.class, "native_exit");
+    private static final CriticalMethod nativeExit = new CriticalNativeMethod(MaxineVM.class, "native_exit");
 
     @PROTOTYPE_ONLY
-    private static final Method _trapStubMethod = Classes.getDeclaredMethod(Trap.class, "trapStub", int.class, Pointer.class, Address.class);
+    private static final Method trapStubMethod = Classes.getDeclaredMethod(Trap.class, "trapStub", int.class, Pointer.class, Address.class);
 
     /**
      * Determines if a given method actor denotes the method used to handle runtime traps.
@@ -97,9 +97,9 @@ public final class Trap {
      */
     public static boolean isTrapStub(MethodActor methodActor) {
         if (MaxineVM.isPrototyping()) {
-            return !methodActor.isInitializer() && MaxineVM.isMaxineClass(methodActor.holder()) && methodActor.toJava().equals(_trapStubMethod);
+            return !methodActor.isInitializer() && MaxineVM.isMaxineClass(methodActor.holder()) && methodActor.toJava().equals(trapStubMethod);
         }
-        return methodActor == _trapStub.classMethodActor();
+        return methodActor == trapStub.classMethodActor;
     }
 
     @PROTOTYPE_ONLY
@@ -113,7 +113,7 @@ public final class Trap {
      * Installs the trap handlers using the operating system's API.
      */
     public static void initialize() {
-        nativeInitialize(_trapStub.address());
+        nativeInitialize(trapStub.address());
     }
 
     /**
@@ -187,7 +187,7 @@ public final class Trap {
         final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
         final Pointer instructionPointer = safepoint.getInstructionPointer(trapState);
 
-        if (_dumpStackOnTrap.getValue()) {
+        if (dumpStackOnTrap.getValue()) {
             Log.print("Trap ");
             Log.print(trapNumber);
             Log.print(" @ ");

@@ -24,7 +24,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.tir.*;
 
 public class TraceAnchor extends Anchor {
-    private TirTrace _trace;
+    private TirTrace trace;
     private TirGuard guard;
 
     public TraceAnchor(BytecodeLocation location, TirGuard guard) {
@@ -34,11 +34,11 @@ public class TraceAnchor extends Anchor {
 
 
     public void setTrace(TirTrace trace) {
-        _trace = trace;
+        this.trace = trace;
     }
 
     public TirTrace trace() {
-        return _trace;
+        return trace;
     }
 
     @Override

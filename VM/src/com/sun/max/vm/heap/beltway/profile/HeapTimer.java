@@ -38,11 +38,11 @@ public class HeapTimer {
     // HashMap that holds all timing facilities per collection
     private static AppendableIndexedSequence<Map<String, SingleUseTimer>> timers;
     private static String[] timersLabels;
-    private static Clock _clockType;
+    private static Clock clockType;
 
     public HeapTimer(String[] labels, Clock clockType) {
         timersLabels = labels;
-        _clockType = clockType;
+        HeapTimer.clockType = clockType;
         timers = new ArrayListSequence<Map<String, SingleUseTimer>>();
     }
 
@@ -52,7 +52,7 @@ public class HeapTimer {
 
     public static void initializeTimers(Clock clockType, String... labels) {
         timersLabels = labels;
-        _clockType = clockType;
+        HeapTimer.clockType = clockType;
     }
 
     public static void addCollectionProfiling() {
@@ -63,7 +63,7 @@ public class HeapTimer {
     private static Map<String, SingleUseTimer> initializeTimers() {
         final Map<String, SingleUseTimer> timerBuffer = new Hashtable<String, SingleUseTimer>();
         for (int i = 0; i < timersLabels.length; i++) {
-            final SingleUseTimer timer = new SingleUseTimer(_clockType);
+            final SingleUseTimer timer = new SingleUseTimer(clockType);
             timerBuffer.put(timersLabels[i], timer);
         }
         return timerBuffer;

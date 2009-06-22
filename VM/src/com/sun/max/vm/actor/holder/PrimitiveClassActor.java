@@ -36,19 +36,16 @@ import com.sun.max.vm.value.*;
  */
 public final class PrimitiveClassActor<Value_Type extends Value<Value_Type>> extends ClassActor {
 
-
-    private final Kind<Value_Type> kind;
-
     @PROTOTYPE_ONLY
     PrimitiveClassActor(Kind<Value_Type> kind) {
         super(kind,
               NO_SPECIFIC_LAYOUT,
               null, // primitive classes do not have a class loader
-              kind.name(),
+              kind.name,
               NO_MAJOR_VERSION,
               NO_MINOR_VERSION,
               ACC_PUBLIC | ACC_FINAL,
-              kind.typeDescriptor(),
+              kind.typeDescriptor,
               NO_SUPER_CLASS_ACTOR,
               NO_COMPONENT_CLASS_ACTOR,
               InterfaceActor.NONE,
@@ -60,11 +57,10 @@ public final class PrimitiveClassActor<Value_Type extends Value<Value_Type>> ext
               NO_INNER_CLASSES,
               NO_OUTER_CLASS,
               NO_ENCLOSING_METHOD_INFO);
-        this.kind = kind;
     }
 
     public TupleClassActor toWrapperClassActor() {
-        return (TupleClassActor) ClassActor.fromJava(kind.boxedClass());
+        return (TupleClassActor) ClassActor.fromJava(kind.boxedClass);
     }
 
     @Override

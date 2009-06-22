@@ -241,7 +241,7 @@ public class SPARCJitCompiler extends JitCompiler {
                 if (!catchAddress.isZero()) {
                     final SPARCStackUnwindingContext unwindingContext = UnsafeLoophole.cast(context);
                     final Pointer stackPointer = stackFrameWalker.stackPointer();
-                    if (!(unwindingContext._throwable instanceof StackOverflowError) || VmThread.current().hasSufficentStackToReprotectGuardPage(stackPointer)) {
+                    if (!(unwindingContext.throwable instanceof StackOverflowError) || VmThread.current().hasSufficentStackToReprotectGuardPage(stackPointer)) {
                         // The Java operand stack of the method that handles the exception is always cleared before pushing the
                         // thrown object.
                         // Compute the offset to the first stack slot of the Java Stack: frame pointer -
@@ -249,7 +249,7 @@ public class SPARCJitCompiler extends JitCompiler {
                         final int offsetToFirstOperandStackSlot = jitTargetMethod.stackFrameLayout().sizeOfNonParameterLocals() + 2 * JitStackFrameLayout.JIT_SLOT_SIZE;
                         final Pointer catcherTopOfStackPointer = localVariablesBase.minus(offsetToFirstOperandStackSlot);
                         // Push the exception on top of the stack first
-                        catcherTopOfStackPointer.writeReference(0, Reference.fromJava(unwindingContext._throwable));
+                        catcherTopOfStackPointer.writeReference(0, Reference.fromJava(unwindingContext.throwable));
 
                         // Compute the catcher stack pointer: this one will be the top frame, so we need to augment it with space for saving a register window plus
                         // mandatory output register. We also need to bias it.

@@ -33,20 +33,20 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class AbstractModeHandler implements ModeHandler {
 
-    private static final boolean _EXPLICIT_NULL_CHECKS = true;
+    private static final boolean EXPLICIT_NULL_CHECKS = true;
 
     @CONSTANT_WHEN_NOT_ZERO
-    private ModalMonitorScheme _monitorScheme;
+    private ModalMonitorScheme monitorScheme;
 
-    private final ModeDelegate _delegate;
+    private final ModeDelegate delegate;
 
     protected AbstractModeHandler(ModeDelegate delegate) {
-        _delegate = delegate;
+        this.delegate = delegate;
     }
 
     @INLINE
     public final ModeDelegate delegate() {
-        return _delegate;
+        return delegate;
     }
 
     /**
@@ -55,16 +55,16 @@ public abstract class AbstractModeHandler implements ModeHandler {
      * @return the current VM monitor scheme.
      */
     protected ModalMonitorScheme monitorScheme() {
-        return _monitorScheme;
+        return monitorScheme;
     }
 
     public void setMonitorScheme(ModalMonitorScheme monitorScheme) {
-        _monitorScheme = monitorScheme;
+        this.monitorScheme = monitorScheme;
     }
 
     @INLINE
     protected final void nullCheck(Object object) {
-        if (_EXPLICIT_NULL_CHECKS && object == null) {
+        if (EXPLICIT_NULL_CHECKS && object == null) {
             throw new NullPointerException();
         }
     }

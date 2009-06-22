@@ -35,7 +35,7 @@ import com.sun.max.unsafe.*;
  */
 public final class KindTypeDescriptor {
 
-    static final Set<TypeDescriptor> _wordTypeDescriptors = Sets.from(com.sun.max.lang.Arrays.map(Word.getSubclasses(), TypeDescriptor.class,
+    static final Set<TypeDescriptor> wordTypeDescriptors = Sets.from(com.sun.max.lang.Arrays.map(Word.getSubclasses(), TypeDescriptor.class,
         new MapFunction<Class, TypeDescriptor>() {
             public TypeDescriptor map(Class javaClass) {
                 return JavaTypeDescriptor.forJavaClass(javaClass);
@@ -82,7 +82,7 @@ public final class KindTypeDescriptor {
     }
 
     public static boolean isWord(final TypeDescriptor descriptor) {
-        return _wordTypeDescriptors.contains(descriptor);
+        return wordTypeDescriptors.contains(descriptor);
     }
 
 }

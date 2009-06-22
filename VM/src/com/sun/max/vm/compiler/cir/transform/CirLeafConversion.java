@@ -42,8 +42,8 @@ public abstract class CirLeafConversion extends CirTransformation {
 
         CirJavaFrameDescriptor javaFrameDescriptor = call.javaFrameDescriptor();
         while (javaFrameDescriptor != null) {
-            transformValues(javaFrameDescriptor.locals());
-            transformValues(javaFrameDescriptor.stackSlots());
+            transformValues(javaFrameDescriptor.locals);
+            transformValues(javaFrameDescriptor.stackSlots);
             javaFrameDescriptor = javaFrameDescriptor.parent();
         }
 

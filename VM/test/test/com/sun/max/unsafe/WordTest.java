@@ -60,7 +60,7 @@ public class WordTest extends WordTestCase {
             final Address address = _addressMax.unsignedShiftedRight(i);
             if (address.equals(0) || address.equals(_addressMax)) {
                 for (WordWidth width : WordWidth.values()) {
-                    if (width.numberOfBits() == i) {
+                    if (width.numberOfBits == i) {
                         assertTrue(Word.width().equals(width));
                         return;
                     }

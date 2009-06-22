@@ -48,16 +48,16 @@ public class WalkIntervals extends AlgorithmPart {
     // Timers
     private final Timer blockedAllocateTimer = createTimer("Blocked allocate");
     private final Timer allocateTimer = createTimer("Allocate");
-    private final Timer _searchFreePosTimer = createTimer("Search free pos");
+    private final Timer searchFreePosTimer = createTimer("Search free pos");
     private final Timer normalSplitTimer = createTimer("Normal split");
 
     // Counters
     private final Metrics.Counter splitCounter = createCounter("Split count");
     private final Metrics.Counter activeIntervalsCounter = createCounter("Active intervals");
-    private final Metrics.Counter _inactiveIntervalsCounter = createCounter("Inactive intervals");
+    private final Metrics.Counter inactiveIntervalsCounter = createCounter("Inactive intervals");
     private final Metrics.Counter samePositionCounter = createCounter("Same Position");
     private final Metrics.Counter floatingIntervalsCounter = createCounter("Floating intervals");
-    private final Metrics.Counter _integerIntervalsCounter = createCounter("Integer intervals");
+    private final Metrics.Counter integerIntervalsCounter = createCounter("Integer intervals");
     private final Metrics.Counter fixedIntervalsCounter = createCounter("Fixed intervals");
     private final Metrics.Counter handledIntervalsCounter = createCounter("Handled intervals");
     private final Metrics.Counter unhandledIntervalsCounter = createCounter("Unhandled intervals");
@@ -116,7 +116,7 @@ public class WalkIntervals extends AlgorithmPart {
 
         if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
             floatingIntervalsCounter.accumulate(floatIntervals.length());
-            _integerIntervalsCounter.accumulate(integerIntervals.length());
+            integerIntervalsCounter.accumulate(integerIntervals.length());
         }
 
         doit(floatIntervals, data().floatingPointRegisters());
@@ -234,7 +234,7 @@ public class WalkIntervals extends AlgorithmPart {
 
                 if (LinearScanRegisterAllocator.DETAILED_COUNTING) {
                     activeIntervalsCounter.accumulate(active.length());
-                    _inactiveIntervalsCounter.accumulate(inactive.length());
+                    inactiveIntervalsCounter.accumulate(inactive.length());
                     handledIntervalsCounter.accumulate(handled.length());
                     unhandledIntervalsCounter.accumulate(unhandled.length());
                 }
@@ -330,7 +330,7 @@ public class WalkIntervals extends AlgorithmPart {
             }
         }
 
-        for (Interval otherIntervals : variable.interval().parent().children()) {
+        for (Interval otherIntervals : variable.interval.parent().children()) {
             if (otherIntervals.variable().location() != null) {
                 return otherIntervals.variable().location();
             }
@@ -554,7 +554,7 @@ public class WalkIntervals extends AlgorithmPart {
     private boolean allocateFreeRegister(int position, Interval current) {
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _searchFreePosTimer.start();
+            searchFreePosTimer.start();
         }
 
         assert registers.length > 0;
@@ -599,7 +599,7 @@ public class WalkIntervals extends AlgorithmPart {
         }
 
         if (LinearScanRegisterAllocator.DETAILED_TIMING) {
-            _searchFreePosTimer.stop();
+            searchFreePosTimer.stop();
         }
 
         if (current.register() != null) {

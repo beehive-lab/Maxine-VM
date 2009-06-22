@@ -52,21 +52,21 @@ public final class DirBlockEquivalence {
         }
 
         boolean makeFalse() {
-            maybe.remove(this);
-            _false.add(this);
+            maybePairs.remove(this);
+            falsePairs.add(this);
             return false;
         }
 
         boolean makeTrue() {
-            maybe.remove(this);
-            _true.add(this);
+            maybePairs.remove(this);
+            truePairs.add(this);
             return true;
         }
     }
 
-    private final Set<Pair> maybe = new HashSet<Pair>();
-    private final Set<Pair> _false = new HashSet<Pair>();
-    private final Set<Pair> _true = new HashSet<Pair>();
+    private final Set<Pair> maybePairs = new HashSet<Pair>();
+    private final Set<Pair> falsePairs = new HashSet<Pair>();
+    private final Set<Pair> truePairs = new HashSet<Pair>();
 
     public DirBlockEquivalence() {
     }
@@ -76,13 +76,13 @@ public final class DirBlockEquivalence {
             return true;
         }
         final Pair pair = new Pair(a, b);
-        if (_false.contains(pair)) {
+        if (falsePairs.contains(pair)) {
             return false;
         }
-        if (_true.contains(pair) || maybe.contains(pair)) {
+        if (truePairs.contains(pair) || maybePairs.contains(pair)) {
             return true;
         }
-        maybe.add(pair);
+        maybePairs.add(pair);
         if (a.instructions().length() != b.instructions().length()) {
             return pair.makeFalse();
         }
