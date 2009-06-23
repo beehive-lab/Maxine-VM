@@ -18,22 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x;
+package test.directives;
 
-/**
- * The <code>C1XMetrics</code> class contains a number of fields that collect metrics about
- * compilation.
- *
- * @author Ben L. Titzer
+import com.sun.max.annotate.FOLD;
+
+/*
+ * @Harness: java
+ * @Runs: 0=true; 1=true
  */
-public class C1XMetrics {
-    public static int LocalValueNumberHits;
-    public static int ValueMapResizes;
-    public static int ValueMapKills;
-    public static int InlinedMethods;
-    public static int InlinedIntrinsics;
-    public static int InlinedFinalizerChecks;
-    public static int FoldableMethodsRegistered;
-    public static int MethodsFolded;
-    public static int InlineForcedMethods;
+public class Fold01 {
+
+    public static boolean test(int arg) {
+        return result();
+    }
+
+    @FOLD
+    static boolean result() {
+        int j = 2;
+        for (int i = 0; i < 100; i++) {
+            j = j + 8 / j;
+        }
+        return true;
+    }
 }
