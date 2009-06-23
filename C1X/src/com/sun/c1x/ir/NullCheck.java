@@ -47,7 +47,7 @@ public class NullCheck extends Instruction {
         this.lockStack = lockStack;
         setFlag(Flag.CanTrap);
         setFlag(Flag.NonNull);
-        pin(PinReason.PinExplicitNullCheck);
+        setFlag(Flag.PinExplicitNullCheck);
     }
 
     /**

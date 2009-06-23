@@ -62,10 +62,7 @@ public class Intrinsic extends StateSplit {
         // for load elimination and common subexpression elimination
         initFlag(Flag.PreservesState, preservesState);
         initFlag(Flag.CanTrap, canTrap);
-        if (!canTrap) {
-            // some intrinsics cannot trap, so unpin them
-            unpin(PinReason.PinStateSplitConstructor);
-        }
+        initFlag(Flag.PinStateSplitConstructor, canTrap);
     }
 
     /**
