@@ -407,7 +407,6 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         }
     }
 
-
     /**
      * Single steps a given thread.
      * @param teleNativeThread the thread to step

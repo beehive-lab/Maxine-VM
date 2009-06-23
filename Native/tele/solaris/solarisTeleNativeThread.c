@@ -118,7 +118,9 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleNativeThread_nativeSetInstruction
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_solaris_SolarisTeleNativeThread_nativeSingleStep(JNIEnv *env, jclass c, jlong processHandle, jlong lwpId) {
-	INIT_LWP_HANDLE(lh, processHandle, lwpId, false);
+    struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
+    INIT_LWP_HANDLE(lh, processHandle, lwpId, false);
+
     if (proc_Lclearfault(lh) != 0) {
         log_println("Lclearfault failed");
         proc_Lfree(lh);
