@@ -1915,7 +1915,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             refreshableActions.append(this);
             inspection().addInspectionListener(new InspectionListenerAdapter() {
                 @Override
-                public void breakpointSetChanged() {
+                public void breakpointStateChanged() {
                     refresh(true);
                 }
             });
@@ -2134,7 +2134,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             });
             inspection().addInspectionListener(new InspectionListenerAdapter() {
                 @Override
-                public void breakpointSetChanged() {
+                public void breakpointStateChanged() {
                     refresh(true);
                 }
             });
@@ -2177,7 +2177,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             refreshableActions.append(this);
             inspection().addInspectionListener(new InspectionListenerAdapter() {
                 @Override
-                public void breakpointSetChanged() {
+                public void breakpointStateChanged() {
                     refresh(true);
                 }
             });
@@ -2443,7 +2443,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             refreshableActions.append(this);
             inspection().addInspectionListener(new InspectionListenerAdapter() {
                 @Override
-                public void breakpointSetChanged() {
+                public void breakpointStateChanged() {
                     refresh(true);
                 }
             });
@@ -2510,7 +2510,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private void setWordWatchpoint(Address address) {
             final Size size = Size.fromInt(Word.size());
             try {
-                final MaxWatchpoint watchpoint = maxVM().setWatchpoint(address, size);
+                final MaxWatchpoint watchpoint = maxVM().setWatchpoint(address, size, true, true, true, true);
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {

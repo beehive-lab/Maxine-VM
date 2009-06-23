@@ -18,12 +18,51 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.opt;
+package test.optimize;
 
-/**
- * The <code>ValueNumberEffects</code> class definition.
- *
- * @author Ben L. Titzer
+/*
+ * Tests optimization of float operations.
+ * @Harness: java
+ * @Runs: 0d=22d; 1d=0d; 2d=144d; 3d=1d
  */
-public class ValueNumberEffects {
+public class VN_Double01 {
+    public static double test(double arg) {
+        if (arg == 0) {
+            return add(arg + 10);
+        }
+        if (arg == 1) {
+            return sub(arg + 10);
+        }
+        if (arg == 2) {
+            return mul(arg + 10);
+        }
+        if (arg == 3) {
+            return div(arg + 10);
+        }
+        return 0;
+    }
+    public static double add(double x) {
+        double c = 1;
+        double t = x + c;
+        double u = x + c;
+        return t + u;
+    }
+    public static double sub(double x) {
+        double c = 1;
+        double t = x - c;
+        double u = x - c;
+        return t - u;
+    }
+    public static double mul(double x) {
+        double c = 1;
+        double t = x * c;
+        double u = x * c;
+        return t * u;
+    }
+    public static double div(double x) {
+        double c = 1;
+        double t = x / c;
+        double u = x / c;
+        return t / u;
+    }
 }

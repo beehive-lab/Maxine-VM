@@ -276,7 +276,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
     }
 
     @Override
-    public void breakpointSetChanged() {
+    public void breakpointStateChanged() {
         // TODO (mlvdv)  Data reading PATCH
         if (maxVMState().processState() != ProcessState.TERMINATED) {
             refreshView(true);

@@ -36,6 +36,7 @@ import com.sun.max.tele.type.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.actor.member.MethodKey.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
@@ -85,7 +86,9 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
      */
     public static Sequence<TeleTargetMethod> get(TeleVM teleVM, MethodKey methodKey) {
         final AppendableSequence<TeleTargetMethod> result = new LinkSequence<TeleTargetMethod>();
-        final Reference targetMethodArrayReference = teleVM.methods().Code_methodKeyToTargetMethods.interpret(TeleReferenceValue.from(methodKey)).asReference();
+        final DefaultMethodKey defaultMethodKey = new DefaultMethodKey(methodKey.holder(), methodKey.name(), methodKey.signature());
+        // The interpreter will be unhappy passing in arguments whose dynamic types are alien (non-VM) classes, so create one for the key.
+        final Reference targetMethodArrayReference = teleVM.methods().Code_methodKeyToTargetMethods.interpret(TeleReferenceValue.from(defaultMethodKey)).asReference();
         final TeleArrayObject teleTargetMethodArrayObject = (TeleArrayObject) teleVM.makeTeleObject(targetMethodArrayReference);
         if (teleTargetMethodArrayObject != null) {
             for (Reference targetMethodReference : (Reference []) teleTargetMethodArrayObject.shallowCopy()) {

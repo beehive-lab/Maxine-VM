@@ -96,4 +96,5 @@ public class SolarisTeleNativeThread extends TeleNativeThread {
     public boolean threadSuspend() {
         return nativeSuspend(teleProcess().processHandle(), lwpId());
     }
+
 }

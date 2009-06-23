@@ -619,7 +619,7 @@ public final class BreakpointsTable extends InspectorTable {
         abstract void setCondition(String conditionText);
 
         /**
-         * @return message describing the status of the condition, if any, assocaited with this breakpoint;
+         * @return message describing the status of the condition, if any, associated with this breakpoint;
          * suitable for a ToolTip.
          */
         abstract String conditionStatus();

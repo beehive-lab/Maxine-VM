@@ -80,6 +80,7 @@ import com.sun.max.vm.value.*;
  * @author Michael Van De Vanter
  * @author Doug Simon
  * @author Thomas Wuerthinger
+ * @author Hannes Payer
  */
 public abstract class TeleVM implements MaxVM {
 
@@ -1125,8 +1126,40 @@ public abstract class TeleVM implements MaxVM {
     /* (non-Javadoc)
      * @see com.sun.max.tele.MaxVM#setWatchpoint(com.sun.max.unsafe.Address, com.sun.max.unsafe.Size)
      */
-    public final MaxWatchpoint setWatchpoint(Address address, Size size) throws TooManyWatchpointsException, DuplicateWatchpointException {
-        return teleProcess.watchpointFactory().setWatchpoint(address, size);
+    public final MaxWatchpoint setWatchpoint(Address address, Size size, boolean after, boolean read, boolean write, boolean exec) throws TooManyWatchpointsException, DuplicateWatchpointException {
+        return teleProcess.watchpointFactory().setWatchpoint(address, size, after, read, write, exec);
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see com.sun.max.tele.MaxVM#updateWatchpointCaches()
+     */
+    public final void updateWatchpointCaches() {
+        teleProcess.watchpointFactory().updateWatchpointCaches();
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see com.sun.max.tele.MaxVM#triggeredWatchpointAddress()
+     */
+    public final Address getTriggeredWatchpointAddress() {
+        return teleProcess.watchpointFactory().getTriggeredWatchpointAddress();
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see com.sun.max.tele.MaxVM#getTriggeredWatchpointCode()
+     */
+    public final int getTriggeredWatchpointCode() {
+        return teleProcess.watchpointFactory().getTriggeredWatchpointCode();
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see com.sun.max.tele.MaxVM#findTriggeredWatchpoint()
+     */
+    public final MaxWatchpoint findTriggeredWatchpoint() {
+        return teleProcess.watchpointFactory().findTriggeredWatchpoint();
     }
 
     /* (non-Javadoc)

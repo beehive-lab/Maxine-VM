@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,40 +18,46 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins;
+package test.optimize;
 
-import com.sun.max.tele.*;
-
-/**
- * An abstract adapter class for receiving inspection events.
- * The methods in this class are empty.  This class exists
- * as a convenience for creating listener objects.
- *
- * Extend this class, override the methods of interest, and
- * register with the inspection via
- * {@link Inspection#addInspectionListener(InspectionListener)} and
- * {@link Inspection#removeInspectionListener(InspectionListener)}.
- *
- * @author Michael Van De Vanter
+/*
+ * Tests value numbering of instanceof operations.
+ * @Harness: java
+ * @Runs: 0=true; 1=true; 2=false
  */
-public abstract class InspectionListenerAdapter implements InspectionListener {
+public class VN_InstanceOf01 {
+    static final Object _object = new VN_InstanceOf01();
 
-    public void vmStateChanged(boolean force) {
+    public static boolean test(int arg) {
+        if (arg == 0) {
+            return test1();
+        }
+        if (arg == 1) {
+            return test2();
+        }
+        if (arg == 2) {
+            return test3();
+        }
+        // do nothing
+        return false;
     }
 
-    public void threadStateChanged(MaxThread thread) {
+    private static boolean test1() {
+        boolean a = _object instanceof VN_InstanceOf01;
+        boolean b = _object instanceof VN_InstanceOf01;
+        return a | b;
     }
 
-    public void breakpointStateChanged() {
+    private static boolean test2() {
+        Object obj = new VN_InstanceOf01();
+        boolean a = obj instanceof VN_InstanceOf01;
+        boolean b = obj instanceof VN_InstanceOf01;
+        return a | b;
     }
 
-    public void watchpointSetChanged() {
+    private static boolean test3() {
+        boolean a = null instanceof VN_InstanceOf01;
+        boolean b = null instanceof VN_InstanceOf01;
+        return a | b;
     }
-
-    public void viewConfigurationChanged() {
-    }
-
-    public void vmProcessTerminated() {
-    }
-
 }

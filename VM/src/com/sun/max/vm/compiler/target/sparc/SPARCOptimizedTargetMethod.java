@@ -24,7 +24,6 @@ import com.sun.max.asm.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * @author Bernd Mathiske
@@ -52,6 +51,6 @@ public class SPARCOptimizedTargetMethod extends OptimizedTargetMethod implements
 
     @Override
     public void forwardTo(TargetMethod newTargetMethod) {
-        throw FatalError.unimplemented();
+        SPARCTargetMethod.Static.forwardTo(this, newTargetMethod);
     }
 }

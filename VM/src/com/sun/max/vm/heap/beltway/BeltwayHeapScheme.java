@@ -177,7 +177,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
         if (Heap.maxSize().greaterThan(size)) {
             size = Heap.maxSize();
         }
-        return size.roundedUpBy(BeltwayHeapSchemeConfiguration.ALLIGNMENT).asSize();
+        return size.roundedUpBy(BeltwayHeapSchemeConfiguration.ALIGNMENT).asSize();
     }
 
     public void wipeMemory(Belt belt) {

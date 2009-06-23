@@ -171,7 +171,6 @@ public final class FatalError extends Error {
      *
      * @see #unexpected(String, Address, Throwable)
      */
-
     public static FatalError unimplemented() {
         throw unexpected("Unimplemented", Address.zero(), null);
     }

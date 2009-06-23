@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,40 +18,15 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins;
-
-import com.sun.max.tele.*;
+package com.sun.c1x;
 
 /**
- * An abstract adapter class for receiving inspection events.
- * The methods in this class are empty.  This class exists
- * as a convenience for creating listener objects.
+ * The <code>C1XMetrics</code> class collects metrics about the compilation.
  *
- * Extend this class, override the methods of interest, and
- * register with the inspection via
- * {@link Inspection#addInspectionListener(InspectionListener)} and
- * {@link Inspection#removeInspectionListener(InspectionListener)}.
- *
- * @author Michael Van De Vanter
+ * @author Ben L. Titzer
  */
-public abstract class InspectionListenerAdapter implements InspectionListener {
-
-    public void vmStateChanged(boolean force) {
-    }
-
-    public void threadStateChanged(MaxThread thread) {
-    }
-
-    public void breakpointStateChanged() {
-    }
-
-    public void watchpointSetChanged() {
-    }
-
-    public void viewConfigurationChanged() {
-    }
-
-    public void vmProcessTerminated() {
-    }
-
+public class C1XMetrics {
+    public static int LocalValueNumberHits;
+    public static int ValueMapResizes;
+    public static int ValueMapKills;
 }

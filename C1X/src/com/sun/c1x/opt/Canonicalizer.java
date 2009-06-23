@@ -40,7 +40,7 @@ import java.util.LinkedList;
  *
  * @author Ben L. Titzer
  */
-public class Canonicalizer implements InstructionVisitor {
+public class Canonicalizer extends InstructionVisitor {
 
     Instruction canonical;
     List<Instruction> extra;
@@ -382,18 +382,7 @@ public class Canonicalizer implements InstructionVisitor {
         return nv;
     }
 
-    public void visitPhi(Phi i) {
-        // do nothing.
-    }
-
-    public void visitLocal(Local i) {
-        // do nothing.
-    }
-
-    public void visitConstant(Constant i) {
-        // do nothing.
-    }
-
+    @Override
     public void visitLoadField(LoadField i) {
         if (i.isStatic() && i.isLoaded() && C1XOptions.CanonicalizeConstantFields) {
             // only try to canonicalize static field loads
@@ -419,6 +408,7 @@ public class Canonicalizer implements InstructionVisitor {
         }
     }
 
+    @Override
     public void visitStoreField(StoreField i) {
         if (C1XOptions.CanonicalizeNarrowingInStores) {
             // Eliminate narrowing conversions emitted by javac which are unnecessary when
@@ -435,6 +425,7 @@ public class Canonicalizer implements InstructionVisitor {
         }
     }
 
+    @Override
     public void visitArrayLength(ArrayLength i) {
         // we can compute the length of the array statically if the object
         // is a NewArray of a constant, or if the object is a constant reference
@@ -468,10 +459,7 @@ public class Canonicalizer implements InstructionVisitor {
         }
     }
 
-    public void visitLoadIndexed(LoadIndexed i) {
-        // do nothing.
-    }
-
+    @Override
     public void visitStoreIndexed(StoreIndexed i) {
         if (C1XOptions.CanonicalizeNarrowingInStores) {
             // Eliminate narrowing conversions emitted by javac which are unnecessary when
@@ -486,6 +474,7 @@ public class Canonicalizer implements InstructionVisitor {
         }
     }
 
+    @Override
     public void visitNegateOp(NegateOp i) {
         ValueType vt = i.x().type();
         if (vt.isConstant()) {
@@ -499,18 +488,22 @@ public class Canonicalizer implements InstructionVisitor {
         assert vt.basicType() == canonical.type().basicType();
     }
 
+    @Override
     public void visitArithmeticOp(ArithmeticOp i) {
         visitOp2(i);
     }
 
+    @Override
     public void visitShiftOp(ShiftOp i) {
         visitOp2(i);
     }
 
+    @Override
     public void visitLogicOp(LogicOp i) {
         visitOp2(i);
     }
 
+    @Override
     public void visitCompareOp(CompareOp i) {
         // we can reduce a compare op if the two inputs are the same,
         // or if both are constants
@@ -566,10 +559,12 @@ public class Canonicalizer implements InstructionVisitor {
         assert Instruction.sameBasicType(i, canonical);
     }
 
+    @Override
     public void visitIfOp(IfOp i) {
         moveConstantToRight(i);
     }
 
+    @Override
     public void visitConvert(Convert i) {
         Instruction v = i.value();
         ValueType xt = v.type();
@@ -653,6 +648,7 @@ public class Canonicalizer implements InstructionVisitor {
         }
     }
 
+    @Override
     public void visitNullCheck(NullCheck i) {
         Instruction o = i.object();
         if (o.isNonNull()) {
@@ -667,26 +663,7 @@ public class Canonicalizer implements InstructionVisitor {
         }
     }
 
-    public void visitInvoke(Invoke i) {
-        // do nothing.
-    }
-
-    public void visitNewInstance(NewInstance i) {
-        // do nothing.
-    }
-
-    public void visitNewTypeArray(NewTypeArray i) {
-        // do nothing.
-    }
-
-    public void visitNewObjectArray(NewObjectArray i) {
-        // do nothing.
-    }
-
-    public void visitNewMultiArray(NewMultiArray i) {
-        // do nothing.
-    }
-
+    @Override
     public void visitCheckCast(CheckCast i) {
         // we can remove a redundant check cast if it is an object constant or the exact type is known
         if (i.targetClass().isLoaded()) {
@@ -714,6 +691,7 @@ public class Canonicalizer implements InstructionVisitor {
         }
     }
 
+    @Override
     public void visitInstanceOf(InstanceOf i) {
         // we can fold an instanceof if it is an object constant or the exact type is known
         if (i.targetClass().isLoaded()) {
@@ -737,14 +715,8 @@ public class Canonicalizer implements InstructionVisitor {
             }
         }
     }
-    public void visitMonitorEnter(MonitorEnter i) {
-        // do nothing.
-    }
 
-    public void visitMonitorExit(MonitorExit i) {
-        // do nothing.
-    }
-
+    @Override
     public void visitIntrinsic(Intrinsic i) {
         if (!C1XOptions.CanonicalizeIntrinsics) {
             return;
@@ -913,14 +885,7 @@ public class Canonicalizer implements InstructionVisitor {
         assert Instruction.sameBasicType(i, canonical);
     }
 
-    public void visitBlockBegin(BlockBegin i) {
-        // do nothing.
-    }
-
-    public void visitGoto(Goto i) {
-        // do nothing.
-    }
-
+    @Override
     public void visitIf(If i) {
         if (i.x().type().isConstant()) {
             // move constant to the right
@@ -1035,10 +1000,7 @@ public class Canonicalizer implements InstructionVisitor {
         setCanonical(new Goto(succ, i.stateBefore(), i.isSafepoint()));
     }
 
-    public void visitIfInstanceOf(IfInstanceOf i) {
-        // IfInstanceOf is not produced by the GraphBuilder, only by the Canonicalizer itself
-    }
-
+    @Override
     public void visitTableSwitch(TableSwitch i) {
         Instruction v = i.value();
         if (v.type().isConstant()) {
@@ -1065,6 +1027,7 @@ public class Canonicalizer implements InstructionVisitor {
         }
     }
 
+    @Override
     public void visitLookupSwitch(LookupSwitch i) {
         Instruction v = i.value();
         if (v.type().isConstant()) {
@@ -1092,30 +1055,6 @@ public class Canonicalizer implements InstructionVisitor {
             Constant key = intInstr(i.keyAt(0));
             setCanonical(new If(v, Condition.eql, false, key, i.successors().get(0), i.defaultSuccessor(), i.stateBefore(), i.isSafepoint()));
         }
-    }
-
-    public void visitReturn(Return i) {
-        // do nothing.
-    }
-
-    public void visitThrow(Throw i) {
-        // do nothing.
-    }
-
-    public void visitBase(Base i) {
-        // do nothing.
-    }
-
-    public void visitOsrEntry(OsrEntry i) {
-        // do nothing.
-    }
-
-    public void visitExceptionObject(ExceptionObject i) {
-        // do nothing.
-    }
-
-    public void visitRoundFP(RoundFP i) {
-        // do nothing.
     }
 
     private void visitUnsafeRawOp(UnsafeRawOp i) {
@@ -1188,40 +1127,18 @@ public class Canonicalizer implements InstructionVisitor {
         return true;
     }
 
+    @Override
     public void visitUnsafeGetRaw(UnsafeGetRaw i) {
         if (C1XOptions.CanonicalizeUnsafes) {
             visitUnsafeRawOp(i);
         }
     }
 
+    @Override
     public void visitUnsafePutRaw(UnsafePutRaw i) {
         if (C1XOptions.CanonicalizeUnsafes) {
             visitUnsafeRawOp(i);
         }
-    }
-
-    public void visitUnsafeGetObject(UnsafeGetObject i) {
-        // do nothing.
-    }
-
-    public void visitUnsafePutObject(UnsafePutObject i) {
-        // do nothing.
-    }
-
-    public void visitUnsafePrefetchRead(UnsafePrefetchRead i) {
-        // do nothing.
-    }
-
-    public void visitUnsafePrefetchWrite(UnsafePrefetchWrite i) {
-        // do nothing.
-    }
-
-    public void visitProfileCall(ProfileCall i) {
-        // do nothing.
-    }
-
-    public void visitProfileCounter(ProfileCounter i) {
-        // do nothing.
     }
 
     private Object argAsObject(Instruction[] args, int index) {

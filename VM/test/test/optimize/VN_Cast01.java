@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,40 +18,50 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins;
+package test.optimize;
 
-import com.sun.max.tele.*;
-
-/**
- * An abstract adapter class for receiving inspection events.
- * The methods in this class are empty.  This class exists
- * as a convenience for creating listener objects.
- *
- * Extend this class, override the methods of interest, and
- * register with the inspection via
- * {@link Inspection#addInspectionListener(InspectionListener)} and
- * {@link Inspection#removeInspectionListener(InspectionListener)}.
- *
- * @author Michael Van De Vanter
+/*
+ * Tests constant folding of integer operations.
+ * @Harness: java
+ * @Runs: 0=18; 1=18; 2=!java.lang.NullPointerException
  */
-public abstract class InspectionListenerAdapter implements InspectionListener {
+public class VN_Cast01 {
+    static final Object _object = new VN_Cast01();
 
-    public void vmStateChanged(boolean force) {
+    int _field = 9;
+
+    public static int test(int arg) {
+        if (arg == 0) {
+            return test1();
+        }
+        if (arg == 1) {
+            return test2();
+        }
+        if (arg == 2) {
+            return test3();
+        }
+        return 0;
     }
 
-    public void threadStateChanged(MaxThread thread) {
+    private static int test1() {
+        Object o = _object;
+        VN_Cast01 a = (VN_Cast01) o;
+        VN_Cast01 b = (VN_Cast01) o;
+        return a._field + b._field;
     }
 
-    public void breakpointStateChanged() {
+    private static int test2() {
+        Object obj = new VN_Cast01();
+        VN_Cast01 a = (VN_Cast01) obj;
+        VN_Cast01 b = (VN_Cast01) obj;
+        return a._field + b._field;
     }
 
-    public void watchpointSetChanged() {
-    }
-
-    public void viewConfigurationChanged() {
-    }
-
-    public void vmProcessTerminated() {
+    private static int test3() {
+        Object o = null;
+        VN_Cast01 a = (VN_Cast01) o;
+        VN_Cast01 b = (VN_Cast01) o;
+        return a._field + b._field;
     }
 
 }

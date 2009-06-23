@@ -36,6 +36,7 @@ import com.sun.max.vm.prototype.*;
  * @author Bernd Mathiske
  * @author Aritra Bandyopadhyay
  * @author Doug Simon
+ * @author Hannes Payer
  */
 public final class SolarisTeleProcess extends TeleProcess {
 
@@ -173,7 +174,7 @@ public final class SolarisTeleProcess extends TeleProcess {
         return nativeWriteBytes(processHandle, dst.toLong(), src.array(), false, src.arrayOffset() + offset, length);
     }
 
-    private native boolean nativeActivateWatchpoint(long processHandle, long start, long size);
+    private native boolean nativeActivateWatchpoint(long processHandle, long start, long size, boolean after, boolean read, boolean write, boolean exec);
     private native boolean nativeDeactivateWatchpoint(long processHandle, long start, long size);
 
     @Override
@@ -183,12 +184,38 @@ public final class SolarisTeleProcess extends TeleProcess {
     }
 
     @Override
-    protected boolean activateWatchpoint(MemoryRegion memoryRegion) {
-        return nativeActivateWatchpoint(processHandle, memoryRegion.start().toLong(), memoryRegion.size().toLong());
+    protected boolean activateWatchpoint(TeleWatchpoint teleWatchpoint) {
+        return nativeActivateWatchpoint(processHandle, teleWatchpoint.start().toLong(), teleWatchpoint.size().toLong(), true, teleWatchpoint.isRead(), teleWatchpoint.isWrite(), teleWatchpoint.isExec());
     }
 
     @Override
     protected boolean deactivateWatchpoint(MemoryRegion memoryRegion) {
         return nativeDeactivateWatchpoint(processHandle, memoryRegion.start().toLong(), memoryRegion.size().toLong());
+    }
+
+    /**
+     * Reads the address which triggered a watchpoint signal.
+     *
+     * @param processHandle
+     * @return address
+     */
+    private static native long nativeReadWatchpointAddress(long processHandle);
+
+    @Override
+    protected long readWatchpointAddress() {
+        return nativeReadWatchpointAddress(processHandle);
+    }
+
+    /**
+     * Reads the access code of the watchpoint which triggered a signal.
+     *
+     * @param processHandle
+     * @return access code
+     */
+    private static native int nativeReadWatchpointAccessCode(long processHandle);
+
+    @Override
+    protected int readWatchpointAccessCode() {
+        return nativeReadWatchpointAccessCode(processHandle);
     }
 }

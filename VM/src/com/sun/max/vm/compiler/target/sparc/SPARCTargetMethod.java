@@ -22,18 +22,25 @@ package com.sun.max.vm.compiler.target.sparc;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.sparc.*;
-import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * @author Bernd Mathiske
+ * @author Paul Caprioli
  */
 public interface SPARCTargetMethod {
 
     public static final class Static {
+        private static final int CALL = 0x40000000;
+        private static final int MOV_O7_TO_G1 = 0x8210000F;
+        private static final int MOV_G1_TO_O7 = 0x9E100001;
+        private static final int BA_A = 0x30800000;
+
         private Static() {
         }
 
@@ -46,18 +53,42 @@ public interface SPARCTargetMethod {
         }
 
         public static void patchCallSite(TargetMethod targetMethod, int callOffset, Word callEntryPoint) {
-            final Pointer callSite = targetMethod.codeStart().plus(callOffset).asPointer();
-            final SPARC64Assembler assembler = new SPARC64Assembler(callSite.toLong());
-            final Label label = new Label();
-            assembler.fixLabel(label, callEntryPoint.asAddress().toLong());
-            assembler.call(label);
-            try {
-                final byte[] code = assembler.toByteArray();
-                Bytes.copy(code, 0, targetMethod.code(), callOffset, code.length);
-            } catch (AssemblyException assemblyException) {
-                ProgramError.unexpected("patching call site failed", assemblyException);
+            final Pointer callSite = targetMethod.codeStart().plus(callOffset);
+            final int displacement = (int) (callEntryPoint.asAddress().toLong() - callSite.toLong());
+            final int callInstruction = CALL | (displacement >>> 2);
+            if (MaxineVM.isPrototyping()) {
+                final byte[] code = targetMethod.code();
+                code[callOffset] = (byte) (callInstruction >> 24);
+                code[callOffset + 1] = (byte) (callInstruction >> 16);
+                code[callOffset + 2] = (byte) (callInstruction >> 8);
+                code[callOffset + 3] = (byte) callInstruction;
+            } else {
+                callSite.writeInt(0, callInstruction);
             }
         }
+
+        public static void forwardTo(TargetMethod oldTargetMethod, TargetMethod newTargetMethod) {
+            assert oldTargetMethod != newTargetMethod;
+            assert !oldTargetMethod.isNative();
+            assert oldTargetMethod.abi().callEntryPoint() != CallEntryPoint.C_ENTRY_POINT;
+
+            final long newOptEntry = CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
+            final long newJitEntry = CallEntryPoint.JIT_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
+
+            patchCode(oldTargetMethod, CallEntryPoint.OPTIMIZED_ENTRY_POINT.offsetFromCodeStart(), newOptEntry);
+            patchCode(oldTargetMethod, CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart(), newJitEntry);
+        }
+
+        private static void patchCode(TargetMethod targetMethod, int offset, long target) {
+            final Pointer callSite = targetMethod.codeStart().plus(offset);
+            final int disp22 = (int) ((target - callSite.toLong()) >>> 2);
+            FatalError.check((disp22 >>> 21) == 0x0 || (disp22 >>> 21) == 0x7FF, "Forwarding too far.");
+            final int cti = BA_A | (disp22 & 0x3FFFFF);
+
+            assert !MaxineVM.isPrototyping() : "Should not be invoking patchCode";
+            callSite.writeInt(offset, cti);
+        }
+
     }
 
 }
