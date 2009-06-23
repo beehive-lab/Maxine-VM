@@ -51,12 +51,14 @@ public class C1XOptions {
     public static boolean RoundFPResults                     = ____;
 
     // debugging settings
+    public static boolean GatherMetrics                      = TRUE;
     public static boolean PinAllInstructions                 = ____;
     public static boolean TestPatching                       = ____;
     public static boolean TestSlowPath                       = ____;
     public static boolean PrintInitialBlockList              = ____;
     public static boolean PrintIR                            = ____;
     public static boolean PrintCFGToFile                     = ____;
+    public static boolean PrintMetrics                       = ____;
 
     // canonicalizer settings
     public static boolean CanonicalizeInstructions           = TRUE;

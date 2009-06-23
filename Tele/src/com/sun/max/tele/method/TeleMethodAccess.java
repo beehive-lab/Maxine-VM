@@ -76,6 +76,14 @@ public abstract class TeleMethodAccess extends AbstractTeleVMHolder {
         }
     }
 
+    /**
+     * Executes the method as if running in the VM.  Interprets (slowly) the bytecodes in an environment
+     * where memory reads are remote to the VM, and in which the IDs of classes are those of the VM.
+     * Local objects passed as arguments must be of types known as legitimate in the VM.
+     *
+     * @param arguments
+     * @return return value from the method
+     */
     public Value interpret(Value... arguments) {
         try {
             ProgramError.check(methodActor instanceof ClassMethodActor, "cannot interpret interface method");

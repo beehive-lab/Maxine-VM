@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,40 +18,51 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins;
+package test.optimize;
 
-import com.sun.max.tele.*;
-
-/**
- * An abstract adapter class for receiving inspection events.
- * The methods in this class are empty.  This class exists
- * as a convenience for creating listener objects.
- *
- * Extend this class, override the methods of interest, and
- * register with the inspection via
- * {@link Inspection#addInspectionListener(InspectionListener)} and
- * {@link Inspection#removeInspectionListener(InspectionListener)}.
- *
- * @author Michael Van De Vanter
+/*
+ * Tests optimization of float operations.
+ * @Harness: java
+ * @Runs: 0f=22f; 1f=0f; 2f=144f; 3f=1f
  */
-public abstract class InspectionListenerAdapter implements InspectionListener {
-
-    public void vmStateChanged(boolean force) {
+public class VN_Float01 {
+    public static float test(float arg) {
+        if (arg == 0) {
+            return add(arg + 10);
+        }
+        if (arg == 1) {
+            return sub(arg + 10);
+        }
+        if (arg == 2) {
+            return mul(arg + 10);
+        }
+        if (arg == 3) {
+            return div(arg + 10);
+        }
+        return 0;
     }
-
-    public void threadStateChanged(MaxThread thread) {
+    public static float add(float x) {
+        float c = 1;
+        float t = x + c;
+        float u = x + c;
+        return t + u;
     }
-
-    public void breakpointStateChanged() {
+    public static float sub(float x) {
+        float c = 1;
+        float t = x - c;
+        float u = x - c;
+        return t - u;
     }
-
-    public void watchpointSetChanged() {
+    public static float mul(float x) {
+        float c = 1;
+        float t = x * c;
+        float u = x * c;
+        return t * u;
     }
-
-    public void viewConfigurationChanged() {
+    public static float div(float x) {
+        float c = 1;
+        float t = x / c;
+        float u = x / c;
+        return t / u;
     }
-
-    public void vmProcessTerminated() {
-    }
-
 }

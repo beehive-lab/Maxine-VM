@@ -142,9 +142,8 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         final int trapStateOffset =  SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
         int offset = trapStateOffset;
 
-        // We want to copy in the trap state the value of the latch register at the instruction that causes the trap.
-        // This is in the TRAP_TOP_OF_STACK register.
-        asm.ldx(latchRegister, VmThreadLocal.TRAP_TOP_OF_STACK.offset(), scratchRegister);
+        // We want to copy into the trap state the value of the latch register at the instruction that causes the trap.
+        asm.ldx(latchRegister, VmThreadLocal.TRAP_LATCH_REGISTER.offset(), scratchRegister);
 
         for (GPR register :  SPARCSafepoint.TRAP_SAVED_GLOBAL_SYMBOLIZER) {
             if (register == latchRegister) {

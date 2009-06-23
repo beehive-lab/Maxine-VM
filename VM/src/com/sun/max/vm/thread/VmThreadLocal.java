@@ -140,9 +140,9 @@ public enum VmThreadLocal {
     TRAP_FAULT_ADDRESS(Kind.WORD),
 
     /**
-     * The value on the top of the stack that was overwritten by the native trap handler.
+     * The value of the latch register when the last trap occurred.
      */
-    TRAP_TOP_OF_STACK(Kind.WORD),
+    TRAP_LATCH_REGISTER(Kind.WORD),
 
     /**
      * @see Deoptimizer.ReferenceOccurrences
@@ -224,7 +224,7 @@ public enum VmThreadLocal {
         // The C code in trap.c relies on the following relationships:
         ProgramError.check(TRAP_NUMBER.ordinal() + 1 == TRAP_INSTRUCTION_POINTER.ordinal());
         ProgramError.check(TRAP_NUMBER.ordinal() + 2 == TRAP_FAULT_ADDRESS.ordinal());
-        ProgramError.check(TRAP_NUMBER.ordinal() + 3 == TRAP_TOP_OF_STACK.ordinal());
+        ProgramError.check(TRAP_NUMBER.ordinal() + 3 == TRAP_LATCH_REGISTER.ordinal());
 
         final String[] names = new String[THREAD_LOCAL_STORAGE_SIZE.toInt() / Word.size()];
         for (VmThreadLocal vmThreadLocal : VALUES) {

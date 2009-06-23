@@ -40,9 +40,6 @@ public final class BeltManager {
     // The List of Belts used
     private static final List<Belt> belts = new ArrayList<Belt>();
 
-    // The beltSize, currently static, but it will change in Appel style GCs
-    private static Size beltSize;
-
     private static Belt applicationHeap = new Belt();
 
     private static Belt tempBelt = new Belt();
@@ -98,7 +95,7 @@ public final class BeltManager {
             belts.get(i).resetAllocationMark();
             belts.get(i).setFramePercentageOfUsableMemory(BeltwayConfiguration.getPercentOfUsableMemoryPerBelt(i));
         }
-        // Initialise the last belt.
+        // Initialize the last belt.
         // Because of the alignment the last belt will be a little bit smaller
         // than the previous ones, as it has to stop at the belt's boundaries
         if (i < BeltwayConfiguration.getNumberOfBelts()) {
@@ -115,11 +112,6 @@ public final class BeltManager {
         final Size heapSize = BeltwayHeapSchemeConfiguration.getMaxHeapSize();
         final Size beltSize = heapSize.times(BeltwayConfiguration.getPercentOfUsableMemoryPerBelt(i)).dividedBy(100);
         return beltSize.roundedUpBy(BeltwayHeapSchemeConfiguration.TLAB_SIZE.toInt()).asSize();
-    }
-
-    @INLINE
-    public Size getBeltSize() {
-        return beltSize;
     }
 
     @INLINE

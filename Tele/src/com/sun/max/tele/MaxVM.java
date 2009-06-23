@@ -50,6 +50,7 @@ import com.sun.max.vm.value.*;
  * This could in the future be merged with the JDWP interface.
  *
  * @author Michael Van De Vanter
+ * @author Hannes Payer
  */
 public interface MaxVM {
 
@@ -630,7 +631,7 @@ public interface MaxVM {
     TeleBytecodeBreakpoint getBytecodeBreakpoint(Key key);
 
     /**
-     * @return are watchpoints enabled in the VM?
+     * @return are watchpoints implemented in this VM configuration?
      */
     boolean watchpointsEnabled();
 
@@ -646,17 +647,45 @@ public interface MaxVM {
      *
      * @param address start of a memory region in the VM
      * @param size size of the memory region in the VM
+     * @param after trap after accessing memory field
+     * @param read read access
+     * @param write write access
+     * @param exec execution access
      * @return a new memory watchpoint
      * @throws TooManyWatchpointsException
      * @throws DuplicateWatchpointException when the watchpoint overlaps in whole or part with an existing watchpoint
      */
-    MaxWatchpoint setWatchpoint(Address address, Size size)  throws TooManyWatchpointsException, DuplicateWatchpointException;
+    MaxWatchpoint setWatchpoint(Address address, Size size, boolean after, boolean read, boolean write, boolean exec)  throws TooManyWatchpointsException, DuplicateWatchpointException;
 
     /**
      * @param address a memory address in the VM
      * @return the watchpoint whose memory region includes the address, null if none.
      */
     MaxWatchpoint findWatchpoint(Address address);
+
+    /**
+     * Update caches of all registered watchpoints.
+     * @return whether update succeeded
+     */
+    void updateWatchpointCaches();
+
+    /**
+     * Find watchpoint which triggered a signal.
+     * @return watchpoint which triggered a signal
+     */
+    MaxWatchpoint findTriggeredWatchpoint();
+
+    /**
+     * Returns the address which triggered the watchpoint.
+     * @return
+     */
+    Address getTriggeredWatchpointAddress();
+
+    /**
+     * Returns the code of the triggered watchpoint.
+     * @return
+     */
+    int getTriggeredWatchpointCode();
 
     /**
      * All existing memory watchpoints set in the VM.
@@ -696,7 +725,7 @@ public interface MaxVM {
      * Interprets a method invocation in the context of the VM.
      *
      * @param classMethodActor method to interpret
-     * @param arguments method arguments encapsulated as values
+     * @param arguments method arguments encapsulated as values, values that are understood as VM classes.
      * @return result of method invocation wrapped as a Value
      * @throws TeleInterpreterException  if an uncaught exception occurs during execution of the method
      */

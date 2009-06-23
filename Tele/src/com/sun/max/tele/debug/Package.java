@@ -20,12 +20,12 @@
  */
 package com.sun.max.tele.debug;
 
-import com.sun.max.vm.*;
+import com.sun.max.*;
 
 /**
  * @author Michael Van De Vanter
  */
-public class Package extends VMPackage {
+public class Package extends MaxPackage {
     public Package() {
         super();
     }

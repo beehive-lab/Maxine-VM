@@ -122,6 +122,15 @@ public class PreferenceDialog extends InspectorDialog {
         breakpointsInspectorPanel.setBorder(border);
         prefPanel.add(breakpointsInspectorPanel);
 
+        final JPanel watchpointsLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+        watchpointsLabelPanel.setBorder(border);
+        watchpointsLabelPanel.add(new TextLabel(inspection, "Watchpoints"), BorderLayout.WEST);
+        prefPanel.add(watchpointsLabelPanel);
+
+        final JPanel watchpointsInspectorPanel = WatchpointsViewPreferences.globalPreferencesPanel(inspection);
+        watchpointsInspectorPanel.setBorder(border);
+        prefPanel.add(watchpointsInspectorPanel);
+
         final JPanel memoryRegionsLabelPanel = new InspectorPanel(inspection, new BorderLayout());
         memoryRegionsLabelPanel.setBorder(border);
         memoryRegionsLabelPanel.add(new TextLabel(inspection, "Memory regions"), BorderLayout.WEST);

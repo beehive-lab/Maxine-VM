@@ -18,13 +18,43 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x;
+package test.optimize;
 
-/**
- * The <code>C1XTunables</code> class definition.
- *
- * @author Ben L. Titzer
+/*
+ * Tests optimization integer conversions.
+ * @Harness: java
+ * @Runs: 0=20; 1=22; 2=24
  */
-public class C1XTunables {
-    // Nothing yet
+public class VN_Convert01 {
+    public static int test(int arg) {
+        if (arg == 0) {
+            return i2b(arg + 10);
+        }
+        if (arg == 1) {
+            return i2s(arg + 10);
+        }
+        if (arg == 2) {
+            return i2c(arg + 10);
+        }
+        return 0;
+    }
+
+    public static int i2b(int arg) {
+        int x = (byte) arg;
+        int y = (byte) arg;
+        return x + y;
+    }
+
+    public static int i2s(int arg) {
+        int x = (short) arg;
+        int y = (short) arg;
+        return x + y;
+    }
+
+    public static int i2c(int arg) {
+        int x = (char) arg;
+        int y = (char) arg;
+        return x + y;
+    }
+
 }

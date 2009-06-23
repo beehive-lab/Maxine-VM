@@ -87,8 +87,8 @@ Interfaces and classes start with an upper case letter, e.g. MyClass, YourInterf
 
 Methods start with a lower case letter, e.g. foo, fooBar, yourMethodIsNotCalledFooBar.
 
-Private and protected and non-final public fields start with "_", 
-followed by a lower case letter, e.g. _myField, _offset.
+Private fields, protected fields, and non-final public fields start with a lower-case letter. 
+(e.g. myField, offset)
 
 Public final fields are all upper case (with "_" word delimiters), e.g. ALL_UPPER_CASE.
 
@@ -265,3 +265,4 @@ o Use 3rd person (descriptive) not 2nd person (prescriptive). For example:
 o Use "this" instead of "the" when referring to an object related to the current class. For example:
     Gets the toolkit for this component.   (preferred)
     Gets the toolkit for the component.    (avoid)
+

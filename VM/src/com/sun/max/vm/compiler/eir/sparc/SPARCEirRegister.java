@@ -57,7 +57,7 @@ public abstract class SPARCEirRegister extends EirRegister {
 
     protected SPARCEirRegister(int ordinal) {
         this.ordinal = ordinal;
-        this.serial = nextSerial++;
+        serial = nextSerial++;
         assert registers[serial] == null;
         registers[serial] = this;
     }
