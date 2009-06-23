@@ -45,7 +45,7 @@ public class C1XOptions {
     public static int     MaximumDesiredSize                 = 8000;
 
     // floating point settings
-    public static int SSEVersion                             = 2;
+    public static int     SSEVersion                         = 2;
     public static boolean RoundFPResults                     = ____;
 
     // debugging settings
