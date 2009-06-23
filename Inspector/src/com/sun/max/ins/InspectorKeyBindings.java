@@ -82,7 +82,7 @@ public class InspectorKeyBindings {
          */
         public static final Map<String, KeyBindingMap> ALL = Collections.unmodifiableMap(ALL_MODIFIABLE);
 
-        private final String _name;
+        private final String name;
 
         /**
          * Creates a new map of actions to key strokes.
@@ -91,13 +91,13 @@ public class InspectorKeyBindings {
          *            binding map present in {@link #ALL}.
          */
         KeyBindingMap(String name) {
-            _name = name;
+            this.name = name;
             final KeyBindingMap oldValue = ALL_MODIFIABLE.put(name, this);
             assert oldValue == null : "There's already a set of key binding map named " + name;
         }
 
         public String name() {
-            return _name;
+            return name;
         }
 
         @Override

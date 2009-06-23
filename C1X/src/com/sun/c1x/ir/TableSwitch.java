@@ -32,7 +32,7 @@ import java.util.List;
  */
 public class TableSwitch extends Switch {
 
-    final int _lowKey;
+    final int lowKey;
 
     /**
      * Constructs a new TableSwitch instruction.
@@ -44,7 +44,7 @@ public class TableSwitch extends Switch {
      */
     public TableSwitch(Instruction value, List<BlockBegin> successors, int lowKey, ValueStack stateBefore, boolean isSafepoint) {
         super(value, successors, stateBefore, isSafepoint);
-        _lowKey = lowKey;
+        this.lowKey = lowKey;
     }
 
     /**
@@ -52,7 +52,7 @@ public class TableSwitch extends Switch {
      * @return the low key
      */
     public int lowKey() {
-        return _lowKey;
+        return lowKey;
     }
 
     /**
@@ -60,7 +60,7 @@ public class TableSwitch extends Switch {
      * @return the high key
      */
     public int highKey() {
-        return _lowKey + numberOfCases();
+        return lowKey + numberOfCases();
     }
 
     /**

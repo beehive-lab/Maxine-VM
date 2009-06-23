@@ -31,7 +31,7 @@ import com.sun.c1x.value.ValueStack;
  */
 public class MonitorEnter extends AccessMonitor {
 
-    ValueStack _lockStackBefore;
+    ValueStack lockStackBefore;
 
     /**
      * Creates a new MonitorEnter instruction.
@@ -41,7 +41,7 @@ public class MonitorEnter extends AccessMonitor {
      */
     public MonitorEnter(Instruction object, int lockNumber, ValueStack lockStackBefore) {
         super(object, lockNumber);
-        _lockStackBefore = lockStackBefore;
+        this.lockStackBefore = lockStackBefore;
 
     }
 
@@ -50,7 +50,7 @@ public class MonitorEnter extends AccessMonitor {
      * @return the lock stack
      */
     public ValueStack lockStackBefore() {
-        return _lockStackBefore;
+        return lockStackBefore;
     }
 
     /**
@@ -69,7 +69,7 @@ public class MonitorEnter extends AccessMonitor {
     @Override
     public void stateValuesDo(InstructionClosure closure) {
         super.stateValuesDo(closure);
-        _lockStackBefore.valuesDo(closure);
+        lockStackBefore.valuesDo(closure);
     }
 
     /**

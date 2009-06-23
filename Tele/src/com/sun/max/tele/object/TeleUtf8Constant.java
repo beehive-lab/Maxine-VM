@@ -36,18 +36,18 @@ public final class TeleUtf8Constant extends TelePoolConstant {
     }
 
     // The field is final; cache it.
-    private String _string;
+    private String string;
 
     /**
      * @return a local copy of the string contained in this object in the {@link TeleVM}.
      */
     public String getString() {
-        if (_string == null) {
+        if (string == null) {
             final Reference stringReference = teleVM().fields().Utf8Constant_string.readReference(reference());
             final TeleString teleString = (TeleString) teleVM().makeTeleObject(stringReference);
-            _string = teleString.getString();
+            string = teleString.getString();
         }
-        return _string;
+        return string;
     }
 
     @Override

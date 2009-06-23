@@ -34,7 +34,7 @@ import com.sun.max.ins.gui.*;
  */
 public final class AboutDialog extends InspectorDialog {
 
-    private static final String _aboutString =
+    private static final String aboutString =
         "The Maxine Inspector is a combined debugger and object browser tool for Maxine,\n" +
         "a research virtual machine written in and for the Java(TM) Programming Language.\n" +
         "\n" +
@@ -52,18 +52,18 @@ public final class AboutDialog extends InspectorDialog {
         "     http://research.sun.com/projects/maxine/\n";
 
 
-    private static final JTextArea _textArea = new JTextArea(_aboutString);
+    private static final JTextArea textArea = new JTextArea(aboutString);
 
     public AboutDialog(Inspection inspection) {
         super(inspection, "About Maxine", true);
 
         final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());
 
-        _textArea.setLineWrap(true);
-        _textArea.setWrapStyleWord(true);
-        _textArea.setColumns(50);
-        _textArea.setRows(17);
-        final JScrollPane scrollPane = new InspectorScrollPane(inspection, _textArea);
+        textArea.setLineWrap(true);
+        textArea.setWrapStyleWord(true);
+        textArea.setColumns(50);
+        textArea.setRows(17);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection, textArea);
         dialogPanel.add(scrollPane, BorderLayout.CENTER);
         dialogPanel.add(new JButton(new AbstractAction("Close") {
             public void actionPerformed(ActionEvent e) {

@@ -27,13 +27,13 @@ package test.output;
 public class LocalCatch {
     static class S {
 
-        public int _x = 12;
+        public int x = 12;
 
         public int b() {
             try {
                 throw new Exception("abc");
             } catch (Exception e) {
-                return _x;
+                return x;
             }
         }
     }

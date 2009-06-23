@@ -29,13 +29,13 @@ package com.sun.max.jdwp.vm.data;
  */
 public class RegistersGroup extends AbstractSerializableObject {
 
-    private Registers[] _registers;
+    private Registers[] registers;
 
     public RegistersGroup(Registers[] arr) {
-        _registers = arr;
+        registers = arr;
     }
 
     public Registers[] getRegisters() {
-        return _registers;
+        return registers;
     }
 }

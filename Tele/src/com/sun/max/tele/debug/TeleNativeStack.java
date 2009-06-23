@@ -32,14 +32,14 @@ import com.sun.max.unsafe.*;
  */
 public class TeleNativeStack extends FixedMemoryRegion {
 
-    private final TeleNativeThread _teleNativeThread;
+    private final TeleNativeThread teleNativeThread;
 
     public TeleNativeThread teleNativeThread() {
-        return _teleNativeThread;
+        return teleNativeThread;
     }
 
     public TeleNativeStack(TeleNativeThread teleNativeThread, Address base, Size size) {
         super(base, size, "Thread-" + teleNativeThread.handle());
-        _teleNativeThread = teleNativeThread;
+        this.teleNativeThread = teleNativeThread;
     }
 }

@@ -42,10 +42,10 @@ public class MantisBug3Test {
 
     static class S {
 
-        public int _x = 12;
+        public int x = 12;
 
         public int c() {
-            return _x++;
+            return x++;
         }
 
         public int b() {
@@ -55,7 +55,7 @@ public class MantisBug3Test {
         }
 
         public void dummy() {
-            _x++;
+            x++;
         }
     }
 

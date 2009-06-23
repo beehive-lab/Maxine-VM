@@ -33,7 +33,7 @@ import com.sun.max.vm.reference.*;
  */
 public abstract class ObjectAggregator {
 
-    private static int _alignment;
+    private static int alignment;
 
     public static ObjectAggregator create(ReferenceClassActor actor, Pointer base) {
         if (actor.toJava() == StaticTuple.class) {
@@ -47,46 +47,46 @@ public abstract class ObjectAggregator {
         }
     }
 
-    final ReferenceClassActor _actor;
-    private final BitSet _instances;
-    private final Pointer _base;
-    private int _count = -1;
-    private Size _totalSize = Size.zero();
+    final ReferenceClassActor actor;
+    private final BitSet instances;
+    private final Pointer base;
+    private int count = -1;
+    private Size totalSize = Size.zero();
 
     ObjectAggregator(ReferenceClassActor actor, Pointer base) {
-        _actor = actor;
-        _instances = new BitSet();
-        _base = base;
+        this.actor = actor;
+        this.instances = new BitSet();
+        this.base = base;
     }
 
     public final int count() {
-        if (_count == -1) {
-            _count = _instances.cardinality();
+        if (count == -1) {
+            count = instances.cardinality();
         }
-        return _count;
+        return count;
     }
 
     public abstract boolean isArray();
 
     public ReferenceClassActor type() {
-        return _actor;
+        return actor;
     }
 
     public Iterator<Reference> instances(final MaxVM maxVM) {
         return new Iterator<Reference>() {
-            int _nextWordOffset = _instances.nextSetBit(0);
+            int nextWordOffset = instances.nextSetBit(0);
             public boolean hasNext() {
-                return _nextWordOffset >= 0;
+                return nextWordOffset >= 0;
             }
 
             public Reference next() {
                 if (!hasNext()) {
                     throw new NoSuchElementException();
                 }
-                final int wordOffset = _nextWordOffset;
-                final int offset = wordOffset * _alignment;
-                final Reference reference = maxVM.wordToReference(_base.plus(offset));
-                _nextWordOffset = _instances.nextSetBit(wordOffset + 1);
+                final int wordOffset = nextWordOffset;
+                final int offset = wordOffset * alignment;
+                final Reference reference = maxVM.wordToReference(base.plus(offset));
+                nextWordOffset = instances.nextSetBit(wordOffset + 1);
                 return reference;
             }
 
@@ -103,33 +103,33 @@ public abstract class ObjectAggregator {
      * @return the size of the cell allocated for the object
      */
     public final Size add(TeleVM teleVM, int offset) {
-        if (_alignment == 0) {
-            _alignment = teleVM.vmConfiguration().platform().processorKind().dataModel().alignment().numberOfBytes();
+        if (alignment == 0) {
+            alignment = teleVM.vmConfiguration().platform().processorKind().dataModel().alignment().numberOfBytes();
         }
 
-        final Pointer cell = _base.plus(offset);
+        final Pointer cell = base.plus(offset);
         final Size size = sizeOf(teleVM, cell);
-        _totalSize = _totalSize.plus(size);
-        final int wordOffset = offset / _alignment;
-        _instances.set(wordOffset);
-        _count = -1;
+        totalSize = totalSize.plus(size);
+        final int wordOffset = offset / alignment;
+        instances.set(wordOffset);
+        count = -1;
         return size;
     }
 
     protected abstract Size sizeOf(TeleVM teleVM, Pointer cell);
 
     public final Size size() {
-        return _totalSize;
+        return totalSize;
     }
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof ObjectAggregator && _actor.equals(((ObjectAggregator) other)._actor);
+        return other instanceof ObjectAggregator && actor.equals(((ObjectAggregator) other).actor);
     }
 
     @Override
     public int hashCode() {
-        return _actor.hashCode();
+        return actor.hashCode();
     }
 
     @Override
@@ -164,16 +164,16 @@ public abstract class ObjectAggregator {
      */
     static class TupleAggregator extends ObjectAggregator {
 
-        private final Size _tupleSize;
+        private final Size tupleSize;
 
         TupleAggregator(TupleClassActor classActor, Pointer base) {
             super(classActor, base);
-            _tupleSize = classActor.dynamicTupleSize();
+            tupleSize = classActor.dynamicTupleSize();
         }
 
         @Override
         protected Size sizeOf(TeleVM teleVM, Pointer cell) {
-            return _tupleSize;
+            return tupleSize;
         }
 
         @Override
@@ -187,18 +187,18 @@ public abstract class ObjectAggregator {
      */
     static class HybridAggregator extends ObjectAggregator {
 
-        private final HybridLayout _layout;
+        private final HybridLayout layout;
 
         HybridAggregator(HybridClassActor hybridActor, Pointer base) {
             super(hybridActor, base);
-            _layout = Layout.hybridLayout();
+            layout = Layout.hybridLayout();
         }
 
         @Override
         protected Size sizeOf(TeleVM teleVM, Pointer cell) {
             final Reference reference = teleVM.cellToReference(cell);
-            final int length = _layout.readLength(reference);
-            return _layout.getArraySize(length);
+            final int length = layout.readLength(reference);
+            return layout.getArraySize(length);
         }
 
         @Override
@@ -212,18 +212,18 @@ public abstract class ObjectAggregator {
      */
     static class ArrayAggregator extends ObjectAggregator {
 
-        private final ArrayLayout _layout;
+        private final ArrayLayout layout;
 
         ArrayAggregator(ArrayClassActor arrayClassActor, Pointer base) {
             super(arrayClassActor, base);
-            _layout = arrayClassActor.componentClassActor().kind.arrayLayout(Layout.layoutScheme());
+            layout = arrayClassActor.componentClassActor().kind.arrayLayout(Layout.layoutScheme());
         }
 
         @Override
         protected Size sizeOf(TeleVM teleVM, Pointer cell) {
             final Reference reference = teleVM.cellToReference(cell);
-            final int length = _layout.readLength(reference);
-            final Size size = _layout.getArraySize(length);
+            final int length = layout.readLength(reference);
+            final Size size = layout.getArraySize(length);
             return size;
         }
 

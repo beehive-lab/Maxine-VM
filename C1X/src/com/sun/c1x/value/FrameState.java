@@ -35,31 +35,31 @@ import com.sun.c1x.util.Util;
  */
 public class FrameState {
 
-    private final IRScope _scope;
-    private final Instruction[] _state;
-    private final char _localsSize;
-    private final char _stackSize;
+    private final IRScope scope;
+    private final Instruction[] state;
+    private final char localsSize;
+    private final char stackSize;
 
     public FrameState(ValueStack state) {
-        _scope = state.scope();
-        _localsSize = (char) state.localsSize();
-        _stackSize = (char) state.stackSize();
-        _state = new Instruction[_localsSize + _stackSize + state.locksSize()];
+        scope = state.scope();
+        localsSize = (char) state.localsSize();
+        stackSize = (char) state.stackSize();
+        this.state = new Instruction[localsSize + stackSize + state.locksSize()];
 
         int i = 0;
-        for (int j = 0; j < _localsSize; j++) {
-            _state[i++] = state.localAt(j);
+        for (int j = 0; j < localsSize; j++) {
+            this.state[i++] = state.localAt(j);
         }
-        for (int j = 0; j < _stackSize; j++) {
-            _state[i++] = state.stackAt(j);
+        for (int j = 0; j < stackSize; j++) {
+            this.state[i++] = state.stackAt(j);
         }
         for (int j = 0; j < state.locksSize(); j++) {
-            _state[i++] = state.lockAt(j);
+            this.state[i++] = state.lockAt(j);
         }
     }
 
     public IRScope scope() {
-        return _scope;
+        return scope;
     }
 
     public ValueStack asValueStack() {
@@ -68,34 +68,34 @@ public class FrameState {
     }
 
     public Instruction localAt(int i) {
-        return _state[i];
+        return state[i];
     }
 
     public Instruction stackAt(int i) {
-        return _state[i + _localsSize];
+        return state[i + localsSize];
     }
 
     public Instruction lockAt(int i) {
-        return _state[i + _localsSize + _stackSize];
+        return state[i + localsSize + stackSize];
     }
 
     public int localsSize() {
-        return _localsSize;
+        return localsSize;
     }
 
     public int stackSize() {
-        return _stackSize;
+        return stackSize;
     }
 
     public int lockSize() {
-        return _state.length - _stackSize - _localsSize;
+        return state.length - stackSize - localsSize;
     }
 
     public void valuesDo(InstructionClosure closure) {
-        for (int i = 0; i < _state.length; i++) {
-            Instruction x = _state[i];
+        for (int i = 0; i < state.length; i++) {
+            Instruction x = state[i];
             if (x != null) {
-                _state[i] = closure.apply(x);
+                state[i] = closure.apply(x);
             }
         }
     }

@@ -94,7 +94,7 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
         }
 
         if (!isWordTagged) {
-            if (!value.isZero() && !contains(value) && !Code.bootCodeRegion().contains(value)) {
+            if (!value.isZero() && !contains(value) && !Code.bootCodeRegion.contains(value)) {
                 Log.println("Non-tagged reference in boot heap refers to address neither in boot heap nor boot code region");
                 Log.print("Slot: ");
                 printSlot(heapWordIndex, address);
@@ -166,7 +166,7 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion implements Pointer
                         if (tracing) {
                             final Pointer address = start().asPointer().plus(heapWordIndex * Word.size());
                             final Address value = address.readWord(0).asAddress();
-                            if (!value.isZero() && !contains(value) && !Code.bootCodeRegion().contains(value)) {
+                            if (!value.isZero() && !contains(value) && !Code.bootCodeRegion.contains(value)) {
                                 Log.print("    Slot: ");
                                 printSlot(heapWordIndex, address);
                             }

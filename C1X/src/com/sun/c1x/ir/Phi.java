@@ -41,9 +41,9 @@ public class Phi extends Instruction {
         }
     }
 
-    private final BlockBegin _block;
-    private int _phiFlags;
-    private final int _index;
+    private final BlockBegin block;
+    private int phiFlags;
+    private final int index;
 
     /**
      * Create a new Phi for the specified join block and local variable (or operand stack) slot.
@@ -53,8 +53,8 @@ public class Phi extends Instruction {
      */
     public Phi(ValueType type, BlockBegin block, int index) {
         super(type);
-        _block = block;
-        _index = index;
+        this.block = block;
+        this.index = index;
     }
 
     /**
@@ -62,7 +62,7 @@ public class Phi extends Instruction {
      * @return the join block of this phi
      */
     public BlockBegin block() {
-        return _block;
+        return block;
     }
 
     /**
@@ -70,7 +70,7 @@ public class Phi extends Instruction {
      * @return <code>true</code> if this phi refers to a local variable
      */
     public final boolean isLocal() {
-        return _index >= 0;
+        return index >= 0;
     }
 
     /**
@@ -78,7 +78,7 @@ public class Phi extends Instruction {
      * @return <code>true</code> if this phi refers to a stack location
      */
     public final boolean isOnStack() {
-        return _index < 0;
+        return index < 0;
     }
 
     /**
@@ -87,7 +87,7 @@ public class Phi extends Instruction {
      */
     public final int localIndex() {
         assert isLocal();
-        return _index;
+        return index;
     }
 
     /**
@@ -96,7 +96,7 @@ public class Phi extends Instruction {
      */
     public final int stackIndex() {
         assert isOnStack();
-        return -(_index + 1);
+        return -(index + 1);
     }
 
     /**
@@ -107,10 +107,10 @@ public class Phi extends Instruction {
      */
     public Instruction operandAt(int i) {
         ValueStack state;
-        if (_block.isExceptionEntry()) {
-            state = _block.exceptionHandlerStates().get(i);
+        if (block.isExceptionEntry()) {
+            state = block.exceptionHandlerStates().get(i);
         } else {
-            state = _block.predecessors().get(i).end().state();
+            state = block.predecessors().get(i).end().state();
         }
         if (isLocal()) {
             return state.localAt(localIndex());
@@ -125,10 +125,10 @@ public class Phi extends Instruction {
      * @return the number of operands in this phi
      */
     public int operandCount() {
-        if (_block.isExceptionEntry()) {
-            return _block.exceptionHandlerStates().size();
+        if (block.isExceptionEntry()) {
+            return block.exceptionHandlerStates().size();
         } else {
-            return _block.predecessors().size();
+            return block.predecessors().size();
         }
     }
 
@@ -155,7 +155,7 @@ public class Phi extends Instruction {
      * @return <code>true</code> if this instruction has the flag
      */
     public boolean checkPhiFlag(PhiFlag flag) {
-        return (_phiFlags & flag.mask()) != 0;
+        return (phiFlags & flag.mask()) != 0;
     }
 
     /**
@@ -163,7 +163,7 @@ public class Phi extends Instruction {
      * @param flag the flag to set
      */
     public void setPhiFlag(PhiFlag flag) {
-        _phiFlags |= flag.mask();
+        phiFlags |= flag.mask();
     }
 
     /**
@@ -171,7 +171,7 @@ public class Phi extends Instruction {
      * @param flag the flag to set
      */
     public void clearPhiFlag(PhiFlag flag) {
-        _phiFlags &= ~flag.mask();
+        phiFlags &= ~flag.mask();
     }
 
     // XXX: why are there no input values to do with inputValuesDo?

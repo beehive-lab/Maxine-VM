@@ -56,48 +56,48 @@ public class VerificationTypeTest extends CompilerTestCase<TargetMethod> {
         super(name);
     }
 
-    private Verifier _verifier;
+    private Verifier verifier;
 
-    private ObjectType _classAType;
-    private ObjectType _classBType;
-    private ObjectType _classCType;
+    private ObjectType classAType;
+    private ObjectType classBType;
+    private ObjectType classCType;
 
-    private ObjectType _classAArrayType;
-    private ObjectType _classBArrayType;
-    private ObjectType _classCArrayType;
+    private ObjectType classAArrayType;
+    private ObjectType classBArrayType;
+    private ObjectType classCArrayType;
 
-    private ObjectType _interfaceAType;
-    private ObjectType _interfaceBType;
-    private ObjectType _interfaceCType;
+    private ObjectType interfaceAType;
+    private ObjectType interfaceBType;
+    private ObjectType interfaceCType;
 
     private ObjectType getObjectType(TypeDescriptor typeDescriptor) {
-        return _verifier.getObjectType(typeDescriptor);
+        return verifier.getObjectType(typeDescriptor);
     }
 
     @Override
     public void setUp() {
-        if (_verifier != null) {
+        if (verifier != null) {
             return;
         }
         final ClassActor classActor = ClassActor.fromJava(VerificationTypeTest.class);
         final ConstantPool constantPool = classActor.constantPool();
-        _verifier = new Verifier(constantPool);
+        verifier = new Verifier(constantPool);
 
-        _classAType = getObjectType(JavaTypeDescriptor.forJavaClass(TestClassA.class));
-        _classBType = getObjectType(JavaTypeDescriptor.forJavaClass(TestClassB.class));
-        _classCType = getObjectType(JavaTypeDescriptor.forJavaClass(TestClassC.class));
+        classAType = getObjectType(JavaTypeDescriptor.forJavaClass(TestClassA.class));
+        classBType = getObjectType(JavaTypeDescriptor.forJavaClass(TestClassB.class));
+        classCType = getObjectType(JavaTypeDescriptor.forJavaClass(TestClassC.class));
 
-        _classAArrayType = getObjectType(JavaTypeDescriptor.getArrayDescriptorForDescriptor(JavaTypeDescriptor.forJavaClass(TestClassA.class), 1));
-        _classBArrayType = getObjectType(JavaTypeDescriptor.getArrayDescriptorForDescriptor(JavaTypeDescriptor.forJavaClass(TestClassB.class), 1));
-        _classCArrayType = getObjectType(JavaTypeDescriptor.getArrayDescriptorForDescriptor(JavaTypeDescriptor.forJavaClass(TestClassC.class), 1));
+        classAArrayType = getObjectType(JavaTypeDescriptor.getArrayDescriptorForDescriptor(JavaTypeDescriptor.forJavaClass(TestClassA.class), 1));
+        classBArrayType = getObjectType(JavaTypeDescriptor.getArrayDescriptorForDescriptor(JavaTypeDescriptor.forJavaClass(TestClassB.class), 1));
+        classCArrayType = getObjectType(JavaTypeDescriptor.getArrayDescriptorForDescriptor(JavaTypeDescriptor.forJavaClass(TestClassC.class), 1));
 
-        _interfaceAType = getObjectType(JavaTypeDescriptor.forJavaClass(TestInterfaceA.class));
-        _interfaceBType = getObjectType(JavaTypeDescriptor.forJavaClass(TestInterfaceB.class));
-        _interfaceCType = getObjectType(JavaTypeDescriptor.forJavaClass(TestInterfaceC.class));
+        interfaceAType = getObjectType(JavaTypeDescriptor.forJavaClass(TestInterfaceA.class));
+        interfaceBType = getObjectType(JavaTypeDescriptor.forJavaClass(TestInterfaceB.class));
+        interfaceCType = getObjectType(JavaTypeDescriptor.forJavaClass(TestInterfaceC.class));
     }
 
     public void test_classfileTag() {
-        _verifier.constantPool().edit(new ConstantPoolEditorClient() {
+        verifier.constantPool().edit(new ConstantPoolEditorClient() {
             public void edit(ConstantPoolEditor constantPoolEditor) {
                 for (VerificationType type : ALL_PREDEFINED_TYPES) {
                     Trace.line(1, "test_classfileTag: " + type);
@@ -111,7 +111,7 @@ public class VerificationTypeTest extends CompilerTestCase<TargetMethod> {
                             fail();
                         }
                         final ClassfileStream classfileStream = new ClassfileStream(byteArrayOutputStream.toByteArray());
-                        final VerificationType readType = VerificationType.readVerificationType(classfileStream, _verifier);
+                        final VerificationType readType = VerificationType.readVerificationType(classfileStream, verifier);
                         assertTrue(readType + " != " + type, type.classfileTag() == readType.classfileTag());
                     } else {
                         try {
@@ -133,10 +133,10 @@ public class VerificationTypeTest extends CompilerTestCase<TargetMethod> {
         for (VerificationType type : ALL_PREDEFINED_TYPES) {
             final TypeDescriptor typeDescriptor = type.typeDescriptor();
             if (typeDescriptor != null) {
-                final VerificationType retrievedType = _verifier.getVerificationType(typeDescriptor);
+                final VerificationType retrievedType = verifier.getVerificationType(typeDescriptor);
                 assertTrue(type + " != " + retrievedType, type == retrievedType);
                 if (type instanceof ObjectType) {
-                    final ObjectType retrievedObjectType = _verifier.getObjectType(typeDescriptor);
+                    final ObjectType retrievedObjectType = verifier.getObjectType(typeDescriptor);
                     assertTrue(type + " != " + retrievedObjectType, type == retrievedObjectType);
                 }
             }
@@ -145,8 +145,8 @@ public class VerificationTypeTest extends CompilerTestCase<TargetMethod> {
         final int[] testAddresses = {0, 1, 10, 100, 1000, 10000, Character.MAX_VALUE - 1, Character.MAX_VALUE};
 
         for (int address : testAddresses) {
-            final UninitializedNewType uninitializedNewType = _verifier.getUninitializedNewType(address);
-            assertTrue(uninitializedNewType == _verifier.getUninitializedNewType(address));
+            final UninitializedNewType uninitializedNewType = verifier.getUninitializedNewType(address);
+            assertTrue(uninitializedNewType == verifier.getUninitializedNewType(address));
         }
     }
 
@@ -164,13 +164,13 @@ public class VerificationTypeTest extends CompilerTestCase<TargetMethod> {
 
     public void test_isAssignableFrom() {
 
-        assertIsAssignableFrom(REFERENCE, _classAType);
-        assertIsAssignableFrom(REFERENCE, _classAArrayType);
+        assertIsAssignableFrom(REFERENCE, classAType);
+        assertIsAssignableFrom(REFERENCE, classAArrayType);
 
         //TODO uninitialized
 
-        assertIsAssignableFrom(_classAType, NULL);
-        assertIsAssignableFrom(_classAArrayType, NULL);
+        assertIsAssignableFrom(classAType, NULL);
+        assertIsAssignableFrom(classAArrayType, NULL);
 
         assertTrue(JavaTypeDescriptor.BOOLEAN.equals(BOOLEAN.typeDescriptor()));
         assertTrue(JavaTypeDescriptor.BYTE.equals(BYTE.typeDescriptor()));
@@ -183,15 +183,15 @@ public class VerificationTypeTest extends CompilerTestCase<TargetMethod> {
 
 
         // For assignments, interfaces are treated like Object.
-        assertIsAssignableFrom(_interfaceAType, _classAType);
-        assertNotIsAssignableFrom(_classAType, _interfaceAType);
-        assertNotIsAssignableFrom(_classCType, _interfaceCType);
-        assertIsAssignableFrom(_interfaceCType, _classCType);
+        assertIsAssignableFrom(interfaceAType, classAType);
+        assertNotIsAssignableFrom(classAType, interfaceAType);
+        assertNotIsAssignableFrom(classCType, interfaceCType);
+        assertIsAssignableFrom(interfaceCType, classCType);
 
-        assertIsAssignableFrom(_classAType, _classBType);
-        assertNotIsAssignableFrom(_classBType, _classAType);
-        assertNotIsAssignableFrom(_classCType, _classAType);
-        assertNotIsAssignableFrom(_classAType, _classCType);
+        assertIsAssignableFrom(classAType, classBType);
+        assertNotIsAssignableFrom(classBType, classAType);
+        assertNotIsAssignableFrom(classCType, classAType);
+        assertNotIsAssignableFrom(classAType, classCType);
 
         // Arrays are subtypes of Object, Cloneable and java.io.Serializable.
         for (VerificationType type : ALL_PREDEFINED_TYPES) {
@@ -201,9 +201,9 @@ public class VerificationTypeTest extends CompilerTestCase<TargetMethod> {
                 assertIsAssignableFrom(SERIALIZABLE, type);
             }
         }
-        assertIsAssignableFrom(OBJECT, _classAArrayType);
-        assertIsAssignableFrom(CLONEABLE, _classAArrayType);
-        assertIsAssignableFrom(SERIALIZABLE, _classAArrayType);
+        assertIsAssignableFrom(OBJECT, classAArrayType);
+        assertIsAssignableFrom(CLONEABLE, classAArrayType);
+        assertIsAssignableFrom(SERIALIZABLE, classAArrayType);
 
         // The subtyping relation between arrays of primitive types is the identity relation.
         for (VerificationType type : PRIMITIVE_ARRAY_TYPES) {
@@ -216,12 +216,12 @@ public class VerificationTypeTest extends CompilerTestCase<TargetMethod> {
         }
 
         // Subtyping between arrays of reference type is covariant.
-        assertIsAssignableFrom(_classAType, _classBType);
-        assertIsAssignableFrom(_classAArrayType, _classBArrayType);
+        assertIsAssignableFrom(classAType, classBType);
+        assertIsAssignableFrom(classAArrayType, classBArrayType);
 
         // Null is assignable to any reference type
-        assertIsAssignableFrom(_classAType, NULL);
-        assertIsAssignableFrom(_classAArrayType, NULL);
+        assertIsAssignableFrom(classAType, NULL);
+        assertIsAssignableFrom(classAArrayType, NULL);
 
         // Subclassing is reflexive.
 

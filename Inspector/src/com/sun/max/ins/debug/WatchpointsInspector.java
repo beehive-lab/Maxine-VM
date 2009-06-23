@@ -43,31 +43,31 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
     private static final int TRACE_VALUE = 1;
 
     // Set to null when inspector closed.
-    private static WatchpointsInspector _watchpointsInspector;
+    private static WatchpointsInspector watchpointsInspector;
 
     /**
      * Displays the (singleton) watchpoints inspector.
      * @return  The watchpoints inspector, possibly newly created.
      */
     public static WatchpointsInspector make(Inspection inspection) {
-        if (_watchpointsInspector == null) {
-            _watchpointsInspector = new WatchpointsInspector(inspection);
+        if (watchpointsInspector == null) {
+            watchpointsInspector = new WatchpointsInspector(inspection);
         }
-        return _watchpointsInspector;
+        return watchpointsInspector;
     }
 
-    private final SaveSettingsListener _saveSettingsListener = createGeometrySettingsClient(this, "watchpointsInspector");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "watchpointsInspector");
 
     // This is a singleton viewer, so only use a single level of view preferences.
-    private final WatchpointsViewPreferences _viewPreferences;
+    private final WatchpointsViewPreferences viewPreferences;
 
-    private WatchpointsTable _table;
+    private WatchpointsTable table;
 
     private WatchpointsInspector(Inspection inspection) {
         super(inspection);
         Trace.begin(TRACE_VALUE,  tracePrefix() + " initializing");
-        _viewPreferences = WatchpointsViewPreferences.globalPreferences(inspection());
-        _viewPreferences.addListener(this);
+        viewPreferences = WatchpointsViewPreferences.globalPreferences(inspection());
+        viewPreferences.addListener(this);
         createFrame(null);
         frame().add(new WatchpointFrameMenuItems());
         Trace.end(TRACE_VALUE,  tracePrefix() + " initializing");
@@ -80,19 +80,19 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
 
     @Override
     protected void createView() {
-        _table = new WatchpointsTable(inspection(), _viewPreferences);
-        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _table);
+        table = new WatchpointsTable(inspection(), viewPreferences);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), table);
         frame().setContentPane(scrollPane);
     }
 
     @Override
     protected SaveSettingsListener saveSettingsListener() {
-        return _saveSettingsListener;
+        return saveSettingsListener;
     }
 
     @Override
     protected InspectorTable getTable() {
-        return _table;
+        return table;
     }
 
     @Override
@@ -105,7 +105,7 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<WatchpointsColumnKind>(inspection(), "Watchpoints View Options", _viewPreferences);
+                new TableColumnVisibilityPreferences.Dialog<WatchpointsColumnKind>(inspection(), "Watchpoints View Options", viewPreferences);
             }
         };
     }
@@ -140,7 +140,7 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
 
     @Override
     protected void refreshView(boolean force) {
-        _table.refresh(force);
+        table.refresh(force);
         super.refreshView(force);
     }
 
@@ -155,8 +155,8 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
 
     @Override
     public void watchpointFocusSet(MaxWatchpoint oldWatchpoint, MaxWatchpoint watchpoint) {
-        if (_table != null) {
-            _table.updateFocusSelection();
+        if (table != null) {
+            table.updateFocusSelection();
         }
     }
 
@@ -167,8 +167,8 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
     @Override
     public void inspectorClosing() {
         Trace.line(TRACE_VALUE, tracePrefix() + " closing");
-        _watchpointsInspector = null;
-        _viewPreferences.removeListener(this);
+        watchpointsInspector = null;
+        viewPreferences.removeListener(this);
         super.inspectorClosing();
     }
 

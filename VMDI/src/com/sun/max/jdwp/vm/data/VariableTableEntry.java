@@ -27,43 +27,43 @@ package com.sun.max.jdwp.vm.data;
  *
  */
 public class VariableTableEntry extends AbstractSerializableObject {
-    private long _codeIndex;
-    private int _length;
-    private String _name;
-    private int _slot;
-    private String _signature;
-    private String _genericSignature;
+    private long codeIndex;
+    private int length;
+    private String name;
+    private int slot;
+    private String signature;
+    private String genericSignature;
 
     public VariableTableEntry(long codeIndex, int length, String name, int slot, String signature, String genericSignature) {
-        _codeIndex = codeIndex;
-        _length = length;
-        _name = name;
-        _slot = slot;
-        _signature = signature;
-        _genericSignature = genericSignature;
+        this.codeIndex = codeIndex;
+        this.length = length;
+        this.name = name;
+        this.slot = slot;
+        this.signature = signature;
+        this.genericSignature = genericSignature;
     }
 
     public long getCodeIndex() {
-        return _codeIndex;
+        return codeIndex;
     }
 
     public int getLength() {
-        return _length;
+        return length;
     }
 
     public String getName() {
-        return _name;
+        return name;
     }
 
     public int getSlot() {
-        return _slot;
+        return slot;
     }
 
     public String getSignature() {
-        return _signature;
+        return signature;
     }
 
     public String getGenericSignature() {
-        return _genericSignature;
+        return genericSignature;
     }
 }

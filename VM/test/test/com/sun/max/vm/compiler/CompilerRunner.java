@@ -57,7 +57,7 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
         super(test);
     }
 
-    private static final OptionSet _options = new OptionSet() {
+    private static final OptionSet options = new OptionSet() {
         @Override
         protected void printHelpHeader(PrintStream stream) {
             stream.println("Usage: " + CompilerRunner.class.getSimpleName() + " [-options] <compilation specs>");
@@ -74,38 +74,38 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
         }
     };
 
-    private static final Option<Integer> _irTraceLevel = _options.newIntegerOption("ir-trace", 3, "The detail level for IR tracing.");
-    private static final Option<Boolean> _cirGui = _options.newBooleanOption("cir-gui", false, "Enable the CIR visualizer.");
-    private static final Option<Boolean> _useJit = _options.newBooleanOption("use-jit", false, "Compile with the JIT compiler.");
-    private static final Option<Boolean> _help = _options.newBooleanOption("help", false, "Show help message and exits.");
-    private static final Option<String> _vmArguments = _options.newStringOption("vmargs", null, "A set of one or VM arguments.");
+    private static final Option<Integer> irTraceLevel = options.newIntegerOption("ir-trace", 3, "The detail level for IR tracing.");
+    private static final Option<Boolean> cirGui = options.newBooleanOption("cir-gui", false, "Enable the CIR visualizer.");
+    private static final Option<Boolean> useJit = options.newBooleanOption("use-jit", false, "Compile with the JIT compiler.");
+    private static final Option<Boolean> help = options.newBooleanOption("help", false, "Show help message and exits.");
+    private static final Option<String> vmArguments = options.newStringOption("vmargs", null, "A set of one or VM arguments.");
 
-    private static final PrototypeGenerator _prototypeGenerator = new PrototypeGenerator(_options);
+    private static final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
 
     @Override
     protected JavaPrototype createJavaPrototype() {
-        return _prototypeGenerator.createJavaPrototype(false);
+        return prototypeGenerator.createJavaPrototype(false);
     }
 
     public static void main(String[] args) {
-        Trace.addTo(_options);
-        _options.parseArguments(args);
+        Trace.addTo(options);
+        options.parseArguments(args);
 
-        if (_help.getValue()) {
-            _options.printHelp(System.out, 80);
+        if (help.getValue()) {
+            options.printHelp(System.out, 80);
             return;
         }
 
-        if (_vmArguments.getValue() != null) {
-            VMOption.setVMArguments(_vmArguments.getValue().split("\\s+"));
+        if (vmArguments.getValue() != null) {
+            VMOption.setVMArguments(vmArguments.getValue().split("\\s+"));
         }
 
-        System.setProperty(IrObserverConfiguration.IR_TRACE_PROPERTY, _irTraceLevel.getValue() + ":");
-        if (_cirGui.getValue()) {
+        System.setProperty(IrObserverConfiguration.IR_TRACE_PROPERTY, irTraceLevel.getValue() + ":");
+        if (cirGui.getValue()) {
             System.setProperty(CirGenerator.CIR_GUI_PROPERTY, "true");
         }
 
-        final String[] arguments = _options.getArguments();
+        final String[] arguments = options.getArguments();
         final TestSuite suite = new TestSuite();
         final Classpath classpath = Classpath.fromSystem();
 
@@ -188,7 +188,7 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
                 return 1;
             }
             public void run(TestResult result) {
-                final CompilerTestCase compilerTestCase = _useJit.getValue() ? new JitCompilerTestCase(name) {} : new CompilerTestCase(name) {};
+                final CompilerTestCase compilerTestCase = useJit.getValue() ? new JitCompilerTestCase(name) {} : new CompilerTestCase(name) {};
                 if (signature != null) {
                     Trace.stream().println("Compiling " + javaClass.getName() + "." + methodName + signature);
                     compilerTestCase.compileMethod(javaClass, methodName, signature);

@@ -38,31 +38,31 @@ class ExecutionThread {
      */
     public static final int STACK_SIZE = 1000;
 
-    private ExecutionFrame _frame;
+    private ExecutionFrame frame;
     //private int _prio;
     //private ThreadType _threadType;
 
     public ExecutionThread(int prio, ThreadType threadType) {
         //_prio = prio;
         //_threadType = threadType;
-        _frame = null;
+        frame = null;
     }
 
     public ExecutionFrame pushFrame(ClassMethodActor method) {
-        _frame = new ExecutionFrame(_frame, method);
-        if (_frame.depth() > STACK_SIZE) {
+        this.frame = new ExecutionFrame(frame, method);
+        if (frame.depth() > STACK_SIZE) {
             throw new StackOverflowError();
         }
-        return _frame;
+        return frame;
     }
 
     public ExecutionFrame popFrame() {
-        _frame = _frame.callersFrame();
-        return _frame;
+        frame = frame.callersFrame();
+        return frame;
     }
 
     public ExecutionFrame frame() {
-        return _frame;
+        return frame;
     }
 
     public static enum ThreadType {
@@ -80,10 +80,10 @@ class ExecutionThread {
      * @return {@code true} if an exception handler was found, {@code false} otherwise
      */
     public boolean handleException(ClassActor throwableClassActor) {
-        ExecutionFrame frame = _frame;
+        ExecutionFrame frame = this.frame;
         while (frame != null) {
             if (frame.handleException(throwableClassActor)) {
-                _frame = frame;
+                this.frame = frame;
                 return true;
             }
 
@@ -93,7 +93,7 @@ class ExecutionThread {
     }
 
     public void printStackTrace(PrintStream printStream, TeleInterpreterException executionException) {
-        ExecutionFrame frame = _frame;
+        ExecutionFrame frame = this.frame;
         printStream.println(executionException.getMessage());
         while (frame != null) {
             printStream.println("\tat " + frame.method().toStackTraceElement(frame.currentOpcodePosition()));
@@ -108,7 +108,7 @@ class ExecutionThread {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder(getClass().getSimpleName());
-        ExecutionFrame frame = _frame;
+        ExecutionFrame frame = this.frame;
         while (frame != null) {
             sb.append(String.format("%n%s [bci:%d]", frame.method().toStackTraceElement(frame.currentOpcodePosition())));
             frame = frame.callersFrame();

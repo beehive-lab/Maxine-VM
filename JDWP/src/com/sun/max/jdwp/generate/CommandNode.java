@@ -31,10 +31,10 @@ class CommandNode extends AbstractNamedNode {
 
     @Override
     void constrain(Context ctx) {
-        if (_components.size() == 3) {
-            final Node out = _components.get(0);
-            final Node reply = _components.get(1);
-            final Node error = _components.get(2);
+        if (components.size() == 3) {
+            final Node out = components.get(0);
+            final Node reply = components.get(1);
+            final Node error = components.get(2);
             if (!(out instanceof OutNode)) {
                 error("Expected 'Out' item, got: " + out);
             }
@@ -44,8 +44,8 @@ class CommandNode extends AbstractNamedNode {
             if (!(error instanceof ErrorSetNode)) {
                 error("Expected 'ErrorSet' item, got: " + error);
             }
-        } else if (_components.size() == 1) {
-            final Node evt = _components.get(0);
+        } else if (components.size() == 1) {
+            final Node evt = components.get(0);
             if (!(evt instanceof EventNode)) {
                 error("Expected 'Event' item, got: " + evt);
             }
@@ -79,7 +79,7 @@ class CommandNode extends AbstractNamedNode {
         indent(writer, depth);
         writer.println("}");
 
-        if (_components.size() == 1) {
+        if (components.size() == 1) {
             indent(writer, depth);
             writer.println("public static class IncomingRequest implements IncomingData {");
             indent(writer, depth + 1);

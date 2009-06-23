@@ -59,7 +59,7 @@ abstract class AbstractGroupNode extends AbstractTypeListNode {
 
     @Override
     void genJavaClassSpecifics(PrintWriter writer, int depth) {
-        switch (_context._state) {
+        switch (context.state) {
             case Context.READING_REPLY:
                 genJavaReadingClassBody(writer, depth, name());
                 break;

@@ -147,7 +147,7 @@ public final class ObjectPane extends InspectorScrollPane {
         return new ObjectPane(objectInspector.inspection(), new MemoryWordsTable(objectInspector, teleObject));
     }
 
-    private final InspectorTable _inspectorTable;
+    private final InspectorTable inspectorTable;
 
     /**
      * Creates a scrollable pane containing the {@link InspectorTable}, with preferred height set to match the size
@@ -155,7 +155,7 @@ public final class ObjectPane extends InspectorScrollPane {
      */
     private ObjectPane(Inspection inspection, InspectorTable inspectorTable) {
         super(inspection, inspectorTable);
-        _inspectorTable = inspectorTable;
+        this.inspectorTable = inspectorTable;
         // Try to size the scroll pane vertically for just enough space, up to a specified maximum;
         // this is empirical, based only the fuzziest notion of how these dimensions work
         final int displayRows = Math.min(style().memoryTableMaxDisplayRows(), inspectorTable.getRowCount()) + 1;
@@ -167,12 +167,12 @@ public final class ObjectPane extends InspectorScrollPane {
 
     @Override
     public void redisplay() {
-        _inspectorTable.redisplay();
+        inspectorTable.redisplay();
     }
 
     @Override
     public void refresh(boolean force) {
-        _inspectorTable.refresh(force);
+        inspectorTable.refresh(force);
     }
 
 }

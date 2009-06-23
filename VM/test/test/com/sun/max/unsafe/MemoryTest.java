@@ -36,14 +36,14 @@ public class MemoryTest extends WordTestCase {
     }
 
     public void test_allocate() {
-        Pointer pointer = Memory.allocate(_sizeLow);
-        assertTrue(pointer.compareTo(_address0) > 0);
+        Pointer pointer = Memory.allocate(sizeLow);
+        assertTrue(pointer.compareTo(address0) > 0);
         switch (wordWidth()) {
             case BITS_64:
-                assertTrue(pointer.toLong() <= Long.MAX_VALUE - _low);
+                assertTrue(pointer.toLong() <= Long.MAX_VALUE - low);
                 break;
             case BITS_32:
-                assertTrue(pointer.toLong() <= Integer.MAX_VALUE - _low);
+                assertTrue(pointer.toLong() <= Integer.MAX_VALUE - low);
                 break;
             default:
                 ProgramError.unknownCase();
@@ -51,16 +51,16 @@ public class MemoryTest extends WordTestCase {
         }
         Memory.deallocate(pointer);
 
-        pointer = Memory.mustAllocate(_size0);
-        assertTrue(pointer.compareTo(_address0) > 0);
+        pointer = Memory.mustAllocate(size0);
+        assertTrue(pointer.compareTo(address0) > 0);
         Memory.deallocate(pointer);
 
-        pointer = Memory.mustAllocate(_size1);
-        assertTrue(pointer.compareTo(_address0) > 0);
+        pointer = Memory.mustAllocate(size1);
+        assertTrue(pointer.compareTo(address0) > 0);
         Memory.deallocate(pointer);
 
         try {
-            pointer = Memory.mustAllocate(_sizeMax);
+            pointer = Memory.mustAllocate(sizeMax);
         } catch (OutOfMemoryError outOfMemoryError) {
         }
     }
@@ -86,7 +86,7 @@ public class MemoryTest extends WordTestCase {
             Memory.deallocate(pointer);
         }
         check_badDeallocate(Pointer.fromInt(12345));
-        check_badDeallocate(_addressMax.asPointer());
+        check_badDeallocate(addressMax.asPointer());
         for (int j = 0; j < n; j++) {
             check_badDeallocate(pointers[j].plus(100));
             Memory.deallocate(pointers[j]);

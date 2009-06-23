@@ -26,9 +26,9 @@ package test.bytecode;
  */
 public class BC_daload {
 
-    static double[] _array = {0.0, -1.1, 4.32, 6.06};
+    static double[] array = {0.0, -1.1, 4.32, 6.06};
 
     public static double test(int arg) {
-        return _array[arg];
+        return array[arg];
     }
 }

@@ -36,19 +36,19 @@ public abstract class AddressInputDialog extends InspectorDialog {
 
     public abstract void entered(Address address);
 
-    private final String _actionName;
+    private final String actionName;
 
-    private final AddressInputField.Hex _addressInputField;
+    private final AddressInputField.Hex addressInputField;
 
     private final class EnterAction extends InspectorAction {
         private EnterAction() {
-            super(inspection(), _actionName);
+            super(inspection(), actionName);
         }
 
         @Override
         protected void procedure() {
             try {
-                _addressInputField.attemptUpdate();
+                addressInputField.attemptUpdate();
             } catch (NumberFormatException numberFormatException) {
                 gui().errorMessage("Badly formed address: " + numberFormatException.getMessage());
             }
@@ -70,14 +70,14 @@ public abstract class AddressInputDialog extends InspectorDialog {
     public AddressInputDialog(Inspection inspection, Address initialAddress, String title, String actionName) {
         super(inspection, title, true);
         if (actionName == null) {
-            _actionName = "OK";
+            this.actionName = "OK";
         } else {
-            _actionName = actionName;
+            this.actionName = actionName;
         }
 
         final JPanel dialogPanel = new InspectorPanel(inspection, new SpringLayout());
         dialogPanel.add(new TextLabel(inspection(), "Address:"));
-        _addressInputField = new AddressInputField.Hex(inspection, initialAddress) {
+        addressInputField = new AddressInputField.Hex(inspection, initialAddress) {
             @Override
             public void update(Address address) {
                 if (isValidInput(address)) {
@@ -86,7 +86,7 @@ public abstract class AddressInputDialog extends InspectorDialog {
                 }
             }
         };
-        dialogPanel.add(_addressInputField);
+        dialogPanel.add(addressInputField);
 
         dialogPanel.add(new JButton(new AbstractAction("Cancel") {
             public void actionPerformed(ActionEvent event) {

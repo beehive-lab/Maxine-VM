@@ -30,9 +30,9 @@ public final class Class_cast02 {
     private Class_cast02() {
     }
 
-    static final String _string = "";
-    static final Object _object = new Object();
-    static final Class_cast02 _thisObject = new Class_cast02();
+    static final String string = "";
+    static final Object object = new Object();
+    static final Class_cast02 thisObject = new Class_cast02();
 
     public static int test(int i) {
         if (i == 0) {

@@ -32,10 +32,10 @@ import com.sun.c1x.value.ValueType;
  */
 public class IfInstanceOf extends BlockEnd {
 
-    final CiType _targetClass;
-    Instruction _object;
-    boolean _testIsInstance;
-    final int _instanceofBCI;
+    final CiType targetClass;
+    Instruction object;
+    boolean testIsInstance;
+    final int instanceofBCI;
 
     /**
      * Constructs a new IfInstanceOf instruction.
@@ -48,12 +48,12 @@ public class IfInstanceOf extends BlockEnd {
      */
     public IfInstanceOf(CiType targetClass, Instruction object, boolean testIsInstance, int instanceofBCI, BlockBegin trueSucc, BlockBegin falseSucc) {
         super(ValueType.ILLEGAL_TYPE, null, false); // XXX: why don't we need the state before??
-        _targetClass = targetClass;
-        _object = object;
-        _testIsInstance = testIsInstance;
-        _instanceofBCI = instanceofBCI;
-        _successors.add(trueSucc);
-        _successors.add(falseSucc);
+        this.targetClass = targetClass;
+        this.object = object;
+        this.testIsInstance = testIsInstance;
+        this.instanceofBCI = instanceofBCI;
+        successors.add(trueSucc);
+        successors.add(falseSucc);
     }
 
     /**
@@ -61,7 +61,7 @@ public class IfInstanceOf extends BlockEnd {
      * @return the target class
      */
     public CiType targetClass() {
-        return _targetClass;
+        return targetClass;
     }
 
     /**
@@ -69,7 +69,7 @@ public class IfInstanceOf extends BlockEnd {
      * @return the instruction producing the object
      */
     public Instruction object() {
-        return _object;
+        return object;
     }
 
     /**
@@ -77,7 +77,7 @@ public class IfInstanceOf extends BlockEnd {
      * @return the bytecode index
      */
     public int instanceofBCI() {
-        return _instanceofBCI;
+        return instanceofBCI;
     }
 
     /**
@@ -85,7 +85,7 @@ public class IfInstanceOf extends BlockEnd {
      * @return <code>true</code> if a successful instanceof implies going to the true successor
      */
     public boolean testIsInstance() {
-        return _testIsInstance;
+        return testIsInstance;
     }
 
     /**
@@ -93,7 +93,7 @@ public class IfInstanceOf extends BlockEnd {
      * @return the true successor
      */
     public BlockBegin trueSuccessor() {
-        return _successors.get(0);
+        return successors.get(0);
     }
 
     /**
@@ -101,7 +101,7 @@ public class IfInstanceOf extends BlockEnd {
      * @return the false successor
      */
     public BlockBegin falseSuccessor() {
-        return _successors.get(1);
+        return successors.get(1);
     }
 
     /**
@@ -110,7 +110,7 @@ public class IfInstanceOf extends BlockEnd {
      * @return the corresponding successor
      */
     public BlockBegin successor(boolean istrue) {
-        return _successors.get(istrue ? 0 : 1);
+        return successors.get(istrue ? 0 : 1);
     }
 
     /**
@@ -118,11 +118,11 @@ public class IfInstanceOf extends BlockEnd {
      * @see Condition#negate()
      */
     public void swapSuccessors() {
-        BlockBegin t = _successors.get(0);
-        BlockBegin f = _successors.get(1);
-        _successors.set(0, f);
-        _successors.set(1, t);
-        _testIsInstance = !_testIsInstance;
+        BlockBegin t = successors.get(0);
+        BlockBegin f = successors.get(1);
+        successors.set(0, f);
+        successors.set(1, t);
+        testIsInstance = !testIsInstance;
     }
 
     /**
@@ -131,7 +131,7 @@ public class IfInstanceOf extends BlockEnd {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        _object = closure.apply(_object);
+        object = closure.apply(object);
     }
 
     /**

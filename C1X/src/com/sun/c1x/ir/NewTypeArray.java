@@ -30,15 +30,15 @@ import com.sun.c1x.value.BasicType;
  */
 public class NewTypeArray extends NewArray {
 
-    final BasicType _elementType;
+    final BasicType elementType;
 
     public NewTypeArray(Instruction length, BasicType elementType) {
         super(length, null);
-        _elementType = elementType;
+        this.elementType = elementType;
     }
 
     public BasicType elementType() {
-        return _elementType;
+        return elementType;
     }
 
     /**

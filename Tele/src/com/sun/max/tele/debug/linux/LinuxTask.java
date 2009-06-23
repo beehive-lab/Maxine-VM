@@ -43,34 +43,34 @@ public final class LinuxTask {
      * The thread group identifier (TGID) of this task. This is the process identifier shared by all tasks in a
      * process and is the value returned by getpid(2) since Linux 2.4.
      */
-    private final int _tgid;
+    private final int tgid;
 
     /**
      * The (system-wide) unique task identifier (TID) of this task. The first task in a thread group is
-     * the <i>leader</i> of the new thread group and its {@link #_tgid TGID} is the same as its {@link #_tid TID}.
+     * the <i>leader</i> of the new thread group and its {@link #tgid TGID} is the same as its {@link #tid TID}.
      *
      * Note that this is <b>not<b> the identifier returned by pthread_create(3p).
      */
-    private final int _tid;
+    private final int tid;
 
     /**
      * Gets the thread group identifier (TGID) of this task. This is the process identifier shared by all
      * tasks in a process and is the value returned by getpid(2) since Linux 2.4.
      */
     public int tgid() {
-        return _tgid;
+        return tgid;
     }
 
-    private final LinuxTask _leader;
+    private final LinuxTask leader;
 
     /**
      * Gets the (system-wide) unique task identifier (TID) of this task. The first task in a thread group is
-     * the <i>leader</i> of the new thread group and its {@link #_tgid TGID} is the same as its {@link #_tid TID}.
+     * the <i>leader</i> of the new thread group and its {@link #tgid TGID} is the same as its {@link #tid TID}.
      *
      * Note that this is <b>not<b> the identifier returned by pthread_create(3p).
      */
     public int tid() {
-        return _tid;
+        return tid;
     }
 
     /**
@@ -79,14 +79,14 @@ public final class LinuxTask {
      * @return
      */
     public LinuxTask leader() {
-        return _leader;
+        return leader;
     }
 
     /**
      * Determines if this task is the {@linkplain #leader() leader} in its thread group.
      */
     public boolean isLeader() {
-        return _leader == this;
+        return leader == this;
     }
 
     /**
@@ -97,9 +97,9 @@ public final class LinuxTask {
      */
     LinuxTask(int tgid, int tid) {
         assert tgid == tid : "TGID must match TID for leader task";
-        _tgid = tgid;
-        _tid = tid;
-        _leader = this;
+        this.tgid = tgid;
+        this.tid = tid;
+        this.leader = this;
     }
 
     /**
@@ -109,9 +109,9 @@ public final class LinuxTask {
      * @param tid
      */
     LinuxTask(LinuxTask leader, int tid) {
-        _tgid = leader._tgid;
-        _tid = tid;
-        _leader = leader;
+        this.tgid = leader.tgid;
+        this.tid = tid;
+        this.leader = leader;
     }
 
     @Override
@@ -156,7 +156,7 @@ public final class LinuxTask {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws Exception {
-                    if (!nativeDetach(_tgid, _tid)) {
+                    if (!nativeDetach(tgid, tid)) {
                         throw new IOException("Ptrace.detach");
                     }
                     return null;
@@ -172,7 +172,7 @@ public final class LinuxTask {
     public synchronized boolean singleStep() {
         return SingleThread.execute(new Function<Boolean>() {
             public Boolean call() throws Exception {
-                return nativeSingleStep(_tgid, _tid);
+                return nativeSingleStep(tgid, tid);
             }
         });
     }
@@ -183,7 +183,7 @@ public final class LinuxTask {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws Exception {
-                    if (!nativeResume(_tgid, _tid, allTasks)) {
+                    if (!nativeResume(tgid, tid, allTasks)) {
                         throw new OSExecutionRequestException("Ptrace.resume");
                     }
                     return null;
@@ -206,7 +206,7 @@ public final class LinuxTask {
      * @throws OSExecutionRequestException
      */
     public void suspend(boolean allTasks) throws OSExecutionRequestException {
-        if (!nativeSuspend(_tgid, _tid, allTasks)) {
+        if (!nativeSuspend(tgid, tid, allTasks)) {
             throw new OSExecutionRequestException("Ptrace.suspend");
         }
     }
@@ -219,7 +219,7 @@ public final class LinuxTask {
         }
         return SingleThread.execute(new Function<Boolean>() {
             public Boolean call() throws Exception {
-                return nativeWait(_tgid, _tid, allTasks);
+                return nativeWait(tgid, tid, allTasks);
             }
         });
     }
@@ -238,7 +238,7 @@ public final class LinuxTask {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws Exception {
-                    if (!nativeKill(_tgid, _tid)) {
+                    if (!nativeKill(tgid, tid)) {
                         throw new OSExecutionRequestException("Ptrace.kill");
                     }
                     return null;
@@ -254,7 +254,7 @@ public final class LinuxTask {
      * support writing to the memory of a process via /proc, it's still necessary to use
      * ptrace for {@linkplain #writeBytes(Address, ByteBuffer, int, int) writing}.
      */
-    private RandomAccessFile _memory;
+    private RandomAccessFile memory;
 
     /**
      * Copies bytes from the tele process into a given {@linkplain ByteBuffer#isDirect() direct ByteBuffer} or byte
@@ -281,18 +281,18 @@ public final class LinuxTask {
                 if (addr < 0) {
                     // RandomAccessFile.see() can't handle unsigned long offsets: have to resort to a JNI call
                     if (dst.isDirect()) {
-                        return nativeReadBytes(_tgid, _tid, addr, dst, true, offset, length);
+                        return nativeReadBytes(tgid, tid, addr, dst, true, offset, length);
                     }
                     assert dst.array() != null;
-                    return nativeReadBytes(_tgid, _tid, addr, dst.array(), false, offset, length);
+                    return nativeReadBytes(tgid, tid, addr, dst.array(), false, offset, length);
                 } else {
-                    if (_memory == null) {
-                        _memory = new RandomAccessFile("/proc/" + tgid() + "/mem", "r");
+                    if (memory == null) {
+                        memory = new RandomAccessFile("/proc/" + tgid() + "/mem", "r");
                     }
                     try {
                         final ByteBuffer dstView = (ByteBuffer) dst.duplicate().position(offset).limit(offset + length);
                         dstView.position(offset);
-                        return _memory.getChannel().read(dstView, addr);
+                        return memory.getChannel().read(dstView, addr);
                     } catch (IOException ioException) {
                         throw new DataIOError(src, ioException.toString());
                     }
@@ -319,10 +319,10 @@ public final class LinuxTask {
             public Integer call() throws Exception {
                 assert src.limit() - offset >= length;
                 if (src.isDirect()) {
-                    return nativeWriteBytes(_tgid, _tid, dst.toLong(), src, true, offset, length);
+                    return nativeWriteBytes(tgid, tid, dst.toLong(), src, true, offset, length);
                 }
                 assert src.array() != null;
-                return nativeWriteBytes(_tgid, _tid, dst.toLong(), src.array(), false, src.arrayOffset() + offset, length);
+                return nativeWriteBytes(tgid, tid, dst.toLong(), src.array(), false, src.arrayOffset() + offset, length);
             }
         });
     }
@@ -332,7 +332,7 @@ public final class LinuxTask {
     public synchronized boolean setInstructionPointer(final Address instructionPointer) {
         return SingleThread.execute(new Function<Boolean>() {
             public Boolean call() throws Exception {
-                return nativeSetInstructionPointer(_tid, instructionPointer.toLong());
+                return nativeSetInstructionPointer(tid, instructionPointer.toLong());
             }
         });
     }
@@ -348,7 +348,7 @@ public final class LinuxTask {
                     final byte[] stateRegisters) {
         return SingleThread.execute(new Function<Boolean>() {
             public Boolean call() throws Exception {
-                return nativeReadRegisters(_tid, integerRegisters, integerRegisters.length,
+                return nativeReadRegisters(tid, integerRegisters, integerRegisters.length,
                                 floatingPointRegisters, floatingPointRegisters.length,
                                 stateRegisters, stateRegisters.length);
             }
@@ -356,9 +356,9 @@ public final class LinuxTask {
     }
 
     public void close() {
-        if (_memory != null) {
+        if (memory != null) {
             try {
-                _memory.close();
+                memory.close();
             } catch (IOException ioException) {
                 ioException.printStackTrace();
             }

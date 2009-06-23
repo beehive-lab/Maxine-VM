@@ -27,7 +27,7 @@ import java.io.*;
  */
 public class SimpleIDTypeNode extends SimpleTypeNode {
 
-    private String _typeName;
+    private String typeName;
 
     private static String getDocType(String name) {
         assert name.length() > 0;
@@ -44,7 +44,7 @@ public class SimpleIDTypeNode extends SimpleTypeNode {
 
     public SimpleIDTypeNode(String name) {
         super(getDocType(name), getJavaType(name), getJavaRead(name));
-        _typeName = name;
+        typeName = name;
     }
 
     @Override
@@ -61,6 +61,6 @@ public class SimpleIDTypeNode extends SimpleTypeNode {
 
     @Override
     public Node copy() {
-        return new SimpleIDTypeNode(_typeName);
+        return new SimpleIDTypeNode(typeName);
     }
 }

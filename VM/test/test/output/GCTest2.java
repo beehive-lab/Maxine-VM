@@ -66,14 +66,14 @@ package test.output;
 // check for proper locking
 
 class Node {
-    Node _left;
-    Node _right;
-    int _i;
-    int _j;
+    Node left;
+    Node right;
+    int i;
+    int j;
 
     Node(Node l, Node r) {
-        _left = l;
-        _right = r;
+        this.left = l;
+        this.right = r;
     }
 
     Node() {
@@ -106,10 +106,10 @@ public class GCTest2 {
         }
 
         depth--;
-        thisNode._left = new Node();
-        thisNode._right = new Node();
-        populate(depth, thisNode._left);
-        populate(depth, thisNode._right);
+        thisNode.left = new Node();
+        thisNode.right = new Node();
+        populate(depth, thisNode.left);
+        populate(depth, thisNode.right);
     }
 
 // Build tree bottom-up
@@ -143,7 +143,7 @@ public class GCTest2 {
             tempTree = null;
         }
         tFinish = System.currentTimeMillis();
-        if (_omitTimes) {
+        if (omitTimes) {
             System.out.println("\tTop down construction completed");
         } else {
             System.out.println("\tTop down construction took " + (tFinish - tStart) + "msecs");
@@ -154,7 +154,7 @@ public class GCTest2 {
             tempTree = null;
         }
         tFinish = System.currentTimeMillis();
-        if (_omitTimes) {
+        if (omitTimes) {
             System.out.println("\tBottom up construction completed");
         } else {
             System.out.println("\tBottom up construction took " + (tFinish - tStart) + "msecs");
@@ -165,10 +165,10 @@ public class GCTest2 {
         main(new String[] {});
     }
 
-    private static boolean _omitTimes = true;
+    private static boolean omitTimes = true;
     public static void main(String[] args) {
         if (args.length > 0) {
-            _omitTimes = false;
+            omitTimes = false;
         }
         // Node root;
         Node longLivedTree;

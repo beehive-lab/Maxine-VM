@@ -90,7 +90,7 @@ public final class ClassActorSearchDialog extends TeleObjectSearchDialog {
                 }
             }
             for (String className : classNames) {
-                _listModel.addElement(className);
+                listModel.addElement(className);
             }
         }
     }

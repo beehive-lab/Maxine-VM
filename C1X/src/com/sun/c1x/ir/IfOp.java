@@ -34,9 +34,9 @@ import com.sun.c1x.bytecode.Bytecodes;
  */
 public class IfOp extends Op2 {
 
-    Condition _cond;
-    Instruction _trueVal;
-    Instruction _falseVal;
+    Condition cond;
+    Instruction trueVal;
+    Instruction falseVal;
 
     /**
      * Constructs a new IfOp.
@@ -48,9 +48,9 @@ public class IfOp extends Op2 {
      */
     public IfOp(Instruction x, Condition cond, Instruction y, Instruction tval, Instruction fval) {
         super(tval.type().meet(fval.type()), Bytecodes.ILLEGAL, x, y); // TODO: return the bytecode IF_ICMPEQ, etc
-        _cond = cond;
-        _trueVal = tval;
-        _falseVal = fval;
+        this.cond = cond;
+        this.trueVal = tval;
+        falseVal = fval;
     }
 
     /**
@@ -58,7 +58,7 @@ public class IfOp extends Op2 {
      * @return the condition
      */
     public Condition condition() {
-        return _cond;
+        return cond;
     }
 
     /**
@@ -66,7 +66,7 @@ public class IfOp extends Op2 {
      * @return the instruction producing the value upon true
      */
     public Instruction trueValue() {
-        return _trueVal;
+        return trueVal;
     }
 
     /**
@@ -74,7 +74,7 @@ public class IfOp extends Op2 {
      * @return the instruction producing the value upon false
      */
     public Instruction falseValue() {
-        return _falseVal;
+        return falseVal;
     }
 
     /**
@@ -82,7 +82,7 @@ public class IfOp extends Op2 {
      * @return <code>true</code> if this comparison is commutative
      */
     public boolean isCommutative() {
-        return _cond == Condition.eql || _cond == Condition.neq;
+        return cond == Condition.eql || cond == Condition.neq;
     }
 
     /**
@@ -92,8 +92,8 @@ public class IfOp extends Op2 {
     @Override
     public void inputValuesDo(InstructionClosure closure) {
         super.inputValuesDo(closure);
-        _trueVal = closure.apply(_trueVal);
-        _trueVal = closure.apply(_falseVal);
+        trueVal = closure.apply(trueVal);
+        trueVal = closure.apply(falseVal);
     }
 
     /**
@@ -107,14 +107,14 @@ public class IfOp extends Op2 {
 
     @Override
     public int valueNumber() {
-        return Util.hash4(_cond.hashCode(), _x, _y, _trueVal, _falseVal);
+        return Util.hash4(cond.hashCode(), x, y, trueVal, falseVal);
     }
 
     @Override
     public boolean valueEqual(Instruction i) {
         if (i instanceof IfOp) {
             IfOp o = (IfOp) i;
-            return _opcode == o._opcode && _x == o._x && _y == o._y && _trueVal == o._trueVal && _falseVal == o._falseVal;
+            return opcode == o.opcode && x == o.x && y == o.y && trueVal == o.trueVal && falseVal == o.falseVal;
         }
         return false;
     }

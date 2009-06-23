@@ -34,8 +34,8 @@ import com.sun.max.vm.grip.*;
  */
 public abstract class TeleGripScheme extends AbstractVMScheme implements GripScheme, TeleVMHolder {
 
-    private TeleVM _teleVM;
-    private TeleRoots _teleRoots;
+    private TeleVM teleVM;
+    private TeleRoots teleRoots;
 
 
     protected TeleGripScheme(VMConfiguration vmConfiguration) {
@@ -43,21 +43,21 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
     }
 
     public void setTeleVM(TeleVM teleVM) {
-        _teleVM = teleVM;
-        _teleRoots = new TeleRoots(this);
+        this.teleVM = teleVM;
+        this.teleRoots = new TeleRoots(this);
     }
 
     public TeleVM teleVM() {
-        return _teleVM;
+        return teleVM;
     }
 
-    private VariableMapping<Long, WeakReference<RemoteTeleGrip>> _rawGripToRemoteTeleGrip = HashMapping.createVariableEqualityMapping();
+    private VariableMapping<Long, WeakReference<RemoteTeleGrip>> rawGripToRemoteTeleGrip = HashMapping.createVariableEqualityMapping();
 
     /**
      * Called by MutableTeleGrip.finalize() and CanonicalConstantTeleGrip.finalize().
      */
     synchronized void finalizeCanonicalConstantTeleGrip(CanonicalConstantTeleGrip canonicalConstantTeleGrip) {
-        _rawGripToRemoteTeleGrip.remove(canonicalConstantTeleGrip.raw().toLong());
+        rawGripToRemoteTeleGrip.remove(canonicalConstantTeleGrip.raw().toLong());
     }
 
     /**
@@ -65,13 +65,13 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
      */
     private void refreshTeleGripCanonicalization() {
         final VariableMapping<Long, WeakReference<RemoteTeleGrip>> newMapping = HashMapping.createVariableEqualityMapping();
-        for (WeakReference<RemoteTeleGrip> r : _rawGripToRemoteTeleGrip.values()) {
+        for (WeakReference<RemoteTeleGrip> r : rawGripToRemoteTeleGrip.values()) {
             final RemoteTeleGrip remoteTeleGrip = r.get();
             if (remoteTeleGrip != null) {
                 newMapping.put(remoteTeleGrip.raw().toLong(), r);
             }
         }
-        _rawGripToRemoteTeleGrip = newMapping;
+        rawGripToRemoteTeleGrip = newMapping;
     }
 
     /**
@@ -79,7 +79,7 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
      */
     public void refresh() {
         // Update Inspector's local cache of the remote Inspector root table.
-        _teleRoots.refresh();
+        teleRoots.refresh();
         // Rebuild the canonicalization map.
         refreshTeleGripCanonicalization();
     }
@@ -91,7 +91,7 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
         if (rawGrip.isZero()) {
             return TeleGrip.ZERO;
         }
-        final WeakReference<RemoteTeleGrip> r = _rawGripToRemoteTeleGrip.get(rawGrip.toLong());
+        final WeakReference<RemoteTeleGrip> r = rawGripToRemoteTeleGrip.get(rawGrip.toLong());
         RemoteTeleGrip remoteTeleGrip;
         if (r != null) {
             remoteTeleGrip = r.get();
@@ -100,35 +100,35 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
             }
         }
         remoteTeleGrip = createTemporaryRemoteTeleGrip(rawGrip);
-        if (_teleVM.isValidOrigin(remoteTeleGrip.toOrigin())) {
+        if (teleVM.isValidOrigin(remoteTeleGrip.toOrigin())) {
             if (teleVM().containsInDynamicHeap(remoteTeleGrip.toOrigin())) {
-                final int index = _teleRoots.register(rawGrip);
+                final int index = teleRoots.register(rawGrip);
                 remoteTeleGrip = new MutableTeleGrip(this, index);
             } else {
                 remoteTeleGrip = new CanonicalConstantTeleGrip(this, rawGrip);
             }
         }
 
-        _rawGripToRemoteTeleGrip.put(rawGrip.toLong(), new WeakReference<RemoteTeleGrip>(remoteTeleGrip));
+        rawGripToRemoteTeleGrip.put(rawGrip.toLong(), new WeakReference<RemoteTeleGrip>(remoteTeleGrip));
         return remoteTeleGrip;
     }
 
     synchronized Address getRawGrip(MutableTeleGrip mutableTeleGrip) {
-        return _teleRoots.getRawGrip(mutableTeleGrip.index());
+        return teleRoots.getRawGrip(mutableTeleGrip.index());
     }
 
     synchronized void finalizeMutableTeleGrip(int index) {
-        _rawGripToRemoteTeleGrip.remove(_teleRoots.getRawGrip(index).toLong());
-        _teleRoots.unregister(index);
+        rawGripToRemoteTeleGrip.remove(teleRoots.getRawGrip(index).toLong());
+        teleRoots.unregister(index);
     }
 
-    private final VariableMapping<Object, WeakReference<LocalTeleGrip>> _objectToLocalTeleGrip = HashMapping.createVariableIdentityMapping();
+    private final VariableMapping<Object, WeakReference<LocalTeleGrip>> objectToLocalTeleGrip = HashMapping.createVariableIdentityMapping();
 
     /**
      * Called by LocalTeleGrip.finalize().
      */
     synchronized void disposeCanonicalLocalGrip(Object object) {
-        _objectToLocalTeleGrip.remove(object);
+        objectToLocalTeleGrip.remove(object);
     }
 
     /**
@@ -138,12 +138,12 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
         if (object == null) {
             return TeleGrip.ZERO;
         }
-        final WeakReference<LocalTeleGrip> r = _objectToLocalTeleGrip.get(object);
+        final WeakReference<LocalTeleGrip> r = objectToLocalTeleGrip.get(object);
         if (r != null) {
             return r.get();
         }
         final LocalTeleGrip localTeleGrip = new LocalTeleGrip(this, object);
-        _objectToLocalTeleGrip.put(object, new WeakReference<LocalTeleGrip>(localTeleGrip));
+        objectToLocalTeleGrip.put(object, new WeakReference<LocalTeleGrip>(localTeleGrip));
         return localTeleGrip;
     }
 

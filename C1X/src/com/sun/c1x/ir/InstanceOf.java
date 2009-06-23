@@ -55,14 +55,14 @@ public class InstanceOf extends TypeCheck {
 
     @Override
     public int valueNumber() {
-        return Util.hash1(Bytecodes.INSTANCEOF, _object);
+        return Util.hash1(Bytecodes.INSTANCEOF, object);
     }
 
     @Override
     public boolean valueEqual(Instruction i) {
         if (i instanceof InstanceOf) {
             InstanceOf o = (InstanceOf) i;
-            return _targetClass == o._targetClass && _object == o._object;
+            return targetClass == o.targetClass && object == o.object;
         }
         return false;
     }

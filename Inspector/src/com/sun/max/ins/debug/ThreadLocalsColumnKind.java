@@ -46,16 +46,16 @@ public enum ThreadLocalsColumnKind {
     VALUE("Value", "Fieldvalue", true, -1),
     REGION("Region", "Memory region pointed to by value", false, -1);
 
-    private final String _label;
-    private final String _toolTipText;
-    private final boolean _defaultVisibility;
-    private final int _minWidth;
+    private final String label;
+    private final String toolTipText;
+    private final boolean defaultVisibility;
+    private final int minWidth;
 
     private ThreadLocalsColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
-        _label = label;
-        _toolTipText = toolTipText;
-        _defaultVisibility = defaultVisibility;
-        _minWidth = minWidth;
+        this.label = label;
+        this.toolTipText = toolTipText;
+        this.defaultVisibility = defaultVisibility;
+        this.minWidth = minWidth;
         assert defaultVisibility || canBeMadeInvisible();
     }
 
@@ -63,26 +63,26 @@ public enum ThreadLocalsColumnKind {
      * @return text to appear in the column header
      */
     public String label() {
-        return _label;
+        return label;
     }
 
     /**
      * @return text to appear in the column header's toolTip, null if none specified.
      */
     public String toolTipText() {
-        return _toolTipText;
+        return toolTipText;
     }
 
     /**
      * @return minimum width allowed for this column when resized by user; -1 if none specified.
      */
     public int minWidth() {
-        return _minWidth;
+        return minWidth;
     }
 
     @Override
     public String toString() {
-        return _label;
+        return label;
     }
 
     /**
@@ -96,7 +96,7 @@ public enum ThreadLocalsColumnKind {
      * Determines if this column should be visible by default; default true.
      */
     public boolean defaultVisibility() {
-        return _defaultVisibility;
+        return defaultVisibility;
     }
 
     public static final IndexedSequence<ThreadLocalsColumnKind> VALUES = new ArraySequence<ThreadLocalsColumnKind>(values());

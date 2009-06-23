@@ -26,10 +26,10 @@ package test.optimize;
  */
 public class Narrow_short03 {
 
-    static short[] _val = new short[4];
+    static short[] val = new short[4];
 
     public static short test(short b) {
-        _val[0] = b;
-        return _val[0];
+        val[0] = b;
+        return val[0];
     }
 }

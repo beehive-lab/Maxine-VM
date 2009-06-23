@@ -23,14 +23,14 @@ package test.output;
 
 public class SafepointWhileInJava {
     private static final class Spinner implements Runnable {
-        boolean _done;
-        int _iterations;
+        boolean done;
+        int iterations;
         public void run() {
             System.out.println("Spinner: spinning...");
             final Object[] localRefs = new Object[1000];
             while (!stopRequested()) {
                 frameWithReferences(localRefs);
-                ++_iterations;
+                ++iterations;
             }
         }
         private Object frameWithReferences(final Object[] localRefs) {
@@ -43,10 +43,10 @@ public class SafepointWhileInJava {
         }
 
         synchronized boolean stopRequested() {
-            return _done;
+            return done;
         }
         synchronized void requestStop() {
-            _done = true;
+            done = true;
         }
     }
 
@@ -57,7 +57,7 @@ public class SafepointWhileInJava {
         spinnerThread.start();
 
         // Poll 'spinner' until it starts spinning
-        while (spinner._iterations < 1000) {
+        while (spinner.iterations < 1000) {
             Thread.sleep(1);
         }
 

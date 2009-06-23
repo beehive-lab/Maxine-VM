@@ -35,14 +35,13 @@ import com.sun.max.tele.*;
  */
 public class InspectorPanel extends JPanel implements Prober, InspectionHolder {
 
-    private final Inspection _inspection;
+    private final Inspection inspection;
 
     /**
      * Creates a new {@JPanel} for use in the {@link Inspection}.
      */
     public InspectorPanel(Inspection inspection) {
-        super();
-        _inspection = inspection;
+        this.inspection = inspection;
     }
 
     /**
@@ -52,37 +51,37 @@ public class InspectorPanel extends JPanel implements Prober, InspectionHolder {
      */
     public InspectorPanel(Inspection inspection, LayoutManager layoutManager) {
         super(layoutManager);
-        _inspection = inspection;
+        this.inspection = inspection;
         setOpaque(true);
         setBackground(inspection.style().defaultBackgroundColor());
     }
 
     public final Inspection inspection() {
-        return _inspection;
+        return inspection;
     }
 
     public MaxVM maxVM() {
-        return _inspection.maxVM();
+        return inspection.maxVM();
     }
 
     public final MaxVMState maxVMState() {
-        return _inspection.maxVM().maxVMState();
+        return inspection.maxVM().maxVMState();
     }
 
     public InspectorGUI gui() {
-        return _inspection.gui();
+        return inspection.gui();
     }
 
     public final InspectorStyle style() {
-        return _inspection.style();
+        return inspection.style();
     }
 
     public final InspectionFocus focus() {
-        return _inspection.focus();
+        return inspection.focus();
     }
 
     public InspectionActions actions() {
-        return _inspection.actions();
+        return inspection.actions();
     }
 
     public void redisplay() {

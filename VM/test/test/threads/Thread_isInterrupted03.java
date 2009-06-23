@@ -43,25 +43,25 @@ public class Thread_isInterrupted03 {
 
     private static class Thread1 extends java.lang.Thread {
 
-        private boolean _interrupted = false;
+        private boolean interrupted = false;
 
         @Override
         public void run() {
-            while (!_interrupted) {
+            while (!interrupted) {
                 try {
                     sleep(10000);
                 } catch (InterruptedException e) {
-                     _interrupted = true;
+                     interrupted = true;
                 }
             }
         }
 
         public void setInterrupted(boolean val) {
-            _interrupted = val;
+            interrupted = val;
         }
 
         public boolean getInterrupted() {
-            return _interrupted;
+            return interrupted;
         }
     }
 }

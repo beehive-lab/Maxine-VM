@@ -32,7 +32,7 @@ import com.sun.c1x.util.Util;
  * @author Ben L. Titzer
  */
 public class StoreField extends AccessField {
-    Instruction _value;
+    Instruction value;
 
     /**
      * Creates a new LoadField instance.
@@ -48,7 +48,7 @@ public class StoreField extends AccessField {
      */
     public StoreField(Instruction object, int offset, CiField field, Instruction value, boolean isStatic, ValueStack lockStack, ValueStack stateBefore, boolean isLoaded, boolean isInitialized) {
         super(object, offset, field, isStatic, lockStack, stateBefore, isLoaded, isInitialized);
-        _value = value;
+        this.value = value;
         setFlag(Flag.NeedsWriteBarrier);
     }
 
@@ -57,7 +57,7 @@ public class StoreField extends AccessField {
      * @return the value
      */
     public Instruction value() {
-        return _value;
+        return value;
     }
 
     /**
@@ -76,7 +76,7 @@ public class StoreField extends AccessField {
     @Override
     public void inputValuesDo(InstructionClosure closure) {
         super.inputValuesDo(closure);
-        _value = closure.apply(_value);
+        value = closure.apply(value);
     }
 
     /**
@@ -90,17 +90,17 @@ public class StoreField extends AccessField {
 
     @Override
     public int valueNumber() {
-        if (_object != null) {
-            return Util.hash2(_field.hashCode(), _object, _value);
+        if (object != null) {
+            return Util.hash2(field.hashCode(), object, value);
         }
-        return Util.hash1(_field.hashCode(), _value);
+        return Util.hash1(field.hashCode(), value);
     }
 
     @Override
     public boolean valueEqual(Instruction i) {
         if (i instanceof StoreField) {
             StoreField o = (StoreField) i;
-            return _field == o._field && _object == o._object && _value == o._value;
+            return field == o.field && object == o.object && value == o.value;
         }
         return false;
     }

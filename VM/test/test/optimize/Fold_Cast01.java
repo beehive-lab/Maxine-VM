@@ -26,20 +26,20 @@ package test.optimize;
  * @Runs: 0=9; 1=9; 2=!java.lang.NullPointerException
  */
 public class Fold_Cast01 {
-    static final Object _object = new Fold_Cast01();
+    static final Object object = new Fold_Cast01();
 
-    int _field = 9;
+    int field = 9;
 
     public static int test(int arg) {
         if (arg == 0) {
-            return ((Fold_Cast01) _object)._field;
+            return ((Fold_Cast01) object).field;
         }
         if (arg == 1) {
             Object obj = new Fold_Cast01();
-            return ((Fold_Cast01) obj)._field;
+            return ((Fold_Cast01) obj).field;
         }
         if (arg == 2) {
-            return ((Fold_Cast01) null)._field;
+            return ((Fold_Cast01) null).field;
         }
         return 0;
     }

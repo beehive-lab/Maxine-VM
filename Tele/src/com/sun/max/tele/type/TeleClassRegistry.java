@@ -54,10 +54,10 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
     private static final int TRACE_VALUE = 2;
 
     // TODO (mlvdv)  Generalize to map either  (TypeDescriptor, ClassLoader) -> ClassActor Reference *or*  TypeDescriptor -> ClassActor Reference*
-    private final Map<TypeDescriptor, Reference> _typeDescriptorToClassActorReference = new HashMap<TypeDescriptor, Reference>();
+    private final Map<TypeDescriptor, Reference> typeDescriptorToClassActorReference = new HashMap<TypeDescriptor, Reference>();
 
     // ClassID of a {@link ClassActor} in the {@link TeleVM} -> reference to the ClassActor
-    private final Map<Integer, Reference> _idToClassActorReference = new HashMap<Integer, Reference>();
+    private final Map<Integer, Reference> idToClassActorReference = new HashMap<Integer, Reference>();
 
     /**
      * Adds an entry to the registry.
@@ -67,24 +67,24 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
      */
     private void addToRegistry(final Reference classActorReference) throws ClassFormatError {
         final int id = teleVM().fields().ClassActor_id.readInt(classActorReference);
-        _idToClassActorReference.put(id, classActorReference);
+        idToClassActorReference.put(id, classActorReference);
         final Reference typeDescriptorReference = teleVM().fields().ClassActor_typeDescriptor.readReference(classActorReference);
         final Reference stringReference = teleVM().fields().Descriptor_string.readReference(typeDescriptorReference);
         final String typeDescriptorString = teleVM().getString(stringReference);
         final TypeDescriptor typeDescriptor = JavaTypeDescriptor.parseTypeDescriptor(typeDescriptorString);
-        _typeDescriptorToClassActorReference.put(typeDescriptor, classActorReference);
+        typeDescriptorToClassActorReference.put(typeDescriptor, classActorReference);
         Trace.line(TRACE_VALUE, tracePrefix() + ": adding class (" + id + ", " + typeDescriptor.toJavaString() + ")");
     }
 
     /**
      * The number of classes loaded in the boot image for the {@link TeleVM}.
      */
-    private final int _preLoadedClassCount;
+    private final int preLoadedClassCount;
 
     /**
      * The number of classes dynamically loaded in the {@link TeleVM} that are known so far.
      */
-    private int _dynamicallyLoadedClassCount = 0;
+    private int dynamicallyLoadedClassCount = 0;
 
 
     /**
@@ -119,8 +119,8 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
                                     SignatureDescriptor.fromJava(int.class, int.class),
                                     classRegistryReferenceValue, IntValue.from(i)).asInt();
 
-                    _idToClassActorReference.put(id, classActorReference);
-                    _typeDescriptorToClassActorReference.put(typeDescriptor, classActorReference);
+                    idToClassActorReference.put(id, classActorReference);
+                    typeDescriptorToClassActorReference.put(typeDescriptor, classActorReference);
                     count++;
                 }
             } else {
@@ -137,12 +137,12 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
                     }
                 }
             }
-            ClassID.setMapping(_classIDMapping);
+            ClassID.setMapping(classIDMapping);
         } catch (Throwable throwable) {
             ProgramError.unexpected("could not build inspector type registry", throwable);
         }
-        _preLoadedClassCount = count;
-        Trace.end(1, tracePrefix() + " initializing (" + _preLoadedClassCount + " pre-loaded entries)", startTimeMillis);
+        preLoadedClassCount = count;
+        Trace.end(1, tracePrefix() + " initializing (" + preLoadedClassCount + " pre-loaded entries)", startTimeMillis);
     }
 
     /**
@@ -156,14 +156,14 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
         final int remoteLoadedClassCount = teleVM().dataAccess().readInt(loadedClassCountPointer);
         final Pointer loadedClassActorsPointer = teleClassInfoStaticTupleReference.toOrigin().plus(teleVM().fields().TeleClassInfo_classActors.fieldActor().offset());
         final Reference loadedClassActorsArrayReference = teleVM().wordToReference(teleVM().dataAccess().readWord(loadedClassActorsPointer));
-        int index = _dynamicallyLoadedClassCount;
+        int index = dynamicallyLoadedClassCount;
         while (index < remoteLoadedClassCount) {
             final Reference classActorReference = teleVM().getElementValue(Kind.REFERENCE, loadedClassActorsArrayReference, index).asReference();
             addToRegistry(classActorReference);
             index++;
         }
-        _dynamicallyLoadedClassCount = remoteLoadedClassCount;
-        Trace.end(TRACE_VALUE, tracePrefix() + "refreshing:  static=" + _preLoadedClassCount + ", dynamic=" + remoteLoadedClassCount + ", new=" + (remoteLoadedClassCount - _dynamicallyLoadedClassCount), startTimeMillis);
+        dynamicallyLoadedClassCount = remoteLoadedClassCount;
+        Trace.end(TRACE_VALUE, tracePrefix() + "refreshing:  static=" + preLoadedClassCount + ", dynamic=" + remoteLoadedClassCount + ", new=" + (remoteLoadedClassCount - dynamicallyLoadedClassCount), startTimeMillis);
     }
 
     /**
@@ -171,7 +171,7 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
      * @return surrogate for the {@link ClassActor} in the {@link TeleVM}, null if not known.
      */
     public TeleClassActor findTeleClassActorByID(int id) {
-        final Reference classActorReference = _idToClassActorReference.get(id);
+        final Reference classActorReference = idToClassActorReference.get(id);
         if (classActorReference != null && !classActorReference.isZero()) {
             return (TeleClassActor) teleVM().makeTeleObject(classActorReference);
         }
@@ -183,7 +183,7 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
      * @return surrogate for the equivalent {@link ClassActor} in the {@link TeleVM}, null if not known.
      */
     public TeleClassActor findTeleClassActorByType(TypeDescriptor typeDescriptor) {
-        final Reference classActorReference = _typeDescriptorToClassActorReference.get(typeDescriptor);
+        final Reference classActorReference = typeDescriptorToClassActorReference.get(typeDescriptor);
         if (classActorReference == null) {
             // Class hasn't been loaded yet by the inspectee.
             return null;
@@ -196,7 +196,7 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
      * @return surrogate for the equivalent {@link ClassActor} in the {@link TeleVM}, null if not known.
      */
     public TeleClassActor findTeleClassActorByClass(Class javaClass) {
-        final Reference classActorReference = _typeDescriptorToClassActorReference.get(JavaTypeDescriptor.forJavaClass(javaClass));
+        final Reference classActorReference = typeDescriptorToClassActorReference.get(JavaTypeDescriptor.forJavaClass(javaClass));
         if (classActorReference == null) {
             // Class hasn't been loaded yet by the inspectee.
             return null;
@@ -208,16 +208,16 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
      * @return  {@link TypeDescriptor}s for all classes loaded in the {@link TeleVM}.
      */
     public Set<TypeDescriptor> typeDescriptors() {
-        return Collections.unmodifiableSet(_typeDescriptorToClassActorReference.keySet());
+        return Collections.unmodifiableSet(typeDescriptorToClassActorReference.keySet());
     }
 
     /**
      * @return surrogates for all {@link ClassActor}s loaded in the {@link TeleVM}.
      */
     public ReferenceTypeProvider[] teleClassActors() {
-        final ReferenceTypeProvider[] result = new ReferenceTypeProvider[_idToClassActorReference.size()];
+        final ReferenceTypeProvider[] result = new ReferenceTypeProvider[idToClassActorReference.size()];
         int index = 0;
-        for (Reference classActorReference : _idToClassActorReference.values()) {
+        for (Reference classActorReference : idToClassActorReference.values()) {
             result[index++] = (TeleClassActor) teleVM().makeTeleObject(classActorReference);
         }
         return result;
@@ -226,35 +226,35 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
     /**
      * ClassID Mapping.
      */
-    private final Map<Integer, ClassActor> _idToClassActor = new HashMap<Integer, ClassActor>();
+    private final Map<Integer, ClassActor> idToClassActor = new HashMap<Integer, ClassActor>();
 
     /**
      * @param id Target id of a {@link ClassActor} in the target VM.
      * @return  Local {@link ClassActor} equivalent to the one in the target VM, null if not known.
      */
     private ClassActor findClassActorByID(int id) {
-        ClassActor classActor = _idToClassActor.get(id);
+        ClassActor classActor = idToClassActor.get(id);
         if (classActor == null) {
-            final Reference classActorReference = _idToClassActorReference.get(id);
+            final Reference classActorReference = idToClassActorReference.get(id);
             if (classActorReference != null) {
                 classActor = teleVM().makeClassActor(classActorReference);
-                _idToClassActor.put(id, classActor);
+                idToClassActor.put(id, classActor);
             }
         }
         return classActor;
     }
 
 
-    private static ThreadLocal<Boolean> _usingTeleClassIDs = new ThreadLocal<Boolean>() {
+    private static ThreadLocal<Boolean> usingTeleClassIDs = new ThreadLocal<Boolean>() {
         @Override
         protected synchronized Boolean initialValue() {
             return false;
         }
     };
 
-    private final ClassID.Mapping _classIDMapping = new ClassID.Mapping() {
+    private final ClassID.Mapping classIDMapping = new ClassID.Mapping() {
         public ClassActor idToClassActor(int id) {
-            if (_usingTeleClassIDs.get()) {
+            if (usingTeleClassIDs.get()) {
                 return findClassActorByID(id);
             }
             return null;
@@ -267,15 +267,15 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
      * Such code would otherwise not work, because class actor IDs in the Inspector differ from those in the tele VM.
      */
     public static <Result_Type> Result_Type usingTeleClassIDs(Function<Result_Type> function) {
-        final boolean oldValue = _usingTeleClassIDs.get();
-        _usingTeleClassIDs.set(true);
+        final boolean oldValue = usingTeleClassIDs.get();
+        usingTeleClassIDs.set(true);
         try {
             final Result_Type result = function.call();
             return result;
         } catch (Exception exception) {
             throw ProgramError.unexpected(exception);
         } finally {
-            _usingTeleClassIDs.set(oldValue);
+            usingTeleClassIDs.set(oldValue);
         }
     }
 

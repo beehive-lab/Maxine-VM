@@ -31,10 +31,10 @@ import com.sun.max.vm.value.*;
  */
 public class PrimitiveValueLabel extends ValueLabel {
 
-    private final Kind _kind;
+    private final Kind kind;
 
     public Kind kind() {
-        return _kind;
+        return kind;
     }
 
     // TODO (mlvdv) this class is very hard to subclass because it does all its work
@@ -42,14 +42,14 @@ public class PrimitiveValueLabel extends ValueLabel {
     // local state variables when the other methods get called.
     public PrimitiveValueLabel(Inspection inspection, Kind kind) {
         super(inspection, null);
-        _kind = kind;
+        this.kind = kind;
         initializeValue();
         redisplay();
     }
 
     public PrimitiveValueLabel(Inspection inspection, Value value) {
         super(inspection, value);
-        _kind = value.kind();
+        this.kind = value.kind();
         initializeValue();
         redisplay();
     }
@@ -64,10 +64,10 @@ public class PrimitiveValueLabel extends ValueLabel {
     @Override
     public void updateText() {
         assert value() != null;
-        if (_kind == Kind.CHAR) {
+        if (kind == Kind.CHAR) {
             setText("'" + value().toString() + "'");
             setToolTipText("Int: " + Integer.toString(value().toInt()) + ", 0x" + Integer.toHexString(value().toInt()));
-        } else if (_kind == Kind.INT) {
+        } else if (kind == Kind.INT) {
             setText(value().toString());
             setToolTipText("0x" + Integer.toHexString(value().toInt()));
         } else {

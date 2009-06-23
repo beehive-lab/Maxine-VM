@@ -33,7 +33,7 @@ import com.sun.c1x.util.Util;
  */
 public class LoadIndexed extends AccessIndexed {
 
-    NullCheck _explicitNullCheck;
+    NullCheck explicitNullCheck;
 
     /**
      * Creates a new LoadIndexed instruction.
@@ -52,7 +52,7 @@ public class LoadIndexed extends AccessIndexed {
      * @return the explicit null check instruction
      */
     public Object explicitNullCheck() {
-        return _explicitNullCheck;
+        return explicitNullCheck;
     }
 
     /**
@@ -60,7 +60,7 @@ public class LoadIndexed extends AccessIndexed {
      * @param explicitNullCheck the object
      */
     public void setExplicitNullCheck(NullCheck explicitNullCheck) {
-        _explicitNullCheck = explicitNullCheck;
+        this.explicitNullCheck = explicitNullCheck;
     }
 
     /**
@@ -93,14 +93,14 @@ public class LoadIndexed extends AccessIndexed {
 
     @Override
     public int valueNumber() {
-        return Util.hash2(124, _array, _index);
+        return Util.hash2(124, array, index);
     }
 
     @Override
     public boolean valueEqual(Instruction i) {
         if (i instanceof LoadIndexed) {
             LoadIndexed o = (LoadIndexed) i;
-            return _array == o._array && _index == o._index;
+            return array == o.array && index == o.index;
         }
         return false;
     }

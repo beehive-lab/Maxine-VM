@@ -41,14 +41,14 @@ public class ValueType {
     public static final ValueType ILLEGAL_TYPE = new ValueType(BasicType.Illegal);
     public static final ValueType VOID_TYPE = new ValueType(BasicType.Void);
 
-    private final BasicType _basicType;
+    private final BasicType basicType;
 
     /**
      * The base constructor for a value type accepts a basic type.
      * @param basicType the basic type
      */
     public ValueType(BasicType basicType) {
-        _basicType = basicType.stackType();
+        this.basicType = basicType.stackType();
     }
 
     /**
@@ -56,7 +56,7 @@ public class ValueType {
      * @return the size of this value type in slots
      */
     public int size() {
-        return _basicType.sizeInSlots();
+        return basicType.sizeInSlots();
     }
 
     /**
@@ -64,7 +64,7 @@ public class ValueType {
      * @return <code>true</code> if this type is void
      */
     public final boolean isVoid() {
-        return _basicType == BasicType.Void;
+        return basicType == BasicType.Void;
     }
 
     /**
@@ -72,7 +72,7 @@ public class ValueType {
      * @return <code>true</code> if this type is int
      */
     public final boolean isInt() {
-        return _basicType == BasicType.Int;
+        return basicType == BasicType.Int;
     }
 
     /**
@@ -80,7 +80,7 @@ public class ValueType {
      * @return <code>true</code> if this type is long
      */
     public final boolean isLong() {
-        return _basicType == BasicType.Long;
+        return basicType == BasicType.Long;
     }
 
     /**
@@ -88,7 +88,7 @@ public class ValueType {
      * @return <code>true</code> if this type is float
      */
     public final boolean isFloat() {
-        return _basicType == BasicType.Float;
+        return basicType == BasicType.Float;
     }
 
     /**
@@ -96,7 +96,7 @@ public class ValueType {
      * @return <code>true</code> if this type is double
      */
     public final boolean isDouble() {
-        return _basicType == BasicType.Double;
+        return basicType == BasicType.Double;
     }
 
     /**
@@ -118,7 +118,7 @@ public class ValueType {
      * @return <code>true</code> if this type is an object
      */
     public final boolean isObject() {
-        return _basicType == BasicType.Object;
+        return basicType == BasicType.Object;
     }
 
     /**
@@ -126,7 +126,7 @@ public class ValueType {
      * @return <code>true</code> if this type is an address
      */
     public boolean isJsr() {
-        return _basicType == BasicType.Jsr;
+        return basicType == BasicType.Jsr;
     }
 
     /**
@@ -134,7 +134,7 @@ public class ValueType {
      * @return <code>true</code> if this type is illegal
      */
     public final boolean isIllegal() {
-        return _basicType == BasicType.Illegal;
+        return basicType == BasicType.Illegal;
     }
 
     /**
@@ -154,7 +154,7 @@ public class ValueType {
      * @return true if this type is represented by a single word
      */
     public boolean isSingleWord() {
-        return _basicType.sizeInSlots() == 1;
+        return basicType.sizeInSlots() == 1;
     }
 
     /**
@@ -162,7 +162,7 @@ public class ValueType {
      * @return <code>true</code> if this type is represented by two words
      */
     public boolean isDoubleWord() {
-        return _basicType.sizeInSlots() == 2;
+        return basicType.sizeInSlots() == 2;
     }
 
     /**
@@ -170,7 +170,7 @@ public class ValueType {
      * @return the type character for this type
      */
     public char tchar() {
-        return _basicType.basicChar;
+        return basicType.basicChar;
     }
 
     /**
@@ -178,7 +178,7 @@ public class ValueType {
      * @return the name of this value type
      */
     public String name() {
-        return _basicType.javaName;
+        return basicType.javaName;
     }
 
     /**
@@ -187,7 +187,7 @@ public class ValueType {
      * @return the result of the meet operation for these two types
      */
     public final ValueType meet(ValueType other) {
-        if (other._basicType == this._basicType) {
+        if (other.basicType == this.basicType) {
             return base();
         }
         return ILLEGAL_TYPE;
@@ -201,7 +201,7 @@ public class ValueType {
         if (getClass() == ValueType.class) {
             return this;
         }
-        return base(_basicType);
+        return base(basicType);
     }
 
     /**
@@ -217,7 +217,7 @@ public class ValueType {
      */
     @Override
     public String toString() {
-        return _basicType.javaName;
+        return basicType.javaName;
     }
 
     /**
@@ -266,7 +266,7 @@ public class ValueType {
      * @return the basic type
      */
     public BasicType basicType() {
-        return _basicType;
+        return basicType;
     }
 
 }

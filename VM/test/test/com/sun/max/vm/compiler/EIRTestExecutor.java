@@ -50,9 +50,9 @@ import com.sun.max.vm.value.*;
  */
 public class EIRTestExecutor implements JavaExecHarness.Executor {
 
-    private static EirGenerator _generator;
+    private static EirGenerator generator;
 
-    public static Utf8Constant _testMethod = SymbolTable.makeSymbol("test");
+    public static Utf8Constant testMethod = SymbolTable.makeSymbol("test");
 
     private static void initialize(boolean loadingPackages) {
         final VMConfiguration cfg = VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host().constrainedByInstructionSet(InstructionSet.AMD64),
@@ -61,18 +61,18 @@ public class EIRTestExecutor implements JavaExecHarness.Executor {
         final Prototype jpt = prototypeGenerator.createJavaPrototype(cfg, loadingPackages);
         final EirGeneratorScheme compilerScheme = (EirGeneratorScheme) jpt.vmConfiguration().compilerScheme();
         compilerScheme.compileSnippets();
-        _generator = compilerScheme.eirGenerator();
+        generator = compilerScheme.eirGenerator();
         ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually prototyping/bootstrapping
     }
 
     public void initialize(JavaExecHarness.JavaTestCase c, boolean loadingPackages) {
-        if (_generator == null) {
+        if (generator == null) {
             initialize(loadingPackages);
         }
 
         final ClassActor classActor = ClassActor.fromJava(c.clazz);
         c.slot1 = classActor;
-        c.slot2 = classActor.findLocalStaticMethodActor(_testMethod);
+        c.slot2 = classActor.findLocalStaticMethodActor(testMethod);
     }
 
     public Object execute(JavaExecHarness.JavaTestCase c, Object[] vals) throws InvocationTargetException {
@@ -81,8 +81,8 @@ public class EIRTestExecutor implements JavaExecHarness.Executor {
             args[i] = Value.fromBoxedJavaValue(vals[i]);
         }
         final ClassMethodActor classMethodActor = (ClassMethodActor) c.slot2;
-        final EirMethod method = (EirMethod) _generator.makeIrMethod(classMethodActor);
-        final EirInterpreter interpreter = new AMD64EirInterpreter((AMD64EirGenerator) _generator);
+        final EirMethod method = (EirMethod) generator.makeIrMethod(classMethodActor);
+        final EirInterpreter interpreter = new AMD64EirInterpreter((AMD64EirGenerator) generator);
         final Value result = interpreter.execute(method, args);
         return result.asBoxedJavaValue();
     }

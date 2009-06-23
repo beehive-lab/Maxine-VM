@@ -39,20 +39,20 @@ import com.sun.max.tele.*;
  */
 public final class ThreadsTable extends InspectorTable {
 
-    private final ThreadsTableModel _model;
-    private final ThreadsColumnModel _columnModel;
-    private final TableColumn[] _columns;
+    private final ThreadsTableModel model;
+    private final ThreadsColumnModel columnModel;
+    private final TableColumn[] columns;
 
-    private MaxVMState _lastRefreshedState = null;
+    private MaxVMState lastRefreshedState = null;
 
     ThreadsTable(Inspection inspection, ThreadsViewPreferences viewPreferences) {
         super(inspection);
-        _model = new ThreadsTableModel();
-        _columns = new TableColumn[ThreadsColumnKind.VALUES.length()];
-        _columnModel = new ThreadsColumnModel(viewPreferences);
+        model = new ThreadsTableModel();
+        columns = new TableColumn[ThreadsColumnKind.VALUES.length()];
+        columnModel = new ThreadsColumnModel(viewPreferences);
 
-        setModel(_model);
-        setColumnModel(_columnModel);
+        setModel(model);
+        setColumnModel(columnModel);
         setShowHorizontalLines(style().defaultTableShowHorizontalLines());
         setShowVerticalLines(style().defaultTableShowVerticalLines());
         setIntercellSpacing(style().defaultTableIntercellSpacing());
@@ -72,7 +72,7 @@ public final class ThreadsTable extends InspectorTable {
     @Override
     public void updateFocusSelection() {
         final MaxThread thread = inspection().focus().thread();
-        final int row = _model.findRow(thread);
+        final int row = model.findRow(thread);
         if (row < 0) {
             clearSelection();
         } else  if (row != getSelectedRow()) {
@@ -81,10 +81,10 @@ public final class ThreadsTable extends InspectorTable {
     }
 
     public void refresh(boolean force) {
-        if (maxVMState().newerThan(_lastRefreshedState) || force) {
-            _lastRefreshedState = maxVMState();
-            _model.refresh();
-            for (TableColumn column : _columns) {
+        if (maxVMState().newerThan(lastRefreshedState) || force) {
+            lastRefreshedState = maxVMState();
+            model.refresh();
+            for (TableColumn column : columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
                 prober.refresh(force);
             }
@@ -92,7 +92,7 @@ public final class ThreadsTable extends InspectorTable {
     }
 
     public void redisplay() {
-        for (TableColumn column : _columns) {
+        for (TableColumn column : columns) {
             final Prober prober = (Prober) column.getCellRenderer();
             prober.redisplay();
         }
@@ -103,12 +103,12 @@ public final class ThreadsTable extends InspectorTable {
     @Override
     protected JTableHeader createDefaultTableHeader() {
         // Custom table header with tooltips that describe the column data.
-        return new JTableHeader(_columnModel) {
+        return new JTableHeader(columnModel) {
             @Override
             public String getToolTipText(MouseEvent mouseEvent) {
                 final Point p = mouseEvent.getPoint();
-                final int index = _columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = _columnModel.getColumn(index).getModelIndex();
+                final int index = columnModel.getColumnIndexAtX(p.x);
+                final int modelIndex = columnModel.getColumn(index).getModelIndex();
                 return ThreadsColumnKind.VALUES.get(modelIndex).toolTipText();
             }
         };
@@ -130,10 +130,10 @@ public final class ThreadsTable extends InspectorTable {
 
     private final class ThreadsColumnModel extends DefaultTableColumnModel {
 
-        private final ThreadsViewPreferences _viewPreferences;
+        private final ThreadsViewPreferences viewPreferences;
 
         private ThreadsColumnModel(ThreadsViewPreferences viewPreferences) {
-            _viewPreferences = viewPreferences;
+            this.viewPreferences = viewPreferences;
             createColumn(ThreadsColumnKind.ID, new IDCellRenderer(inspection()));
             createColumn(ThreadsColumnKind.HANDLE, new HandleCellRenderer(inspection()));
             createColumn(ThreadsColumnKind.KIND, new KindCellRenderer(inspection()));
@@ -143,13 +143,13 @@ public final class ThreadsTable extends InspectorTable {
 
         private void createColumn(ThreadsColumnKind columnKind, TableCellRenderer renderer) {
             final int col = columnKind.ordinal();
-            _columns[col] = new TableColumn(col, 0, renderer, null);
-            _columns[col].setHeaderValue(columnKind.label());
-            _columns[col].setMinWidth(columnKind.minWidth());
-            if (_viewPreferences.isVisible(columnKind)) {
-                addColumn(_columns[col]);
+            columns[col] = new TableColumn(col, 0, renderer, null);
+            columns[col].setHeaderValue(columnKind.label());
+            columns[col].setMinWidth(columnKind.minWidth());
+            if (viewPreferences.isVisible(columnKind)) {
+                addColumn(columns[col]);
             }
-            _columns[col].setIdentifier(columnKind);
+            columns[col].setIdentifier(columnKind);
         }
     }
 

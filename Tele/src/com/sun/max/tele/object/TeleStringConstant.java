@@ -36,18 +36,18 @@ public final class TeleStringConstant extends TelePoolConstant {
     }
 
     // The field is final; cache it.
-    private String _value;
+    private String value;
 
     /**
      * @return a local copy of the string contained in this object in the tele VM
      */
     public String getString() {
-        if (_value == null) {
+        if (value == null) {
             final Reference stringReference = teleVM().fields().StringConstant_value.readReference(reference());
             final TeleString teleString = (TeleString) teleVM().makeTeleObject(stringReference);
-            _value = teleString.getString();
+            value = teleString.getString();
         }
-        return _value;
+        return value;
     }
 
 

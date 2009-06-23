@@ -132,50 +132,50 @@ public abstract class TemplateTableTestCase extends CompilerTestCase<TargetMetho
 
     static class TemplateStats {
 
-        int _bytesCount = 0;
-        int _templateCount = 0;
-        int _minSize = 999999;
-        int _maxSize = 0;
-        int _minSizeCount = 0; // How many times have we seen the min size
-        int _maxSizeCount = 0; // How many times have we seen the max size
-        int _minFrameSize = 999999;
-        int _maxFrameSize = 0;
+        int bytesCount = 0;
+        int templateCount = 0;
+        int minSize = 999999;
+        int maxSize = 0;
+        int minSizeCount = 0; // How many times have we seen the min size
+        int maxSizeCount = 0; // How many times have we seen the max size
+        int minFrameSize = 999999;
+        int maxFrameSize = 0;
 
         void update(CompiledBytecodeTemplate template) {
             final int len = template.targetMethod.codeLength();
-            _bytesCount += len;
-            _templateCount++;
-            if (len <= _minSize) {
-                if (_minSize == len) {
-                    _minSizeCount++;
+            bytesCount += len;
+            templateCount++;
+            if (len <= minSize) {
+                if (minSize == len) {
+                    minSizeCount++;
                 } else {
-                    _minSize = len;
-                    _minSizeCount = 1;
+                    minSize = len;
+                    minSizeCount = 1;
                 }
             }
-            if (len >= _maxSize) {
-                if (_maxSize == len) {
-                    _maxSizeCount++;
+            if (len >= maxSize) {
+                if (maxSize == len) {
+                    maxSizeCount++;
                 } else {
-                    _maxSize = len;
-                    _maxSizeCount = 1;
+                    maxSize = len;
+                    maxSizeCount = 1;
                 }
             }
             final int frameSize = template.targetMethod.frameSize();
 
-            if (frameSize > _maxFrameSize) {
-                _maxFrameSize = frameSize;
-            } else if (frameSize < _minFrameSize) {
-                _minFrameSize = frameSize;
+            if (frameSize > maxFrameSize) {
+                maxFrameSize = frameSize;
+            } else if (frameSize < minFrameSize) {
+                minFrameSize = frameSize;
             }
         }
 
         void report() {
-            Trace.line(1, "Templates #: " + _templateCount + " Total Size = " + _bytesCount + " bytes");
-            if (_templateCount > 0) {
-                final int avg = _bytesCount / _templateCount;
-                Trace.line(1, "avg size = " + avg + ", min size = " + _minSize + " (" + _minSizeCount + "),  max size = " + _maxSize + " (" + _maxSizeCount + ")");
-                Trace.line(1, "Frame Size:  min = " + _minFrameSize + ", max =" + _maxFrameSize);
+            Trace.line(1, "Templates #: " + templateCount + " Total Size = " + bytesCount + " bytes");
+            if (templateCount > 0) {
+                final int avg = bytesCount / templateCount;
+                Trace.line(1, "avg size = " + avg + ", min size = " + minSize + " (" + minSizeCount + "),  max size = " + maxSize + " (" + maxSizeCount + ")");
+                Trace.line(1, "Frame Size:  min = " + minFrameSize + ", max =" + maxFrameSize);
             }
         }
     }

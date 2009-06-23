@@ -62,13 +62,13 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
 
     private static final int TRACE_VALUE = 2;
 
-    private InspectorFrame _frame;
+    private InspectorFrame frame;
 
     /**
      * @return the window system frame in which the Inspector displays its view
      */
     public InspectorFrame frame() {
-        return _frame;
+        return frame;
     }
 
     /**
@@ -146,10 +146,10 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      * @param menu  optional menu to replace the default frame menu
      */
     protected void createFrame(InspectorMenu menu) {
-        _frame = new InternalInspectorFrame(this, menu);
+        frame = new InternalInspectorFrame(this, menu);
         updateFrameTitle();
         createView();
-        _frame.pack();
+        frame.pack();
         gui().addInspector(this);
         inspection().addInspectionListener(this);
         inspection().focus().addListener(this);
@@ -165,9 +165,9 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      * @param force suspend caching behavior; read state unconditionally.
      */
     protected void refreshView(boolean force) {
-        _frame.refresh(force);
-        _frame.invalidate();
-        _frame.repaint();
+        frame.refresh(force);
+        frame.invalidate();
+        frame.repaint();
     }
 
     /**
@@ -176,9 +176,9 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      * configuration of the view changes enough to require creating a new one.
      */
     protected void reconstructView() {
-        final Dimension size = _frame.getSize();
+        final Dimension size = frame.getSize();
         createView();
-        _frame.setPreferredSize(size);
+        frame.setPreferredSize(size);
         frame().pack();
     }
 
@@ -233,19 +233,19 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      * @return whether the inspector's view can be seen on the screen.
      */
     protected final boolean isShowing() {
-        return _frame.isShowing();
+        return frame.isShowing();
     }
 
     protected void moveToFront() {
-        _frame.moveToFront();
+        frame.moveToFront();
     }
 
     protected boolean isSelected() {
-        return _frame.isSelected();
+        return frame.isSelected();
     }
 
     protected void setSelected() {
-        _frame.setSelected();
+        frame.setSelected();
     }
 
     /**
@@ -254,7 +254,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     public void highlight() {
         moveToFront();
         setSelected();
-        _frame.flash(style().frameBorderFlashColor());
+        frame.flash(style().frameBorderFlashColor());
     }
 
     /**
@@ -264,7 +264,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         moveToFront();
         if (!isSelected()) {
             setSelected();
-            _frame.flash(style().frameBorderFlashColor());
+            frame.flash(style().frameBorderFlashColor());
         }
     }
 
@@ -274,7 +274,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      * event on the frame.
      */
     public void dispose() {
-        _frame.dispose();
+        frame.dispose();
     }
 
     /**

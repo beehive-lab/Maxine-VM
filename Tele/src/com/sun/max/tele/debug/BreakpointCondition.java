@@ -36,32 +36,32 @@ import com.sun.max.util.*;
  */
 public class BreakpointCondition extends AbstractTeleVMHolder {
 
-    private String _condition;
-    private StreamTokenizer _streamTokenizer;
-    private TeleIntegerRegisters _integerRegisters;
-    private static Map<String, ? extends Symbol> _integerRegisterSymbols;
-    private Expression _expression;
+    private String condition;
+    private StreamTokenizer streamTokenizer;
+    private TeleIntegerRegisters integerRegisters;
+    private static Map<String, ? extends Symbol> integerRegisterSymbols;
+    private Expression expression;
 
     public BreakpointCondition(TeleVM teleVM, String condition) throws ExpressionException {
         super(teleVM);
-        _condition = condition;
-        if (_integerRegisterSymbols == null) {
-            _integerRegisterSymbols = Symbolizer.Static.toSymbolMap(TeleIntegerRegisters.symbolizer(teleVM.vmConfiguration()));
+        this.condition = condition;
+        if (integerRegisterSymbols == null) {
+            integerRegisterSymbols = Symbolizer.Static.toSymbolMap(TeleIntegerRegisters.symbolizer(teleVM.vmConfiguration()));
         }
-        _expression = parse();
+        this.expression = parse();
     }
 
     public boolean evaluate(TeleProcess teleProcess, TeleNativeThread teleNativeThread) {
-        if (_expression == null) {
+        if (expression == null) {
             return false;
         }
-        _integerRegisters = teleNativeThread.integerRegisters();
-        if (_integerRegisters == null) {
+        integerRegisters = teleNativeThread.integerRegisters();
+        if (integerRegisters == null) {
             return false;
         }
-        _integerRegisters.symbolizer();
+        integerRegisters.symbolizer();
         try {
-            final Expression result = _expression.evaluate();
+            final Expression result = expression.evaluate();
             if (result instanceof BooleanExpression) {
                 return ((BooleanExpression) result).value();
             }
@@ -72,15 +72,15 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
     }
 
     private void initializeTokenizer() {
-        _streamTokenizer = new StreamTokenizer(new StringReader(_condition));
-        _streamTokenizer.ordinaryChars('0', '9');
-        _streamTokenizer.wordChars('0', '9');
+        streamTokenizer = new StreamTokenizer(new StringReader(condition));
+        streamTokenizer.ordinaryChars('0', '9');
+        streamTokenizer.wordChars('0', '9');
     }
 
     Expression parse()  throws ExpressionException {
         try {
             initializeTokenizer();
-            _streamTokenizer.nextToken();
+            streamTokenizer.nextToken();
             final Expression result = parseExpression();
             // Must be empty or a BinaryExpr
             if (result == null || result instanceof BinaryExpression) {
@@ -96,15 +96,15 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
 
     Expression parseExpression() throws ExpressionException, IOException {
         Expression result = null;
-        while (_streamTokenizer.ttype != TT_EOF) {
+        while (streamTokenizer.ttype != TT_EOF) {
             Operator op;
             Expression expression = null;
-            if (_streamTokenizer.ttype == '(') {
-                _streamTokenizer.nextToken();
+            if (streamTokenizer.ttype == '(') {
+                streamTokenizer.nextToken();
                 expression = parseExpression();
-                _streamTokenizer.nextToken();
+                streamTokenizer.nextToken();
                 expectChar(')');
-            } else if (_streamTokenizer.ttype == '[') {
+            } else if (streamTokenizer.ttype == '[') {
                 expression = expectMemory();
             } else if ((expression = isRegister()) != null) {
                //
@@ -114,11 +114,11 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
                 if (result == null) {
                     throw new ExpressionException("no left operand for binary operator");
                 }
-                _streamTokenizer.nextToken();
+                streamTokenizer.nextToken();
                 expression = new BinaryExpression(op, result, parseExpression());
             }
             result = expression;
-            _streamTokenizer.nextToken();
+            streamTokenizer.nextToken();
         }
         return result;
     }
@@ -126,8 +126,8 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
     // CheckStyle: resume inner assignment checks
 
     private RegisterExpression isRegister() {
-        if (_streamTokenizer.ttype == TT_WORD) {
-            final Symbol register = _integerRegisterSymbols.get(_streamTokenizer.sval);
+        if (streamTokenizer.ttype == TT_WORD) {
+            final Symbol register = integerRegisterSymbols.get(streamTokenizer.sval);
             if (register != null) {
                 return new RegisterExpression(register);
             }
@@ -136,52 +136,52 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
     }
 
     private Operator isBinaryOperator() throws IOException, ExpressionException {
-        switch (_streamTokenizer.ttype) {
+        switch (streamTokenizer.ttype) {
             case '+':
                 return Operator.PLUS;
             case '-':
                 return Operator.MINUS;
             case '=':
-                _streamTokenizer.nextToken();
-                if (_streamTokenizer.ttype == '=') {
+                streamTokenizer.nextToken();
+                if (streamTokenizer.ttype == '=') {
                     return Operator.EQ;
                 }
-                _streamTokenizer.pushBack();
+                streamTokenizer.pushBack();
                 break;
             case '!':
-                _streamTokenizer.nextToken();
-                if (_streamTokenizer.ttype == '=') {
+                streamTokenizer.nextToken();
+                if (streamTokenizer.ttype == '=') {
                     return Operator.NE;
                 }
-                _streamTokenizer.pushBack();
+                streamTokenizer.pushBack();
                 break;
             case '>':
-                _streamTokenizer.nextToken();
-                if (_streamTokenizer.ttype == '=') {
+                streamTokenizer.nextToken();
+                if (streamTokenizer.ttype == '=') {
                     return Operator.GE;
                 }
-                _streamTokenizer.pushBack();
+                streamTokenizer.pushBack();
                 return Operator.GT;
             case '<':
-                _streamTokenizer.nextToken();
-                if (_streamTokenizer.ttype == '=') {
+                streamTokenizer.nextToken();
+                if (streamTokenizer.ttype == '=') {
                     return Operator.LE;
                 }
-                _streamTokenizer.pushBack();
+                streamTokenizer.pushBack();
                 return Operator.LT;
             case '&':
-                _streamTokenizer.nextToken();
-                if (_streamTokenizer.ttype == '&') {
+                streamTokenizer.nextToken();
+                if (streamTokenizer.ttype == '&') {
                     return Operator.LOGAND;
                 }
-                _streamTokenizer.pushBack();
+                streamTokenizer.pushBack();
                 break;
             case '|':
-                _streamTokenizer.nextToken();
-                if (_streamTokenizer.ttype == '|') {
+                streamTokenizer.nextToken();
+                if (streamTokenizer.ttype == '|') {
                     return Operator.LOGOR;
                 }
-                _streamTokenizer.pushBack();
+                streamTokenizer.pushBack();
                 break;
             default:
                 break;
@@ -190,15 +190,15 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
     }
 
     private Expression expectMemory() throws ExpressionException, IOException {
-        if (_streamTokenizer.ttype == '[') {
+        if (streamTokenizer.ttype == '[') {
             Expression result = null;
-            _streamTokenizer.nextToken();
+            streamTokenizer.nextToken();
             final Expression addressExpression = expectRegisterOrNumber();
-            _streamTokenizer.nextToken();
+            streamTokenizer.nextToken();
             final Operator op = isBinaryOperator();
             if (op != null) {
                 if (op == Operator.PLUS || op == Operator.MINUS) {
-                    _streamTokenizer.nextToken();
+                    streamTokenizer.nextToken();
                     final Expression addressOffsetExpression = expectRegisterOrNumber();
                     if (addressExpression  instanceof RegisterExpression && addressOffsetExpression instanceof NumberExpression) {
                         result = new OffsetRegisterMemoryExpression((RegisterExpression) addressExpression, op, (NumberExpression) addressOffsetExpression);
@@ -221,9 +221,9 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
                     } else {
                         throw new ExpressionException("illegal memory expression");
                     }
-                    _streamTokenizer.nextToken();
+                    streamTokenizer.nextToken();
                 } else {
-                    _streamTokenizer.pushBack();
+                    streamTokenizer.pushBack();
                 }
             } else {
                 if (addressExpression instanceof RegisterExpression) {
@@ -239,7 +239,7 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
     }
 
     private void expectChar(char ch) throws ExpressionException {
-        if (_streamTokenizer.ttype != ch) {
+        if (streamTokenizer.ttype != ch) {
             throw new ExpressionException("syntax error: " + ch + " expected");
         }
     }
@@ -257,14 +257,14 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
     }
 
     private Expression isNumber() {
-        if (_streamTokenizer.ttype == TT_WORD) {
-            final int length = _streamTokenizer.sval.length();
+        if (streamTokenizer.ttype == TT_WORD) {
+            final int length = streamTokenizer.sval.length();
             if (length > 0) {
-                final char firstChar = _streamTokenizer.sval.charAt(0);
+                final char firstChar = streamTokenizer.sval.charAt(0);
                 if ((firstChar >= '0') && (firstChar <= '9')) {
-                    final boolean isHex = (firstChar == '0') && (length > 1 && Character.toUpperCase(_streamTokenizer.sval.charAt(1)) == 'X');
+                    final boolean isHex = (firstChar == '0') && (length > 1 && Character.toUpperCase(streamTokenizer.sval.charAt(1)) == 'X');
                     final int radix = isHex ? 16 : 10;
-                    String toParse = _streamTokenizer.sval;
+                    String toParse = streamTokenizer.sval;
                     if (isHex) {
                         toParse = toParse.substring(2);
                     }
@@ -277,7 +277,7 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
 
     @Override
     public String toString() {
-        return _condition;
+        return condition;
     }
 
     public static class ExpressionException extends Exception {
@@ -308,34 +308,34 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
     }
 
     class BinaryExpression extends Expression {
-        private Operator _operator;
-        private Expression _left;
-        private Expression _right;
+        private Operator operator;
+        private Expression left;
+        private Expression right;
 
         BinaryExpression(Operator operator, Expression left, Expression right) {
-            _operator = operator;
-            _left = left;
-            _right = right;
+            this.operator = operator;
+            this.left = left;
+            this.right = right;
         }
 
         Operator operator() {
-            return _operator;
+            return operator;
         }
 
         Expression left() {
-            return _left;
+            return left;
         }
 
         Expression right() {
-            return _right;
+            return right;
         }
 
         @Override
         Expression evaluate()  throws ExpressionException {
-            final Expression leftValue = _left.evaluate();
-            final Expression rightValue = _right.evaluate();
+            final Expression leftValue = left.evaluate();
+            final Expression rightValue = right.evaluate();
 
-            switch (_operator) {
+            switch (operator) {
                 case LT:
                     return new BooleanExpression(leftValue.lt(rightValue));
                 case LE:
@@ -352,7 +352,7 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
                 case LOGOR:
                     final BooleanExpression leftBoolean = checkBoolean(leftValue);
                     final BooleanExpression rightBoolean = checkBoolean(rightValue);
-                    if (_operator == Operator.LOGAND) {
+                    if (operator == Operator.LOGAND) {
                         return new BooleanExpression(leftBoolean.value() && rightBoolean.value());
                     }
                     return new BooleanExpression(leftBoolean.value() || rightBoolean.value());
@@ -370,19 +370,19 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
     }
 
     class RegisterExpression extends Expression {
-        Symbol _register;
+        Symbol register;
 
         RegisterExpression(Symbol register) {
-            _register = register;
+            this.register = register;
         }
 
         Symbol register() {
-            return _register;
+            return register;
         }
 
         @Override
         Expression evaluate() {
-            return new NumberExpression(_integerRegisters.get(_register).toLong());
+            return new NumberExpression(integerRegisters.get(register).toLong());
         }
 
         @Override
@@ -396,14 +396,14 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
     }
 
     class NumberExpression extends Expression {
-        long _value;
+        long value;
 
         NumberExpression(long value) {
-            _value = value;
+            this.value = value;
         }
 
         long value() {
-            return _value;
+            return value;
         }
 
         @Override
@@ -415,7 +415,7 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
         public boolean equals(Object other) {
             if (other instanceof NumberExpression) {
                 final NumberExpression otherNumber    = (NumberExpression) other;
-                return otherNumber._value == _value;
+                return otherNumber.value == value;
             }
             return false;
         }
@@ -424,7 +424,7 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
         boolean lt(Object other) {
             if (other instanceof NumberExpression) {
                 final NumberExpression otherNumber    = (NumberExpression) other;
-                return otherNumber._value < _value;
+                return otherNumber.value < value;
             }
             return false;
         }
@@ -433,7 +433,7 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
         boolean le(Object other) {
             if (other instanceof NumberExpression) {
                 final NumberExpression otherNumber    = (NumberExpression) other;
-                return otherNumber._value <= _value;
+                return otherNumber.value <= value;
             }
             return false;
         }
@@ -442,7 +442,7 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
         boolean gt(Object other) {
             if (other instanceof NumberExpression) {
                 final NumberExpression otherNumber    = (NumberExpression) other;
-                return otherNumber._value > _value;
+                return otherNumber.value > value;
             }
             return false;
         }
@@ -451,21 +451,21 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
         boolean ge(Object other) {
             if (other instanceof NumberExpression) {
                 final NumberExpression otherNumber    = (NumberExpression) other;
-                return otherNumber._value >= _value;
+                return otherNumber.value >= value;
             }
             return false;
         }
     }
 
     static class BooleanExpression extends Expression {
-        boolean _value;
+        boolean value;
 
         BooleanExpression(boolean value) {
-            _value = value;
+            this.value = value;
         }
 
         boolean value() {
-            return _value;
+            return value;
         }
 
         @Override
@@ -478,62 +478,62 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
     }
 
     class AddressMemoryExpression extends MemoryExpression {
-        Address _address;
+        Address address;
 
         AddressMemoryExpression(Address address) {
-            _address = address;
+            this.address = address;
         }
 
         void setAddress(Address address) {
-            _address = address;
+            this.address = address;
         }
 
         Address address() {
-            return _address;
+            return address;
         }
 
         @Override
         Expression evaluate() {
-            return new NumberExpression(teleVM().dataAccess().readLong(_address));
+            return new NumberExpression(teleVM().dataAccess().readLong(address));
         }
     }
 
     class RegisterMemoryExpression extends MemoryExpression {
-        RegisterExpression _registerExpression;
-        AddressMemoryExpression _addressMemoryExpression = new AddressMemoryExpression(Address.zero());
+        RegisterExpression registerExpression;
+        AddressMemoryExpression addressMemoryExpression = new AddressMemoryExpression(Address.zero());
 
         RegisterMemoryExpression(RegisterExpression registerExpression) {
-            _registerExpression = registerExpression;
+            this.registerExpression = registerExpression;
         }
 
         @Override
         Expression evaluate() {
-            final NumberExpression addressExpression = (NumberExpression) _registerExpression.evaluate();
-            _addressMemoryExpression.setAddress(Address.fromLong(addressExpression.value()));
-            return _addressMemoryExpression.evaluate();
+            final NumberExpression addressExpression = (NumberExpression) registerExpression.evaluate();
+            addressMemoryExpression.setAddress(Address.fromLong(addressExpression.value()));
+            return addressMemoryExpression.evaluate();
         }
     }
 
     class OffsetRegisterMemoryExpression extends RegisterMemoryExpression {
-        int _offset;
-        Operator _operator;
+        int offset;
+        Operator operator;
 
         OffsetRegisterMemoryExpression(RegisterExpression registerExpression, Operator operator, NumberExpression offset) {
             super(registerExpression);
-            _offset = (int) offset.value();
-            _operator = operator;
+            this.offset = (int) offset.value();
+            this.operator = operator;
         }
 
         @Override
         Expression evaluate() {
-            final NumberExpression addressExpression = (NumberExpression) _registerExpression.evaluate();
+            final NumberExpression addressExpression = (NumberExpression) registerExpression.evaluate();
             Address address = Address.fromLong(addressExpression.value());
-            switch (_operator) {
+            switch (operator) {
                 case PLUS:
-                    address = address.plus(_offset);
+                    address = address.plus(offset);
                     break;
                 case MINUS:
-                    address = address.minus(_offset);
+                    address = address.minus(offset);
                     break;
                 default:
             }

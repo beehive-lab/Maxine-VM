@@ -34,13 +34,13 @@ public class SizeTest extends WordTestCase {
     }
 
     public void test_toString() {
-        String s = _sizeLow.toString();
-        assertEquals(s, "#" + Integer.toString(_low));
+        String s = sizeLow.toString();
+        assertEquals(s, "#" + Integer.toString(low));
 
-        s = _size0.toString();
+        s = size0.toString();
         assertEquals(s, "#0");
 
-        s = _sizeMax.toString();
+        s = sizeMax.toString();
         switch (wordWidth()) {
             case BITS_64:
                 assertEquals(s, "#18446744073709551615");
@@ -55,19 +55,19 @@ public class SizeTest extends WordTestCase {
     }
 
     public void test_add_Size() {
-        assertTrue(_sizeMedium.plus(_sizeLow).toInt() == _medium + _low);
-        assertTrue(_size0.plus(_size0).equals(_size0));
-        assertTrue(_sizeMax.plus(_size1).toLong() == 0L);
+        assertTrue(sizeMedium.plus(sizeLow).toInt() == medium + low);
+        assertTrue(size0.plus(size0).equals(size0));
+        assertTrue(sizeMax.plus(size1).toLong() == 0L);
 
-        final long result = _sizeHigh.plus(_sizeLow).toLong();
+        final long result = sizeHigh.plus(sizeLow).toLong();
         switch (wordWidth()) {
             case BITS_64:
-                assertTrue(result == _high + _low);
-                assertFalse(result == ((int) _high + _low));
+                assertTrue(result == high + low);
+                assertFalse(result == ((int) high + low));
                 break;
             case BITS_32:
-                assertFalse(result == _high + _low);
-                assertTrue(result == ((int) _high + _low));
+                assertFalse(result == high + low);
+                assertTrue(result == ((int) high + low));
                 break;
             default:
                 ProgramError.unknownCase();
@@ -76,41 +76,41 @@ public class SizeTest extends WordTestCase {
     }
 
     public void test_add_Offset() {
-        assertTrue(_size0.plus(_offset1).equals(_size1));
-        assertTrue(_size1.plus(_offset1.negate()).equals(_size0));
-        assertTrue(_sizeMedium.plus(Offset.fromInt(_low)).toInt() == _medium + _low);
-        assertTrue(_sizeMedium.plus(Offset.fromInt(-_low)).toInt() == _medium - _low);
-        assertTrue(_size0.plus(Offset.zero()).equals(_size0));
+        assertTrue(size0.plus(offset1).equals(size1));
+        assertTrue(size1.plus(offset1.negate()).equals(size0));
+        assertTrue(sizeMedium.plus(Offset.fromInt(low)).toInt() == medium + low);
+        assertTrue(sizeMedium.plus(Offset.fromInt(-low)).toInt() == medium - low);
+        assertTrue(size0.plus(Offset.zero()).equals(size0));
 
-        assertTrue(_sizeMax.plus(_offset1).toLong() == 0L);
-        assertTrue(_size0.plus(_offset1.negate()).equals(_sizeMax));
+        assertTrue(sizeMax.plus(offset1).toLong() == 0L);
+        assertTrue(size0.plus(offset1.negate()).equals(sizeMax));
 
-        long result = _sizeHigh.plus(_offsetLow).toLong();
+        long result = sizeHigh.plus(offsetLow).toLong();
         switch (wordWidth()) {
             case BITS_64:
-                assertTrue(result == _high + _low);
-                assertFalse(result == ((int) _high + _low));
+                assertTrue(result == high + low);
+                assertFalse(result == ((int) high + low));
                 break;
             case BITS_32:
-                assertFalse(result == _high + _low);
-                assertTrue(result == ((int) _high + _low));
+                assertFalse(result == high + low);
+                assertTrue(result == ((int) high + low));
                 break;
             default:
                 ProgramError.unknownCase();
                 break;
         }
-        assertTrue(_sizeLow.plus(_offsetHigh).equals(Address.fromLong(result)));
+        assertTrue(sizeLow.plus(offsetHigh).equals(Address.fromLong(result)));
 
-        result = _sizeLow.plus(_offsetHigh.negate()).toLong();
-        final long difference = _low - _high;
+        result = sizeLow.plus(offsetHigh.negate()).toLong();
+        final long difference = low - high;
         final long differenceLowBits = difference & 0xffffffffL;
         switch (wordWidth()) {
             case BITS_64:
-                assertTrue(result == _low - _high);
+                assertTrue(result == low - high);
                 assertFalse(result == differenceLowBits);
                 break;
             case BITS_32:
-                assertFalse(result == _low - _high);
+                assertFalse(result == low - high);
                 assertTrue(result == differenceLowBits);
                 break;
             default:
@@ -120,49 +120,49 @@ public class SizeTest extends WordTestCase {
     }
 
     public void test_add_int() {
-        assertTrue(_size0.plus(1).equals(_size1));
-        assertTrue(_size1.plus(-1).equals(_size0));
-        assertTrue(_sizeMedium.plus(_low).toInt() == _medium + _low);
-        assertTrue(_sizeMedium.plus(-_low).toInt() == _medium - _low);
-        assertTrue(_size0.plus(0).equals(_size0));
+        assertTrue(size0.plus(1).equals(size1));
+        assertTrue(size1.plus(-1).equals(size0));
+        assertTrue(sizeMedium.plus(low).toInt() == medium + low);
+        assertTrue(sizeMedium.plus(-low).toInt() == medium - low);
+        assertTrue(size0.plus(0).equals(size0));
 
-        assertTrue(_sizeMax.plus(1).toLong() == 0L);
-        assertTrue(_size0.plus(-1).equals(_sizeMax));
+        assertTrue(sizeMax.plus(1).toLong() == 0L);
+        assertTrue(size0.plus(-1).equals(sizeMax));
 
-        final long result = _sizeHigh.plus(_low).toLong();
+        final long result = sizeHigh.plus(low).toLong();
         switch (wordWidth()) {
             case BITS_64:
-                assertTrue(result == _high + _low);
-                assertFalse(result == ((int) _high + _low));
+                assertTrue(result == high + low);
+                assertFalse(result == ((int) high + low));
                 break;
             case BITS_32:
-                assertFalse(result == _high + _low);
-                assertTrue(result == ((int) _high + _low));
+                assertFalse(result == high + low);
+                assertTrue(result == ((int) high + low));
                 break;
             default:
                 ProgramError.unknownCase();
                 break;
         }
-        assertTrue(_sizeLow.plus((int) _high).equals(Address.fromInt(_low + (int) _high)));
+        assertTrue(sizeLow.plus((int) high).equals(Address.fromInt(low + (int) high)));
     }
 
     public void test_subtract_Size() {
-        assertTrue(_address1.minus(_address1).equals(_address0));
-        assertTrue(_address0.minus(_address1).equals(_addressMax));
-        assertTrue(_addressMedium.minus(_addressLow).toInt() == _medium - _low);
+        assertTrue(address1.minus(address1).equals(address0));
+        assertTrue(address0.minus(address1).equals(addressMax));
+        assertTrue(addressMedium.minus(addressLow).toInt() == medium - low);
     }
 
     public void test_subtract_Offset() {
-        assertTrue(_address1.minus(_offset1).equals(_address0));
-        assertTrue(_addressMedium.minus(_offsetLow).toInt() == _medium - _low);
-        assertTrue(_address0.minus(_offset1).equals(_addressMax));
+        assertTrue(address1.minus(offset1).equals(address0));
+        assertTrue(addressMedium.minus(offsetLow).toInt() == medium - low);
+        assertTrue(address0.minus(offset1).equals(addressMax));
         switch (wordWidth()) {
             case BITS_64:
-                assertTrue(_addressLow.minus(_offsetMedium).equals(_offsetLow.minus(_offsetMedium)));
+                assertTrue(addressLow.minus(offsetMedium).equals(offsetLow.minus(offsetMedium)));
                 break;
             case BITS_32:
-                final long v = ((long) _low - (long) _medium) & LOW_32_BITS_MASK;
-                assertTrue(_addressLow.minus(_offsetMedium).toLong() == v);
+                final long v = ((long) low - (long) medium) & LOW_32_BITS_MASK;
+                assertTrue(addressLow.minus(offsetMedium).toLong() == v);
                 break;
             default:
                 ProgramError.unknownCase();
@@ -171,56 +171,56 @@ public class SizeTest extends WordTestCase {
     }
 
     public void test_subtract_int() {
-        assertTrue(_address1.minus(1).equals(_address0));
-        assertTrue(_addressMedium.minus(_low).toInt() == _medium - _low);
-        assertTrue(_addressMedium.minus(_low).equals(_offsetLow.negate().plus(_offsetMedium)));
-        assertTrue(_address0.minus(1).equals(_addressMax));
+        assertTrue(address1.minus(1).equals(address0));
+        assertTrue(addressMedium.minus(low).toInt() == medium - low);
+        assertTrue(addressMedium.minus(low).equals(offsetLow.negate().plus(offsetMedium)));
+        assertTrue(address0.minus(1).equals(addressMax));
     }
 
     public void test_divide() {
         try {
-            _sizeLow.dividedBy(0);
+            sizeLow.dividedBy(0);
             fail();
         } catch (ArithmeticException arithmeticException) {
         }
         try {
-            _sizeLow.dividedBy(-1);
+            sizeLow.dividedBy(-1);
         } catch (ArithmeticException arithmeticException) {
         }
-        assertTrue(_sizeLow.dividedBy(4).toInt() == _low / 4);
-        assertTrue(_size0.dividedBy(42).toInt() == 0);
+        assertTrue(sizeLow.dividedBy(4).toInt() == low / 4);
+        assertTrue(size0.dividedBy(42).toInt() == 0);
     }
 
     public void test_remainder() {
         try {
-            _sizeLow.remainder(0);
+            sizeLow.remainder(0);
             fail();
         } catch (ArithmeticException arithmeticException) {
         }
         try {
-            _sizeLow.remainder(-1);
+            sizeLow.remainder(-1);
         } catch (ArithmeticException arithmeticException) {
         }
         for (int i = 0; i < 10; i++) {
             assertTrue(Size.fromInt(i).remainder(4) == i % 4);
         }
-        assertTrue(_size0.remainder(42) == 0);
+        assertTrue(size0.remainder(42) == 0);
     }
 
     public void test_isRoundedBy() {
         try {
-            _sizeLow.isRoundedBy(0);
+            sizeLow.isRoundedBy(0);
             fail();
         } catch (ArithmeticException arithmeticException) {
         }
         try {
-            _sizeLow.isRoundedBy(-1);
+            sizeLow.isRoundedBy(-1);
         } catch (ArithmeticException arithmeticException) {
         }
         for (int i = 0; i < 10; i++) {
             assertTrue(Size.fromInt(i).isRoundedBy(4) == (i % 4 == 0));
         }
-        assertTrue(_size0.isRoundedBy(42));
+        assertTrue(size0.isRoundedBy(42));
     }
 
     private int roundedUpBy(int base, int number) {
@@ -233,34 +233,34 @@ public class SizeTest extends WordTestCase {
 
     public void test_roundedUpBy() {
         try {
-            _sizeLow.roundedUpBy(0);
+            sizeLow.roundedUpBy(0);
             fail();
         } catch (ArithmeticException arithmeticException) {
         }
         try {
-            _sizeLow.roundedUpBy(-1);
+            sizeLow.roundedUpBy(-1);
         } catch (ArithmeticException arithmeticException) {
         }
         for (int i = 0; i < 20; i++) {
             assertTrue(Size.fromInt(i).roundedUpBy(8).toInt() == roundedUpBy(8, i));
         }
-        assertTrue(_size0.roundedUpBy(12).equals(_size0));
+        assertTrue(size0.roundedUpBy(12).equals(size0));
     }
 
     public void test_roundedDownBy() {
         try {
-            _sizeLow.roundedDownBy(0);
+            sizeLow.roundedDownBy(0);
             fail();
         } catch (ArithmeticException arithmeticException) {
         }
         try {
-            _sizeLow.roundedDownBy(-1);
+            sizeLow.roundedDownBy(-1);
         } catch (ArithmeticException arithmeticException) {
         }
         for (int i = 0; i < 20; i++) {
             assertTrue(Size.fromInt(i).roundedDownBy(8).toInt() == (i & ~7));
         }
-        assertTrue(_size0.roundedDownBy(12).equals(_size0));
+        assertTrue(size0.roundedDownBy(12).equals(size0));
     }
 
 }

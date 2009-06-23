@@ -25,28 +25,28 @@ package test.hotpath;
  * @Runs: 40 = 4972; 1000 = 2019980;
  */
 public class HP_field04 {
-    public byte _b;
-    public char _c;
-    public short _s;
-    public int _i;
-    public long _l;
-    public float _f;
-    public double _d;
+    public byte b;
+    public char c;
+    public short s;
+    public int i;
+    public long l;
+    public float f;
+    public double d;
 
     public static int test(int count) {
         return new HP_field04().run(count);
     }
 
     public int run(int count) {
-        for (int i = 0; i <= count; i++) {
-            _b += i;
-            _c += i;
-            _s += i;
-            _i += i;
-            _l += i;
-            _f += i;
-            _d += i;
+        for (int x = 0; x <= count; x++) {
+            b += x;
+            c += x;
+            s += x;
+            i += x;
+            l += x;
+            f += x;
+            d += x;
         }
-        return (int) (_b + _c + _s + _i + _l + _f + _d);
+        return (int) (b + c + s + i + l + f + d);
     }
 }

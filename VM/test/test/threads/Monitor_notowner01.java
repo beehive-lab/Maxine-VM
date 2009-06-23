@@ -27,15 +27,15 @@ package test.threads;
 
 public class Monitor_notowner01 {
 
-    static Object _monitor = new Object();
-    static Object _finished = new Object();
+    static Object monitor = new Object();
+    static Object finished = new Object();
 
     public static boolean test(int i) throws InterruptedException {
         final BadRunnable badRunnable = new BadRunnable();
-        synchronized (_monitor) {
+        synchronized (monitor) {
             new Thread(badRunnable).start();
-            synchronized (_finished) {
-                _finished.wait(1000);
+            synchronized (finished) {
+                finished.wait(1000);
             }
         }
         return badRunnable.caught;
@@ -46,13 +46,13 @@ public class Monitor_notowner01 {
         public void run() {
             try {
                 // we don't own this!
-                _monitor.wait();
+                monitor.wait();
             } catch (InterruptedException ex) {
 
             } catch (IllegalMonitorStateException ex) {
                 caught = true;
-                synchronized(_finished) {
-                    _finished.notifyAll();
+                synchronized(finished) {
+                    finished.notifyAll();
                 }
             }
         }

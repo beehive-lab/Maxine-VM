@@ -38,29 +38,29 @@ import com.sun.max.vm.thread.*;
  */
 public final class TeleStackFrameWalker extends StackFrameWalker {
 
-    private final TeleVM _teleVM;
-    private final TeleThreadLocalValues _teleEnabledVmThreadLocalValues;
-    private final TeleNativeThread _teleNativeThread;
+    private final TeleVM teleVM;
+    private final TeleThreadLocalValues teleEnabledVmThreadLocalValues;
+    private final TeleNativeThread teleNativeThread;
 
-    private final Pointer _cpuInstructionPointer;
-    private final Pointer _cpuStackPointer;
-    private final Pointer _cpuFramePointer;
+    private final Pointer cpuInstructionPointer;
+    private final Pointer cpuStackPointer;
+    private final Pointer cpuFramePointer;
 
     public TeleStackFrameWalker(TeleVM teleVM, TeleNativeThread teleNativeThread) {
         super(teleVM.vmConfiguration().compilerScheme());
-        _teleVM = teleVM;
-        _teleNativeThread = teleNativeThread;
-        _teleEnabledVmThreadLocalValues = teleNativeThread.threadLocalsFor(Safepoint.State.ENABLED);
-        _cpuInstructionPointer = teleNativeThread.instructionPointer();
-        _cpuStackPointer = teleNativeThread.stackPointer();
-        _cpuFramePointer = teleNativeThread.framePointer();
+        this.teleVM = teleVM;
+        this.teleNativeThread = teleNativeThread;
+        this.teleEnabledVmThreadLocalValues = teleNativeThread.threadLocalsFor(Safepoint.State.ENABLED);
+        this.cpuInstructionPointer = teleNativeThread.instructionPointer();
+        this.cpuStackPointer = teleNativeThread.stackPointer();
+        this.cpuFramePointer = teleNativeThread.framePointer();
     }
 
     public class ErrorStackFrame extends StackFrame {
-        private final String _errorMessage;
+        private final String errorMessage;
         ErrorStackFrame(StackFrame callee, StackFrameWalker walker, String errorMessage) {
             super(callee, walker.instructionPointer(), walker.stackPointer(), walker.framePointer());
-            _errorMessage = errorMessage;
+            this.errorMessage = errorMessage;
         }
 
         @Override
@@ -74,7 +74,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
         }
 
         public String errorMessage() {
-            return _errorMessage;
+            return errorMessage;
         }
 
         @Override
@@ -94,7 +94,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
     public Sequence<StackFrame> frames() {
         final AppendableSequence<StackFrame> frames = new LinkSequence<StackFrame>();
         try {
-            frames(frames, _cpuInstructionPointer, _cpuStackPointer, _cpuFramePointer);
+            frames(frames, cpuInstructionPointer, cpuStackPointer, cpuFramePointer);
         } catch (Throwable e) {
             final StackFrame parentFrame = frames.isEmpty() ? null : frames.last();
             frames.append(new ErrorStackFrame(parentFrame, this, e.toString()));
@@ -104,12 +104,12 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
 
     @Override
     public boolean isThreadInNative() {
-        return _teleEnabledVmThreadLocalValues != null && !_teleEnabledVmThreadLocalValues.isInJavaCode();
+        return teleEnabledVmThreadLocalValues != null && !teleEnabledVmThreadLocalValues.isInJavaCode();
     }
 
     @Override
     public TargetMethod targetMethodFor(Pointer instructionPointer) {
-        final TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(_teleVM, instructionPointer);
+        final TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(teleVM, instructionPointer);
         if (teleTargetMethod != null) {
             return teleTargetMethod.reducedShallowCopy();
         }
@@ -118,7 +118,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
 
     @Override
     protected RuntimeStub runtimeStubFor(Pointer instructionPointer) {
-        final TeleRuntimeStub teleRuntimeStub = TeleRuntimeStub.make(_teleVM, instructionPointer);
+        final TeleRuntimeStub teleRuntimeStub = TeleRuntimeStub.make(teleVM, instructionPointer);
         if (teleRuntimeStub != null) {
             return teleRuntimeStub.runtimeStub();
         }
@@ -126,33 +126,33 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
     }
     @Override
     public byte readByte(Address address, int offset) {
-        return _teleVM.dataAccess().readByte(address, offset);
+        return teleVM.dataAccess().readByte(address, offset);
     }
 
     @Override
     public Word readWord(Address address, int offset) {
-        return _teleVM.dataAccess().readWord(address, offset);
+        return teleVM.dataAccess().readWord(address, offset);
     }
 
     @Override
     public int readInt(Address address, int offset) {
-        return _teleVM.dataAccess().readInt(address, offset);
+        return teleVM.dataAccess().readInt(address, offset);
     }
 
     @Override
     public Word readWord(VmThreadLocal local) {
-        return _teleEnabledVmThreadLocalValues.getWord(local);
+        return teleEnabledVmThreadLocalValues.getWord(local);
     }
 
     @Override
     public Word readFramelessCallAddressRegister(TargetABI targetABI) {
-        return _teleNativeThread.integerRegisters().get(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS, targetABI);
+        return teleNativeThread.integerRegisters().get(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS, targetABI);
     }
 
     @Override
     public void useABI(TargetABI targetABI) {
-        final Pointer abiStackPointer = _teleNativeThread.integerRegisters().get(VMRegister.Role.ABI_STACK_POINTER, targetABI);
-        final Pointer abiFramePointer = _teleNativeThread.integerRegisters().get(VMRegister.Role.ABI_FRAME_POINTER, targetABI);
-        advance(_cpuInstructionPointer, abiStackPointer, abiFramePointer);
+        final Pointer abiStackPointer = teleNativeThread.integerRegisters().get(VMRegister.Role.ABI_STACK_POINTER, targetABI);
+        final Pointer abiFramePointer = teleNativeThread.integerRegisters().get(VMRegister.Role.ABI_FRAME_POINTER, targetABI);
+        advance(cpuInstructionPointer, abiStackPointer, abiFramePointer);
     }
 }

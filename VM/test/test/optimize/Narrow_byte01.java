@@ -25,9 +25,9 @@ package test.optimize;
  * @Runs: 0b=0b; 1b=1b; -1b=-1b; 110b=110b
  */
 public class Narrow_byte01 {
-    public static byte _val;
+    public static byte val;
     public static byte test(byte b) {
-        _val = b;
-        return _val;
+        val = b;
+        return val;
     }
 }

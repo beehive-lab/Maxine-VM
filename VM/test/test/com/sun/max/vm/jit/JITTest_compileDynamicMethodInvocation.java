@@ -36,26 +36,26 @@ import com.sun.max.vm.type.*;
  * @author Laurent Daynes
  */
 public class JITTest_compileDynamicMethodInvocation extends JitCompilerTestCase {
-    int _intField;
+    int intField;
 
     int getInt() {
-        return _intField;
+        return intField;
     }
 
     int compute1(int i) {
-        return _intField - i;
+        return intField - i;
     }
 
     int compute2(int i1, int i2) {
-        return i2 * (_intField - i1);
+        return i2 * (intField - i1);
     }
 
     void setInt(int i) {
-        _intField = i;
+        intField = i;
     }
 
     void setInt(int i1, int i2) {
-        _intField = i1 + i2;
+        intField = i1 + i2;
     }
 
     @SuppressWarnings("unused")

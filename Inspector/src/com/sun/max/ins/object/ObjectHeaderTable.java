@@ -52,20 +52,20 @@ public class ObjectHeaderTable extends InspectorTable {
     private static final int HEADER_MISC_ROW = 1;
     private static final int HEADER_ARRAY_LENGTH_ROW = 2;
 
-    private final ObjectInspector _objectInspector;
-    private final Inspection _inspection;
-    private final TeleObject _teleObject;
-    private Pointer _objectOrigin;
-    private TeleHub _teleHub;
-    private final int _hubReferenceOffset; // Property of the layout scheme; doesn't change
-    private final int _miscWordOffset; // Property of the layout scheme; doesn't change
-    private final int _arrayLengthOffset; // Property of the layout scheme; doesn't change
+    private final ObjectInspector objectInspector;
+    private final Inspection inspection;
+    private final TeleObject teleObject;
+    private Pointer objectOrigin;
+    private TeleHub teleHub;
+    private final int hubReferenceOffset; // Property of the layout scheme; doesn't change
+    private final int miscWordOffset; // Property of the layout scheme; doesn't change
+    private final int arrayLengthOffset; // Property of the layout scheme; doesn't change
 
-    private final ObjectHeaderTableModel _model;
-    private final ObjectHeaderTableColumnModel _columnModel;
-    private final TableColumn[] _columns;
+    private final ObjectHeaderTableModel model;
+    private final ObjectHeaderTableColumnModel columnModel;
+    private final TableColumn[] columns;
 
-    private MaxVMState _lastRefreshedState = null;
+    private MaxVMState lastRefreshedState = null;
 
     /**
      * A {@link JTable} specialized to display Maxine object fields.
@@ -74,19 +74,19 @@ public class ObjectHeaderTable extends InspectorTable {
      */
     public ObjectHeaderTable(final ObjectInspector objectInspector) {
         super(objectInspector.inspection());
-        _objectInspector = objectInspector;
-        _inspection = objectInspector.inspection();
-        _teleObject = objectInspector.teleObject();
+        this.objectInspector = objectInspector;
+        this.inspection = objectInspector.inspection();
+        this.teleObject = objectInspector.teleObject();
         final LayoutScheme layoutScheme = maxVM().vmConfiguration().layoutScheme();
-        _hubReferenceOffset = layoutScheme.generalLayout.getOffsetFromOrigin(HeaderField.HUB).toInt();
-        _miscWordOffset = layoutScheme.generalLayout.getOffsetFromOrigin(HeaderField.MISC).toInt();
-        _arrayLengthOffset = layoutScheme.arrayHeaderLayout.getOffsetFromOrigin(HeaderField.LENGTH).toInt();
+        this.hubReferenceOffset = layoutScheme.generalLayout.getOffsetFromOrigin(HeaderField.HUB).toInt();
+        this.miscWordOffset = layoutScheme.generalLayout.getOffsetFromOrigin(HeaderField.MISC).toInt();
+        this.arrayLengthOffset = layoutScheme.arrayHeaderLayout.getOffsetFromOrigin(HeaderField.LENGTH).toInt();
 
-        _model = new ObjectHeaderTableModel();
-        _columns = new TableColumn[ObjectFieldColumnKind.VALUES.length()];
-        _columnModel = new ObjectHeaderTableColumnModel(_objectInspector);
-        setModel(_model);
-        setColumnModel(_columnModel);
+        this.model = new ObjectHeaderTableModel();
+        this.columns = new TableColumn[ObjectFieldColumnKind.VALUES.length()];
+        this.columnModel = new ObjectHeaderTableColumnModel(objectInspector);
+        setModel(model);
+        setColumnModel(columnModel);
         setFillsViewportHeight(true);
         setShowHorizontalLines(style().memoryTableShowHorizontalLines());
         setShowVerticalLines(style().memoryTableShowVerticalLines());
@@ -94,8 +94,8 @@ public class ObjectHeaderTable extends InspectorTable {
         setRowHeight(style().memoryTableRowHeight());
         setRowSelectionAllowed(true);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, _inspection.style().defaultBorderColor()));
-        addMouseListener(new TableCellMouseClickAdapter(_inspection, this) {
+        setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, inspection.style().defaultBorderColor()));
+        addMouseListener(new TableCellMouseClickAdapter(inspection, this) {
 
             @Override
             public void procedure(final MouseEvent mouseEvent) {
@@ -104,7 +104,7 @@ public class ObjectHeaderTable extends InspectorTable {
                 if (selectedRow != -1 && selectedColumn != -1) {
                     // Left button selects a table cell; also cause an address selection at the row.
                     if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
-                        _inspection.focus().setAddress(_model.rowToAddress(selectedRow));
+                        inspection.focus().setAddress(model.rowToAddress(selectedRow));
                     }
                 }
                 if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
@@ -116,7 +116,7 @@ public class ObjectHeaderTable extends InspectorTable {
                         final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
                         if (modelIndex == ObjectFieldColumnKind.TAG.ordinal()) {
                             final InspectorMenu menu = new InspectorMenu();
-                            final Address address = _model.rowToAddress(hitRowIndex);
+                            final Address address = model.rowToAddress(hitRowIndex);
                             menu.add(actions().setWordWatchpoint(address, "Watch this memory word"));
                             menu.add(actions().removeWatchpoint(address, "Un-watch this memory word"));
                             menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
@@ -131,12 +131,12 @@ public class ObjectHeaderTable extends InspectorTable {
     }
 
     public void refresh(boolean force) {
-        if (maxVMState().newerThan(_lastRefreshedState) || force) {
-            _lastRefreshedState = maxVMState();
-            _objectOrigin = _teleObject.getCurrentOrigin();
-            _teleHub = _teleObject.getTeleHub();
+        if (maxVMState().newerThan(lastRefreshedState) || force) {
+            lastRefreshedState = maxVMState();
+            objectOrigin = teleObject.getCurrentOrigin();
+            teleHub = teleObject.getTeleHub();
             final int oldSelectedRow = getSelectedRow();
-            final int newRow = _model.addressToRow(focus().address());
+            final int newRow = model.addressToRow(focus().address());
             if (newRow >= 0) {
                 getSelectionModel().setSelectionInterval(newRow, newRow);
             } else {
@@ -144,7 +144,7 @@ public class ObjectHeaderTable extends InspectorTable {
                     getSelectionModel().clearSelection();
                 }
             }
-            for (TableColumn column : _columns) {
+            for (TableColumn column : columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
                 prober.refresh(force);
             }
@@ -152,7 +152,7 @@ public class ObjectHeaderTable extends InspectorTable {
     }
 
     public void redisplay() {
-        for (TableColumn column : _columns) {
+        for (TableColumn column : columns) {
             final Prober prober = (Prober) column.getCellRenderer();
             prober.redisplay();
         }
@@ -178,13 +178,13 @@ public class ObjectHeaderTable extends InspectorTable {
      */
     @Override
     protected JTableHeader createDefaultTableHeader() {
-        return new JTableHeader(_columnModel) {
+        return new JTableHeader(columnModel) {
 
             @Override
             public String getToolTipText(java.awt.event.MouseEvent mouseEvent) {
                 final Point p = mouseEvent.getPoint();
-                final int index = _columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = _columnModel.getColumn(index).getModelIndex();
+                final int index = columnModel.getColumnIndexAtX(p.x);
+                final int modelIndex = columnModel.getColumn(index).getModelIndex();
                 return ObjectFieldColumnKind.VALUES.get(modelIndex).toolTipText();
             }
         };
@@ -200,7 +200,7 @@ public class ObjectHeaderTable extends InspectorTable {
         }
 
         public int getRowCount() {
-            switch (_teleObject.getObjectKind()) {
+            switch (teleObject.getObjectKind()) {
                 case TUPLE:
                     return 2;
                 case ARRAY:
@@ -224,11 +224,11 @@ public class ObjectHeaderTable extends InspectorTable {
         public int rowToOffset(int row) {
             switch (row) {
                 case HEADER_HUB_ROW:
-                    return _hubReferenceOffset;
+                    return hubReferenceOffset;
                 case HEADER_MISC_ROW:
-                    return _miscWordOffset;
+                    return miscWordOffset;
                 case HEADER_ARRAY_LENGTH_ROW:
-                    return _arrayLengthOffset;
+                    return arrayLengthOffset;
                 default:
                     ProgramError.unexpected();
             }
@@ -236,13 +236,13 @@ public class ObjectHeaderTable extends InspectorTable {
         }
 
         public Address rowToAddress(int row) {
-            return _objectOrigin.plus(rowToOffset(row)).asAddress();
+            return objectOrigin.plus(rowToOffset(row)).asAddress();
         }
 
         public TypeDescriptor rowToType(int row) {
             switch (row) {
                 case HEADER_HUB_ROW:
-                    return _teleHub == null ? null : JavaTypeDescriptor.forJavaClass(_teleHub.hub().getClass());
+                    return teleHub == null ? null : JavaTypeDescriptor.forJavaClass(teleHub.hub().getClass());
                 case HEADER_MISC_ROW:
                     return JavaTypeDescriptor.WORD;
                 case HEADER_ARRAY_LENGTH_ROW:
@@ -282,10 +282,10 @@ public class ObjectHeaderTable extends InspectorTable {
         public int addressToRow(Address address) {
             if (!address.isZero()) {
                 final int wordSize = maxVM().wordSize();
-                final Address endAddress = _teleObject.getObjectKind() == ObjectKind.TUPLE ? _objectOrigin.plus(_miscWordOffset + wordSize) : _objectOrigin.plus(_arrayLengthOffset +
+                final Address endAddress = teleObject.getObjectKind() == ObjectKind.TUPLE ? objectOrigin.plus(miscWordOffset + wordSize) : objectOrigin.plus(arrayLengthOffset +
                     wordSize);
-                if (address.greaterEqual(_objectOrigin) && address.lessThan(endAddress)) {
-                    return address.minus(_objectOrigin).dividedBy(wordSize).toInt();
+                if (address.greaterEqual(objectOrigin) && address.lessThan(endAddress)) {
+                    return address.minus(objectOrigin).dividedBy(wordSize).toInt();
                 }
             }
             return -1;
@@ -310,35 +310,35 @@ public class ObjectHeaderTable extends InspectorTable {
 
         private void createColumn(ObjectFieldColumnKind columnKind, TableCellRenderer renderer, boolean isVisible) {
             final int col = columnKind.ordinal();
-            _columns[col] = new TableColumn(col, 0, renderer, null);
-            _columns[col].setHeaderValue(columnKind.label());
-            _columns[col].setMinWidth(columnKind.minWidth());
+            columns[col] = new TableColumn(col, 0, renderer, null);
+            columns[col].setHeaderValue(columnKind.label());
+            columns[col].setMinWidth(columnKind.minWidth());
             if (isVisible) {
-                addColumn(_columns[col]);
+                addColumn(columns[col]);
             }
-            _columns[col].setIdentifier(columnKind);
+            columns[col].setIdentifier(columnKind);
         }
     }
 
     private final class TagRenderer extends MemoryTagTableCellRenderer implements TableCellRenderer {
 
         TagRenderer() {
-            super(_inspection);
+            super(inspection);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            return getRenderer(_model.rowToAddress(row), focus().thread(), _model.rowToWatchpoint(row));
+            return getRenderer(model.rowToAddress(row), focus().thread(), model.rowToWatchpoint(row));
         }
     }
 
     private final class AddressRenderer extends LocationLabel.AsAddressWithOffset implements TableCellRenderer {
 
         AddressRenderer() {
-            super(_inspection);
+            super(inspection);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(_model.rowToOffset(row), _objectOrigin);
+            setValue(model.rowToOffset(row), objectOrigin);
             return this;
         }
     }
@@ -346,11 +346,11 @@ public class ObjectHeaderTable extends InspectorTable {
     private final class PositionRenderer extends LocationLabel.AsOffset implements TableCellRenderer {
 
         public PositionRenderer() {
-            super(_inspection);
+            super(inspection);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(_model.rowToOffset(row), _objectOrigin);
+            setValue(model.rowToOffset(row), objectOrigin);
             return this;
         }
     }
@@ -358,11 +358,11 @@ public class ObjectHeaderTable extends InspectorTable {
     private final class TypeRenderer extends TypeLabel implements TableCellRenderer {
 
         public TypeRenderer() {
-            super(_inspection);
+            super(inspection);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            setValue(_model.rowToType(row));
+            setValue(model.rowToType(row));
             return this;
         }
     }
@@ -370,41 +370,41 @@ public class ObjectHeaderTable extends InspectorTable {
     private final class NameRenderer extends JavaNameLabel implements TableCellRenderer {
 
         public NameRenderer() {
-            super(_inspection);
+            super(inspection);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(_model.rowToName(row));
+            setValue(model.rowToName(row));
             return this;
         }
     }
 
     private final class ValueRenderer implements TableCellRenderer, Prober {
 
-        private InspectorLabel[] _labels = new InspectorLabel[MAX_ROW_COUNT];
+        private InspectorLabel[] labels = new InspectorLabel[MAX_ROW_COUNT];
 
         public ValueRenderer() {
 
             // Hub
-            _labels[HEADER_HUB_ROW] = new WordValueLabel(_inspection, WordValueLabel.ValueMode.REFERENCE, ObjectHeaderTable.this) {
+            labels[HEADER_HUB_ROW] = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, ObjectHeaderTable.this) {
 
                 @Override
                 public Value fetchValue() {
-                    if (_teleHub != null) {
-                        return WordValue.from(_teleHub.getCurrentOrigin());
+                    if (teleHub != null) {
+                        return WordValue.from(teleHub.getCurrentOrigin());
                     }
                     return WordValue.ZERO;
                 }
             };
 
             // Misc word
-            _labels[HEADER_MISC_ROW] = new MiscWordLabel(_inspection, _teleObject);
+            labels[HEADER_MISC_ROW] = new MiscWordLabel(inspection, teleObject);
 
             // Array length (only for array and hybrid objects).
-            switch (_teleObject.getObjectKind()) {
+            switch (teleObject.getObjectKind()) {
                 case ARRAY: {
-                    final TeleArrayObject teleArrayObject = (TeleArrayObject) _teleObject;
-                    _labels[HEADER_ARRAY_LENGTH_ROW] = new PrimitiveValueLabel(_inspection, Kind.INT) {
+                    final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject;
+                    labels[HEADER_ARRAY_LENGTH_ROW] = new PrimitiveValueLabel(inspection, Kind.INT) {
 
                         @Override
                         public Value fetchValue() {
@@ -414,8 +414,8 @@ public class ObjectHeaderTable extends InspectorTable {
                     break;
                 }
                 case HYBRID: {
-                    final TeleHybridObject teleHybridObject = (TeleHybridObject) _teleObject;
-                    _labels[HEADER_ARRAY_LENGTH_ROW] = new PrimitiveValueLabel(_inspection, Kind.INT) {
+                    final TeleHybridObject teleHybridObject = (TeleHybridObject) teleObject;
+                    labels[HEADER_ARRAY_LENGTH_ROW] = new PrimitiveValueLabel(inspection, Kind.INT) {
 
                         @Override
                         public Value fetchValue() {
@@ -426,24 +426,24 @@ public class ObjectHeaderTable extends InspectorTable {
                 }
                 case TUPLE: {
                     // Dummy; never used
-                    _labels[HEADER_ARRAY_LENGTH_ROW] = new TextLabel(_inspection, "");
+                    labels[HEADER_ARRAY_LENGTH_ROW] = new TextLabel(inspection, "");
                     break;
                 }
             }
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            return _labels[row];
+            return labels[row];
         }
 
         public void redisplay() {
-            for (InspectorLabel label : _labels) {
+            for (InspectorLabel label : labels) {
                 label.redisplay();
             }
         }
 
         public void refresh(boolean force) {
-            for (InspectorLabel label : _labels) {
+            for (InspectorLabel label : labels) {
                 label.refresh(force);
             }
         }
@@ -451,34 +451,34 @@ public class ObjectHeaderTable extends InspectorTable {
 
     private final class RegionRenderer implements TableCellRenderer, Prober {
 
-        private final InspectorLabel _regionLabel;
-        private final InspectorLabel _dummyLabel;
+        private final InspectorLabel regionLabel;
+        private final InspectorLabel dummyLabel;
 
         public RegionRenderer() {
-            _regionLabel = new MemoryRegionValueLabel(_inspection) {
+            regionLabel = new MemoryRegionValueLabel(inspection) {
 
                 @Override
                 public Value fetchValue() {
-                    if (_teleHub != null) {
-                        return WordValue.from(_teleHub.getCurrentOrigin());
+                    if (teleHub != null) {
+                        return WordValue.from(teleHub.getCurrentOrigin());
                     }
                     return WordValue.ZERO;
                 }
             };
-            _dummyLabel = new PlainLabel(_inspection, "");
+            dummyLabel = new PlainLabel(inspection, "");
         }
 
         public void refresh(boolean force) {
-            _regionLabel.refresh(force);
+            regionLabel.refresh(force);
         }
 
         public void redisplay() {
-            _regionLabel.redisplay();
-            _dummyLabel.redisplay();
+            regionLabel.redisplay();
+            dummyLabel.redisplay();
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            return row == HEADER_HUB_ROW ? _regionLabel : _dummyLabel;
+            return row == HEADER_HUB_ROW ? regionLabel : dummyLabel;
         }
     }
 

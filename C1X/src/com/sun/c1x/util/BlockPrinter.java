@@ -32,39 +32,39 @@ import com.sun.c1x.value.*;
  */
 public class BlockPrinter implements BlockClosure {
 
-    private final InstructionPrinter _ip;
-    private final boolean _cfgOnly;
-    private final boolean _liveOnly;
+    private final InstructionPrinter ip;
+    private final boolean cfgOnly;
+    private final boolean liveOnly;
 
     public BlockPrinter(InstructionPrinter ip, boolean cfgOnly, boolean liveOnly) {
-        _ip = ip;
-        _cfgOnly = cfgOnly;
-        _liveOnly = liveOnly;
+        this.ip = ip;
+        this.cfgOnly = cfgOnly;
+        this.liveOnly = liveOnly;
     }
 
     public void apply(BlockBegin block) {
-        if (_cfgOnly) {
-            _ip.printInstruction(block);
-            _ip.out().println();
+        if (cfgOnly) {
+            ip.printInstruction(block);
+            ip.out().println();
         } else {
-            printBlock(block, _liveOnly);
+            printBlock(block, liveOnly);
         }
     }
 
     public void printBlock(BlockBegin block, boolean liveOnly) {
-        _ip.printInstruction(block);
-        LogStream out = _ip.out();
+        ip.printInstruction(block);
+        LogStream out = ip.out();
         out.println();
         printStack(block.state(), out);
         out.println();
 
         out.println("inlining depth " + block.scope().level);
 
-        _ip.printInstructionListingHeader();
+        ip.printInstructionListingHeader();
 
         for (Instruction i = block.next(); i != null; i = i.next()) {
             if (!liveOnly || i.isPinned()) {
-                _ip.printInstructionListing(i);
+                ip.printInstructionListing(i);
             }
         }
         out.println();

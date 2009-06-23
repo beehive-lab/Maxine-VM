@@ -82,20 +82,20 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      */
     protected TeleObject(TeleVM teleVM, Reference reference) {
         super(teleVM);
-        _reference = (TeleReference) reference;
-        _oid = _reference.makeOID();
+        this.reference = (TeleReference) reference;
+        oid = this.reference.makeOID();
     }
 
     protected void refresh(long processEpoch) {
     }
 
-    private final TeleReference _reference;
+    private final TeleReference reference;
 
     /**
      * @return canonical reference to this object in the {@link TeleVM}
      */
     public TeleReference reference() {
-        return _reference;
+        return reference;
     }
 
     /**
@@ -103,7 +103,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * subject to relocation by GC.
      */
     public Pointer getCurrentCell() {
-        return teleVM().referenceToCell(_reference);
+        return teleVM().referenceToCell(reference);
     }
 
     /**
@@ -118,7 +118,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      *  in the {@link TeleVM}, subject to relocation by GC
      */
     public Pointer getCurrentOrigin() {
-        return _reference.toOrigin();
+        return reference.toOrigin();
     }
 
     /**
@@ -126,21 +126,21 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      */
     public abstract ObjectKind getObjectKind();
 
-    private final long _oid;
+    private final long oid;
 
     /**
      * @return a number that uniquely identifies this object in the {@link TeleVM} for the duration of the inspection
      */
     public long getOID() {
-        return _oid;
+        return oid;
     }
 
     @Override
     public String toString() {
-        return getClass().toString() + "<" + _oid + ">";
+        return getClass().toString() + "<" + oid + ">";
     }
 
-    private TeleHub _teleHub = null;
+    private TeleHub teleHub = null;
 
     /**
      * @return a short string describing the role played by this object if it is of special interest in the Maxine
@@ -162,18 +162,18 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * @return the local surrogate for the Hub of this object
      */
     public TeleHub getTeleHub() {
-        if (_teleHub == null) {
-            final Reference hubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(_reference));
-            _teleHub = (TeleHub) teleVM().makeTeleObject(hubReference);
+        if (teleHub == null) {
+            final Reference hubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
+            teleHub = (TeleHub) teleVM().makeTeleObject(hubReference);
         }
-        return _teleHub;
+        return teleHub;
     }
 
     /**
      * @return the "misc" word from the header of this object in the teleVM
      */
     public Word getMiscWord() {
-        return teleVM().layoutScheme().generalLayout.readMisc(_reference);
+        return teleVM().layoutScheme().generalLayout.readMisc(reference);
     }
 
     /**
@@ -243,11 +243,11 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
 
     protected static final class DeepCopyContext {
 
-        private int _level = 0;
-        private final FieldIncludeChecker _fieldIncludeChecker;
-        private final Map<TeleObject, Object> _teleObjectToObject = new HashMap<TeleObject, Object>();
+        private int level = 0;
+        private final FieldIncludeChecker fieldIncludeChecker;
+        private final Map<TeleObject, Object> teleObjectToObject = new HashMap<TeleObject, Object>();
 
-        private static final FieldIncludeChecker _defaultIFieldIncludeChecker = new FieldIncludeChecker() {
+        private static final FieldIncludeChecker defaultIFieldIncludeChecker = new FieldIncludeChecker() {
             public boolean include(int level, FieldActor fieldActor) {
                 return true;
             }
@@ -257,35 +257,35 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
          * Creates a context for a deep copy.
          */
         protected DeepCopyContext() {
-            _fieldIncludeChecker = _defaultIFieldIncludeChecker;
+            this.fieldIncludeChecker = defaultIFieldIncludeChecker;
         }
 
         /**
          * Creates a context for a deep copy in which a filter suppresses copying of specified fields.
          */
         protected DeepCopyContext(FieldIncludeChecker fieldIncludeChecker) {
-            _fieldIncludeChecker = fieldIncludeChecker;
+            this.fieldIncludeChecker = fieldIncludeChecker;
         }
 
         /**
          * @return the depth of the object graph currently being copied
          */
         protected int level() {
-            return _level;
+            return level;
         }
 
         /**
          * Registers a newly copied object in the context to avoid duplication.
          */
         protected void register(TeleObject teleObject, Object newObject) {
-            _teleObjectToObject.put(teleObject, newObject);
+            teleObjectToObject.put(teleObject, newObject);
         }
 
         /**
          * @return whether the specified object field at this level of the object graph should be copied.
          */
         protected boolean include(int level, FieldActor fieldActor) {
-            return _fieldIncludeChecker.include(level, fieldActor);
+            return fieldIncludeChecker.include(level, fieldActor);
         }
 
     }
@@ -296,12 +296,12 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * already been copied.
      */
     protected final Object makeDeepCopy(DeepCopyContext context) {
-        Object newObject = context._teleObjectToObject.get(this);
+        Object newObject = context.teleObjectToObject.get(this);
         if (newObject == null) {
-            context._level++;
+            context.level++;
             newObject = createDeepCopy(context);
             context.register(this, newObject);
-            context._level--;
+            context.level--;
         }
         return newObject;
     }

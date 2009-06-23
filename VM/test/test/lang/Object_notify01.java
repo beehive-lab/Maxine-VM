@@ -30,10 +30,10 @@ public final class Object_notify01 {
     private Object_notify01() {
     }
 
-    static final Object _object = new Object();
+    static final Object object = new Object();
 
     public static boolean test(int i) throws InterruptedException {
-        _object.notify();
+        object.notify();
         return true;
     }
 }

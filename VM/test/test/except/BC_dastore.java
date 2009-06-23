@@ -29,10 +29,10 @@ package test.except;
 
 public class BC_dastore {
 
-    static double[] _array = {0, 0, 0, 0};
+    static double[] arr = {0, 0, 0, 0};
 
     public static double test(int arg, double val) {
-        final double[] array = arg == -2 ? null : _array;
+        final double[] array = arg == -2 ? null : arr;
         array[arg] = val;
         return array[arg];
     }

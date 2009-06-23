@@ -29,29 +29,29 @@ import com.sun.max.tele.object.*;
   */
 public class NamedTeleObject implements Comparable<NamedTeleObject> {
 
-    private final String _name;
+    private final String name;
 
-    private final TeleObject _teleObject;
+    private final TeleObject teleObject;
 
     public NamedTeleObject(String name, TeleObject teleObject) {
-        _name = name;
-        _teleObject = teleObject;
+        this.name = name;
+        this.teleObject = teleObject;
     }
 
     public String name() {
-        return _name;
+        return name;
     }
 
     public TeleObject teleObject() {
-        return _teleObject;
+        return teleObject;
     }
 
     public int compareTo(NamedTeleObject o) {
-        return _name.compareTo(o._name);
+        return name.compareTo(o.name);
     }
 
     @Override
     public String toString() {
-        return _name;
+        return name;
     }
 }

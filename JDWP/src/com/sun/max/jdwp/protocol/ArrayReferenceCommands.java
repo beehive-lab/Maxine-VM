@@ -45,22 +45,22 @@ public final class ArrayReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ArrayID _arrayObject;
+            public ID.ArrayID arrayObject;
             public IncomingRequest(ID.ArrayID arrayObject) {
-                this._arrayObject = arrayObject;
+                this.arrayObject = arrayObject;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _arrayObject = ID.read(ps.getInputStream(), ID.ArrayID.class);
+                arrayObject = ID.read(ps.getInputStream(), ID.ArrayID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _arrayObject.write(ps.getOutputStream());
+                arrayObject.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_arrayObject=" + _arrayObject);
+                stringBuilder.append("arrayObject=" + arrayObject);
                 return stringBuilder.toString();
             }
         }
@@ -69,22 +69,22 @@ public final class ArrayReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public int _arrayLength;
+            public int arrayLength;
             public Reply(int arrayLength) {
-                this._arrayLength = arrayLength;
+                this.arrayLength = arrayLength;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _arrayLength = ps.readInt();
+                arrayLength = ps.readInt();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_arrayLength);
+                ps.write(arrayLength);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_arrayLength=" + _arrayLength);
+                stringBuilder.append("arrayLength=" + arrayLength);
                 return stringBuilder.toString();
             }
         }
@@ -102,38 +102,38 @@ public final class ArrayReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ArrayID _arrayObject;
+            public ID.ArrayID arrayObject;
 
-            public int _firstIndex;
+            public int firstIndex;
 
-            public int _length;
+            public int length;
             public IncomingRequest(ID.ArrayID arrayObject,
                 int firstIndex,
                 int length) {
-                this._arrayObject = arrayObject;
-                this._firstIndex = firstIndex;
-                this._length = length;
+                this.arrayObject = arrayObject;
+                this.firstIndex = firstIndex;
+                this.length = length;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _arrayObject = ID.read(ps.getInputStream(), ID.ArrayID.class);
-                _firstIndex = ps.readInt();
-                _length = ps.readInt();
+                arrayObject = ID.read(ps.getInputStream(), ID.ArrayID.class);
+                firstIndex = ps.readInt();
+                length = ps.readInt();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _arrayObject.write(ps.getOutputStream());
-                ps.write(_firstIndex);
-                ps.write(_length);
+                arrayObject.write(ps.getOutputStream());
+                ps.write(firstIndex);
+                ps.write(length);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_arrayObject=" + _arrayObject);
+                stringBuilder.append("arrayObject=" + arrayObject);
                 stringBuilder.append(", ");
-                stringBuilder.append("_firstIndex=" + _firstIndex);
+                stringBuilder.append("firstIndex=" + firstIndex);
                 stringBuilder.append(", ");
-                stringBuilder.append("_length=" + _length);
+                stringBuilder.append("length=" + length);
                 return stringBuilder.toString();
             }
         }
@@ -142,22 +142,22 @@ public final class ArrayReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public java.util.List<? extends JDWPValue> _values;
+            public java.util.List<? extends JDWPValue> values;
             public Reply(java.util.List<? extends JDWPValue> values) {
-                this._values = values;
+                this.values = values;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _values = ps.readArrayRegion();
+                values = ps.readArrayRegion();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_values);
+                ps.write(values);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_values=" + _values);
+                stringBuilder.append("values=" + values);
                 return stringBuilder.toString();
             }
         }
@@ -175,48 +175,48 @@ public final class ArrayReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ArrayID _arrayObject;
+            public ID.ArrayID arrayObject;
 
-            public int _firstIndex;
+            public int firstIndex;
 
-            public JDWPValue[] _values;
+            public JDWPValue[] values;
             public IncomingRequest(ID.ArrayID arrayObject,
                 int firstIndex,
                 JDWPValue[] values) {
-                this._arrayObject = arrayObject;
-                this._firstIndex = firstIndex;
-                this._values = values;
+                this.arrayObject = arrayObject;
+                this.firstIndex = firstIndex;
+                this.values = values;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _arrayObject = ID.read(ps.getInputStream(), ID.ArrayID.class);
-                _firstIndex = ps.readInt();
+                arrayObject = ID.read(ps.getInputStream(), ID.ArrayID.class);
+                firstIndex = ps.readInt();
                 final int valuesCount = ps.readInt();
-                _values = new JDWPValue[valuesCount];
+                values = new JDWPValue[valuesCount];
                 for (int i = 0; i < valuesCount; i++) {
-                    _values[i] = ps.readUntaggedValue();
+                    values[i] = ps.readUntaggedValue();
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _arrayObject.write(ps.getOutputStream());
-                ps.write(_firstIndex);
-                ps.write(_values.length);
-                for (int i = 0; i < _values.length; i++) {
-                    ps.write(_values[i]);
+                arrayObject.write(ps.getOutputStream());
+                ps.write(firstIndex);
+                ps.write(values.length);
+                for (int i = 0; i < values.length; i++) {
+                    ps.write(values[i]);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_arrayObject=" + _arrayObject);
+                stringBuilder.append("arrayObject=" + arrayObject);
                 stringBuilder.append(", ");
-                stringBuilder.append("_firstIndex=" + _firstIndex);
+                stringBuilder.append("firstIndex=" + firstIndex);
                 stringBuilder.append(", ");
-                stringBuilder.append("_values=[" + _values.length + "]{");
-                for (int i = 0; i < _values.length; i++) {
+                stringBuilder.append("values=[" + values.length + "]{");
+                for (int i = 0; i < values.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_values[i]=" + _values[i]);
+                    stringBuilder.append("values[i]=" + values[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();

@@ -26,11 +26,11 @@ import java.util.logging.*;
 import com.sun.max.jdwp.vm.core.*;
 
 /**
- * Convenience class that provides a default implementation of SerializableObject that is useful in most cases. Objects that should be transmitted over the JDWP stream instead of generating proxy objects should
- * be subclasses of this class. Transmitting the object can be a performance improvement.
+ * Convenience class that provides a default implementation of SerializableObject that is useful in most cases. Objects
+ * that should be transmitted over the JDWP stream instead of generating proxy objects should be subclasses of this
+ * class. Transmitting the object can be a performance improvement.
  *
  * @author Thomas Wuerthinger
- *
  */
 class AbstractSerializableObject implements SerializableObject {
 

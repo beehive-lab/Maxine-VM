@@ -41,94 +41,94 @@ import com.sun.max.vm.value.*;
  */
 public final class ObjectAggregatorInspector extends UniqueInspector<ObjectAggregatorInspector> {
 
-    private final ObjectAggregator _objectAggregator;
-    private int _start;
-    private int _end;
-    private final  JPanel _contentPane;
+    private final ObjectAggregator objectAggregator;
+    private int start;
+    private int end;
+    private final  JPanel contentPane;
 
     private JComponent createController() {
         final JPanel controller = new InspectorPanel(inspection(), new SpringLayout());
 
         controller.add(new TextLabel(inspection(), "start:"));
-        final AddressInputField.Hex startField = new AddressInputField.Hex(inspection(), Address.fromInt(_start)) {
+        final AddressInputField.Hex startField = new AddressInputField.Hex(inspection(), Address.fromInt(start)) {
             @Override
-            public void update(Address start) {
-                if (!start.equals(_start)) {
-                    _start = start.toInt();
-                    if (_end < _start) {
-                        _start = _end;
+            public void update(Address newStart) {
+                if (!newStart.equals(start)) {
+                    start = newStart.toInt();
+                    if (end < start) {
+                        start = end;
                     }
                     updateView();
                 }
             }
         };
-        startField.setRange(0, _objectAggregator.count() - 1);
+        startField.setRange(0, objectAggregator.count() - 1);
         controller.add(startField);
 
         controller.add(new TextLabel(inspection(), "end:"));
-        final AddressInputField.Decimal endField = new AddressInputField.Decimal(inspection(), Address.fromInt(_end)) {
+        final AddressInputField.Decimal endField = new AddressInputField.Decimal(inspection(), Address.fromInt(end)) {
             @Override
-            public void update(Address end) {
-                if (!end.equals(_end)) {
-                    _end = end.toInt();
-                    if (_end < _start) {
-                        _end = _start;
+            public void update(Address newEnd) {
+                if (!newEnd.equals(end)) {
+                    end = newEnd.toInt();
+                    if (end < start) {
+                        end = start;
                     }
                     updateView();
                 }
             }
         };
-        endField.setRange(0, _objectAggregator.count() - 1);
+        endField.setRange(0, objectAggregator.count() - 1);
         controller.add(endField);
 
         SpringUtilities.makeCompactGrid(controller, 4);
         return controller;
     }
 
-    private WordValueLabel[] _referenceLabels;
+    private WordValueLabel[] referenceLabels;
 
     @Override
     protected void refreshView(boolean force) {
-        for (WordValueLabel wordValueLabel : _referenceLabels) {
+        for (WordValueLabel wordValueLabel : referenceLabels) {
             wordValueLabel.refresh(force);
         }
         super.refreshView(force);
     }
 
     public void viewConfigurationChanged() {
-        for (WordValueLabel wordValueLabel : _referenceLabels) {
+        for (WordValueLabel wordValueLabel : referenceLabels) {
             wordValueLabel.redisplay();
         }
     }
 
     @Override
     public String getTextForTitle() {
-        return "Aggregator for " + _objectAggregator.type();
+        return "Aggregator for " + objectAggregator.type();
     }
 
     @Override
     protected void createView() {
-        frame().setContentPane(_contentPane);
-        _contentPane.removeAll();
-        _contentPane.setLayout(new BorderLayout());
+        frame().setContentPane(contentPane);
+        contentPane.removeAll();
+        contentPane.setLayout(new BorderLayout());
 
-        _contentPane.add(new TextLabel(inspection(), _objectAggregator.count() + " instances occupying " + _objectAggregator.size().toLong() + " bytes"), BorderLayout.NORTH);
+        contentPane.add(new TextLabel(inspection(), objectAggregator.count() + " instances occupying " + objectAggregator.size().toLong() + " bytes"), BorderLayout.NORTH);
 
         final JPanel view = new InspectorPanel(inspection(), new SpringLayout());
 
-        final Iterator<Reference> iterator = _objectAggregator.instances(maxVM());
+        final Iterator<Reference> iterator = objectAggregator.instances(maxVM());
 
         int index = 0;
-        while (index != _start) {
+        while (index != start) {
             iterator.next();
             ++index;
         }
 
-        _referenceLabels = new WordValueLabel[(_end + 1) - _start];
+        referenceLabels = new WordValueLabel[(end + 1) - start];
         int i = 0;
-        while (index <= _end) {
+        while (index <= end) {
             final WordValueLabel referenceLabel = new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, iterator.next().toOrigin(), null);
-            _referenceLabels[i++] = referenceLabel;
+            referenceLabels[i++] = referenceLabel;
             view.add(referenceLabel);
             ++index;
         }
@@ -138,16 +138,16 @@ public final class ObjectAggregatorInspector extends UniqueInspector<ObjectAggre
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), view);
         final Dimension dim = scrollPane.getPreferredSize();
         scrollPane.setPreferredSize(new Dimension(Math.min(200, dim.width), Math.min(400, dim.height)));
-        _contentPane.add(scrollPane, BorderLayout.CENTER);
+        contentPane.add(scrollPane, BorderLayout.CENTER);
 
-        _contentPane.add(createController(), BorderLayout.SOUTH);
+        contentPane.add(createController(), BorderLayout.SOUTH);
     }
 
     private ObjectAggregatorInspector(Inspection inspection, ObjectAggregator objectAggregator) {
         super(inspection, ReferenceValue.from(objectAggregator.type()));
-        _objectAggregator = objectAggregator;
-        _end = Math.min(100, _objectAggregator.count() - 1);
-        _contentPane = new InspectorPanel(inspection);
+        this.objectAggregator = objectAggregator;
+        this.end = Math.min(100, objectAggregator.count() - 1);
+        contentPane = new InspectorPanel(inspection);
         createFrame(null);
         inspection.gui().moveToMiddle(this);
     }

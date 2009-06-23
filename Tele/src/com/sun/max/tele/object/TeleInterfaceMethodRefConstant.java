@@ -47,7 +47,7 @@ public abstract class TeleInterfaceMethodRefConstant extends TelePoolConstant {
      */
     public static final class Resolved extends TeleInterfaceMethodRefConstant {
 
-        private TeleInterfaceMethodActor _teleInterfaceMethodActor;
+        private TeleInterfaceMethodActor teleInterfaceMethodActor;
 
         public Resolved(TeleVM teleVM, Reference resolvedInterfaceMethodRefConstantReference) {
             super(teleVM, resolvedInterfaceMethodRefConstantReference);
@@ -62,11 +62,11 @@ public abstract class TeleInterfaceMethodRefConstant extends TelePoolConstant {
          * @return surrogate for the {@InterfaceMethodActor} in the {@link TeleVM} to which the constant was resolved
          */
         public TeleInterfaceMethodActor getTeleInterfaceMethodActor() {
-            if (_teleInterfaceMethodActor == null) {
+            if (teleInterfaceMethodActor == null) {
                 final Reference methodActorReference = teleVM().fields().ResolvedMethodRefConstant_methodActor.readReference(reference());
-                _teleInterfaceMethodActor = (TeleInterfaceMethodActor) teleVM().makeTeleObject(methodActorReference);
+                teleInterfaceMethodActor = (TeleInterfaceMethodActor) teleVM().makeTeleObject(methodActorReference);
             }
-            return _teleInterfaceMethodActor;
+            return teleInterfaceMethodActor;
         }
 
         @Override

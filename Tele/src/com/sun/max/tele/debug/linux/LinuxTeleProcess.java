@@ -38,27 +38,27 @@ import com.sun.max.vm.prototype.*;
  */
 public final class LinuxTeleProcess extends TeleProcess {
 
-    private final LinuxTask _task;
+    private final LinuxTask task;
 
     LinuxTask task() {
-        return _task;
+        return task;
     }
 
-    private final DataAccess _dataAccess;
+    private final DataAccess dataAccess;
 
     @Override
     public DataAccess dataAccess() {
-        return _dataAccess;
+        return dataAccess;
     }
 
     LinuxTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
         super(teleVM, platform, ProcessState.STOPPED);
         final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(programFile, commandLineArguments);
-        _task = LinuxTask.createChild(commandLineArgumentsBuffer.toLong(), agent.port());
-        if (_task == null) {
+        task = LinuxTask.createChild(commandLineArgumentsBuffer.toLong(), agent.port());
+        if (task == null) {
             throw new BootImageException("Error launching VM");
         }
-        _dataAccess = new PageDataAccess(this, platform.processorKind().dataModel());
+        dataAccess = new PageDataAccess(this, platform.processorKind().dataModel());
         try {
             resume();
         } catch (OSExecutionRequestException e) {
@@ -68,24 +68,24 @@ public final class LinuxTeleProcess extends TeleProcess {
 
     @Override
     protected void kill() throws OSExecutionRequestException {
-        _task.kill();
+        task.kill();
     }
 
     @Override
     protected void resume() throws OSExecutionRequestException {
-        _task.resume(true);
+        task.resume(true);
     }
 
     @Override
     protected void suspend() throws OSExecutionRequestException {
-        _task.suspend(true);
+        task.suspend(true);
     }
 
     @Override
     protected boolean waitUntilStopped() {
-        final boolean result = _task.waitUntilStopped(true);
+        final boolean result = task.waitUntilStopped(true);
         if (!result) {
-            _task.close();
+            task.close();
         }
         return result;
     }
@@ -103,7 +103,7 @@ public final class LinuxTeleProcess extends TeleProcess {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws IOException {
                     final Word threadSpecificsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header().threadSpecificsListOffset));
-                    nativeGatherThreads(_task.tgid(), threads, threadSpecificsList.asAddress().toLong());
+                    nativeGatherThreads(task.tgid(), threads, threadSpecificsList.asAddress().toLong());
                     return null;
                 }
             });
@@ -114,11 +114,11 @@ public final class LinuxTeleProcess extends TeleProcess {
 
     @Override
     protected int read0(Address address, ByteBuffer buffer, int offset, int length) {
-        return _task.readBytes(address, buffer, offset, length);
+        return task.readBytes(address, buffer, offset, length);
     }
 
     @Override
     protected int write0(ByteBuffer buffer, int offset, int length, Address address) {
-        return _task.writeBytes(address, buffer, offset, length);
+        return task.writeBytes(address, buffer, offset, length);
     }
 }

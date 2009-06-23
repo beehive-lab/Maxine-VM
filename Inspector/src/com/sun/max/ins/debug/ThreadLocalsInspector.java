@@ -45,31 +45,31 @@ import com.sun.max.vm.runtime.*;
 public final class ThreadLocalsInspector extends Inspector implements TableColumnViewPreferenceListener {
 
     // Set to null when inspector closed.
-    private static ThreadLocalsInspector _threadLocalsInspector;
+    private static ThreadLocalsInspector threadLocalsInspector;
 
     /**
      * Displays the (singleton) thread locals inspector, creating it if needed.
      */
     public static ThreadLocalsInspector make(Inspection inspection) {
-        if (_threadLocalsInspector == null) {
-            _threadLocalsInspector = new ThreadLocalsInspector(inspection);
+        if (threadLocalsInspector == null) {
+            threadLocalsInspector = new ThreadLocalsInspector(inspection);
         }
-        return _threadLocalsInspector;
+        return threadLocalsInspector;
     }
 
-    private final SaveSettingsListener _saveSettingsListener = createGeometrySettingsClient(this, "threadlocalsInspector");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "threadlocalsInspector");
 
     // This is a singleton viewer, so only use a single level of view preferences.
-    private final ThreadLocalsViewPreferences _viewPreferences;
+    private final ThreadLocalsViewPreferences viewPreferences;
 
-    private MaxThread _thread;
-    private JTabbedPane _tabbedPane;
+    private MaxThread thread;
+    private JTabbedPane tabbedPane;
 
     private ThreadLocalsInspector(Inspection inspection) {
         super(inspection);
         Trace.begin(1,  tracePrefix() + " initializing");
-        _viewPreferences = ThreadLocalsViewPreferences.globalPreferences(inspection());
-        _viewPreferences.addListener(this);
+        viewPreferences = ThreadLocalsViewPreferences.globalPreferences(inspection());
+        viewPreferences.addListener(this);
         createFrame(null);
         refreshView(true);
         Trace.end(1,  tracePrefix() + " initializing");
@@ -82,37 +82,37 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
     @Override
     protected void createView() {
-        _thread = inspection().focus().thread();
-        _tabbedPane = new JTabbedPane();
-        if (_thread != null) {
+        thread = inspection().focus().thread();
+        tabbedPane = new JTabbedPane();
+        if (thread != null) {
             for (Safepoint.State state : Safepoint.State.CONSTANTS) {
-                final TeleThreadLocalValues values = _thread.threadLocalsFor(state);
+                final TeleThreadLocalValues values = thread.threadLocalsFor(state);
                 if (values != null) {
-                    final ThreadLocalsPanel panel = new ThreadLocalsPanel(inspection(), _thread, values, _viewPreferences);
-                    _tabbedPane.add(state.toString(), panel);
+                    final ThreadLocalsPanel panel = new ThreadLocalsPanel(inspection(), thread, values, viewPreferences);
+                    tabbedPane.add(state.toString(), panel);
                 }
             }
-            _tabbedPane.addChangeListener(new ChangeListener() {
+            tabbedPane.addChangeListener(new ChangeListener() {
                 // Do a refresh whenever there's a tab change, so that the newly exposed pane is sure to be current
                 public void stateChanged(ChangeEvent event) {
                     refreshView(true);
                 }
             });
         }
-        frame().setContentPane(_tabbedPane);
+        frame().setContentPane(tabbedPane);
         updateFrameTitle();
     }
 
     @Override
     protected SaveSettingsListener saveSettingsListener() {
-        return _saveSettingsListener;
+        return saveSettingsListener;
     }
 
     @Override
     public String getTextForTitle() {
         String title = "Thread Locals: ";
-        if (_thread != null) {
-            title += inspection().nameDisplay().longNameWithState(_thread);
+        if (thread != null) {
+            title += inspection().nameDisplay().longNameWithState(thread);
         }
         return title;
     }
@@ -122,7 +122,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<ThreadLocalsColumnKind>(inspection(), "Thread Locals View Options", _viewPreferences);
+                new TableColumnVisibilityPreferences.Dialog<ThreadLocalsColumnKind>(inspection(), "Thread Locals View Options", viewPreferences);
             }
         };
     }
@@ -132,7 +132,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         return new InspectorAction(inspection(), "Print") {
             @Override
             public void procedure() {
-                final ThreadLocalsPanel threadLocalsPanel = (ThreadLocalsPanel) _tabbedPane.getSelectedComponent();
+                final ThreadLocalsPanel threadLocalsPanel = (ThreadLocalsPanel) tabbedPane.getSelectedComponent();
                 final String name = getTextForTitle() + " " + threadLocalsPanel.getSafepointState().toString();
                 final MessageFormat footer = new MessageFormat("Maxine: " + name + "  Printed: " + new Date() + " -- Page: {0, number, integer}");
                 try {
@@ -147,7 +147,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     }
 
     private ThreadLocalsPanel threadLocalsPanelFor(Safepoint.State state) {
-        for (Component component : _tabbedPane.getComponents()) {
+        for (Component component : tabbedPane.getComponents()) {
             final ThreadLocalsPanel threadLocalsPanel = (ThreadLocalsPanel) component;
             if (threadLocalsPanel.getSafepointState() == state) {
                 return threadLocalsPanel;
@@ -161,16 +161,16 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
         boolean panelsAddedOrRemoved = false;
         for (Safepoint.State state : Safepoint.State.CONSTANTS) {
-            final TeleThreadLocalValues values = _thread.threadLocalsFor(state);
+            final TeleThreadLocalValues values = thread.threadLocalsFor(state);
             final ThreadLocalsPanel panel = threadLocalsPanelFor(state);
             if (values != null) {
                 if (panel == null) {
-                    _tabbedPane.add(state.toString(), new ThreadLocalsPanel(inspection(), _thread, values, _viewPreferences));
+                    tabbedPane.add(state.toString(), new ThreadLocalsPanel(inspection(), thread, values, viewPreferences));
                     panelsAddedOrRemoved = true;
                 }
             } else {
                 if (panel != null) {
-                    _tabbedPane.remove(panel);
+                    tabbedPane.remove(panel);
                     panelsAddedOrRemoved = true;
                 }
             }
@@ -180,7 +180,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         }
 
         // Only need to refresh the panel that's visible, as long as we refresh them when they become visible
-        final ThreadLocalsPanel threadLocalsPanel = (ThreadLocalsPanel) _tabbedPane.getSelectedComponent();
+        final ThreadLocalsPanel threadLocalsPanel = (ThreadLocalsPanel) tabbedPane.getSelectedComponent();
         if (threadLocalsPanel != null) {
             threadLocalsPanel.refresh(force);
         }
@@ -210,8 +210,8 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
-        _threadLocalsInspector = null;
-        _viewPreferences.removeListener(this);
+        threadLocalsInspector = null;
+        viewPreferences.removeListener(this);
         super.inspectorClosing();
     }
 

@@ -42,26 +42,26 @@ import com.sun.max.vm.prototype.BootImage.*;
  */
 public final class ReadOnlyTeleProcess extends TeleProcess {
 
-    private final DataAccess _dataAccess;
-    private final Pointer _heap;
+    private final DataAccess dataAccess;
+    private final Pointer heap;
 
     @Override
     public DataAccess dataAccess() {
-        return _dataAccess;
+        return dataAccess;
     }
 
     public ReadOnlyTeleProcess(TeleVM teleVM, Platform platform, File programFile) throws BootImageException {
         super(teleVM, platform, ProcessState.NO_PROCESS);
-        _heap = Pointer.zero();
+        heap = Pointer.zero();
         try {
-            _dataAccess = map(teleVM.bootImageFile(), teleVM.bootImage(), false);
+            dataAccess = map(teleVM.bootImageFile(), teleVM.bootImage(), false);
         } catch (IOException ioException) {
             throw new BootImageException("Error mapping in boot image", ioException);
         }
     }
 
     public Pointer heap() {
-        return _heap;
+        return heap;
     }
 
     /**
@@ -90,75 +90,75 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
         final MappedByteBuffer bootImageBuffer = randomAccessFile.getChannel().map(MapMode.PRIVATE, heapOffsetInImage, header.bootHeapSize + header.bootCodeSize);
         bootImageBuffer.order(bootImage.vmConfiguration().platform().processorKind().dataModel().endianness().asByteOrder());
 
-        return new MappedByteBufferDataAccess(bootImageBuffer, _heap, WordWidth.BITS_64);
+        return new MappedByteBufferDataAccess(bootImageBuffer, heap, WordWidth.BITS_64);
     }
 
     static final class MappedByteBufferDataAccess extends DataAccessAdapter {
 
-        private final MappedByteBuffer _buffer;
-        private final Address _base;
+        private final MappedByteBuffer buffer;
+        private final Address base;
 
         MappedByteBufferDataAccess(MappedByteBuffer buffer, Address base, WordWidth wordWidth) {
             super(wordWidth);
-            _buffer = buffer;
-            _base = base;
+            this.buffer = buffer;
+            this.base = base;
         }
 
         public int read(Address src, ByteBuffer dst, int dstOffset, int length) throws DataIOError {
             final int toRead = Math.min(length, dst.limit() - dstOffset);
-            final ByteBuffer srcView = (ByteBuffer) _buffer.duplicate().position(src.toInt()).limit(toRead);
+            final ByteBuffer srcView = (ByteBuffer) buffer.duplicate().position(src.toInt()).limit(toRead);
             dst.put(srcView);
             return toRead;
         }
 
         public int write(ByteBuffer src, int srcOffset, int length, Address dst) throws DataIOError {
-            _buffer.position(dst.toInt());
+            buffer.position(dst.toInt());
             final ByteBuffer srcView = (ByteBuffer) src.duplicate().position(srcOffset).limit(length);
-            _buffer.put(srcView);
+            buffer.put(srcView);
             return length;
         }
 
         private int asOffset(Address address) {
-            if (address.lessThan(_base)) {
+            if (address.lessThan(base)) {
                 throw new DataIOError(address);
             }
 
             if (address.toLong() < 0 || address.toLong() > Integer.MAX_VALUE) {
                 throw new DataIOError(address);
             }
-            return _base.toInt() + address.toInt();
+            return base.toInt() + address.toInt();
         }
 
         public byte readByte(Address address) {
-            return _buffer.get(asOffset(address));
+            return buffer.get(asOffset(address));
         }
 
         public int readInt(Address address) {
-            return _buffer.getInt(asOffset(address));
+            return buffer.getInt(asOffset(address));
         }
 
         public long readLong(Address address) {
-            return _buffer.getLong(asOffset(address));
+            return buffer.getLong(asOffset(address));
         }
 
         public short readShort(Address address) {
-            return _buffer.getShort(asOffset(address));
+            return buffer.getShort(asOffset(address));
         }
 
         public void writeByte(Address address, byte value) {
-            _buffer.put(asOffset(address), value);
+            buffer.put(asOffset(address), value);
         }
 
         public void writeInt(Address address, int value) {
-            _buffer.putInt(asOffset(address), value);
+            buffer.putInt(asOffset(address), value);
         }
 
         public void writeLong(Address address, long value) {
-            _buffer.putLong(asOffset(address), value);
+            buffer.putLong(asOffset(address), value);
         }
 
         public void writeShort(Address address, short value) {
-            _buffer.putShort(asOffset(address), value);
+            buffer.putShort(asOffset(address), value);
         }
     }
 
@@ -177,7 +177,7 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
 
     @Override
     protected int read0(Address address, ByteBuffer buffer, int offset, int length) {
-        return _dataAccess.read(address, buffer, offset, length);
+        return dataAccess.read(address, buffer, offset, length);
     }
 
     @Override

@@ -52,10 +52,10 @@ public final class TypeSearchDialog extends FilteredListDialog<TypeDescriptor> {
     protected void rebuildList(String filterText) {
         if (!filterText.isEmpty()) {
             final String filter = filterText.toLowerCase();
-            for (TypeDescriptor typeDescriptor : _types) {
+            for (TypeDescriptor typeDescriptor : types) {
                 final String className = ClassActorSearchDialog.match(filter, typeDescriptor);
                 if (className != null) {
-                    _listModel.addElement(className);
+                    listModel.addElement(className);
                 }
             }
         }
@@ -67,10 +67,10 @@ public final class TypeSearchDialog extends FilteredListDialog<TypeDescriptor> {
 
     private TypeSearchDialog(Inspection inspection, String title, String actionName) {
         super(inspection, title == null ? "Select Class" : title, "Class Name", actionName, false);
-        _types = maxVM().loadableTypeDescriptors();
+        types = maxVM().loadableTypeDescriptors();
     }
 
-    private final Iterable<TypeDescriptor> _types;
+    private final Iterable<TypeDescriptor> types;
 
     /**
      * Displays a dialog for selecting a type available via the {@linkplain MaxVM#loadableTypeDescriptors()} including those that may

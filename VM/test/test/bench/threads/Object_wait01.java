@@ -28,9 +28,9 @@ import test.bench.util.*;
 
 
 public class Object_wait01  extends RunBench {
-    static volatile int _count = 0;
-    static volatile boolean _done;
-    static final Object _object = new Object();
+    static volatile int count = 0;
+    static volatile boolean done;
+    static final Object object = new Object();
 
     protected Object_wait01(LoopRunnable bench) {
         super(bench);
@@ -46,18 +46,18 @@ public class Object_wait01  extends RunBench {
 
         public void run(long loopCount) throws InterruptedException {
             for (long i = 0; i < loopCount; i++) {
-                synchronized (_object) {
-                    _object.wait();
-                    _count++;
+                synchronized (object) {
+                    object.wait();
+                    count++;
                 }
             }
-            _done = true;
+            done = true;
         }
 
         public void runBareLoop(long loopCount) {
             for (long i = 0; i < loopCount; i++) {
-                synchronized (_object) {
-                    _count++;
+                synchronized (object) {
+                    count++;
                 }
             }
         }
@@ -65,9 +65,9 @@ public class Object_wait01  extends RunBench {
 
     static class Notifier implements Runnable {
         public void run() {
-            while (!_done) {
-                synchronized (_object) {
-                    _object.notify();
+            while (!done) {
+                synchronized (object) {
+                    object.notify();
                 }
             }
         }

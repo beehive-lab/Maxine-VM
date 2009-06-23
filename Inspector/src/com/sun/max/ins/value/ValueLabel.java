@@ -37,12 +37,12 @@ public abstract class ValueLabel extends InspectorLabel {
 
     // TODO (mlvdv) the flow of control in this class hierarchy is awkward and should be redesigned.
 
-    private MaxVMState _lastRefreshedState = null;
+    private MaxVMState lastRefreshedState = null;
 
-    private Value _value;
+    private Value value;
 
     protected final Value value() {
-        return _value;
+        return value;
     }
 
     /**
@@ -55,7 +55,7 @@ public abstract class ValueLabel extends InspectorLabel {
 
     protected ValueLabel(Inspection inspection, Value value) {
         super(inspection);
-        _value = value;
+        this.value = value;
     }
 
     /**
@@ -64,15 +64,15 @@ public abstract class ValueLabel extends InspectorLabel {
      * Subclasses override this to read from the VM for values that can change.
      */
     protected Value fetchValue() {
-        return _value;
+        return value;
     }
 
     /**
      * Sets initial value, display properties.
      */
     protected final void initializeValue() {
-        _value = fetchValue();
-        _lastRefreshedState = maxVMState();
+        value = fetchValue();
+        lastRefreshedState = maxVMState();
     }
 
     /**
@@ -84,15 +84,15 @@ public abstract class ValueLabel extends InspectorLabel {
      * Explicitly sets the value, as opposed to letting it be read from the VM by an override of {@link #fetchValue()}.
      */
     public void setValue(Value value) {
-        _value = value;
+        this.value = value;
         updateText();
         invalidate();
         repaint();
     }
 
     public final void refresh(boolean force) {
-        if (maxVMState().newerThan(_lastRefreshedState) || force) {
-            _lastRefreshedState = maxVMState();
+        if (maxVMState().newerThan(lastRefreshedState) || force) {
+            lastRefreshedState = maxVMState();
             setValue(fetchValue());
         }
     }

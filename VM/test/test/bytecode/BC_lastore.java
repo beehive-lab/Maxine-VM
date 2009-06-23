@@ -26,10 +26,10 @@ package test.bytecode;
  */
 public class BC_lastore {
 
-    static long[] _array = {0, 0, 0, 0};
+    static long[] array = {0, 0, 0, 0};
 
     public static long test(int arg, long val) {
-        final long[] array = arg == -2 ? null : _array;
+        final long[] array = arg == -2 ? null : BC_lastore.array;
         array[arg] = val;
         return array[arg];
     }

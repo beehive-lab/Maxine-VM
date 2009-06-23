@@ -29,15 +29,15 @@ import com.sun.max.vm.runtime.*;
 
 public class GuestVMXenDataAccess extends DataAccessAdapter {
 
-    private final int _domainId;
+    private final int domainId;
 
     protected GuestVMXenDataAccess(DataModel dataModel, int domainId) {
         super(dataModel.wordWidth());
-        _domainId = domainId;
+        this.domainId = domainId;
     }
 
     public byte readByte(Address address) {
-        final int result = GuestVMXenDBChannel.readByte(_domainId, address.toLong());
+        final int result = GuestVMXenDBChannel.readByte(domainId, address.toLong());
         if (result < 0) {
             throw new DataIOError(address);
         }
@@ -50,7 +50,7 @@ public class GuestVMXenDataAccess extends DataAccessAdapter {
     }
 
     public int readInt(Address address) {
-        final long result = GuestVMXenDBChannel.readInt(_domainId, address.toLong());
+        final long result = GuestVMXenDBChannel.readInt(domainId, address.toLong());
         if (result < 0L) {
             throw new DataIOError(address);
         }
@@ -58,7 +58,7 @@ public class GuestVMXenDataAccess extends DataAccessAdapter {
     }
 
     public short readShort(Address address) {
-        final int result = GuestVMXenDBChannel.readShort(_domainId, address.toLong());
+        final int result = GuestVMXenDBChannel.readShort(domainId, address.toLong());
         if (result < 0L) {
             throw new DataIOError(address);
         }
@@ -70,7 +70,7 @@ public class GuestVMXenDataAccess extends DataAccessAdapter {
     }
 
     public void writeByte(Address address, byte value) {
-        if (!GuestVMXenDBChannel.writeByte(_domainId, address.toLong(), value)) {
+        if (!GuestVMXenDBChannel.writeByte(domainId, address.toLong(), value)) {
             throw new DataIOError(address);
         }
     }

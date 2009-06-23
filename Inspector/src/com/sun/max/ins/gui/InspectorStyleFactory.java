@@ -30,24 +30,24 @@ import com.sun.max.ins.*;
  */
 public class InspectorStyleFactory extends AbstractInspectionHolder {
 
-    private final InspectorStyle _standard10;
-    private final InspectorStyle _standard11;
-    private final InspectorStyle _standard12;
-    private final InspectorStyle[] _allStyles;
+    private final InspectorStyle standard10;
+    private final InspectorStyle standard11;
+    private final InspectorStyle standard12;
+    private final InspectorStyle[] allStyles;
 
     public InspectorStyleFactory(Inspection inspection) {
         super(inspection);
-        _standard10 = new StandardInspectorStyle(inspection, 10, 16);
-        _standard11 = new StandardInspectorStyle(inspection, 11, 18);
-        _standard12 = new StandardInspectorStyle(inspection, 12, 20);
-        _allStyles = new InspectorStyle[] {_standard10, _standard11, _standard12};
+        standard10 = new StandardInspectorStyle(inspection, 10, 16);
+        standard11 = new StandardInspectorStyle(inspection, 11, 18);
+        standard12 = new StandardInspectorStyle(inspection, 12, 20);
+        allStyles = new InspectorStyle[] {standard10, standard11, standard12};
     }
 
     /**
      * @return the default {@link InspectorStyle} to use when no preference specified.
      */
     public InspectorStyle defaultStyle() {
-        return _standard12;
+        return standard12;
     }
 
     /**
@@ -55,7 +55,7 @@ public class InspectorStyleFactory extends AbstractInspectionHolder {
      * @return the style by that name, null if none exists.
      */
     public InspectorStyle findStyle(String name) {
-        for (InspectorStyle style : _allStyles) {
+        for (InspectorStyle style : allStyles) {
             if (name.equals(style.name())) {
                 return style;
             }
@@ -67,7 +67,7 @@ public class InspectorStyleFactory extends AbstractInspectionHolder {
      * @return all available styles.
      */
     public InspectorStyle[] allStyles() {
-        return _allStyles;
+        return allStyles;
     }
 
 }

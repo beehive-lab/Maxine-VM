@@ -51,10 +51,10 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
      * updated with the selected type in {@linkplain TypeDescriptor#toJavaString() Java source format}.
      */
     class TypeFieldChooser extends InspectorAction {
-        final JTextComponent _field;
+        final JTextComponent field;
         TypeFieldChooser(String name, JTextComponent field) {
             super(inspection(), name);
-            _field = field;
+            this.field = field;
         }
 
         @Override
@@ -63,12 +63,12 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
             if (typeDescriptor != null) {
                 final String javaString = typeDescriptor.toJavaString();
                 final String newValue;
-                if (_field instanceof JTextArea) {
-                    newValue = updateSelectedParameter(_field.getText(), _field.getCaretPosition(), javaString);
+                if (field instanceof JTextArea) {
+                    newValue = updateSelectedParameter(field.getText(), field.getCaretPosition(), javaString);
                 } else {
                     newValue = javaString;
                 }
-                _field.setText(newValue);
+                field.setText(newValue);
             }
         }
 
@@ -112,25 +112,25 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
         }
     }
 
-    private final MethodKeyMessage _methodKeyMessage = new MethodKeyMessage();
+    private final MethodKeyMessage methodKeyMessage = new MethodKeyMessage();
 
-    private final JButton _okButton;
-    private final JTextField _holderField;
-    private final JTextField _nameField;
-    private final JTextField _returnTypeField;
-    private final JTextArea _parametersField;
-    private DefaultMethodKey _methodKey;
+    private final JButton okButton;
+    private final JTextField holderField;
+    private final JTextField nameField;
+    private final JTextField returnTypeField;
+    private final JTextArea parametersField;
+    private DefaultMethodKey methodKey;
 
     public void changedUpdate(DocumentEvent e) {
         ProgramError.unexpected();
     }
 
     public void insertUpdate(DocumentEvent e) {
-        _okButton.setEnabled(updateMethodKey());
+        okButton.setEnabled(updateMethodKey());
     }
 
     public void removeUpdate(DocumentEvent e) {
-        _okButton.setEnabled(updateMethodKey());
+        okButton.setEnabled(updateMethodKey());
     }
 
     /**
@@ -145,38 +145,38 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
         String returnType = null;
         String parameterTypes = null;
 
-        _methodKeyMessage.setMessage(false, "");
+        methodKeyMessage.setMessage(false, "");
 
-        final String nameString = _nameField.getText();
+        final String nameString = nameField.getText();
         if (!nameString.isEmpty()) {
             name = SymbolTable.makeSymbol(nameString);
             if (!ClassfileReader.isValidMethodName(name, true)) {
                 name = null;
-                _methodKeyMessage.setMessage(true, "Name is not a valid Java identifier");
+                methodKeyMessage.setMessage(true, "Name is not a valid Java identifier");
             }
         }
 
-        final String holderName = _holderField.getText();
+        final String holderName = holderField.getText();
         if (!holderName.isEmpty()) {
             try {
                 holder = JavaTypeDescriptor.getDescriptorForJavaString(holderName);
             } catch (ClassFormatError e) {
                 holder = null;
-                _methodKeyMessage.setMessage(true, "Invalid name for declaring class");
+                methodKeyMessage.setMessage(true, "Invalid name for declaring class");
             }
         }
 
-        final String returnTypeName = _returnTypeField.getText();
+        final String returnTypeName = returnTypeField.getText();
         if (!returnTypeName.isEmpty()) {
             try {
                 returnType = JavaTypeDescriptor.getDescriptorForJavaString(returnTypeName).string;
             } catch (ClassFormatError e) {
                 returnType = null;
-                _methodKeyMessage.setMessage(true, "Invalid name for return type");
+                methodKeyMessage.setMessage(true, "Invalid name for return type");
             }
         }
 
-        final String parameterTypeNames = _parametersField.getText();
+        final String parameterTypeNames = parametersField.getText();
         if (parameterTypeNames.isEmpty()) {
             parameterTypes = "";
         } else {
@@ -191,14 +191,14 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
                     parameterTypes += JavaTypeDescriptor.getDescriptorForJavaString(n).string;
                 } catch (ClassFormatError classFormatError) {
                     parameterTypes = null;
-                    _methodKeyMessage.setMessage(true, "Invalid name for parameter " + (i + 1));
+                    methodKeyMessage.setMessage(true, "Invalid name for parameter " + (i + 1));
                 }
             }
         }
 
         if (holder != null && name != null && returnType != null && parameterTypes != null) {
-            _methodKey = new DefaultMethodKey(holder, name, SignatureDescriptor.create("(" + parameterTypes + ")" + returnType));
-            _methodKeyMessage.setMessage(false, _methodKey.toString(true));
+            methodKey = new DefaultMethodKey(holder, name, SignatureDescriptor.create("(" + parameterTypes + ")" + returnType));
+            methodKeyMessage.setMessage(false, methodKey.toString(true));
             return true;
         }
         return false;
@@ -207,36 +207,36 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
     public MethodKeyInputDialog(Inspection inspection, String title) {
         super(inspection, title, true);
 
-        _holderField = new JTextField(30);
-        _nameField = new JTextField(30);
-        _returnTypeField = new JTextField(30);
-        _parametersField = new JTextArea(5, 30);
+        holderField = new JTextField(30);
+        nameField = new JTextField(30);
+        returnTypeField = new JTextField(30);
+        parametersField = new JTextArea(5, 30);
 
         final TextLabel holderLabel = new TextLabel(inspection, "Declaring class:");
-        final JButton holderButton = new JButton(new TypeFieldChooser("...", _holderField));
+        final JButton holderButton = new JButton(new TypeFieldChooser("...", holderField));
         final JLabel nameLabel = new JLabel("Name:");
         final TextLabel returnTypeLabel = new TextLabel(inspection, "Return type:");
-        final JButton returnTypeButton = new JButton(new TypeFieldChooser("...", _returnTypeField));
+        final JButton returnTypeButton = new JButton(new TypeFieldChooser("...", returnTypeField));
 
-        final JScrollPane parametersPane = new InspectorScrollPane(inspection, _parametersField);
+        final JScrollPane parametersPane = new InspectorScrollPane(inspection, parametersField);
         final TextLabel parametersLabel = new TextLabel(inspection, "Parameters:");
-        final JButton parametersButton = new JButton(new TypeFieldChooser("...", _parametersField));
+        final JButton parametersButton = new JButton(new TypeFieldChooser("...", parametersField));
 
-        _okButton = new JButton(new AbstractAction("OK") {
+        okButton = new JButton(new AbstractAction("OK") {
             public void actionPerformed(ActionEvent e) {
                 dispose();
             }
         });
         final JButton cancelButton = new JButton(new AbstractAction("Cancel") {
             public void actionPerformed(ActionEvent e) {
-                _methodKey = null;
+                methodKey = null;
                 dispose();
             }
         });
 
         final JPanel statusPanel = new InspectorPanel(inspection, new FlowLayout(FlowLayout.LEFT));
         statusPanel.add(new JLabel("Method key:"));
-        statusPanel.add(_methodKeyMessage);
+        statusPanel.add(methodKeyMessage);
         statusPanel.setBorder(BorderFactory.createEtchedBorder());
 
         final JPanel inputPanel = new InspectorPanel(inspection);
@@ -251,11 +251,11 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
                                         addComponent(returnTypeLabel).
                                         addComponent(parametersLabel)).
                         addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING).
-                                        addComponent(_holderField).
-                                        addComponent(_nameField).
-                                        addComponent(_returnTypeField).
+                                        addComponent(holderField).
+                                        addComponent(nameField).
+                                        addComponent(returnTypeField).
                                         addComponent(parametersPane).
-                                        addComponent(_okButton)).
+                                        addComponent(okButton)).
                         addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).
                                         addComponent(holderButton).
                                         addComponent(returnTypeButton).
@@ -264,21 +264,21 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
         layout.setVerticalGroup(layout.createSequentialGroup().
                         addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).
                                         addComponent(holderLabel).
-                                        addComponent(_holderField).
+                                        addComponent(holderField).
                                         addComponent(holderButton)).
                         addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).
                                         addComponent(nameLabel).
-                                        addComponent(_nameField)).
+                                        addComponent(nameField)).
                         addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).
                                         addComponent(returnTypeLabel).
-                                        addComponent(_returnTypeField).
+                                        addComponent(returnTypeField).
                                         addComponent(returnTypeButton)).
                         addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).
                                         addComponent(parametersLabel).
                                         addComponent(parametersPane).
                                         addComponent(parametersButton)).
                         addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).
-                                        addComponent(_okButton).
+                                        addComponent(okButton).
                                         addComponent(cancelButton)));
 
 
@@ -291,13 +291,13 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
         pack();
         inspection.gui().moveToMiddle(this);
 
-        _holderField.getDocument().addDocumentListener(this);
-        _nameField.getDocument().addDocumentListener(this);
-        _returnTypeField.getDocument().addDocumentListener(this);
-        _parametersField.getDocument().addDocumentListener(this);
+        holderField.getDocument().addDocumentListener(this);
+        nameField.getDocument().addDocumentListener(this);
+        returnTypeField.getDocument().addDocumentListener(this);
+        parametersField.getDocument().addDocumentListener(this);
 
         // Make pressing "Enter" equivalent to pressing the "Select" button.
-        getRootPane().setDefaultButton(_okButton);
+        getRootPane().setDefaultButton(okButton);
 
         // Make pressing "Escape" equivalent to pressing the "Cancel" button.
         getRootPane().registerKeyboardAction(cancelButton.getAction(), KeyStroke.getKeyStroke((char) KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -309,7 +309,7 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
      * @return null if the dialog was canceled or has never been made {@linkplain #setVisible(boolean) visible}
      */
     public MethodKey methodKey() {
-        return _methodKey;
+        return methodKey;
     }
 
     /**

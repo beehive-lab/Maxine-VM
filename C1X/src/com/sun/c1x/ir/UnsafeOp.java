@@ -29,7 +29,7 @@ import com.sun.c1x.value.BasicType;
  * @author Ben L. Titzer
  */
 public abstract class UnsafeOp extends Instruction {
-    BasicType _basicType;
+    BasicType basicType;
 
     /**
      * Creates a new UnsafeOp instruction.
@@ -38,11 +38,11 @@ public abstract class UnsafeOp extends Instruction {
      */
     public UnsafeOp(BasicType basicType, boolean isStore) {
         super(isStore ? ValueType.VOID_TYPE : ValueType.fromBasicType(basicType));
-        _basicType = basicType;
+        this.basicType = basicType;
         pin();
     }
 
     public BasicType basicType() {
-        return _basicType;
+        return basicType;
     }
 }

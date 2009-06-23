@@ -30,7 +30,7 @@ import com.sun.max.tele.method.*;
  */
 public abstract class TeleBreakpoint extends AbstractTeleVMHolder {
 
-    private final boolean _isTransient;
+    private final boolean isTransient;
 
     /**
      * Creates a breakpoint.
@@ -40,14 +40,14 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder {
      */
     public TeleBreakpoint(TeleVM teleVM, boolean isTransient) {
         super(teleVM);
-        _isTransient = isTransient;
+        this.isTransient = isTransient;
     }
 
     /**
      * Determines whether this breakpoint is to be deleted when a process execution stops or an inspection session finishes.
      */
     public boolean isTransient() {
-        return _isTransient;
+        return isTransient;
     }
 
     /**

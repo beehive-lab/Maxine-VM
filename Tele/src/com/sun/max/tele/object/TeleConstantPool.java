@@ -33,7 +33,7 @@ import com.sun.max.vm.type.*;
  */
 public final class TeleConstantPool extends TeleTupleObject{
 
-    private Reference _constantsArrayReference;
+    private Reference constantsArrayReference;
 
     TeleConstantPool(TeleVM teleVM, Reference constantPoolReference) {
         super(teleVM, constantPoolReference);
@@ -46,10 +46,10 @@ public final class TeleConstantPool extends TeleTupleObject{
     }
 
     private Reference constantsArrayReference() {
-        if (_constantsArrayReference == null) {
-            _constantsArrayReference = teleVM().fields().ConstantPool_constants.readReference(reference());
+        if (constantsArrayReference == null) {
+            constantsArrayReference = teleVM().fields().ConstantPool_constants.readReference(reference());
         }
-        return _constantsArrayReference;
+        return constantsArrayReference;
     }
     /**
      * @param index specifies an entry in this pool

@@ -28,53 +28,52 @@ import com.sun.max.vm.type.*;
 
 abstract class JavaReferenceTypeProvider implements ReferenceTypeProvider {
 
-    private Class _clazz;
-    private ClassProvider _superClass;
-    private ClassLoaderProvider _classLoader;
-    private InterfaceProvider[] _implementedInterfaces;
-    private MethodProvider[] _methodProviders;
-    private VMAccess _vm;
+    private Class clazz;
+    private ClassProvider superClass;
+    private ClassLoaderProvider classLoader;
+    private InterfaceProvider[] implementedInterfaces;
+    private MethodProvider[] methodProviders;
+    private VMAccess vm;
 
     protected JavaReferenceTypeProvider(Class c, VMAccess vm, ClassLoaderProvider classLoader) {
-
-        _clazz = c;
-        _vm = vm;
+        this.clazz = c;
+        this.vm = vm;
         initReferencedClasses();
         initMethods();
     }
 
     public ClassProvider getSuperClass() {
-        return _superClass;
+        return superClass;
     }
 
     private void initReferencedClasses() {
 
-        if (_clazz.getSuperclass() != null) {
-            final ReferenceTypeProvider referenceTypeProvider = _vm.getReferenceType(_clazz.getSuperclass());
+        if (clazz.getSuperclass() != null) {
+            final ReferenceTypeProvider referenceTypeProvider = vm.getReferenceType(clazz.getSuperclass());
             assert referenceTypeProvider instanceof ClassProvider;
-            _superClass = (ClassProvider) referenceTypeProvider;
+            superClass = (ClassProvider) referenceTypeProvider;
         }
 
-        final Class[] interfaces = _clazz.getInterfaces();
-        _implementedInterfaces = new InterfaceProvider[interfaces.length];
+        final Class[] interfaces = clazz.getInterfaces();
+        implementedInterfaces = new InterfaceProvider[interfaces.length];
         for (int i = 0; i < interfaces.length; i++) {
-            final ReferenceTypeProvider referenceTypeProvider = _vm.getReferenceType(interfaces[i]);
+            final ReferenceTypeProvider referenceTypeProvider = vm.getReferenceType(interfaces[i]);
             assert referenceTypeProvider instanceof InterfaceProvider;
-            _implementedInterfaces[i] = (InterfaceProvider) referenceTypeProvider;
+            implementedInterfaces[i] = (InterfaceProvider) referenceTypeProvider;
         }
 
     }
 
     private void initMethods() {
-        final Method[] methods = _clazz.getDeclaredMethods();
-        _methodProviders = new MethodProvider[methods.length];
+        final Method[] methods = clazz.getDeclaredMethods();
+        methodProviders = new MethodProvider[methods.length];
         for (int i = 0; i < methods.length; i++) {
-            _methodProviders[i] = new JavaMethodProvider(methods[i], this, _vm);
+            methodProviders[i] = new JavaMethodProvider(methods[i], this, vm);
         }
     }
 
     public ClassLoaderProvider classLoader() {
-        return _classLoader;
+        return classLoader;
     }
 
     public ClassObjectProvider classObject() {
@@ -88,11 +87,11 @@ abstract class JavaReferenceTypeProvider implements ReferenceTypeProvider {
     }
 
     public int getFlags() {
-        return _clazz.getModifiers();
+        return clazz.getModifiers();
     }
 
     public InterfaceProvider[] getImplementedInterfaces() {
-        return _implementedInterfaces;
+        return implementedInterfaces;
     }
 
     public ObjectProvider[] getInstances() {
@@ -101,11 +100,11 @@ abstract class JavaReferenceTypeProvider implements ReferenceTypeProvider {
     }
 
     public MethodProvider[] getMethods() {
-        return _methodProviders;
+        return methodProviders;
     }
 
     public String getName() {
-        return _clazz.getSimpleName();
+        return clazz.getSimpleName();
     }
 
     public ReferenceTypeProvider[] getNestedTypes() {
@@ -114,11 +113,11 @@ abstract class JavaReferenceTypeProvider implements ReferenceTypeProvider {
     }
 
     public String getSignature() {
-        return JavaTypeDescriptor.forJavaClass(_clazz).toString();
+        return JavaTypeDescriptor.forJavaClass(clazz).toString();
     }
 
     public String getSignatureWithGeneric() {
-        return _clazz.getName();
+        return clazz.getName();
     }
 
     public String getSourceFileName() {
@@ -131,23 +130,23 @@ abstract class JavaReferenceTypeProvider implements ReferenceTypeProvider {
     }
 
     public VMValue.Type getType() {
-        if (this._clazz == Boolean.TYPE) {
+        if (this.clazz == Boolean.TYPE) {
             return VMValue.Type.BOOLEAN;
-        } else if (this._clazz == Byte.TYPE) {
+        } else if (this.clazz == Byte.TYPE) {
             return VMValue.Type.BYTE;
-        } else if (this._clazz == Character.TYPE) {
+        } else if (this.clazz == Character.TYPE) {
             return VMValue.Type.CHAR;
-        } else if (this._clazz == Double.TYPE) {
+        } else if (this.clazz == Double.TYPE) {
             return VMValue.Type.DOUBLE;
-        } else if (this._clazz == Float.TYPE) {
+        } else if (this.clazz == Float.TYPE) {
             return VMValue.Type.FLOAT;
-        } else if (this._clazz == Integer.TYPE) {
+        } else if (this.clazz == Integer.TYPE) {
             return VMValue.Type.INT;
-        } else if (this._clazz == Long.TYPE) {
+        } else if (this.clazz == Long.TYPE) {
             return VMValue.Type.LONG;
-        } else if (this._clazz == Short.TYPE) {
+        } else if (this.clazz == Short.TYPE) {
             return VMValue.Type.SHORT;
-        } else if (this._clazz == Void.TYPE) {
+        } else if (this.clazz == Void.TYPE) {
             return VMValue.Type.VOID;
         }
 

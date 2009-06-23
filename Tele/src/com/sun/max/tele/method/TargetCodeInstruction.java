@@ -30,129 +30,129 @@ import com.sun.max.unsafe.*;
   */
 public final class TargetCodeInstruction {
 
-    private final String _mnemonic;
+    private final String mnemonic;
 
     /**
      * @return disassembled mnemonic for this instruction.
      */
     public String mnemonic() {
-        return _mnemonic;
+        return mnemonic;
     }
 
-    private final int _position;
+    private final int position;
 
     /**
      * @return position in bytes in the sequence of instructions for this method
      */
     public int position() {
-        return _position;
+        return position;
     }
 
-    private final Address _address;
+    private final Address address;
 
     /**
      * @return address of the first byte of the instruction
      */
     public Address address() {
-        return _address;
+        return address;
     }
 
-    private final String _label;
+    private final String label;
 
     /**
      * The label (if any) at this instruction's address.
      */
     public String label() {
-        return _label;
+        return label;
     }
 
-    private final byte[] _bytes;
+    private final byte[] bytes;
 
     public byte[] bytes() {
-        return _bytes;
+        return bytes;
     }
 
-    private final String _operands;
+    private final String operands;
 
     public String operands() {
-        return _operands;
+        return operands;
     }
 
     /**
      * The target address of this instruction if it is a direct call or jump instruction otherwise null.
      */
-    public final Address _targetAddress;
+    public final Address targetAddress;
 
     /**
      * The address of a literal value loaded by a load instruction. How the literal is loaded depends on the instruction set
      * (e.g., load relative to current pc, or relative of a base register, etc...)
      */
-    public final Address _literalSourceAddress;
+    public final Address literalSourceAddress;
 
     public String getMnemonic() {
-        return _mnemonic;
+        return mnemonic;
     }
 
     public int getPosition() {
-        return _position;
+        return position;
     }
 
     public long getAddress() {
-        return _address.toLong();
+        return address.toLong();
     }
 
     public String getLabel() {
-        return _label;
+        return label;
     }
 
     public byte[] getBytes() {
-        return _bytes;
+        return bytes;
     }
 
     public String getOperands() {
-        return _operands;
+        return operands;
     }
 
     public long getTargetAddress() {
-        if (_targetAddress == null) {
+        if (targetAddress == null) {
             return 0;
         }
-        return _targetAddress.toLong();
+        return targetAddress.toLong();
     }
 
     TargetCodeInstruction(String mnemonic, Address address, int position, String label, byte[] bytes, String operands, Address targetAddress, Address literalSourceAddress) {
-        _mnemonic = mnemonic;
-        _address = address;
-        _position = position;
-        _label = label;
-        _bytes = bytes;
-        _operands = operands;
-        _targetAddress = targetAddress;
-        _literalSourceAddress = literalSourceAddress;
+        this.mnemonic = mnemonic;
+        this.address = address;
+        this.position = position;
+        this.label = label;
+        this.bytes = bytes;
+        this.operands = operands;
+        this.targetAddress = targetAddress;
+        this.literalSourceAddress = literalSourceAddress;
     }
 
     /**
      * @return length in bytes of the instruction.
      */
     public int length() {
-        return _bytes.length;
+        return bytes.length;
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder(_address.toHexString()).
+        final StringBuilder sb = new StringBuilder(address.toHexString()).
             append("[+").
-            append(_position).
+            append(position).
             append("] ");
-        if (_label != null) {
-            sb.append(_label).
+        if (label != null) {
+            sb.append(label).
                 append(": ");
         }
-        sb.append(_mnemonic).
+        sb.append(mnemonic).
             append(' ').
-            append(_operands).
+            append(operands).
             append("    ").
-            append(DisassembledInstruction.toHexString(_bytes));
+            append(DisassembledInstruction.toHexString(bytes));
         return sb.toString();
     }
 }

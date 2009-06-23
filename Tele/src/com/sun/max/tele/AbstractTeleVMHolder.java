@@ -29,24 +29,24 @@ package com.sun.max.tele;
  */
 public abstract class AbstractTeleVMHolder implements TeleVMHolder {
 
-    private final TeleVM _teleVM;
+    private final TeleVM teleVM;
 
     public final TeleVM teleVM() {
-        return _teleVM;
+        return teleVM;
     }
 
-    private final String _tracePrefix;
+    private final String tracePrefix;
 
     /**
      * @return default prefix text for trace messages; identifies the class being traced.
      */
     protected String tracePrefix() {
-        return _tracePrefix;
+        return tracePrefix;
     }
 
     protected AbstractTeleVMHolder(TeleVM teleVM) {
-        _teleVM = teleVM;
-        _tracePrefix = "[" + getClass().getSimpleName() + "] ";
+        this.teleVM = teleVM;
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
     }
 
 }

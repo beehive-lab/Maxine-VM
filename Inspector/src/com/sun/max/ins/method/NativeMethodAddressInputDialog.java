@@ -36,48 +36,48 @@ import com.sun.max.unsafe.*;
  */
 public abstract class NativeMethodAddressInputDialog extends InspectorDialog {
 
-    private  AddressInputField.Decimal _codeLengthInputField;
-    private final AddressInputField.Hex _addressInputField;
-    private final JTextField _titleInputField;
+    private  AddressInputField.Decimal codeLengthInputField;
+    private final AddressInputField.Hex addressInputField;
+    private final JTextField titleInputField;
 
-    private final Size _initialCodeSize;
-    private final String _initialTitle;
+    private final Size initialCodeSize;
+    private final String initialTitle;
 
-    private Address _codeStart;
-    private Size _codeSize;
-    private String _title;
+    private Address codeStart;
+    private Size codeSize;
+    private String title;
 
     public abstract void entered(Address address, Size codeSize, String title);
 
     public NativeMethodAddressInputDialog(Inspection inspection, Address codeStart, Size initialCodeSize) {
         super(inspection, "Native Code Address", true);
-        _initialCodeSize = initialCodeSize;
-        _initialTitle =  defaultTitle(codeStart);
+        this.initialCodeSize = initialCodeSize;
+        initialTitle =  defaultTitle(codeStart);
 
         final JPanel dialogPanel = new InspectorPanel(inspection, new SpringLayout());
         dialogPanel.add(new TextLabel(inspection, "Address:"));
-        _addressInputField = new AddressInputField.Hex(inspection, codeStart) {
+        addressInputField = new AddressInputField.Hex(inspection, codeStart) {
             @Override
             public void update(Address address) {
                 if (isValidInput(address)) {
-                    _codeStart = address;
+                    NativeMethodAddressInputDialog.this.codeStart = address;
                 }
             }
         };
-        dialogPanel.add(_addressInputField);
+        dialogPanel.add(addressInputField);
         dialogPanel.add(new TextLabel(inspection, "CodeLength:"));
-        _codeLengthInputField = new AddressInputField.Decimal(inspection, _initialCodeSize) {
+        codeLengthInputField = new AddressInputField.Decimal(inspection, initialCodeSize) {
             @Override
             public void update(Address address) {
                 if (isValidInput(address)) {
-                    _codeSize = Size.fromLong(address.toLong());
+                    codeSize = Size.fromLong(address.toLong());
                 }
             }
         };
-        dialogPanel.add(_codeLengthInputField);
+        dialogPanel.add(codeLengthInputField);
         dialogPanel.add(new TextLabel(inspection, "Title:"));
-        _titleInputField = new JTextField(_initialTitle);
-        dialogPanel.add(_titleInputField);
+        titleInputField = new JTextField(initialTitle);
+        dialogPanel.add(titleInputField);
 
         dialogPanel.add(new JButton(new AbstractAction("Cancel") {
             public void actionPerformed(ActionEvent e) {
@@ -108,14 +108,14 @@ public abstract class NativeMethodAddressInputDialog extends InspectorDialog {
 
         @Override
         protected void procedure() {
-            _addressInputField.attemptUpdate();
-            _codeLengthInputField.attemptUpdate();
-            _title = _titleInputField.getText();
-            if (_title.equals(_initialTitle)) {
-                _title = defaultTitle(_codeStart);
+            addressInputField.attemptUpdate();
+            codeLengthInputField.attemptUpdate();
+            title = titleInputField.getText();
+            if (title.equals(initialTitle)) {
+                title = defaultTitle(codeStart);
             }
             dispose();
-            entered(_codeStart, _codeSize, _title);
+            entered(codeStart, codeSize, title);
         }
     }
 

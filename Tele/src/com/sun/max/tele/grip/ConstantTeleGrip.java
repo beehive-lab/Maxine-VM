@@ -29,30 +29,30 @@ import com.sun.max.unsafe.*;
  */
 public abstract class ConstantTeleGrip extends RemoteTeleGrip {
 
-    private final Address _raw;
+    private final Address raw;
 
     @Override
     public Address raw() {
-        return _raw;
+        return raw;
     }
 
     protected ConstantTeleGrip(TeleGripScheme teleGripScheme, Address rawGrip) {
         super(teleGripScheme);
-        _raw = rawGrip;
+        raw = rawGrip;
     }
 
     @Override
     public boolean equals(Object other) {
         if (other instanceof ConstantTeleGrip) {
             final ConstantTeleGrip constantTeleGrip = (ConstantTeleGrip) other;
-            return _raw.equals(constantTeleGrip._raw);
+            return raw.equals(constantTeleGrip.raw);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return _raw.toInt();
+        return raw.toInt();
     }
 
     @Override

@@ -50,67 +50,67 @@ public final class EventRequestCommands {
                 public abstract void read(JDWPInputStream ps) throws java.io.IOException, JDWPException;
             }
 
-            public byte _modKind;
-            public ModifierCommon _aModifierCommon;
+            public byte modKind;
+            public ModifierCommon aModifierCommon;
 
             public Modifier(byte modKind, ModifierCommon aModifierCommon) {
-                this._modKind = modKind;
-                this._aModifierCommon = aModifierCommon;
+                this.modKind = modKind;
+                this.aModifierCommon = aModifierCommon;
             }
 
             public Modifier() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _modKind = ps.readByte();
-                switch (_modKind) {
+                modKind = ps.readByte();
+                switch (modKind) {
                     case 1:
-                        _aModifierCommon = new Count();
+                        aModifierCommon = new Count();
                         break;
                     case 2:
-                        _aModifierCommon = new Conditional();
+                        aModifierCommon = new Conditional();
                         break;
                     case 3:
-                        _aModifierCommon = new ThreadOnly();
+                        aModifierCommon = new ThreadOnly();
                         break;
                     case 4:
-                        _aModifierCommon = new ClassOnly();
+                        aModifierCommon = new ClassOnly();
                         break;
                     case 5:
-                        _aModifierCommon = new ClassMatch();
+                        aModifierCommon = new ClassMatch();
                         break;
                     case 6:
-                        _aModifierCommon = new ClassExclude();
+                        aModifierCommon = new ClassExclude();
                         break;
                     case 7:
-                        _aModifierCommon = new LocationOnly();
+                        aModifierCommon = new LocationOnly();
                         break;
                     case 8:
-                        _aModifierCommon = new ExceptionOnly();
+                        aModifierCommon = new ExceptionOnly();
                         break;
                     case 9:
-                        _aModifierCommon = new FieldOnly();
+                        aModifierCommon = new FieldOnly();
                         break;
                     case 10:
-                        _aModifierCommon = new Step();
+                        aModifierCommon = new Step();
                         break;
                     case 11:
-                        _aModifierCommon = new InstanceOnly();
+                        aModifierCommon = new InstanceOnly();
                         break;
                     case 12:
-                        _aModifierCommon = new SourceNameMatch();
+                        aModifierCommon = new SourceNameMatch();
                         break;
                 }
-                _aModifierCommon.read(ps);
+                aModifierCommon.read(ps);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_modKind);
-                _aModifierCommon.write(ps);
+                ps.write(modKind);
+                aModifierCommon.write(ps);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_modKind=" + _modKind);
-                stringBuilder.append(_aModifierCommon);
+                stringBuilder.append("modKind=" + modKind);
+                stringBuilder.append(aModifierCommon);
                 return stringBuilder.toString();
             }
 
@@ -120,24 +120,24 @@ public final class EventRequestCommands {
                     return new Modifier(ALT_ID, new Count(count));
                 }
 
-                public int _count;
+                public int count;
                 public Count(int count) {
-                    this._count = count;
+                    this.count = count;
                 }
                 public Count() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _count = ps.readInt();
+                    count = ps.readInt();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_count);
+                    ps.write(count);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_count=" + _count);
+                    stringBuilder.append("count=" + count);
                     return stringBuilder.toString();
                 }
             }
@@ -148,24 +148,24 @@ public final class EventRequestCommands {
                     return new Modifier(ALT_ID, new Conditional(exprID));
                 }
 
-                public int _exprID;
+                public int exprID;
                 public Conditional(int exprID) {
-                    this._exprID = exprID;
+                    this.exprID = exprID;
                 }
                 public Conditional() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _exprID = ps.readInt();
+                    exprID = ps.readInt();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_exprID);
+                    ps.write(exprID);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_exprID=" + _exprID);
+                    stringBuilder.append("exprID=" + exprID);
                     return stringBuilder.toString();
                 }
             }
@@ -176,24 +176,24 @@ public final class EventRequestCommands {
                     return new Modifier(ALT_ID, new ThreadOnly(thread));
                 }
 
-                public ID.ThreadID _thread;
+                public ID.ThreadID thread;
                 public ThreadOnly(ID.ThreadID thread) {
-                    this._thread = thread;
+                    this.thread = thread;
                 }
                 public ThreadOnly() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                    thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    _thread.write(ps.getOutputStream());
+                    thread.write(ps.getOutputStream());
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_thread=" + _thread);
+                    stringBuilder.append("thread=" + thread);
                     return stringBuilder.toString();
                 }
             }
@@ -204,24 +204,24 @@ public final class EventRequestCommands {
                     return new Modifier(ALT_ID, new ClassOnly(clazz));
                 }
 
-                public ID.ReferenceTypeID _clazz;
+                public ID.ReferenceTypeID clazz;
                 public ClassOnly(ID.ReferenceTypeID clazz) {
-                    this._clazz = clazz;
+                    this.clazz = clazz;
                 }
                 public ClassOnly() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _clazz = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
+                    clazz = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    _clazz.write(ps.getOutputStream());
+                    clazz.write(ps.getOutputStream());
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_clazz=" + _clazz);
+                    stringBuilder.append("clazz=" + clazz);
                     return stringBuilder.toString();
                 }
             }
@@ -232,24 +232,24 @@ public final class EventRequestCommands {
                     return new Modifier(ALT_ID, new ClassMatch(classPattern));
                 }
 
-                public String _classPattern;
+                public String classPattern;
                 public ClassMatch(String classPattern) {
-                    this._classPattern = classPattern;
+                    this.classPattern = classPattern;
                 }
                 public ClassMatch() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _classPattern = ps.readString();
+                    classPattern = ps.readString();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_classPattern);
+                    ps.write(classPattern);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_classPattern=" + _classPattern);
+                    stringBuilder.append("classPattern=" + classPattern);
                     return stringBuilder.toString();
                 }
             }
@@ -260,24 +260,24 @@ public final class EventRequestCommands {
                     return new Modifier(ALT_ID, new ClassExclude(classPattern));
                 }
 
-                public String _classPattern;
+                public String classPattern;
                 public ClassExclude(String classPattern) {
-                    this._classPattern = classPattern;
+                    this.classPattern = classPattern;
                 }
                 public ClassExclude() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _classPattern = ps.readString();
+                    classPattern = ps.readString();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_classPattern);
+                    ps.write(classPattern);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_classPattern=" + _classPattern);
+                    stringBuilder.append("classPattern=" + classPattern);
                     return stringBuilder.toString();
                 }
             }
@@ -288,24 +288,24 @@ public final class EventRequestCommands {
                     return new Modifier(ALT_ID, new LocationOnly(loc));
                 }
 
-                public JDWPLocation _loc;
+                public JDWPLocation loc;
                 public LocationOnly(JDWPLocation loc) {
-                    this._loc = loc;
+                    this.loc = loc;
                 }
                 public LocationOnly() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _loc = ps.readLocation();
+                    loc = ps.readLocation();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_loc);
+                    ps.write(loc);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_loc=" + _loc);
+                    stringBuilder.append("loc=" + loc);
                     return stringBuilder.toString();
                 }
             }
@@ -316,40 +316,40 @@ public final class EventRequestCommands {
                     return new Modifier(ALT_ID, new ExceptionOnly(exceptionOrNull, caught, uncaught));
                 }
 
-                public ID.ReferenceTypeID _exceptionOrNull;
+                public ID.ReferenceTypeID exceptionOrNull;
 
-                public boolean _caught;
+                public boolean caught;
 
-                public boolean _uncaught;
+                public boolean uncaught;
                 public ExceptionOnly(ID.ReferenceTypeID exceptionOrNull,
                     boolean caught,
                     boolean uncaught) {
-                    this._exceptionOrNull = exceptionOrNull;
-                    this._caught = caught;
-                    this._uncaught = uncaught;
+                    this.exceptionOrNull = exceptionOrNull;
+                    this.caught = caught;
+                    this.uncaught = uncaught;
                 }
                 public ExceptionOnly() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _exceptionOrNull = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
-                    _caught = ps.readBoolean();
-                    _uncaught = ps.readBoolean();
+                    exceptionOrNull = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
+                    caught = ps.readBoolean();
+                    uncaught = ps.readBoolean();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    _exceptionOrNull.write(ps.getOutputStream());
-                    ps.write(_caught);
-                    ps.write(_uncaught);
+                    exceptionOrNull.write(ps.getOutputStream());
+                    ps.write(caught);
+                    ps.write(uncaught);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_exceptionOrNull=" + _exceptionOrNull);
+                    stringBuilder.append("exceptionOrNull=" + exceptionOrNull);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_caught=" + _caught);
+                    stringBuilder.append("caught=" + caught);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_uncaught=" + _uncaught);
+                    stringBuilder.append("uncaught=" + uncaught);
                     return stringBuilder.toString();
                 }
             }
@@ -360,32 +360,32 @@ public final class EventRequestCommands {
                     return new Modifier(ALT_ID, new FieldOnly(declaring, fieldID));
                 }
 
-                public ID.ReferenceTypeID _declaring;
+                public ID.ReferenceTypeID declaring;
 
-                public ID.FieldID _fieldID;
+                public ID.FieldID fieldID;
                 public FieldOnly(ID.ReferenceTypeID declaring,
                     ID.FieldID fieldID) {
-                    this._declaring = declaring;
-                    this._fieldID = fieldID;
+                    this.declaring = declaring;
+                    this.fieldID = fieldID;
                 }
                 public FieldOnly() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _declaring = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
-                    _fieldID = ID.read(ps.getInputStream(), ID.FieldID.class);
+                    declaring = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
+                    fieldID = ID.read(ps.getInputStream(), ID.FieldID.class);
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    _declaring.write(ps.getOutputStream());
-                    _fieldID.write(ps.getOutputStream());
+                    declaring.write(ps.getOutputStream());
+                    fieldID.write(ps.getOutputStream());
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_declaring=" + _declaring);
+                    stringBuilder.append("declaring=" + declaring);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_fieldID=" + _fieldID);
+                    stringBuilder.append("fieldID=" + fieldID);
                     return stringBuilder.toString();
                 }
             }
@@ -396,40 +396,40 @@ public final class EventRequestCommands {
                     return new Modifier(ALT_ID, new Step(thread, size, depth));
                 }
 
-                public ID.ThreadID _thread;
+                public ID.ThreadID thread;
 
-                public int _size;
+                public int size;
 
-                public int _depth;
+                public int depth;
                 public Step(ID.ThreadID thread,
                     int size,
                     int depth) {
-                    this._thread = thread;
-                    this._size = size;
-                    this._depth = depth;
+                    this.thread = thread;
+                    this.size = size;
+                    this.depth = depth;
                 }
                 public Step() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                    _size = ps.readInt();
-                    _depth = ps.readInt();
+                    thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                    size = ps.readInt();
+                    depth = ps.readInt();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    _thread.write(ps.getOutputStream());
-                    ps.write(_size);
-                    ps.write(_depth);
+                    thread.write(ps.getOutputStream());
+                    ps.write(size);
+                    ps.write(depth);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_thread=" + _thread);
+                    stringBuilder.append("thread=" + thread);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_size=" + _size);
+                    stringBuilder.append("size=" + size);
                     stringBuilder.append(", ");
-                    stringBuilder.append("_depth=" + _depth);
+                    stringBuilder.append("depth=" + depth);
                     return stringBuilder.toString();
                 }
             }
@@ -440,24 +440,24 @@ public final class EventRequestCommands {
                     return new Modifier(ALT_ID, new InstanceOnly(instance));
                 }
 
-                public ID.ObjectID _instance;
+                public ID.ObjectID instance;
                 public InstanceOnly(ID.ObjectID instance) {
-                    this._instance = instance;
+                    this.instance = instance;
                 }
                 public InstanceOnly() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _instance = ID.read(ps.getInputStream(), ID.ObjectID.class);
+                    instance = ID.read(ps.getInputStream(), ID.ObjectID.class);
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    _instance.write(ps.getOutputStream());
+                    instance.write(ps.getOutputStream());
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_instance=" + _instance);
+                    stringBuilder.append("instance=" + instance);
                     return stringBuilder.toString();
                 }
             }
@@ -468,73 +468,73 @@ public final class EventRequestCommands {
                     return new Modifier(ALT_ID, new SourceNameMatch(sourceNamePattern));
                 }
 
-                public String _sourceNamePattern;
+                public String sourceNamePattern;
                 public SourceNameMatch(String sourceNamePattern) {
-                    this._sourceNamePattern = sourceNamePattern;
+                    this.sourceNamePattern = sourceNamePattern;
                 }
                 public SourceNameMatch() {
                 }
                 @Override
                 public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                    _sourceNamePattern = ps.readString();
+                    sourceNamePattern = ps.readString();
                 }
                 @Override
                 public void write(JDWPOutputStream ps) throws java.io.IOException {
-                    ps.write(_sourceNamePattern);
+                    ps.write(sourceNamePattern);
                 }
                 @Override
                 public String toString() {
                     final StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append("_sourceNamePattern=" + _sourceNamePattern);
+                    stringBuilder.append("sourceNamePattern=" + sourceNamePattern);
                     return stringBuilder.toString();
                 }
             }
         }
 
         public static class IncomingRequest implements IncomingData {
-            public byte _eventKind;
+            public byte eventKind;
 
-            public byte _suspendPolicy;
+            public byte suspendPolicy;
 
-            public Modifier[] _modifiers;
+            public Modifier[] modifiers;
             public IncomingRequest(byte eventKind,
                 byte suspendPolicy,
                 Modifier[] modifiers) {
-                this._eventKind = eventKind;
-                this._suspendPolicy = suspendPolicy;
-                this._modifiers = modifiers;
+                this.eventKind = eventKind;
+                this.suspendPolicy = suspendPolicy;
+                this.modifiers = modifiers;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _eventKind = ps.readByte();
-                _suspendPolicy = ps.readByte();
+                eventKind = ps.readByte();
+                suspendPolicy = ps.readByte();
                 final int modifiersCount = ps.readInt();
-                _modifiers = new Modifier[modifiersCount];
+                modifiers = new Modifier[modifiersCount];
                 for (int i = 0; i < modifiersCount; i++) {
-                    _modifiers[i] = new Modifier();
-                    _modifiers[i].read(ps);
+                    modifiers[i] = new Modifier();
+                    modifiers[i].read(ps);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_eventKind);
-                ps.write(_suspendPolicy);
-                ps.write(_modifiers.length);
-                for (int i = 0; i < _modifiers.length; i++) {
-                    _modifiers[i].write(ps);
+                ps.write(eventKind);
+                ps.write(suspendPolicy);
+                ps.write(modifiers.length);
+                for (int i = 0; i < modifiers.length; i++) {
+                    modifiers[i].write(ps);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_eventKind=" + _eventKind);
+                stringBuilder.append("eventKind=" + eventKind);
                 stringBuilder.append(", ");
-                stringBuilder.append("_suspendPolicy=" + _suspendPolicy);
+                stringBuilder.append("suspendPolicy=" + suspendPolicy);
                 stringBuilder.append(", ");
-                stringBuilder.append("_modifiers=[" + _modifiers.length + "]{");
-                for (int i = 0; i < _modifiers.length; i++) {
+                stringBuilder.append("modifiers=[" + modifiers.length + "]{");
+                for (int i = 0; i < modifiers.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_modifiers[i]=" + _modifiers[i]);
+                    stringBuilder.append("modifiers[i]=" + modifiers[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -545,22 +545,22 @@ public final class EventRequestCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public int _requestID;
+            public int requestID;
             public Reply(int requestID) {
-                this._requestID = requestID;
+                this.requestID = requestID;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _requestID = ps.readInt();
+                requestID = ps.readInt();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_requestID);
+                ps.write(requestID);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_requestID=" + _requestID);
+                stringBuilder.append("requestID=" + requestID);
                 return stringBuilder.toString();
             }
         }
@@ -578,30 +578,30 @@ public final class EventRequestCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public byte _eventKind;
+            public byte eventKind;
 
-            public int _requestID;
+            public int requestID;
             public IncomingRequest(byte eventKind,
                 int requestID) {
-                this._eventKind = eventKind;
-                this._requestID = requestID;
+                this.eventKind = eventKind;
+                this.requestID = requestID;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _eventKind = ps.readByte();
-                _requestID = ps.readInt();
+                eventKind = ps.readByte();
+                requestID = ps.readInt();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_eventKind);
-                ps.write(_requestID);
+                ps.write(eventKind);
+                ps.write(requestID);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_eventKind=" + _eventKind);
+                stringBuilder.append("eventKind=" + eventKind);
                 stringBuilder.append(", ");
-                stringBuilder.append("_requestID=" + _requestID);
+                stringBuilder.append("requestID=" + requestID);
                 return stringBuilder.toString();
             }
         }

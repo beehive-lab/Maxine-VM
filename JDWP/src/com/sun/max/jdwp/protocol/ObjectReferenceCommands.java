@@ -45,22 +45,22 @@ public final class ObjectReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ObjectID _object;
+            public ID.ObjectID object;
             public IncomingRequest(ID.ObjectID object) {
-                this._object = object;
+                this.object = object;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _object = ID.read(ps.getInputStream(), ID.ObjectID.class);
+                object = ID.read(ps.getInputStream(), ID.ObjectID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _object.write(ps.getOutputStream());
+                object.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_object=" + _object);
+                stringBuilder.append("object=" + object);
                 return stringBuilder.toString();
             }
         }
@@ -69,30 +69,30 @@ public final class ObjectReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public byte _refTypeTag;
+            public byte refTypeTag;
 
-            public ID.ReferenceTypeID _typeID;
+            public ID.ReferenceTypeID typeID;
             public Reply(byte refTypeTag,
                 ID.ReferenceTypeID typeID) {
-                this._refTypeTag = refTypeTag;
-                this._typeID = typeID;
+                this.refTypeTag = refTypeTag;
+                this.typeID = typeID;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _refTypeTag = ps.readByte();
-                _typeID = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
+                refTypeTag = ps.readByte();
+                typeID = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_refTypeTag);
-                _typeID.write(ps.getOutputStream());
+                ps.write(refTypeTag);
+                typeID.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_refTypeTag=" + _refTypeTag);
+                stringBuilder.append("refTypeTag=" + refTypeTag);
                 stringBuilder.append(", ");
-                stringBuilder.append("_typeID=" + _typeID);
+                stringBuilder.append("typeID=" + typeID);
                 return stringBuilder.toString();
             }
         }
@@ -111,62 +111,62 @@ public final class ObjectReferenceCommands {
 
         public static class Field {
 
-            public ID.FieldID _fieldID;
+            public ID.FieldID fieldID;
             public Field(ID.FieldID fieldID) {
-                this._fieldID = fieldID;
+                this.fieldID = fieldID;
             }
             public Field() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _fieldID = ID.read(ps.getInputStream(), ID.FieldID.class);
+                fieldID = ID.read(ps.getInputStream(), ID.FieldID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _fieldID.write(ps.getOutputStream());
+                fieldID.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_fieldID=" + _fieldID);
+                stringBuilder.append("fieldID=" + fieldID);
                 return stringBuilder.toString();
             }
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ObjectID _object;
+            public ID.ObjectID object;
 
-            public Field[] _fields;
+            public Field[] fields;
             public IncomingRequest(ID.ObjectID object,
                 Field[] fields) {
-                this._object = object;
-                this._fields = fields;
+                this.object = object;
+                this.fields = fields;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _object = ID.read(ps.getInputStream(), ID.ObjectID.class);
+                object = ID.read(ps.getInputStream(), ID.ObjectID.class);
                 final int fieldsCount = ps.readInt();
-                _fields = new Field[fieldsCount];
+                fields = new Field[fieldsCount];
                 for (int i = 0; i < fieldsCount; i++) {
-                    _fields[i] = new Field();
-                    _fields[i].read(ps);
+                    fields[i] = new Field();
+                    fields[i].read(ps);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _object.write(ps.getOutputStream());
-                ps.write(_fields.length);
-                for (int i = 0; i < _fields.length; i++) {
-                    _fields[i].write(ps);
+                object.write(ps.getOutputStream());
+                ps.write(fields.length);
+                for (int i = 0; i < fields.length; i++) {
+                    fields[i].write(ps);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_object=" + _object);
+                stringBuilder.append("object=" + object);
                 stringBuilder.append(", ");
-                stringBuilder.append("_fields=[" + _fields.length + "]{");
-                for (int i = 0; i < _fields.length; i++) {
+                stringBuilder.append("fields=[" + fields.length + "]{");
+                for (int i = 0; i < fields.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_fields[i]=" + _fields[i]);
+                    stringBuilder.append("fields[i]=" + fields[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -177,32 +177,32 @@ public final class ObjectReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public JDWPValue[] _values;
+            public JDWPValue[] values;
             public Reply(JDWPValue[] values) {
-                this._values = values;
+                this.values = values;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
                 final int valuesCount = ps.readInt();
-                _values = new JDWPValue[valuesCount];
+                values = new JDWPValue[valuesCount];
                 for (int i = 0; i < valuesCount; i++) {
-                    _values[i] = ps.readValue();
+                    values[i] = ps.readValue();
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_values.length);
-                for (int i = 0; i < _values.length; i++) {
-                    ps.write(_values[i]);
+                ps.write(values.length);
+                for (int i = 0; i < values.length; i++) {
+                    ps.write(values[i]);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_values=[" + _values.length + "]{");
-                for (int i = 0; i < _values.length; i++) {
+                stringBuilder.append("values=[" + values.length + "]{");
+                for (int i = 0; i < values.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_values[i]=" + _values[i]);
+                    stringBuilder.append("values[i]=" + values[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -223,70 +223,70 @@ public final class ObjectReferenceCommands {
 
         public static class FieldValue {
 
-            public ID.FieldID _fieldID;
+            public ID.FieldID fieldID;
 
-            public JDWPValue _value;
+            public JDWPValue value;
             public FieldValue(ID.FieldID fieldID,
                 JDWPValue value) {
-                this._fieldID = fieldID;
-                this._value = value;
+                this.fieldID = fieldID;
+                this.value = value;
             }
             public FieldValue() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _fieldID = ID.read(ps.getInputStream(), ID.FieldID.class);
-                _value = ps.readUntaggedValue();
+                fieldID = ID.read(ps.getInputStream(), ID.FieldID.class);
+                value = ps.readUntaggedValue();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _fieldID.write(ps.getOutputStream());
-                ps.write(_value);
+                fieldID.write(ps.getOutputStream());
+                ps.write(value);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_fieldID=" + _fieldID);
+                stringBuilder.append("fieldID=" + fieldID);
                 stringBuilder.append(", ");
-                stringBuilder.append("_value=" + _value);
+                stringBuilder.append("value=" + value);
                 return stringBuilder.toString();
             }
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ObjectID _object;
+            public ID.ObjectID object;
 
-            public FieldValue[] _values;
+            public FieldValue[] values;
             public IncomingRequest(ID.ObjectID object,
                 FieldValue[] values) {
-                this._object = object;
-                this._values = values;
+                this.object = object;
+                this.values = values;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _object = ID.read(ps.getInputStream(), ID.ObjectID.class);
+                object = ID.read(ps.getInputStream(), ID.ObjectID.class);
                 final int valuesCount = ps.readInt();
-                _values = new FieldValue[valuesCount];
+                values = new FieldValue[valuesCount];
                 for (int i = 0; i < valuesCount; i++) {
-                    _values[i] = new FieldValue();
-                    _values[i].read(ps);
+                    values[i] = new FieldValue();
+                    values[i].read(ps);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _object.write(ps.getOutputStream());
-                ps.write(_values.length);
-                for (int i = 0; i < _values.length; i++) {
-                    _values[i].write(ps);
+                object.write(ps.getOutputStream());
+                ps.write(values.length);
+                for (int i = 0; i < values.length; i++) {
+                    values[i].write(ps);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_object=" + _object);
+                stringBuilder.append("object=" + object);
                 stringBuilder.append(", ");
-                stringBuilder.append("_values=[" + _values.length + "]{");
-                for (int i = 0; i < _values.length; i++) {
+                stringBuilder.append("values=[" + values.length + "]{");
+                for (int i = 0; i < values.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_values[i]=" + _values[i]);
+                    stringBuilder.append("values[i]=" + values[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -322,22 +322,22 @@ public final class ObjectReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ObjectID _object;
+            public ID.ObjectID object;
             public IncomingRequest(ID.ObjectID object) {
-                this._object = object;
+                this.object = object;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _object = ID.read(ps.getInputStream(), ID.ObjectID.class);
+                object = ID.read(ps.getInputStream(), ID.ObjectID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _object.write(ps.getOutputStream());
+                object.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_object=" + _object);
+                stringBuilder.append("object=" + object);
                 return stringBuilder.toString();
             }
         }
@@ -346,48 +346,48 @@ public final class ObjectReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public ID.ThreadID _owner;
+            public ID.ThreadID owner;
 
-            public int _entryCount;
+            public int entryCount;
 
-            public ID.ThreadID[] _waiters;
+            public ID.ThreadID[] waiters;
             public Reply(ID.ThreadID owner,
                 int entryCount,
                 ID.ThreadID[] waiters) {
-                this._owner = owner;
-                this._entryCount = entryCount;
-                this._waiters = waiters;
+                this.owner = owner;
+                this.entryCount = entryCount;
+                this.waiters = waiters;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _owner = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                _entryCount = ps.readInt();
+                owner = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                entryCount = ps.readInt();
                 final int waitersCount = ps.readInt();
-                _waiters = new ID.ThreadID[waitersCount];
+                waiters = new ID.ThreadID[waitersCount];
                 for (int i = 0; i < waitersCount; i++) {
-                    _waiters[i] = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                    waiters[i] = ID.read(ps.getInputStream(), ID.ThreadID.class);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _owner.write(ps.getOutputStream());
-                ps.write(_entryCount);
-                ps.write(_waiters.length);
-                for (int i = 0; i < _waiters.length; i++) {
-                    _waiters[i].write(ps.getOutputStream());
+                owner.write(ps.getOutputStream());
+                ps.write(entryCount);
+                ps.write(waiters.length);
+                for (int i = 0; i < waiters.length; i++) {
+                    waiters[i].write(ps.getOutputStream());
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_owner=" + _owner);
+                stringBuilder.append("owner=" + owner);
                 stringBuilder.append(", ");
-                stringBuilder.append("_entryCount=" + _entryCount);
+                stringBuilder.append("entryCount=" + entryCount);
                 stringBuilder.append(", ");
-                stringBuilder.append("_waiters=[" + _waiters.length + "]{");
-                for (int i = 0; i < _waiters.length; i++) {
+                stringBuilder.append("waiters=[" + waiters.length + "]{");
+                for (int i = 0; i < waiters.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_waiters[i]=" + _waiters[i]);
+                    stringBuilder.append("waiters[i]=" + waiters[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();
@@ -407,74 +407,74 @@ public final class ObjectReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ObjectID _object;
+            public ID.ObjectID object;
 
-            public ID.ThreadID _thread;
+            public ID.ThreadID thread;
 
-            public ID.ClassID _clazz;
+            public ID.ClassID clazz;
 
-            public ID.MethodID _methodID;
+            public ID.MethodID methodID;
 
-            public JDWPValue[] _arguments;
+            public JDWPValue[] arguments;
 
-            public int _options;
+            public int options;
             public IncomingRequest(ID.ObjectID object,
                 ID.ThreadID thread,
                 ID.ClassID clazz,
                 ID.MethodID methodID,
                 JDWPValue[] arguments,
                 int options) {
-                this._object = object;
-                this._thread = thread;
-                this._clazz = clazz;
-                this._methodID = methodID;
-                this._arguments = arguments;
-                this._options = options;
+                this.object = object;
+                this.thread = thread;
+                this.clazz = clazz;
+                this.methodID = methodID;
+                this.arguments = arguments;
+                this.options = options;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _object = ID.read(ps.getInputStream(), ID.ObjectID.class);
-                _thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
-                _clazz = ID.read(ps.getInputStream(), ID.ClassID.class);
-                _methodID = ID.read(ps.getInputStream(), ID.MethodID.class);
+                object = ID.read(ps.getInputStream(), ID.ObjectID.class);
+                thread = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                clazz = ID.read(ps.getInputStream(), ID.ClassID.class);
+                methodID = ID.read(ps.getInputStream(), ID.MethodID.class);
                 final int argumentsCount = ps.readInt();
-                _arguments = new JDWPValue[argumentsCount];
+                arguments = new JDWPValue[argumentsCount];
                 for (int i = 0; i < argumentsCount; i++) {
-                    _arguments[i] = ps.readValue();
+                    arguments[i] = ps.readValue();
                 }
-                _options = ps.readInt();
+                options = ps.readInt();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _object.write(ps.getOutputStream());
-                _thread.write(ps.getOutputStream());
-                _clazz.write(ps.getOutputStream());
-                _methodID.write(ps.getOutputStream());
-                ps.write(_arguments.length);
-                for (int i = 0; i < _arguments.length; i++) {
-                    ps.write(_arguments[i]);
+                object.write(ps.getOutputStream());
+                thread.write(ps.getOutputStream());
+                clazz.write(ps.getOutputStream());
+                methodID.write(ps.getOutputStream());
+                ps.write(arguments.length);
+                for (int i = 0; i < arguments.length; i++) {
+                    ps.write(arguments[i]);
                 }
-                ps.write(_options);
+                ps.write(options);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_object=" + _object);
+                stringBuilder.append("object=" + object);
                 stringBuilder.append(", ");
-                stringBuilder.append("_thread=" + _thread);
+                stringBuilder.append("thread=" + thread);
                 stringBuilder.append(", ");
-                stringBuilder.append("_clazz=" + _clazz);
+                stringBuilder.append("clazz=" + clazz);
                 stringBuilder.append(", ");
-                stringBuilder.append("_methodID=" + _methodID);
+                stringBuilder.append("methodID=" + methodID);
                 stringBuilder.append(", ");
-                stringBuilder.append("_arguments=[" + _arguments.length + "]{");
-                for (int i = 0; i < _arguments.length; i++) {
+                stringBuilder.append("arguments=[" + arguments.length + "]{");
+                for (int i = 0; i < arguments.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_arguments[i]=" + _arguments[i]);
+                    stringBuilder.append("arguments[i]=" + arguments[i]);
                 }
                 stringBuilder.append("}");
                 stringBuilder.append(", ");
-                stringBuilder.append("_options=" + _options);
+                stringBuilder.append("options=" + options);
                 return stringBuilder.toString();
             }
         }
@@ -483,30 +483,30 @@ public final class ObjectReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public JDWPValue _returnValue;
+            public JDWPValue returnValue;
 
-            public JDWPValue _exception;
+            public JDWPValue exception;
             public Reply(JDWPValue returnValue,
                 JDWPValue exception) {
-                this._returnValue = returnValue;
-                this._exception = exception;
+                this.returnValue = returnValue;
+                this.exception = exception;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _returnValue = ps.readValue();
-                _exception = ps.readValue();
+                returnValue = ps.readValue();
+                exception = ps.readValue();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_returnValue);
-                ps.write(_exception);
+                ps.write(returnValue);
+                ps.write(exception);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_returnValue=" + _returnValue);
+                stringBuilder.append("returnValue=" + returnValue);
                 stringBuilder.append(", ");
-                stringBuilder.append("_exception=" + _exception);
+                stringBuilder.append("exception=" + exception);
                 return stringBuilder.toString();
             }
         }
@@ -524,22 +524,22 @@ public final class ObjectReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ObjectID _object;
+            public ID.ObjectID object;
             public IncomingRequest(ID.ObjectID object) {
-                this._object = object;
+                this.object = object;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _object = ID.read(ps.getInputStream(), ID.ObjectID.class);
+                object = ID.read(ps.getInputStream(), ID.ObjectID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _object.write(ps.getOutputStream());
+                object.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_object=" + _object);
+                stringBuilder.append("object=" + object);
                 return stringBuilder.toString();
             }
         }
@@ -573,22 +573,22 @@ public final class ObjectReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ObjectID _object;
+            public ID.ObjectID object;
             public IncomingRequest(ID.ObjectID object) {
-                this._object = object;
+                this.object = object;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _object = ID.read(ps.getInputStream(), ID.ObjectID.class);
+                object = ID.read(ps.getInputStream(), ID.ObjectID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _object.write(ps.getOutputStream());
+                object.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_object=" + _object);
+                stringBuilder.append("object=" + object);
                 return stringBuilder.toString();
             }
         }
@@ -622,22 +622,22 @@ public final class ObjectReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ObjectID _object;
+            public ID.ObjectID object;
             public IncomingRequest(ID.ObjectID object) {
-                this._object = object;
+                this.object = object;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _object = ID.read(ps.getInputStream(), ID.ObjectID.class);
+                object = ID.read(ps.getInputStream(), ID.ObjectID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _object.write(ps.getOutputStream());
+                object.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_object=" + _object);
+                stringBuilder.append("object=" + object);
                 return stringBuilder.toString();
             }
         }
@@ -646,22 +646,22 @@ public final class ObjectReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public boolean _isCollected;
+            public boolean isCollected;
             public Reply(boolean isCollected) {
-                this._isCollected = isCollected;
+                this.isCollected = isCollected;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _isCollected = ps.readBoolean();
+                isCollected = ps.readBoolean();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_isCollected);
+                ps.write(isCollected);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_isCollected=" + _isCollected);
+                stringBuilder.append("isCollected=" + isCollected);
                 return stringBuilder.toString();
             }
         }
@@ -679,30 +679,30 @@ public final class ObjectReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ObjectID _object;
+            public ID.ObjectID object;
 
-            public int _maxReferrers;
+            public int maxReferrers;
             public IncomingRequest(ID.ObjectID object,
                 int maxReferrers) {
-                this._object = object;
-                this._maxReferrers = maxReferrers;
+                this.object = object;
+                this.maxReferrers = maxReferrers;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _object = ID.read(ps.getInputStream(), ID.ObjectID.class);
-                _maxReferrers = ps.readInt();
+                object = ID.read(ps.getInputStream(), ID.ObjectID.class);
+                maxReferrers = ps.readInt();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _object.write(ps.getOutputStream());
-                ps.write(_maxReferrers);
+                object.write(ps.getOutputStream());
+                ps.write(maxReferrers);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_object=" + _object);
+                stringBuilder.append("object=" + object);
                 stringBuilder.append(", ");
-                stringBuilder.append("_maxReferrers=" + _maxReferrers);
+                stringBuilder.append("maxReferrers=" + maxReferrers);
                 return stringBuilder.toString();
             }
         }
@@ -711,32 +711,32 @@ public final class ObjectReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public JDWPValue[] _referringObjects;
+            public JDWPValue[] referringObjects;
             public Reply(JDWPValue[] referringObjects) {
-                this._referringObjects = referringObjects;
+                this.referringObjects = referringObjects;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
                 final int referringObjectsCount = ps.readInt();
-                _referringObjects = new JDWPValue[referringObjectsCount];
+                referringObjects = new JDWPValue[referringObjectsCount];
                 for (int i = 0; i < referringObjectsCount; i++) {
-                    _referringObjects[i] = ps.readValue();
+                    referringObjects[i] = ps.readValue();
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_referringObjects.length);
-                for (int i = 0; i < _referringObjects.length; i++) {
-                    ps.write(_referringObjects[i]);
+                ps.write(referringObjects.length);
+                for (int i = 0; i < referringObjects.length; i++) {
+                    ps.write(referringObjects[i]);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_referringObjects=[" + _referringObjects.length + "]{");
-                for (int i = 0; i < _referringObjects.length; i++) {
+                stringBuilder.append("referringObjects=[" + referringObjects.length + "]{");
+                for (int i = 0; i < referringObjects.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_referringObjects[i]=" + _referringObjects[i]);
+                    stringBuilder.append("referringObjects[i]=" + referringObjects[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();

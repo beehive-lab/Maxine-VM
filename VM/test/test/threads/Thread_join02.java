@@ -30,14 +30,14 @@ package test.threads;
 
 public class Thread_join02 implements Runnable {
 
-    static volatile boolean _continue;
+    static volatile boolean cont;
 
     public static boolean test(int i) throws InterruptedException {
-        _continue = true;
+        cont = true;
         final Thread thread = new Thread(new Thread_join02());
         thread.start();
         thread.join();
-        return _continue;
+        return cont;
     }
 
     public void run() {
@@ -45,6 +45,6 @@ public class Thread_join02 implements Runnable {
             Thread.sleep(200);
         } catch (InterruptedException ex) {
         }
-        _continue = false;
+        cont = false;
     }
 }

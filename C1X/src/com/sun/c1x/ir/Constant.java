@@ -32,7 +32,7 @@ import com.sun.c1x.util.InstructionClosure;
  */
 public class Constant extends Instruction {
 
-    private ValueStack _state;
+    private ValueStack state;
 
     /**
      * Constructs a new instruction representing the specified constant.
@@ -50,7 +50,7 @@ public class Constant extends Instruction {
      */
     public Constant(ClassType type, ValueStack state) {
         super(type);
-        _state = state;
+        this.state = state;
     }
 
     /**
@@ -59,7 +59,7 @@ public class Constant extends Instruction {
      * @return the value stack at this constant
      */
     public ValueStack state() {
-        return _state;
+        return state;
     }
 
     /**
@@ -70,7 +70,7 @@ public class Constant extends Instruction {
      */
     @Override
     public boolean canTrap() {
-        return _state != null;
+        return state != null;
     }
 
     /**
@@ -106,8 +106,8 @@ public class Constant extends Instruction {
      */
     @Override
     public void otherValuesDo(InstructionClosure closure) {
-        if (_state != null) {
-            _state.valuesDo(closure);
+        if (state != null) {
+            state.valuesDo(closure);
         }
     }
 

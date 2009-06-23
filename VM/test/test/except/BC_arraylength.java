@@ -27,9 +27,9 @@ package test.except;
 
 public class BC_arraylength {
 
-    static int[] _array1 = {1, 2, 3};
-    static char[] _array2 = {'a', 'b', 'c', 'd'};
-    static Object[] _array3 = new Object[5];
+    static int[] arr = {1, 2, 3};
+    static char[] arr2 = {'a', 'b', 'c', 'd'};
+    static Object[] arr3 = new Object[5];
 
     public static int test(int arg) {
         if (arg == 0) {
@@ -37,13 +37,13 @@ public class BC_arraylength {
             return array.length;
         }
         if (arg == 1) {
-            return _array1.length;
+            return arr.length;
         }
         if (arg == 2) {
-            return _array2.length;
+            return arr2.length;
         }
         if (arg == 3) {
-            return _array3.length;
+            return arr3.length;
         }
         return 42;
     }

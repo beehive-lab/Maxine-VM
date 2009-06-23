@@ -28,25 +28,25 @@ import com.sun.max.jdwp.vm.proxy.*;
 
 public class JavaArrayTypeProvider extends JavaClassProvider implements ArrayTypeProvider {
 
-    private ReferenceTypeProvider _elementType;
-    private Class _clazz;
-    private VMAccess _vm;
+    private ReferenceTypeProvider elementType;
+    private Class clazz;
+    private VMAccess vm;
 
 
     JavaArrayTypeProvider(Class c, VMAccess vm, ClassLoaderProvider classLoader) {
         super(c, vm, classLoader);
-        _elementType = vm.getReferenceType(c.getComponentType());
-        _clazz = c;
-        _vm = vm;
+        this.elementType = vm.getReferenceType(c.getComponentType());
+        this.clazz = c;
+        this.vm = vm;
     }
 
     public ReferenceTypeProvider elementType() {
-        return _elementType;
+        return elementType;
     }
 
     public ArrayProvider newInstance(int length) {
-        final Object array = Array.newInstance(_clazz.getComponentType(), length);
-        final Provider result = _vm.createJavaObjectValue(array, _clazz).asProvider();
+        final Object array = Array.newInstance(clazz.getComponentType(), length);
+        final Provider result = vm.createJavaObjectValue(array, clazz).asProvider();
         assert result instanceof ArrayProvider;
         return (ArrayProvider) result;
     }

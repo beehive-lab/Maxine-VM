@@ -24,13 +24,13 @@ package test.hotpath;
  * @Runs: 40 = 3200;
  */
 public class HP_array03 {
-    public static byte[] _b = new byte[40];
-    public static char[] _c = new char[40];
+    public static byte[] b = new byte[40];
+    public static char[] c = new char[40];
 
     public static int test(int count) {
         int sum = 0;
         for (int i = 0; i < count; i++) {
-            sum += _b.length + _c.length;
+            sum += b.length + c.length;
         }
         return sum;
     }

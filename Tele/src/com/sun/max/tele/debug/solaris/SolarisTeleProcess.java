@@ -39,19 +39,19 @@ import com.sun.max.vm.prototype.*;
  */
 public final class SolarisTeleProcess extends TeleProcess {
 
-    private final DataAccess _dataAccess;
+    private final DataAccess dataAccess;
 
     @Override
     public DataAccess dataAccess() {
-        return _dataAccess;
+        return dataAccess;
     }
 
     private static native long nativeCreateChild(long argv, int vmAgentPort);
 
-    private long _processHandle;
+    private long processHandle;
 
     long processHandle() {
-        return _processHandle;
+        return processHandle;
     }
 
     /**
@@ -67,8 +67,8 @@ public final class SolarisTeleProcess extends TeleProcess {
     SolarisTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
         super(teleVM, platform, ProcessState.STOPPED);
         final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(programFile, commandLineArguments);
-        _processHandle = nativeCreateChild(commandLineArgumentsBuffer.toLong(), agent.port());
-        _dataAccess = new PageDataAccess(this, platform.processorKind().dataModel());
+        processHandle = nativeCreateChild(commandLineArgumentsBuffer.toLong(), agent.port());
+        dataAccess = new PageDataAccess(this, platform.processorKind().dataModel());
         try {
             resume();
         } catch (OSExecutionRequestException e) {
@@ -80,14 +80,14 @@ public final class SolarisTeleProcess extends TeleProcess {
 
     @Override
     public void kill() throws OSExecutionRequestException {
-        nativeKill(_processHandle);
+        nativeKill(processHandle);
     }
 
     private static native boolean nativeSuspend(long processHandle);
 
     @Override
     public void suspend() throws OSExecutionRequestException {
-        if (!nativeSuspend(_processHandle)) {
+        if (!nativeSuspend(processHandle)) {
             throw new OSExecutionRequestException("Could not suspend process");
         }
     }
@@ -96,7 +96,7 @@ public final class SolarisTeleProcess extends TeleProcess {
 
     @Override
     protected void resume() throws OSExecutionRequestException {
-        if (!nativeResume(_processHandle)) {
+        if (!nativeResume(processHandle)) {
             throw new OSExecutionRequestException("The VM could not be resumed");
         }
     }
@@ -108,7 +108,7 @@ public final class SolarisTeleProcess extends TeleProcess {
 
     @Override
     protected boolean waitUntilStopped() {
-        final boolean result = nativeWait(_processHandle);
+        final boolean result = nativeWait(processHandle);
         return result;
     }
 
@@ -118,7 +118,7 @@ public final class SolarisTeleProcess extends TeleProcess {
     protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
         final Word threadSpecificsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header().threadSpecificsListOffset));
         assert !threadSpecificsList.isZero();
-        nativeGatherThreads(_processHandle, threads, threadSpecificsList.asAddress().toLong());
+        nativeGatherThreads(processHandle, threads, threadSpecificsList.asAddress().toLong());
     }
 
     @Override
@@ -144,10 +144,10 @@ public final class SolarisTeleProcess extends TeleProcess {
     protected int read0(Address src, ByteBuffer dst, int offset, int length) {
         assert dst.limit() - offset >= length;
         if (dst.isDirect()) {
-            return nativeReadBytes(_processHandle, src.toLong(), dst, true, offset, length);
+            return nativeReadBytes(processHandle, src.toLong(), dst, true, offset, length);
         }
         assert dst.array() != null;
-        return nativeReadBytes(_processHandle, src.toLong(), dst.array(), false, dst.arrayOffset() + offset, length);
+        return nativeReadBytes(processHandle, src.toLong(), dst.array(), false, dst.arrayOffset() + offset, length);
     }
 
     /**
@@ -167,10 +167,10 @@ public final class SolarisTeleProcess extends TeleProcess {
     protected int write0(ByteBuffer src, int offset, int length, Address dst) {
         assert src.limit() - offset >= length;
         if (src.isDirect()) {
-            return nativeWriteBytes(_processHandle, dst.toLong(), src, true, offset, length);
+            return nativeWriteBytes(processHandle, dst.toLong(), src, true, offset, length);
         }
         assert src.array() != null;
-        return nativeWriteBytes(_processHandle, dst.toLong(), src.array(), false, src.arrayOffset() + offset, length);
+        return nativeWriteBytes(processHandle, dst.toLong(), src.array(), false, src.arrayOffset() + offset, length);
     }
 
     private native boolean nativeActivateWatchpoint(long processHandle, long start, long size);
@@ -184,11 +184,11 @@ public final class SolarisTeleProcess extends TeleProcess {
 
     @Override
     protected boolean activateWatchpoint(MemoryRegion memoryRegion) {
-        return nativeActivateWatchpoint(_processHandle, memoryRegion.start().toLong(), memoryRegion.size().toLong());
+        return nativeActivateWatchpoint(processHandle, memoryRegion.start().toLong(), memoryRegion.size().toLong());
     }
 
     @Override
     protected boolean deactivateWatchpoint(MemoryRegion memoryRegion) {
-        return nativeDeactivateWatchpoint(_processHandle, memoryRegion.start().toLong(), memoryRegion.size().toLong());
+        return nativeDeactivateWatchpoint(processHandle, memoryRegion.start().toLong(), memoryRegion.size().toLong());
     }
 }

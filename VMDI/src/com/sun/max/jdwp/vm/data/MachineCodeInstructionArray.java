@@ -28,13 +28,13 @@ package com.sun.max.jdwp.vm.data;
  *
  */
 public class MachineCodeInstructionArray extends AbstractSerializableObject {
-    private MachineCodeInstruction[] _array;
+    private final MachineCodeInstruction[] array;
 
     public MachineCodeInstructionArray(MachineCodeInstruction[] array) {
-        _array = array;
+        this.array = array;
     }
 
     public MachineCodeInstruction[] getArray() {
-        return _array;
+        return array;
     }
 }

@@ -42,52 +42,52 @@ import com.sun.max.vm.runtime.*;
  */
 public final class ThreadLocalsPanel extends InspectorPanel {
 
-    private final ThreadLocalsHeaderPanel _threadLocalsHeaderPanel;
-    private final ThreadLocalsTable _threadLocalsTable;
-    final TeleThreadLocalValues _teleVMThreadLocalValues;
+    private final ThreadLocalsHeaderPanel threadLocalsHeaderPanel;
+    private final ThreadLocalsTable threadLocalsTable;
+    final TeleThreadLocalValues teleVMThreadLocalValues;
 
     ThreadLocalsPanel(Inspection inspection, MaxThread thread, TeleThreadLocalValues values, ThreadLocalsViewPreferences preferences) {
         super(inspection);
-        _threadLocalsHeaderPanel = new ThreadLocalsHeaderPanel(inspection, values);
-        _threadLocalsTable = new ThreadLocalsTable(inspection, thread, values, preferences);
-        _teleVMThreadLocalValues = values;
+        threadLocalsHeaderPanel = new ThreadLocalsHeaderPanel(inspection, values);
+        threadLocalsTable = new ThreadLocalsTable(inspection, thread, values, preferences);
+        teleVMThreadLocalValues = values;
 
         setLayout(new BorderLayout());
-        add(_threadLocalsHeaderPanel, BorderLayout.NORTH);
+        add(threadLocalsHeaderPanel, BorderLayout.NORTH);
 
-        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _threadLocalsTable);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), threadLocalsTable);
         add(scrollPane, BorderLayout.CENTER);
     }
 
     @Override
     public void refresh(boolean force) {
         if (isShowing()) {
-            _threadLocalsHeaderPanel.refresh(force);
-            _threadLocalsTable.refresh(force);
+            threadLocalsHeaderPanel.refresh(force);
+            threadLocalsTable.refresh(force);
         }
     }
 
     @Override
     public void redisplay() {
-        _threadLocalsHeaderPanel.redisplay();
-        _threadLocalsTable.redisplay();
+        threadLocalsHeaderPanel.redisplay();
+        threadLocalsTable.redisplay();
     }
 
     /**
      * @return the state with which the values displayed in the panel are associated.
      */
     public Safepoint.State getSafepointState() {
-        return _teleVMThreadLocalValues.safepointState();
+        return teleVMThreadLocalValues.safepointState();
     }
 
     public InspectorTable getTable() {
-        return _threadLocalsTable;
+        return threadLocalsTable;
     }
 
 
     private final class ThreadLocalsHeaderPanel extends InspectorPanel {
 
-        private final AppendableSequence<InspectorLabel> _labels = new LinkSequence<InspectorLabel>();
+        private final AppendableSequence<InspectorLabel> labels = new LinkSequence<InspectorLabel>();
 
         public ThreadLocalsHeaderPanel(Inspection inspection, TeleThreadLocalValues values) {
             super(inspection);
@@ -103,19 +103,19 @@ public final class ThreadLocalsPanel extends InspectorPanel {
 
         private void addInspectorLabel(InspectorLabel label) {
             add(label);
-            _labels.append(label);
+            labels.append(label);
         }
 
         @Override
         public void redisplay() {
-            for (InspectorLabel label : _labels) {
+            for (InspectorLabel label : labels) {
                 label.redisplay();
             }
         }
 
         @Override
         public void refresh(boolean force) {
-            for (InspectorLabel label : _labels) {
+            for (InspectorLabel label : labels) {
                 label.refresh(force);
             }
         }

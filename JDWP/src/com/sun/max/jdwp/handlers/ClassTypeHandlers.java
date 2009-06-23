@@ -52,7 +52,7 @@ public class ClassTypeHandlers extends Handlers {
 
         @Override
         public Superclass.Reply handle(Superclass.IncomingRequest incomingRequest) throws JDWPException {
-            final ClassProvider klass = session().getClass(incomingRequest._clazz);
+            final ClassProvider klass = session().getClass(incomingRequest.clazz);
             return new Superclass.Reply(session().toID(klass.getSuperClass()));
         }
     }
@@ -70,18 +70,18 @@ public class ClassTypeHandlers extends Handlers {
         public int helpAtDecodingUntaggedValue(SetValues.IncomingRequest data) throws JDWPException {
 
             int index = -1;
-            for (SetValues.FieldValue fieldValue : data._values) {
+            for (SetValues.FieldValue fieldValue : data.values) {
                 if (fieldValue == null) {
                     break;
                 }
                 index++;
             }
 
-            assert index >= 0 && index < data._values.length : "Index must be valid!";
-            assert data._clazz != null && data._values[index] != null : "Packet must be partially present!";
+            assert index >= 0 && index < data.values.length : "Index must be valid!";
+            assert data.clazz != null && data.values[index] != null : "Packet must be partially present!";
 
-            final ID.FieldID fieldID = data._values[index]._fieldID;
-            final FieldProvider field = session().getField(data._clazz, fieldID);
+            final ID.FieldID fieldID = data.values[index].fieldID;
+            final FieldProvider field = session().getField(data.clazz, fieldID);
 
             return JDWPSession.getValueTypeTag(field.getType());
         }
@@ -89,9 +89,9 @@ public class ClassTypeHandlers extends Handlers {
         @Override
         public SetValues.Reply handle(SetValues.IncomingRequest incomingRequest) throws JDWPException {
 
-            for (SetValues.FieldValue fv : incomingRequest._values) {
-                final FieldProvider field = session().getField(incomingRequest._clazz, fv._fieldID);
-                field.setStaticValue(session().toValue(fv._value));
+            for (SetValues.FieldValue fv : incomingRequest.values) {
+                final FieldProvider field = session().getField(incomingRequest.clazz, fv.fieldID);
+                field.setStaticValue(session().toValue(fv.value));
             }
 
             return new SetValues.Reply();
@@ -108,16 +108,16 @@ public class ClassTypeHandlers extends Handlers {
         @Override
         public InvokeMethod.Reply handle(InvokeMethod.IncomingRequest incomingRequest) throws JDWPException {
 
-            final ThreadProvider threadProvider = session().getThread(incomingRequest._thread);
-            final MethodProvider methodProvider = session().getMethod(incomingRequest._clazz, incomingRequest._methodID);
+            final ThreadProvider threadProvider = session().getThread(incomingRequest.thread);
+            final MethodProvider methodProvider = session().getMethod(incomingRequest.clazz, incomingRequest.methodID);
 
-            final int invokeOptions = incomingRequest._options;
+            final int invokeOptions = incomingRequest.options;
             final boolean singleThreaded = (invokeOptions & InvokeOptions.INVOKE_SINGLE_THREADED) != 0;
             final boolean nonVirtual = (invokeOptions & InvokeOptions.INVOKE_NONVIRTUAL) != 0;
 
-            final VMValue[] args = new VMValue[incomingRequest._arguments.length];
+            final VMValue[] args = new VMValue[incomingRequest.arguments.length];
             for (int i = 0; i < args.length; i++) {
-                args[i] = session().toValue(incomingRequest._arguments[i]);
+                args[i] = session().toValue(incomingRequest.arguments[i]);
             }
 
             assert !nonVirtual : "Static methods do not allow nonVirtual to be set!";
@@ -126,8 +126,8 @@ public class ClassTypeHandlers extends Handlers {
             final VMValue result = methodProvider.invokeStatic(args, threadProvider, singleThreaded);
 
             final InvokeMethod.Reply reply = new InvokeMethod.Reply();
-            reply._returnValue = session().toJDWPValue(result);
-            reply._exception = new JDWPValue(ID.ObjectID.NULL);
+            reply.returnValue = session().toJDWPValue(result);
+            reply.exception = new JDWPValue(ID.ObjectID.NULL);
             return reply;
         }
     }
@@ -141,16 +141,16 @@ public class ClassTypeHandlers extends Handlers {
         @Override
         public NewInstance.Reply handle(NewInstance.IncomingRequest incomingRequest) throws JDWPException {
 
-            final ThreadProvider threadProvider = session().getThread(incomingRequest._thread);
-            final MethodProvider methodProvider = session().getMethod(incomingRequest._clazz, incomingRequest._methodID);
+            final ThreadProvider threadProvider = session().getThread(incomingRequest.thread);
+            final MethodProvider methodProvider = session().getMethod(incomingRequest.clazz, incomingRequest.methodID);
 
-            final int invokeOptions = incomingRequest._options;
+            final int invokeOptions = incomingRequest.options;
             final boolean singleThreaded = (invokeOptions & InvokeOptions.INVOKE_SINGLE_THREADED) != 0;
             final boolean nonVirtual = (invokeOptions & InvokeOptions.INVOKE_NONVIRTUAL) != 0;
 
-            final VMValue[] args = new VMValue[incomingRequest._arguments.length];
+            final VMValue[] args = new VMValue[incomingRequest.arguments.length];
             for (int i = 0; i < args.length; i++) {
-                args[i] = session().toValue(incomingRequest._arguments[i]);
+                args[i] = session().toValue(incomingRequest.arguments[i]);
             }
 
             assert !nonVirtual : "Static method invocations may not have nonVirtual set";
@@ -159,8 +159,8 @@ public class ClassTypeHandlers extends Handlers {
             final VMValue result = methodProvider.invokeStatic(args, threadProvider, singleThreaded);
 
             final NewInstance.Reply r = new NewInstance.Reply();
-            r._newObject = session().toJDWPValue(result);
-            r._exception = new JDWPValue(ID.ObjectID.NULL);
+            r.newObject = session().toJDWPValue(result);
+            r.exception = new JDWPValue(ID.ObjectID.NULL);
             return r;
         }
     }

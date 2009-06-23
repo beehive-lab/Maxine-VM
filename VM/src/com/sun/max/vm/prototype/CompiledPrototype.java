@@ -397,7 +397,7 @@ public class CompiledPrototype extends Prototype {
 
     private void addMethodsReferencedByExistingTargetCode() {
         final DynamicCompilerScheme dynamicCompilerScheme = compilerScheme();
-        for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
+        for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
             processNewTargetMethod(dynamicCompilerScheme, targetMethod);
         }
     }
@@ -499,7 +499,7 @@ public class CompiledPrototype extends Prototype {
 
     private boolean compileWorklist() {
         Trace.begin(1, "compile: " + worklist.size() + " new methods");
-        final CodeRegion region = Code.bootCodeRegion();
+        final CodeRegion region = Code.bootCodeRegion;
         final Address oldMark = region.getAllocationMark();
         int submittedCompilations = totalCompilations;
         final long initialNumberOfCompilations = numberOfCompilations();
@@ -602,7 +602,7 @@ public class CompiledPrototype extends Prototype {
 
     public void addEntrypoints() {
         // 1. create bootcode region.
-        final CodeRegion region = Code.bootCodeRegion();
+        final CodeRegion region = Code.bootCodeRegion;
         region.setSize(Size.fromInt(Integer.MAX_VALUE / 4)); // enable virtually infinite allocations
         // 2. add only entrypoint methods and methods not to be compiled.
         addMethodsReferencedByExistingTargetCode();
@@ -624,7 +624,7 @@ public class CompiledPrototype extends Prototype {
 
     private void linkNonVirtualCalls() {
         Trace.begin(1, "linkNonVirtualCalls");
-        for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
+        for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
             if (!unlinkedClasses.contains(targetMethod.classMethodActor().holder()) && !unlinkedMethods.contains(targetMethod.classMethodActor())) {
                 if (!targetMethod.linkDirectCalls()) {
                     targetMethod.linkDirectCalls();

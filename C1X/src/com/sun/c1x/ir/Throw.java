@@ -32,7 +32,7 @@ import com.sun.c1x.value.ValueType;
  */
 public class Throw extends BlockEnd {
 
-    Instruction _exception;
+    Instruction exception;
 
     /**
      * Creates a new Throw instruction.
@@ -41,7 +41,7 @@ public class Throw extends BlockEnd {
      */
     public Throw(Instruction exception, ValueStack stateBefore) {
         super(ValueType.ILLEGAL_TYPE, stateBefore, true);
-        _exception = exception;
+        this.exception = exception;
     }
 
     /**
@@ -49,7 +49,7 @@ public class Throw extends BlockEnd {
      * @return the instruction producing the exception
      */
     public Instruction exception() {
-        return _exception;
+        return exception;
     }
 
     /**
@@ -67,7 +67,7 @@ public class Throw extends BlockEnd {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        _exception = closure.apply(_exception);
+        exception = closure.apply(exception);
     }
 
     /**
@@ -76,7 +76,7 @@ public class Throw extends BlockEnd {
      */
     @Override
     public void stateValuesDo(InstructionClosure closure) {
-        _stateBefore.valuesDo(closure);
+        stateBefore.valuesDo(closure);
     }
 
     /**

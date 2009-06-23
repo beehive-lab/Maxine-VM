@@ -34,19 +34,19 @@ import com.sun.max.tele.object.*;
  */
 public final class CharacterArrayInspector extends ObjectInspector {
 
-    private JTabbedPane _tabbedPane;
-    private ObjectPane _elementsPane;
-    private StringPane _stringPane;
+    private JTabbedPane tabbedPane;
+    private ObjectPane elementsPane;
+    private StringPane stringPane;
 
     // Should the alternate visualization be displayed?
     // Follows user's tab selection, but should persist when view reconstructed.
-    private boolean _alternateDisplay;
+    private boolean alternateDisplay;
 
     CharacterArrayInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
         super(inspection, factory, teleObject);
         // This is the default for a newly created inspector.
         // TODO (mlvdv) make this a global view option?
-        _alternateDisplay = true;
+        alternateDisplay = true;
         createFrame(null);
     }
 
@@ -57,37 +57,37 @@ public final class CharacterArrayInspector extends ObjectInspector {
         final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject();
         final String componentTypeName = teleArrayObject.classActorForType().componentClassActor().javaSignature(false);
 
-        _tabbedPane = new JTabbedPane();
+        tabbedPane = new JTabbedPane();
 
-        _elementsPane = ObjectPane.createArrayElementsPane(this, teleArrayObject);
-        _tabbedPane.add(componentTypeName + "[" + teleArrayObject.getLength() + "]", _elementsPane);
+        elementsPane = ObjectPane.createArrayElementsPane(this, teleArrayObject);
+        tabbedPane.add(componentTypeName + "[" + teleArrayObject.getLength() + "]", elementsPane);
 
-        _stringPane = StringPane.createStringPane(this, new StringSource() {
+        stringPane = StringPane.createStringPane(this, new StringSource() {
             public String fetchString() {
                 final char[] chars = (char[]) teleArrayObject.shallowCopy();
                 final int length = Math.min(chars.length, style().maxStringFromCharArrayDisplayLength());
                 return new String(chars, 0, length);
             }
         });
-        _tabbedPane.add("string value", _stringPane);
+        tabbedPane.add("string value", stringPane);
 
-        _tabbedPane.setSelectedComponent(_alternateDisplay ? _stringPane : _elementsPane);
-        _tabbedPane.addChangeListener(new ChangeListener() {
+        tabbedPane.setSelectedComponent(alternateDisplay ? stringPane : elementsPane);
+        tabbedPane.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent event) {
-                final Prober prober = (Prober) _tabbedPane.getSelectedComponent();
+                final Prober prober = (Prober) tabbedPane.getSelectedComponent();
                 // Remember which display is now selected
-                _alternateDisplay = prober == _stringPane;
+                alternateDisplay = prober == stringPane;
                 // Refresh the display that is now visible.
                 prober.refresh(true);
             }
         });
-        frame().getContentPane().add(_tabbedPane);
+        frame().getContentPane().add(tabbedPane);
     }
 
     @Override
     protected void refreshView(boolean force) {
         // Only refresh the visible pane.
-        final Prober prober = (Prober) _tabbedPane.getSelectedComponent();
+        final Prober prober = (Prober) tabbedPane.getSelectedComponent();
         prober.refresh(force);
         super.refreshView(force);
     }

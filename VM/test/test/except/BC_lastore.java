@@ -28,10 +28,10 @@ package test.except;
 
 public class BC_lastore {
 
-    static long[] _array = {0, 0, 0, 0};
+    static long[] arr = {0, 0, 0, 0};
 
     public static long test(int arg, long val) {
-        final long[] array = arg == -2 ? null : _array;
+        final long[] array = arg == -2 ? null : arr;
         array[arg] = val;
         return array[arg];
     }

@@ -46,8 +46,8 @@ public class ConstType extends ValueType {
     public static final ConstType DOUBLE_0 = ConstType.forDouble(0);
     public static final ConstType DOUBLE_1 = ConstType.forDouble(1);
 
-    private final Object _value;
-    private final boolean _isObject;
+    private final Object value;
+    private final boolean isObject;
 
     /**
      * Create a new constant type represented by the specified object reference or boxed
@@ -58,8 +58,8 @@ public class ConstType extends ValueType {
      */
     public ConstType(BasicType type, Object value, boolean isObject) {
         super(type);
-        _value = value;
-        _isObject = isObject;
+        this.value = value;
+        this.isObject = isObject;
     }
 
     /**
@@ -76,7 +76,7 @@ public class ConstType extends ValueType {
      */
     @Override
     public String toString() {
-        final String val = _isObject ? "object@" + System.identityHashCode(_value) : _value.toString();
+        final String val = isObject ? "object@" + System.identityHashCode(value) : value.toString();
         return basicType().javaName + " = " + val;
     }
 
@@ -86,7 +86,7 @@ public class ConstType extends ValueType {
      * @return this constant's value as a string
      */
     public String valueString() {
-        return _value.toString();
+        return value.toString();
     }
 
     public boolean equivalent(ValueType other) {
@@ -100,9 +100,9 @@ public class ConstType extends ValueType {
                 return false;
             }
             // use == for object references and .equals() for boxed types
-            if (_value == cother._value) {
+            if (value == cother.value) {
                 return true;
-            } else if (!(_isObject || cother._isObject) && _value != null && _value.equals(cother._value)) {
+            } else if (!(isObject || cother.isObject) && value != null && value.equals(cother.value)) {
                 return true;
             }
         }
@@ -114,18 +114,18 @@ public class ConstType extends ValueType {
      * @return the int value of this constant
      */
     public int asInt() {
-        if (!_isObject) {
-            if (_value instanceof Integer) {
-                return (Integer) _value;
+        if (!isObject) {
+            if (value instanceof Integer) {
+                return (Integer) value;
             }
-            if (_value instanceof Byte) {
-                return (Byte) _value;
+            if (value instanceof Byte) {
+                return (Byte) value;
             }
-            if (_value instanceof Short) {
-                return (Short) _value;
+            if (value instanceof Short) {
+                return (Short) value;
             }
-            if (_value instanceof Character) {
-                return (Character) _value;
+            if (value instanceof Character) {
+                return (Character) value;
             }
         }
         throw new Error("Invalid constant");
@@ -136,21 +136,21 @@ public class ConstType extends ValueType {
      * @return the long value of this constant
      */
     public long asLong() {
-        if (!_isObject) {
-            if (_value instanceof Long) {
-                return (Long) _value;
+        if (!isObject) {
+            if (value instanceof Long) {
+                return (Long) value;
             }
-            if (_value instanceof Integer) {
-                return (Integer) _value;
+            if (value instanceof Integer) {
+                return (Integer) value;
             }
-            if (_value instanceof Byte) {
-                return (Byte) _value;
+            if (value instanceof Byte) {
+                return (Byte) value;
             }
-            if (_value instanceof Short) {
-                return (Short) _value;
+            if (value instanceof Short) {
+                return (Short) value;
             }
-            if (_value instanceof Character) {
-                return (Character) _value;
+            if (value instanceof Character) {
+                return (Character) value;
             }
         }
         throw new Error("Invalid constant");
@@ -161,9 +161,9 @@ public class ConstType extends ValueType {
      * @return the float value of this constant
      */
     public float asFloat() {
-        if (!_isObject) {
-            if (_value instanceof Float) {
-                return (Float) _value;
+        if (!isObject) {
+            if (value instanceof Float) {
+                return (Float) value;
             }
         }
         throw new Error("Invalid constant");
@@ -174,12 +174,12 @@ public class ConstType extends ValueType {
      * @return the double value of this constant
      */
     public double asDouble() {
-        if (!_isObject) {
-            if (_value instanceof Double) {
-                return (Double) _value;
+        if (!isObject) {
+            if (value instanceof Double) {
+                return (Double) value;
             }
-            if (_value instanceof Float) {
-                return (Float) _value;
+            if (value instanceof Float) {
+                return (Float) value;
             }
         }
         throw new Error("Invalid constant");
@@ -190,8 +190,8 @@ public class ConstType extends ValueType {
      * @return the object which this constant represents
      */
     public Object asObject() {
-        if (_isObject) {
-            return _value;
+        if (isObject) {
+            return value;
         }
         throw new Error("Invalid constant");
     }
@@ -202,10 +202,10 @@ public class ConstType extends ValueType {
      */
     @Override
     public int hashCode() {
-        if (_isObject) {
-            return System.identityHashCode(_value);
+        if (isObject) {
+            return System.identityHashCode(value);
         }
-        return _value.hashCode();
+        return value.hashCode();
     }
 
     /**

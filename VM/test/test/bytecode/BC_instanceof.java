@@ -25,18 +25,18 @@ package test.bytecode;
  * @Runs: 0 = false; 1 = false; 2 = false; 3 = false; 4 = true
  */
 public class BC_instanceof {
-    static Object _object2 = new Object();
-    static Object _object3 = "";
-    static Object _object4 = new BC_instanceof();
+    static Object object2 = new Object();
+    static Object object3 = "";
+    static Object object4 = new BC_instanceof();
 
     public static boolean test(int arg) {
         Object obj;
         if (arg == 2) {
-            obj = _object2;
+            obj = object2;
         } else if (arg == 3) {
-            obj = _object3;
+            obj = object3;
         } else if (arg == 4) {
-            obj = _object4;
+            obj = object4;
         } else {
             obj = null;
         }

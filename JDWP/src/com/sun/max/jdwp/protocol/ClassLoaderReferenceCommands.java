@@ -45,52 +45,52 @@ public final class ClassLoaderReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ClassLoaderID _classLoaderObject;
+            public ID.ClassLoaderID classLoaderObject;
             public IncomingRequest(ID.ClassLoaderID classLoaderObject) {
-                this._classLoaderObject = classLoaderObject;
+                this.classLoaderObject = classLoaderObject;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _classLoaderObject = ID.read(ps.getInputStream(), ID.ClassLoaderID.class);
+                classLoaderObject = ID.read(ps.getInputStream(), ID.ClassLoaderID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _classLoaderObject.write(ps.getOutputStream());
+                classLoaderObject.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_classLoaderObject=" + _classLoaderObject);
+                stringBuilder.append("classLoaderObject=" + classLoaderObject);
                 return stringBuilder.toString();
             }
         }
 
         public static class ClassInfo {
 
-            public byte _refTypeTag;
+            public byte refTypeTag;
 
-            public ID.ReferenceTypeID _typeID;
+            public ID.ReferenceTypeID typeID;
             public ClassInfo(byte refTypeTag,
                 ID.ReferenceTypeID typeID) {
-                this._refTypeTag = refTypeTag;
-                this._typeID = typeID;
+                this.refTypeTag = refTypeTag;
+                this.typeID = typeID;
             }
             public ClassInfo() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _refTypeTag = ps.readByte();
-                _typeID = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
+                refTypeTag = ps.readByte();
+                typeID = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_refTypeTag);
-                _typeID.write(ps.getOutputStream());
+                ps.write(refTypeTag);
+                typeID.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_refTypeTag=" + _refTypeTag);
+                stringBuilder.append("refTypeTag=" + refTypeTag);
                 stringBuilder.append(", ");
-                stringBuilder.append("_typeID=" + _typeID);
+                stringBuilder.append("typeID=" + typeID);
                 return stringBuilder.toString();
             }
         }
@@ -99,33 +99,33 @@ public final class ClassLoaderReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public ClassInfo[] _classes;
+            public ClassInfo[] classes;
             public Reply(ClassInfo[] classes) {
-                this._classes = classes;
+                this.classes = classes;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
                 final int classesCount = ps.readInt();
-                _classes = new ClassInfo[classesCount];
+                classes = new ClassInfo[classesCount];
                 for (int i = 0; i < classesCount; i++) {
-                    _classes[i] = new ClassInfo();
-                    _classes[i].read(ps);
+                    classes[i] = new ClassInfo();
+                    classes[i].read(ps);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_classes.length);
-                for (int i = 0; i < _classes.length; i++) {
-                    _classes[i].write(ps);
+                ps.write(classes.length);
+                for (int i = 0; i < classes.length; i++) {
+                    classes[i].write(ps);
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_classes=[" + _classes.length + "]{");
-                for (int i = 0; i < _classes.length; i++) {
+                stringBuilder.append("classes=[" + classes.length + "]{");
+                for (int i = 0; i < classes.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_classes[i]=" + _classes[i]);
+                    stringBuilder.append("classes[i]=" + classes[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();

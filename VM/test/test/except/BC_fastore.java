@@ -29,10 +29,10 @@ package test.except;
 
 public class BC_fastore {
 
-    static float[] _array = {0, 0, 0, 0};
+    static float[] arr = {0, 0, 0, 0};
 
     public static float test(int arg, float val) {
-        final float[] array = arg == -2 ? null : _array;
+        final float[] array = arg == -2 ? null : arr;
         array[arg] = val;
         return array[arg];
     }

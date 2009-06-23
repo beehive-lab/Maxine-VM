@@ -31,7 +31,7 @@ import com.sun.c1x.value.ValueType;
  */
 public class NewInstance extends StateSplit {
 
-    CiType _instanceClass;
+    CiType instanceClass;
 
     /**
      * Constructs a NewInstance instruction.
@@ -39,7 +39,7 @@ public class NewInstance extends StateSplit {
      */
     public NewInstance(CiType theClass) {
         super(ValueType.OBJECT_TYPE);
-        _instanceClass = theClass;
+        instanceClass = theClass;
         setFlag(Flag.NonNull);
     }
 
@@ -48,7 +48,7 @@ public class NewInstance extends StateSplit {
      * @return the instance class allocated
      */
     public CiType instanceClass() {
-        return _instanceClass;
+        return instanceClass;
     }
 
     /**
@@ -67,7 +67,7 @@ public class NewInstance extends StateSplit {
      */
     @Override
     public CiType exactType() {
-        return _instanceClass;
+        return instanceClass;
     }
 
     /**

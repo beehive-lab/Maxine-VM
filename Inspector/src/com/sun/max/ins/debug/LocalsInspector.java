@@ -57,49 +57,49 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
         return localsInspector;
     }
 
-    private final MaxThread _thread;
-    private final JitStackFrame _jitStackFrame;
+    private final MaxThread thread;
+    private final JitStackFrame jitStackFrame;
 
-    private final JPanel _localsPanel;
-    private final JPanel _stackPanel;
-    private final WordValueLabel[] _locals;
-    private final WordValueLabel[] _stack;
-    private int _stackDepth;
+    private final JPanel localsPanel;
+    private final JPanel stackPanel;
+    private final WordValueLabel[] locals;
+    private final WordValueLabel[] stack;
+    private int stackDepth;
 
     /**
      * Control whether the entire operand stack is displayed or just the effective stack (i.e., all the slot up to
      * the current top of stack).
      */
-    private boolean _showAll;
+    private boolean showAll;
 
     public LocalsInspector(Inspection inspection, MaxThread thread, JitStackFrame jitStackFrame) {
         super(inspection, LongValue.from(jitStackFrame.framePointer.toLong()));
         assert jitStackFrame.targetMethod().compilerScheme() == maxVM().vmConfiguration().jitScheme();
-        _thread = thread;
-        _jitStackFrame = jitStackFrame;
+        this.thread = thread;
+        this.jitStackFrame = jitStackFrame;
         final ClassMethodActor classMethodActor = jitStackFrame.targetMethod().classMethodActor();
-        _locals = new WordValueLabel[classMethodActor.codeAttribute().maxLocals()];
-        _stack =  new WordValueLabel[classMethodActor.codeAttribute().maxStack()];
-        _localsPanel = new InspectorPanel(inspection, new SpringLayout());
-        _stackPanel = new InspectorPanel(inspection, new SpringLayout());
-        _stackPanel.setBackground(InspectorStyle.SunYellow2);
-        _stackDepth = 0;
-        _showAll = true;
+        locals = new WordValueLabel[classMethodActor.codeAttribute().maxLocals()];
+        stack =  new WordValueLabel[classMethodActor.codeAttribute().maxStack()];
+        localsPanel = new InspectorPanel(inspection, new SpringLayout());
+        stackPanel = new InspectorPanel(inspection, new SpringLayout());
+        stackPanel.setBackground(InspectorStyle.SunYellow2);
+        stackDepth = 0;
+        showAll = true;
         createFrame(null);
     }
 
     public void itemStateChanged(ItemEvent e) {
-        _showAll = e.getStateChange() == ItemEvent.SELECTED;
-        final int tos = topOfStack(_stackDepth);
-        if (_showAll) {
-            for (int stackSlotIndex = tos; stackSlotIndex  < _stack.length; stackSlotIndex++) {
+        showAll = e.getStateChange() == ItemEvent.SELECTED;
+        final int tos = topOfStack(stackDepth);
+        if (showAll) {
+            for (int stackSlotIndex = tos; stackSlotIndex  < stack.length; stackSlotIndex++) {
                 final Word stackItem = readStackSlot(stackSlotIndex);
-                final WordValueLabel label = _stack[stackSlotIndex];
+                final WordValueLabel label = stack[stackSlotIndex];
                 label.setValue(new WordValue(stackItem));
             }
         } else {
-            for (int stackSlotIndex = tos; stackSlotIndex  < _stack.length; stackSlotIndex++) {
-                final WordValueLabel label = _stack[stackSlotIndex];
+            for (int stackSlotIndex = tos; stackSlotIndex  < stack.length; stackSlotIndex++) {
+                final WordValueLabel label = stack[stackSlotIndex];
                 label.setValue(WordValue.ZERO);
             }
         }
@@ -110,11 +110,11 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
         if (isShowing() || force) {
             // First, refresh stack frame information.
             Pointer stackPointer = null;
-            final Sequence<StackFrame> frames = _thread.frames();
+            final Sequence<StackFrame> frames = thread.frames();
             for (StackFrame stackFrame : frames) {
                 if (stackFrame instanceof JitStackFrame) {
                     final JitStackFrame jitStackFrame = (JitStackFrame) stackFrame;
-                    if (_jitStackFrame.isSameFrame(jitStackFrame)) {
+                    if (this.jitStackFrame.isSameFrame(jitStackFrame)) {
                         stackPointer = jitStackFrame.stackPointer;
                         break;
                     }
@@ -126,29 +126,29 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
                 return;
             }
 
-            for (int  localVarIndex = 0; localVarIndex < _locals.length; localVarIndex++) {
+            for (int  localVarIndex = 0; localVarIndex < locals.length; localVarIndex++) {
                 final Word localVar = readlocalVariable(localVarIndex);
-                _locals[localVarIndex].setValue(new WordValue(localVar));
+                locals[localVarIndex].setValue(new WordValue(localVar));
             }
 
             // Update top of stack now (do it once the tos label has been cleared)
-            final int stackDepth = _jitStackFrame.operandStackDepth();
+            final int stackDepth = jitStackFrame.operandStackDepth();
             final int tos = topOfStack(stackDepth);
-            if (tos != topOfStack(_stackDepth)) {
+            if (tos != topOfStack(this.stackDepth)) {
                 clearTosLabel();
-                _stackDepth = stackDepth;
+                this.stackDepth = stackDepth;
                 setTosLabel();
-                if (!_showAll) {
-                    for (int stackSlotIndex = tos; stackSlotIndex  < _stack.length; stackSlotIndex++) {
-                        final WordValueLabel label = _stack[stackSlotIndex];
+                if (!showAll) {
+                    for (int stackSlotIndex = tos; stackSlotIndex  < stack.length; stackSlotIndex++) {
+                        final WordValueLabel label = stack[stackSlotIndex];
                         label.setValue(WordValue.ZERO);
                     }
                 }
             }
-            final int end = _showAll ? _stack.length : tos;
+            final int end = showAll ? stack.length : tos;
             for (int stackSlotIndex = 0; stackSlotIndex <  end; stackSlotIndex++) {
                 final Word stackItem = readStackSlot(stackSlotIndex);
-                final WordValueLabel label = _stack[stackSlotIndex];
+                final WordValueLabel label = stack[stackSlotIndex];
                 label.setValue(new WordValue(stackItem));
             }
             super.refreshView(force);
@@ -156,10 +156,10 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
     }
 
     public void viewConfigurationChanged() {
-        for (InspectorLabel label : _locals) {
+        for (InspectorLabel label : locals) {
             label.redisplay();
         }
-        for (InspectorLabel label : _stack) {
+        for (InspectorLabel label : stack) {
             label.redisplay();
         }
         // TODO (mlvdv) redisplay this
@@ -172,33 +172,33 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
     }
 
     private static final int LABEL_WIDTH = 4;
-    private static final Dimension _iconSize = new Dimension(16, 12);
-    private static final Icon _ARROW = IconFactory.createRightArrow(_iconSize);
+    private static final Dimension iconSize = new Dimension(16, 12);
+    private static final Icon ARROW = IconFactory.createRightArrow(iconSize);
 
     private Word readStackSlot(int stackSlotIndex) {
-        return maxVM().readWord(_jitStackFrame.operandStackPointer(stackSlotIndex));
+        return maxVM().readWord(jitStackFrame.operandStackPointer(stackSlotIndex));
     }
 
     private Word readlocalVariable(int localVariableIndex) {
-        return maxVM().readWord(_jitStackFrame.localsPointer(localVariableIndex));
+        return maxVM().readWord(jitStackFrame.localsPointer(localVariableIndex));
     }
 
     private JLabel getTosLabel(int stackSize) {
-        return  (JLabel) _stackPanel.getComponent(stackSize * 2);
+        return  (JLabel) stackPanel.getComponent(stackSize * 2);
     }
 
     private void setTosLabel() {
-        final JLabel tosLabel = getTosLabel(_stackDepth);
+        final JLabel tosLabel = getTosLabel(stackDepth);
         tosLabel.setForeground(InspectorStyle.SunOrange2);
     }
 
     private void clearTosLabel() {
-        final JLabel tosLabel = getTosLabel(_stackDepth);
+        final JLabel tosLabel = getTosLabel(stackDepth);
         tosLabel.setForeground(InspectorStyle.SunYellow2);
     }
 
     public int topOfStack(int stackDepth) {
-        return stackDepth < _stack.length ? stackDepth : _stack.length;
+        return stackDepth < stack.length ? stackDepth : stack.length;
     }
 
     private JLabel createStackPointerLabel(int stackSlotIndex) {
@@ -207,28 +207,28 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
         return stackPointer;
     }
     private JLabel createStackPointerLabel() {
-        final JLabel stackPointer = new JLabel(_ARROW);
+        final JLabel stackPointer = new JLabel(ARROW);
         stackPointer.setForeground(InspectorStyle.SunYellow2);
         return stackPointer;
     }
 
     private void initPanelView() {
-        final JitTargetMethod targetMethod = _jitStackFrame.targetMethod();
+        final JitTargetMethod targetMethod = jitStackFrame.targetMethod();
         final Word callEntryPoint = targetMethod.codeStart();
-        final WordValueLabel header = new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, callEntryPoint, _localsPanel);
+        final WordValueLabel header = new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, callEntryPoint, localsPanel);
         // header.setToolTipText(_jitStackFrame.targetMethod().name());
-        _localsPanel.add(new Space(4));
-        _localsPanel.add(header);
+        localsPanel.add(new Space(4));
+        localsPanel.add(header);
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
         final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
         final LocalVariableTable localVariableTable = codeAttribute.localVariableTable();
         boolean addReceiverToolTip = !classMethodActor.isStatic();
 
-        for (int  localVarIndex =  0; localVarIndex < _locals.length; localVarIndex++) {
+        for (int  localVarIndex =  0; localVarIndex < locals.length; localVarIndex++) {
             final Word localVar = readlocalVariable(localVarIndex);
-            final WordValueLabel label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, localVar, _localsPanel);
+            final WordValueLabel label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, localVar, localsPanel);
             JLabel indexLabel = new LocalIndex(localVarIndex);
-            final int bytecodePosition = targetMethod.bytecodePositionFor(_jitStackFrame.instructionPointer);
+            final int bytecodePosition = targetMethod.bytecodePositionFor(jitStackFrame.instructionPointer);
             if (bytecodePosition != -1) {
                 final Entry entry = localVariableTable.findLocalVariable(localVarIndex, bytecodePosition);
                 if (entry != null) {
@@ -239,43 +239,43 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
                 indexLabel.setToolTipText("this");
                 addReceiverToolTip = false;
             }
-            _locals[localVarIndex] = label;
-            _localsPanel.add(indexLabel);
-            _localsPanel.add(label);
+            locals[localVarIndex] = label;
+            localsPanel.add(indexLabel);
+            localsPanel.add(label);
         }
         // Create operand stack part of the panel.
-        _stackPanel.add(createStackPointerLabel());
-        _stackPanel.add(new Space(LABEL_WIDTH));
+        stackPanel.add(createStackPointerLabel());
+        stackPanel.add(new Space(LABEL_WIDTH));
 
-        _stackDepth = _jitStackFrame.operandStackDepth();
+        stackDepth = jitStackFrame.operandStackDepth();
         // In some rare case, the computed top of stack may be larger than the operand stack size.
         // This happens when the operand stack is full and is calling a method, in that case the stack pointer
         // of the current frame includes extra space for the RIP. The following adjust the top of stack.
-        final int tos = _showAll ? _stack.length : topOfStack(_stackDepth);
+        final int tos = showAll ? stack.length : topOfStack(stackDepth);
         for (int stackSlotIndex = 0; stackSlotIndex <  tos; stackSlotIndex++) {
             final Word stackItem = readStackSlot(stackSlotIndex);
-            final WordValueLabel label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, stackItem, _localsPanel);
+            final WordValueLabel label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, stackItem, localsPanel);
             label.setBackground(InspectorStyle.SunYellow2);
-            _stack[stackSlotIndex] = label;
-            _stackPanel.add(createStackPointerLabel(stackSlotIndex));
-            _stackPanel.add(label);
+            stack[stackSlotIndex] = label;
+            stackPanel.add(createStackPointerLabel(stackSlotIndex));
+            stackPanel.add(label);
         }
-        for (int stackSlotIndex = tos; stackSlotIndex  < _stack.length; stackSlotIndex++) {
-            final WordValueLabel label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, Word.zero(), _localsPanel);
+        for (int stackSlotIndex = tos; stackSlotIndex  < stack.length; stackSlotIndex++) {
+            final WordValueLabel label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, Word.zero(), localsPanel);
             label.setBackground(InspectorStyle.SunYellow2);
-            _stack[stackSlotIndex] = label;
-            _stackPanel.add(createStackPointerLabel(stackSlotIndex));
-            _stackPanel.add(label);
+            stack[stackSlotIndex] = label;
+            stackPanel.add(createStackPointerLabel(stackSlotIndex));
+            stackPanel.add(label);
         }
         setTosLabel();
 
-        SpringUtilities.makeCompactGrid(_localsPanel, _locals.length + 1, 2, 0, 0, 5, 1);
-        SpringUtilities.makeCompactGrid(_stackPanel, _stack.length + 1, 2, 0, 0, 5, 1);
+        SpringUtilities.makeCompactGrid(localsPanel, locals.length + 1, 2, 0, 0, 5, 1);
+        SpringUtilities.makeCompactGrid(stackPanel, stack.length + 1, 2, 0, 0, 5, 1);
     }
 
     @Override
     public String getTextForTitle() {
-        return "StackFrame @ " + _jitStackFrame.framePointer.toHexString();
+        return "StackFrame @ " + jitStackFrame.framePointer.toHexString();
     }
 
     @Override
@@ -288,8 +288,8 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
         showAll.addItemListener(this);
         showAll.setAlignmentX(Component.LEFT_ALIGNMENT);
         mainPanel.add(showAll);
-        mainPanel.add(_localsPanel);
-        mainPanel.add(_stackPanel);
+        mainPanel.add(localsPanel);
+        mainPanel.add(stackPanel);
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), mainPanel);
         frame().setContentPane(scrollPane);
     }

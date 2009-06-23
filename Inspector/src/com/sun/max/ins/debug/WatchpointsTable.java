@@ -44,20 +44,20 @@ import com.sun.max.vm.value.*;
  */
 public class WatchpointsTable extends InspectorTable {
 
-    private final WatchpointsTableModel _model;
-    private final WatchpointsColumnModel _columnModel;
-    private final TableColumn[] _columns;
+    private final WatchpointsTableModel model;
+    private final WatchpointsColumnModel columnModel;
+    private final TableColumn[] columns;
 
-    private MaxVMState _lastRefreshedState = null;
+    private MaxVMState lastRefreshedState = null;
 
     WatchpointsTable(Inspection inspection, WatchpointsViewPreferences viewPreferences) {
         super(inspection);
-        _model = new WatchpointsTableModel();
-        _columns = new TableColumn[WatchpointsColumnKind.VALUES.length()];
-        _columnModel = new WatchpointsColumnModel(viewPreferences);
+        model = new WatchpointsTableModel();
+        columns = new TableColumn[WatchpointsColumnKind.VALUES.length()];
+        columnModel = new WatchpointsColumnModel(viewPreferences);
 
-        setModel(_model);
-        setColumnModel(_columnModel);
+        setModel(model);
+        setColumnModel(columnModel);
         setShowHorizontalLines(style().defaultTableShowHorizontalLines());
         setShowVerticalLines(style().defaultTableShowVerticalLines());
         setIntercellSpacing(style().defaultTableIntercellSpacing());
@@ -77,7 +77,7 @@ public class WatchpointsTable extends InspectorTable {
     @Override
     public void updateFocusSelection() {
         final MaxWatchpoint watchpoint = inspection().focus().watchpoint();
-        final int row = _model.findRow(watchpoint);
+        final int row = model.findRow(watchpoint);
         if (row < 0) {
             clearSelection();
         } else  if (row != getSelectedRow()) {
@@ -86,10 +86,10 @@ public class WatchpointsTable extends InspectorTable {
     }
 
     public void refresh(boolean force) {
-        if (maxVMState().newerThan(_lastRefreshedState) || force) {
-            _lastRefreshedState = maxVMState();
-            _model.refresh();
-            for (TableColumn column : _columns) {
+        if (maxVMState().newerThan(lastRefreshedState) || force) {
+            lastRefreshedState = maxVMState();
+            model.refresh();
+            for (TableColumn column : columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
                 prober.refresh(force);
             }
@@ -99,7 +99,7 @@ public class WatchpointsTable extends InspectorTable {
     }
 
     public void redisplay() {
-        for (TableColumn column : _columns) {
+        for (TableColumn column : columns) {
             final Prober prober = (Prober) column.getCellRenderer();
             prober.redisplay();
         }
@@ -110,12 +110,12 @@ public class WatchpointsTable extends InspectorTable {
     @Override
     protected JTableHeader createDefaultTableHeader() {
         // Custom table header with tooltips that describe the column data.
-        return new JTableHeader(_columnModel) {
+        return new JTableHeader(columnModel) {
             @Override
             public String getToolTipText(MouseEvent mouseEvent) {
                 final Point p = mouseEvent.getPoint();
-                final int index = _columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = _columnModel.getColumn(index).getModelIndex();
+                final int index = columnModel.getColumnIndexAtX(p.x);
+                final int modelIndex = columnModel.getColumn(index).getModelIndex();
                 return WatchpointsColumnKind.VALUES.get(modelIndex).toolTipText();
             }
         };
@@ -139,10 +139,10 @@ public class WatchpointsTable extends InspectorTable {
 
     private final class WatchpointsColumnModel extends DefaultTableColumnModel {
 
-        private final WatchpointsViewPreferences _viewPreferences;
+        private final WatchpointsViewPreferences viewPreferences;
 
         private WatchpointsColumnModel(WatchpointsViewPreferences viewPreferences) {
-            _viewPreferences = viewPreferences;
+            this.viewPreferences = viewPreferences;
             createColumn(WatchpointsColumnKind.START, new StartAddressCellRenderer(inspection()));
             createColumn(WatchpointsColumnKind.END, new EndAddressCellRenderer(inspection()));
             createColumn(WatchpointsColumnKind.REGION, new RegionRenderer(inspection()));
@@ -150,13 +150,13 @@ public class WatchpointsTable extends InspectorTable {
 
         private void createColumn(WatchpointsColumnKind columnKind, TableCellRenderer renderer) {
             final int col = columnKind.ordinal();
-            _columns[col] = new TableColumn(col, 0, renderer, null);
-            _columns[col].setHeaderValue(columnKind.label());
-            _columns[col].setMinWidth(columnKind.minWidth());
-            if (_viewPreferences.isVisible(columnKind)) {
-                addColumn(_columns[col]);
+            columns[col] = new TableColumn(col, 0, renderer, null);
+            columns[col].setHeaderValue(columnKind.label());
+            columns[col].setMinWidth(columnKind.minWidth());
+            if (viewPreferences.isVisible(columnKind)) {
+                addColumn(columns[col]);
             }
-            _columns[col].setIdentifier(columnKind);
+            columns[col].setIdentifier(columnKind);
         }
     }
 
@@ -211,25 +211,25 @@ public class WatchpointsTable extends InspectorTable {
 
     private final class StartAddressCellRenderer extends DefaultTableCellRenderer implements Prober{
 
-        private final Inspection _inspection;
-        private final Map<MaxWatchpoint, WeakReference<WordValueLabel> > _watchpointToLabelMap = new HashMap<MaxWatchpoint, WeakReference<WordValueLabel> >();
+        private final Inspection inspection;
+        private final Map<MaxWatchpoint, WeakReference<WordValueLabel> > watchpointToLabelMap = new HashMap<MaxWatchpoint, WeakReference<WordValueLabel> >();
 
         public StartAddressCellRenderer(Inspection inspection) {
-            _inspection = inspection;
+            this.inspection = inspection;
         }
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
-            WeakReference<WordValueLabel> labelReference = _watchpointToLabelMap.get(watchpoint);
+            WeakReference<WordValueLabel> labelReference = watchpointToLabelMap.get(watchpoint);
             if (labelReference != null && labelReference.get() == null) {
                 // has been collected
-                _watchpointToLabelMap.remove(labelReference);
+                watchpointToLabelMap.remove(labelReference);
                 labelReference = null;
             }
             if (labelReference == null) {
                 labelReference = new WeakReference<WordValueLabel>(new WatchpointStartWordValueLabel(inspection(), ValueMode.WORD, watchpoint));
-                _watchpointToLabelMap.put(watchpoint, labelReference);
+                watchpointToLabelMap.put(watchpoint, labelReference);
             }
             final WordValueLabel label = labelReference.get();
             if (row == getSelectionModel().getMinSelectionIndex()) {
@@ -241,7 +241,7 @@ public class WatchpointsTable extends InspectorTable {
         }
 
         public void redisplay() {
-            for (WeakReference<WordValueLabel> labelReference : _watchpointToLabelMap.values()) {
+            for (WeakReference<WordValueLabel> labelReference : watchpointToLabelMap.values()) {
                 final WordValueLabel label = labelReference.get();
                 if (label != null) {
                     label.redisplay();
@@ -250,7 +250,7 @@ public class WatchpointsTable extends InspectorTable {
         }
 
         public void refresh(boolean force) {
-            for (WeakReference<WordValueLabel> labelReference : _watchpointToLabelMap.values()) {
+            for (WeakReference<WordValueLabel> labelReference : watchpointToLabelMap.values()) {
                 final WordValueLabel label = labelReference.get();
                 if (label != null) {
                     label.refresh(force);
@@ -260,41 +260,41 @@ public class WatchpointsTable extends InspectorTable {
 
         private final class WatchpointStartWordValueLabel extends WordValueLabel {
 
-            private final MaxWatchpoint _watchpoint;
+            private final MaxWatchpoint watchpoint;
 
             WatchpointStartWordValueLabel(Inspection inspection, WordValueLabel.ValueMode valueMode, MaxWatchpoint watchpoint) {
                 super(inspection, valueMode, watchpoint.start(), WatchpointsTable.this);
-                _watchpoint = watchpoint;
+                this.watchpoint = watchpoint;
             }
 
             @Override
             public Value fetchValue() {
-                return _watchpoint == null ? null : new WordValue(_watchpoint.start());
+                return watchpoint == null ? null : new WordValue(watchpoint.start());
             }
         }
     }
 
     private final class EndAddressCellRenderer extends DefaultTableCellRenderer implements Prober{
 
-        private final Inspection _inspection;
-        private final Map<MaxWatchpoint, WeakReference<WordValueLabel> > _watchpointToLabelMap = new HashMap<MaxWatchpoint, WeakReference<WordValueLabel> >();
+        private final Inspection inspection;
+        private final Map<MaxWatchpoint, WeakReference<WordValueLabel> > watchpointToLabelMap = new HashMap<MaxWatchpoint, WeakReference<WordValueLabel> >();
 
         public EndAddressCellRenderer(Inspection inspection) {
-            _inspection = inspection;
+            this.inspection = inspection;
         }
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
-            WeakReference<WordValueLabel> labelReference = _watchpointToLabelMap.get(watchpoint);
+            WeakReference<WordValueLabel> labelReference = watchpointToLabelMap.get(watchpoint);
             if (labelReference != null && labelReference.get() == null) {
                 // has been collected
-                _watchpointToLabelMap.remove(labelReference);
+                watchpointToLabelMap.remove(labelReference);
                 labelReference = null;
             }
             if (labelReference == null) {
                 labelReference = new WeakReference<WordValueLabel>(new WatchpointEndWordValueLabel(inspection(), ValueMode.WORD, watchpoint));
-                _watchpointToLabelMap.put(watchpoint, labelReference);
+                watchpointToLabelMap.put(watchpoint, labelReference);
             }
             final WordValueLabel label = labelReference.get();
             if (row == getSelectionModel().getMinSelectionIndex()) {
@@ -306,7 +306,7 @@ public class WatchpointsTable extends InspectorTable {
         }
 
         public void redisplay() {
-            for (WeakReference<WordValueLabel> labelReference : _watchpointToLabelMap.values()) {
+            for (WeakReference<WordValueLabel> labelReference : watchpointToLabelMap.values()) {
                 final WordValueLabel label = labelReference.get();
                 if (label != null) {
                     label.redisplay();
@@ -315,7 +315,7 @@ public class WatchpointsTable extends InspectorTable {
         }
 
         public void refresh(boolean force) {
-            for (WeakReference<WordValueLabel> labelReference : _watchpointToLabelMap.values()) {
+            for (WeakReference<WordValueLabel> labelReference : watchpointToLabelMap.values()) {
                 final WordValueLabel label = labelReference.get();
                 if (label != null) {
                     label.refresh(force);
@@ -325,16 +325,16 @@ public class WatchpointsTable extends InspectorTable {
 
         private final class WatchpointEndWordValueLabel extends WordValueLabel {
 
-            private final MaxWatchpoint _watchpoint;
+            private final MaxWatchpoint watchpoint;
 
             WatchpointEndWordValueLabel(Inspection inspection, WordValueLabel.ValueMode valueMode, MaxWatchpoint watchpoint) {
                 super(inspection, valueMode, watchpoint.end(), WatchpointsTable.this);
-                _watchpoint = watchpoint;
+                this.watchpoint = watchpoint;
             }
 
             @Override
             public Value fetchValue() {
-                return _watchpoint == null ? null : new WordValue(_watchpoint.end());
+                return watchpoint == null ? null : new WordValue(watchpoint.end());
             }
         }
     }

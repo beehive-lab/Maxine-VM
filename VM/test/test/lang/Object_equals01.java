@@ -28,14 +28,14 @@ public final class Object_equals01 {
     private Object_equals01() {
     }
 
-    public static Object_equals01 _field = new Object_equals01();
+    public static Object_equals01 field = new Object_equals01();
 
     public static boolean test(int i) {
         final Object obj1 = new Object();
         final Object obj2 = new Object();
         switch (i) {
             case 0:
-                return obj1.equals(_field);
+                return obj1.equals(field);
             case 1:
                 return obj1.equals(obj2);
             case 2:
@@ -43,9 +43,9 @@ public final class Object_equals01 {
             case 3:
                 return obj1.equals(obj1);
             case 4:
-                return _field.equals(_field);
+                return field.equals(field);
             case 5:
-                return obj2.equals(_field);
+                return obj2.equals(field);
             case 6:
                 return obj2.equals(obj2);
             case 7:

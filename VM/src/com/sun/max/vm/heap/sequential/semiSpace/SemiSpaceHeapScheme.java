@@ -265,7 +265,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * If successful sets region start and size.
      */
     private static Address allocateSpace(SemiSpaceMemoryRegion space, Size size) {
-        final Address base = virtualAllocOption.isPresent() ? VirtualMemory.allocate(size, VirtualMemory.Type.HEAP) : Memory.allocate(size);
+        final Address base = virtualAllocOption.getValue() ? VirtualMemory.allocate(size, VirtualMemory.Type.HEAP) : Memory.allocate(size);
         if (!base.isZero()) {
             space.setStart(base);
             space.setAllocationMark(base); // debugging
@@ -281,7 +281,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      */
     private static void deallocateSpace(SemiSpaceMemoryRegion space) {
         final Address base = space.start();
-        if (virtualAllocOption.isPresent()) {
+        if (virtualAllocOption.getValue()) {
             VirtualMemory.deallocate(base, space.size(), VirtualMemory.Type.HEAP);
         } else {
             Memory.deallocate(base);

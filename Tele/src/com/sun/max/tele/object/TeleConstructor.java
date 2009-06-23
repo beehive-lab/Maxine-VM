@@ -32,7 +32,7 @@ import com.sun.max.vm.reference.*;
  */
 public final class TeleConstructor extends TeleTupleObject {
 
-    private Constructor _constructor;
+    private Constructor constructor;
 
     protected TeleConstructor(TeleVM teleVM, Reference constructorReference) {
         super(teleVM, constructorReference);
@@ -42,14 +42,14 @@ public final class TeleConstructor extends TeleTupleObject {
      * @return the local instance of {@link Constructor} equivalent to this object in the{@link TeleVM}.
      */
     public Constructor toJava() {
-        if (_constructor == null) {
+        if (constructor == null) {
             final Reference methodActorReference = teleVM().fields().Constructor_methodActor.readReference(reference());
             final TeleMethodActor teleMethodActor = (TeleMethodActor) teleVM().makeTeleObject(methodActorReference);
             if (teleMethodActor != null) {
-                _constructor = teleMethodActor.methodActor().toJavaConstructor();
+                constructor = teleMethodActor.methodActor().toJavaConstructor();
             }
         }
-        return _constructor;
+        return constructor;
     }
 
     @Override

@@ -25,31 +25,31 @@
 package test.threads;
 
 public class Object_wait02  implements Runnable {
-    static volatile boolean _done;
-    static final Object _object = new Object();
-    static int _sleep;
+    static volatile boolean done;
+    static final Object object = new Object();
+    static int sleep;
 
     public static boolean test(int i) throws InterruptedException {
-        _done = false;
-        _sleep = i * 200;
+        done = false;
+        sleep = i * 200;
         new Thread(new Object_wait02()).start();
-        synchronized (_object) {
-            while (!_done) {
-                _object.wait(200);
+        synchronized (object) {
+            while (!done) {
+                object.wait(200);
             }
         }
-        return _done;
+        return done;
     }
 
     public void run() {
         try {
-            Thread.sleep(_sleep);
+            Thread.sleep(sleep);
         } catch (InterruptedException ex) {
 
         }
-        synchronized (_object) {
-            _done = true;
-            _object.notifyAll();
+        synchronized (object) {
+            done = true;
+            object.notifyAll();
         }
     }
 

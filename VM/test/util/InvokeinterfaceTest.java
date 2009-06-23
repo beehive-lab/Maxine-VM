@@ -27,10 +27,10 @@ public class InvokeinterfaceTest {
     }
 
     static class S implements Clock {
-        private int _sum = 0;
+        private int sum = 0;
 
         public void ccc(int x) {
-            _sum += x;
+            sum += x;
         }
     }
 
@@ -39,7 +39,7 @@ public class InvokeinterfaceTest {
         for (int i = 0; i < 2000; i++) {
             s.ccc(i);
         }
-        return ((S) s)._sum;
+        return ((S) s).sum;
     }
 
     public static void main(String[] args) {

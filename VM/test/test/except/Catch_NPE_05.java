@@ -26,7 +26,7 @@ package test.except;
  */
 public class Catch_NPE_05 {
 
-    private int _field = 45;
+    private int field = 45;
 
     public static int test(int a) {
         try {
@@ -39,7 +39,7 @@ public class Catch_NPE_05 {
     private static int throwNPE(int a) {
         if (a >= 0) {
             final Catch_NPE_05 obj = null;
-            return obj._field;
+            return obj.field;
         }
         return -1;
     }

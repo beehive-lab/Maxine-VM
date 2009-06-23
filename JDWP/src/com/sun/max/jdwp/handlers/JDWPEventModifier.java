@@ -41,33 +41,33 @@ public interface JDWPEventModifier {
 
             final AppendableSequence<JDWPEventModifier> result = new LinkSequence<JDWPEventModifier>();
             for (Set.Modifier m : modifiers) {
-                final Set.Modifier.ModifierCommon mc = m._aModifierCommon;
+                final Set.Modifier.ModifierCommon mc = m.aModifierCommon;
                 if (mc instanceof Set.Modifier.ClassExclude) {
-                    result.append(new JDWPEventModifier.ClassExclude(((Set.Modifier.ClassExclude) mc)._classPattern));
+                    result.append(new JDWPEventModifier.ClassExclude(((Set.Modifier.ClassExclude) mc).classPattern));
                 } else if (mc instanceof Set.Modifier.ClassMatch) {
-                    result.append(new JDWPEventModifier.ClassMatch(((Set.Modifier.ClassMatch) mc)._classPattern));
+                    result.append(new JDWPEventModifier.ClassMatch(((Set.Modifier.ClassMatch) mc).classPattern));
                 } else if (mc instanceof Set.Modifier.ClassOnly) {
-                    result.append(new JDWPEventModifier.ClassOnly(session.getReferenceType(((Set.Modifier.ClassOnly) mc)._clazz)));
+                    result.append(new JDWPEventModifier.ClassOnly(session.getReferenceType(((Set.Modifier.ClassOnly) mc).clazz)));
                 } else if (mc instanceof Set.Modifier.Conditional) {
                     throw new JDWPNotImplementedException();
                 } else if (mc instanceof Set.Modifier.Count) {
-                    result.append(new JDWPEventModifier.Count(((Set.Modifier.Count) mc)._count));
+                    result.append(new JDWPEventModifier.Count(((Set.Modifier.Count) mc).count));
                 } else if (mc instanceof Set.Modifier.ExceptionOnly) {
                     final Set.Modifier.ExceptionOnly emc = (Set.Modifier.ExceptionOnly) mc;
-                    result.append(new JDWPEventModifier.ExceptionOnly(session.getReferenceType(emc._exceptionOrNull), emc._caught, emc._uncaught));
+                    result.append(new JDWPEventModifier.ExceptionOnly(session.getReferenceType(emc.exceptionOrNull), emc.caught, emc.uncaught));
                 } else if (mc instanceof Set.Modifier.FieldOnly) {
                     throw new JDWPNotImplementedException();
                 } else if (mc instanceof Set.Modifier.InstanceOnly) {
                     throw new JDWPNotImplementedException();
                 } else if (mc instanceof Set.Modifier.LocationOnly) {
-                    result.append(new JDWPEventModifier.LocationOnly(((Set.Modifier.LocationOnly) mc)._loc));
+                    result.append(new JDWPEventModifier.LocationOnly(((Set.Modifier.LocationOnly) mc).loc));
                 } else if (mc instanceof Set.Modifier.SourceNameMatch) {
                     throw new JDWPNotImplementedException();
                 } else if (mc instanceof Set.Modifier.Step) {
                     final Set.Modifier.Step stepModifier = (Set.Modifier.Step) mc;
-                    result.append(new JDWPEventModifier.Step(session.getThread(stepModifier._thread), stepModifier._size, stepModifier._depth));
+                    result.append(new JDWPEventModifier.Step(session.getThread(stepModifier.thread), stepModifier.size, stepModifier.depth));
                 } else if (mc instanceof Set.Modifier.ThreadOnly) {
-                    result.append(new JDWPEventModifier.ThreadOnly(session.getThread(((Set.Modifier.ThreadOnly) mc)._thread)));
+                    result.append(new JDWPEventModifier.ThreadOnly(session.getThread(((Set.Modifier.ThreadOnly) mc).thread)));
                 } else {
                     throw new JDWPNotImplementedException();
                 }
@@ -78,80 +78,80 @@ public interface JDWPEventModifier {
 
     public static class Count implements JDWPEventModifier {
 
-        private int _count;
+        private int count;
 
         public Count(int count) {
-            _count = count;
+            this.count = count;
         }
 
         public boolean isAccepted(JDWPEventContext context) {
-            return --_count == 0;
+            return --count == 0;
         }
     }
 
     public static class Step extends ThreadOnly {
-        private int _size;
-        private int _depth;
+        private int size;
+        private int depth;
 
         public Step(ThreadProvider thread, int size, int depth) {
             super(thread);
-            _size = size;
-            _depth = depth;
+            this.size = size;
+            this.depth = depth;
         }
 
         public int size() {
-            return _size;
+            return size;
         }
 
         public int depth() {
-            return _depth;
+            return depth;
         }
 
     }
 
     public static class ThreadOnly implements JDWPEventModifier {
 
-        private ThreadProvider _thread;
+        private ThreadProvider thread;
 
         public ThreadOnly(ThreadProvider thread) {
-            _thread = thread;
+            this.thread = thread;
         }
 
         public boolean isAccepted(JDWPEventContext context) {
-            return context.getThread() == null || context.getThread().equals(_thread);
+            return context.getThread() == null || context.getThread().equals(thread);
         }
 
         public ThreadProvider thread() {
-            return _thread;
+            return thread;
         }
     }
 
     public static class ClassOnly implements JDWPEventModifier {
 
-        private ReferenceTypeProvider _klass;
+        private ReferenceTypeProvider klass;
 
         public ClassOnly(ReferenceTypeProvider klass) {
-            _klass = klass;
+            this.klass = klass;
         }
 
         public boolean isAccepted(JDWPEventContext context) {
-            return context.getReferenceType() == null || context.getReferenceType().equals(_klass);
+            return context.getReferenceType() == null || context.getReferenceType().equals(klass);
         }
     }
 
     public static class ClassMatch implements JDWPEventModifier {
 
-        private String _regexp;
+        private String regexp;
 
         public ClassMatch(String regexp) {
-            _regexp = regexp;
+            this.regexp = regexp;
         }
 
         public boolean isAccepted(JDWPEventContext context) {
             if (context.getReferenceType() == null) {
                 return true;
             }
-            final Pattern pattern = Pattern.compile(_regexp);
+            final Pattern pattern = Pattern.compile(regexp);
             final String value = context.getReferenceType().getName();
             final Matcher matcher = pattern.matcher(value);
             return matcher.matches();
@@ -160,17 +160,17 @@ public interface JDWPEventModifier {
 
     public static class ClassExclude implements JDWPEventModifier {
 
-        private String _regexp;
+        private String regexp;
 
         public ClassExclude(String regexp) {
-            _regexp = regexp;
+            this.regexp = regexp;
         }
 
         public boolean isAccepted(JDWPEventContext context) {
             if (context.getReferenceType() == null) {
                 return true;
             }
-            final Pattern pattern = Pattern.compile(_regexp);
+            final Pattern pattern = Pattern.compile(regexp);
             final String value = context.getReferenceType().getName();
             final Matcher matcher = pattern.matcher(value);
             return !matcher.matches();
@@ -179,18 +179,18 @@ public interface JDWPEventModifier {
 
     public static class LocationOnly implements JDWPEventModifier {
 
-        private JDWPLocation _location;
+        private JDWPLocation location;
 
         public LocationOnly(JDWPLocation location) {
-            _location = location;
+            this.location = location;
         }
 
         public JDWPLocation location() {
-            return _location;
+            return location;
         }
 
         public boolean isAccepted(JDWPEventContext context) {
-            return context.getLocation() == null || context.getLocation().equals(_location);
+            return context.getLocation() == null || context.getLocation().equals(location);
         }
     }
 

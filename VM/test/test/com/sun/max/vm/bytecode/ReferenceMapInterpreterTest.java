@@ -77,12 +77,12 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
      * Describes which local variable indices and operand stack indices contain references.
      */
     static class ReferenceMap {
-        final boolean[] _locals;
-        final boolean[] _stack;
+        final boolean[] locals;
+        final boolean[] stack;
 
         ReferenceMap(int maxLocals, int maxStack) {
-            _locals = new boolean[maxLocals];
-            _stack = new boolean[maxStack];
+            locals = new boolean[maxLocals];
+            stack = new boolean[maxStack];
         }
 
         /**
@@ -98,8 +98,8 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
 
         ReferenceMap(boolean receiverTypeIsWord, byte[] code, ConstantPool constantPool, Frame frame, int maxLocals, int maxStack) {
             this(maxLocals, maxStack);
-            init(receiverTypeIsWord, code, constantPool, _locals, frame.locals());
-            init(receiverTypeIsWord, code, constantPool, _stack, frame.stack());
+            init(receiverTypeIsWord, code, constantPool, locals, frame.locals());
+            init(receiverTypeIsWord, code, constantPool, stack, frame.stack());
         }
 
         /**
@@ -110,14 +110,14 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
         public boolean equals(Object other) {
             if (other instanceof ReferenceMap) {
                 final ReferenceMap otherReferenceMap = (ReferenceMap) other;
-                return Arrays.equals(_stack, otherReferenceMap._stack) && Arrays.equals(_locals, otherReferenceMap._locals);
+                return Arrays.equals(stack, otherReferenceMap.stack) && Arrays.equals(locals, otherReferenceMap.locals);
             }
             return false;
         }
 
         @Override
         public String toString() {
-            return "stack = " + Arrays.toString(_stack) + ", locals = " + Arrays.toString(_locals);
+            return "stack = " + Arrays.toString(stack) + ", locals = " + Arrays.toString(locals);
         }
     }
 
@@ -127,20 +127,20 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
      */
     static class InterpreterMapMaker implements ReferenceMapInterpreterContext, ReferenceSlotVisitor {
 
-        private final ClassMethodActor _classMethodActor;
-        private final Object _blockFrames;
-        private final BirBlock[] _blocks;
-        private final ExceptionHandler[] _exceptionHandlerMap;
-        private final ReferenceMap[] _referenceMaps;
-        private final BytecodePositionIterator _bytecodePositionIterator;
+        private final ClassMethodActor classMethodActor;
+        private final Object blockFrames;
+        private final BirBlock[] blocks;
+        private final ExceptionHandler[] exceptionHandlerMap;
+        private final ReferenceMap[] referenceMaps;
+        private final BytecodePositionIterator bytecodePositionIterator;
 
         InterpreterMapMaker(BirMethod birMethod) {
-            _classMethodActor = birMethod.classMethodActor();
-            _blocks = Sequence.Static.toArray(birMethod.blocks(), BirBlock.class);
-            _blockFrames = ReferenceMapInterpreter.createFrames(this);
-            final CodeAttribute codeAttribute = _classMethodActor.codeAttribute();
-            _exceptionHandlerMap = ExceptionHandler.createHandlerMap(codeAttribute);
-            _referenceMaps = new ReferenceMap[codeAttribute.code().length];
+            classMethodActor = birMethod.classMethodActor();
+            blocks = Sequence.Static.toArray(birMethod.blocks(), BirBlock.class);
+            blockFrames = ReferenceMapInterpreter.createFrames(this);
+            final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
+            exceptionHandlerMap = ExceptionHandler.createHandlerMap(codeAttribute);
+            referenceMaps = new ReferenceMap[codeAttribute.code().length];
 
             final AppendableIndexedSequence<Integer> bytecodePositions = new ArrayListSequence<Integer>();
             final BytecodeAdapter bytecodeAdapter = new BytecodeAdapter() {
@@ -148,77 +148,77 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
                 protected void opcodeDecoded() {
                     final int bytecodePosition = bytecodeScanner().currentOpcodePosition();
                     bytecodePositions.append(bytecodePosition);
-                    _referenceMaps[bytecodePosition] = new ReferenceMap(codeAttribute.maxLocals(), codeAttribute.maxStack());
+                    referenceMaps[bytecodePosition] = new ReferenceMap(codeAttribute.maxLocals(), codeAttribute.maxStack());
                 }
             };
-            new BytecodeScanner(bytecodeAdapter).scan(_classMethodActor);
+            new BytecodeScanner(bytecodeAdapter).scan(classMethodActor);
 
-            _bytecodePositionIterator = new BytecodePositionIterator() {
-                private int _index;
+            bytecodePositionIterator = new BytecodePositionIterator() {
+                private int index;
                 public int bytecodePosition() {
-                    if (_index < bytecodePositions.length()) {
-                        return bytecodePositions.get(_index);
+                    if (index < bytecodePositions.length()) {
+                        return bytecodePositions.get(index);
                     }
                     return -1;
                 }
                 public int next() {
-                    if (++_index < bytecodePositions.length()) {
-                        return bytecodePositions.get(_index);
+                    if (++index < bytecodePositions.length()) {
+                        return bytecodePositions.get(index);
                     }
                     return -1;
                 }
                 public void reset() {
-                    _index = 0;
+                    index = 0;
                 }
             };
         }
 
         public Object blockFrames() {
-            return _blockFrames;
+            return blockFrames;
         }
 
         public int blockIndexFor(int bytecodePosition) {
-            for (int blockIndex = 0; blockIndex < _blocks.length; ++blockIndex) {
-                final BirBlock block = _blocks[blockIndex];
+            for (int blockIndex = 0; blockIndex < blocks.length; ++blockIndex) {
+                final BirBlock block = blocks[blockIndex];
                 if (block.bytecodeBlock().start() > bytecodePosition) {
                     assert blockIndex > 0;
                     return blockIndex - 1;
                 }
             }
-            return _blocks.length - 1;
+            return blocks.length - 1;
         }
 
         public int blockStartBytecodePosition(int blockIndex) {
-            if (blockIndex == _blocks.length) {
+            if (blockIndex == blocks.length) {
                 return classMethodActor().codeAttribute().code().length;
             }
-            return _blocks[blockIndex].bytecodeBlock().start();
+            return blocks[blockIndex].bytecodeBlock().start();
         }
 
         public ClassMethodActor classMethodActor() {
-            return _classMethodActor;
+            return classMethodActor;
         }
 
         public ExceptionHandler exceptionHandlersActiveAt(int bytecodePosition) {
-            if (_exceptionHandlerMap == null) {
+            if (exceptionHandlerMap == null) {
                 return null;
             }
-            return _exceptionHandlerMap[bytecodePosition];
+            return exceptionHandlerMap[bytecodePosition];
         }
 
         public int numberOfBlocks() {
-            return _blocks.length;
+            return blocks.length;
         }
 
         public void visitReferenceInLocalVariable(int localVariableIndex) {
-            final ReferenceMap map = _referenceMaps[_bytecodePositionIterator.bytecodePosition()];
-            map._locals[localVariableIndex] = true;
+            final ReferenceMap map = referenceMaps[bytecodePositionIterator.bytecodePosition()];
+            map.locals[localVariableIndex] = true;
         }
 
         public void visitReferenceOnOperandStack(int operandStackIndex, boolean parametersPopped) {
             if (!parametersPopped) {
-                final ReferenceMap map = _referenceMaps[_bytecodePositionIterator.bytecodePosition()];
-                map._stack[operandStackIndex] = true;
+                final ReferenceMap map = referenceMaps[bytecodePositionIterator.bytecodePosition()];
+                map.stack[operandStackIndex] = true;
             }
         }
 
@@ -228,18 +228,18 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
         }
 
         public ReferenceMap[] maps() {
-            final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(_blockFrames);
+            final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(blockFrames);
             interpreter.finalizeFrames(this);
-            interpreter.interpretReferenceSlots(this, this, _bytecodePositionIterator);
-            return _referenceMaps;
+            interpreter.interpretReferenceSlots(this, this, bytecodePositionIterator);
+            return referenceMaps;
         }
 
         public String[] framesAsStrings() {
-            return ReferenceMapInterpreter.from(_blockFrames).framesToStrings(this);
+            return ReferenceMapInterpreter.from(blockFrames).framesToStrings(this);
         }
     }
 
-    private ClassVerifier _classVerifier;
+    private ClassVerifier classVerifier;
 
     /**
      * Deletes frames derived from a {@link StackMapTable} attribute that do not align with the start of a basic block.
@@ -277,8 +277,8 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
     protected BirMethod compileMethod(final ClassMethodActor classMethodActor) {
         final BirMethod method = super.compileMethod(classMethodActor);
 
-        if (_classVerifier == null || !_classVerifier.classActor.equals(classMethodActor.holder())) {
-            _classVerifier = Verifier.verifierFor(classMethodActor.holder());
+        if (classVerifier == null || !classVerifier.classActor.equals(classMethodActor.holder())) {
+            classVerifier = Verifier.verifierFor(classMethodActor.holder());
         }
 
         final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
@@ -348,9 +348,9 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
                     final int codeLength,
                     final boolean[] blockStarts) {
         final ReferenceMap[] verifiedMaps = new ReferenceMap[codeLength];
-        if (_classVerifier instanceof TypeCheckingVerifier) {
-            new TypeCheckingMethodVerifier(_classVerifier, classMethodActor, codeAttribute) {
-                private final boolean _receiverTypeIsWord = thisObjectType.typeDescriptor().toKind() == Kind.WORD;
+        if (classVerifier instanceof TypeCheckingVerifier) {
+            new TypeCheckingMethodVerifier(classVerifier, classMethodActor, codeAttribute) {
+                private final boolean receiverTypeIsWord = thisObjectType.typeDescriptor().toKind() == Kind.WORD;
                 @Override
                 public void verify() {
                     clearNonBlockStartFrames(frameMap, blockStarts);
@@ -361,12 +361,12 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
                 protected void preInstructionScan() {
                     super.preInstructionScan();
                     final int currentOpcodePosition = currentOpcodePosition();
-                    verifiedMaps[currentOpcodePosition] = new ReferenceMap(_receiverTypeIsWord, codeAttribute().code(), constantPool(), frame, maxLocals, maxStack);
+                    verifiedMaps[currentOpcodePosition] = new ReferenceMap(receiverTypeIsWord, codeAttribute().code(), constantPool(), frame, maxLocals, maxStack);
                 }
             }.verify();
         } else {
-            new TypeInferencingMethodVerifier(_classVerifier, classMethodActor, codeAttribute) {
-                private final boolean _receiverTypeIsWord = thisObjectType.typeDescriptor().toKind() == Kind.WORD;
+            new TypeInferencingMethodVerifier(classVerifier, classMethodActor, codeAttribute) {
+                private final boolean receiverTypeIsWord = thisObjectType.typeDescriptor().toKind() == Kind.WORD;
                 @Override
                 public void verify() {
                     clearNonBlockStartFrames(frameMap, blockStarts);
@@ -377,7 +377,7 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
                 protected void preInstructionScan() {
                     super.preInstructionScan();
                     final int currentOpcodePosition = currentOpcodePosition();
-                    verifiedMaps[currentOpcodePosition] = new ReferenceMap(_receiverTypeIsWord, codeAttribute().code(), constantPool(), frame, maxLocals, maxStack);
+                    verifiedMaps[currentOpcodePosition] = new ReferenceMap(receiverTypeIsWord, codeAttribute().code(), constantPool(), frame, maxLocals, maxStack);
                 }
             }.verify();
         }

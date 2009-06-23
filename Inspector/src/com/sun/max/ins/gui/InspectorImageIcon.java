@@ -29,22 +29,21 @@ public abstract class InspectorImageIcon extends ImageIcon {
 
     protected abstract void draw(Graphics2D g);
 
-    private final int _width;
+    private final int width;
 
     public int width() {
-        return _width;
+        return width;
     }
 
-    private final int _height;
+    private final int height;
 
     public int height() {
-        return _height;
+        return height;
     }
 
     protected InspectorImageIcon(int width, int height) {
-        super();
-        _width = width;
-        _height = height;
+        this.width = width;
+        this.height = height;
         final BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         final Graphics2D g = (Graphics2D) image.getGraphics().create();
         draw(g);
@@ -71,7 +70,7 @@ public abstract class InspectorImageIcon extends ImageIcon {
         return createBlank(size.width, size.height);
     }
 
-    private static final int _MARGIN = 2;
+    private static final int MARGIN = 2;
 
     private static final class DownTriangleIcon extends InspectorImageIcon {
         DownTriangleIcon(int width, int height) {
@@ -82,9 +81,9 @@ public abstract class InspectorImageIcon extends ImageIcon {
         public void draw(Graphics2D g) {
             g.setColor(InspectorStyle.Black);
             final Polygon polygon = new Polygon();
-            polygon.addPoint(_MARGIN, _MARGIN);
-            polygon.addPoint(width() - _MARGIN, _MARGIN);
-            polygon.addPoint(width() / 2, height() - _MARGIN);
+            polygon.addPoint(MARGIN, MARGIN);
+            polygon.addPoint(width() - MARGIN, MARGIN);
+            polygon.addPoint(width() / 2, height() - MARGIN);
             g.fillPolygon(polygon);
         }
     }

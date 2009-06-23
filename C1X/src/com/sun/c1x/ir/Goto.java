@@ -39,7 +39,7 @@ public class Goto extends BlockEnd {
      */
     public Goto(BlockBegin succ, ValueStack stateBefore, boolean isSafepoint) {
         super(ValueType.ILLEGAL_TYPE, stateBefore, isSafepoint);
-        _successors.add(succ);
+        successors.add(succ);
     }
 
     /**

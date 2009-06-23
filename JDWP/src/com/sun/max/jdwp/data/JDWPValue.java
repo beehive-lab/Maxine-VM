@@ -34,164 +34,164 @@ import com.sun.max.jdwp.data.ID.*;
  */
 public class JDWPValue {
 
-    private byte _tag;
-    private Object _value;
+    private byte tag;
+    private Object value;
 
     public JDWPValue(InputStream is) throws IOException {
-        _tag = (byte) is.read();
+        tag = (byte) is.read();
         readValue(is);
     }
 
     public JDWPValue(InputStream is, int typeTag) throws IOException {
-        _tag = (byte) typeTag;
+        tag = (byte) typeTag;
         readValue(is);
     }
 
     public JDWPValue(ID.ArrayID v) {
-        _value = v;
-        _tag = Tag.ARRAY;
+        value = v;
+        tag = Tag.ARRAY;
     }
 
     public JDWPValue(Byte v) {
-        _value = v;
-        _tag = Tag.BYTE;
+        value = v;
+        tag = Tag.BYTE;
     }
 
     public JDWPValue(Character v) {
-        _value = v;
-        _tag = Tag.CHAR;
+        value = v;
+        tag = Tag.CHAR;
     }
 
     public JDWPValue(ID.ObjectID v) {
-        _value = v;
-        _tag = Tag.OBJECT;
+        value = v;
+        tag = Tag.OBJECT;
     }
 
     public JDWPValue(Float v) {
-        _value = v;
-        _tag = Tag.FLOAT;
+        value = v;
+        tag = Tag.FLOAT;
     }
 
     public JDWPValue(Double v) {
-        _value = v;
-        _tag = Tag.DOUBLE;
+        value = v;
+        tag = Tag.DOUBLE;
     }
 
     public JDWPValue(Integer v) {
-        _value = v;
-        _tag = Tag.INT;
+        value = v;
+        tag = Tag.INT;
     }
 
     public JDWPValue(Long v) {
-        _value = v;
-        _tag = Tag.LONG;
+        value = v;
+        tag = Tag.LONG;
     }
 
     public JDWPValue(Short v) {
-        _value = v;
-        _tag = Tag.SHORT;
+        value = v;
+        tag = Tag.SHORT;
     }
 
     public JDWPValue() {
-        _tag = Tag.VOID;
+        tag = Tag.VOID;
     }
 
     public JDWPValue(Boolean v) {
-        _value = v;
-        _tag = Tag.BOOLEAN;
+        value = v;
+        tag = Tag.BOOLEAN;
     }
 
     public JDWPValue(ID.StringID v) {
-        _value = v;
-        _tag = Tag.STRING;
+        value = v;
+        tag = Tag.STRING;
     }
 
     public JDWPValue(ID.ThreadID v) {
-        _value = v;
-        _tag = Tag.THREAD;
+        value = v;
+        tag = Tag.THREAD;
     }
 
     public JDWPValue(ID.ThreadGroupID v) {
-        _value = v;
-        _tag = Tag.THREAD_GROUP;
+        value = v;
+        tag = Tag.THREAD_GROUP;
     }
 
     public JDWPValue(ID.ClassLoaderID v) {
-        _value = v;
-        _tag = Tag.CLASS_LOADER;
+        value = v;
+        tag = Tag.CLASS_LOADER;
     }
 
     public JDWPValue(ID.ClassObjectID v) {
-        _value = v;
-        _tag = Tag.CLASS_OBJECT;
+        value = v;
+        tag = Tag.CLASS_OBJECT;
     }
 
     public byte tag() {
-        return _tag;
+        return tag;
     }
 
     public ID.ArrayID asArray() {
-        return (_tag == Tag.ARRAY) ? (ID.ArrayID) _value : null;
+        return (tag == Tag.ARRAY) ? (ID.ArrayID) value : null;
     }
 
     public Byte asByte() {
-        return (_tag == Tag.BYTE) ? (Byte) _value : null;
+        return (tag == Tag.BYTE) ? (Byte) value : null;
     }
 
     public Character asCharacter() {
-        return (_tag == Tag.CHAR) ? (Character) _value : null;
+        return (tag == Tag.CHAR) ? (Character) value : null;
     }
 
     public ID.ObjectID asObject() {
-        return (_tag == Tag.OBJECT) ? (ID.ObjectID) _value : null;
+        return (tag == Tag.OBJECT) ? (ID.ObjectID) value : null;
     }
 
     public Float asFloat() {
-        return (_tag == Tag.FLOAT) ? (Float) _value : null;
+        return (tag == Tag.FLOAT) ? (Float) value : null;
     }
 
     public Double asDouble() {
-        return (_tag == Tag.DOUBLE) ? (Double) _value : null;
+        return (tag == Tag.DOUBLE) ? (Double) value : null;
     }
 
     public Integer asInteger() {
-        return (_tag == Tag.INT) ? (Integer) _value : null;
+        return (tag == Tag.INT) ? (Integer) value : null;
     }
 
     public Long asLong() {
-        return (_tag == Tag.LONG) ? (Long) _value : null;
+        return (tag == Tag.LONG) ? (Long) value : null;
     }
 
     public Short asShort() {
-        return (_tag == Tag.SHORT) ? (Short) _value : null;
+        return (tag == Tag.SHORT) ? (Short) value : null;
     }
 
     public boolean isVoid() {
-        return _tag == Tag.VOID;
+        return tag == Tag.VOID;
     }
 
     public Boolean asBoolean() {
-        return (_tag == Tag.BOOLEAN) ? (Boolean) _value : null;
+        return (tag == Tag.BOOLEAN) ? (Boolean) value : null;
     }
 
     public ID.StringID asString() {
-        return (_tag == Tag.STRING) ? (ID.StringID) _value : null;
+        return (tag == Tag.STRING) ? (ID.StringID) value : null;
     }
 
     public ID.ThreadID asThread() {
-        return (_tag == Tag.THREAD) ? (ID.ThreadID) _value : null;
+        return (tag == Tag.THREAD) ? (ID.ThreadID) value : null;
     }
 
     public ID.ThreadGroupID asThreadGroup() {
-        return (_tag == Tag.THREAD_GROUP) ? (ID.ThreadGroupID) _value : null;
+        return (tag == Tag.THREAD_GROUP) ? (ID.ThreadGroupID) value : null;
     }
 
     public ID.ClassLoaderID asClassLoader() {
-        return (_tag == Tag.CLASS_LOADER) ? (ID.ClassLoaderID) _value : null;
+        return (tag == Tag.CLASS_LOADER) ? (ID.ClassLoaderID) value : null;
     }
 
     public ID.ClassObjectID asClassObject() {
-        return (_tag == Tag.CLASS_OBJECT) ? (ID.ClassObjectID) _value : null;
+        return (tag == Tag.CLASS_OBJECT) ? (ID.ClassObjectID) value : null;
     }
 
     /**
@@ -201,7 +201,7 @@ public class JDWPValue {
      */
     public void writeUntagged(OutputStream outputStream) throws IOException {
         final DataOutputStream dos = new DataOutputStream(outputStream);
-        switch (_tag) {
+        switch (tag) {
             case Tag.ARRAY:
                 asArray().write(dos);
                 break;
@@ -266,56 +266,56 @@ public class JDWPValue {
     }
 
     private void readValue(InputStream is) throws IOException {
-        switch (_tag) {
+        switch (tag) {
             case Tag.ARRAY:
-                _value = ID.read(is, ID.ArrayID.class);
+                value = ID.read(is, ID.ArrayID.class);
                 break;
             case Tag.BYTE:
-                _value = new Byte(new DataInputStream(is).readByte());
+                value = new Byte(new DataInputStream(is).readByte());
                 break;
             case Tag.CHAR:
-                _value = new Character(new DataInputStream(is).readChar());
+                value = new Character(new DataInputStream(is).readChar());
                 break;
             case Tag.OBJECT:
-                _value = ID.read(is, ID.ObjectID.class);
+                value = ID.read(is, ID.ObjectID.class);
                 break;
             case Tag.FLOAT:
-                _value = new Float(new DataInputStream(is).readFloat());
+                value = new Float(new DataInputStream(is).readFloat());
                 break;
             case Tag.DOUBLE:
-                _value = new Double(new DataInputStream(is).readDouble());
+                value = new Double(new DataInputStream(is).readDouble());
                 break;
             case Tag.INT:
-                _value = new Integer(new DataInputStream(is).readInt());
+                value = new Integer(new DataInputStream(is).readInt());
                 break;
             case Tag.LONG:
-                _value = new Long(new DataInputStream(is).readLong());
+                value = new Long(new DataInputStream(is).readLong());
                 break;
             case Tag.SHORT:
-                _value = new Short(new DataInputStream(is).readShort());
+                value = new Short(new DataInputStream(is).readShort());
                 break;
             case Tag.VOID:
                 break;
             case Tag.BOOLEAN:
-                _value = new Boolean(new DataInputStream(is).readBoolean());
+                value = new Boolean(new DataInputStream(is).readBoolean());
                 break;
             case Tag.STRING:
-                _value = ID.read(is, ID.StringID.class);
+                value = ID.read(is, ID.StringID.class);
                 break;
             case Tag.THREAD:
-                _value = ID.read(is, ID.ThreadID.class);
+                value = ID.read(is, ID.ThreadID.class);
                 break;
             case Tag.THREAD_GROUP:
-                _value = ID.read(is, ID.ThreadGroupID.class);
+                value = ID.read(is, ID.ThreadGroupID.class);
                 break;
             case Tag.CLASS_LOADER:
-                _value = ID.read(is, ID.ClassLoaderID.class);
+                value = ID.read(is, ID.ClassLoaderID.class);
                 break;
             case Tag.CLASS_OBJECT:
-                _value = ID.read(is, ID.ClassObjectID.class);
+                value = ID.read(is, ID.ClassObjectID.class);
                 break;
             default:
-                assert false : "Unhandled Tag constant " + _tag + "!";
+                assert false : "Unhandled Tag constant " + tag + "!";
 
         }
     }
@@ -325,11 +325,11 @@ public class JDWPValue {
      * @return the object identifier or null, if the value cannot be converted to it
      */
     public ID.ObjectID asGeneralObjectID() {
-        return (_value instanceof ObjectID) ? (ID.ObjectID) _value : null;
+        return (value instanceof ObjectID) ? (ID.ObjectID) value : null;
     }
 
     @Override
     public String toString() {
-        return "JDWPValue(" + _tag + ")[" + _value + "]";
+        return "JDWPValue(" + tag + ")[" + value + "]";
     }
 }

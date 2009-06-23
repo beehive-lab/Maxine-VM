@@ -43,47 +43,47 @@ public class AlternateInspectorStyle extends InspectorStyleAdapter {
     /*
      * Defaults
      */
-    private final int _defaultFontSize = 14;
-    private final Font _defaultFont = new Font("SansSerif", Font.PLAIN, _defaultFontSize);
-    private final Color _defaultTextColor = Color.BLACK;
+    private final int defaultFontSize = 14;
+    private final Font defaultFont = new Font("SansSerif", Font.PLAIN, defaultFontSize);
+    private final Color defaultTextColor = Color.BLACK;
 
     /*
      * Text labels, in English
      */
-    private final Font _textLabelFont = new Font("SansSerif", Font.BOLD, _defaultFontSize);
+    private final Font textLabelFont = new Font("SansSerif", Font.BOLD, defaultFontSize);
 
     /*
      * Hexadecimal data
      */
-    private final Font _hexDataFont = new Font("Monospaced", Font.PLAIN, _defaultFontSize);
+    private final Font hexDataFont = new Font("Monospaced", Font.PLAIN, defaultFontSize);
 
     /*
      * Java names
      */
-    private final int _javaNameSize = _defaultFontSize + 2;
-    private final Font _javaNameFont = new Font("SansSerif", Font.PLAIN, _javaNameSize);
+    private final int javaNameSize = defaultFontSize + 2;
+    private final Font javaNameFont = new Font("SansSerif", Font.PLAIN, javaNameSize);
 
     public int defaultTextFontSize() {
-        return _defaultFontSize;
+        return defaultFontSize;
     }
 
     public Font defaultFont() {
-        return _defaultFont;
+        return defaultFont;
     }
 
     @Override
     public Color defaultTextColor() {
-        return _defaultTextColor;
+        return defaultTextColor;
     }
 
     @Override
     public Font textLabelFont() {
-        return _textLabelFont;
+        return textLabelFont;
     }
 
     @Override
     public Font hexDataFont() {
-        return _hexDataFont;
+        return hexDataFont;
     }
 
     @Override
@@ -98,10 +98,10 @@ public class AlternateInspectorStyle extends InspectorStyleAdapter {
 
     @Override
     public int javaNameFontSize() {
-        return _javaNameSize;
+        return javaNameSize;
     }
     @Override
     public Font javaNameFont() {
-        return _javaNameFont;
+        return javaNameFont;
     }
 }

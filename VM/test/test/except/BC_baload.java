@@ -28,10 +28,10 @@ package test.except;
 
 public class BC_baload {
 
-    static boolean[] _array = {true, false, true, false};
+    static boolean[] arr = {true, false, true, false};
 
     public static boolean test(int arg) {
-        final boolean[] array = arg == -2 ? null : _array;
+        final boolean[] array = arg == -2 ? null : arr;
         return array[arg];
     }
 

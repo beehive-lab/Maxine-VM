@@ -46,19 +46,19 @@ public class InvokeVirtual_01 {
         }
     }
 
-    static A _a = new A();
-    static A _b = new B();
-    static A _c = new C();
+    static A aObject = new A();
+    static A bObject = new B();
+    static A cObject = new C();
 
     public static int test(int a) {
         if (a == 0) {
-            return _a.plus(a);
+            return aObject.plus(a);
         }
         if (a == 1) {
-            return _b.plus(a);
+            return bObject.plus(a);
         }
         if (a == 2) {
-            return _c.plus(a);
+            return cObject.plus(a);
         }
         return 42;
     }

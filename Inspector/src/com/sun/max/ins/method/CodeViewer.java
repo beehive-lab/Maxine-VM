@@ -48,21 +48,21 @@ public abstract class CodeViewer extends InspectorPanel {
 
     private static final int TRACE_VALUE = 2;
 
-    private final MethodInspector _parent;
+    private final MethodInspector parent;
 
-    private JPanel _toolBarPanel;
-    private JToolBar _toolBar;
-    private RowTextSearchToolBar _searchToolBar;
-    private final JButton _searchButton;
-    private final JButton _activeRowsButton;
-    private JButton _viewCloseButton;
+    private JPanel toolBarPanel;
+    private JToolBar toolBar;
+    private RowTextSearchToolBar searchToolBar;
+    private final JButton searchButton;
+    private final JButton activeRowsButton;
+    private JButton viewCloseButton;
 
     public MethodInspector parent() {
-        return _parent;
+        return parent;
     }
 
     protected JToolBar toolBar() {
-        return _toolBar;
+        return toolBar;
     }
 
     public abstract MethodCodeKind codeKind();
@@ -79,16 +79,16 @@ public abstract class CodeViewer extends InspectorPanel {
 
     public CodeViewer(Inspection inspection, MethodInspector parent) {
         super(inspection, new BorderLayout());
-        _parent = parent;
+        this.parent = parent;
 
-        _searchButton = new InspectorButton(inspection, new AbstractAction("Search...") {
+        searchButton = new InspectorButton(inspection, new AbstractAction("Search...") {
             public void actionPerformed(ActionEvent actionEvent) {
                 addSearchToolBar();
             }
         });
-        _searchButton.setToolTipText("Open toolbar for searching");
+        searchButton.setToolTipText("Open toolbar for searching");
 
-        _activeRowsButton = new InspectorButton(inspection, new AbstractAction(null, style().debugActiveRowButtonIcon()) {
+        activeRowsButton = new InspectorButton(inspection, new AbstractAction(null, style().debugActiveRowButtonIcon()) {
             public void actionPerformed(ActionEvent actionEvent) {
                 int nextActiveRow = nextActiveRow();
                 if (nextActiveRow >= 0) {
@@ -100,18 +100,18 @@ public abstract class CodeViewer extends InspectorPanel {
                 }
             }
         });
-        _activeRowsButton.setForeground(style().debugIPTagColor());
-        _activeRowsButton.setToolTipText("Scroll to next line with IP or Call Return");
-        _activeRowsButton.setEnabled(false);
+        activeRowsButton.setForeground(style().debugIPTagColor());
+        activeRowsButton.setToolTipText("Scroll to next line with IP or Call Return");
+        activeRowsButton.setEnabled(false);
 
-        _viewCloseButton =
+        viewCloseButton =
             new InspectorButton(inspection(), "", "Close " + codeViewerKindName());
-        _viewCloseButton.setAction(new AbstractAction() {
+        viewCloseButton.setAction(new AbstractAction() {
             public void actionPerformed(ActionEvent actionEvent) {
                 parent().closeCodeViewer(CodeViewer.this);
             }
         });
-        _viewCloseButton.setIcon(style().codeViewCloseIcon());
+        viewCloseButton.setIcon(style().codeViewCloseIcon());
 
         //getActionMap().put(SEARCH_ACTION, new SearchAction());
 
@@ -120,30 +120,30 @@ public abstract class CodeViewer extends InspectorPanel {
     }
 
     protected void createView() {
-        _toolBarPanel = new InspectorPanel(inspection(), new GridLayout(0, 1));
-        _toolBar = new InspectorToolBar(inspection());
-        _toolBar.setFloatable(false);
-        _toolBar.setRollover(true);
-        _toolBarPanel.add(_toolBar);
-        add(_toolBarPanel, BorderLayout.NORTH);
+        toolBarPanel = new InspectorPanel(inspection(), new GridLayout(0, 1));
+        toolBar = new InspectorToolBar(inspection());
+        toolBar.setFloatable(false);
+        toolBar.setRollover(true);
+        toolBarPanel.add(toolBar);
+        add(toolBarPanel, BorderLayout.NORTH);
     }
 
-    private IndexedSequence<Integer> _searchMatchingRows = null;
+    private IndexedSequence<Integer> searchMatchingRows = null;
 
     /**
      * @return the rows that match a current search session; null if no search session active.
      */
     protected final IndexedSequence<Integer> getSearchMatchingRows() {
-        return _searchMatchingRows;
+        return searchMatchingRows;
     }
 
-    private final RowSearchListener _searchListener = new RowSearchListener() {
+    private final RowSearchListener searchListener = new RowSearchListener() {
 
-        public void searchResult(IndexedSequence<Integer> searchMatchingRows) {
-            _searchMatchingRows = searchMatchingRows;
+        public void searchResult(IndexedSequence<Integer> result) {
+            searchMatchingRows = result;
             // go to next matching row from current selection
-            if (_searchMatchingRows != null) {
-                Trace.line(TRACE_VALUE, "search: matches " + _searchMatchingRows.length() + " = " + _searchMatchingRows);
+            if (searchMatchingRows != null) {
+                Trace.line(TRACE_VALUE, "search: matches " + searchMatchingRows.length() + " = " + searchMatchingRows);
             }
             repaint();
         }
@@ -162,27 +162,27 @@ public abstract class CodeViewer extends InspectorPanel {
     };
 
     private void addSearchToolBar() {
-        if (_searchToolBar == null) {
-            _searchToolBar = new RowTextSearchToolBar(inspection(), _searchListener, getRowTextSearcher());
-            _toolBarPanel.add(_searchToolBar);
+        if (searchToolBar == null) {
+            searchToolBar = new RowTextSearchToolBar(inspection(), searchListener, getRowTextSearcher());
+            toolBarPanel.add(searchToolBar);
             parent().frame().pack();
-            _searchToolBar.getFocus();
+            searchToolBar.getFocus();
         }
     }
 
     private void closeSearch() {
         Trace.line(TRACE_VALUE, "search:  closing");
-        _toolBarPanel.remove(_searchToolBar);
+        toolBarPanel.remove(searchToolBar);
         parent().frame().pack();
-        _searchToolBar = null;
-        _searchMatchingRows = null;
+        searchToolBar = null;
+        searchMatchingRows = null;
     }
 
     private void setFocusAtNextSearchMatch() {
         Trace.line(TRACE_VALUE, "search:  next match");
-        if (_searchMatchingRows.length() > 0) {
+        if (searchMatchingRows.length() > 0) {
             int currentRow = getSelectedRow();
-            for (int row : _searchMatchingRows) {
+            for (int row : searchMatchingRows) {
                 if (row > currentRow) {
                     setFocusAtRow(row);
                     return;
@@ -190,7 +190,7 @@ public abstract class CodeViewer extends InspectorPanel {
             }
             // wrap, could be optional, or dialog choice
             currentRow = -1;
-            for (int row : _searchMatchingRows) {
+            for (int row : searchMatchingRows) {
                 if (row > currentRow) {
                     setFocusAtRow(row);
                     return;
@@ -203,10 +203,10 @@ public abstract class CodeViewer extends InspectorPanel {
 
     private void setFocusAtPreviousSearchMatch() {
         Trace.line(TRACE_VALUE, "search:  previous match");
-        if (_searchMatchingRows.length() > 0) {
+        if (searchMatchingRows.length() > 0) {
             int currentRow = getSelectedRow();
-            for (int index = _searchMatchingRows.length() - 1; index >= 0; index--) {
-                final Integer matchingRow = _searchMatchingRows.get(index);
+            for (int index = searchMatchingRows.length() - 1; index >= 0; index--) {
+                final Integer matchingRow = searchMatchingRows.get(index);
                 if (matchingRow < currentRow) {
                     setFocusAtRow(matchingRow);
                     return;
@@ -214,8 +214,8 @@ public abstract class CodeViewer extends InspectorPanel {
             }
             // wrap, could be optional, or dialog choice
             currentRow = getRowCount();
-            for (int index = _searchMatchingRows.length() - 1; index >= 0; index--) {
-                final Integer matchingRow = _searchMatchingRows.get(index);
+            for (int index = searchMatchingRows.length() - 1; index >= 0; index--) {
+                final Integer matchingRow = searchMatchingRows.get(index);
                 if (matchingRow < currentRow) {
                     setFocusAtRow(matchingRow);
                     return;
@@ -251,7 +251,7 @@ public abstract class CodeViewer extends InspectorPanel {
      * Adds a button to the view's tool bar that enables textual search.
      */
     protected void addSearchButton() {
-        toolBar().add(_searchButton);
+        toolBar().add(searchButton);
     }
 
     /**
@@ -259,14 +259,14 @@ public abstract class CodeViewer extends InspectorPanel {
      * stack locations in the current thread.
      */
     protected void addActiveRowsButton() {
-        toolBar().add(_activeRowsButton);
+        toolBar().add(activeRowsButton);
     }
 
     /**
      * Adds a button to the view's tool bar that closes this view.
      */
     protected void addCodeViewCloseButton() {
-        _toolBar.add(_viewCloseButton);
+        toolBar.add(viewCloseButton);
     }
 
     @Override
@@ -290,7 +290,7 @@ public abstract class CodeViewer extends InspectorPanel {
     }
 
     protected void flash() {
-        _parent.frame().flash(style().frameBorderFlashColor());
+        parent.frame().flash(style().frameBorderFlashColor());
     }
 
 
@@ -299,43 +299,43 @@ public abstract class CodeViewer extends InspectorPanel {
      */
     protected final class StackFrameInfo {
 
-        private final StackFrame _stackFrame;
+        private final StackFrame stackFrame;
 
         /**
          * @return the {@link StackFrame}
          */
         public StackFrame frame() {
-            return _stackFrame;
+            return stackFrame;
         }
 
-        private final MaxThread _thread;
+        private final MaxThread thread;
 
         /**
          * @return the thread in whose stack the frame resides.
          */
         public MaxThread thread() {
-            return _thread;
+            return thread;
         }
 
-        private final int _stackPosition;
+        private final int stackPosition;
 
         /**
          * @return the position of the frame on the stack, with 0 at top
          */
         public int position() {
-            return _stackPosition;
+            return stackPosition;
         }
 
         public StackFrameInfo(StackFrame stackFrame, MaxThread thread, int stackPosition) {
-            _stackFrame = stackFrame;
-            _thread = thread;
-            _stackPosition = stackPosition;
+            this.stackFrame = stackFrame;
+            this.thread = thread;
+            this.stackPosition = stackPosition;
         }
     }
 
     // Cached stack information, relative to this method, derived from the thread of current focus.
     // TODO (mlvdv) Generalize to account for the possibility of multiple stack frames associated with a single row.
-    protected StackFrameInfo[] _rowToStackFrameInfo;
+    protected StackFrameInfo[] rowToStackFrameInfo;
 
     /**
      * Rebuild the data in the cached stack information for the code view.
@@ -343,18 +343,18 @@ public abstract class CodeViewer extends InspectorPanel {
     protected abstract void updateStackCache();
 
     // The thread from which the stack cache was last built.
-    private MaxThread _threadForCache = null;
+    private MaxThread threadForCache = null;
 
-    private MaxVMState _lastRefreshedState = null;
+    private MaxVMState lastRefreshedState = null;
 
     private void updateCaches(boolean force) {
         final MaxThread thread = inspection().focus().thread();
-        if (thread != _threadForCache || maxVMState().newerThan(_lastRefreshedState) || force) {
-            _lastRefreshedState = maxVMState();
+        if (thread != threadForCache || maxVMState().newerThan(lastRefreshedState) || force) {
+            lastRefreshedState = maxVMState();
             updateStackCache();
             // Active rows depend on the stack cache.
             updateActiveRows();
-            _threadForCache = thread;
+            threadForCache = thread;
         }
     }
 
@@ -368,7 +368,7 @@ public abstract class CodeViewer extends InspectorPanel {
      * Returns stack frame information, if any, associated with the row.
      */
     protected StackFrameInfo stackFrameInfo(int row) {
-        return _rowToStackFrameInfo[row];
+        return rowToStackFrameInfo[row];
     }
 
     /**
@@ -376,7 +376,7 @@ public abstract class CodeViewer extends InspectorPanel {
      * for a non-top frame of the stack of the thread that is the current focus?
      */
     protected boolean isCallReturn(int row) {
-        final StackFrameInfo stackFrameInfo = _rowToStackFrameInfo[row];
+        final StackFrameInfo stackFrameInfo = rowToStackFrameInfo[row];
         return stackFrameInfo != null && !stackFrameInfo.frame().isTopFrame();
     }
 
@@ -385,30 +385,30 @@ public abstract class CodeViewer extends InspectorPanel {
      * for the top frame of the stack of the thread that is the current focus?
      */
     protected boolean isInstructionPointer(int row) {
-        final StackFrameInfo stackFrameInfo = _rowToStackFrameInfo[row];
+        final StackFrameInfo stackFrameInfo = rowToStackFrameInfo[row];
         return stackFrameInfo != null && stackFrameInfo.frame().isTopFrame();
     }
 
     // Active rows are those for which there is an associated stack frame
-    private VectorSequence<Integer> _activeRows = new VectorSequence<Integer>(3);
-    private int _currentActiveRowIndex = -1;
+    private VectorSequence<Integer> activeRows = new VectorSequence<Integer>(3);
+    private int currentActiveRowIndex = -1;
 
     private void updateActiveRows() {
-        _activeRows.clear();
-        for (int row = 0; row < _rowToStackFrameInfo.length; row++) {
-            if (_rowToStackFrameInfo[row] != null) {
-                _activeRows.append(row);
+        activeRows.clear();
+        for (int row = 0; row < rowToStackFrameInfo.length; row++) {
+            if (rowToStackFrameInfo[row] != null) {
+                activeRows.append(row);
             }
         }
-        _currentActiveRowIndex = -1;
-        _activeRowsButton.setEnabled(hasActiveRows());
+        currentActiveRowIndex = -1;
+        activeRowsButton.setEnabled(hasActiveRows());
     }
 
     /**
      * Does the method have any rows that are either the current instruction pointer or call return lines marked.
      */
     protected boolean hasActiveRows() {
-        return _activeRows.length() > 0;
+        return activeRows.length() > 0;
     }
 
     /**
@@ -417,8 +417,8 @@ public abstract class CodeViewer extends InspectorPanel {
      */
     protected int nextActiveRow() {
         if (hasActiveRows()) {
-            _currentActiveRowIndex = (_currentActiveRowIndex + 1) % _activeRows.length();
-            return _activeRows.elementAt(_currentActiveRowIndex);
+            currentActiveRowIndex = (currentActiveRowIndex + 1) % activeRows.length();
+            return activeRows.elementAt(currentActiveRowIndex);
         }
         return -1;
     }

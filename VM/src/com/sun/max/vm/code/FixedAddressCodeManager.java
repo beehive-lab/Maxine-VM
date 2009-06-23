@@ -47,7 +47,7 @@ public class FixedAddressCodeManager extends CodeManager {
      */
     @Override
     void initialize() {
-        setStart(Code.bootCodeRegion().end().roundedUpBy(Platform.hostOrTarget().pageSize()));
+        setStart(Code.bootCodeRegion.end().roundedUpBy(Platform.hostOrTarget().pageSize()));
     }
 
     /**

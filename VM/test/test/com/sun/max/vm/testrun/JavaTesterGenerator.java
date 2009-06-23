@@ -143,7 +143,7 @@ public class JavaTesterGenerator {
 
     public void genClassList(LinkedList<JavaExecHarness.JavaTestCase> testCases) {
         writer.indent();
-        writer.println("private static final Class<?>[] _classList = {");
+        writer.println("private static final Class<?>[] classList = {");
         writer.indent();
         final Iterator<JavaExecHarness.JavaTestCase> iterator = testCases.iterator();
         while (iterator.hasNext()) {
@@ -167,7 +167,7 @@ public class JavaTesterGenerator {
             writer.println("_verbose = " + verboseOption.getValue() + ";");
             writer.println("if (VM.isPrototyping()) {");
             writer.indent();
-            writer.println("for (Class<?> testClass : _classList) {");
+            writer.println("for (Class<?> testClass : classList) {");
             writer.indent();
             writer.println("addClassToImage(testClass);");
             writer.outdent();

@@ -22,7 +22,7 @@ package test.output;
 
 public class SafepointWhileInNative {
     static final class Sleeper implements Runnable {
-        boolean _done;
+        boolean done;
         public void run() {
             System.out.println("Sleeper: sleeping...");
             synchronized (this) {
@@ -42,10 +42,10 @@ public class SafepointWhileInNative {
             System.out.println("Sleeper: woke up!");
         }
         synchronized boolean stopRequested() {
-            return _done;
+            return done;
         }
         synchronized void requestStop() {
-            _done = true;
+            done = true;
         }
     }
 

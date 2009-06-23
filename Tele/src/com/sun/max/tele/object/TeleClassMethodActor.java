@@ -63,17 +63,17 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
     /**
      * Cached history of compilation for this method in the tele VM.  Null means not initialized yet.
      */
-    private TeleTargetMethod[] _teleTargetMethodHistory = null;
+    private TeleTargetMethod[] teleTargetMethodHistory = null;
 
     private void initialize() {
-        if (_teleTargetMethodHistory == null) {
-            _teleTargetMethodHistory = new TeleTargetMethod[0];
+        if (teleTargetMethodHistory == null) {
+            teleTargetMethodHistory = new TeleTargetMethod[0];
             readTeleMethodState();
         }
     }
 
     public TargetMethodAccess[] getTargetMethods() {
-        return _teleTargetMethodHistory;
+        return teleTargetMethodHistory;
     }
 
     public void refreshView() {
@@ -88,13 +88,13 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
         final Reference methodStateReference = teleVM().fields().ClassMethodActor_methodState.readReference(reference());
         if (!methodStateReference.isZero()) {
             final int numberOfCompilations =  teleVM().fields().MethodState_numberOfCompilations.readInt(methodStateReference);
-            if (numberOfCompilations != _teleTargetMethodHistory.length) {
-                _teleTargetMethodHistory = new TeleTargetMethod[numberOfCompilations];
+            if (numberOfCompilations != teleTargetMethodHistory.length) {
+                teleTargetMethodHistory = new TeleTargetMethod[numberOfCompilations];
                 final Reference targetMethodHistoryArrayReference = teleVM().fields().MethodState_targetMethodHistory.readReference(methodStateReference);
                 final TeleArrayObject teleTargetMethodHistoryArray = (TeleArrayObject) teleVM().makeTeleObject(targetMethodHistoryArrayReference);
                 for (int i = 0; i <= numberOfCompilations - 1; i++) {
                     final Reference targetMethodReference = teleTargetMethodHistoryArray.readElementValue(i).asReference();
-                    _teleTargetMethodHistory[i] = (TeleTargetMethod) teleVM().makeTeleObject(targetMethodReference);
+                    teleTargetMethodHistory[i] = (TeleTargetMethod) teleVM().makeTeleObject(targetMethodReference);
                 }
             }
         }
@@ -105,7 +105,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
      */
     public final int numberOfCompilations() {
         initialize();
-        return _teleTargetMethodHistory.length;
+        return teleTargetMethodHistory.length;
     }
     /**
      * @return whether there is any compiled target code for this method.
@@ -119,7 +119,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
      */
     public Iterable<TeleTargetMethod> targetMethods() {
         if (hasTargetMethod()) {
-            return Arrays.iterable(_teleTargetMethodHistory);
+            return Arrays.iterable(teleTargetMethodHistory);
         }
         return Arrays.iterable(new TeleTargetMethod[0]);
     }
@@ -129,7 +129,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
      */
     public TeleTargetMethod getCurrentJavaTargetMethod() {
         if (hasTargetMethod()) {
-            return _teleTargetMethodHistory[_teleTargetMethodHistory.length - 1];
+            return teleTargetMethodHistory[teleTargetMethodHistory.length - 1];
         }
         return null;
     }
@@ -139,8 +139,8 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
      */
     public TeleTargetMethod getJavaTargetMethod(int index) {
         initialize();
-        if (0 <= index && index < _teleTargetMethodHistory.length) {
-            return _teleTargetMethodHistory[index];
+        if (0 <= index && index < teleTargetMethodHistory.length) {
+            return teleTargetMethodHistory[index];
         }
         return null;
     }
@@ -151,8 +151,8 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
      */
     public int indexOf(TeleTargetMethod teleTargetMethod) {
         initialize();
-        for (int i = 0; i <= _teleTargetMethodHistory.length - 1; i++) {
-            if (_teleTargetMethodHistory[i] == teleTargetMethod) {
+        for (int i = 0; i <= teleTargetMethodHistory.length - 1; i++) {
+            if (teleTargetMethodHistory[i] == teleTargetMethod) {
                 return i;
             }
         }

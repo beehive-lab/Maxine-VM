@@ -53,22 +53,22 @@ import com.sun.max.vm.type.*;
 public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMethod> {
     public static final String UNRESOLVED_CLASS_NAME = UnresolvedAtTestTime.class.getName();
     public JitCompilerTestCase() {
-        _compiler = null;
+        compiler = null;
     }
 
     public JitCompilerTestCase(String name) {
         super(name);
     }
 
-    private static Class< ? > _testCaseClass = null;
+    private static Class< ? > testCaseClass = null;
 
     @Override
     protected void setUp() {
         // We want to reset the compiler only when we change the JitCompilerTestCase sub-class.
         // This is mostly to handle AutoTest
-        if (_testCaseClass != this.getClass()) {
+        if (testCaseClass != this.getClass()) {
             resetCompiler();
-            _testCaseClass = this.getClass();
+            testCaseClass = this.getClass();
         }
     }
 
@@ -96,18 +96,18 @@ public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMeth
         return new Class[]{UnoptimizedBytecodeTemplateSource.class};
     }
 
-    private static JitCompiler _compiler = null;
+    private static JitCompiler compiler = null;
 
     private JitCompiler compiler() {
-        if (_compiler == null) {
+        if (compiler == null) {
             final TemplateTable templateTable = new TemplateTable(templateSources());
-            _compiler = newJitCompiler(templateTable);
+            compiler = newJitCompiler(templateTable);
         }
-        return _compiler;
+        return compiler;
     }
 
     protected void resetCompiler() {
-        _compiler = null;
+        compiler = null;
     }
 
     protected Class initializeClassInTarget(final Class classToInitialize) {

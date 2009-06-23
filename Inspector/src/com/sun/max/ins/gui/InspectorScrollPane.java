@@ -36,7 +36,7 @@ import com.sun.max.tele.*;
  */
 public class InspectorScrollPane extends JScrollPane implements Prober, InspectionHolder {
 
-    private final Inspection _inspection;
+    private final Inspection inspection;
 
     /**
      * Creates a new {@JScrollPane} for use in the {@link Inspection}.
@@ -47,37 +47,37 @@ public class InspectorScrollPane extends JScrollPane implements Prober, Inspecti
      */
     public InspectorScrollPane(Inspection inspection, Component component) {
         super(component, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        _inspection = inspection;
+        this.inspection = inspection;
         setOpaque(true);
         setBackground(inspection.style().defaultBackgroundColor());
     }
 
     public final Inspection inspection() {
-        return _inspection;
+        return inspection;
     }
 
     public MaxVM maxVM() {
-        return _inspection.maxVM();
+        return inspection.maxVM();
     }
 
     public final MaxVMState maxVMState() {
-        return _inspection.maxVM().maxVMState();
+        return inspection.maxVM().maxVMState();
     }
 
     public InspectorGUI gui() {
-        return _inspection.gui();
+        return inspection.gui();
     }
 
     public final InspectorStyle style() {
-        return _inspection.style();
+        return inspection.style();
     }
 
     public final InspectionFocus focus() {
-        return _inspection.focus();
+        return inspection.focus();
     }
 
     public InspectionActions actions() {
-        return _inspection.actions();
+        return inspection.actions();
     }
 
     public void redisplay() {

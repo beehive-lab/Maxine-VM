@@ -29,18 +29,18 @@ import java.util.*;
  */
 class SelectNode extends AbstractGroupNode implements TypeNode {
 
-    private TypeNode _typeNode;
+    private TypeNode typeNode;
 
     @Override
     void prune() {
         super.prune();
-        final Iterator it = _components.iterator();
+        final Iterator it = components.iterator();
 
         if (it.hasNext()) {
             final Node typeNode = (Node) it.next();
 
             if (typeNode.javaType().equals("byte") || typeNode.javaType().equals("int")) {
-                this._typeNode = (AbstractSimpleTypeNode) typeNode;
+                this.typeNode = (AbstractSimpleTypeNode) typeNode;
                 it.remove();
             } else {
                 error("Select must be based on 'int' or 'byte'");
@@ -53,7 +53,7 @@ class SelectNode extends AbstractGroupNode implements TypeNode {
     @Override
     void constrain(Context ctx) {
         super.constrain(ctx);
-        if (_components.size() < 2) {
+        if (components.size() < 2) {
             error("Select must have at least two options");
         }
     }
@@ -75,7 +75,7 @@ class SelectNode extends AbstractGroupNode implements TypeNode {
     }
 
     private String commonVarField() {
-        return "_" + commonVar();
+        return commonVar();
     }
 
     @Override
@@ -86,13 +86,13 @@ class SelectNode extends AbstractGroupNode implements TypeNode {
         writer.println("public abstract void write(JDWPOutputStream ps) throws java.io.IOException;");
         indent(writer, depth + 1);
         writer.println("public abstract void read(JDWPInputStream ps) throws java.io.IOException, JDWPException;");
-        if (!_context.isWritingCommand()) {
+        if (!context.isWritingCommand()) {
             indent(writer, depth + 1);
-            writer.println("public abstract " + _typeNode.javaParam() + "();");
+            writer.println("public abstract " + typeNode.javaParam() + "();");
         }
         indent(writer, depth);
         writer.println("}");
-        _typeNode.genJavaDeclaration(writer, depth);
+        typeNode.genJavaDeclaration(writer, depth);
         indent(writer, depth);
         writer.println("public " + commonBaseClass() + " " + commonVarField() + ";");
         super.genJavaClassSpecifics(writer, depth);
@@ -107,11 +107,11 @@ class SelectNode extends AbstractGroupNode implements TypeNode {
     void genJavaReadingClassBody(PrintWriter writer, int depth, String className) {
         writer.println();
         indent(writer, depth);
-        writer.print("public " + className + "(" + _typeNode.javaParam() + ", ");
+        writer.print("public " + className + "(" + typeNode.javaParam() + ", ");
         writer.print(commonBaseClass() + " " + commonVar());
         writer.println(") {");
         indent(writer, depth + 1);
-        writer.println("this." + _typeNode.fieldName() + " = " + _typeNode.name() + ";");
+        writer.println("this." + typeNode.fieldName() + " = " + typeNode.name() + ";");
         indent(writer, depth + 1);
         writer.println("this." + commonVarField() + " = " + commonVar() + ";");
         indent(writer, depth);
@@ -153,11 +153,11 @@ class SelectNode extends AbstractGroupNode implements TypeNode {
     void genJavaWritingClassBody(PrintWriter writer, int depth, String className) {
         writer.println();
         indent(writer, depth);
-        writer.print("public " + className + "(" + _typeNode.javaParam() + ", ");
+        writer.print("public " + className + "(" + typeNode.javaParam() + ", ");
         writer.print(commonBaseClass() + " " + commonVar());
         writer.println(") {");
         indent(writer, depth + 1);
-        writer.println("this." + _typeNode.fieldName() + " = " + _typeNode.name() + ";");
+        writer.println("this." + typeNode.fieldName() + " = " + typeNode.name() + ";");
         indent(writer, depth + 1);
         writer.println("this." + commonVarField() + " =" + commonVar() + ";");
         indent(writer, depth);
@@ -166,24 +166,24 @@ class SelectNode extends AbstractGroupNode implements TypeNode {
 
     @Override
     void genJavaWrites(PrintWriter writer, int depth) {
-        _typeNode.genJavaWrite(writer, depth, _typeNode.fieldName());
+        typeNode.genJavaWrite(writer, depth, typeNode.fieldName());
         indent(writer, depth);
         writer.println(commonVarField() + ".write(ps);");
     }
 
     @Override
     void genJavaToString(PrintWriter writer, int depth) {
-        _typeNode.genJavaToString(writer, depth, _typeNode.fieldName());
+        typeNode.genJavaToString(writer, depth, typeNode.fieldName());
         indent(writer, depth);
         writer.println("stringBuilder.append(" + commonVarField() + ");");
     }
 
     @Override
     void genJavaReads(PrintWriter writer, int depth) {
-        _typeNode.genJavaRead(writer, depth, _typeNode.fieldName());
+        typeNode.genJavaRead(writer, depth, typeNode.fieldName());
         indent(writer, depth);
-        writer.println("switch (" + _typeNode.fieldName() + ") {");
-        for (final Iterator it = _components.iterator(); it.hasNext();) {
+        writer.println("switch (" + typeNode.fieldName() + ") {");
+        for (final Iterator it = components.iterator(); it.hasNext();) {
             final AltNode alt = (AltNode) it.next();
             alt.genJavaReadsSelectCase(writer, depth + 1, commonVarField());
         }
@@ -195,16 +195,16 @@ class SelectNode extends AbstractGroupNode implements TypeNode {
 
     @Override
     public void genJavaDeclaration(PrintWriter writer, int depth) {
-        _typeNode.genJavaDeclaration(writer, depth);
+        typeNode.genJavaDeclaration(writer, depth);
         super.genJavaDeclaration(writer, depth);
     }
 
     @Override
     public String javaParam() {
-        return _typeNode.javaParam() + ", " + name() + " a" + name();
+        return typeNode.javaParam() + ", " + name() + " a" + name();
     }
 
     public TypeNode typeNode() {
-        return _typeNode;
+        return typeNode;
     }
 }

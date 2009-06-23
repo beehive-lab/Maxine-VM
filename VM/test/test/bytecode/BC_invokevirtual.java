@@ -26,10 +26,10 @@ package test.bytecode;
  * @Runs: 0 = 0; 1 = 1; 2 = 2; 3 = 3; -4 = -4
  */
 public class BC_invokevirtual {
-    static BC_invokevirtual _object = new BC_invokevirtual();
+    static BC_invokevirtual object = new BC_invokevirtual();
 
     public static int test(int a) {
-        return _object.id(a);
+        return object.id(a);
     }
 
     public int id(int i) {

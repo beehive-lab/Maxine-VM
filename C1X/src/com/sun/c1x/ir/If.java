@@ -34,11 +34,11 @@ import com.sun.c1x.value.ValueType;
  */
 public class If extends BlockEnd {
 
-    Instruction _x;
-    Instruction _y;
-    Condition _condition;
-    CiMethod _profiledMethod;
-    int _profiledBCI;
+    Instruction x;
+    Instruction y;
+    Condition condition;
+    CiMethod profiledMethod;
+    int profiledBCI;
 
     /**
      * Constructs a new If instruction.
@@ -54,13 +54,13 @@ public class If extends BlockEnd {
     public If(Instruction x, Condition cond, boolean unorderedIsTrue, Instruction y,
               BlockBegin trueSucc, BlockBegin falseSucc, ValueStack stateBefore, boolean isSafepoint) {
         super(ValueType.ILLEGAL_TYPE, stateBefore, isSafepoint);
-        _x = x;
-        _y = y;
-        _condition = cond;
+        this.x = x;
+        this.y = y;
+        condition = cond;
         assert Instruction.sameBasicType(x, y);
         initFlag(Flag.UnorderedIsTrue, unorderedIsTrue);
-        _successors.add(trueSucc);
-        _successors.add(falseSucc);
+        successors.add(trueSucc);
+        successors.add(falseSucc);
     }
 
     /**
@@ -68,7 +68,7 @@ public class If extends BlockEnd {
      * @return the instruction producing the first input
      */
     public Instruction x() {
-        return _x;
+        return x;
     }
 
     /**
@@ -76,7 +76,7 @@ public class If extends BlockEnd {
      * @return the instruction producing the second input
      */
     public Instruction y() {
-        return _y;
+        return y;
     }
 
     /**
@@ -84,7 +84,7 @@ public class If extends BlockEnd {
      * @return the condition
      */
     public Condition condition() {
-        return _condition;
+        return condition;
     }
 
     /**
@@ -100,7 +100,7 @@ public class If extends BlockEnd {
      * @return the true successor
      */
     public BlockBegin trueSuccessor() {
-        return _successors.get(0);
+        return successors.get(0);
     }
 
     /**
@@ -108,7 +108,7 @@ public class If extends BlockEnd {
      * @return the false successor
      */
     public BlockBegin falseSuccessor() {
-        return _successors.get(1);
+        return successors.get(1);
     }
 
     /**
@@ -117,7 +117,7 @@ public class If extends BlockEnd {
      * @return the corresponding successor
      */
     public BlockBegin successor(boolean istrue) {
-        return _successors.get(istrue ? 0 : 1);
+        return successors.get(istrue ? 0 : 1);
     }
 
     /**
@@ -133,10 +133,10 @@ public class If extends BlockEnd {
      * @see Condition#mirror()
      */
     public void swapOperands() {
-        _condition = _condition.mirror();
-        Instruction t = _x;
-        _x = _y;
-        _y = t;
+        condition = condition.mirror();
+        Instruction t = x;
+        x = y;
+        y = t;
     }
 
     /**
@@ -145,11 +145,11 @@ public class If extends BlockEnd {
      */
     public void swapSuccessors() {
         setFlag(Flag.UnorderedIsTrue, !unorderedIsTrue());
-        _condition = _condition.negate();
-        BlockBegin t = _successors.get(0);
-        BlockBegin f = _successors.get(1);
-        _successors.set(0, f);
-        _successors.set(1, t);
+        condition = condition.negate();
+        BlockBegin t = successors.get(0);
+        BlockBegin f = successors.get(1);
+        successors.set(0, f);
+        successors.set(1, t);
     }
 
     /**
@@ -157,7 +157,7 @@ public class If extends BlockEnd {
      * @return the profiled method
      */
     public CiMethod profiledMethod() {
-        return _profiledMethod;
+        return profiledMethod;
     }
 
     /**
@@ -165,7 +165,7 @@ public class If extends BlockEnd {
      * @return the profiled bytecode index
      */
     public int profiledBCI() {
-        return _profiledBCI;
+        return profiledBCI;
     }
 
     /**
@@ -173,7 +173,7 @@ public class If extends BlockEnd {
      * @return <code>true</code> if profiling should be added to this instruction
      */
     public boolean shouldProfile() {
-        return _profiledMethod != null;
+        return profiledMethod != null;
     }
 
     /**
@@ -182,8 +182,8 @@ public class If extends BlockEnd {
      * @param bci the bytecode index
      */
     public void setProfile(CiMethod method, int bci) {
-        _profiledMethod = method;
-        _profiledBCI = bci;
+        profiledMethod = method;
+        profiledBCI = bci;
     }
 
     /**
@@ -192,8 +192,8 @@ public class If extends BlockEnd {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        _x = closure.apply(_x);
-        _y = closure.apply(_y);
+        x = closure.apply(x);
+        y = closure.apply(y);
     }
 
     /**

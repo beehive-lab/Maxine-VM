@@ -31,7 +31,7 @@ import com.sun.c1x.value.ValueStack;
  */
 public class NewObjectArray extends NewArray {
 
-    final CiType _elementClass;
+    final CiType elementClass;
 
     /**
      * Constructs a new NewObjectArray instruction.
@@ -41,7 +41,7 @@ public class NewObjectArray extends NewArray {
      */
     public NewObjectArray(CiType elementClass, Instruction length, ValueStack stateBefore) {
         super(length, stateBefore);
-        _elementClass = elementClass;
+        this.elementClass = elementClass;
     }
 
     /**
@@ -49,7 +49,7 @@ public class NewObjectArray extends NewArray {
      * @return the element type of the array
      */
     public CiType elementClass() {
-        return _elementClass;
+        return elementClass;
     }
 
     /**
@@ -58,7 +58,7 @@ public class NewObjectArray extends NewArray {
      */
     @Override
     public CiType exactType() {
-        return _elementClass.arrayOf();
+        return elementClass.arrayOf();
     }
 
     /**

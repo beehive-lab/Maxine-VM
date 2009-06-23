@@ -36,16 +36,16 @@ public final class TeleVMState implements MaxVMState {
 
     private static final Sequence<MaxThread> EMPTY_THREAD_SEQUENCE = Sequence.Static.empty(MaxThread.class);
 
-    private final ProcessState _processState;
-    private final long _serialID;
-    private final long _epoch;
-    private final Sequence<MaxThread> _threads;
-    private final MaxThread _singleStepThread;
-    private final Sequence<MaxThread> _breakpointThreads;
-    private final Sequence<MaxThread> _threadsStarted;
-    private final Sequence<MaxThread> _threadsDied;
-    private final boolean _isInGC;
-    private final TeleVMState _previous;
+    private final ProcessState processState;
+    private final long serialID;
+    private final long epoch;
+    private final Sequence<MaxThread> threads;
+    private final MaxThread singleStepThread;
+    private final Sequence<MaxThread> breakpointThreads;
+    private final Sequence<MaxThread> threadsStarted;
+    private final Sequence<MaxThread> threadsDied;
+    private final boolean isInGC;
+    private final TeleVMState previous;
 
     /**
      * @param processState current state of the VM
@@ -66,87 +66,87 @@ public final class TeleVMState implements MaxVMState {
                     Sequence<TeleNativeThread> threadsStarted,
                     Sequence<TeleNativeThread> threadsDied,
                     boolean isInGC, TeleVMState previous) {
-        _processState = processState;
-        _serialID = previous == null ? 0 : previous.serialID() + 1;
-        _epoch = epoch;
-        _singleStepThread = singleStepThread;
-        _breakpointThreads = breakpointThreads.length() == 0 ? EMPTY_THREAD_SEQUENCE : new VectorSequence<MaxThread>(breakpointThreads);
-        _threadsStarted = threadsStarted.length() == 0 ? EMPTY_THREAD_SEQUENCE : new VectorSequence<MaxThread>(threadsStarted);
-        _threadsDied = threadsDied.length() == 0 ? EMPTY_THREAD_SEQUENCE : new VectorSequence<MaxThread>(threadsDied);
-        _isInGC = isInGC;
-        _previous = previous;
+        this.processState = processState;
+        this.serialID = previous == null ? 0 : previous.serialID() + 1;
+        this.epoch = epoch;
+        this.singleStepThread = singleStepThread;
+        this.breakpointThreads = breakpointThreads.length() == 0 ? EMPTY_THREAD_SEQUENCE : new VectorSequence<MaxThread>(breakpointThreads);
+        this.threadsStarted = threadsStarted.length() == 0 ? EMPTY_THREAD_SEQUENCE : new VectorSequence<MaxThread>(threadsStarted);
+        this.threadsDied = threadsDied.length() == 0 ? EMPTY_THREAD_SEQUENCE : new VectorSequence<MaxThread>(threadsDied);
+        this.isInGC = isInGC;
+        this.previous = previous;
 
         // Compute the current active thread list.
         if (previous == null) {
             // First state transition in the history.
-            _threads = new VectorSequence<MaxThread>(threadsStarted);
+            this.threads = new VectorSequence<MaxThread>(threadsStarted);
         } else if (threadsStarted.length() + threadsDied.length() == 0)  {
             // No changes since predecessor; share the thread list.
-            _threads = previous.threads();
+            this.threads = previous.threads();
         } else {
             // There have been some thread changes; make a new (immutable) sequence for the new state
-            _threads = new VectorSequence<MaxThread>(threads);
+            this.threads = new VectorSequence<MaxThread>(threads);
         }
     }
 
     public ProcessState processState() {
-        return _processState;
+        return processState;
     }
 
     public long serialID() {
-        return _serialID;
+        return serialID;
     }
 
     public long epoch() {
-        return _epoch;
+        return epoch;
     }
 
     public Sequence<MaxThread> threads() {
-        return _threads;
+        return threads;
     }
 
     public MaxThread singleStepThread() {
-        return _singleStepThread;
+        return singleStepThread;
     }
 
     public Sequence<MaxThread> breakpointThreads() {
-        return _breakpointThreads;
+        return breakpointThreads;
     }
 
     public Sequence<MaxThread> threadsStarted() {
-        return _threadsStarted;
+        return threadsStarted;
     }
 
     public  Sequence<MaxThread> threadsDied() {
-        return _threadsDied;
+        return threadsDied;
     }
 
     public boolean isInGC() {
-        return _isInGC;
+        return isInGC;
     }
 
     public MaxVMState previous() {
-        return _previous;
+        return previous;
     }
 
     public boolean newerThan(MaxVMState maxVMState) {
-        return maxVMState == null || _serialID > maxVMState.serialID();
+        return maxVMState == null || serialID > maxVMState.serialID();
     }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder(50);
         sb.append(getClass().getSimpleName()).append("(");
-        sb.append(Long.toString(_serialID)).append(", ");
-        sb.append(_processState.toString()).append(", ");
-        sb.append(Long.toString(_epoch)).append(", ");
-        sb.append(Boolean.toString(_isInGC)).append(", ");
-        if (_previous == null) {
+        sb.append(Long.toString(serialID)).append(", ");
+        sb.append(processState.toString()).append(", ");
+        sb.append(Long.toString(epoch)).append(", ");
+        sb.append(Boolean.toString(isInGC)).append(", ");
+        if (previous == null) {
             sb.append("null");
         } else {
-            sb.append("(").append(_previous.processState().toString()).append(",");
-            sb.append(Long.toString(_previous.serialID())).append(",");
-            sb.append(Long.toString(_previous.epoch())).append(")");
+            sb.append("(").append(previous.processState().toString()).append(",");
+            sb.append(Long.toString(previous.serialID())).append(",");
+            sb.append(Long.toString(previous.epoch())).append(")");
         }
         sb.append(")");
         return sb.toString();

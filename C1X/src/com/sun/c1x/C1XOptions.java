@@ -28,8 +28,10 @@ package com.sun.c1x;
  */
 public class C1XOptions {
 
+    // Checkstyle: stop
     private static final boolean ____ = false;
     private static final boolean TRUE = true;
+    // Checkstyle: resume
 
     // inlining settings
     public static boolean InlineMethods                      = ____;

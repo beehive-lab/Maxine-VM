@@ -62,12 +62,12 @@ class RootNode extends AbstractNamedNode {
             LOGGER.severe("Exception while reading header: " + e);
         }
 
-        for (final Iterator it = _components.iterator(); it.hasNext();) {
+        for (final Iterator it = components.iterator(); it.hasNext();) {
             FileWriter fw = null;
             try {
                 final Node n = (Node) it.next();
 
-                if (n._components.size() > 0) {
+                if (n.components.size() > 0) {
 
                     String dirName = protocolDirName;
                     if (n instanceof ConstantSetNode) {

@@ -36,10 +36,10 @@ public class TeleClassLoader extends TeleTupleObject implements ClassLoaderProvi
 
     protected TeleClassLoader(TeleVM teleVM, Reference classLoaderReference) {
         super(teleVM, classLoaderReference);
-        _teleClassLoaders.append(this);
+        teleClassLoaders.append(this);
     }
 
-    private static final AppendableSequence<TeleClassLoader> _teleClassLoaders = new LinkSequence<TeleClassLoader>();
+    private static final AppendableSequence<TeleClassLoader> teleClassLoaders = new LinkSequence<TeleClassLoader>();
 
     @Override
     protected Object createDeepCopy(DeepCopyContext context) {
@@ -49,7 +49,7 @@ public class TeleClassLoader extends TeleTupleObject implements ClassLoaderProvi
     }
 
     public static Sequence<TeleClassLoader> teleClassLoaders() {
-        return _teleClassLoaders;
+        return teleClassLoaders;
     }
 
     public ReferenceTypeProvider[] visibleClasses() {

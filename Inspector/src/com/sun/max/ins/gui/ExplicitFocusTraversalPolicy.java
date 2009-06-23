@@ -31,10 +31,10 @@ import com.sun.max.collect.*;
  */
 public class ExplicitFocusTraversalPolicy extends FocusTraversalPolicy {
 
-    private final IndexedSequence<Component> _order;
+    private final IndexedSequence<Component> order;
 
     public ExplicitFocusTraversalPolicy(IndexedSequence<Component> components) {
-        _order = components;
+        order = components;
     }
 
     public ExplicitFocusTraversalPolicy(Component... components) {
@@ -42,7 +42,7 @@ public class ExplicitFocusTraversalPolicy extends FocusTraversalPolicy {
     }
 
     private int indexOf(Component component) {
-        return Sequence.Static.indexOfIdentical(_order, component);
+        return Sequence.Static.indexOfIdentical(order, component);
     }
 
     @Override
@@ -51,8 +51,8 @@ public class ExplicitFocusTraversalPolicy extends FocusTraversalPolicy {
         int index = currentIndex;
         Component result;
         do {
-            index = (index + 1) % _order.length();
-            result = _order.get(index);
+            index = (index + 1) % order.length();
+            result = order.get(index);
         } while (!result.isFocusable() && index != currentIndex);
         return result;
     }
@@ -65,25 +65,25 @@ public class ExplicitFocusTraversalPolicy extends FocusTraversalPolicy {
         do {
             --index;
             if (index < 0) {
-                index = _order.length() - 1;
+                index = order.length() - 1;
             }
-            result = _order.get(index);
+            result = order.get(index);
         } while (!result.isFocusable() && index != currentIndex);
         return result;
     }
 
     @Override
     public Component getDefaultComponent(Container focusCycleRoot) {
-        return _order.get(0);
+        return order.get(0);
     }
 
     @Override
     public Component getLastComponent(Container focusCycleRoot) {
-        return _order.last();
+        return order.last();
     }
 
     @Override
     public Component getFirstComponent(Container focusCycleRoot) {
-        return _order.get(0);
+        return order.get(0);
     }
 }

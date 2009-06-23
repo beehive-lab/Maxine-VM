@@ -37,14 +37,14 @@ class ErrorNode extends AbstractNamedNode {
     }
 
     ErrorNode(List<Node> components) {
-        this._kind = "Error";
-        this._components = components;
-        this._lineno = 0;
+        this.kind = "Error";
+        this.components = components;
+        this.lineno = 0;
     }
 
     @Override
     void constrain(Context ctx) {
-        if (_components.size() != 0) {
+        if (components.size() != 0) {
             error("Errors have no internal structure");
         }
         super.constrain(ctx);

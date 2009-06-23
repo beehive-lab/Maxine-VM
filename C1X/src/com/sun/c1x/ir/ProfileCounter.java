@@ -32,9 +32,9 @@ import com.sun.c1x.value.ValueType;
  */
 public class ProfileCounter extends Instruction {
 
-    Instruction _mdo;
-    final int _offset;
-    final int _increment;
+    Instruction mdo;
+    final int offset;
+    final int increment;
 
     /**
      * Creates a new ProfileCounter instruction.
@@ -44,9 +44,9 @@ public class ProfileCounter extends Instruction {
      */
     public ProfileCounter(Instruction mdo, int offset, int increment) {
         super(ValueType.VOID_TYPE);
-        _mdo = mdo;
-        _offset = offset;
-        _increment = increment;
+        this.mdo = mdo;
+        this.offset = offset;
+        this.increment = increment;
         pin();
     }
 
@@ -55,7 +55,7 @@ public class ProfileCounter extends Instruction {
      * @return the instruction generating the mdo
      */
     public Instruction mdo() {
-        return _mdo;
+        return mdo;
     }
 
     /**
@@ -63,7 +63,7 @@ public class ProfileCounter extends Instruction {
      * @return the offset into the method data object
      */
     public int offset() {
-        return _offset;
+        return offset;
     }
 
     /**
@@ -71,7 +71,7 @@ public class ProfileCounter extends Instruction {
      * @return the increment
      */
     public int increment() {
-        return _increment;
+        return increment;
     }
 
     /**
@@ -80,7 +80,7 @@ public class ProfileCounter extends Instruction {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        _mdo = closure.apply(_mdo);
+        mdo = closure.apply(mdo);
     }
 
     /**

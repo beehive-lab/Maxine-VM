@@ -28,25 +28,25 @@ import com.sun.max.jdwp.vm.proxy.*;
  */
 public class JDWPEventContext {
 
-    private ThreadProvider _thread;
-    private ReferenceTypeProvider _reference;
-    private JDWPLocation _location;
+    private ThreadProvider thread;
+    private ReferenceTypeProvider reference;
+    private JDWPLocation location;
 
     public JDWPEventContext(ThreadProvider thread, ReferenceTypeProvider reference, JDWPLocation location) {
-        _thread = thread;
-        _reference = reference;
-        _location = location;
+        this.thread = thread;
+        this.reference = reference;
+        this.location = location;
     }
 
     public ThreadProvider getThread() {
-        return _thread;
+        return thread;
     }
 
     public ReferenceTypeProvider getReferenceType() {
-        return _reference;
+        return reference;
     }
 
     public JDWPLocation getLocation() {
-        return _location;
+        return location;
     }
 }

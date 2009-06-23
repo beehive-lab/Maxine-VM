@@ -32,21 +32,21 @@ import com.sun.max.vm.bytecode.*;
  */
 public class TeleBytecodeLocation {
 
-    private final TeleClassMethodActor _teleClassMethodActor;
+    private final TeleClassMethodActor teleClassMethodActor;
 
     public TeleClassMethodActor teleClassMethodActor() {
-        return _teleClassMethodActor;
+        return teleClassMethodActor;
     }
 
-    private final BytecodeLocation _bytecodeLocation;
+    private final BytecodeLocation bytecodeLocation;
 
     public BytecodeLocation bytecodeLocation() {
-        return _bytecodeLocation;
+        return bytecodeLocation;
     }
 
     public TeleBytecodeLocation(TeleClassMethodActor teleClassMethodActor, int position) {
-        _teleClassMethodActor = teleClassMethodActor;
-        _bytecodeLocation = new BytecodeLocation(teleClassMethodActor.classMethodActor(), position);
+        this.teleClassMethodActor = teleClassMethodActor;
+        this.bytecodeLocation = new BytecodeLocation(teleClassMethodActor.classMethodActor(), position);
     }
 
 }

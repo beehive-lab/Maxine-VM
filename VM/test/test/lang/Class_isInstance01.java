@@ -30,20 +30,20 @@ public final class Class_isInstance01 {
     private Class_isInstance01() {
     }
 
-    static final String _string = "";
-    static final Object _object = new Object();
-    static final Class_isInstance01 _thisObject = new Class_isInstance01();
+    static final String string = "";
+    static final Object obj = new Object();
+    static final Class_isInstance01 thisObject = new Class_isInstance01();
 
     public static boolean test(int i) {
         Object object = null;
         if (i == 0) {
-            object = _object;
+            object = obj;
         }
         if (i == 1) {
-            object = _string;
+            object = string;
         }
         if (i == 2) {
-            object = _thisObject;
+            object = thisObject;
         }
         return Object.class.isInstance(object);
     }

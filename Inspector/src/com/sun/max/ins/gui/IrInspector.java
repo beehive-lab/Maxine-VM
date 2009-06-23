@@ -28,29 +28,29 @@ import com.sun.max.vm.value.*;
 
 public abstract class IrInspector<IrInspector_Type extends IrInspector> extends UniqueInspector<IrInspector_Type> {
 
-    private final Reference _irMethodReference;
+    private final Reference irMethodReference;
 
     public Reference irMethodReference() {
-        return _irMethodReference;
+        return irMethodReference;
     }
 
-    private final TeleClassMethodActor _teleClassMethodActor;
+    private final TeleClassMethodActor teleClassMethodActor;
 
     public TeleClassMethodActor teleClassMethodActor() {
-        return _teleClassMethodActor;
+        return teleClassMethodActor;
     }
     protected IrInspector(Inspection inspection, Reference irMethodReference) {
         super(inspection, irMethodReference);
-        _irMethodReference = irMethodReference;
-        final Reference classMethodActorReference =  maxVM().fields().IrMethod_classMethodActor(maxVM().makeClassActorForTypeOf(_irMethodReference).toJava().asSubclass(IrMethod.class)).readReference(irMethodReference());
-        _teleClassMethodActor = (TeleClassMethodActor) maxVM().makeTeleObject(classMethodActorReference);
+        this.irMethodReference = irMethodReference;
+        final Reference classMethodActorReference =  maxVM().fields().IrMethod_classMethodActor(maxVM().makeClassActorForTypeOf(irMethodReference).toJava().asSubclass(IrMethod.class)).readReference(irMethodReference());
+        this.teleClassMethodActor = (TeleClassMethodActor) maxVM().makeTeleObject(classMethodActorReference);
     }
 
     protected IrInspector(Inspection inspection, Reference irMethodReference, Value subject) {
         super(inspection, subject);
-        _irMethodReference = irMethodReference;
-        final Reference classMethodActorReference =  maxVM().fields().IrMethod_classMethodActor(maxVM().makeClassActorForTypeOf(_irMethodReference).toJava().asSubclass(IrMethod.class)).readReference(irMethodReference());
-        _teleClassMethodActor = (TeleClassMethodActor) maxVM().makeTeleObject(classMethodActorReference);
+        this.irMethodReference = irMethodReference;
+        final Reference classMethodActorReference =  maxVM().fields().IrMethod_classMethodActor(maxVM().makeClassActorForTypeOf(irMethodReference).toJava().asSubclass(IrMethod.class)).readReference(irMethodReference());
+        this.teleClassMethodActor = (TeleClassMethodActor) maxVM().makeTeleObject(classMethodActorReference);
     }
 
 }

@@ -28,10 +28,10 @@ package test.except;
 
 public class BC_daload {
 
-    static double[] _array = {0.0, -1.1, 4.32, 6.06};
+    static double[] arr = {0.0, -1.1, 4.32, 6.06};
 
     public static double test(int arg) {
-        final double[] array = arg == -2 ? null : _array;
+        final double[] array = arg == -2 ? null : arr;
         return array[arg];
     }
 }

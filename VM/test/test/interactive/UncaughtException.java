@@ -45,19 +45,19 @@ public class UncaughtException {
     }
 
     static class TestThreadGroup extends   ThreadGroup {
-        Throwable _uncaught;
+        Throwable uncaught;
         public TestThreadGroup() {
             super("test");
         }
 
         public synchronized Throwable getLastUncaughtException() {
-            return _uncaught;
+            return uncaught;
         }
 
         @Override
         public void uncaughtException(Thread t, Throwable e) {
             synchronized(this) {
-                _uncaught = e;
+                uncaught = e;
             }
             super.uncaughtException(t, e);
         }

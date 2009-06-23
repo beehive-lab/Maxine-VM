@@ -27,13 +27,13 @@ package test.except;
 
 public class Throw_Synchronized04 {
 
-    static final Throw_Synchronized04 _object = new Throw_Synchronized04();
+    static final Throw_Synchronized04 object = new Throw_Synchronized04();
 
     public static boolean test(int i) throws Exception {
         if (i == 0) {
             return true;
         }
-        return _object.test2(i);
+        return object.test2(i);
     }
     public synchronized boolean test2(int i) throws Exception {
         throw new Exception();

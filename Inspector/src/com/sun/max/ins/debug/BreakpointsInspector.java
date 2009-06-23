@@ -43,31 +43,31 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     private static final int TRACE_VALUE = 1;
 
     // Set to null when inspector closed.
-    private static BreakpointsInspector _breakpointsInspector;
+    private static BreakpointsInspector breakpointsInspector;
 
     /**
      * Displays the (singleton) breakpoints inspector.
      * @return  The breakpoints inspector, possibly newly created.
      */
     public static BreakpointsInspector make(Inspection inspection) {
-        if (_breakpointsInspector == null) {
-            _breakpointsInspector = new BreakpointsInspector(inspection);
+        if (breakpointsInspector == null) {
+            breakpointsInspector = new BreakpointsInspector(inspection);
         }
-        return _breakpointsInspector;
+        return breakpointsInspector;
     }
 
-    private final SaveSettingsListener _saveSettingsListener = createGeometrySettingsClient(this, "breakpointsInspector");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "breakpointsInspector");
 
     // This is a singleton viewer, so only use a single level of view preferences.
-    private final BreakpointsViewPreferences _viewPreferences;
+    private final BreakpointsViewPreferences viewPreferences;
 
-    private BreakpointsTable _table;
+    private BreakpointsTable table;
 
     private BreakpointsInspector(Inspection inspection) {
         super(inspection);
         Trace.begin(1,  tracePrefix() + " initializing");
-        _viewPreferences = BreakpointsViewPreferences.globalPreferences(inspection());
-        _viewPreferences.addListener(this);
+        viewPreferences = BreakpointsViewPreferences.globalPreferences(inspection());
+        viewPreferences.addListener(this);
         createFrame(null);
         frame().add(new BreakpointFrameMenuItems());
         Trace.end(1,  tracePrefix() + " initializing");
@@ -80,19 +80,19 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
 
     @Override
     protected void createView() {
-        _table = new BreakpointsTable(inspection(), _viewPreferences);
-        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _table);
+        table = new BreakpointsTable(inspection(), viewPreferences);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), table);
         frame().setContentPane(scrollPane);
     }
 
     @Override
     protected SaveSettingsListener saveSettingsListener() {
-        return _saveSettingsListener;
+        return saveSettingsListener;
     }
 
     @Override
     protected InspectorTable getTable() {
-        return _table;
+        return table;
     }
 
     @Override
@@ -105,7 +105,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<BreakpointsColumnKind>(inspection(), "Breakpoints View Options", _viewPreferences);
+                new TableColumnVisibilityPreferences.Dialog<BreakpointsColumnKind>(inspection(), "Breakpoints View Options", viewPreferences);
             }
         };
     }
@@ -146,7 +146,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
 
     @Override
     protected void refreshView(boolean force) {
-        _table.refresh(force);
+        table.refresh(force);
         super.refreshView(force);
     }
 
@@ -161,8 +161,8 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
 
     @Override
     public  void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
-        if (_table != null) {
-            _table.updateFocusSelection();
+        if (table != null) {
+            table.updateFocusSelection();
         }
     }
 
@@ -173,8 +173,8 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     @Override
     public void inspectorClosing() {
         Trace.line(TRACE_VALUE, tracePrefix() + " closing");
-        _breakpointsInspector = null;
-        _viewPreferences.removeListener(this);
+        breakpointsInspector = null;
+        viewPreferences.removeListener(this);
         super.inspectorClosing();
     }
 

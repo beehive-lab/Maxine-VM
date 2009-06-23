@@ -36,20 +36,20 @@ class JDWPStream implements JDWPSender {
     private static final String HANDSHAKE = "JDWP-Handshake";
     private static final int HEADER_SIZE = 11;
 
-    private DataInputStream _in;
-    private DataOutputStream _out;
+    private DataInputStream in;
+    private DataOutputStream out;
 
     // Counter that is increased for each sent outgoing command.
-    private int _outgoingID;
+    private int outgoingID;
 
     JDWPStream(InputStream is, OutputStream os) {
-        _in = new DataInputStream(is);
-        _out = new DataOutputStream(os);
+        in = new DataInputStream(is);
+        out = new DataOutputStream(os);
     }
 
     public synchronized void sendCommand(OutgoingData outgoingData) throws IOException {
-        _outgoingID++;
-        send(_outgoingID, outgoingData);
+        outgoingID++;
+        send(outgoingID, outgoingData);
     }
 
     private void send(int id, OutgoingData outgoingData) throws IOException {
@@ -60,12 +60,12 @@ class JDWPStream implements JDWPSender {
 
         final byte[] dataBytes = toByteArray(outgoingData);
         final int length = HEADER_SIZE + dataBytes.length;
-        _out.writeInt(length);
-        _out.writeInt(id);
-        _out.writeByte(0);
-        _out.writeByte(outgoingData.getCommandSetId());
-        _out.writeByte(outgoingData.getCommandId());
-        _out.write(dataBytes);
+        out.writeInt(length);
+        out.writeInt(id);
+        out.writeByte(0);
+        out.writeByte(outgoingData.getCommandSetId());
+        out.writeByte(outgoingData.getCommandId());
+        out.write(dataBytes);
     }
 
     private byte[] toByteArray(OutgoingData outgoingData) {
@@ -93,11 +93,11 @@ class JDWPStream implements JDWPSender {
         LOGGER.info("Sending reply packet: " + packet);
         final byte[] dataBytes = toByteArray(packet.getData());
         final int length = HEADER_SIZE + dataBytes.length;
-        _out.writeInt(length);
-        _out.writeInt(packet.getId());
-        _out.writeByte(packet.getFlags());
-        _out.writeShort(packet.getErrorCode());
-        _out.write(dataBytes);
+        out.writeInt(length);
+        out.writeInt(packet.getId());
+        out.writeByte(packet.getFlags());
+        out.writeShort(packet.getErrorCode());
+        out.write(dataBytes);
     }
 
     /**
@@ -116,14 +116,14 @@ class JDWPStream implements JDWPSender {
     private void writeStringAsBytes(String s) throws IOException {
         for (int i = 0; i < s.length(); i++) {
             assert ((byte) s.charAt(i)) == s.charAt(i) : "String may only consist of ASCII characters";
-            _out.writeByte((byte) s.charAt(i));
+            out.writeByte((byte) s.charAt(i));
         }
     }
 
     private boolean readAndCheckStringAsBytes(String s) throws IOException {
         for (int i = 0; i < s.length(); i++) {
             assert ((byte) s.charAt(i)) == s.charAt(i) : "String may only consist of ASCII characters";
-            final byte b = _in.readByte();
+            final byte b = in.readByte();
             if (b != ((byte) s.charAt(i))) {
                 return false;
             }
@@ -143,13 +143,13 @@ class JDWPStream implements JDWPSender {
      */
     public IncomingPacket<? extends IncomingData, ? extends OutgoingData> receive(CommandHandlerRegistry registry) throws IOException, JDWPIncomingPacketException {
 
-        final int length = _in.readInt();
-        final int id = _in.readInt();
-        final byte flags = _in.readByte();
-        final byte commandSetId = _in.readByte();
-        final byte commandId = _in.readByte();
+        final int length = in.readInt();
+        final int id = in.readInt();
+        final byte flags = in.readByte();
+        final byte commandSetId = in.readByte();
+        final byte commandId = in.readByte();
         final byte[] data = new byte[length - HEADER_SIZE];
-        _in.read(data);
+        in.read(data);
 
         final CommandHandler<? extends IncomingData, ? extends OutgoingData> handler = registry.findCommandHandler(commandSetId, commandId);
         if (handler == null) {

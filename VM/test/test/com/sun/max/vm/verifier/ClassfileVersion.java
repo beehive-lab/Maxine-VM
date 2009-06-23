@@ -31,12 +31,12 @@ import com.sun.max.vm.prototype.*;
  * @author Doug Simon
  */
 public class ClassfileVersion {
-    final int _major;
-    final int _minor;
+    final int major;
+    final int minor;
 
     public ClassfileVersion(int major, int minor) {
-        _major = major;
-        _minor = minor;
+        this.major = major;
+        this.minor = minor;
     }
 
     public ClassfileVersion(String className, Classpath classpath) {
@@ -48,8 +48,8 @@ public class ClassfileVersion {
                 if (magic != 0xcafebabe) {
                     ProgramWarning.message("invalid magic number (0x" + Integer.toHexString(magic) + ") in class file for " + className);
                 }
-                _minor = dataInputStream.readUnsignedShort();
-                _major = dataInputStream.readUnsignedShort();
+                minor = dataInputStream.readUnsignedShort();
+                major = dataInputStream.readUnsignedShort();
                 return;
 
             } catch (IOException e) {

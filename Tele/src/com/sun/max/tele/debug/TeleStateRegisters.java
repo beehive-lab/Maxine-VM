@@ -34,20 +34,20 @@ import com.sun.max.vm.runtime.*;
  */
 public final class TeleStateRegisters extends TeleRegisters {
 
-    private final Symbol _instructionPointerRegister;
-    private final Symbol _flagsRegister;
+    private final Symbol instructionPointerRegister;
+    private final Symbol flagsRegister;
 
     public TeleStateRegisters(VMConfiguration vmConfiguration) {
         super(symbolizer(vmConfiguration), vmConfiguration);
         switch (vmConfiguration.platform().processorKind().instructionSet()) {
             case AMD64: {
-                _instructionPointerRegister = Amd64StateRegister.RIP;
-                _flagsRegister = Amd64StateRegister.FLAGS;
+                instructionPointerRegister = Amd64StateRegister.RIP;
+                flagsRegister = Amd64StateRegister.FLAGS;
                 break;
             }
             case SPARC: {
-                _instructionPointerRegister = SparcStateRegister.PC;
-                _flagsRegister = SparcStateRegister.CCR;
+                instructionPointerRegister = SparcStateRegister.PC;
+                flagsRegister = SparcStateRegister.CCR;
                 break;
             }
             default: {
@@ -62,7 +62,7 @@ public final class TeleStateRegisters extends TeleRegisters {
      * @return the value of the instruction pointer
      */
     public Pointer instructionPointer() {
-        return get(_instructionPointerRegister).asPointer();
+        return get(instructionPointerRegister).asPointer();
     }
 
     /**
@@ -72,7 +72,7 @@ public final class TeleStateRegisters extends TeleRegisters {
      * @param value the new value of the instruction pointer
      */
     public void setInstructionPointer(Address value) {
-        set(_instructionPointerRegister, value);
+        set(instructionPointerRegister, value);
     }
 
     private enum Amd64StateRegister implements Enumerable<Amd64StateRegister> {
@@ -89,22 +89,22 @@ public final class TeleStateRegisters extends TeleRegisters {
             return ENUMERATOR;
         }
 
-        private static char[] _flagNames = {
+        private static char[] flagNames = {
             'C', '1', 'P', '3', 'A', '5', 'Z', 'S',
             'T', 'I', 'D', 'O', 'I', 'L', 'N', 'F',
             'R', 'V', 'a', 'f', 'p', 'i', '2', '3',
             '4', '5', '6', '7', '8', '9', '0', '1'
         };
 
-        private static final int _USED_FLAGS = 22;
+        private static final int USED_FLAGS = 22;
 
         public static String flagsToString(long flags) {
-            final char[] chars = new char[_USED_FLAGS];
+            final char[] chars = new char[USED_FLAGS];
             long f = flags;
             int charIndex = chars.length - 1;
-            for (int i = 0; i < _USED_FLAGS; i++) {
+            for (int i = 0; i < USED_FLAGS; i++) {
                 if ((f & 1) != 0) {
-                    chars[charIndex--] = _flagNames[i];
+                    chars[charIndex--] = flagNames[i];
                 } else {
                     chars[charIndex--] = '_';
                 }
@@ -144,11 +144,11 @@ public final class TeleStateRegisters extends TeleRegisters {
     }
 
     public boolean isInstructionPointerRegister(Symbol register) {
-        return register == _instructionPointerRegister;
+        return register == instructionPointerRegister;
     }
 
     public boolean isFlagsRegister(Symbol register) {
-        return register == _flagsRegister;
+        return register == flagsRegister;
     }
 
     public static String flagsToString(TeleVM teleVM, long flags) {

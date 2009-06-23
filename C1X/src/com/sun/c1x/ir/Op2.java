@@ -30,9 +30,9 @@ import com.sun.c1x.value.*;
  * @author Ben L. Titzer
  */
 public abstract class Op2 extends Instruction {
-    final int _opcode;
-    Instruction _x;
-    Instruction _y;
+    final int opcode;
+    Instruction x;
+    Instruction y;
 
     /**
      * Creates a new Op2 instance.
@@ -43,9 +43,9 @@ public abstract class Op2 extends Instruction {
      */
     public Op2(ValueType type, int opcode, Instruction x, Instruction y) {
         super(type);
-        _opcode = opcode;
-        _x = x;
-        _y = y;
+        this.opcode = opcode;
+        this.x = x;
+        this.y = y;
     }
 
     /**
@@ -55,7 +55,7 @@ public abstract class Op2 extends Instruction {
      * @see Bytecodes
      */
     public int opcode() {
-        return _opcode;
+        return opcode;
     }
 
     /**
@@ -63,7 +63,7 @@ public abstract class Op2 extends Instruction {
      * @return the first input to this instruction
      */
     public Instruction x() {
-        return _x;
+        return x;
     }
 
     /**
@@ -71,17 +71,17 @@ public abstract class Op2 extends Instruction {
      * @return the second input to this instruction
      */
     public Instruction y() {
-        return _y;
+        return y;
     }
 
     /**
      * Swaps the operands of this instruction. This is only legal for commutative operations.
      */
     public void swapOperands() {
-        assert Bytecodes.isCommutative(_opcode);
-        Instruction t = _x;
-        _x = _y;
-        _y = t;
+        assert Bytecodes.isCommutative(opcode);
+        Instruction t = x;
+        x = y;
+        y = t;
     }
 
     /**
@@ -90,20 +90,20 @@ public abstract class Op2 extends Instruction {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        _x = closure.apply(_x);
-        _x = closure.apply(_y);
+        x = closure.apply(x);
+        x = closure.apply(y);
     }
 
     @Override
     public int valueNumber() {
-        return Util.hash2(_opcode, _x, _y);
+        return Util.hash2(opcode, x, y);
     }
 
     @Override
     public boolean valueEqual(Instruction i) {
         if (i instanceof Op2) {
             Op2 o = (Op2) i;
-            return _opcode == o._opcode && _x == o._x && _y == o._y;
+            return opcode == o.opcode && x == o.x && y == o.y;
         }
         return false;
     }

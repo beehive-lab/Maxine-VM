@@ -34,22 +34,22 @@ import com.sun.max.tele.object.*;
  */
 public class TeleNativeRoutine implements TeleRoutine {
 
-    private final TeleNativeTargetRoutine _teleNativeTargetRoutine;
+    private final TeleNativeTargetRoutine teleNativeTargetRoutine;
 
     /**
      * @return local {@link TeleNativeTargetRoutine} that holds what
      * we know about the native code for this routine
      */
     public TeleNativeTargetRoutine teleNativeTargetRoutine() {
-        return _teleNativeTargetRoutine;
+        return teleNativeTargetRoutine;
     }
 
     public TeleNativeRoutine(TeleNativeTargetRoutine teleNativeTargetRoutine) {
-        _teleNativeTargetRoutine = teleNativeTargetRoutine;
+        this.teleNativeTargetRoutine = teleNativeTargetRoutine;
     }
 
     public String getUniqueName() {
-        return "native method @ " + _teleNativeTargetRoutine.targetCodeRegion().start().toHexString();
+        return "native method @ " + teleNativeTargetRoutine.targetCodeRegion().start().toHexString();
     }
 
 }

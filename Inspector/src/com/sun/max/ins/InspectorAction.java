@@ -43,7 +43,7 @@ public abstract class InspectorAction extends AbstractAction implements Prober {
         return "[InspectorAction] ";
     }
 
-    private final Inspection _inspection;
+    private final Inspection inspection;
 
     /**
      * Creates an action than involves Inspector machinery in addition to GUI machinery.
@@ -51,7 +51,7 @@ public abstract class InspectorAction extends AbstractAction implements Prober {
      */
     public InspectorAction(Inspection inspection, String title) {
         super(title);
-        _inspection = inspection;
+        this.inspection = inspection;
         inspection.registerAction(this);
     }
 
@@ -77,7 +77,7 @@ public abstract class InspectorAction extends AbstractAction implements Prober {
     public void redisplay() {
     }
 
-    private final Object _actionTracer  = new Object() {
+    private final Object actionTracer  = new Object() {
         @Override
         public String toString() {
             return tracePrefix() + name();
@@ -85,19 +85,19 @@ public abstract class InspectorAction extends AbstractAction implements Prober {
     };
 
     public void perform() {
-        Trace.begin(TRACE_VALUE, _actionTracer);
+        Trace.begin(TRACE_VALUE, actionTracer);
         final long startTimeMillis = System.currentTimeMillis();
-        _inspection.gui().showInspectorBusy(true);
+        inspection.gui().showInspectorBusy(true);
         try {
             procedure();
         } catch (InspectorError inspectorError) {
-            inspectorError.display(_inspection);
+            inspectorError.display(inspection);
         } catch (Throwable throwable) {
-            ThrowableDialog.showLater(throwable, _inspection.gui().frame(), "Error while performing \"" + name() + "\"");
+            ThrowableDialog.showLater(throwable, inspection.gui().frame(), "Error while performing \"" + name() + "\"");
         } finally {
-            _inspection.setCurrentAction(null);
-            Trace.end(TRACE_VALUE, _actionTracer, startTimeMillis);
-            _inspection.gui().showInspectorBusy(false);
+            inspection.setCurrentAction(null);
+            Trace.end(TRACE_VALUE, actionTracer, startTimeMillis);
+            inspection.gui().showInspectorBusy(false);
         }
     }
 
@@ -105,22 +105,22 @@ public abstract class InspectorAction extends AbstractAction implements Prober {
         perform();
     }
 
-    private AppendableSequence<JMenuItem> _menuItems = new LinkSequence<JMenuItem>();
+    private AppendableSequence<JMenuItem> menuItems = new LinkSequence<JMenuItem>();
 
     public Sequence<JMenuItem> menuItems() {
-        return _menuItems;
+        return menuItems;
     }
 
     public void prepend(JMenu menu) {
-        _menuItems.append(menu.insert(this, 0));
+        menuItems.append(menu.insert(this, 0));
     }
 
     public void append(JMenu menu) {
-        _menuItems.append(menu.add(this));
+        menuItems.append(menu.add(this));
     }
 
     public void append(JPopupMenu menu) {
-        _menuItems.append(menu.add(this));
+        menuItems.append(menu.add(this));
     }
 
 }

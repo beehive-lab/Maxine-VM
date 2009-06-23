@@ -25,20 +25,20 @@ package test.hotpath;
  * @Runs: 40 = 820;
  */
 public class HP_field01 {
-    public static int _a;
-    public static int _b;
-    public static int _c;
+    public static int a;
+    public static int b;
+    public static int c;
 
     public static int test(int count) {
         for (int i = 0; i <= count; i++) {
             if (i > 5) {
-                _a += i;
+                a += i;
             } else if (i > 7) {
-                _b += i;
+                b += i;
             } else {
-                _c += i;
+                c += i;
             }
         }
-        return _a + _b + _c;
+        return a + b + c;
     }
 }

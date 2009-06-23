@@ -31,10 +31,10 @@ public class Thread_isInterrupted02 {
 
     private static final Object start = new Object();
     private static final Object end = new Object();
-    private static int _waitTime;
+    private static int waitTime;
 
-    public static boolean test(int i, int waitTime) throws InterruptedException {
-        _waitTime = waitTime;
+    public static boolean test(int i, int time) throws InterruptedException {
+        waitTime = time;
         final Thread thread = new Thread();
         synchronized (thread) {
             // start the thread and wait for it
@@ -62,10 +62,10 @@ public class Thread_isInterrupted02 {
                         notify();
                     }
                     // wait for the condition, which should be interrupted
-                    if (_waitTime == 0) {
+                    if (waitTime == 0) {
                         start.wait();
                     } else {
-                        start.wait(_waitTime);
+                        start.wait(waitTime);
                     }
                 }
             } catch (InterruptedException e) {

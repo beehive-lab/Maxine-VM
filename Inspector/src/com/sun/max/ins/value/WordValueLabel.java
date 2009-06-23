@@ -48,7 +48,7 @@ public class WordValueLabel extends ValueLabel {
 
     // Optionally supplied component that needs to be
     // repainted when this label changes its appearance.
-    private final Component _parent;
+    private final Component parent;
 
     /**
      * The expected kind of word value. The visual
@@ -67,7 +67,7 @@ public class WordValueLabel extends ValueLabel {
         CALL_RETURN_POINT;
     }
 
-    private final ValueMode _valueMode;
+    private final ValueMode valueMode;
 
     /**
      * The actual kind of word value, determined empirically by reading from the VM; this may change after update.
@@ -98,33 +98,33 @@ public class WordValueLabel extends ValueLabel {
         INVALID // this value is completely invalid
     }
 
-    private DisplayMode _displayMode;
+    private DisplayMode displayMode;
 
-    private String _prefix;
+    private String prefix;
 
     /**
      * Sets a string to be prepended to all label displays.
      */
     public final void setPrefix(String prefix) {
-        _prefix = prefix;
+        this.prefix = prefix;
     }
 
-    private String _suffix;
+    private String suffix;
 
     /**
      * Sets a string to be appended to all label displays.
      */
     public final void setSuffix(String suffix) {
-        _suffix = suffix;
+        this.suffix = suffix;
     }
 
-    private String _toolTipSuffix;
+    private String toolTipSuffix;
 
     /**
      * Sets a string to be appended to all tooltip displays over the label.
      */
     public final void setToolTipSuffix(String toolTipSuffix) {
-        _toolTipSuffix = toolTipSuffix;
+        this.toolTipSuffix = toolTipSuffix;
     }
 
     /**
@@ -166,8 +166,8 @@ public class WordValueLabel extends ValueLabel {
      */
     public WordValueLabel(Inspection inspection, ValueMode valueMode, Word word, Component parent) {
         super(inspection, null);
-        _parent = parent;
-        _valueMode = valueMode;
+        this.parent = parent;
+        this.valueMode = valueMode;
         initializeValue();
         if (value() == null) {
             setValue(new WordValue(word));
@@ -197,7 +197,7 @@ public class WordValueLabel extends ValueLabel {
                     case MouseEvent.BUTTON3: {
                         final InspectorMenu menu = new InspectorMenu();
                         menu.add(new WordValueMenuItems(inspection(), value()));
-                        switch (_displayMode) {
+                        switch (displayMode) {
                             case OBJECT_REFERENCE:
                             case OBJECT_REFERENCE_TEXT: {
                                 final TeleObject teleObject = maxVM().makeTeleObject(maxVM().wordToReference(value().toWord()));
@@ -225,90 +225,90 @@ public class WordValueLabel extends ValueLabel {
     }
 
     /** Object in the VM heap pointed to by the word, if it is a valid reference. */
-    private TeleObject _teleObject;
+    private TeleObject teleObject;
 
     /** Non-null if a Class ID. */
-    private TeleClassActor _teleClassActor;
+    private TeleClassActor teleClassActor;
 
     /** Non-null if a code pointer. */
-    private TeleTargetMethod _teleTargetMethod;
+    private TeleTargetMethod teleTargetMethod;
 
     /** Non-null if a stack reference. */
-    private MaxThread _thread;
+    private MaxThread thread;
 
     @Override
     public void setValue(Value newValue) {
-        _teleObject = null;
-        _teleClassActor = null;
-        _teleTargetMethod = null;
-        _thread = null;
+        teleObject = null;
+        teleClassActor = null;
+        teleTargetMethod = null;
+        thread = null;
 
         if (newValue == VoidValue.VOID) {
-            _displayMode = DisplayMode.INVALID;
-        } else if (_valueMode == ValueMode.FLAGS_REGISTER) {
+            displayMode = DisplayMode.INVALID;
+        } else if (valueMode == ValueMode.FLAGS_REGISTER) {
             if (newValue == null) {
-                _displayMode = DisplayMode.INVALID;
-            } else if (_displayMode == null) {
-                _displayMode = DisplayMode.FLAGS;
+                displayMode = DisplayMode.INVALID;
+            } else if (displayMode == null) {
+                displayMode = DisplayMode.FLAGS;
             }
-        } else if (_valueMode == ValueMode.FLOATING_POINT) {
+        } else if (valueMode == ValueMode.FLOATING_POINT) {
             if (newValue == null) {
-                _displayMode = DisplayMode.INVALID;
-            } else if (_displayMode == null) {
-                _displayMode = DisplayMode.DOUBLE;
+                displayMode = DisplayMode.INVALID;
+            } else if (displayMode == null) {
+                displayMode = DisplayMode.DOUBLE;
             }
         } else if (!inspection().investigateWordValues()) {
-            if (_valueMode == ValueMode.REFERENCE || _valueMode == ValueMode.LITERAL_REFERENCE) {
-                _displayMode = DisplayMode.UNCHECKED_REFERENCE;
-            } else if (_valueMode == ValueMode.CALL_ENTRY_POINT || _valueMode == ValueMode.CALL_RETURN_POINT) {
-                _displayMode = DisplayMode.UNCHECKED_CALL_POINT;
+            if (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) {
+                displayMode = DisplayMode.UNCHECKED_REFERENCE;
+            } else if (valueMode == ValueMode.CALL_ENTRY_POINT || valueMode == ValueMode.CALL_RETURN_POINT) {
+                displayMode = DisplayMode.UNCHECKED_CALL_POINT;
             } else {
-                _displayMode = DisplayMode.UNCHECKED_WORD;
+                displayMode = DisplayMode.UNCHECKED_WORD;
             }
         } else {
-            _displayMode = DisplayMode.WORD;
+            displayMode = DisplayMode.WORD;
             if (maxVM().isBootImageRelocated()) {
                 if (newValue == null || newValue.isZero()) {
-                    if (_valueMode == ValueMode.REFERENCE) {
-                        _displayMode = DisplayMode.NULL;
+                    if (valueMode == ValueMode.REFERENCE) {
+                        displayMode = DisplayMode.NULL;
                     }
                 } else if (maxVM().isValidReference(maxVM().wordToReference(newValue.toWord()))) {
-                    _displayMode = (_valueMode == ValueMode.REFERENCE || _valueMode == ValueMode.LITERAL_REFERENCE) ? DisplayMode.OBJECT_REFERENCE_TEXT : DisplayMode.OBJECT_REFERENCE;
+                    displayMode = (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) ? DisplayMode.OBJECT_REFERENCE_TEXT : DisplayMode.OBJECT_REFERENCE;
                     final TeleReference reference = (TeleReference) maxVM().wordToReference(newValue.toWord());
 
                     try {
-                        _teleObject = maxVM().makeTeleObject(reference);
+                        teleObject = maxVM().makeTeleObject(reference);
                     } catch (Throwable throwable) {
                         // If we don't catch this the views will not be updated at all.
-                        _teleObject = null;
-                        _displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
+                        teleObject = null;
+                        displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                     }
                 } else {
                     final Address address = newValue.toWord().asAddress();
-                    _thread = maxVM().threadContaining(address);
-                    if (_thread != null) {
-                        _displayMode = _valueMode == ValueMode.REFERENCE ? DisplayMode.STACK_LOCATION_TEXT : DisplayMode.STACK_LOCATION;
+                    thread = maxVM().threadContaining(address);
+                    if (thread != null) {
+                        displayMode = valueMode == ValueMode.REFERENCE ? DisplayMode.STACK_LOCATION_TEXT : DisplayMode.STACK_LOCATION;
                     } else {
-                        if (_valueMode == ValueMode.REFERENCE || _valueMode == ValueMode.LITERAL_REFERENCE) {
-                            _displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
+                        if (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) {
+                            displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                         } else {
-                            _teleTargetMethod = maxVM().makeTeleTargetMethod(newValue.toWord().asAddress());
-                            if (_teleTargetMethod != null) {
-                                final Address codeStart = _teleTargetMethod.getCodeStart();
+                            teleTargetMethod = maxVM().makeTeleTargetMethod(newValue.toWord().asAddress());
+                            if (teleTargetMethod != null) {
+                                final Address codeStart = teleTargetMethod.getCodeStart();
                                 final Word jitEntryPoint = codeStart.plus(CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart());
                                 final Word optimizedEntryPoint = codeStart.plus(CallEntryPoint.OPTIMIZED_ENTRY_POINT.offsetFromCodeStart());
                                 if (newValue.toWord().equals(optimizedEntryPoint) || newValue.toWord().equals(jitEntryPoint)) {
-                                    _displayMode = (_valueMode == ValueMode.CALL_ENTRY_POINT) ? DisplayMode.CALL_ENTRY_POINT_TEXT : DisplayMode.CALL_ENTRY_POINT;
+                                    displayMode = (valueMode == ValueMode.CALL_ENTRY_POINT) ? DisplayMode.CALL_ENTRY_POINT_TEXT : DisplayMode.CALL_ENTRY_POINT;
                                 } else {
-                                    _displayMode = (_valueMode == ValueMode.CALL_RETURN_POINT) ? DisplayMode.CALL_RETURN_POINT : DisplayMode.CALL_RETURN_POINT;
+                                    displayMode = (valueMode == ValueMode.CALL_RETURN_POINT) ? DisplayMode.CALL_RETURN_POINT : DisplayMode.CALL_RETURN_POINT;
                                 }
-                            } else if (_valueMode == ValueMode.ITABLE_ENTRY) {
+                            } else if (valueMode == ValueMode.ITABLE_ENTRY) {
                                 final TeleClassActor teleClassActor = maxVM().findTeleClassActor(newValue.asWord().asAddress().toInt());
                                 if (teleClassActor != null) {
-                                    _teleClassActor = teleClassActor;
-                                    _displayMode = DisplayMode.CLASS_ACTOR;
+                                    this.teleClassActor = teleClassActor;
+                                    displayMode = DisplayMode.CLASS_ACTOR;
                                 } else {
-                                    _displayMode = DisplayMode.CLASS_ACTOR_ID;
+                                    displayMode = DisplayMode.CLASS_ACTOR_ID;
                                 }
                             }
                         }
@@ -336,13 +336,13 @@ public class WordValueLabel extends ValueLabel {
             setForeground(style().wordInvalidDataColor());
             setText("void");
             setToolTipText("Location not in allocated regions");
-            if (_parent != null) {
-                _parent.repaint();
+            if (parent != null) {
+                parent.repaint();
             }
             return;
         }
-        final String hexString = (_valueMode == ValueMode.INTEGER_REGISTER || _valueMode == ValueMode.FLAGS_REGISTER || _valueMode == ValueMode.FLOATING_POINT) ? value.toWord().toPaddedHexString('0') : value.toWord().toHexString();
-        switch (_displayMode) {
+        final String hexString = (valueMode == ValueMode.INTEGER_REGISTER || valueMode == ValueMode.FLAGS_REGISTER || valueMode == ValueMode.FLOATING_POINT) ? value.toWord().toPaddedHexString('0') : value.toWord().toHexString();
+        switch (displayMode) {
             case WORD: {
                 setFont(style().wordDataFont());
                 setForeground(value.isZero() ? style().wordNullDataColor() : style().wordDataColor());
@@ -361,8 +361,8 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordAlternateTextFont());
                 setForeground(style().wordNullDataColor());
                 setText("null");
-                if (_valueMode == ValueMode.LITERAL_REFERENCE) {
-                    setToolTipText("null" + _toolTipSuffix);
+                if (valueMode == ValueMode.LITERAL_REFERENCE) {
+                    setToolTipText("null" + toolTipSuffix);
                 }
                 break;
             }
@@ -370,8 +370,8 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordAlternateTextFont());
                 setForeground(style().wordInvalidDataColor());
                 setText("invalid");
-                if (_valueMode == ValueMode.LITERAL_REFERENCE) {
-                    setToolTipText("invalid" + _toolTipSuffix);
+                if (valueMode == ValueMode.LITERAL_REFERENCE) {
+                    setToolTipText("invalid" + toolTipSuffix);
                 }
                 break;
             }
@@ -379,23 +379,23 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordDataFont());
                 setForeground(style().wordValidObjectReferenceDataColor());
                 setText(hexString);
-                if (_valueMode == ValueMode.LITERAL_REFERENCE) {
-                    setToolTipText(inspection().nameDisplay().referenceToolTipText(_teleObject) + _toolTipSuffix);
+                if (valueMode == ValueMode.LITERAL_REFERENCE) {
+                    setToolTipText(inspection().nameDisplay().referenceToolTipText(teleObject) + toolTipSuffix);
                 } else {
-                    setToolTipText(inspection().nameDisplay().referenceToolTipText(_teleObject));
+                    setToolTipText(inspection().nameDisplay().referenceToolTipText(teleObject));
                 }
                 break;
             }
             case OBJECT_REFERENCE_TEXT: {
                 try {
-                    final String labelText = inspection().nameDisplay().referenceLabelText(_teleObject);
+                    final String labelText = inspection().nameDisplay().referenceLabelText(teleObject);
                     if (labelText != null) {
                         setText(labelText);
-                        setToolTipText(inspection().nameDisplay().referenceToolTipText(_teleObject));
+                        setToolTipText(inspection().nameDisplay().referenceToolTipText(teleObject));
                         setFont(style().wordAlternateTextFont());
                         setForeground(style().wordValidObjectReferenceDataColor());
-                        if (_valueMode == ValueMode.LITERAL_REFERENCE) {
-                            setToolTipText(getToolTipText() + _toolTipSuffix);
+                        if (valueMode == ValueMode.LITERAL_REFERENCE) {
+                            setToolTipText(getToolTipText() + toolTipSuffix);
                         }
                         break;
                     }
@@ -404,7 +404,7 @@ public class WordValueLabel extends ValueLabel {
                     System.out.println("WVL: setAlternateReferenceText error" + noClassDefFoundError);
                 }
                 System.out.println("WVL:  set AlternateReferenceText failed");
-                _displayMode = DisplayMode.OBJECT_REFERENCE;
+                displayMode = DisplayMode.OBJECT_REFERENCE;
                 updateText();
                 break;
             }
@@ -412,8 +412,8 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordDataFont());
                 setForeground(style().wordStackLocationDataColor());
                 setText(hexString);
-                final String threadName = inspection().nameDisplay().longName(_thread);
-                final long offset = value().asWord().asAddress().minus(_thread.stack().start()).toLong();
+                final String threadName = inspection().nameDisplay().longName(thread);
+                final long offset = value().asWord().asAddress().minus(thread.stack().start()).toLong();
                 final String hexOffsetString = offset >= 0 ? ("+0x" + Long.toHexString(offset)) : "0x" + Long.toHexString(offset);
                 setToolTipText("Stack:  thread=" + threadName + ", offset=" + hexOffsetString);
                 break;
@@ -421,8 +421,8 @@ public class WordValueLabel extends ValueLabel {
             case STACK_LOCATION_TEXT: {
                 setFont(style().wordAlternateTextFont());
                 setForeground(style().wordStackLocationDataColor());
-                final String threadName = inspection().nameDisplay().longName(_thread);
-                final long offset = value().asWord().asAddress().minus(_thread.stack().start()).toLong();
+                final String threadName = inspection().nameDisplay().longName(thread);
+                final long offset = value().asWord().asAddress().minus(thread.stack().start()).toLong();
                 final String decimalOffsetString = offset >= 0 ? ("+" + offset) : Long.toString(offset);
                 setText(threadName + " " + decimalOffsetString);
                 setToolTipText("Stack:  thread=" + threadName + ", addr=0x" +  Long.toHexString(value().asWord().asAddress().toLong()));
@@ -432,8 +432,8 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordDataFont());
                 setForeground(style().wordUncheckedReferenceDataColor());
                 setText(hexString);
-                if (_valueMode == ValueMode.LITERAL_REFERENCE) {
-                    setToolTipText("<unchecked>" + _toolTipSuffix);
+                if (valueMode == ValueMode.LITERAL_REFERENCE) {
+                    setToolTipText("<unchecked>" + toolTipSuffix);
                 } else {
                     setToolTipText("Unchecked Reference");
                 }
@@ -443,8 +443,8 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordDataFont());
                 setForeground(style().wordInvalidObjectReferenceDataColor());
                 setText(hexString);
-                if (_valueMode == ValueMode.LITERAL_REFERENCE) {
-                    setToolTipText("<invalid>" + _toolTipSuffix);
+                if (valueMode == ValueMode.LITERAL_REFERENCE) {
+                    setToolTipText("<invalid>" + toolTipSuffix);
                 }
                 break;
             }
@@ -452,22 +452,22 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordDataFont());
                 setForeground(style().wordCallEntryPointColor());
                 setText(hexString);
-                setToolTipText("Code: " + inspection().nameDisplay().longName(_teleTargetMethod));
+                setToolTipText("Code: " + inspection().nameDisplay().longName(teleTargetMethod));
                 break;
             }
             case CALL_ENTRY_POINT_TEXT: {
                 setFont(style().wordAlternateTextFont());
                 setForeground(style().wordCallEntryPointColor());
-                setText(inspection().nameDisplay().veryShortName(_teleTargetMethod));
-                setToolTipText("Code: " + inspection().nameDisplay().longName(_teleTargetMethod));
+                setText(inspection().nameDisplay().veryShortName(teleTargetMethod));
+                setToolTipText("Code: " + inspection().nameDisplay().longName(teleTargetMethod));
                 break;
             }
             case CLASS_ACTOR_ID: {
                 setFont(style().wordDataFont());
                 setForeground(style().wordDataColor());
                 setText(Long.toString(value.asWord().asAddress().toLong()));
-                if (_teleClassActor != null) {
-                    setToolTipText(inspection().nameDisplay().referenceToolTipText(_teleClassActor));
+                if (teleClassActor != null) {
+                    setToolTipText(inspection().nameDisplay().referenceToolTipText(teleClassActor));
                 } else {
                     setToolTipText("Class{???}");
                 }
@@ -476,25 +476,25 @@ public class WordValueLabel extends ValueLabel {
             case CLASS_ACTOR: {
                 setFont(style().javaClassNameFont());
                 setForeground(style().javaNameColor());
-                setText(_teleClassActor.classActor().simpleName());
-                setToolTipText(inspection().nameDisplay().referenceToolTipText(_teleClassActor));
+                setText(teleClassActor.classActor().simpleName());
+                setToolTipText(inspection().nameDisplay().referenceToolTipText(teleClassActor));
                 break;
             }
             case CALL_RETURN_POINT: {
                 setFont(style().wordDataFont());
                 setForeground(style().wordCallReturnPointColor());
                 setText(hexString);
-                if (_teleTargetMethod != null) {
-                    setToolTipText("Code: " + inspection().nameDisplay().longName(_teleTargetMethod, value.toWord().asAddress()));
+                if (teleTargetMethod != null) {
+                    setToolTipText("Code: " + inspection().nameDisplay().longName(teleTargetMethod, value.toWord().asAddress()));
                 }
                 break;
             }
             case CALL_RETURN_POINT_TEXT: {
                 setFont(style().wordAlternateTextFont());
                 setForeground(style().wordCallReturnPointColor());
-                if (_teleTargetMethod != null) {
-                    setText(inspection().nameDisplay().veryShortName(_teleTargetMethod, value.toWord().asAddress()));
-                    setToolTipText("Code: " + inspection().nameDisplay().longName(_teleTargetMethod, value.toWord().asAddress()));
+                if (teleTargetMethod != null) {
+                    setText(inspection().nameDisplay().veryShortName(teleTargetMethod, value.toWord().asAddress()));
+                    setToolTipText("Code: " + inspection().nameDisplay().longName(teleTargetMethod, value.toWord().asAddress()));
                 }
                 break;
             }
@@ -534,21 +534,21 @@ public class WordValueLabel extends ValueLabel {
                 break;
             }
         }
-        if (_prefix != null) {
-            setText(_prefix + getText());
+        if (prefix != null) {
+            setText(prefix + getText());
         }
-        if (_suffix != null) {
-            setText(getText() + _suffix);
+        if (suffix != null) {
+            setText(getText() + suffix);
         }
-        if (_parent != null) {
-            _parent.repaint();
+        if (parent != null) {
+            parent.repaint();
         }
     }
 
     private InspectorAction getToggleDisplayTextAction() {
-        DisplayMode alternateValueKind = _displayMode;
-        if (_valueMode == ValueMode.FLAGS_REGISTER) {
-            switch (_displayMode) {
+        DisplayMode alternateValueKind = displayMode;
+        if (valueMode == ValueMode.FLAGS_REGISTER) {
+            switch (displayMode) {
                 case WORD: {
                     alternateValueKind = DisplayMode.FLAGS;
                     break;
@@ -562,7 +562,7 @@ public class WordValueLabel extends ValueLabel {
                 }
             }
         }
-        if (_valueMode == ValueMode.FLOATING_POINT) {
+        if (valueMode == ValueMode.FLOATING_POINT) {
             switch (alternateValueKind) {
                 case WORD: {
                     alternateValueKind = DisplayMode.DOUBLE;
@@ -581,7 +581,7 @@ public class WordValueLabel extends ValueLabel {
                 }
             }
         }
-        if (_valueMode == ValueMode.INTEGER_REGISTER) {
+        if (valueMode == ValueMode.INTEGER_REGISTER) {
             switch (alternateValueKind) {
                 case WORD: {
                     alternateValueKind = DisplayMode.DECIMAL;
@@ -622,7 +622,7 @@ public class WordValueLabel extends ValueLabel {
                 break;
             }
             case CLASS_ACTOR_ID: {
-                if (_teleClassActor != null) {
+                if (teleClassActor != null) {
                     alternateValueKind = DisplayMode.CLASS_ACTOR;
                 }
                 break;
@@ -643,14 +643,14 @@ public class WordValueLabel extends ValueLabel {
                 break;
             }
         }
-        if (alternateValueKind != _displayMode) {
+        if (alternateValueKind != displayMode) {
             final DisplayMode newValueKind = alternateValueKind;
             return new InspectorAction(inspection(), "Toggle alternate display text") {
 
                 @Override
                 public void procedure() {
-                    Trace.line(TRACE_VALUE, "WVL: " + _displayMode.toString() + "->" + newValueKind);
-                    _displayMode = newValueKind;
+                    Trace.line(TRACE_VALUE, "WVL: " + displayMode.toString() + "->" + newValueKind);
+                    displayMode = newValueKind;
                     WordValueLabel.this.updateText();
                 }
             };
@@ -660,7 +660,7 @@ public class WordValueLabel extends ValueLabel {
 
     private InspectorAction getInspectValueAction(Value value) {
         InspectorAction action = null;
-        switch (_displayMode) {
+        switch (displayMode) {
             case OBJECT_REFERENCE:
             case UNCHECKED_REFERENCE:
             case OBJECT_REFERENCE_TEXT: {
@@ -712,7 +712,7 @@ public class WordValueLabel extends ValueLabel {
         InspectorAction action = null;
         if (value != VoidValue.VOID) {
             final Address address = value.toWord().asAddress();
-            switch (_displayMode) {
+            switch (displayMode) {
                 case INVALID_OBJECT_REFERENCE:
                 case UNCHECKED_REFERENCE:
                 case OBJECT_REFERENCE:
@@ -751,7 +751,7 @@ public class WordValueLabel extends ValueLabel {
         InspectorAction action = null;
         if (value != VoidValue.VOID) {
             final Address address = value.toWord().asAddress();
-            switch (_displayMode) {
+            switch (displayMode) {
                 case INVALID_OBJECT_REFERENCE:
                 case UNCHECKED_REFERENCE:
                 case OBJECT_REFERENCE:
@@ -800,123 +800,123 @@ public class WordValueLabel extends ValueLabel {
 
     private final class WordValueMenuItems implements InspectorMenuItems {
 
-        private final InspectorAction _copyWordAction;
+        private final InspectorAction copyWordAction;
 
         private final class MenuInspectObjectAction extends InspectorAction {
 
-            private final InspectorAction _inspectAction;
+            private final InspectorAction inspectAction;
 
             private MenuInspectObjectAction(Value value) {
                 super(inspection(), "Inspect Object (Left-Button)");
-                _inspectAction = getInspectValueAction(value);
-                setEnabled(_inspectAction != null);
+                inspectAction = getInspectValueAction(value);
+                setEnabled(inspectAction != null);
             }
 
             @Override
             public void procedure() {
-                _inspectAction.perform();
+                inspectAction.perform();
             }
         }
 
-        private final MenuInspectObjectAction _menuInspectObjectAction;
+        private final MenuInspectObjectAction menuInspectObjectAction;
 
 
         private final class MenuToggleDisplayAction extends InspectorAction {
 
-            private final InspectorAction _toggleAction;
+            private final InspectorAction toggleAction;
 
             private MenuToggleDisplayAction() {
                 super(inspection(), "Toggle display (Middle-Button)");
-                _toggleAction = getToggleDisplayTextAction();
-                setEnabled(_toggleAction != null);
+                toggleAction = getToggleDisplayTextAction();
+                setEnabled(toggleAction != null);
             }
 
             @Override
             public void procedure() {
-                _toggleAction.perform();
+                toggleAction.perform();
             }
         }
 
-        private final MenuToggleDisplayAction _menuToggleDisplayAction;
+        private final MenuToggleDisplayAction menuToggleDisplayAction;
 
 
         private final class MenuInspectMemoryAction extends InspectorAction {
 
-            private final InspectorAction _inspectMemoryAction;
+            private final InspectorAction inspectMemoryAction;
 
             private MenuInspectMemoryAction(Value value) {
                 super(inspection(), "Inspect memory");
-                _inspectMemoryAction = getInspectMemoryAction(value);
-                setEnabled(_inspectMemoryAction != null);
+                inspectMemoryAction = getInspectMemoryAction(value);
+                setEnabled(inspectMemoryAction != null);
             }
 
             @Override
             public void procedure() {
-                _inspectMemoryAction.perform();
+                inspectMemoryAction.perform();
             }
         }
 
-        private final MenuInspectMemoryAction _menuInspectMemoryAction;
+        private final MenuInspectMemoryAction menuInspectMemoryAction;
 
 
         private final class MenuInspectMemoryWordsAction extends InspectorAction {
 
-            private final InspectorAction _inspectMemoryWordsAction;
+            private final InspectorAction inspectMemoryWordsAction;
 
             private MenuInspectMemoryWordsAction(Value value) {
                 super(inspection(), "Inspect memory words");
-                _inspectMemoryWordsAction = getInspectMemoryWordsAction(value);
-                setEnabled(_inspectMemoryWordsAction != null);
+                inspectMemoryWordsAction = getInspectMemoryWordsAction(value);
+                setEnabled(inspectMemoryWordsAction != null);
             }
 
             @Override
             public void procedure() {
-                _inspectMemoryWordsAction.perform();
+                inspectMemoryWordsAction.perform();
             }
         }
 
-        private final MenuInspectMemoryWordsAction _menuInspectMemoryWordsAction;
+        private final MenuInspectMemoryWordsAction menuInspectMemoryWordsAction;
 
 
         private final class MenuShowMemoryRegionAction extends InspectorAction {
 
-            private final InspectorAction _showMemoryRegionAction;
+            private final InspectorAction showMemoryRegionAction;
 
             private MenuShowMemoryRegionAction(Value value) {
                 super(inspection(), "Show memory region");
-                _showMemoryRegionAction = getShowMemoryRegionAction(value);
-                if (_showMemoryRegionAction == null) {
+                showMemoryRegionAction = getShowMemoryRegionAction(value);
+                if (showMemoryRegionAction == null) {
                     setEnabled(false);
                 } else {
                     setEnabled(true);
-                    setName(_showMemoryRegionAction.name());
+                    setName(showMemoryRegionAction.name());
                 }
             }
 
             @Override
             public void procedure() {
-                _showMemoryRegionAction.perform();
+                showMemoryRegionAction.perform();
             }
         }
 
-        private final MenuShowMemoryRegionAction _menuShowMemoryRegionAction;
+        private final MenuShowMemoryRegionAction menuShowMemoryRegionAction;
 
         private WordValueMenuItems(Inspection inspection, Value value) {
-            _copyWordAction = inspection.actions().copyValue(value, "Copy value to clipboard");
-            _menuInspectObjectAction = new MenuInspectObjectAction(value);
-            _menuToggleDisplayAction = new MenuToggleDisplayAction();
-            _menuInspectMemoryAction = new MenuInspectMemoryAction(value);
-            _menuInspectMemoryWordsAction = new MenuInspectMemoryWordsAction(value);
-            _menuShowMemoryRegionAction = new MenuShowMemoryRegionAction(value);
+            copyWordAction = inspection.actions().copyValue(value, "Copy value to clipboard");
+            menuInspectObjectAction = new MenuInspectObjectAction(value);
+            menuToggleDisplayAction = new MenuToggleDisplayAction();
+            menuInspectMemoryAction = new MenuInspectMemoryAction(value);
+            menuInspectMemoryWordsAction = new MenuInspectMemoryWordsAction(value);
+            menuShowMemoryRegionAction = new MenuShowMemoryRegionAction(value);
         }
 
         public void addTo(InspectorMenu menu) {
-            menu.add(_copyWordAction);
-            menu.add(_menuInspectObjectAction);
-            menu.add(_menuToggleDisplayAction);
-            menu.add(_menuInspectMemoryAction);
-            menu.add(_menuInspectMemoryWordsAction);
-            menu.add(_menuShowMemoryRegionAction);
+            menu.add(copyWordAction);
+            menu.add(menuInspectObjectAction);
+            menu.add(menuToggleDisplayAction);
+            menu.add(menuInspectMemoryAction);
+            menu.add(menuInspectMemoryWordsAction);
+            menu.add(menuShowMemoryRegionAction);
             menu.addSeparator();
 
         }

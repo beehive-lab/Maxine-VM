@@ -34,20 +34,20 @@ import com.sun.max.vm.value.*;
  */
 public class TeleInterpreterException extends InvocationTargetException {
 
-    private final ReferenceValue _throwableReference;
+    private final ReferenceValue throwableReference;
 
     public TeleInterpreterException(Throwable throwable, Machine machine) {
         super(throwable, throwable.getMessage());
-        _throwableReference = ReferenceValue.from(throwable);
+        throwableReference = ReferenceValue.from(throwable);
         initStackTrace(machine);
     }
 
     public ReferenceValue throwableReference() {
-        return _throwableReference;
+        return throwableReference;
     }
 
     public Class throwableType() {
-        return _throwableReference.getClassActor().toJava();
+        return throwableReference.getClassActor().toJava();
     }
 
     private void initStackTrace(Machine machine) {

@@ -36,16 +36,16 @@ import com.sun.max.program.option.*;
 
 public class MethodInspectorPreferences extends AbstractInspectionHolder {
 
-    private static MethodInspectorPreferences _globalPreferences;
+    private static MethodInspectorPreferences globalPreferences;
 
     /**
      * @return the global, persistent set of user preferences for viewing method code
      */
     public static MethodInspectorPreferences globalPreferences(Inspection inspection) {
-        if (_globalPreferences == null) {
-            _globalPreferences = new MethodInspectorPreferences(inspection);
+        if (globalPreferences == null) {
+            globalPreferences = new MethodInspectorPreferences(inspection);
         }
-        return _globalPreferences;
+        return globalPreferences;
     }
 
     /**
@@ -58,14 +58,14 @@ public class MethodInspectorPreferences extends AbstractInspectionHolder {
     /**
      * A predicate specifying which kinds of code are to be displayed in a method inspector.
      */
-    private final Map<MethodCodeKind, Boolean> _visibleCodeKinds = new EnumMap<MethodCodeKind, Boolean>(MethodCodeKind.class);
+    private final Map<MethodCodeKind, Boolean> visibleCodeKinds = new EnumMap<MethodCodeKind, Boolean>(MethodCodeKind.class);
 
     public MethodInspectorPreferences(Inspection inspection) {
         super(inspection);
         final InspectionSettings settings = inspection.settings();
         final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener("methodInspectorPrefs") {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
-                for (Map.Entry<MethodCodeKind, Boolean> entry : _visibleCodeKinds.entrySet()) {
+                for (Map.Entry<MethodCodeKind, Boolean> entry : visibleCodeKinds.entrySet()) {
                     saveSettingsEvent.save(entry.getKey().name().toLowerCase(), entry.getValue());
                 }
             }
@@ -75,7 +75,7 @@ public class MethodInspectorPreferences extends AbstractInspectionHolder {
             final boolean defaultVisibility = codeKind.defaultVisibility();
             final String name = codeKind.name().toLowerCase();
             final Boolean value = settings.get(saveSettingsListener, name, OptionTypes.BOOLEAN_TYPE, defaultVisibility);
-            _visibleCodeKinds.put(codeKind, value);
+            visibleCodeKinds.put(codeKind, value);
         }
     }
 
@@ -84,7 +84,7 @@ public class MethodInspectorPreferences extends AbstractInspectionHolder {
      * for a given code kind.
      */
     public boolean isVisible(MethodCodeKind codeKind) {
-        return _visibleCodeKinds.get(codeKind);
+        return visibleCodeKinds.get(codeKind);
     }
 
     /**
@@ -99,7 +99,7 @@ public class MethodInspectorPreferences extends AbstractInspectionHolder {
                 for (MethodCodeKind codeKind : MethodCodeKind.VALUES) {
                     final JCheckBox checkBox = checkBoxes[codeKind.ordinal()];
                     if (source == checkBox) {
-                        _visibleCodeKinds.put(codeKind, checkBox.isSelected());
+                        visibleCodeKinds.put(codeKind, checkBox.isSelected());
                         inspection().settings().save();
                         break;
                     }
@@ -110,7 +110,7 @@ public class MethodInspectorPreferences extends AbstractInspectionHolder {
         content.add(new TextLabel(inspection(), "View:  "));
         final String toolTipText = "Should new Method inspectors initially display this code, when available?";
         for (MethodCodeKind codeKind : MethodCodeKind.VALUES) {
-            final boolean currentValue = _visibleCodeKinds.get(codeKind);
+            final boolean currentValue = visibleCodeKinds.get(codeKind);
             final JCheckBox checkBox =
                 new InspectorCheckBox(inspection(), codeKind.toString(), toolTipText, currentValue);
             checkBox.addItemListener(itemListener);

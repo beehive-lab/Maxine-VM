@@ -55,13 +55,13 @@ public class StackFrameHandlers extends Handlers {
 
         @Override
         public GetValues.Reply handle(GetValues.IncomingRequest incomingRequest) throws JDWPException {
-            final FrameProvider frame = session().getFrame(incomingRequest._thread, incomingRequest._frame);
-            final int slotCount = incomingRequest._slots.length;
+            final FrameProvider frame = session().getFrame(incomingRequest.thread, incomingRequest.frame);
+            final int slotCount = incomingRequest.slots.length;
             final GetValues.Reply reply = new GetValues.Reply();
-            reply._values = new JDWPValue[slotCount];
+            reply.values = new JDWPValue[slotCount];
             for (int i = 0; i < slotCount; i++) {
-                final int index = incomingRequest._slots[i]._slot;
-                final byte sigByte = incomingRequest._slots[i]._sigbyte;
+                final int index = incomingRequest.slots[i].slot;
+                final byte sigByte = incomingRequest.slots[i].sigbyte;
 
                 final VMValue v = frame.getValue(index);
                 final JDWPValue jdwpValue = session().toJDWPValue(v);
@@ -69,7 +69,7 @@ public class StackFrameHandlers extends Handlers {
                     // TODO: Make better check that can be asserted!
                     LOGGER.warning("WARNING: Tag bytes do not match, tagByte=" + jdwpValue.tag() + ", sigByte=" + sigByte + "!");
                 }
-                reply._values[i] = jdwpValue;
+                reply.values[i] = jdwpValue;
             }
 
             return reply;
@@ -84,11 +84,11 @@ public class StackFrameHandlers extends Handlers {
 
         @Override
         public SetValues.Reply handle(SetValues.IncomingRequest incomingRequest) throws JDWPException {
-            final FrameProvider frame = session().getFrame(incomingRequest._thread, incomingRequest._frame);
+            final FrameProvider frame = session().getFrame(incomingRequest.thread, incomingRequest.frame);
 
-            for (int i = 0; i < incomingRequest._slotValues.length; i++) {
-                final SetValues.SlotInfo si = incomingRequest._slotValues[i];
-                frame.setValue(si._slot, session().toValue(si._slotValue));
+            for (int i = 0; i < incomingRequest.slotValues.length; i++) {
+                final SetValues.SlotInfo si = incomingRequest.slotValues[i];
+                frame.setValue(si.slot, session().toValue(si.slotValue));
             }
 
             return new SetValues.Reply();
@@ -103,7 +103,7 @@ public class StackFrameHandlers extends Handlers {
 
         @Override
         public ThisObject.Reply handle(ThisObject.IncomingRequest incomingRequest) throws JDWPException {
-            final FrameProvider frame = session().getFrame(incomingRequest._thread, incomingRequest._frame);
+            final FrameProvider frame = session().getFrame(incomingRequest.thread, incomingRequest.frame);
             return new ThisObject.Reply(new JDWPValue(session().toID(frame.thisObject())));
         }
     }

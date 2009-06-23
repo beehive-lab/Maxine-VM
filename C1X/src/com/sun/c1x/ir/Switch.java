@@ -33,7 +33,7 @@ import java.util.List;
  */
 public abstract class Switch extends BlockEnd {
 
-    Instruction _value;
+    Instruction value;
 
     /**
      * Constructs a new Switch.
@@ -44,8 +44,8 @@ public abstract class Switch extends BlockEnd {
      */
     public Switch(Instruction value, List<BlockBegin> successors, ValueStack stateBefore, boolean isSafepoint) {
         super(ValueType.ILLEGAL_TYPE, stateBefore, isSafepoint);
-        _successors = successors;
-        _value = value;
+        this.successors = successors;
+        this.value = value;
     }
 
     /**
@@ -53,7 +53,7 @@ public abstract class Switch extends BlockEnd {
      * @return the instruction producing the input value
      */
     public Instruction value() {
-        return _value;
+        return value;
     }
 
     /**
@@ -61,7 +61,7 @@ public abstract class Switch extends BlockEnd {
      * @return the number of cases
      */
     public int numberOfCases() {
-        return _successors.size() - 1;
+        return successors.size() - 1;
     }
 
     /**
@@ -70,6 +70,6 @@ public abstract class Switch extends BlockEnd {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        _value = closure.apply(_value);
+        value = closure.apply(value);
     }
 }

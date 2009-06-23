@@ -32,35 +32,35 @@ import com.sun.max.vm.template.generate.*;
  */
 @PROTOTYPE_ONLY
 public class UnresolvedAtTestTime extends UnresolvedAtCompileTime {
-    public static byte _staticByteField;
-    public static boolean _staticBooleanField;
-    public static char _staticCharField;
-    public static short _staticShortField;
-    public static int _staticIntField;
-    public static float _staticFloatField;
-    public static long _staticLongField;
-    public static double _staticDoubleField;
-    public static Object _staticObjectField;
+    public static byte staticByteField;
+    public static boolean staticBooleanField;
+    public static char staticCharField;
+    public static short staticShortField;
+    public static int staticIntField;
+    public static float staticFloatField;
+    public static long staticLongField;
+    public static double staticDoubleField;
+    public static Object staticObjectField;
 
-    public int _intField2;
-    public byte _byteField2;
-    public char _charField2;
-    public short _shortField2;
-    public long _longField2;
-    public float _floatField2;
-    public boolean _booleanField2;
-    public double _doubleField2;
-    public Object _objField2;
+    public int intField2;
+    public byte byteField2;
+    public char charField2;
+    public short shortField2;
+    public long longField2;
+    public float floatField2;
+    public boolean booleanField2;
+    public double doubleField2;
+    public Object objField2;
 
     public int getInt() {
-        return _intField2;
+        return intField2;
     }
 
     public void updateInt(int i1, int i2) {
-        _intField2 = i1 << i2;
+        intField2 = i1 << i2;
     }
 
     public static int staticGetInt() {
-        return _staticIntField;
+        return staticIntField;
     }
 }

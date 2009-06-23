@@ -32,7 +32,7 @@ import com.sun.c1x.value.ValueStack;
  */
 public class ArithmeticOp extends Op2 {
 
-    ValueStack _lockStack;
+    ValueStack lockStack;
 
     /**
      * Creates a new arithmetic operation.
@@ -45,7 +45,7 @@ public class ArithmeticOp extends Op2 {
     public ArithmeticOp(int opcode, Instruction x, Instruction y, boolean isStrictFP, ValueStack lockStack) {
         super(x.type().meet(y.type()), opcode, x, y);
         initFlag(Flag.IsStrictFP, isStrictFP);
-        _lockStack = lockStack;
+        this.lockStack = lockStack;
         if (canTrap()) {
             pin();
         }
@@ -56,7 +56,7 @@ public class ArithmeticOp extends Op2 {
      * @return the lock stack
      */
     public ValueStack lockStack() {
-        return _lockStack;
+        return lockStack;
     }
 
     /**
@@ -64,7 +64,7 @@ public class ArithmeticOp extends Op2 {
      * @param lockStack the lock stack
      */
     public void setLockStack(ValueStack lockStack) {
-        _lockStack = lockStack;
+        this.lockStack = lockStack;
     }
 
     /**
@@ -81,8 +81,8 @@ public class ArithmeticOp extends Op2 {
      */
     @Override
     public void otherValuesDo(InstructionClosure closure) {
-        if (_lockStack != null) {
-            _lockStack.valuesDo(closure);
+        if (lockStack != null) {
+            lockStack.valuesDo(closure);
         }
     }
 
@@ -93,7 +93,7 @@ public class ArithmeticOp extends Op2 {
      */
     @Override
     public boolean canTrap() {
-        switch (_opcode) {
+        switch (opcode) {
             case Bytecodes.IDIV:
             case Bytecodes.IREM:
             case Bytecodes.LDIV:

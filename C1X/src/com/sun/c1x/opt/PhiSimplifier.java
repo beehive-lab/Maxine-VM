@@ -33,7 +33,7 @@ import com.sun.c1x.value.ValueStack;
  */
 public class PhiSimplifier implements BlockClosure {
 
-    boolean _hasSubstitutions;
+    boolean hasSubstitutions;
 
     /**
      * Creates a new PhiSimplifier for the specified start block and performs phi simplification.
@@ -41,7 +41,7 @@ public class PhiSimplifier implements BlockClosure {
      */
     public PhiSimplifier(BlockBegin start) {
         start.iteratePreOrder(this);
-        if (_hasSubstitutions) {
+        if (hasSubstitutions) {
             // perform substitutions
             new SubstitutionResolver(start);
         }
@@ -111,7 +111,7 @@ public class PhiSimplifier implements BlockClosure {
             assert phiSubst != null : "illegal phi function";
             phi.clearPhiFlag(Phi.PhiFlag.Visited);
             phi.setSubst(phiSubst);
-            _hasSubstitutions = true;
+            hasSubstitutions = true;
             return phiSubst;
         }
     }

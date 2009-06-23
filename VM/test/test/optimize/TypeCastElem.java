@@ -22,7 +22,7 @@ package test.optimize;
 
 /*
  * @Harness: java
- * @Runs: (10, 13, 25)= 4683
+ * @Runs: (10, 13, 25) = 27183
  */
 public class TypeCastElem {
     interface Int1 {
@@ -35,37 +35,37 @@ public class TypeCastElem {
         int do3();
     }
     public static class ClassA implements Int1 {
-        private int _a;
+        private int a;
         public ClassA(int a) {
-            _a = a;
+            this.a = a;
         }
         public int do1() {
-            return _a;
+            return a;
         }
     }
     public static class ClassB extends ClassA implements Int2 {
-        int _b;
+        int b;
         public ClassB(int a, int b) {
             super(a);
-            _b = b;
+            this.b = b;
         }
 
         public int do2() {
-            return _b;
+            return b;
         }
     }
     public static class ClassC implements Int3 {
-        private int _a,  _b;
+        private int a, b;
         public ClassC(int a, int b) {
-            a = _a;
-            b = _b;
+            this.a = a;
+            this.b = b;
         }
         public int do3() {
-            return _b;
+            return b;
         }
 
         public int do1() {
-            return _a;
+            return a;
         }
 
     }
@@ -74,7 +74,7 @@ public class TypeCastElem {
         if (o instanceof ClassB) {
             ClassB b = (ClassB) o;
             if (o instanceof Int1) {
-                return b._b-b._b+1;
+                return b.b-b.b+1;
             }
             return 7;
         }
@@ -95,7 +95,7 @@ public class TypeCastElem {
 
     public static int test3(Object o) {
         Object b = o;
-        boolean t =o instanceof Int3;
+        boolean t = o instanceof Int3;
         if (t) {
             Int1 a = (Int1) b;
             return a.do1();
@@ -110,7 +110,11 @@ public class TypeCastElem {
         int sum1= test1(ca)+test1(cb)*10+test1(cc)*100;
         int sum2 = test2(ca)+test2(cb)*10+test2(cc)*100;
         int sum3 = test3(ca)+test3(cb)*10+test3(cc)*100;
-        int result =sum1*5+sum2*7+sum3*9;
+        int result = sum1*5+sum2*7+sum3*9;
         return result;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(test(10, 13,25));
     }
 }

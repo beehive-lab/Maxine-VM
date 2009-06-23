@@ -32,7 +32,7 @@ import com.sun.c1x.bytecode.Bytecodes;
  */
 public class RoundFP extends Instruction {
 
-    Instruction _value;
+    Instruction value;
 
     /**
      * Creates a new RoundFP instruction.
@@ -40,7 +40,7 @@ public class RoundFP extends Instruction {
      */
     public RoundFP(Instruction value) {
         super(value.type());
-        _value = value;
+        this.value = value;
     }
 
     /**
@@ -48,7 +48,7 @@ public class RoundFP extends Instruction {
      * @return the instruction that generates the input value
      */
     public Instruction value() {
-        return _value;
+        return value;
     }
 
     /**
@@ -57,7 +57,7 @@ public class RoundFP extends Instruction {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        _value = closure.apply(_value);
+        value = closure.apply(value);
     }
 
     /**
@@ -71,14 +71,14 @@ public class RoundFP extends Instruction {
 
     @Override
     public int valueNumber() {
-        return Util.hash1(Bytecodes.D2F, _value); // just use d2f for the hash code
+        return Util.hash1(Bytecodes.D2F, value); // just use d2f for the hash code
     }
 
     @Override
     public boolean valueEqual(Instruction i) {
         if (i instanceof RoundFP) {
             RoundFP o = (RoundFP) i;
-            return _value == o._value;
+            return value == o.value;
         }
         return false;
     }

@@ -37,17 +37,17 @@ public abstract class TeleHub extends TeleHybridObject {
         super(teleVM, hubReference);
     }
 
-    private TeleClassActor _teleClassActor = null;
+    private TeleClassActor teleClassActor = null;
 
     /**
      * @return surrogate for the {@ClassActor} in the {@link TeleVM} that contains this {@link Hub}, i.e. for the type that this hub helps implement
      */
     public TeleClassActor getTeleClassActor() {
-        if (_teleClassActor == null) {
+        if (teleClassActor == null) {
             final Reference classActorReference = teleVM().fields().Hub_classActor.readReference(reference());
-            _teleClassActor = (TeleClassActor) teleVM().makeTeleObject(classActorReference);
+            teleClassActor = (TeleClassActor) teleVM().makeTeleObject(classActorReference);
         }
-        return _teleClassActor;
+        return teleClassActor;
     }
 
     /**
