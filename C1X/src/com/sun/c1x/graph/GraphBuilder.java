@@ -189,7 +189,7 @@ public class GraphBuilder {
         start.setBlockID(compilation.nextBlockNumber());
 
         BlockBegin newHeaderBlock;
-        if (stdEntry.predecessors().size() == 0 && !profileBranches()) {
+        if (stdEntry.predecessors().size() == 0 && !C1XOptions.ProfileBranches) {
             newHeaderBlock = stdEntry;
         } else {
             newHeaderBlock = headerBlock(stdEntry, BlockBegin.BlockFlag.StandardEntry, state);
@@ -218,7 +218,7 @@ public class GraphBuilder {
 
         Instruction l = h;
         CiMethodData methodData = method().methodData();
-        if (profileBranches() && methodData != null) {
+        if (C1XOptions.ProfileBranches && methodData != null) {
             // increment the invocation counter;
             // note that the normal append() won't work, so we do this manually
             Instruction m = Constant.forObject(methodData.dataObject());
@@ -702,7 +702,7 @@ public class GraphBuilder {
         int bci = stream().currentBCI();
         boolean isBackwards = tsucc.bci() <= bci || fsucc.bci() <= bci;
         final Instruction instr = append(new If(x, cond, false, y, tsucc, fsucc, isBackwards ? stateBefore : null, isBackwards));
-        if (instr instanceof If && profileBranches()) {
+        if (instr instanceof If && C1XOptions.ProfileBranches) {
             ((If) instr).setProfile(method(), bci);
         }
     }
@@ -742,7 +742,7 @@ public class GraphBuilder {
         if (assumeLeafClass(type)) {
             c.setDirectCompare();
         }
-        if (profileCheckcasts()) {
+        if (C1XOptions.ProfileCheckcasts) {
             c.setProfile(method(), bci());
         }
     }
@@ -1113,7 +1113,7 @@ public class GraphBuilder {
         for (ScopeData cur = scopeData; cur != null && cur.parsingJsr() && cur.scope == scope(); cur = cur.parent) {
             if (cur.jsrEntryBCI() == dest) {
                 // the jsr/ret pattern includes a recursive invocation
-                throw new Bailout("jsr/ret structure is too complicated");
+                throw new Bailout("recursive jsr/ret structure");
             }
         }
         push(ValueType.JSR_TYPE, append(Constant.forJsr(nextBCI())));
@@ -1145,7 +1145,7 @@ public class GraphBuilder {
             isBackwards |= offset < 0; // track if any of the successors are backwards
         }
         int offset = ts.defaultOffset();
-        isBackwards |= offset < 0; // track if any of the successors are backwards
+        isBackwards |= offset < 0; // if the default successor is backwards
         list.add(blockAt(bci + offset));
         ValueStack stateBefore = isBackwards ? curState.copy() : null;
         append(new TableSwitch(ipop(), list, ts.lowKey(), stateBefore, isBackwards));
@@ -1166,7 +1166,7 @@ public class GraphBuilder {
             isBackwards |= offset < 0; // track if any of the successors are backwards
         }
         int offset = ls.defaultOffset();
-        isBackwards |= offset < 0; // track if any of the successors are backwards
+        isBackwards |= offset < 0; // if the default successor is backwards
         list.add(blockAt(bci + offset));
         ValueStack stateBefore = isBackwards ? curState.copy() : null;
         append(new LookupSwitch(ipop(), list, keys, stateBefore, isBackwards));
@@ -1192,13 +1192,13 @@ public class GraphBuilder {
     }
 
     private void profileCall(Instruction receiver, CiType knownHolder) {
-        if (profileCalls()) {
+        if (C1XOptions.ProfileCalls) {
             append(new ProfileCall(method(), bci(), receiver, knownHolder));
         }
     }
 
     private void profileInvocation(CiMethod callee) {
-        if (profileCalls()) {
+        if (C1XOptions.ProfileCalls) {
             CiMethodData mdo = callee.methodData();
             if (mdo != null) {
                 int offset = mdo.invocationCountOffset();
@@ -1212,7 +1212,7 @@ public class GraphBuilder {
     }
 
     private void profileBCI(int bci) {
-        if (profileBranches()) {
+        if (C1XOptions.ProfileBranches) {
             CiMethodData mdo = method().methodData();
             if (mdo != null) {
                 int offset = mdo.bciCountOffset(bci);
@@ -1223,22 +1223,6 @@ public class GraphBuilder {
                 }
             }
         }
-    }
-
-    private boolean profileCalls() {
-        return C1XOptions.ProfileCalls;
-    }
-
-    private boolean profileInlinedCalls() {
-        return C1XOptions.ProfileInlinedCalls;
-    }
-
-    private boolean profileCheckcasts() {
-        return C1XOptions.ProfileCheckcasts;
-    }
-
-    private boolean profileBranches() {
-        return C1XOptions.ProfileBranches;
     }
 
     private Instruction appendConstant(ConstType type) {
@@ -1491,7 +1475,7 @@ public class GraphBuilder {
             nullCheck(receiver);
         }
 
-        if (profileInlinedCalls()) {
+        if (C1XOptions.ProfileInlinedCalls) {
             profileCall(receiver, knownHolder);
         }
 
