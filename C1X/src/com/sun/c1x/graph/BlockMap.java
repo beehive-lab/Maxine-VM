@@ -60,7 +60,7 @@ public class BlockMap {
 
         ExceptionMap(CiMethod method, byte[] code) {
             canTrap = new BitMap(code.length);
-            _isObjectInit = C1XOptions.RegisterFinalizersAtInit && C1XIntrinsic.getIntrinsic(method) == C1XIntrinsic.java_lang_Object$init;
+            isObjectInit = C1XOptions.RegisterFinalizersAtInit && C1XIntrinsic.getIntrinsic(method) == C1XIntrinsic.java_lang_Object$init;
             allHandlers = method.exceptionHandlers();
             handlerMap = new ArrayMap<HashSet<BlockBegin>>(firstBlock, code.length / 5);
         }

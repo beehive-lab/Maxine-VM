@@ -407,7 +407,7 @@ public class MaxineTesterConfiguration {
     }
 
     public static String[] shootoutTests() {
-        return _shootoutInputs.keySet().toArray(new String[_shootoutInputs.size()]);
+        return shootoutInputs.keySet().toArray(new String[shootoutInputs.size()]);
     }
 
     public static Object[] shootoutInputs(String benchmark) {

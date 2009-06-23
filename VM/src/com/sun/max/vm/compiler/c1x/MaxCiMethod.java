@@ -298,18 +298,18 @@ public class MaxCiMethod implements CiMethod {
     }
 
     MethodActor asMethodActor(String operation) {
-        if (_methodActor != null) {
-            return _methodActor;
+        if (methodActor != null) {
+            return methodActor;
         }
         throw unresolved(operation);
     }
 
     private MaxCiUnresolved unresolved(String operation) {
         String name;
-        if (_methodActor != null) {
-            name = _methodActor.toString();
+        if (methodActor != null) {
+            name = methodActor.toString();
         } else {
-            name = _methodRef.toString(_constantPool._constantPool);
+            name = methodRef.toString(constantPool.constantPool);
         }
         throw new MaxCiUnresolved(operation + " not defined for unresolved method " + name);
     }

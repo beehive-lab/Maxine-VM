@@ -54,8 +54,8 @@ public abstract class AccessField extends Instruction {
     public AccessField(Instruction object, CiField field, boolean isStatic,
                        ValueStack lockStack, ValueStack stateBefore, boolean isLoaded, boolean isInitialized) {
         super(ValueType.fromBasicType(field.basicType()));
-        _object = object;
-        _offset = isLoaded ? field.offset() : -1;
+        this.object = object;
+        this.offset = isLoaded ? field.offset() : -1;
         this.field = field;
         this.lockStack = lockStack;
         this.stateBefore = stateBefore;

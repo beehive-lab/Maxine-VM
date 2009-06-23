@@ -159,7 +159,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @return the compiler interface field resolved at that index
      */
     public CiField lookupGetField(char cpi) {
-        return fieldFrom(_constantPool.fieldAt(cpi), cpi);
+        return fieldFrom(constantPool.fieldAt(cpi), cpi);
     }
 
     /**
@@ -168,7 +168,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @return the compiler interface field resolved at that index
      */
     public CiField lookupPutField(char cpi) {
-        return fieldFrom(_constantPool.fieldAt(cpi), cpi);
+        return fieldFrom(constantPool.fieldAt(cpi), cpi);
     }
 
     /**
@@ -177,7 +177,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @return the compiler interface field resolved at that index
      */
     public CiField lookupGetStatic(char cpi) {
-        return fieldFrom(_constantPool.fieldAt(cpi), cpi);
+        return fieldFrom(constantPool.fieldAt(cpi), cpi);
     }
 
     /**
@@ -186,7 +186,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @return the compiler interface field resolved at that index
      */
     public CiField lookupPutStatic(char cpi) {
-        return fieldFrom(_constantPool.fieldAt(cpi), cpi);
+        return fieldFrom(constantPool.fieldAt(cpi), cpi);
     }
 
     /**
@@ -195,7 +195,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @return the compiler interface method resolved at that index
      */
     public CiMethod lookupInvokeVirtual(char cpi) {
-        return methodFrom(_constantPool.methodAt(cpi), cpi);
+        return methodFrom(constantPool.methodAt(cpi), cpi);
     }
 
     /**
@@ -204,7 +204,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @return the compiler interface method resolved at that index
      */
     public CiMethod lookupInvokeSpecial(char cpi) {
-        return methodFrom(_constantPool.methodAt(cpi), cpi);
+        return methodFrom(constantPool.methodAt(cpi), cpi);
     }
 
     /**
@@ -213,7 +213,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @return the compiler interface method resolved at that index
      */
     public CiMethod lookupInvokeInterface(char cpi) {
-        return methodFrom(_constantPool.methodAt(cpi), cpi);
+        return methodFrom(constantPool.methodAt(cpi), cpi);
     }
 
     /**
@@ -222,7 +222,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @return the compiler interface method resolved at that index
      */
     public CiMethod lookupInvokeStatic(char cpi) {
-        return methodFrom(_constantPool.methodAt(cpi), cpi);
+        return methodFrom(constantPool.methodAt(cpi), cpi);
     }
 
     private MaxCiField resolveField(char cpi) {
@@ -267,7 +267,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @return the compiler interface type at that index
      */
     public CiType lookupType(char cpi) {
-        return typeFrom(_constantPool.classAt(cpi), cpi);
+        return typeFrom(constantPool.classAt(cpi), cpi);
     }
 
     /**
@@ -278,7 +278,7 @@ public class MaxCiConstantPool implements CiConstantPool {
     public CiConstant lookupConstant(char cpi) {
         switch (constantPool.tagAt(cpi)) {
             case CLASS: {
-                return new MaxCiConstant(typeFrom(_constantPool.classAt(cpi), cpi));
+                return new MaxCiConstant(typeFrom(constantPool.classAt(cpi), cpi));
             }
             case INTEGER: {
                 return new MaxCiConstant(IntValue.from(constantPool.intAt(cpi)));
@@ -306,7 +306,7 @@ public class MaxCiConstantPool implements CiConstantPool {
             return canonicalCiField(((FieldRefConstant.Resolved) constant).fieldActor());
         } else if (attemptResolution(constant)) {
             // the resolution can occur without side effects
-            return canonicalCiField(constant.resolve(_constantPool, cpi));
+            return canonicalCiField(constant.resolve(constantPool, cpi));
         }
         return new MaxCiField(this, constant); // unresolved
     }
@@ -320,7 +320,7 @@ public class MaxCiConstantPool implements CiConstantPool {
             return canonicalCiMethod(((InterfaceMethodRefConstant.Resolved) constant).methodActor());
         } else if (attemptResolution(constant)) {
             // the resolution can occur without side effects
-            return canonicalCiMethod(constant.resolve(_constantPool, cpi));
+            return canonicalCiMethod(constant.resolve(constantPool, cpi));
         }
         return new MaxCiMethod(this, constant); // unresolved
     }
@@ -328,16 +328,16 @@ public class MaxCiConstantPool implements CiConstantPool {
     private MaxCiType typeFrom(ClassConstant constant, int cpi) {
         if (constant instanceof ClassConstant.Resolved) {
             // already resolved
-            return canonicalCiType(((ClassConstant.Resolved) constant).classActor());
+            return canonicalCiType(((ClassConstant.Resolved) constant).classActor);
         } else if (attemptResolution(constant)) {
             // the resolution can occur without side effects
-            return canonicalCiType(constant.resolve(_constantPool, cpi));
+            return canonicalCiType(constant.resolve(constantPool, cpi));
         }
         return new MaxCiType(this, constant); // unresolved
     }
 
     private boolean attemptResolution(ResolvableConstant constant) {
-        return C1XOptions.AggressivelyResolveCPEs && constant.isResolvableWithoutClassLoading(_constantPool);
+        return C1XOptions.AggressivelyResolveCPEs && constant.isResolvableWithoutClassLoading(constantPool);
     }
 
     /**
