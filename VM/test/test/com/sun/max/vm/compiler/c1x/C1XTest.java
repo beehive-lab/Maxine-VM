@@ -36,6 +36,7 @@ import com.sun.max.program.option.OptionSet.*;
 import com.sun.max.test.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.actor.Actor;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
@@ -281,6 +282,10 @@ public class C1XTest {
             @Override
             public boolean add(MethodActor e) {
                 final boolean result = super.add(e);
+                // register foldable methods with C1X.
+                if (C1XOptions.CanonicalizeFoldableMethods && Actor.isDeclaredFoldable(e.flags())) {
+                    C1XIntrinsic.registerFoldableMethod(MaxCiRuntime.globalRuntime.getCiMethod(e), e.toJava());
+                }
                 if ((size() % 1000) == 0 && verboseOption.getValue() >= 1) {
                     out.print('.');
                 }
@@ -427,7 +432,7 @@ public class C1XTest {
                     try {
                         final int value = field.getInt(null);
                         final String name = field.getName();
-                        out.print(name + ": " + value + "\n");
+                        out.print(Strings.padLengthWithSpaces(name, 40) + ": " + value + "\n");
                     } catch (IllegalAccessException e) {
                         // do nothing.
                     }

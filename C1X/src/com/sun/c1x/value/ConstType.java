@@ -89,6 +89,14 @@ public class ConstType extends ValueType {
         return value.toString();
     }
 
+    /**
+     * Returns the value of this constant as a boxed Java value.
+     * @return the value of this constant
+     */
+    public Object boxedValue() {
+        return value;
+    }
+
     public boolean equivalent(ValueType other) {
         if (other == this) {
             return true;
