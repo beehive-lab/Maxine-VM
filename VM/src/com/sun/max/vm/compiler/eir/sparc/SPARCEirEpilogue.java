@@ -65,7 +65,6 @@ public final class SPARCEirEpilogue extends EirEpilogue<SPARCEirInstructionVisit
         asm.ldx(latchRegister, VmThreadLocal.TRAP_INSTRUCTION_POINTER.offset(), returnAddressRegister);
 
         // restore all the general purpose registers not in the register windows
-        // restore all the floating point registers
         for (GPR register : SPARCSafepoint.TRAP_SAVED_GLOBAL_SYMBOLIZER) {
             asm.ldx(stackPointer, offset, register);
             offset += wordSize;
@@ -74,13 +73,10 @@ public final class SPARCEirEpilogue extends EirEpilogue<SPARCEirInstructionVisit
             asm.ldx(stackPointer, offset, register);
             offset += wordSize;
         }
-        for (int i = 0; i < 32; i++) {
+        // restore all the floating point registers
+        for (int i = 0; i < 64; i += 2) {
             final FPR fpr = FPR.fromValue(i);
-            if (fpr instanceof DFPR) {
-                asm.ldd(stackPointer, offset, (DFPR) fpr);
-            } else {
-                asm.ld(stackPointer, offset, (SFPR) fpr);
-            }
+            asm.ldd(stackPointer, offset, (DFPR) fpr);
             offset += wordSize;
         }
         asm.ldx(stackPointer, offset, scratchRegister1);
