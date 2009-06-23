@@ -4644,9 +4644,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.bytecode.BC_ldc_06");
         String runString = null;
         try {
-        // test(0) == test.output.BC_ldc_06
+        // test(0) == test.bytecode.BC_ldc_06
             runString = "test(0)";
-            if (!"test.output.BC_ldc_06".equals(test.bytecode.BC_ldc_06.test(0))) {
+            if (!"test.bytecode.BC_ldc_06".equals(test.bytecode.BC_ldc_06.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
