@@ -147,11 +147,11 @@ public class C1XTest {
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
 
         for (int i = 0; i < warmupOption.getValue(); i++) {
-                if (i == 0) {
-                    out.print("Warming up");
-                }
-                out.print(".");
-                out.flush();
+            if (i == 0) {
+                out.print("Warming up");
+            }
+            out.print(".");
+            out.flush();
             for (MethodActor actor : methods) {
                 compile(runtime, actor, false, true);
             }
