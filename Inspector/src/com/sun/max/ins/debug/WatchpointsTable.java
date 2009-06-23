@@ -91,7 +91,9 @@ public class WatchpointsTable extends InspectorTable {
             model.refresh();
             for (TableColumn column : columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(force);
+                if (prober != null) {
+                    prober.refresh(force);
+                }
             }
         }
         invalidate();
@@ -143,12 +145,13 @@ public class WatchpointsTable extends InspectorTable {
 
         private WatchpointsColumnModel(WatchpointsViewPreferences viewPreferences) {
             this.viewPreferences = viewPreferences;
-            createColumn(WatchpointsColumnKind.START, new StartAddressCellRenderer(inspection()));
-            createColumn(WatchpointsColumnKind.END, new EndAddressCellRenderer(inspection()));
-            createColumn(WatchpointsColumnKind.REGION, new RegionRenderer(inspection()));
+            createColumn(WatchpointsColumnKind.START, new StartAddressCellRenderer(inspection()), null);
+            createColumn(WatchpointsColumnKind.END, new EndAddressCellRenderer(inspection()), null);
+            createColumn(WatchpointsColumnKind.REGION, new RegionRenderer(inspection()), null);
+            createColumn(WatchpointsColumnKind.READ, null, new DefaultCellEditor(new JCheckBox()));
         }
 
-        private void createColumn(WatchpointsColumnKind columnKind, TableCellRenderer renderer) {
+        private void createColumn(WatchpointsColumnKind columnKind, TableCellRenderer renderer, TableCellEditor editor) {
             final int col = columnKind.ordinal();
             columns[col] = new TableColumn(col, 0, renderer, null);
             columns[col].setHeaderValue(columnKind.label());
@@ -183,6 +186,9 @@ public class WatchpointsTable extends InspectorTable {
         public Object getValueAt(int row, int col) {
             int count = 0;
             for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
+                if (WatchpointsColumnKind.VALUES.get(col) == WatchpointsColumnKind.READ) {
+                    return true;
+                }
                 if (count == row) {
                     return watchpoint;
                 }
@@ -193,7 +199,12 @@ public class WatchpointsTable extends InspectorTable {
 
         @Override
         public Class< ? > getColumnClass(int c) {
-            return MaxWatchpoint.class;
+            switch (WatchpointsColumnKind.VALUES.get(c)) {
+                case READ:
+                    return Boolean.class;
+                default:
+                    return MaxWatchpoint.class;
+            }
         }
 
         int findRow(MaxWatchpoint findWatchpoint) {
