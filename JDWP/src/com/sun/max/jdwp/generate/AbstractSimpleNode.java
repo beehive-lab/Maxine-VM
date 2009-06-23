@@ -30,7 +30,7 @@ import java.util.*;
 abstract class AbstractSimpleNode extends Node {
 
     AbstractSimpleNode() {
-        _kind = "-simple-";
-        _components = new ArrayList<Node>();
+        kind = "-simple-";
+        components = new ArrayList<Node>();
     }
 }

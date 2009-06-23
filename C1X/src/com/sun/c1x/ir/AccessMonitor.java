@@ -30,8 +30,8 @@ import com.sun.c1x.util.InstructionClosure;
  */
 public abstract class AccessMonitor extends StateSplit {
 
-    Instruction _object;
-    int _lockNumber;
+    Instruction object;
+    int lockNumber;
 
     /**
      * Creates a new AccessMonitor instruction.
@@ -40,8 +40,8 @@ public abstract class AccessMonitor extends StateSplit {
      */
     public AccessMonitor(Instruction object, int lockNumber) {
         super(ValueType.ILLEGAL_TYPE);
-        _object = object;
-        _lockNumber = lockNumber;
+        this.object = object;
+        this.lockNumber = lockNumber;
     }
 
     /**
@@ -49,7 +49,7 @@ public abstract class AccessMonitor extends StateSplit {
      * @return the instruction producing the object
      */
     public Instruction object() {
-        return _object;
+        return object;
     }
 
     /**
@@ -57,7 +57,7 @@ public abstract class AccessMonitor extends StateSplit {
      * @return the lock number
      */
     public int lockNumber() {
-        return _lockNumber;
+        return lockNumber;
     }
 
     /**
@@ -66,6 +66,6 @@ public abstract class AccessMonitor extends StateSplit {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        _object = closure.apply(_object);
+        object = closure.apply(object);
     }
 }

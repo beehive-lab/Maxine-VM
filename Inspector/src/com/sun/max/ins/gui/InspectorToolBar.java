@@ -33,45 +33,45 @@ import com.sun.max.tele.*;
  */
 public class InspectorToolBar extends JToolBar implements InspectionHolder {
 
-    private final Inspection _inspection;
+    private final Inspection inspection;
 
     /**
      * Creates a new {@JToolBar}, specialized for use in the Maxine Inspector,
      * not floatable by default.
      */
     public InspectorToolBar(Inspection inspection) {
-        _inspection = inspection;
+        this.inspection = inspection;
         setFloatable(false);
         setOpaque(true);
         setBackground(inspection.style().defaultBackgroundColor());
     }
 
     public final Inspection inspection() {
-        return _inspection;
+        return inspection;
     }
 
     public MaxVM maxVM() {
-        return _inspection.maxVM();
+        return inspection.maxVM();
     }
 
     public final MaxVMState maxVMState() {
-        return _inspection.maxVM().maxVMState();
+        return inspection.maxVM().maxVMState();
     }
 
     public InspectorGUI gui() {
-        return _inspection.gui();
+        return inspection.gui();
     }
 
     public final InspectorStyle style() {
-        return _inspection.style();
+        return inspection.style();
     }
 
     public final InspectionFocus focus() {
-        return _inspection.focus();
+        return inspection.focus();
     }
 
     public InspectionActions actions() {
-        return _inspection.actions();
+        return inspection.actions();
     }
 
     public void redisplay() {

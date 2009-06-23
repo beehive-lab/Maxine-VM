@@ -42,32 +42,32 @@ public class JDWPSession {
 
     private static final Logger LOGGER = Logger.getLogger(Handlers.class.getName());
 
-    private VMAccess _vm;
+    private VMAccess vm;
 
-    private VariableMapping<ID, Provider> _idToProvider;
-    private VariableMapping<Provider, ID> _providerToID;
+    private VariableMapping<ID, Provider> idToProvider;
+    private VariableMapping<Provider, ID> providerToID;
 
-    private VariableMapping<MethodProvider, ReferenceTypeProvider> _methodToReferenceType;
-    private VariableMapping<FieldProvider, ReferenceTypeProvider> _fieldToReferenceType;
-    private VariableMapping<FrameProvider, ThreadProvider> _frameToThread;
-    private long _lastID;
+    private VariableMapping<MethodProvider, ReferenceTypeProvider> methodToReferenceType;
+    private VariableMapping<FieldProvider, ReferenceTypeProvider> fieldToReferenceType;
+    private VariableMapping<FrameProvider, ThreadProvider> frameToThread;
+    private long lastID;
 
     public JDWPSession(VMAccess vm) {
         assert vm != null : "Virtual machine abstraction must not be null";
-        _vm = vm;
-        _idToProvider = new ChainedHashMapping<ID, Provider>();
+        this.vm = vm;
+        idToProvider = new ChainedHashMapping<ID, Provider>();
 
         final Class<HashIdentity<Provider>> type = null;
-        _providerToID = new ChainedHashMapping<Provider, ID>(HashIdentity.instance(type));
+        providerToID = new ChainedHashMapping<Provider, ID>(HashIdentity.instance(type));
 
         final Class<HashIdentity<MethodProvider>> type2 = null;
-        _methodToReferenceType = new ChainedHashMapping<MethodProvider, ReferenceTypeProvider>(HashIdentity.instance(type2));
+        methodToReferenceType = new ChainedHashMapping<MethodProvider, ReferenceTypeProvider>(HashIdentity.instance(type2));
 
         final Class<HashIdentity<FieldProvider>> type3 = null;
-        _fieldToReferenceType = new ChainedHashMapping<FieldProvider, ReferenceTypeProvider>(HashIdentity.instance(type3));
+        fieldToReferenceType = new ChainedHashMapping<FieldProvider, ReferenceTypeProvider>(HashIdentity.instance(type3));
 
         final Class<HashIdentity<FrameProvider>> type4 = null;
-        _frameToThread = new ChainedHashMapping<FrameProvider, ThreadProvider>(HashIdentity.instance(type4));
+        frameToThread = new ChainedHashMapping<FrameProvider, ThreadProvider>(HashIdentity.instance(type4));
     }
 
     public static int getValueTypeTag(VMValue.Type type) {
@@ -100,7 +100,7 @@ public class JDWPSession {
     }
 
     public VMAccess vm() {
-        return _vm;
+        return vm;
     }
 
     /**
@@ -132,18 +132,18 @@ public class JDWPSession {
             return ID.create(0, idKlass);
         }
 
-        if (!_providerToID.containsKey(provider)) {
-            _lastID++;
-            final ID_Type newID = ID.create(_lastID, idKlass);
-            _idToProvider.put(newID, provider);
-            _providerToID.put(provider, newID);
-            assert _providerToID.containsKey(provider);
-            assert _idToProvider.containsKey(newID);
-            assert _idToProvider.containsKey(ID.convert(newID, ID.class));
-            LOGGER.fine("Created new ID " + _lastID + " for provider " + provider);
+        if (!providerToID.containsKey(provider)) {
+            lastID++;
+            final ID_Type newID = ID.create(lastID, idKlass);
+            idToProvider.put(newID, provider);
+            providerToID.put(provider, newID);
+            assert providerToID.containsKey(provider);
+            assert idToProvider.containsKey(newID);
+            assert idToProvider.containsKey(ID.convert(newID, ID.class));
+            LOGGER.fine("Created new ID " + lastID + " for provider " + provider);
             return newID;
         }
-        final ID result = _providerToID.get(provider);
+        final ID result = providerToID.get(provider);
 
         // TODO: Make a better check-system!
         /*if (!idKlass.isAssignableFrom(result.getClass())) {
@@ -168,10 +168,10 @@ public class JDWPSession {
             return null;
         }
 
-        if (!_idToProvider.containsKey(id)) {
+        if (!idToProvider.containsKey(id)) {
             throw new JDWPException((short) Error.INVALID_OBJECT, "The id " + id + " is unknown!");
         }
-        final Provider result = _idToProvider.get(id);
+        final Provider result = idToProvider.get(id);
         // TODO: Check if there can be a better assertion.
         // if (klass.isAssignableFrom(result.getClass())) {
         // throw new JDWPException(errorCode, "The object found at id " + id + " is not a valid instance of " +
@@ -208,8 +208,8 @@ public class JDWPSession {
      */
     private void checkField(ReferenceTypeProvider referenceTypeProvider, FieldProvider fieldProvider) throws JDWPException {
 
-        if (!this._fieldToReferenceType.containsKey(fieldProvider)) {
-            _fieldToReferenceType.put(fieldProvider, referenceTypeProvider);
+        if (!this.fieldToReferenceType.containsKey(fieldProvider)) {
+            fieldToReferenceType.put(fieldProvider, referenceTypeProvider);
         }
 
         // TODO: Check subclass / class relationship.
@@ -219,8 +219,8 @@ public class JDWPSession {
     }
 
     private void checkMethod(ReferenceTypeProvider refType, MethodProvider m) throws JDWPException {
-        if (!this._methodToReferenceType.containsKey(m)) {
-            _methodToReferenceType.put(m, refType);
+        if (!this.methodToReferenceType.containsKey(m)) {
+            methodToReferenceType.put(m, refType);
         }
 
         // TODO: Check subclass / class relationship.
@@ -231,11 +231,11 @@ public class JDWPSession {
     }
 
     private void checkFrame(ThreadProvider thread, FrameProvider frameProvider) throws JDWPException {
-        if (!this._frameToThread.containsKey(frameProvider)) {
-            _frameToThread.put(frameProvider, thread);
+        if (!this.frameToThread.containsKey(frameProvider)) {
+            frameToThread.put(frameProvider, thread);
         }
 
-        if (this._frameToThread.get(frameProvider) != thread) {
+        if (this.frameToThread.get(frameProvider) != thread) {
             throw new JDWPException("Frame has wrong parent thread!");
         }
     }

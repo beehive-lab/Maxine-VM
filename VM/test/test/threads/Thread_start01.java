@@ -27,13 +27,13 @@ package test.threads;
 
 public class Thread_start01 implements Runnable {
 
-    static volatile boolean _continue;
+    static volatile boolean cont;
 
     public static boolean test(int i) {
-        _continue = true;
+        cont = true;
         new Thread(new Thread_start01()).start();
         for (int j = 0; j < 100000000; j++) {
-            if (!_continue) {
+            if (!cont) {
                 return true;
             }
         }
@@ -41,6 +41,6 @@ public class Thread_start01 implements Runnable {
     }
 
     public void run() {
-        _continue = false;
+        cont = false;
     }
 }

@@ -59,11 +59,11 @@ public class ObjectReferenceHandlers extends Handlers {
 
         @Override
         public ReferenceType.Reply handle(ReferenceType.IncomingRequest incomingRequest) throws JDWPException {
-            final ObjectProvider object = session().getObject(incomingRequest._object);
+            final ObjectProvider object = session().getObject(incomingRequest.object);
             final ReferenceTypeProvider refType = object.getReferenceType();
             final ReferenceType.Reply reply = new ReferenceType.Reply();
-            reply._refTypeTag = session().getTypeTag(refType);
-            reply._typeID = session().toID(refType);
+            reply.refTypeTag = session().getTypeTag(refType);
+            reply.typeID = session().toID(refType);
             return reply;
         }
     }
@@ -78,17 +78,17 @@ public class ObjectReferenceHandlers extends Handlers {
         @Override
         public GetValues.Reply handle(GetValues.IncomingRequest incomingRequest) throws JDWPException {
 
-            final ObjectProvider object = session().getObject(incomingRequest._object);
+            final ObjectProvider object = session().getObject(incomingRequest.object);
             final ReferenceTypeProvider referenceType = object.getReferenceType();
 
             final GetValues.Reply reply = new GetValues.Reply();
-            reply._values = new JDWPValue[incomingRequest._fields.length];
+            reply.values = new JDWPValue[incomingRequest.fields.length];
 
-            for (int i = 0; i < reply._values.length; i++) {
-                final ID.FieldID fieldID = incomingRequest._fields[i]._fieldID;
+            for (int i = 0; i < reply.values.length; i++) {
+                final ID.FieldID fieldID = incomingRequest.fields[i].fieldID;
                 final FieldProvider field = session().getField(session().toID(referenceType), fieldID);
                 final JDWPValue value = session().toJDWPValue(field.getValue(object));
-                reply._values[i] = value;
+                reply.values[i] = value;
             }
 
             return reply;
@@ -109,27 +109,27 @@ public class ObjectReferenceHandlers extends Handlers {
         public int helpAtDecodingUntaggedValue(SetValues.IncomingRequest data) throws JDWPException {
 
             int index = -1;
-            for (SetValues.FieldValue fieldValue : data._values) {
+            for (SetValues.FieldValue fieldValue : data.values) {
                 if (fieldValue == null) {
                     break;
                 }
                 index++;
             }
 
-            assert index >= 0 && index < data._values.length : "Index must be valid!";
-            assert data._object != null && data._values[index] != null : "Packet must be partially present!";
-            final ObjectProvider object = session().getObject(data._object);
-            final ID.FieldID fieldID = data._values[index]._fieldID;
+            assert index >= 0 && index < data.values.length : "Index must be valid!";
+            assert data.object != null && data.values[index] != null : "Packet must be partially present!";
+            final ObjectProvider object = session().getObject(data.object);
+            final ID.FieldID fieldID = data.values[index].fieldID;
             final FieldProvider field = session().getField(session().toID(object.getReferenceType()), fieldID);
             return JDWPSession.getValueTypeTag(field.getType());
         }
 
         @Override
         public SetValues.Reply handle(SetValues.IncomingRequest incomingRequest) throws JDWPException {
-            final ObjectProvider object = session().getObject(incomingRequest._object);
-            for (SetValues.FieldValue fv : incomingRequest._values) {
-                final FieldProvider field = session().getField(session().toID(object.getReferenceType()), fv._fieldID);
-                field.setValue(object, session().toValue(fv._value));
+            final ObjectProvider object = session().getObject(incomingRequest.object);
+            for (SetValues.FieldValue fv : incomingRequest.values) {
+                final FieldProvider field = session().getField(session().toID(object.getReferenceType()), fv.fieldID);
+                field.setValue(object, session().toValue(fv.value));
             }
 
             return new SetValues.Reply();
@@ -160,26 +160,26 @@ public class ObjectReferenceHandlers extends Handlers {
         @Override
         public InvokeMethod.Reply handle(InvokeMethod.IncomingRequest incomingRequest) throws JDWPException {
 
-            final ThreadProvider threadProvider = session().getThread(incomingRequest._thread);
-            final MethodProvider methodProvider = session().getMethod(incomingRequest._clazz, incomingRequest._methodID);
+            final ThreadProvider threadProvider = session().getThread(incomingRequest.thread);
+            final MethodProvider methodProvider = session().getMethod(incomingRequest.clazz, incomingRequest.methodID);
 
-            final int invokeOptions = incomingRequest._options;
+            final int invokeOptions = incomingRequest.options;
             final boolean singleThreaded = (invokeOptions & InvokeOptions.INVOKE_SINGLE_THREADED) != 0;
             final boolean nonVirtual = (invokeOptions & InvokeOptions.INVOKE_NONVIRTUAL) != 0;
 
-            final VMValue[] args = new VMValue[incomingRequest._arguments.length];
+            final VMValue[] args = new VMValue[incomingRequest.arguments.length];
             for (int i = 0; i < args.length; i++) {
-                args[i] = session().toValue(incomingRequest._arguments[i]);
+                args[i] = session().toValue(incomingRequest.arguments[i]);
             }
 
-            final ObjectProvider object = session().getObject(incomingRequest._object);
+            final ObjectProvider object = session().getObject(incomingRequest.object);
 
             // TODO: Enable the possibility of exceptions here!
             final VMValue result = methodProvider.invoke(object, args, threadProvider, singleThreaded, nonVirtual);
 
             final InvokeMethod.Reply r = new InvokeMethod.Reply();
-            r._returnValue = session().toJDWPValue(result);
-            r._exception = new JDWPValue(ID.ObjectID.NULL);
+            r.returnValue = session().toJDWPValue(result);
+            r.exception = new JDWPValue(ID.ObjectID.NULL);
             return r;
         }
     }

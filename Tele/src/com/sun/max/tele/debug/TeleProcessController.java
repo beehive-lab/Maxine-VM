@@ -49,20 +49,20 @@ public final class TeleProcessController {
     }
 
     TeleProcessController(TeleProcess teleProcess) {
-        _teleProcess = teleProcess;
+        this.teleProcess = teleProcess;
     }
 
-    private TeleProcess _teleProcess;
+    private TeleProcess teleProcess;
 
     /**
      * @return the {@link TeleProcess} associated with this controller.
      */
     public TeleProcess teleProcess() {
-        return _teleProcess;
+        return teleProcess;
     }
 
-    private final Object _runToInstructionScheduleTracer = new Tracer(RUN_TO_INSTRUCTION, "schedule");
-    private final Object _runToInstructionPerformTracer = new Tracer(RUN_TO_INSTRUCTION, "perform");
+    private final Object runToInstructionScheduleTracer = new Tracer(RUN_TO_INSTRUCTION, "schedule");
+    private final Object runToInstructionPerformTracer = new Tracer(RUN_TO_INSTRUCTION, "perform");
 
     /**
      * Resumes a process to make it run until a given destination instruction. All breakpoints encountered between the
@@ -73,12 +73,12 @@ public final class TeleProcessController {
      * @throws OSExecutionRequestException
      */
     public void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean disableBreakpoints) throws OSExecutionRequestException, InvalidProcessRequestException {
-        Trace.begin(TRACE_VALUE, _runToInstructionScheduleTracer);
+        Trace.begin(TRACE_VALUE, runToInstructionScheduleTracer);
         final TeleEventRequest request = new TeleEventRequest(RUN_TO_INSTRUCTION, null) {
             @Override
             public void execute() throws OSExecutionRequestException {
-                Trace.begin(TRACE_VALUE, _runToInstructionPerformTracer);
-                final Factory breakpointFactory = _teleProcess.targetBreakpointFactory();
+                Trace.begin(TRACE_VALUE, runToInstructionPerformTracer);
+                final Factory breakpointFactory = teleProcess.targetBreakpointFactory();
 
                 // Create a temporary breakpoint if there is not already an enabled, non-persistent breakpoint for the target address:
                 TeleTargetBreakpoint breakpoint = breakpointFactory.getNonTransientBreakpointAt(instructionPointer);
@@ -96,96 +96,96 @@ public final class TeleProcessController {
                     breakpoint.activate();
                 }
                 teleProcess().resume();
-                Trace.end(TRACE_VALUE, _runToInstructionPerformTracer);
+                Trace.end(TRACE_VALUE, runToInstructionPerformTracer);
             }
         };
         teleProcess().scheduleRequest(request, synchronous);
-        Trace.end(TRACE_VALUE, _runToInstructionScheduleTracer);
+        Trace.end(TRACE_VALUE, runToInstructionScheduleTracer);
     }
 
 
-    private final Object _terminatePerformTracer = new Tracer(TERMINATE, "perform");
+    private final Object terminatePerformTracer = new Tracer(TERMINATE, "perform");
 
     public void terminate() throws Exception {
-        Trace.begin(TRACE_VALUE, _terminatePerformTracer);
+        Trace.begin(TRACE_VALUE, terminatePerformTracer);
         teleProcess().terminate();
-        Trace.end(TRACE_VALUE, _terminatePerformTracer);
+        Trace.end(TRACE_VALUE, terminatePerformTracer);
     }
 
 
-    private final Object _pausePerformTracer = new Tracer(PAUSE, "perform");
+    private final Object pausePerformTracer = new Tracer(PAUSE, "perform");
 
     public void pause() throws InvalidProcessRequestException, OSExecutionRequestException {
-        Trace.begin(TRACE_VALUE, _pausePerformTracer);
+        Trace.begin(TRACE_VALUE, pausePerformTracer);
         teleProcess().pause();
-        Trace.end(TRACE_VALUE, _pausePerformTracer);
+        Trace.end(TRACE_VALUE, pausePerformTracer);
     }
 
 
-    private final Object _resumeScheduleTracer = new Tracer(RESUME, "schedule");
-    private final Object _resumePerformTracer = new Tracer(RESUME, "perform");
+    private final Object resumeScheduleTracer = new Tracer(RESUME, "schedule");
+    private final Object resumePerformTracer = new Tracer(RESUME, "perform");
 
     public void resume(final boolean synchronous, final boolean disableBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException {
-        Trace.begin(TRACE_VALUE, _resumeScheduleTracer);
+        Trace.begin(TRACE_VALUE, resumeScheduleTracer);
         final TeleEventRequest request = new TeleEventRequest(RESUME, null) {
             @Override
             public void execute() throws OSExecutionRequestException {
-                Trace.begin(TRACE_VALUE, _resumePerformTracer);
+                Trace.begin(TRACE_VALUE, resumePerformTracer);
                 for (TeleNativeThread thread : teleProcess().threads()) {
                     thread.evadeBreakpoint();
                 }
                 if (!disableBreakpoints) {
-                    _teleProcess.targetBreakpointFactory().activateAll();
+                    teleProcess.targetBreakpointFactory().activateAll();
                 }
                 teleProcess().resume();
-                Trace.end(TRACE_VALUE, _resumePerformTracer);
+                Trace.end(TRACE_VALUE, resumePerformTracer);
             }
         };
         teleProcess().scheduleRequest(request, synchronous);
-        Trace.end(TRACE_VALUE, _resumeScheduleTracer);
+        Trace.end(TRACE_VALUE, resumeScheduleTracer);
     }
 
 
-    private final Object _singleStepScheduleTracer = new Tracer(SINGLE_STEP, "schedule");
-    private final Object _singleStepPerformTracer = new Tracer(SINGLE_STEP, "perform");
+    private final Object singleStepScheduleTracer = new Tracer(SINGLE_STEP, "schedule");
+    private final Object singleStepPerformTracer = new Tracer(SINGLE_STEP, "perform");
 
     public void singleStep(final TeleNativeThread thread, boolean isSynchronous) throws InvalidProcessRequestException, OSExecutionRequestException    {
-        Trace.begin(TRACE_VALUE, _singleStepScheduleTracer);
+        Trace.begin(TRACE_VALUE, singleStepScheduleTracer);
         final TeleEventRequest request = new TeleEventRequest(SINGLE_STEP, thread) {
             @Override
             public void execute() throws OSExecutionRequestException {
-                Trace.begin(TRACE_VALUE, _singleStepPerformTracer);
+                Trace.begin(TRACE_VALUE, singleStepPerformTracer);
                 teleProcess().performSingleStep(thread);
-                Trace.end(TRACE_VALUE, _singleStepPerformTracer);
+                Trace.end(TRACE_VALUE, singleStepPerformTracer);
             }
         };
         teleProcess().scheduleRequest(request, isSynchronous);
-        Trace.end(TRACE_VALUE, _singleStepScheduleTracer);
+        Trace.end(TRACE_VALUE, singleStepScheduleTracer);
     }
 
 
-    private final Object _stepOverScheduleTracer = new Tracer(STEP_OVER, "schedule");
-    private final Object _stepOverPerformTracer = new Tracer(STEP_OVER, "perform");
+    private final Object stepOverScheduleTracer = new Tracer(STEP_OVER, "schedule");
+    private final Object stepOverPerformTracer = new Tracer(STEP_OVER, "perform");
 
     public void stepOver(final TeleNativeThread thread, boolean synchronous, final boolean disableBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException {
-        Trace.begin(TRACE_VALUE, _stepOverScheduleTracer);
+        Trace.begin(TRACE_VALUE, stepOverScheduleTracer);
         final TeleEventRequest request = new TeleEventRequest(STEP_OVER, thread) {
 
-            private Pointer _oldInstructionPointer;
-            private Pointer _oldReturnAddress;
+            private Pointer oldInstructionPointer;
+            private Pointer oldReturnAddress;
 
             @Override
             public void execute() throws OSExecutionRequestException {
-                Trace.begin(TRACE_VALUE, _stepOverPerformTracer);
-                _oldInstructionPointer = thread.instructionPointer();
-                _oldReturnAddress = thread.getReturnAddress();
+                Trace.begin(TRACE_VALUE, stepOverPerformTracer);
+                oldInstructionPointer = thread.instructionPointer();
+                oldReturnAddress = thread.getReturnAddress();
                 teleProcess().performSingleStep(thread);
-                Trace.end(TRACE_VALUE, _stepOverPerformTracer);
+                Trace.end(TRACE_VALUE, stepOverPerformTracer);
             }
 
             @Override
             public void notifyProcessStopped() {
-                final Pointer stepOutAddress = getStepoutAddress(thread, _oldReturnAddress, _oldInstructionPointer, thread.instructionPointer());
+                final Pointer stepOutAddress = getStepoutAddress(thread, oldReturnAddress, oldInstructionPointer, thread.instructionPointer());
                 if (stepOutAddress != null) {
                     try {
                         runToInstruction(stepOutAddress, true, disableBreakpoints);
@@ -198,7 +198,7 @@ public final class TeleProcessController {
             }
         };
         teleProcess().scheduleRequest(request, synchronous);
-        Trace.end(TRACE_VALUE, _stepOverScheduleTracer);
+        Trace.end(TRACE_VALUE, stepOverScheduleTracer);
     }
 
     /**
@@ -220,12 +220,12 @@ public final class TeleProcessController {
             // Executed a return
             return null;
         }
-        final TeleTargetMethod oldTeleTargetMethod = TeleTargetMethod.make(_teleProcess.teleVM(), oldInstructionPointer);
+        final TeleTargetMethod oldTeleTargetMethod = TeleTargetMethod.make(teleProcess.teleVM(), oldInstructionPointer);
         if (oldTeleTargetMethod == null) {
             // Stepped from native code:
             return null;
         }
-        final TeleTargetMethod newTeleTargetMethod = TeleTargetMethod.make(_teleProcess.teleVM(), newInstructionPointer);
+        final TeleTargetMethod newTeleTargetMethod = TeleTargetMethod.make(teleProcess.teleVM(), newInstructionPointer);
         if (newTeleTargetMethod == null) {
             // Stepped into native code:
             return null;
@@ -243,8 +243,8 @@ public final class TeleProcessController {
      */
     private class Tracer {
 
-        private final String _processAction;
-        private final String _controllerAction;
+        private final String processAction;
+        private final String controllerAction;
 
         /**
          * An object that delays evaluation of a trace message.
@@ -252,12 +252,12 @@ public final class TeleProcessController {
          * @param controllerAction the step being taken by the controller
          */
         public Tracer(String processAction, String controllerAction) {
-            _processAction = processAction;
-            _controllerAction = controllerAction;
+            this.processAction = processAction;
+            this.controllerAction = controllerAction;
         }
         @Override
         public String toString() {
-            return tracePrefix() + _controllerAction + " " + _processAction;
+            return tracePrefix() + controllerAction + " " + processAction;
         }
     }
 }

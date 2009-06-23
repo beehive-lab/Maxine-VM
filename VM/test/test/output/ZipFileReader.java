@@ -31,7 +31,7 @@ import java.util.zip.*;
  */
 public class ZipFileReader {
     private static final int BYTES_PER_LINE = 32;
-    private static final char[] _hex = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+    private static final char[] hex = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
     private static final String INPUT_FILE_NAME = ZipFileReader.class.getSimpleName() + ".input";
 
     public static void main(String[] args) throws IOException, InterruptedException {
@@ -89,6 +89,6 @@ public class ZipFileReader {
     }
 
     private static char hexChar(int val) {
-        return _hex[val & 0xf];
+        return hex[val & 0xf];
     }
 }

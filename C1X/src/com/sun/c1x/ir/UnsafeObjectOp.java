@@ -30,9 +30,9 @@ import com.sun.c1x.value.BasicType;
  */
 public abstract class UnsafeObjectOp extends UnsafeOp {
 
-    Instruction _object;
-    Instruction _offset;
-    boolean _isVolatile;
+    Instruction object;
+    Instruction offset;
+    boolean isVolatile;
 
     /**
      * Creates a new UnsafeObjectOp instruction.
@@ -44,9 +44,9 @@ public abstract class UnsafeObjectOp extends UnsafeOp {
      */
     public UnsafeObjectOp(BasicType basicType, Instruction object, Instruction offset, boolean isStore, boolean isVolatile) {
         super(basicType, isStore);
-        _object = object;
-        _offset = offset;
-        _isVolatile = isVolatile;
+        this.object = object;
+        this.offset = offset;
+        this.isVolatile = isVolatile;
     }
 
     /**
@@ -54,7 +54,7 @@ public abstract class UnsafeObjectOp extends UnsafeOp {
      * @return the instruction that produces the object
      */
     public Instruction object() {
-        return _object;
+        return object;
     }
 
     /**
@@ -62,7 +62,7 @@ public abstract class UnsafeObjectOp extends UnsafeOp {
      * @return the instruction generating the offset
      */
     public Instruction offset() {
-        return _offset;
+        return offset;
     }
 
     /**
@@ -70,7 +70,7 @@ public abstract class UnsafeObjectOp extends UnsafeOp {
      * @return <code>true</code> if this operation is volatile
      */
     public boolean isVolatile() {
-        return _isVolatile;
+        return isVolatile;
     }
 
     /**
@@ -80,7 +80,7 @@ public abstract class UnsafeObjectOp extends UnsafeOp {
     @Override
     public void inputValuesDo(InstructionClosure closure) {
         super.inputValuesDo(closure);
-        _object = closure.apply(_object);
-        _offset = closure.apply(_offset);
+        object = closure.apply(object);
+        offset = closure.apply(offset);
     }
 }

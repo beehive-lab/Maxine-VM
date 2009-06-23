@@ -39,23 +39,23 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     @CONSTANT
-    private static int _intZero = 0;
+    private static int intZero = 0;
 
     @CONSTANT
-    private static int _intOne = 1;
+    private static int intOne = 1;
 
     @CONSTANT
-    private static int _intMinusOne = -1;
+    private static int intMinusOne = -1;
 
     @CONSTANT
-    private static int _intEight = 8;
+    private static int intEight = 8;
 
     private static int intMinus0(int a) {
-        return a - _intZero;
+        return a - intZero;
     }
 
     private static int int0Minus(int b) {
-        return _intZero - b;
+        return intZero - b;
     }
 
     public void test_intMinus() {
@@ -79,15 +79,15 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
     static class ClassB extends ClassA implements Int2 {
         public ClassB(int x) {
-            _x = x;
+            this.x = x;
         }
-        public int _x;
+        public int x;
     }
 
     private static int instanceofClass(ClassA a) {
         if (a instanceof ClassB) {
             final ClassB b = (ClassB) a;
-            return b._x;
+            return b.x;
         }
         return 0;
     }
@@ -102,11 +102,11 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
 
 
     private static int intPlus0(int a) {
-        return a + _intZero;
+        return a + intZero;
     }
 
     private static int int0Plus(int b) {
-        return _intZero + b;
+        return intZero + b;
     }
 
     public void test_intPlus() {
@@ -122,19 +122,19 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static int intTimes0(int a) {
-        return a * _intZero;
+        return a * intZero;
     }
 
     private static int intTimes1(int a) {
-        return _intOne * a;
+        return intOne * a;
     }
 
     private static int intTimesMinusOne(int a) {
-        return a * _intMinusOne;
+        return a * intMinusOne;
     }
 
     private static int intTimesEight(int a) {
-        return a * _intEight;
+        return a * intEight;
     }
 
     public void test_intTimes() {
@@ -160,23 +160,23 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     @CONSTANT
-    private static long _longZero = 0;
+    private static long longZero = 0;
 
     @CONSTANT
-    private static long _longOne = 1;
+    private static long longOne = 1;
 
     @CONSTANT
-    private static long _longMinusOne = -1;
+    private static long longMinusOne = -1;
 
     @CONSTANT
-    private static long _longEight = 8;
+    private static long longEight = 8;
 
     private static long longMinus0(long a) {
-        return a - _longZero;
+        return a - longZero;
     }
 
     private static long long0Minus(long b) {
-        return _longZero - b;
+        return longZero - b;
     }
 
     public void test_longMinus() {
@@ -192,11 +192,11 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static long longPlus0(long a) {
-        return a + _longZero;
+        return a + longZero;
     }
 
     private static long long0Plus(long b) {
-        return _longZero + b;
+        return longZero + b;
     }
 
     public void test_longPlus() {
@@ -212,19 +212,19 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static long longTimes0(long a) {
-        return a * _longZero;
+        return a * longZero;
     }
 
     private static long longTimes1(long a) {
-        return _longOne * a;
+        return longOne * a;
     }
 
     private static long longTimesMinusOne(long a) {
-        return a * _longMinusOne;
+        return a * longMinusOne;
     }
 
     private static long longTimesEight(long a) {
-        return a * _longEight;
+        return a * longEight;
     }
 
     public void test_longTimes() {
@@ -250,19 +250,19 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static int intDividedBy0(int a) {
-        return a / _intZero;
+        return a / intZero;
     }
 
     private static int int0DividedBy(int b) {
-        return _intZero / b;
+        return intZero / b;
     }
 
     private static int intDividedBy1(int a) {
-        return a / _intOne;
+        return a / intOne;
     }
 
     private static int intDividedByMinusOne(int a) {
-        return a / _intMinusOne;
+        return a / intMinusOne;
     }
 
     public void test_intDividedBy() {
@@ -287,19 +287,19 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static long longDividedBy0(long a) {
-        return a / _longZero;
+        return a / longZero;
     }
 
     private static long long0DividedBy(long b) {
-        return _longZero / b;
+        return longZero / b;
     }
 
     private static long longDividedBy1(long a) {
-        return a / _longOne;
+        return a / longOne;
     }
 
     private static long longDividedByMinusOne(long a) {
-        return a / _longMinusOne;
+        return a / longMinusOne;
     }
 
     public void test_longDividedBy() {
@@ -361,7 +361,7 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static Address addressDividedByInt0(Address a) {
-        return a.dividedBy(_intZero);
+        return a.dividedBy(intZero);
     }
 
     private static Address addressZeroDividedByInt(int b) {
@@ -369,11 +369,11 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static Address addressDividedByInt1(Address a) {
-        return a.dividedBy(_intOne);
+        return a.dividedBy(intOne);
     }
 
     private static Address addressDividedByIntEight(Address a) {
-        return a.dividedBy(_intEight);
+        return a.dividedBy(intEight);
     }
 
     public void test_addressDividedByInt() {
@@ -398,23 +398,23 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static int intRemainder0(int a) {
-        return a % _intZero;
+        return a % intZero;
     }
 
     private static int int0Remainder(int b) {
-        return _intZero % b;
+        return intZero % b;
     }
 
     private static int intRemainder1(int a) {
-        return a % _intOne;
+        return a % intOne;
     }
 
     private static int intRemainderMinusOne(int a) {
-        return a % _intMinusOne;
+        return a % intMinusOne;
     }
 
     private static int intRemainderEight(int a) {
-        return a % _intEight;
+        return a % intEight;
     }
 
     public void test_intRemainder() {
@@ -444,23 +444,23 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static long longRemainder0(long a) {
-        return a % _longZero;
+        return a % longZero;
     }
 
     private static long long0Remainder(long b) {
-        return _longZero % b;
+        return longZero % b;
     }
 
     private static long longRemainder1(long a) {
-        return a % _longOne;
+        return a % longOne;
     }
 
     private static long longRemainderMinusOne(long a) {
-        return a % _longMinusOne;
+        return a % longMinusOne;
     }
 
     private static long longRemainderEight(long a) {
-        return a % _longEight;
+        return a % longEight;
     }
 
     public void test_longRemainder() {
@@ -527,7 +527,7 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static int addressRemainderByInt0(Address a) {
-        return a.remainder(_intZero);
+        return a.remainder(intZero);
     }
 
     private static int addressZeroRemainderByInt(int b) {
@@ -535,11 +535,11 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static int addressRemainderByInt1(Address a) {
-        return a.remainder(_intOne);
+        return a.remainder(intOne);
     }
 
     private static int addressRemainderByIntEight(Address a) {
-        return a.remainder(_intEight);
+        return a.remainder(intEight);
     }
 
     public void test_addressRemainderByInt() {
@@ -564,19 +564,19 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static int intShiftedLeft0(int b) {
-        return _intZero << b;
+        return intZero << b;
     }
 
     private static int intShiftedLeftBy0(int a) {
-        return a << _intZero;
+        return a << intZero;
     }
 
     private static int intShiftedLeftBy32(int a) {
-        return a << (_intEight * 4);
+        return a << (intEight * 4);
     }
 
     private static int intShiftedLeftBy65(int a) {
-        return a << (_intEight * 8 + 1);
+        return a << (intEight * 8 + 1);
     }
 
     public void test_intShiftedLeft() {
@@ -602,19 +602,19 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static long longShiftedLeft0(int b) {
-        return _longZero << b;
+        return longZero << b;
     }
 
     private static long longShiftedLeftBy0(long a) {
-        return a << _intZero;
+        return a << intZero;
     }
 
     private static long longShiftedLeftBy64(long a) {
-        return a << (_intEight * 8);
+        return a << (intEight * 8);
     }
 
     private static long longShiftedLeftBy129(long a) {
-        return a << (_intEight * 16L + 1L);
+        return a << (intEight * 16L + 1L);
     }
 
     public void test_longShiftedLeft() {
@@ -640,19 +640,19 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static int intUnsignedShiftedRight0(int b) {
-        return _intZero >>> b;
+        return intZero >>> b;
     }
 
     private static int intUnsignedShiftedRightBy0(int a) {
-        return a >>> _intZero;
+        return a >>> intZero;
     }
 
     private static int intUnsignedShiftedRightBy32(int a) {
-        return a >>> (_intEight * 4);
+        return a >>> (intEight * 4);
     }
 
     private static int intUnsignedShiftedRightBy65(int a) {
-        return a >>> (_intEight * 8 + 1);
+        return a >>> (intEight * 8 + 1);
     }
 
     public void test_intUnsignedShiftedRight() {
@@ -678,19 +678,19 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static long longUnsignedShiftedRight0(int b) {
-        return _longZero >>> b;
+        return longZero >>> b;
     }
 
     private static long longUnsignedShiftedRightBy0(long a) {
-        return a >>> _intZero;
+        return a >>> intZero;
     }
 
     private static long longUnsignedShiftedRightBy64(long a) {
-        return a >>> (_intEight * 8);
+        return a >>> (intEight * 8);
     }
 
     private static long longUnsignedShiftedRightBy129(long a) {
-        return a >>> (_intEight * 16L + 1L);
+        return a >>> (intEight * 16L + 1L);
     }
 
     public void test_longUnsignedShiftedRight() {
@@ -716,23 +716,23 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static int intSignedShiftedRightMinusOne(int b) {
-        return _intMinusOne >> b;
+        return intMinusOne >> b;
     }
 
     private static int intSignedShiftedRight0(int b) {
-        return _intZero >> b;
+        return intZero >> b;
     }
 
     private static int intSignedShiftedRightBy0(int a) {
-        return a >> _intZero;
+        return a >> intZero;
     }
 
     private static int intSignedShiftedRightBy32(int a) {
-        return a >> (_intEight * 4);
+        return a >> (intEight * 4);
     }
 
     private static int intSignedShiftedRightBy65(int a) {
-        return a >> (_intEight * 8 + 1);
+        return a >> (intEight * 8 + 1);
     }
 
     public void test_intSignedShiftedRight() {
@@ -763,23 +763,23 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static long longSignedShiftedRightMinusOne(int b) {
-        return _longMinusOne >> b;
+        return longMinusOne >> b;
     }
 
     private static long longSignedShiftedRight0(int b) {
-        return _longZero >> b;
+        return longZero >> b;
     }
 
     private static long longSignedShiftedRightBy0(long a) {
-        return a >> _intZero;
+        return a >> intZero;
     }
 
     private static long longSignedShiftedRightBy64(long a) {
-        return a >> (_intEight * 8);
+        return a >> (intEight * 8);
     }
 
     private static long longSignedShiftedRightBy129(long a) {
-        return a >> (_intEight * 16L + 1L);
+        return a >> (intEight * 16L + 1L);
     }
 
     public void test_longSignedShiftedRight() {
@@ -810,19 +810,19 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static int intAnd0(int a) {
-        return a & _intZero;
+        return a & intZero;
     }
 
     private static int int0And(int b) {
-        return _intZero & b;
+        return intZero & b;
     }
 
     private static int intAndMinusOne(int a) {
-        return a & _intMinusOne;
+        return a & intMinusOne;
     }
 
     private static int intMinusOneAnd(int b) {
-        return _intMinusOne & b;
+        return intMinusOne & b;
     }
 
     private static int intAndSelf(int a) {
@@ -857,19 +857,19 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static long longAnd0(long a) {
-        return a & _longZero;
+        return a & longZero;
     }
 
     private static long long0And(long b) {
-        return _longZero & b;
+        return longZero & b;
     }
 
     private static long longAndMinusOne(long a) {
-        return a & _longMinusOne;
+        return a & longMinusOne;
     }
 
     private static long longMinusOneAnd(long b) {
-        return _longMinusOne & b;
+        return longMinusOne & b;
     }
 
     private static long longAndSelf(long a) {
@@ -904,19 +904,19 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static int intOr0(int a) {
-        return a | _intZero;
+        return a | intZero;
     }
 
     private static int int0Or(int b) {
-        return _intZero | b;
+        return intZero | b;
     }
 
     private static int intOrMinusOne(int a) {
-        return a | _intMinusOne;
+        return a | intMinusOne;
     }
 
     private static int intMinusOneOr(int b) {
-        return _intMinusOne | b;
+        return intMinusOne | b;
     }
 
     private static int intOrSelf(int a) {
@@ -951,19 +951,19 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static long longOr0(long a) {
-        return a | _longZero;
+        return a | longZero;
     }
 
     private static long long0Or(long b) {
-        return _longZero | b;
+        return longZero | b;
     }
 
     private static long longOrMinusOne(long a) {
-        return a | _longMinusOne;
+        return a | longMinusOne;
     }
 
     private static long longMinusOneOr(long b) {
-        return _longMinusOne | b;
+        return longMinusOne | b;
     }
 
     private static long longOrSelf(long a) {
@@ -998,19 +998,19 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static int intXor0(int a) {
-        return a ^ _intZero;
+        return a ^ intZero;
     }
 
     private static int int0Xor(int b) {
-        return _intZero ^ b;
+        return intZero ^ b;
     }
 
     private static int intXorMinusOne(int a) {
-        return a ^ _intMinusOne;
+        return a ^ intMinusOne;
     }
 
     private static int intMinusOneXor(int b) {
-        return _intMinusOne ^ b;
+        return intMinusOne ^ b;
     }
 
     private static int intXorSelf(int a) {
@@ -1045,19 +1045,19 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     }
 
     private static long longXor0(long a) {
-        return a ^ _longZero;
+        return a ^ longZero;
     }
 
     private static long long0Xor(long b) {
-        return _longZero ^ b;
+        return longZero ^ b;
     }
 
     private static long longXorMinusOne(long a) {
-        return a ^ _longMinusOne;
+        return a ^ longMinusOne;
     }
 
     private static long longMinusOneXor(long b) {
-        return _longMinusOne ^ b;
+        return longMinusOne ^ b;
     }
 
     private static long longXorSelf(long a) {

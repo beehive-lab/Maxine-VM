@@ -51,45 +51,45 @@ import com.sun.max.vm.value.*;
  */
 public final class MemoryWordInspector extends Inspector {
 
-    private Address _address;
-    private int _selectedLine = -1;
-    private Address _selectedAddress;
-    private int _numberOfWords;
-    private final int _wordHexChars;
+    private Address address;
+    private int selectedLine = -1;
+    private Address selectedAddress;
+    private int numberOfWords;
+    private final int wordHexChars;
 
     private JComponent createController() {
         final JPanel controller = new InspectorPanel(inspection(), new SpringLayout());
 
-        final AddressInputField.Hex addressField = new AddressInputField.Hex(inspection(), _address) {
+        final AddressInputField.Hex addressField = new AddressInputField.Hex(inspection(), address) {
             @Override
-            public void update(Address address) {
-                if (!address.equals(_address)) {
-                    _address = address.aligned();
-                    setText(_address.toUnsignedString(16));
+            public void update(Address value) {
+                if (!value.equals(address)) {
+                    address = value.aligned();
+                    setText(address.toUnsignedString(16));
                     MemoryWordInspector.this.reconstructView();
                 }
             }
         };
         addressField.setColumns(18);
 
-        final AddressInputField.Decimal numberOfWordsField = new AddressInputField.Decimal(inspection(), Address.fromInt(_numberOfWords)) {
+        final AddressInputField.Decimal numberOfWordsField = new AddressInputField.Decimal(inspection(), Address.fromInt(numberOfWords)) {
             @Override
-            public void update(Address numberOfGroups) {
-                if (!numberOfGroups.equals(_numberOfWords)) {
-                    _numberOfWords = numberOfGroups.toInt();
+            public void update(Address value) {
+                if (!value.equals(numberOfWords)) {
+                    numberOfWords = value.toInt();
                     MemoryWordInspector.this.reconstructView();
                 }
             }
         };
-        numberOfWordsField.setColumns(1 + _wordHexChars);
+        numberOfWordsField.setColumns(1 + wordHexChars);
         numberOfWordsField.setRange(1, 1024);
 
         // Configure buttons
         final JButton up = new JButton(new AbstractAction("Up") {
             public void actionPerformed(ActionEvent e) {
-                _address = _address.minus(maxVM().wordSize());
-                addressField.setText(_address.toHexString());
-                numberOfWordsField.setText(Integer.toString(++_numberOfWords));
+                address = address.minus(maxVM().wordSize());
+                addressField.setText(address.toHexString());
+                numberOfWordsField.setText(Integer.toString(++numberOfWords));
                 MemoryWordInspector.this.reconstructView();
             }
         });
@@ -97,7 +97,7 @@ public final class MemoryWordInspector extends Inspector {
         // Configure buttons
         final JButton down = new JButton(new AbstractAction("Down") {
             public void actionPerformed(ActionEvent e) {
-                numberOfWordsField.setText(Integer.toString(++_numberOfWords));
+                numberOfWordsField.setText(Integer.toString(++numberOfWords));
                 MemoryWordInspector.this.reconstructView();
             }
         });
@@ -113,20 +113,20 @@ public final class MemoryWordInspector extends Inspector {
         return controller;
     }
 
-    private RegisterAddressLabel[] _addressLabels;
-    private LocationLabel[] _offsetLabels;
-    private WordValueLabel[] _memoryWords;
-    private final InspectorAction _disabledInspectObjectAction;
+    private RegisterAddressLabel[] addressLabels;
+    private LocationLabel[] offsetLabels;
+    private WordValueLabel[] memoryWords;
+    private final InspectorAction disabledInspectObjectAction;
 
     private final class RegisterAddressLabel extends WordValueLabel {
 
-        private final int _line;
-        private String _registerNameList;
-        private String _registerDisplayText;
+        private final int line;
+        private String registerNameList;
+        private String registerDisplayText;
 
         RegisterAddressLabel(Inspection inspection, int line, Address address) {
             super(inspection, WordValueLabel.ValueMode.WORD, address, null);
-            _line = line;
+            this.line = line;
             updateText();
         }
 
@@ -135,19 +135,19 @@ public final class MemoryWordInspector extends Inspector {
             if (misalignment != 0) {
                 registerName = registerName + "-" + misalignment;
             }
-            if (_registerNameList == null) {
-                _registerNameList = registerName;
+            if (registerNameList == null) {
+                registerNameList = registerName;
             } else {
-                _registerNameList = _registerNameList + "," + registerName;
+                registerNameList = registerNameList + "," + registerName;
             }
-            _registerDisplayText = Strings.padLengthWithSpaces(_wordHexChars - 4, _registerNameList) + " -->";
+            registerDisplayText = Strings.padLengthWithSpaces(wordHexChars - 4, registerNameList) + " -->";
             updateText();
         }
 
         void clearRegister() {
-            if (_registerNameList != null) {
-                _registerNameList = null;
-                _registerDisplayText = null;
+            if (registerNameList != null) {
+                registerNameList = null;
+                registerDisplayText = null;
             }
             updateText();
         }
@@ -155,19 +155,19 @@ public final class MemoryWordInspector extends Inspector {
         @Override
         public void updateText() {
             super.updateText();
-            if (_line == _selectedLine) {
+            if (line == selectedLine) {
                 setBackground(selectionColor());
             }
-            if (_registerDisplayText != null) {
-                setText(_registerDisplayText);
-                setToolTipText("Register(s): " + _registerNameList + " point at this location");
+            if (registerDisplayText != null) {
+                setText(registerDisplayText);
+                setToolTipText("Register(s): " + registerNameList + " point at this location");
                 setForeground(style().wordSelectedColor());
             }
         }
     }
 
 
-    private final InspectorMouseClickAdapter _offsetLabelMouseClickAdapter = new InspectorMouseClickAdapter(inspection()) {
+    private final InspectorMouseClickAdapter offsetLabelMouseClickAdapter = new InspectorMouseClickAdapter(inspection()) {
 
         @Override
         public void procedure(MouseEvent mouseEvent) {
@@ -175,10 +175,10 @@ public final class MemoryWordInspector extends Inspector {
                 return;
             }
             final Object source = mouseEvent.getSource();
-            final int line = Arrays.find(_offsetLabels, source);
+            final int line = Arrays.find(offsetLabels, source);
             if (line >= 0) {
-                _selectedLine = line;
-                _selectedAddress = _address.plus(line * maxVM().wordSize());
+                selectedLine = line;
+                selectedAddress = address.plus(line * maxVM().wordSize());
                 MemoryWordInspector.this.reconstructView();
             }
         }
@@ -186,18 +186,18 @@ public final class MemoryWordInspector extends Inspector {
 
     private final class MemoryOffsetLabel extends LocationLabel.AsOffset {
 
-        private final int _line;
+        private final int line;
 
         MemoryOffsetLabel(Inspection inspection, int line, int offset) {
             super(inspection, offset);
-            _line = line;
+            this.line = line;
             updateText();
         }
 
         @Override
         public void updateText() {
             super.updateText();
-            if (_line == _selectedLine) {
+            if (line == selectedLine) {
                 setBackground(selectionColor());
             } else {
                 setBackground(style().defaultBackgroundColor());
@@ -207,17 +207,17 @@ public final class MemoryWordInspector extends Inspector {
 
     private final class MemoryWordLabel extends WordValueLabel {
 
-        private final int _line;
+        private final int line;
 
         MemoryWordLabel(Inspection inspection, int line) {
             super(inspection, ValueMode.INTEGER_REGISTER, Word.zero(), null);
-            _line = line;
+            this.line = line;
         }
 
         @Override
         public void updateText() {
             super.updateText();
-            if (_line == _selectedLine) {
+            if (line == selectedLine) {
                 setBackground(selectionColor());
             }
         }
@@ -226,28 +226,28 @@ public final class MemoryWordInspector extends Inspector {
     @Override
     protected void refreshView(boolean force) {
         final int wordSize = maxVM().wordSize();
-        for (int i = 0; i < _numberOfWords; i++) {
-            final Address address = _address.plus(i * wordSize);
+        for (int i = 0; i < numberOfWords; i++) {
+            final Address a = address.plus(i * wordSize);
             try {
-                _addressLabels[i].clearRegister();
-                _memoryWords[i].setValue(new WordValue(maxVM().readWord(address)));
+                addressLabels[i].clearRegister();
+                memoryWords[i].setValue(new WordValue(maxVM().readWord(a)));
 
             } catch (DataIOError e) {
-                _memoryWords[i].setValue(VoidValue.VOID);
+                memoryWords[i].setValue(VoidValue.VOID);
             }
         }
-        final Address lastAddress = _address.plus(_numberOfWords * wordSize);
+        final Address lastAddress = address.plus(numberOfWords * wordSize);
         final MaxThread selectedThread = focus().thread();
         if (selectedThread != null) {
             final TeleIntegerRegisters registers = selectedThread.integerRegisters();
             for (Symbol s : registers.symbolizer()) {
                 final Address registerValue = registers.get(s);
-                if (registerValue.greaterEqual(_address) && registerValue.lessThan(lastAddress)) {
+                if (registerValue.greaterEqual(address) && registerValue.lessThan(lastAddress)) {
                     // if the register points into this range, overwrite the address label with the name of the register
-                    final Address offset = registerValue.minus(_address);
+                    final Address offset = registerValue.minus(address);
                     final int line = offset.dividedBy(wordSize).toInt();
                     final int misAlignment = offset.and(wordSize - 1).toInt();
-                    _addressLabels[line].setRegister(s, misAlignment);
+                    addressLabels[line].setRegister(s, misAlignment);
                 }
             }
         }
@@ -260,15 +260,15 @@ public final class MemoryWordInspector extends Inspector {
         refreshView(true);
     }
 
-    private JPanel _contentPane;
+    private JPanel contentPane;
 
-    private static final Predicate<Inspector> _allMemoryWordInspectorsPredicate = new Predicate<Inspector>() {
+    private static final Predicate<Inspector> allMemoryWordInspectorsPredicate = new Predicate<Inspector>() {
         public boolean evaluate(Inspector inspector) {
             return inspector instanceof MemoryWordInspector;
         }
     };
 
-    private final Predicate<Inspector> _otherMemoryInspectorsPredicate = new Predicate<Inspector>() {
+    private final Predicate<Inspector> otherMemoryInspectorsPredicate = new Predicate<Inspector>() {
         public boolean evaluate(Inspector inspector) {
             return inspector instanceof MemoryWordInspector && inspector != MemoryWordInspector.this;
         }
@@ -276,51 +276,51 @@ public final class MemoryWordInspector extends Inspector {
 
     @Override
     public String getTextForTitle() {
-        return "Memory Words @ " + _address.toHexString();
+        return "Memory Words @ " + address.toHexString();
     }
 
     @Override
     protected void createView() {
-        _contentPane = new InspectorPanel(inspection());
-        frame().setContentPane(_contentPane);
-        _contentPane.removeAll();
-        _contentPane.setLayout(new BoxLayout(_contentPane, BoxLayout.Y_AXIS));
-        _contentPane.add(createController());
+        contentPane = new InspectorPanel(inspection());
+        frame().setContentPane(contentPane);
+        contentPane.removeAll();
+        contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
+        contentPane.add(createController());
 
         final JPanel view = new InspectorPanel(inspection(), new SpringLayout());
-        _contentPane.add(view);
+        contentPane.add(view);
 
-        _addressLabels = new RegisterAddressLabel[_numberOfWords];
-        _offsetLabels = new LocationLabel.AsOffset[_numberOfWords];
-        _memoryWords = new WordValueLabel[_numberOfWords];
+        addressLabels = new RegisterAddressLabel[numberOfWords];
+        offsetLabels = new LocationLabel.AsOffset[numberOfWords];
+        memoryWords = new WordValueLabel[numberOfWords];
 
-        Address lineAddress = _address;
-        for (int line = 0; line < _numberOfWords; line++) {
+        Address lineAddress = address;
+        for (int line = 0; line < numberOfWords; line++) {
             // Memory Address
             final RegisterAddressLabel addrLabel = new RegisterAddressLabel(inspection(), line, lineAddress);
             addrLabel.setFont(style().wordDataFont());
             addrLabel.setForeground(style().wordDataColor());
             addrLabel.setBackground(style().wordDataBackgroundColor());
-            _addressLabels[line] = addrLabel;
+            addressLabels[line] = addrLabel;
             view.add(addrLabel);
 
             // Memory Offset
-            final int offset = lineAddress.minus(_selectedAddress).toInt();
+            final int offset = lineAddress.minus(selectedAddress).toInt();
             //final LocationLabel.AsOffset offsetLabel = new LocationLabel.AsOffset(inspection(), offset);
             final LocationLabel.AsOffset offsetLabel = new MemoryOffsetLabel(inspection(), line, offset);
-            offsetLabel.addMouseListener(_offsetLabelMouseClickAdapter);
-            _offsetLabels[line] = offsetLabel;
+            offsetLabel.addMouseListener(offsetLabelMouseClickAdapter);
+            offsetLabels[line] = offsetLabel;
             view.add(offsetLabel);
 
             // Memory Word
-            _memoryWords[line] = new MemoryWordLabel(inspection(), line);
-            view.add(_memoryWords[line]);
+            memoryWords[line] = new MemoryWordLabel(inspection(), line);
+            view.add(memoryWords[line]);
 
             lineAddress = lineAddress.plus(maxVM().wordSize());
         }
 
         refreshView(true);
-        SpringUtilities.makeCompactGrid(view, _numberOfWords, 3, 0, 0, 0, 0);
+        SpringUtilities.makeCompactGrid(view, numberOfWords, 3, 0, 0, 0, 0);
     }
 
     public void viewConfigurationChanged() {
@@ -333,27 +333,27 @@ public final class MemoryWordInspector extends Inspector {
 
     private MemoryWordInspector(Inspection inspection, Address address, int numberOfWords) {
         super(inspection);
-        _address = address.aligned();
-        _selectedAddress = _address;
-        _numberOfWords = numberOfWords;
-        _wordHexChars = maxVM().wordSize() * 2;
+        this.address = address.aligned();
+        selectedAddress = this.address;
+        this.numberOfWords = numberOfWords;
+        wordHexChars = maxVM().wordSize() * 2;
         createFrame(null);
         frame().menu().addSeparator();
-        frame().menu().add(actions().closeViews(_otherMemoryInspectorsPredicate, "Close other Memory Word Inspectors"));
-        frame().menu().add(actions().closeViews(_allMemoryWordInspectorsPredicate, "Close all Memory Word Inspectors"));
+        frame().menu().add(actions().closeViews(otherMemoryInspectorsPredicate, "Close other Memory Word Inspectors"));
+        frame().menu().add(actions().closeViews(allMemoryWordInspectorsPredicate, "Close all Memory Word Inspectors"));
         inspection.gui().setLocationRelativeToMouse(this);
-        _memoryWordInspectors.add(this);
-        _disabledInspectObjectAction = new InspectorAction(inspection, "Inspect object (Left-Button)") {
+        memoryWordInspectors.add(this);
+        disabledInspectObjectAction = new InspectorAction(inspection, "Inspect object (Left-Button)") {
             @Override
             protected void procedure() {
                 throw FatalError.unexpected("Should not happen");
             }
         };
-        _disabledInspectObjectAction.setEnabled(false);
+        disabledInspectObjectAction.setEnabled(false);
         Trace.line(1, tracePrefix() + " creating for " + getTextForTitle());
     }
 
-    private static final IdentityHashSet<MemoryWordInspector> _memoryWordInspectors = new IdentityHashSet<MemoryWordInspector>();
+    private static final IdentityHashSet<MemoryWordInspector> memoryWordInspectors = new IdentityHashSet<MemoryWordInspector>();
 
     /**
      * Displays and highlights a new word inspector for a region of memory in the VM.

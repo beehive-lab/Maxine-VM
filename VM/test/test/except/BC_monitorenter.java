@@ -25,10 +25,10 @@
 package test.except;
 
 public class BC_monitorenter {
-    static test.bytecode.BC_monitorenter _object = new test.bytecode.BC_monitorenter();
+    static test.bytecode.BC_monitorenter object = new test.bytecode.BC_monitorenter();
 
     public static boolean test(boolean arg) {
-        final Object o = arg ? _object : null;
+        final Object o = arg ? object : null;
         synchronized (o) {
             return arg;
         }

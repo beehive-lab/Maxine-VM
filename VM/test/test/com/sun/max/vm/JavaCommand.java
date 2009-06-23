@@ -30,11 +30,11 @@ import java.util.*;
  * @author Ben L. Titzer
  */
 public class JavaCommand {
-    private final String[] _mainArgs;
-    private final List<String> _vmOptions = new LinkedList<String>();
-    private final List<String> _sysProps = new LinkedList<String>();
-    private final List<String> _classPaths = new LinkedList<String>();
-    private final List<String> _arguments = new LinkedList<String>();
+    private final String[] mainArgs;
+    private final List<String> vmOptions = new LinkedList<String>();
+    private final List<String> sysProps = new LinkedList<String>();
+    private final List<String> classPaths = new LinkedList<String>();
+    private final List<String> arguments = new LinkedList<String>();
 
     /**
      * Create a java command with the specified main class.
@@ -42,9 +42,9 @@ public class JavaCommand {
      */
     public JavaCommand(Class mainClass) {
         if (mainClass == null) {
-            _mainArgs = new String[0];
+            this.mainArgs = new String[0];
         } else {
-            _mainArgs = new String[] {mainClass.getName()};
+            this.mainArgs = new String[] {mainClass.getName()};
         }
     }
 
@@ -54,18 +54,18 @@ public class JavaCommand {
      */
     public JavaCommand(String mainClassName) {
         if (mainClassName == null) {
-            _mainArgs = new String[0];
+            this.mainArgs = new String[0];
         } else {
-            _mainArgs = new String[] {mainClassName};
+            this.mainArgs = new String[] {mainClassName};
         }
     }
 
     private JavaCommand(String[] mainArgs, List<String> vmOptions, List<String> sysProps, List<String> classPaths, List<String> arguments) {
-        _mainArgs = mainArgs.clone();
-        _vmOptions.addAll(vmOptions);
-        _sysProps.addAll(sysProps);
-        _classPaths.addAll(classPaths);
-        _arguments.addAll(arguments);
+        this.mainArgs = mainArgs.clone();
+        this.vmOptions.addAll(vmOptions);
+        this.sysProps.addAll(sysProps);
+        this.classPaths.addAll(classPaths);
+        this.arguments.addAll(arguments);
     }
 
     /**
@@ -73,7 +73,7 @@ public class JavaCommand {
      * @param jarFile
      */
     public JavaCommand(File jarFile) {
-        _mainArgs = new String[] {"-jar", jarFile.getPath()};
+        this.mainArgs = new String[] {"-jar", jarFile.getPath()};
     }
 
     /**
@@ -83,9 +83,9 @@ public class JavaCommand {
      */
     public void addSystemProperty(String name, String value) {
         if (value != null) {
-            _sysProps.add("-D" + name + "=" + value);
+            sysProps.add("-D" + name + "=" + value);
         } else {
-            _sysProps.add("-D" + name);
+            sysProps.add("-D" + name);
         }
     }
 
@@ -94,7 +94,7 @@ public class JavaCommand {
      * @param arg the argument to add to the main class
      */
     public void addArgument(String arg) {
-        _arguments.add(arg);
+        arguments.add(arg);
     }
 
     /**
@@ -104,7 +104,7 @@ public class JavaCommand {
     public void addArguments(String[] arg) {
         if (arg != null) {
             for (String s : arg) {
-                _arguments.add(s);
+                arguments.add(s);
             }
         }
     }
@@ -114,7 +114,7 @@ public class JavaCommand {
      * @param option the option to add to the java command
      */
     public void addVMOption(String option) {
-        _vmOptions.add(option);
+        vmOptions.add(option);
     }
 
     /**
@@ -124,7 +124,7 @@ public class JavaCommand {
     public void addVMOptions(String[] option) {
         if (option != null) {
             for (String s : option) {
-                _vmOptions.add(s);
+                vmOptions.add(s);
             }
         }
     }
@@ -135,7 +135,7 @@ public class JavaCommand {
      * @param classpath the classpath entry that will be added
      */
     public void addClasspath(String classpath) {
-        _classPaths.add(classpath);
+        classPaths.add(classpath);
     }
 
     /**
@@ -149,12 +149,12 @@ public class JavaCommand {
         if (exec != null) {
             list.add(exec);
         }
-        list.addAll(_vmOptions);
-        list.addAll(_sysProps);
-        if (!_classPaths.isEmpty()) {
+        list.addAll(vmOptions);
+        list.addAll(sysProps);
+        if (!classPaths.isEmpty()) {
             list.add("-classpath");
             final StringBuilder builder = new StringBuilder();
-            for (String path : _classPaths) {
+            for (String path : classPaths) {
                 if (builder.length() > 0) {
                     builder.append(':');
                 }
@@ -162,10 +162,10 @@ public class JavaCommand {
             }
             list.add(builder.toString());
         }
-        for (String arg : _mainArgs) {
+        for (String arg : mainArgs) {
             list.add(arg);
         }
-        list.addAll(_arguments);
+        list.addAll(arguments);
         return list.toArray(new String[list.size()]);
     }
 
@@ -175,6 +175,6 @@ public class JavaCommand {
      * @return a new copy of this JavaCommand
      */
     public JavaCommand copy() {
-        return new JavaCommand(_mainArgs, _vmOptions, _sysProps, _classPaths, _arguments);
+        return new JavaCommand(mainArgs, vmOptions, sysProps, classPaths, arguments);
     }
 }

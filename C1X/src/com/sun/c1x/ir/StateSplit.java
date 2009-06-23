@@ -32,7 +32,7 @@ import com.sun.c1x.value.ValueType;
  */
 public abstract class StateSplit extends Instruction {
 
-    private ValueStack _state;
+    private ValueStack state;
 
     /**
      * Creates a new state split with the specified value type.
@@ -47,7 +47,7 @@ public abstract class StateSplit extends Instruction {
      * @param state the state
      */
     public void setState(ValueStack state) {
-        _state = state;
+        this.state = state;
     }
 
     /**
@@ -55,7 +55,7 @@ public abstract class StateSplit extends Instruction {
      * @return the state
      */
     public ValueStack state() {
-        return _state;
+        return state;
     }
 
     /**
@@ -63,7 +63,7 @@ public abstract class StateSplit extends Instruction {
      * @return the IR scope
      */
     public IRScope scope() {
-        return _state.scope();
+        return state.scope();
     }
 
     /**
@@ -73,8 +73,8 @@ public abstract class StateSplit extends Instruction {
      */
     @Override
     public void stateValuesDo(InstructionClosure closure) {
-        if (_state != null) {
-            _state.valuesDo(closure);
+        if (state != null) {
+            state.valuesDo(closure);
         }
     }
 }

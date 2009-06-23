@@ -31,12 +31,12 @@ public class TeleInterpreterTestClass {
     }
 
     protected TeleInterpreterTestClass(int y) {
-        _y = y;
+        this.y = y;
     }
 
-    private static int _x = 0xdeadbeef;
+    private static int x = 0xdeadbeef;
 
-    public int _y = 0xcafebabe;
+    public int y = 0xcafebabe;
 
     public static int iadd(int a, int b) {
         return a + b;
@@ -53,26 +53,26 @@ public class TeleInterpreterTestClass {
     }
 
     public static int getstatic() {
-        final int y = _x;
+        final int y = x;
         return y;
     }
 
     public static int putstatic() {
-        _x = 4;
-        return _x;
+        x = 4;
+        return x;
     }
 
     public static int getfield(TeleInterpreterTestClass i) {
-        return i._y;
+        return i.y;
     }
 
     public static int putfield(TeleInterpreterTestClass i) {
-        i._y = 4;
-        return i._y;
+        i.y = 4;
+        return i.y;
     }
 
     public int return_y() {
-        return _y;
+        return y;
     }
 
     public static int invokevirtual1(TeleInterpreterTestClass i) {
@@ -181,7 +181,7 @@ public class TeleInterpreterTestClass {
 
     public static int checkcast(Object o) throws ClassCastException {
         final TeleInterpreterTestClass i = (TeleInterpreterTestClass) o;
-        return i._y;
+        return i.y;
     }
 
     public static boolean instanceof_(Object o) {
@@ -199,12 +199,12 @@ public class TeleInterpreterTestClass {
 
     public static int new1() {
         final TeleInterpreterTestClass i = new TeleInterpreterTestClass();
-        return i._y;
+        return i.y;
     }
 
     public static int new2() {
         final TeleInterpreterTestClass i = new TeleInterpreterTestClass(0x80081355);
-        return i._y;
+        return i.y;
     }
 
     public static int println() {

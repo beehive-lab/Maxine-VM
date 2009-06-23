@@ -30,11 +30,11 @@ public final class Object_wait02 {
     private Object_wait02() {
     }
 
-    static final Object _object = new Object();
+    static final Object object = new Object();
 
     public static boolean test(int i) throws InterruptedException {
-        synchronized (_object) {
-            _object.wait(1);
+        synchronized (object) {
+            object.wait(1);
         }
         return true;
     }

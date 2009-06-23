@@ -33,25 +33,25 @@ import com.sun.max.ins.*;
  */
 public final class InspectorMenu implements Prober {
 
-    private final Inspector _inspector;
-    private AppendableSequence<InspectorMenuItems> _inspectorMenuItems;
+    private final Inspector inspector;
+    private AppendableSequence<InspectorMenuItems> inspectorMenuItems;
 
-    private final JPopupMenu _popupMenu;
+    private final JPopupMenu popupMenu;
 
     public JPopupMenu popupMenu() {
-        return _popupMenu;
+        return popupMenu;
     }
 
-    private final JMenu _standardMenu;
+    private final JMenu standardMenu;
 
     public JMenu standardMenu() {
-        return _standardMenu;
+        return standardMenu;
     }
 
     public InspectorMenu(Inspector inspector, String name) {
-        _inspector = inspector;
-        _popupMenu =  new JPopupMenu(name);
-        _standardMenu = new JMenu(name);
+        this.inspector = inspector;
+        popupMenu =  new JPopupMenu(name);
+        standardMenu = new JMenu(name);
         if (inspector != null) {
             add(inspector.getViewOptionsAction());
             add(inspector.getRefreshAction());
@@ -72,26 +72,26 @@ public final class InspectorMenu implements Prober {
     }
 
     public int length() {
-        return _standardMenu.getItemCount();
+        return standardMenu.getItemCount();
     }
 
     public void add(InspectorAction action) {
-        action.append(_standardMenu);
-        action.append(_popupMenu);
+        action.append(standardMenu);
+        action.append(popupMenu);
     }
 
     public void add(InspectorMenuItems inspectorMenuItems) {
         addSeparator();
         inspectorMenuItems.addTo(this);
-        if (_inspectorMenuItems == null) {
-            _inspectorMenuItems = new LinkSequence<InspectorMenuItems>();
+        if (this.inspectorMenuItems == null) {
+            this.inspectorMenuItems = new LinkSequence<InspectorMenuItems>();
         }
-        _inspectorMenuItems.append(inspectorMenuItems);
+        this.inspectorMenuItems.append(inspectorMenuItems);
     }
 
     public void add(InspectorMenu inspectorMenu) {
-        _standardMenu.add(inspectorMenu._standardMenu);
-        _popupMenu.add(inspectorMenu._standardMenu);
+        standardMenu.add(inspectorMenu.standardMenu);
+        popupMenu.add(inspectorMenu.standardMenu);
     }
 
     /**
@@ -99,22 +99,22 @@ public final class InspectorMenu implements Prober {
      * @param menuItem
      */
     public void add(JMenuItem menuItem) {
-        _standardMenu.add(menuItem);
-        _popupMenu.add(menuItem);
+        standardMenu.add(menuItem);
+        popupMenu.add(menuItem);
     }
 
     public void addSeparator() {
-        _standardMenu.addSeparator();
-        _popupMenu.addSeparator();
+        standardMenu.addSeparator();
+        popupMenu.addSeparator();
     }
 
     public Inspection inspection() {
-        return _inspector.inspection();
+        return inspector.inspection();
     }
 
     public void refresh(boolean force) {
-        if (_inspectorMenuItems != null) {
-            for (InspectorMenuItems inspectorMenuItems : _inspectorMenuItems) {
+        if (this.inspectorMenuItems != null) {
+            for (InspectorMenuItems inspectorMenuItems : this.inspectorMenuItems) {
                 inspectorMenuItems.refresh(force);
             }
         }

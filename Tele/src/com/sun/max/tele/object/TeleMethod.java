@@ -32,7 +32,7 @@ import com.sun.max.vm.reference.*;
  */
 public class TeleMethod extends TeleTupleObject {
 
-    private Method _method;
+    private Method method;
 
     protected TeleMethod(TeleVM teleVM, Reference methodReference) {
         super(teleVM, methodReference);
@@ -42,12 +42,12 @@ public class TeleMethod extends TeleTupleObject {
      * @return the local instance of {@link Method} equivalent to this object in the {@link TeleVM}.
      */
     public Method toJava() {
-        if (_method == null) {
+        if (method == null) {
             final Reference methodActorReference = teleVM().fields().Method_methodActor.readReference(reference());
             final TeleMethodActor teleMethodActor = (TeleMethodActor) teleVM().makeTeleObject(methodActorReference);
-            _method = teleMethodActor.methodActor().toJava();
+            method = teleMethodActor.methodActor().toJava();
         }
-        return _method;
+        return method;
     }
 
     @Override

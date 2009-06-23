@@ -28,10 +28,10 @@ package test.except;
 
 public class BC_caload {
 
-    static char[] _array = {'\000', 'a', ' ', 10000};
+    static char[] arr = {'\000', 'a', ' ', 10000};
 
     public static char test(int arg) {
-        final char[] array = arg == -2 ? null : _array;
+        final char[] array = arg == -2 ? null : arr;
         return array[arg];
     }
 }

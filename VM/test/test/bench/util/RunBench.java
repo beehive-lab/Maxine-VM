@@ -49,17 +49,17 @@ public class RunBench implements Runnable {
         void runBareLoop(long count);
     }
 
-    private final LoopRunnable _bench;
-    private long _elapsed;
-    private long _loopCount;
-    private static long _defaultLoopCount = 1000000;
+    private final LoopRunnable bench;
+    private long elapsed;
+    private long loopCount;
+    private static long defaultLoopCount = 1000000;
     private static final String LOOPCOUNT_PROPERTY = "test.bench.loopcount";
 
     private static void getLoopCount() {
         final String lps = System.getProperty(LOOPCOUNT_PROPERTY);
         if (lps != null) {
             try {
-                _defaultLoopCount = Long.parseLong(lps);
+                defaultLoopCount = Long.parseLong(lps);
             }  catch (NumberFormatException ex) {
                 ProgramError.unexpected("test.bench.loopcount " + lps + " did not parse");
             }
@@ -68,11 +68,11 @@ public class RunBench implements Runnable {
 
     protected RunBench(LoopRunnable bench) {
         getLoopCount();
-        _bench = bench;
+        this.bench = bench;
     }
 
     protected long loopCount() {
-        return _loopCount;
+        return loopCount;
     }
 
     /*
@@ -81,7 +81,7 @@ public class RunBench implements Runnable {
      * @return the elapsed time in nanoseconds
      */
     public long runBench(boolean report) throws InterruptedException {
-        return runBench(_defaultLoopCount, report);
+        return runBench(defaultLoopCount, report);
     }
 
     /*
@@ -91,9 +91,9 @@ public class RunBench implements Runnable {
      * @return the elapsed time in nanoseconds
      */
     public long runBench(long loopCount, boolean report) throws InterruptedException {
-        _loopCount = loopCount;
+        this.loopCount = loopCount;
         final long start = System.nanoTime();
-        _bench.runBareLoop(loopCount);
+        bench.runBareLoop(loopCount);
         final long loopTime = System.nanoTime() - start;
 
         final Thread thread = new Thread(this);
@@ -101,26 +101,26 @@ public class RunBench implements Runnable {
         thread.join();
         if (report) {
             final long count = loopCount();
-            final long benchElapsed = _elapsed - loopTime;
+            final long benchElapsed = elapsed - loopTime;
             Trace.line(0, "Benchmark results (nanoseconds)");
             Trace.line(0, "  loopcount: " + count + ", loop overhead " + loopTime);
-            Trace.line(0, "  elapsed: " + _elapsed +  ", corrected elapsed: " + benchElapsed);
+            Trace.line(0, "  elapsed: " + elapsed +  ", corrected elapsed: " + benchElapsed);
             final long x = benchElapsed / count;
             final long y = benchElapsed % count;
              // loopCount assumed to be a power of 10 for simplicity.
             Trace.line(0, "  nanoseconds per iteration: " + x + "." + y);
         }
-        return _elapsed;
+        return elapsed;
     }
 
     public void run() {
         final long startTime = System.nanoTime();
         try {
-            _bench.run(_loopCount);
+            bench.run(loopCount);
         } catch (Exception ex) {
             Trace.line(0, "benchmark threw " + ex);
         }
-        _elapsed = System.nanoTime() - startTime;
+        elapsed = System.nanoTime() - startTime;
     }
 
 }

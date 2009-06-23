@@ -42,21 +42,21 @@ import com.sun.max.vm.value.*;
  */
 public class RegistersTable extends InspectorTable {
 
-    private static final Color[] _ageColors = {Color.RED, Color.MAGENTA, Color.BLUE};
+    private static final Color[] ageColors = {Color.RED, Color.MAGENTA, Color.BLUE};
 
-    private final RegistersTableModel _model;
-    private RegistersColumnModel _columnModel;
-    private final TableColumn[] _columns;
+    private final RegistersTableModel model;
+    private RegistersColumnModel columnModel;
+    private final TableColumn[] columns;
 
-    private MaxVMState _lastRefreshedState = null;
+    private MaxVMState lastRefreshedState = null;
 
     public RegistersTable(Inspection inspection, MaxThread thread, RegistersViewPreferences viewPreferences) {
         super(inspection);
-        _model = new RegistersTableModel(thread);
-        _columns = new TableColumn[RegistersColumnKind.VALUES.length()];
-        _columnModel = new RegistersColumnModel(viewPreferences);
-        setModel(_model);
-        setColumnModel(_columnModel);
+        model = new RegistersTableModel(thread);
+        columns = new TableColumn[RegistersColumnKind.VALUES.length()];
+        columnModel = new RegistersColumnModel(viewPreferences);
+        setModel(model);
+        setColumnModel(columnModel);
         setShowHorizontalLines(style().memoryTableShowHorizontalLines());
         setShowVerticalLines(style().memoryTableShowVerticalLines());
         setIntercellSpacing(style().memoryTableIntercellSpacing());
@@ -71,12 +71,12 @@ public class RegistersTable extends InspectorTable {
 
 
     public void refresh(boolean force) {
-        if (maxVMState().newerThan(_lastRefreshedState) || force) {
-            _lastRefreshedState = maxVMState();
+        if (maxVMState().newerThan(lastRefreshedState) || force) {
+            lastRefreshedState = maxVMState();
             // Read from VM, increment history generation count.
-            _model.refresh();
+            model.refresh();
             // Refresh the display, might be caused by explicit user request
-            for (TableColumn column : _columns) {
+            for (TableColumn column : columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
                 if (prober != null) {
                     prober.refresh(force);
@@ -86,7 +86,7 @@ public class RegistersTable extends InspectorTable {
     }
 
     public void redisplay() {
-        for (TableColumn column : _columns) {
+        for (TableColumn column : columns) {
             final Prober prober = (Prober) column.getCellRenderer();
             prober.redisplay();
         }
@@ -97,12 +97,12 @@ public class RegistersTable extends InspectorTable {
     @Override
     protected JTableHeader createDefaultTableHeader() {
         // Custom table header with tooltips that describe the column data.
-        return new JTableHeader(_columnModel) {
+        return new JTableHeader(columnModel) {
             @Override
             public String getToolTipText(MouseEvent mouseEvent) {
                 final Point p = mouseEvent.getPoint();
-                final int index = _columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = _columnModel.getColumn(index).getModelIndex();
+                final int index = columnModel.getColumnIndexAtX(p.x);
+                final int modelIndex = columnModel.getColumn(index).getModelIndex();
                 return RegistersColumnKind.VALUES.get(modelIndex).toolTipText();
             }
         };
@@ -110,10 +110,10 @@ public class RegistersTable extends InspectorTable {
 
     private final class RegistersColumnModel extends DefaultTableColumnModel {
 
-        private final RegistersViewPreferences _viewPreferences;
+        private final RegistersViewPreferences viewPreferences;
 
         private RegistersColumnModel(RegistersViewPreferences viewPreferences) {
-            _viewPreferences = viewPreferences;
+            this.viewPreferences = viewPreferences;
             createColumn(RegistersColumnKind.NAME, new NameCellRenderer(inspection()), null);
             createColumn(RegistersColumnKind.VALUE, new ValueCellRenderer(inspection()), null);
             createColumn(RegistersColumnKind.REGION, new RegionCellRenderer(), null);
@@ -121,13 +121,13 @@ public class RegistersTable extends InspectorTable {
 
         private void createColumn(RegistersColumnKind columnKind, TableCellRenderer renderer, TableCellEditor editor) {
             final int col = columnKind.ordinal();
-            _columns[col] = new TableColumn(col, 0, renderer, editor);
-            _columns[col].setHeaderValue(columnKind.label());
-            _columns[col].setMinWidth(columnKind.minWidth());
-            if (_viewPreferences.isVisible(columnKind)) {
-                addColumn(_columns[col]);
+            columns[col] = new TableColumn(col, 0, renderer, editor);
+            columns[col].setHeaderValue(columnKind.label());
+            columns[col].setMinWidth(columnKind.minWidth());
+            if (viewPreferences.isVisible(columnKind)) {
+                addColumn(columns[col]);
             }
-            _columns[col].setIdentifier(columnKind);
+            columns[col].setIdentifier(columnKind);
         }
     }
 
@@ -140,39 +140,39 @@ public class RegistersTable extends InspectorTable {
      */
     private final class RegistersTableModel extends DefaultTableModel {
 
-        private final MaxThread _thread;
+        private final MaxThread thread;
 
-        private int _nRegisters = 0;
+        private int nRegisters = 0;
 
-        private final RegisterInfo[] _registerInfos;
+        private final RegisterInfo[] registerInfos;
 
         RegistersTableModel(MaxThread thread) {
-            _thread = thread;
-            final TeleIntegerRegisters integerRegisters = _thread.integerRegisters();
-            final TeleStateRegisters stateRegisters = _thread.stateRegisters();
-            final TeleFloatingPointRegisters floatingPointRegisters = _thread.floatingPointRegisters();
-            _nRegisters = integerRegisters.symbolizer().numberOfValues()
+            this.thread = thread;
+            final TeleIntegerRegisters integerRegisters = thread.integerRegisters();
+            final TeleStateRegisters stateRegisters = thread.stateRegisters();
+            final TeleFloatingPointRegisters floatingPointRegisters = thread.floatingPointRegisters();
+            nRegisters = integerRegisters.symbolizer().numberOfValues()
                  + stateRegisters.symbolizer().numberOfValues()
                  + floatingPointRegisters.symbolizer().numberOfValues();
-            _registerInfos = new RegisterInfo[_nRegisters];
+            registerInfos = new RegisterInfo[nRegisters];
             int row = 0;
             for (Symbol register : integerRegisters.symbolizer()) {
-                _registerInfos[row] = new IntegerRegisterInfo(integerRegisters, register);
+                registerInfos[row] = new IntegerRegisterInfo(integerRegisters, register);
                 row++;
             }
 
             for (Symbol register : stateRegisters.symbolizer()) {
-                _registerInfos[row] = new StateRegisterInfo(stateRegisters, register);
+                registerInfos[row] = new StateRegisterInfo(stateRegisters, register);
                 row++;
             }
 
             for (Symbol register : floatingPointRegisters.symbolizer()) {
-                _registerInfos[row] = new FloatingPointRegisterInfo(floatingPointRegisters, register);
+                registerInfos[row] = new FloatingPointRegisterInfo(floatingPointRegisters, register);
                 row++;
             }
-            assert _nRegisters == row;
-            for (int i = 0; i < _nRegisters; i++) {
-                _registerInfos[i].refresh();
+            assert nRegisters == row;
+            for (int i = 0; i < nRegisters; i++) {
+                registerInfos[i].refresh();
             }
         }
 
@@ -180,7 +180,7 @@ public class RegistersTable extends InspectorTable {
          * Reads from VM and increments the history generation.
          */
         void refresh() {
-            for (RegisterInfo registerInfo : _registerInfos) {
+            for (RegisterInfo registerInfo : registerInfos) {
                 registerInfo.refresh();
             }
             fireTableDataChanged();
@@ -193,12 +193,12 @@ public class RegistersTable extends InspectorTable {
 
         @Override
         public int getRowCount() {
-            return _nRegisters;
+            return nRegisters;
         }
 
         @Override
         public Object getValueAt(int row, int col) {
-            return _registerInfos[row];
+            return registerInfos[row];
         }
 
         @Override
@@ -210,7 +210,7 @@ public class RegistersTable extends InspectorTable {
          * @return the appropriate display mode for the value of the register at this row
          */
         public WordValueLabel.ValueMode getValueMode(int row) {
-            return _registerInfos[row].registerLabelValueMode();
+            return registerInfos[row].registerLabelValueMode();
         }
 
     }
@@ -226,10 +226,10 @@ public class RegistersTable extends InspectorTable {
             final String name = registerInfo.name();
             setValue(name, "Register " + name);
             final int age = registerInfo.age();
-            if (age < 0 || age >= _ageColors.length) {
+            if (age < 0 || age >= ageColors.length) {
                 setForeground(style().defaultTextColor());
             } else {
-                setForeground(_ageColors[age]);
+                setForeground(ageColors[age]);
             }
             return this;
         }
@@ -237,13 +237,13 @@ public class RegistersTable extends InspectorTable {
 
     private final class ValueCellRenderer implements TableCellRenderer, Prober {
 
-        private final WordValueLabel[] _labels;
+        private final WordValueLabel[] labels;
 
         ValueCellRenderer(Inspection inspection) {
-            _labels = new WordValueLabel[_model.getRowCount()];
-            for (int row = 0; row < _model.getRowCount(); row++) {
-                final RegisterInfo registerInfo = (RegisterInfo) _model.getValueAt(row, 0);
-                _labels[row] = new WordValueLabel(inspection, _model.getValueMode(row), RegistersTable.this) {
+            labels = new WordValueLabel[model.getRowCount()];
+            for (int row = 0; row < model.getRowCount(); row++) {
+                final RegisterInfo registerInfo = (RegisterInfo) model.getValueAt(row, 0);
+                labels[row] = new WordValueLabel(inspection, model.getValueMode(row), RegistersTable.this) {
 
                     @Override
                     protected Value fetchValue() {
@@ -254,11 +254,11 @@ public class RegistersTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            return _labels[row];
+            return labels[row];
         }
 
         public void redisplay() {
-            for (InspectorLabel label : _labels) {
+            for (InspectorLabel label : labels) {
                 if (label != null) {
                     label.redisplay();
                 }
@@ -266,7 +266,7 @@ public class RegistersTable extends InspectorTable {
         }
 
         public void refresh(boolean force) {
-            for (InspectorLabel label : _labels) {
+            for (InspectorLabel label : labels) {
                 if (label != null) {
                     label.refresh(force);
                 }
@@ -276,10 +276,10 @@ public class RegistersTable extends InspectorTable {
 
     private final class RegionCellRenderer implements TableCellRenderer, Prober {
 
-        private MemoryRegionValueLabel[] _labels = new MemoryRegionValueLabel[_model.getRowCount()];
+        private MemoryRegionValueLabel[] labels = new MemoryRegionValueLabel[model.getRowCount()];
 
         public void refresh(boolean force) {
-            for (InspectorLabel label : _labels) {
+            for (InspectorLabel label : labels) {
                 if (label != null) {
                     label.refresh(force);
                 }
@@ -287,7 +287,7 @@ public class RegistersTable extends InspectorTable {
         }
 
         public void redisplay() {
-            for (InspectorLabel label : _labels) {
+            for (InspectorLabel label : labels) {
                 if (label != null) {
                     label.redisplay();
                 }
@@ -296,10 +296,10 @@ public class RegistersTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
             final RegisterInfo registerInfo = (RegisterInfo) value;
-            MemoryRegionValueLabel label = _labels[row];
+            MemoryRegionValueLabel label = labels[row];
             if (label == null) {
                 label = new MemoryRegionValueLabel(inspection());
-                _labels[row] = label;
+                labels[row] = label;
             }
             label.setValue(registerInfo.value());
             return label;

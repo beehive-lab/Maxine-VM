@@ -43,7 +43,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
 
     private static final int TRACE_VALUE = 2;
 
-    private static Manager _manager;
+    private static Manager manager;
 
     /**
      * Manages inspection of methods in the VM, even when the tabbed view does not exist.
@@ -58,13 +58,13 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
         }
 
         public static void make(Inspection inspection) {
-            if (_manager == null) {
-                _manager = new Manager(inspection);
+            if (manager == null) {
+                manager = new Manager(inspection);
                 inspection.focus().addListener(new InspectionFocusAdapter() {
 
                     @Override
                     public void codeLocationFocusSet(TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
-                        final MethodInspector methodInspector = MethodInspector.make(_manager.inspection(), teleCodeLocation, interactiveForNative);
+                        final MethodInspector methodInspector = MethodInspector.make(manager.inspection(), teleCodeLocation, interactiveForNative);
                         if (methodInspector != null) {
                             // Ensure that a newly created MethodInspector will have the focus set;
                             SwingUtilities.invokeLater(new Runnable() {
@@ -225,15 +225,15 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
         return nativeMethodInspector;
     }
 
-    private final MethodInspectorContainer _parent;
+    private final MethodInspectorContainer parent;
 
     protected MethodInspectorContainer parent() {
-        return _parent;
+        return parent;
     }
 
     public MethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleTargetMethod teleTargetMethod, TeleRoutine teleRoutine) {
         super(inspection, teleTargetMethod, teleRoutine);
-        _parent = parent;
+        this.parent = parent;
     }
 
     @Override
@@ -284,11 +284,11 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
     }
 
     public void close() {
-        _parent.close(this);
+        parent.close(this);
     }
 
     public void closeOthers() {
-        _parent.closeOthers(this);
+        parent.closeOthers(this);
     }
 
     @Override

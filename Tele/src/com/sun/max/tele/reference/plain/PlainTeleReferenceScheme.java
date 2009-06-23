@@ -35,16 +35,16 @@ import com.sun.max.vm.reference.*;
  */
 public final class PlainTeleReferenceScheme extends TeleReferenceScheme {
 
-    private final GripScheme _gripScheme;
+    private final GripScheme gripScheme;
 
     @FOLD
     public GripScheme gripScheme() {
-        return _gripScheme;
+        return gripScheme;
     }
 
     public PlainTeleReferenceScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        _gripScheme = vmConfiguration.gripScheme();
+        gripScheme = vmConfiguration.gripScheme();
     }
 
     @Override

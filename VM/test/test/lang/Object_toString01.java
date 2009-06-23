@@ -27,21 +27,21 @@ package test.lang;
 
 public class Object_toString01 {
 
-    static final String _string = "Object_toString01";
-    static final Object _object = new Object();
+    static final String string = "Object_toString01";
+    static final Object object = new Object();
 
     public static boolean test(int i) {
         if (i == 0) {
-            return _object.toString() != null;
+            return object.toString() != null;
         }
         if (i == 1) {
-            return new Object_toString01().toString() == _string;
+            return new Object_toString01().toString() == string;
         }
         return false;
     }
 
     @Override
     public String toString() {
-        return _string;
+        return string;
     }
 }

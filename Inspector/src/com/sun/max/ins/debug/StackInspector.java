@@ -60,31 +60,31 @@ import com.sun.max.vm.value.*;
 public class StackInspector extends Inspector {
 
     // Set to null when inspector closed.
-    private static StackInspector _stackInspector;
+    private static StackInspector stackInspector;
 
     /**
      * Displays the (singleton) inspector, creating it if needed.
      */
     public static StackInspector make(Inspection inspection) {
-        if (_stackInspector == null) {
-            _stackInspector = new StackInspector(inspection);
+        if (stackInspector == null) {
+            stackInspector = new StackInspector(inspection);
         }
-        return _stackInspector;
+        return stackInspector;
     }
 
     private static final int DEFAULT_MAX_FRAMES_DISPLAY = 500;
     private static final String MAX_FRAMES_DISPLAY_PROPERTY = "inspector.max.stack.frames.display";
-    private static int _defaultMaxFramesDisplay;
+    private static int defaultMaxFramesDisplay;
     static {
         final String value = System.getProperty(MAX_FRAMES_DISPLAY_PROPERTY);
         if (value != null) {
             try {
-                _defaultMaxFramesDisplay = Integer.parseInt(value);
+                defaultMaxFramesDisplay = Integer.parseInt(value);
             } catch (NumberFormatException ex) {
                 ProgramError.unexpected(MAX_FRAMES_DISPLAY_PROPERTY + " value " +  value + " not an integer");
             }
         } else {
-            _defaultMaxFramesDisplay = DEFAULT_MAX_FRAMES_DISPLAY;
+            defaultMaxFramesDisplay = DEFAULT_MAX_FRAMES_DISPLAY;
         }
     }
 
@@ -120,38 +120,38 @@ public class StackInspector extends Inspector {
         }
     }
 
-    private final SaveSettingsListener _saveSettingsListener = createGeometrySettingsClient(this, "stackInspector");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "stackInspector");
 
-    private MaxThread _thread = null;
-    private InspectorPanel _contentPane = null;
-    private  DefaultListModel _stackFrameListModel = null;
-    private JList _stackFrameList = null;
-    private JSplitPane _splitPane = null;
-    private JPanel _nativeFrame = null;
+    private MaxThread thread = null;
+    private InspectorPanel contentPane = null;
+    private  DefaultListModel stackFrameListModel = null;
+    private JList stackFrameList = null;
+    private JSplitPane splitPane = null;
+    private JPanel nativeFrame = null;
 
-    private final FrameSelectionListener _frameSelectionListener = new FrameSelectionListener();
-    private final StackFrameListCellRenderer _stackFrameListCellRenderer = new StackFrameListCellRenderer();
+    private final FrameSelectionListener frameSelectionListener = new FrameSelectionListener();
+    private final StackFrameListCellRenderer stackFrameListCellRenderer = new StackFrameListCellRenderer();
 
-    private boolean _stateChanged = true;  // conservative assessment of possible stack change
-    private StackFramePanel<? extends StackFrame> _selectedFrame;
+    private boolean stateChanged = true;  // conservative assessment of possible stack change
+    private StackFramePanel<? extends StackFrame> selectedFrame;
 
     @Override
     public void threadStateChanged(MaxThread thread) {
-        if (thread.equals(_thread)) {
-            _stateChanged = thread.framesChanged();
+        if (thread.equals(this.thread)) {
+            stateChanged = thread.framesChanged();
         }
         super.threadStateChanged(thread);
     }
 
     @Override
     public void stackFrameFocusChanged(StackFrame oldStackFrame, MaxThread threadForStackFrame, StackFrame newStackFrame) {
-        if (threadForStackFrame == _thread) {
-            final int oldIndex = _stackFrameList.getSelectedIndex();
-            for (int index = 0; index < _stackFrameListModel.getSize(); index++) {
-                final StackFrame stackFrame = (StackFrame) _stackFrameListModel.get(index);
+        if (threadForStackFrame == thread) {
+            final int oldIndex = stackFrameList.getSelectedIndex();
+            for (int index = 0; index < stackFrameListModel.getSize(); index++) {
+                final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(index);
                 if (stackFrame.isSameFrame(newStackFrame)) {
                     if (index != oldIndex) {
-                        _stackFrameList.setSelectedIndex(index);
+                        stackFrameList.setSelectedIndex(index);
                     }
                     break;
                 }
@@ -233,7 +233,7 @@ public class StackInspector extends Inspector {
         Trace.begin(1,  tracePrefix() + " initializing");
         createFrame(null);
         frame().menu().addSeparator();
-        frame().menu().add(_copyStackToClipboardAction);
+        frame().menu().add(copyStackToClipboardAction);
         refreshView(true);
         Trace.end(1,  tracePrefix() + " initializing");
     }
@@ -245,38 +245,38 @@ public class StackInspector extends Inspector {
 
     @Override
     protected SaveSettingsListener saveSettingsListener() {
-        return _saveSettingsListener;
+        return saveSettingsListener;
     }
 
     @Override
     public void createView() {
-        _thread = inspection().focus().thread();
-        _contentPane = new InspectorPanel(inspection(), new BorderLayout());
-        if (_thread != null) {
-            _stackFrameListModel = new DefaultListModel();
-            _stackFrameList = new JList(_stackFrameListModel);
-            _stackFrameList.setCellRenderer(_stackFrameListCellRenderer);
+        thread = inspection().focus().thread();
+        contentPane = new InspectorPanel(inspection(), new BorderLayout());
+        if (thread != null) {
+            stackFrameListModel = new DefaultListModel();
+            stackFrameList = new JList(stackFrameListModel);
+            stackFrameList.setCellRenderer(stackFrameListCellRenderer);
 
             final JPanel header = new InspectorPanel(inspection(), new SpringLayout());
             header.add(new TextLabel(inspection(), "start: "));
-            header.add(new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, _thread.stack().start(), _contentPane));
+            header.add(new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, thread.stack().start(), contentPane));
             header.add(new TextLabel(inspection(), "size: "));
-            header.add(new DataLabel.IntAsDecimal(inspection(), _thread.stack().size().toInt()));
+            header.add(new DataLabel.IntAsDecimal(inspection(), thread.stack().size().toInt()));
             SpringUtilities.makeCompactGrid(header, 2);
-            _contentPane.add(header, BorderLayout.NORTH);
+            contentPane.add(header, BorderLayout.NORTH);
 
-            _stackFrameList.setSelectionInterval(1, 0);
-            _stackFrameList.setVisibleRowCount(10);
-            _stackFrameList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-            _stackFrameList.setLayoutOrientation(JList.VERTICAL);
-            _stackFrameList.addKeyListener(_stackFrameKeyTypedListener);
-            _stackFrameList.addMouseListener(new StackFrameMouseClickAdapter(inspection()));
+            stackFrameList.setSelectionInterval(1, 0);
+            stackFrameList.setVisibleRowCount(10);
+            stackFrameList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            stackFrameList.setLayoutOrientation(JList.VERTICAL);
+            stackFrameList.addKeyListener(stackFrameKeyTypedListener);
+            stackFrameList.addMouseListener(new StackFrameMouseClickAdapter(inspection()));
 
-            _stackFrameList.addListSelectionListener(_frameSelectionListener);
+            stackFrameList.addListSelectionListener(frameSelectionListener);
 
-            _nativeFrame = new InspectorPanel(inspection());
-            final JScrollPane listScrollPane = new InspectorScrollPane(inspection(), _stackFrameList);
-            _splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT) {
+            nativeFrame = new InspectorPanel(inspection());
+            final JScrollPane listScrollPane = new InspectorScrollPane(inspection(), stackFrameList);
+            splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT) {
                 @Override
                 public void setLeftComponent(Component component) {
                     super.setLeftComponent(setMinimumSizeToZero(component));
@@ -295,20 +295,20 @@ public class StackInspector extends Inspector {
                     return component;
                 }
             };
-            _splitPane.setOneTouchExpandable(true);
-            _splitPane.setLeftComponent(listScrollPane);
-            _splitPane.setRightComponent(_nativeFrame);
+            splitPane.setOneTouchExpandable(true);
+            splitPane.setLeftComponent(listScrollPane);
+            splitPane.setRightComponent(nativeFrame);
 
-            _contentPane.add(_splitPane, BorderLayout.CENTER);
+            contentPane.add(splitPane, BorderLayout.CENTER);
         }
-        frame().setContentPane(_contentPane);
+        frame().setContentPane(contentPane);
         refreshView(true);
 
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 // System.err.println("setting divider location in stack inspector for " + inspection().inspectionThreadName(_thread));
                 // Try to place the split pane divider in the middle of the split pane's space initially
-                _splitPane.setDividerLocation(0.5d);
+                splitPane.setDividerLocation(0.5d);
             }
         });
     }
@@ -316,33 +316,33 @@ public class StackInspector extends Inspector {
     @Override
     public String getTextForTitle() {
         String title = "Stack: ";
-        if (_thread != null) {
-            title += inspection().nameDisplay().longNameWithState(_thread);
+        if (thread != null) {
+            title += inspection().nameDisplay().longNameWithState(thread);
         }
         return title;
     }
 
     @Override
     protected void refreshView(boolean force) {
-        if (_thread != null && _thread.isLive()) {
-            final Sequence<StackFrame> frames = _thread.frames();
+        if (thread != null && thread.isLive()) {
+            final Sequence<StackFrame> frames = thread.frames();
             assert !frames.isEmpty();
-            if (_stateChanged || force) {
-                _stackFrameListModel.clear();
+            if (stateChanged || force) {
+                stackFrameListModel.clear();
                 addToModel(frames);
-                _stateChanged = false;
+                stateChanged = false;
             } else {
                 // The stack is structurally unchanged with respect to methods,
                 // so avoid a complete redisplay for performance reasons.
                 // However, the object representing the top frame may be different,
                 // in which case the state of the old frame object is out of date.
                 final StackFrame newTopFrame = frames.first();
-                if (_selectedFrame != null && _selectedFrame.stackFrame().isTopFrame() && _selectedFrame.stackFrame().isSameFrame(newTopFrame)) {
-                    _selectedFrame.setStackFrame(newTopFrame);
+                if (selectedFrame != null && selectedFrame.stackFrame().isTopFrame() && selectedFrame.stackFrame().isSameFrame(newTopFrame)) {
+                    selectedFrame.setStackFrame(newTopFrame);
                 }
             }
-            if (_selectedFrame != null) {
-                _selectedFrame.refresh(force);
+            if (selectedFrame != null) {
+                selectedFrame.refresh(force);
             }
         }
         super.refreshView(force);
@@ -360,47 +360,47 @@ public class StackInspector extends Inspector {
         reconstructView();
     }
 
-    private int _maxFramesDisplay = _defaultMaxFramesDisplay;
+    private int maxFramesDisplay = defaultMaxFramesDisplay;
 
     /**
-     * Add frames to the stack model until {@link #_maxFramesDisplay} reached.
+     * Add frames to the stack model until {@link #maxFramesDisplay} reached.
      */
     private void addToModel(final Sequence<StackFrame> frames) {
         StackFrame parentStackFrame = null;
         for (StackFrame stackFrame : frames) {
-            if (_stackFrameListModel.size()  >= _maxFramesDisplay) {
-                _stackFrameListModel.addElement(new TruncatedStackFrame(parentStackFrame, stackFrame));
-                inspection().gui().informationMessage("stack depth of " + _stackFrameListModel.size() + " exceeds " + _maxFramesDisplay + ": truncated", "Stack Inspector");
+            if (stackFrameListModel.size()  >= maxFramesDisplay) {
+                stackFrameListModel.addElement(new TruncatedStackFrame(parentStackFrame, stackFrame));
+                inspection().gui().informationMessage("stack depth of " + stackFrameListModel.size() + " exceeds " + maxFramesDisplay + ": truncated", "Stack Inspector");
                 break;
             }
-            _stackFrameListModel.addElement(stackFrame);
+            stackFrameListModel.addElement(stackFrame);
             parentStackFrame = stackFrame;
         }
     }
 
     abstract static class StackFramePanel<StackFrame_Type extends StackFrame> extends InspectorPanel {
 
-        protected StackFrame_Type _stackFrame;
+        protected StackFrame_Type stackFrame;
 
         public StackFramePanel(Inspection inspection, StackFrame_Type stackFrame) {
             super(inspection, new BorderLayout());
-            _stackFrame = stackFrame;
+            this.stackFrame = stackFrame;
         }
 
         public final StackFrame_Type stackFrame() {
-            return _stackFrame;
+            return stackFrame;
         }
 
         public final void setStackFrame(StackFrame stackFrame) {
             final Class<StackFrame_Type> type = null;
-            _stackFrame = StaticLoophole.cast(type, stackFrame);
+            this.stackFrame = StaticLoophole.cast(type, stackFrame);
             refresh(true);
         }
     }
 
     private final class AdapterStackFramePanel extends StackFramePanel<AdapterStackFrame> {
 
-        private final AppendableSequence<InspectorLabel> _labels = new ArrayListSequence<InspectorLabel>(10);
+        private final AppendableSequence<InspectorLabel> labels = new ArrayListSequence<InspectorLabel>(10);
 
         public AdapterStackFramePanel(Inspection inspection, AdapterStackFrame adapterStackFrame) {
             super(inspection, adapterStackFrame);
@@ -422,19 +422,19 @@ public class StackInspector extends Inspector {
 
         private void addLabel(JPanel panel, InspectorLabel label) {
             panel.add(label);
-            _labels.append(label);
+            labels.append(label);
         }
 
         @Override
         public void refresh(boolean force) {
-            for (InspectorLabel label : _labels) {
+            for (InspectorLabel label : labels) {
                 label.refresh(force);
             }
         }
 
         @Override
         public void redisplay() {
-            for (InspectorLabel label : _labels) {
+            for (InspectorLabel label : labels) {
                 label.redisplay();
             }
         }
@@ -442,24 +442,24 @@ public class StackInspector extends Inspector {
 
     private final class JavaStackFramePanel extends StackFramePanel<JavaStackFrame> {
 
-        final WordValueLabel _instructionPointerLabel;
-        final Slots _slots;
-        final TextLabel[] _slotLabels;
-        final WordValueLabel[] _slotValues;
-        final TargetMethod _targetMethod;
-        final CodeAttribute _codeAttribute;
-        final JCheckBox _showSlotAddresses;
+        final WordValueLabel instructionPointerLabel;
+        final Slots slots;
+        final TextLabel[] slotLabels;
+        final WordValueLabel[] slotValues;
+        final TargetMethod targetMethod;
+        final CodeAttribute codeAttribute;
+        final JCheckBox showSlotAddresses;
 
         JavaStackFramePanel(Inspection inspection, JavaStackFrame javaStackFrame) {
             super(inspection, javaStackFrame);
             final String frameClassName = javaStackFrame.getClass().getSimpleName();
             final Address slotBase = javaStackFrame.slotBase();
-            _targetMethod = javaStackFrame.targetMethod();
-            _codeAttribute = _targetMethod.classMethodActor().codeAttribute();
+            targetMethod = javaStackFrame.targetMethod();
+            codeAttribute = targetMethod.classMethodActor().codeAttribute();
             final int frameSize = javaStackFrame.layout.frameSize();
 
             final JPanel header = new InspectorPanel(inspection(), new SpringLayout());
-            _instructionPointerLabel = new WordValueLabel(inspection(), ValueMode.INTEGER_REGISTER, this) {
+            instructionPointerLabel = new WordValueLabel(inspection(), ValueMode.INTEGER_REGISTER, this) {
                 @Override
                 public Value fetchValue() {
                     return WordValue.from(stackFrame().instructionPointer);
@@ -480,7 +480,7 @@ public class StackInspector extends Inspector {
             header.add(stackPointerLabel);
             header.add(new DataLabel.BiasedStackAddressAsHex(inspection(), stackPointer, bias));
             header.add(new TextLabel(inspection(), "Instruction pointer:", frameClassName));
-            header.add(_instructionPointerLabel);
+            header.add(instructionPointerLabel);
 
 
             SpringUtilities.makeCompactGrid(header, 2);
@@ -488,11 +488,11 @@ public class StackInspector extends Inspector {
             final JPanel slotsPanel = new InspectorPanel(inspection(), new SpringLayout());
             slotsPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-            _slots = javaStackFrame.layout.slots();
-            _slotLabels = new TextLabel[_slots.length()];
-            _slotValues = new WordValueLabel[_slots.length()];
+            slots = javaStackFrame.layout.slots();
+            slotLabels = new TextLabel[slots.length()];
+            slotValues = new WordValueLabel[slots.length()];
             int slotIndex = 0;
-            for (Slot slot : _slots) {
+            for (Slot slot : slots) {
                 final int offset = slot.offset;
                 final TextLabel slotLabel = new TextLabel(inspection(), slot.name + ":");
                 slotsPanel.add(slotLabel);
@@ -509,17 +509,17 @@ public class StackInspector extends Inspector {
                 };
                 slotsPanel.add(slotValue);
 
-                _slotLabels[slotIndex] = slotLabel;
-                _slotValues[slotIndex] = slotValue;
+                slotLabels[slotIndex] = slotLabel;
+                slotValues[slotIndex] = slotValue;
                 ++slotIndex;
             }
 
             SpringUtilities.makeCompactGrid(slotsPanel, 2);
 
-            _showSlotAddresses = new InspectorCheckBox(inspection(), "Slot addresses", null, false);
+            showSlotAddresses = new InspectorCheckBox(inspection(), "Slot addresses", null, false);
             final JPanel slotNameFormatPanel = new InspectorPanel(inspection(), new FlowLayout(FlowLayout.LEFT));
-            slotNameFormatPanel.add(_showSlotAddresses);
-            _showSlotAddresses.addItemListener(new ItemListener() {
+            slotNameFormatPanel.add(showSlotAddresses);
+            showSlotAddresses.addItemListener(new ItemListener() {
                 public void itemStateChanged(ItemEvent e) {
                     refresh(true);
                 }
@@ -535,26 +535,26 @@ public class StackInspector extends Inspector {
 
         @Override
         public void refresh(boolean force) {
-            _instructionPointerLabel.refresh(force);
-            final boolean isTopFrame = _stackFrame.isTopFrame();
-            final Pointer instructionPointer = _stackFrame.instructionPointer;
+            instructionPointerLabel.refresh(force);
+            final boolean isTopFrame = stackFrame.isTopFrame();
+            final Pointer instructionPointer = stackFrame.instructionPointer;
             final Pointer instructionPointerForStopPosition = isTopFrame ?  instructionPointer.plus(1) :  instructionPointer;
-            int stopIndex = _targetMethod.findClosestStopIndex(instructionPointerForStopPosition);
+            int stopIndex = targetMethod.findClosestStopIndex(instructionPointerForStopPosition);
             if (stopIndex != -1 && isTopFrame) {
-                final int stopPosition = _targetMethod.stopPosition(stopIndex);
-                final int targetCodePosition = _targetMethod.targetCodePositionFor(instructionPointer);
+                final int stopPosition = targetMethod.stopPosition(stopIndex);
+                final int targetCodePosition = targetMethod.targetCodePositionFor(instructionPointer);
                 if (targetCodePosition != stopPosition) {
                     stopIndex = -1;
                 }
             }
 
             // Update the color of the slot labels to denote if a reference map indicates they are holding object references:
-            final ByteArrayBitMap referenceMap = stopIndex == -1 ? null : _targetMethod.frameReferenceMapFor(stopIndex);
-            for (int slotIndex = 0; slotIndex < _slots.length(); ++slotIndex) {
-                final Slot slot = _slots.slot(slotIndex);
-                final TextLabel slotLabel = _slotLabels[slotIndex];
+            final ByteArrayBitMap referenceMap = stopIndex == -1 ? null : targetMethod.frameReferenceMapFor(stopIndex);
+            for (int slotIndex = 0; slotIndex < slots.length(); ++slotIndex) {
+                final Slot slot = slots.slot(slotIndex);
+                final TextLabel slotLabel = slotLabels[slotIndex];
                 updateSlotLabel(slot, slotLabel);
-                _slotValues[slotIndex].refresh(force);
+                slotValues[slotIndex].refresh(force);
                 if (slot.referenceMapIndex != -1) {
                     if (referenceMap != null && referenceMap.isSet(slot.referenceMapIndex)) {
                         slotLabel.setForeground(style().wordValidObjectReferenceDataColor());
@@ -575,12 +575,12 @@ public class StackInspector extends Inspector {
         private void updateSlotLabel(Slot slot, TextLabel slotLabel) {
             final String sourceVariableName = sourceVariableName(slot);
             final int offset = slot.offset;
-            final String name = _showSlotAddresses.isSelected() ? _stackFrame.slotBase().plus(offset).toHexString() : slot.name;
+            final String name = showSlotAddresses.isSelected() ? stackFrame.slotBase().plus(offset).toHexString() : slot.name;
             slotLabel.setText(name + ":");
             String otherInfo = "";
-            final STACK_BIAS bias = _stackFrame.bias();
+            final STACK_BIAS bias = stackFrame.bias();
             if (bias.isFramePointerBiased()) {
-                final int biasedOffset = _stackFrame.biasedOffset(offset);
+                final int biasedOffset = stackFrame.biasedOffset(offset);
                 otherInfo = String.format("(%%fp %+d)", biasedOffset);
             }
             slotLabel.setToolTipText(String.format("%+d%s%s", offset, otherInfo, sourceVariableName == null ? "" : " [" + sourceVariableName + "]"));
@@ -593,17 +593,17 @@ public class StackInspector extends Inspector {
          * @return the Java source name for {@code slot} or null if a name is not available
          */
         private String sourceVariableName(Slot slot) {
-            if (_targetMethod instanceof JitTargetMethod) {
-                final JitTargetMethod jitTargetMethod = (JitTargetMethod) _targetMethod;
-                final JitStackFrameLayout jitLayout = (JitStackFrameLayout) _stackFrame.layout;
-                final int bytecodePosition = jitTargetMethod.bytecodePositionFor(_stackFrame.instructionPointer);
+            if (targetMethod instanceof JitTargetMethod) {
+                final JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod;
+                final JitStackFrameLayout jitLayout = (JitStackFrameLayout) stackFrame.layout;
+                final int bytecodePosition = jitTargetMethod.bytecodePositionFor(stackFrame.instructionPointer);
                 if (bytecodePosition != -1) {
-                    for (int localVariableIndex = 0; localVariableIndex < _codeAttribute.maxLocals(); ++localVariableIndex) {
+                    for (int localVariableIndex = 0; localVariableIndex < codeAttribute.maxLocals(); ++localVariableIndex) {
                         final int localVariableOffset = jitLayout.localVariableOffset(localVariableIndex);
                         if (slot.offset == localVariableOffset) {
-                            final Entry entry = _codeAttribute.localVariableTable().findLocalVariable(localVariableIndex, bytecodePosition);
+                            final Entry entry = codeAttribute.localVariableTable().findLocalVariable(localVariableIndex, bytecodePosition);
                             if (entry != null) {
-                                return entry.name(_codeAttribute.constantPool()).string;
+                                return entry.name(codeAttribute.constantPool()).string;
                             }
                         }
                     }
@@ -624,9 +624,9 @@ public class StackInspector extends Inspector {
         public void procedure(final MouseEvent mouseEvent) {
             switch(MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
                 case MouseEvent.BUTTON1: {
-                    final int index = _stackFrameList.getSelectedIndex();
-                    final StackFrame stackFrame = (StackFrame) _stackFrameListModel.get(index);
-                    inspection().focus().setStackFrame(_thread, stackFrame, true);
+                    final int index = stackFrameList.getSelectedIndex();
+                    final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(index);
+                    inspection().focus().setStackFrame(thread, stackFrame, true);
                 }
             }
         }
@@ -640,37 +640,37 @@ public class StackInspector extends Inspector {
             if (listSelectionEvent.getValueIsAdjusting()) {
                 return;
             }
-            final int index = _stackFrameList.getSelectedIndex();
-            _selectedFrame = null;
-            final int dividerLocation = _splitPane.getDividerLocation();
+            final int index = stackFrameList.getSelectedIndex();
+            selectedFrame = null;
+            final int dividerLocation = splitPane.getDividerLocation();
 
-            final Component oldRightComponent = _splitPane.getRightComponent();
+            final Component oldRightComponent = splitPane.getRightComponent();
             Component newRightComponent = oldRightComponent;
 
-            if (index >= 0 && index < _stackFrameListModel.getSize()) {
-                final StackFrame stackFrame = (StackFrame) _stackFrameListModel.get(index);
+            if (index >= 0 && index < stackFrameListModel.getSize()) {
+                final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(index);
                 if (stackFrame instanceof JavaStackFrame) {
                     if (stackFrame.isAdapter()) {
                         final AdapterStackFrame adapterStackFrame = (AdapterStackFrame) stackFrame;
-                        _selectedFrame = new AdapterStackFramePanel(inspection(), adapterStackFrame);
+                        selectedFrame = new AdapterStackFramePanel(inspection(), adapterStackFrame);
                     } else {
                         final JavaStackFrame javaStackFrame = (JavaStackFrame) stackFrame;
-                        _selectedFrame = new JavaStackFramePanel(inspection(), javaStackFrame);
+                        selectedFrame = new JavaStackFramePanel(inspection(), javaStackFrame);
                     }
-                    newRightComponent = _selectedFrame;
+                    newRightComponent = selectedFrame;
                 } else if (stackFrame instanceof TruncatedStackFrame) {
-                    _maxFramesDisplay *= 2;
-                    _stateChanged = true;
+                    maxFramesDisplay *= 2;
+                    stateChanged = true;
                     refreshView(true);
                 } else {
-                    newRightComponent = _nativeFrame;
+                    newRightComponent = nativeFrame;
                 }
             }
             if (oldRightComponent != newRightComponent) {
-                _splitPane.setRightComponent(newRightComponent);
+                splitPane.setRightComponent(newRightComponent);
                 SwingUtilities.invokeLater(new Runnable() {
                     public void run() {
-                        _splitPane.setDividerLocation(dividerLocation);
+                        splitPane.setDividerLocation(dividerLocation);
                     }
                 });
             }
@@ -680,7 +680,7 @@ public class StackInspector extends Inspector {
     /**
      * Watch for shift key being released to display the selected activation's stack frame.
      */
-    private final KeyListener _stackFrameKeyTypedListener = new KeyListener() {
+    private final KeyListener stackFrameKeyTypedListener = new KeyListener() {
         public final void keyTyped(KeyEvent keyEvent) {
         }
         public final void keyPressed(KeyEvent keyEvent) {
@@ -688,11 +688,11 @@ public class StackInspector extends Inspector {
 
         public final void keyReleased(KeyEvent keyEvent) {
             if (keyEvent.getKeyCode() == KeyEvent.VK_SHIFT) {
-                final int index = _stackFrameList.getSelectedIndex();
-                if (index >= 0 && index < _stackFrameListModel.getSize()) {
-                    final StackFrame stackFrame = (StackFrame) _stackFrameListModel.get(index);
+                final int index = stackFrameList.getSelectedIndex();
+                if (index >= 0 && index < stackFrameListModel.getSize()) {
+                    final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(index);
                     if (stackFrame instanceof JitStackFrame) {
-                        LocalsInspector.make(inspection(), _thread, (JitStackFrame) stackFrame).highlight();
+                        LocalsInspector.make(inspection(), thread, (JitStackFrame) stackFrame).highlight();
                     }
                 }
             }
@@ -709,23 +709,23 @@ public class StackInspector extends Inspector {
         public void procedure() {
             // (mlvdv)  This is pretty awkward, but has the virtue that it reproduces exactly what's displayed.  Could be improved.
             final StringBuilder result = new StringBuilder(100);
-            final ListCellRenderer cellRenderer = _stackFrameList.getCellRenderer();
-            for (int index = 0; index < _stackFrameListModel.getSize(); index++) {
-                final Object elementAt = _stackFrameListModel.getElementAt(index);
-                final JLabel jLabel = (JLabel) cellRenderer.getListCellRendererComponent(_stackFrameList, elementAt, index, false, false);
+            final ListCellRenderer cellRenderer = stackFrameList.getCellRenderer();
+            for (int index = 0; index < stackFrameListModel.getSize(); index++) {
+                final Object elementAt = stackFrameListModel.getElementAt(index);
+                final JLabel jLabel = (JLabel) cellRenderer.getListCellRendererComponent(stackFrameList, elementAt, index, false, false);
                 result.append(jLabel.getText()).append("\n");
             }
             gui().postToClipboard(result.toString());
         }
     }
 
-    private final InspectorAction _copyStackToClipboardAction = new CopyStackToClipboardAction();
+    private final InspectorAction copyStackToClipboardAction = new CopyStackToClipboardAction();
 
 
     @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
-        _stackInspector = null;
+        stackInspector = null;
         super.inspectorClosing();
     }
 

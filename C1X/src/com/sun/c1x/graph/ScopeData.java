@@ -47,15 +47,15 @@ public class ScopeData {
     // the constant pool
     final CiConstantPool constantPool;
     // whether this scope or any parent scope has exception handlers
-    boolean _hasHandler;
+    boolean hasHandler;
     // the worklist of blocks, managed like a sorted list
-    BlockBegin[] _workList;
+    BlockBegin[] workList;
     // the current position in the worklist
-    int _workListIndex;
+    int workListIndex;
     // maximum inline size for this scope
-    int _maxInlineSize;
+    int maxInlineSize;
     // expression stack depth at point where inline occurred
-    int _callerStackSize;
+    int callerStackSize;
 
     // The continuation point for the inline. Currently only used in
     // multi-block inlines, but eventually would like to use this for
@@ -63,40 +63,40 @@ public class ScopeData {
     // get the continuation point from the BlockList instead of
     // fabricating it anew because Invokes would be considered to be
     // BlockEnds.
-    BlockBegin _continuation;
+    BlockBegin continuation;
 
     // Without return value of inlined method on stack
-    ValueStack _continuationState;
+    ValueStack continuationState;
 
     // Number of returns seen in this scope
-    int _numReturns;
+    int numReturns;
 
     // In order to generate better code while inlining, we currently
     // have to perform an optimization for single-block inlined
     // methods where we continue parsing into the same block. This
     // allows us to perform LVN and folding across inlined scopes.
-    BlockBegin _cleanupBlock;       // The block to which the return was added
-    Instruction _cleanupReturnPrev; // Instruction before return instruction
-    ValueStack _cleanupState;       // State of that block (not yet pinned)
+    BlockBegin cleanupBlock;       // The block to which the return was added
+    Instruction cleanupReturnPrev; // Instruction before return instruction
+    ValueStack cleanupState;       // State of that block (not yet pinned)
 
     // We track the destination bci of the jsr only to determine
     // bailout conditions, since we only handle a subset of all of the
     // possible jsr-ret control structures. Recursive invocations of a
     // jsr are disallowed by the verifier. > 0 indicates parsing
     // of a jsr.
-    int _jsrEntryBci;
+    int jsrEntryBci;
     // We need to track the local variable in which the return address
     // was stored to ensure we can handle inlining the jsr, because we
     // don't handle arbitrary jsr/ret constructs.
-    int _jsrRetAddrLocal;
+    int jsrRetAddrLocal;
 
     // If we are parsing a jsr, the continuation point for rets
-    BlockBegin _jsrContinuation;
+    BlockBegin jsrContinuation;
 
     // Cloned exception handlers for jsr-related ScopeDatas
-    List<ExceptionHandler> _jsrHandlers;
+    List<ExceptionHandler> jsrHandlers;
 
-    BlockBegin[] _jsrDuplicatedBlocks; // blocks that have been duplicated for JSR inlining
+    BlockBegin[] jsrDuplicatedBlocks; // blocks that have been duplicated for JSR inlining
 
     /**
      * Constructs a new ScopeData instance with the specified parent ScopeData.
@@ -113,16 +113,16 @@ public class ScopeData {
         this.stream = stream;
         this.constantPool = constantPool;
         if (parent != null) {
-            _maxInlineSize = (int) (C1XOptions.MaximumInlineRatio * parent.maxInlineSize());
-            if (_maxInlineSize < C1XOptions.MaximumTrivialSize) {
-                _maxInlineSize = C1XOptions.MaximumTrivialSize;
+            maxInlineSize = (int) (C1XOptions.MaximumInlineRatio * parent.maxInlineSize());
+            if (maxInlineSize < C1XOptions.MaximumTrivialSize) {
+                maxInlineSize = C1XOptions.MaximumTrivialSize;
             }
-            _hasHandler = parent._hasHandler;
+            hasHandler = parent.hasHandler;
         } else {
-            _maxInlineSize = C1XOptions.MaximumInlineSize;
+            maxInlineSize = C1XOptions.MaximumInlineSize;
         }
         if (scope.exceptionHandlers() != null) {
-            _hasHandler = true;
+            hasHandler = true;
         }
     }
 
@@ -138,14 +138,14 @@ public class ScopeData {
             // including those for exception handlers in the scope of the method
             // containing the jsr (because those exception handlers may contain ret
             // instructions in some cases).
-            BlockBegin block = _jsrDuplicatedBlocks[bci];
+            BlockBegin block = jsrDuplicatedBlocks[bci];
             if (block == null) {
                 BlockBegin p = this.parent.blockAt(bci);
                 if (p != null) {
                     BlockBegin newBlock = new BlockBegin(p.bci());
                     newBlock.setDepthFirstNumber(p.depthFirstNumber());
                     newBlock.copyBlockFlags(p);
-                    _jsrDuplicatedBlocks[bci] = newBlock;
+                    jsrDuplicatedBlocks[bci] = newBlock;
                     block = newBlock;
                 }
             }
@@ -159,7 +159,7 @@ public class ScopeData {
      * @return <code>true</code> if there are any exception handlers
      */
     public boolean hasHandler() {
-        return _hasHandler;
+        return hasHandler;
     }
 
     /**
@@ -167,7 +167,7 @@ public class ScopeData {
      * @return the maximum inline size
      */
     public int maxInlineSize() {
-        return _maxInlineSize;
+        return maxInlineSize;
     }
 
     /**
@@ -184,7 +184,7 @@ public class ScopeData {
      * @return the continuation
      */
     public BlockBegin continuation() {
-        return _continuation;
+        return continuation;
     }
 
     /**
@@ -192,7 +192,7 @@ public class ScopeData {
      * @param continuation the continuation
      */
     public void setContinuation(BlockBegin continuation) {
-        _continuation = continuation;
+        this.continuation = continuation;
     }
 
     /**
@@ -200,7 +200,7 @@ public class ScopeData {
      * @return the state at the continuation point
      */
     public ValueStack continuationState() {
-        return _continuationState;
+        return continuationState;
     }
 
     /**
@@ -208,7 +208,7 @@ public class ScopeData {
      * @param state the state at the continuation
      */
     public void setContinuationState(ValueStack state) {
-        _continuationState = state;
+        continuationState = state;
     }
 
     /**
@@ -216,7 +216,7 @@ public class ScopeData {
      * @return <code>true</code> if this scope data is parsing a JSR
      */
     public boolean parsingJsr() {
-        return _jsrEntryBci > 0;
+        return jsrEntryBci > 0;
     }
 
     /**
@@ -224,7 +224,7 @@ public class ScopeData {
      * @return the jsr entry bci
      */
     public int jsrEntryBCI() {
-        return _jsrEntryBci;
+        return jsrEntryBci;
     }
 
     /**
@@ -233,8 +233,8 @@ public class ScopeData {
      */
     public void setJsrEntryBCI(int bci) {
         assert bci > 0 : "jsr cannot possibly jump to BCI 0";
-        _jsrDuplicatedBlocks = new BlockBegin[scope.method.codeSize()];
-        _jsrEntryBci = bci;
+        jsrDuplicatedBlocks = new BlockBegin[scope.method.codeSize()];
+        jsrEntryBci = bci;
     }
 
     /**
@@ -242,7 +242,7 @@ public class ScopeData {
      * @return the index of the local with the JSR return address
      */
     public int jsrEntryReturnAddressLocal() {
-        return _jsrRetAddrLocal;
+        return jsrRetAddrLocal;
     }
 
     /**
@@ -250,7 +250,7 @@ public class ScopeData {
      * @param local the local
      */
     public void setJsrEntryReturnAddressLocal(int local) {
-        _jsrRetAddrLocal = local;
+        jsrRetAddrLocal = local;
     }
 
     /**
@@ -258,7 +258,7 @@ public class ScopeData {
      * @return the jsr continuation
      */
     public BlockBegin jsrContinuation() {
-        return _jsrContinuation;
+        return jsrContinuation;
     }
 
     /**
@@ -266,7 +266,7 @@ public class ScopeData {
      * @param block the block that is the continuation
      */
     public void setJsrContinuation(BlockBegin block) {
-        _jsrContinuation = block;
+        jsrContinuation = block;
     }
 
     /**
@@ -277,7 +277,7 @@ public class ScopeData {
         if (parsingJsr()) {
             return parent.numberOfReturns();
         }
-        return _numReturns;
+        return numReturns;
     }
 
     /**
@@ -287,7 +287,7 @@ public class ScopeData {
         if (parsingJsr()) {
             parent.incrementNumberOfReturns();
         } else {
-            _numReturns++;
+            numReturns++;
         }
     }
 
@@ -298,9 +298,9 @@ public class ScopeData {
      * @param returnState the state at the previous return
      */
     public void setInlineCleanupInfo(BlockBegin block, Instruction returnPrev, ValueStack returnState) {
-        _cleanupBlock = block;
-        _cleanupReturnPrev = returnPrev;
-        _cleanupState = returnState;
+        cleanupBlock = block;
+        cleanupReturnPrev = returnPrev;
+        cleanupState = returnState;
     }
 
     /**
@@ -308,7 +308,7 @@ public class ScopeData {
      * @return the cleanup block
      */
     public BlockBegin inlineCleanupBlock() {
-        return _cleanupBlock;
+        return cleanupBlock;
     }
 
     /**
@@ -316,7 +316,7 @@ public class ScopeData {
      * @return the previous return
      */
     public Instruction inlineCleanupReturnPrev() {
-        return _cleanupReturnPrev;
+        return cleanupReturnPrev;
     }
 
     /**
@@ -324,7 +324,7 @@ public class ScopeData {
      * @return the state
      */
     public ValueStack inlineCleanupState() {
-        return _cleanupState;
+        return cleanupState;
     }
 
     /**
@@ -336,7 +336,7 @@ public class ScopeData {
 
         List<ExceptionHandler> shandlers = scope.exceptionHandlers();
         if (shandlers != null) {
-            _jsrHandlers = new ArrayList<ExceptionHandler>(shandlers.size());
+            jsrHandlers = new ArrayList<ExceptionHandler>(shandlers.size());
             for (ExceptionHandler h : shandlers) {
                 ExceptionHandler n = new ExceptionHandler(h);
                 if (n.handlerBCI() != Instruction.SYNCHRONIZATION_ENTRY_BCI) {
@@ -344,10 +344,10 @@ public class ScopeData {
                 } else {
                     assert n.entryBlock().checkBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler);
                 }
-                _jsrHandlers.add(n);
+                jsrHandlers.add(n);
             }
         } else {
-            _jsrHandlers = new ArrayList<ExceptionHandler>(0);
+            jsrHandlers = new ArrayList<ExceptionHandler>(0);
         }
     }
 
@@ -356,11 +356,11 @@ public class ScopeData {
      * @return the list of exception handlers
      */
     public List<ExceptionHandler> exceptionHandlers() {
-        if (_jsrHandlers == null) {
+        if (jsrHandlers == null) {
             assert !parsingJsr();
             return scope.exceptionHandlers();
         }
-        return _jsrHandlers;
+        return jsrHandlers;
     }
 
     /**
@@ -368,13 +368,13 @@ public class ScopeData {
      * @param handler the handler to add
      */
     public void addExceptionHandler(ExceptionHandler handler) {
-        if (_jsrHandlers == null) {
+        if (jsrHandlers == null) {
             assert !parsingJsr();
             scope.addExceptionHandler(handler);
         } else {
-            _jsrHandlers.add(handler);
+            jsrHandlers.add(handler);
         }
-        _hasHandler = true;
+        hasHandler = true;
     }
 
     /**
@@ -385,7 +385,7 @@ public class ScopeData {
      */
     public void addToWorkList(BlockBegin block) {
         if (!block.isOnWorkList()) {
-            if (block == _continuation || block == _jsrContinuation) {
+            if (block == continuation || block == jsrContinuation) {
                 return;
             }
             block.setOnWorkList(true);
@@ -396,28 +396,28 @@ public class ScopeData {
     private void sortIntoWorkList(BlockBegin top) {
         // XXX: this is O(n), since the whole list is sorted; a heap could achieve O(nlogn), but
         //      would only pay off for large worklists
-        if (_workList == null) {
+        if (workList == null) {
             // need to allocate the worklist
-            _workList = new BlockBegin[5];
-        } else if (_workListIndex == _workList.length) {
+            workList = new BlockBegin[5];
+        } else if (workListIndex == workList.length) {
             // need to grow the worklist
-            BlockBegin[] nworkList = new BlockBegin[_workList.length * 3];
-            System.arraycopy(_workList, 0, nworkList, 0, _workList.length);
-            _workList = nworkList;
+            BlockBegin[] nworkList = new BlockBegin[workList.length * 3];
+            System.arraycopy(workList, 0, nworkList, 0, workList.length);
+            workList = nworkList;
         }
         // put the block at the end of the array
-        _workList[_workListIndex++] = top;
+        workList[workListIndex++] = top;
         int dfn = top.depthFirstNumber();
         assert dfn >= 0;
-        int i = _workListIndex - 2;
+        int i = workListIndex - 2;
         // push top towards the beginning of the array
         for (; i >= 0; i--) {
-            BlockBegin b = _workList[i];
+            BlockBegin b = workList[i];
             if (b.depthFirstNumber() >= dfn) {
                 break; // already in the right position
             }
-            _workList[i + 1] = b; // bubble b down by one
-            _workList[i] = top;   // and overwrite it with top
+            workList[i + 1] = b; // bubble b down by one
+            workList[i] = top;   // and overwrite it with top
         }
     }
 
@@ -428,11 +428,11 @@ public class ScopeData {
      * in the worklist
      */
     public BlockBegin removeFromWorkList() {
-        if (_workListIndex == 0) {
+        if (workListIndex == 0) {
             return null;
         }
         // pop the last item off the end
-        return _workList[--_workListIndex];
+        return workList[--workListIndex];
     }
 
     /**
@@ -440,7 +440,7 @@ public class ScopeData {
      * @return <code>true</code> if there are no more blocks in the worklist
      */
     public boolean isWorkListEmpty() {
-        return _workListIndex == 0;
+        return workListIndex == 0;
     }
 
     /**
@@ -450,7 +450,7 @@ public class ScopeData {
     @Override
     public String toString() {
         if (parsingJsr()) {
-            return "jsr@" + _jsrEntryBci + " data for " + scope.toString();
+            return "jsr@" + jsrEntryBci + " data for " + scope.toString();
         } else {
             return "data for " + scope.toString();
         }

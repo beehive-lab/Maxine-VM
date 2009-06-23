@@ -33,7 +33,7 @@ import java.util.List;
  */
 public class LookupSwitch extends Switch {
 
-    final int[] _keys;
+    final int[] keys;
 
     /**
      * Constructs a new TableSwitch instruction.
@@ -45,7 +45,7 @@ public class LookupSwitch extends Switch {
      */
     public LookupSwitch(Instruction value, List<BlockBegin> successors, int[] keys, ValueStack stateBefore, boolean isSafepoint) {
         super(value, successors, stateBefore, isSafepoint);
-        _keys = keys;
+        this.keys = keys;
     }
 
     /**
@@ -54,7 +54,7 @@ public class LookupSwitch extends Switch {
      * @return the key at that index
      */
     public int keyAt(int i) {
-        return _keys[i];
+        return keys[i];
     }
 
     /**

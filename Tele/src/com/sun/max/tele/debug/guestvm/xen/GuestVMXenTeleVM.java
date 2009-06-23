@@ -34,7 +34,7 @@ public class GuestVMXenTeleVM extends TeleVM {
         super(bootImageFile, bootImage, sourcepath, commandlineArguments, processID, null);
     }
 
-    private GuestVMXenTeleDomain _domain;
+    private GuestVMXenTeleDomain domain;
 
     @Override
     protected TeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
@@ -43,16 +43,16 @@ public class GuestVMXenTeleVM extends TeleVM {
 
     @Override
     protected TeleProcess attachToTeleProcess(int processID) {
-        if (_domain != null) {
+        if (domain != null) {
             throw new RuntimeException("Attempt to create multiple XenOSTeleDomains, not allowed.");
         }
-        _domain = new GuestVMXenTeleDomain(this, bootImage().vmConfiguration().platform(), processID);
-        return _domain;
+        domain = new GuestVMXenTeleDomain(this, bootImage().vmConfiguration().platform(), processID);
+        return domain;
     }
 
     @Override
     protected Pointer loadBootImage(TeleVMAgent agent) throws BootImageException {
-        return _domain.getBootHeap();
+        return domain.getBootHeap();
     }
 
 }

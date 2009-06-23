@@ -26,12 +26,12 @@ package test.except;
 
 public class BC_getfield {
 
-    private static BC_getfield _object = new BC_getfield();
+    private static BC_getfield object = new BC_getfield();
 
-    private int _field = 13;
+    private int field = 13;
 
     public static int test(int arg) {
-        final BC_getfield obj = arg == 3 ? null : _object;
-        return obj._field;
+        final BC_getfield obj = arg == 3 ? null : object;
+        return obj.field;
     }
 }

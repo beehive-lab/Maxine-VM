@@ -30,34 +30,34 @@ import java.util.*;
  */
 public abstract class AbstractNamedNode extends Node {
 
-    private NameNode _nameNode;
-    private String _name;
+    private NameNode nameNode;
+    private String name;
 
     public String name() {
-        return _name;
+        return name;
     }
 
     public NameNode nameNode() {
-        return _nameNode;
+        return nameNode;
     }
 
     public String fieldName() {
-        return "_" + name();
+        return name();
     }
 
     @Override
     void prune() {
-        final Iterator it = _components.iterator();
+        final Iterator it = components.iterator();
 
         if (it.hasNext()) {
             final Node curNameNode = (Node) it.next();
 
             if (curNameNode instanceof NameNode) {
-                this._nameNode = (NameNode) curNameNode;
-                this._name = this._nameNode.text();
+                this.nameNode = (NameNode) curNameNode;
+                this.name = this.nameNode.text();
                 it.remove();
             } else {
-                error("Bad name: " + _name);
+                error("Bad name: " + name);
             }
         } else {
             error("empty");
@@ -67,7 +67,7 @@ public abstract class AbstractNamedNode extends Node {
 
     @Override
     void constrain(Context ctx) {
-        _nameNode.constrain(ctx);
+        nameNode.constrain(ctx);
         super.constrain(ctx.subcontext(name()));
     }
 
@@ -94,7 +94,7 @@ public abstract class AbstractNamedNode extends Node {
         writer.print("class " + javaClassName());
         writer.println(javaClassImplements() + " {");
         genJavaClassSpecifics(writer, depth + 1);
-        for (final Iterator it = _components.iterator(); it.hasNext();) {
+        for (final Iterator it = components.iterator(); it.hasNext();) {
             ((Node) it.next()).genJava(writer, depth + 1);
         }
         indent(writer, depth);

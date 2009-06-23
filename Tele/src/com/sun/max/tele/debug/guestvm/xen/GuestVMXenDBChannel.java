@@ -33,13 +33,13 @@ import com.sun.max.unsafe.*;
  *
  */
 public final class GuestVMXenDBChannel {
-    private static GuestVMXenTeleDomain _teleDomain;
-    private static int _maxByteBufferSize;
+    private static GuestVMXenTeleDomain teleDomain;
+    private static int maxByteBufferSize;
 
     public static synchronized void attach(GuestVMXenTeleDomain teleDomain, int domId) {
-        _teleDomain = teleDomain;
+        GuestVMXenDBChannel.teleDomain = teleDomain;
         nativeAttach(domId);
-        _maxByteBufferSize = nativeMaxByteBufferSize();
+        maxByteBufferSize = nativeMaxByteBufferSize();
     }
 
     public static synchronized Pointer getBootHeapStart() {
@@ -64,7 +64,7 @@ public final class GuestVMXenDBChannel {
         int localOffset = dstOffset;
         long localAddress = src.toLong();
         while (lengthLeft > 0) {
-            final int toDo = lengthLeft > _maxByteBufferSize ? _maxByteBufferSize : lengthLeft;
+            final int toDo = lengthLeft > maxByteBufferSize ? maxByteBufferSize : lengthLeft;
             final int r = readBytes0(localAddress, dst, localOffset, toDo);
             if (r != toDo) {
                 return -1;
@@ -91,7 +91,7 @@ public final class GuestVMXenDBChannel {
         int localOffset = offset;
         long localAddress = address.toLong();
         while (lengthLeft > 0) {
-            final int toDo = lengthLeft > _maxByteBufferSize ? _maxByteBufferSize : lengthLeft;
+            final int toDo = lengthLeft > maxByteBufferSize ? maxByteBufferSize : lengthLeft;
             final int r = writeBytes0(localAddress, buffer, localOffset, toDo);
             if (r != toDo) {
                 return -1;
@@ -105,7 +105,7 @@ public final class GuestVMXenDBChannel {
 
 
     public static synchronized void gatherThreads(AppendableSequence<TeleNativeThread> threads, int domainId, long threadSpecificsList) {
-        nativeGatherThreads(_teleDomain, threads, domainId, threadSpecificsList);
+        nativeGatherThreads(teleDomain, threads, domainId, threadSpecificsList);
     }
 
     public static synchronized int resume(int domainId) {

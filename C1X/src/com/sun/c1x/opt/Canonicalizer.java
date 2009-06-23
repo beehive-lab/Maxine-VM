@@ -42,9 +42,9 @@ import java.util.LinkedList;
  */
 public class Canonicalizer implements InstructionVisitor {
 
-    Instruction _canonical;
-    List<Instruction> _extra;
-    int _bci;
+    Instruction canonical;
+    List<Instruction> extra;
+    int bci;
 
     /**
      * Creates a new Canonicalizer for the specified instruction.
@@ -53,8 +53,8 @@ public class Canonicalizer implements InstructionVisitor {
      */
     public Canonicalizer(Instruction original, int bci) {
         // XXX: reusing a canonicalizer instance for each operation would reduce allocation
-        _canonical = original;
-        _bci = bci;
+        canonical = original;
+        this.bci = bci;
         original.accept(this);
     }
 
@@ -70,18 +70,18 @@ public class Canonicalizer implements InstructionVisitor {
      * @return the canonicalized version of the instruction
      */
     public Instruction canonical() {
-        return _canonical;
+        return canonical;
     }
 
     public List<Instruction> extra() {
-        return _extra;
+        return extra;
     }
 
     private <T extends Instruction> T addInstr(T x) {
-        if (_extra == null) {
-            _extra = new LinkedList<Instruction>();
+        if (extra == null) {
+            extra = new LinkedList<Instruction>();
         }
-        _extra.add(x);
+        extra.add(x);
         return x;
     }
 
@@ -94,46 +94,46 @@ public class Canonicalizer implements InstructionVisitor {
     }
 
     private Instruction setCanonical(Instruction x) {
-        return _canonical = x;
+        return canonical = x;
     }
 
     private Instruction setIntConstant(int val) {
-        return _canonical = Constant.forInt(val);
+        return canonical = Constant.forInt(val);
     }
 
     private Instruction setBooleanConstant(boolean val) {
-        return _canonical = Constant.forBoolean(val);
+        return canonical = Constant.forBoolean(val);
     }
 
     private Instruction setObjectConstant(Object val) {
         if (C1XOptions.SupportObjectConstants) {
-            return _canonical = Constant.forObject(val);
+            return canonical = Constant.forObject(val);
         }
-        return _canonical;
+        return canonical;
     }
 
     private Instruction setLongConstant(long val) {
-        return _canonical = Constant.forLong(val);
+        return canonical = Constant.forLong(val);
     }
 
     private Instruction setFloatConstant(float val) {
-        return _canonical = Constant.forFloat(val);
+        return canonical = Constant.forFloat(val);
     }
 
     private Instruction setDoubleConstant(double val) {
-        return _canonical = Constant.forDouble(val);
+        return canonical = Constant.forDouble(val);
     }
 
     private Instruction setByteConstant(byte val) {
-        return _canonical = new Constant(ConstType.forByte(val));
+        return canonical = new Constant(ConstType.forByte(val));
     }
 
     private Instruction setCharConstant(char val) {
-        return _canonical = new Constant(ConstType.forChar(val));
+        return canonical = new Constant(ConstType.forChar(val));
     }
 
     private Instruction setShortConstant(short val) {
-        return _canonical = new Constant(ConstType.forShort(val));
+        return canonical = new Constant(ConstType.forShort(val));
     }
 
     private void moveConstantToRight(Op2 x) {
@@ -229,7 +229,7 @@ public class Canonicalizer implements InstructionVisitor {
                 // floating point operations need to be extra careful
             }
         }
-        assert Instruction.sameBasicType(i, _canonical);
+        assert Instruction.sameBasicType(i, canonical);
     }
 
     private Instruction reduceIntOp2(Op2 original, Instruction x, int y) {
@@ -496,7 +496,7 @@ public class Canonicalizer implements InstructionVisitor {
                 case Double: setDoubleConstant(-vt.asConstant().asDouble()); break;
             }
         }
-        assert vt.basicType() == _canonical.type().basicType();
+        assert vt.basicType() == canonical.type().basicType();
     }
 
     public void visitArithmeticOp(ArithmeticOp i) {
@@ -563,7 +563,7 @@ public class Canonicalizer implements InstructionVisitor {
                 }
             }
         }
-        assert Instruction.sameBasicType(i, _canonical);
+        assert Instruction.sameBasicType(i, canonical);
     }
 
     public void visitIfOp(IfOp i) {
@@ -910,7 +910,7 @@ public class Canonicalizer implements InstructionVisitor {
                 return;
             }
         }
-        assert Instruction.sameBasicType(i, _canonical);
+        assert Instruction.sameBasicType(i, canonical);
     }
 
     public void visitBlockBegin(BlockBegin i) {
@@ -1014,7 +1014,7 @@ public class Canonicalizer implements InstructionVisitor {
                 visitIf(canon);
             } else {
                 setCanonical(canon);
-                _canonical.setBCI(cmp.bci());
+                canonical.setBCI(cmp.bci());
             }
         }
     }

@@ -32,8 +32,8 @@ import com.sun.c1x.value.ValueType;
  */
 public class Convert extends Instruction {
 
-    final int _opcode;
-    Instruction _value;
+    final int opcode;
+    Instruction value;
 
     /**
      * Constructs a new Convert instance.
@@ -43,8 +43,8 @@ public class Convert extends Instruction {
      */
     public Convert(int opcode, Instruction value, ValueType type) {
         super(type);
-        _opcode = opcode;
-        _value = value;
+        this.opcode = opcode;
+        this.value = value;
     }
 
     /**
@@ -52,7 +52,7 @@ public class Convert extends Instruction {
      * @return the opcode of this conversion operation
      */
     public int opcode() {
-        return _opcode;
+        return opcode;
     }
 
     /**
@@ -60,7 +60,7 @@ public class Convert extends Instruction {
      * @return the input value instruction
      */
     public Instruction value() {
-        return _value;
+        return value;
     }
 
     /**
@@ -69,7 +69,7 @@ public class Convert extends Instruction {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        _value = closure.apply(_value);
+        value = closure.apply(value);
     }
 
     /**
@@ -83,14 +83,14 @@ public class Convert extends Instruction {
 
     @Override
     public int valueNumber() {
-        return Util.hash1(_opcode, _value);
+        return Util.hash1(opcode, value);
     }
 
     @Override
     public boolean valueEqual(Instruction i) {
         if (i instanceof Convert) {
             Convert o = (Convert) i;
-            return _opcode == o._opcode && _value == o._value;
+            return opcode == o.opcode && value == o.value;
         }
         return false;
     }

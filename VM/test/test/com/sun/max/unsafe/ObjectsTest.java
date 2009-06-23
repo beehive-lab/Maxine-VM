@@ -41,7 +41,7 @@ public class ObjectsTest extends MaxTestCase {
     }
 
     private static final class C {
-        String _f1;
-        Integer _f2;
+        String f1;
+        Integer f2;
     }
 }

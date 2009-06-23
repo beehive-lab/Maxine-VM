@@ -45,7 +45,7 @@ import com.sun.max.vm.debug.*;
  */
 public final class TargetMethodMenuItems extends AbstractInspectionHolder implements InspectorMenuItems {
 
-    private final TeleTargetMethod _teleTargetMethod;
+    private final TeleTargetMethod teleTargetMethod;
 
     private final class ViewTargetMethodCodeAction extends InspectorAction {
         private ViewTargetMethodCodeAction() {
@@ -54,11 +54,11 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
 
         @Override
         public void procedure() {
-            inspection().focus().setCodeLocation(maxVM().createCodeLocation(_teleTargetMethod.callEntryPoint()), false);
+            inspection().focus().setCodeLocation(maxVM().createCodeLocation(teleTargetMethod.callEntryPoint()), false);
         }
     }
 
-    private final ViewTargetMethodCodeAction _viewTargetMethodCodeAction;
+    private final ViewTargetMethodCodeAction viewTargetMethodCodeAction;
 
     private final class CopyTargetMethodCodeToClipboardAction extends InspectorAction {
         private CopyTargetMethodCodeToClipboardAction() {
@@ -69,13 +69,13 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
         public void procedure() {
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
-            writer.println("target method: " + _teleTargetMethod.classMethodActor().format("%H.%n(%p)"));
-            writer.println("compilation: " + inspection().nameDisplay().methodCompilationID(_teleTargetMethod) + "  " + _teleTargetMethod.classActorForType().simpleName());
-            _teleTargetMethod.traceBundle(writer);
+            writer.println("target method: " + teleTargetMethod.classMethodActor().format("%H.%n(%p)"));
+            writer.println("compilation: " + inspection().nameDisplay().methodCompilationID(teleTargetMethod) + "  " + teleTargetMethod.classActorForType().simpleName());
+            teleTargetMethod.traceBundle(writer);
             writer.flush();
             final ProcessorKind processorKind = maxVM().vmConfiguration().platform().processorKind();
-            final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(_teleTargetMethod.getEncodedInlineDataDescriptors());
-            final Pointer startAddress = _teleTargetMethod.getCodeStart();
+            final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(teleTargetMethod.getEncodedInlineDataDescriptors());
+            final Pointer startAddress = teleTargetMethod.getCodeStart();
             final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
                 @Override
                 protected String disassembledObjectString(Disassembler disassembler, DisassembledObject disassembledObject) {
@@ -93,12 +93,12 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
                     return string;
                 }
             };
-            Disassemble.disassemble(byteArrayOutputStream, _teleTargetMethod.getCode(), processorKind, startAddress, inlineDataDecoder, disassemblyPrinter);
+            Disassemble.disassemble(byteArrayOutputStream, teleTargetMethod.getCode(), processorKind, startAddress, inlineDataDecoder, disassemblyPrinter);
             inspection().gui().postToClipboard(byteArrayOutputStream.toString());
         }
     }
 
-    private final CopyTargetMethodCodeToClipboardAction _copyTargetMethodCodeToClipboardAction;
+    private final CopyTargetMethodCodeToClipboardAction copyTargetMethodCodeToClipboardAction;
 
     private final class TargetCodeBreakOnEntryAction extends InspectorAction {
         private TargetCodeBreakOnEntryAction() {
@@ -107,11 +107,11 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
 
         @Override
         public void procedure() {
-            _teleTargetMethod.setTargetBreakpointAtEntry();
+            teleTargetMethod.setTargetBreakpointAtEntry();
         }
     }
 
-    private final TargetCodeBreakOnEntryAction _targetCodeBreakOnEntryAction;
+    private final TargetCodeBreakOnEntryAction targetCodeBreakOnEntryAction;
 
     private final class InspectTargetMethodObjectAction extends InspectorAction {
         private InspectTargetMethodObjectAction() {
@@ -120,11 +120,11 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
 
         @Override
         public void procedure() {
-            inspection().focus().setHeapObject(_teleTargetMethod);
+            inspection().focus().setHeapObject(teleTargetMethod);
         }
     }
 
-    private final InspectTargetMethodObjectAction _inspectTargetMethodObjectAction;
+    private final InspectTargetMethodObjectAction inspectTargetMethodObjectAction;
 
 
     private final class InspectTargetCodeMemoryAction extends InspectorAction {
@@ -133,11 +133,11 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
         }
         @Override
         protected void procedure() {
-            MemoryInspector.create(inspection(), _teleTargetMethod.targetCodeRegion().start(), _teleTargetMethod.targetCodeRegion().size().toInt(), 1, 8).highlight();
+            MemoryInspector.create(inspection(), teleTargetMethod.targetCodeRegion().start(), teleTargetMethod.targetCodeRegion().size().toInt(), 1, 8).highlight();
         }
     }
 
-    private final InspectTargetCodeMemoryAction _inspectTargetCodeMemoryAction;
+    private final InspectTargetCodeMemoryAction inspectTargetCodeMemoryAction;
 
     private final class InspectTargetCodeMemoryWordsAction extends InspectorAction {
         private InspectTargetCodeMemoryWordsAction() {
@@ -146,32 +146,32 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
 
         @Override
         protected void procedure() {
-            MemoryWordInspector.create(inspection(), _teleTargetMethod.targetCodeRegion().start(), _teleTargetMethod.targetCodeRegion().size().toInt()).highlight();
+            MemoryWordInspector.create(inspection(), teleTargetMethod.targetCodeRegion().start(), teleTargetMethod.targetCodeRegion().size().toInt()).highlight();
         }
     }
 
-    private final InspectTargetCodeMemoryWordsAction _inspectTargetCodeMemoryWordsAction;
+    private final InspectTargetCodeMemoryWordsAction inspectTargetCodeMemoryWordsAction;
 
     public TargetMethodMenuItems(Inspection inspection, TeleTargetMethod teleTargetMethod) {
         super(inspection);
-        _teleTargetMethod = teleTargetMethod;
-        _viewTargetMethodCodeAction = new ViewTargetMethodCodeAction();
-        _targetCodeBreakOnEntryAction = new TargetCodeBreakOnEntryAction();
-        _copyTargetMethodCodeToClipboardAction = new CopyTargetMethodCodeToClipboardAction();
-        _inspectTargetMethodObjectAction = new InspectTargetMethodObjectAction();
-        _inspectTargetCodeMemoryAction = new InspectTargetCodeMemoryAction();
-        _inspectTargetCodeMemoryWordsAction = new InspectTargetCodeMemoryWordsAction();
+        this.teleTargetMethod = teleTargetMethod;
+        viewTargetMethodCodeAction = new ViewTargetMethodCodeAction();
+        targetCodeBreakOnEntryAction = new TargetCodeBreakOnEntryAction();
+        copyTargetMethodCodeToClipboardAction = new CopyTargetMethodCodeToClipboardAction();
+        inspectTargetMethodObjectAction = new InspectTargetMethodObjectAction();
+        inspectTargetCodeMemoryAction = new InspectTargetCodeMemoryAction();
+        inspectTargetCodeMemoryWordsAction = new InspectTargetCodeMemoryWordsAction();
         refresh(true);
     }
 
     public void addTo(InspectorMenu menu) {
-        menu.add(_viewTargetMethodCodeAction);
-        menu.add(_targetCodeBreakOnEntryAction);
-        menu.add(_copyTargetMethodCodeToClipboardAction);
+        menu.add(viewTargetMethodCodeAction);
+        menu.add(targetCodeBreakOnEntryAction);
+        menu.add(copyTargetMethodCodeToClipboardAction);
         menu.addSeparator();
-        menu.add(_inspectTargetMethodObjectAction);
-        menu.add(_inspectTargetCodeMemoryAction);
-        menu.add(_inspectTargetCodeMemoryWordsAction);
+        menu.add(inspectTargetMethodObjectAction);
+        menu.add(inspectTargetCodeMemoryAction);
+        menu.add(inspectTargetCodeMemoryWordsAction);
     }
 
     public void refresh(boolean force) {

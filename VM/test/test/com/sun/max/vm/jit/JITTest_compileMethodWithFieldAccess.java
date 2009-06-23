@@ -43,26 +43,26 @@ import com.sun.max.vm.type.*;
 public class JITTest_compileMethodWithFieldAccess extends JitCompilerTestCase {
     static class IntFieldHolder {
         int a;
-        int _b;
+        int b;
         int f() {
-            return 2 * a + _b;
+            return 2 * a + b;
         }
     }
 
     static class FloatFieldHolder {
         float a;
-        float _b;
+        float b;
         float f() {
-            return 2.5F * a + _b;
+            return 2.5F * a + b;
         }
     }
 
     static class LongFieldHolder {
         long a;
-        long _b;
+        long b;
 
         long f() {
-            return 2 * a + _b;
+            return 2 * a + b;
         }
     }
 
@@ -76,7 +76,7 @@ public class JITTest_compileMethodWithFieldAccess extends JitCompilerTestCase {
     @SuppressWarnings("unused")
     void performTwoIntFieldAccess(IntFieldHolder holder) {
         final int a = holder.a;
-        final int b = holder._b;
+        final int b = holder.b;
     }
 
     @SuppressWarnings("unused")
@@ -87,7 +87,7 @@ public class JITTest_compileMethodWithFieldAccess extends JitCompilerTestCase {
     @SuppressWarnings("unused")
     void performTwoIntFieldAccess(UnresolvedAtTestTime holder) {
         final int a =  holder.intField;
-        final int b =  holder._intField2;
+        final int b =  holder.intField2;
     }
 
     ///////////////////////////// FLOAT
@@ -100,7 +100,7 @@ public class JITTest_compileMethodWithFieldAccess extends JitCompilerTestCase {
     @SuppressWarnings("unused")
     void performTwoFloatFieldAccess(FloatFieldHolder holder) {
         final float a = holder.a;
-        final float b = holder._b;
+        final float b = holder.b;
     }
 
     @SuppressWarnings("unused")
@@ -111,7 +111,7 @@ public class JITTest_compileMethodWithFieldAccess extends JitCompilerTestCase {
     @SuppressWarnings("unused")
     void performTwoFloatFieldAccess(UnresolvedAtTestTime holder) {
         final float a =  holder.floatField;
-        final float b =  holder._floatField2;
+        final float b =  holder.floatField2;
     }
 
     ///////////////////////////// LONG
@@ -124,7 +124,7 @@ public class JITTest_compileMethodWithFieldAccess extends JitCompilerTestCase {
     @SuppressWarnings("unused")
     void performTwoLongFieldAccess(LongFieldHolder holder) {
         final long a = holder.a;
-        final long b = holder._b;
+        final long b = holder.b;
     }
 
     @SuppressWarnings("unused")
@@ -135,7 +135,7 @@ public class JITTest_compileMethodWithFieldAccess extends JitCompilerTestCase {
     @SuppressWarnings("unused")
     void performTwoLongFieldAccess(UnresolvedAtTestTime holder) {
         final long a =  holder.longField;
-        final long b =  holder._longField2;
+        final long b =  holder.longField2;
     }
 
     ///////////////////////////////

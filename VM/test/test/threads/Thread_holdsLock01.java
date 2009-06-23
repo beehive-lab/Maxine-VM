@@ -30,21 +30,21 @@ public final class Thread_holdsLock01 {
     private Thread_holdsLock01() {
     }
 
-    static final Object _monitor = new Object();
+    static final Object monitor = new Object();
 
     public static boolean test(int i) {
         if (i == 0) {
-            synchronized (_monitor) {
-                return Thread.holdsLock(_monitor);
+            synchronized (monitor) {
+                return Thread.holdsLock(monitor);
             }
         } else if (i == 1) {
-            synchronized (_monitor) {
+            synchronized (monitor) {
                 // do nothing.
             }
-            return Thread.holdsLock(_monitor);
+            return Thread.holdsLock(monitor);
         } else if (i == 2) {
             return Thread.holdsLock(null);
         }
-        return Thread.holdsLock(_monitor);
+        return Thread.holdsLock(monitor);
     }
 }

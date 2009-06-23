@@ -54,28 +54,28 @@ public class MethodHandlers extends Handlers {
 
         @Override
         public LineTable.Reply handle(LineTable.IncomingRequest incomingRequest) throws JDWPException {
-            final MethodProvider method = session().getMethod(incomingRequest._refType, incomingRequest._methodID);
+            final MethodProvider method = session().getMethod(incomingRequest.refType, incomingRequest.methodID);
 
             final Reply reply = new Reply();
-            reply._start = -1;
-            reply._end = -1;
-            reply._lines = new LineInfo[0];
+            reply.start = -1;
+            reply.end = -1;
+            reply.lines = new LineInfo[0];
 
             final LineTableEntry[] entries = method.getLineTable();
             if (entries.length > 0) {
                 long min = Integer.MAX_VALUE;
                 long max = -1;
-                reply._lines = new LineInfo[entries.length];
+                reply.lines = new LineInfo[entries.length];
                 for (int i = 0; i < entries.length; i++) {
-                    reply._lines[i] = new LineInfo();
+                    reply.lines[i] = new LineInfo();
                     min = Math.min(min, entries[i].getCodeIndex());
                     max = Math.max(max, entries[i].getCodeIndex());
-                    reply._lines[i]._lineCodeIndex = entries[i].getCodeIndex();
-                    reply._lines[i]._lineNumber = entries[i].getLineNumber();
+                    reply.lines[i].lineCodeIndex = entries[i].getCodeIndex();
+                    reply.lines[i].lineNumber = entries[i].getLineNumber();
                 }
 
-                reply._start = min;
-                reply._end = max;
+                reply.start = min;
+                reply.end = max;
             }
 
             return reply;
@@ -90,20 +90,20 @@ public class MethodHandlers extends Handlers {
 
         @Override
         public VariableTable.Reply handle(VariableTable.IncomingRequest incomingRequest) throws JDWPException {
-            final MethodProvider method = session().getMethod(incomingRequest._refType, incomingRequest._methodID);
+            final MethodProvider method = session().getMethod(incomingRequest.refType, incomingRequest.methodID);
             final VariableTableEntry[] entries = method.getVariableTable();
 
             final VariableTable.Reply r = new VariableTable.Reply();
-            r._argCnt = method.getNumberOfArguments();
-            r._slots = new VariableTable.SlotInfo[entries.length];
+            r.argCnt = method.getNumberOfArguments();
+            r.slots = new VariableTable.SlotInfo[entries.length];
 
             for (int i = 0; i < entries.length; i++) {
-                r._slots[i] = new VariableTable.SlotInfo();
-                r._slots[i]._codeIndex = entries[i].getCodeIndex();
-                r._slots[i]._length = entries[i].getLength();
-                r._slots[i]._name = entries[i].getName();
-                r._slots[i]._signature = entries[i].getSignature();
-                r._slots[i]._slot = entries[i].getSlot();
+                r.slots[i] = new VariableTable.SlotInfo();
+                r.slots[i].codeIndex = entries[i].getCodeIndex();
+                r.slots[i].length = entries[i].getLength();
+                r.slots[i].name = entries[i].getName();
+                r.slots[i].signature = entries[i].getSignature();
+                r.slots[i].slot = entries[i].getSlot();
             }
 
             return r;
@@ -145,21 +145,21 @@ public class MethodHandlers extends Handlers {
 
         @Override
         public VariableTableWithGeneric.Reply handle(VariableTableWithGeneric.IncomingRequest incomingRequest) throws JDWPException {
-            final MethodProvider method = session().getMethod(incomingRequest._refType, incomingRequest._methodID);
+            final MethodProvider method = session().getMethod(incomingRequest.refType, incomingRequest.methodID);
             final VariableTableEntry[] entries = method.getVariableTable();
 
             final VariableTableWithGeneric.Reply r = new VariableTableWithGeneric.Reply();
-            r._argCnt = method.getNumberOfArguments();
-            r._slots = new VariableTableWithGeneric.SlotInfo[entries.length];
+            r.argCnt = method.getNumberOfArguments();
+            r.slots = new VariableTableWithGeneric.SlotInfo[entries.length];
 
             for (int i = 0; i < entries.length; i++) {
-                r._slots[i] = new VariableTableWithGeneric.SlotInfo();
-                r._slots[i]._codeIndex = entries[i].getCodeIndex();
-                r._slots[i]._length = entries[i].getLength();
-                r._slots[i]._name = entries[i].getName();
-                r._slots[i]._signature = entries[i].getSignature();
-                r._slots[i]._genericSignature = entries[i].getGenericSignature();
-                r._slots[i]._slot = entries[i].getSlot();
+                r.slots[i] = new VariableTableWithGeneric.SlotInfo();
+                r.slots[i].codeIndex = entries[i].getCodeIndex();
+                r.slots[i].length = entries[i].getLength();
+                r.slots[i].name = entries[i].getName();
+                r.slots[i].signature = entries[i].getSignature();
+                r.slots[i].genericSignature = entries[i].getGenericSignature();
+                r.slots[i].slot = entries[i].getSlot();
             }
 
             return r;

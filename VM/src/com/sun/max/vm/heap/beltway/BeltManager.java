@@ -198,7 +198,7 @@ public final class BeltManager {
     }
 
     public void printTotalMemory() {
-        Size size = Heap.bootHeapRegion().size().plus(Code.bootCodeRegion().size()).plus(Code.getCodeSize());
+        Size size = Heap.bootHeapRegion().size().plus(Code.bootCodeRegion.size()).plus(Code.getCodeSize());
         for (int i = 0; i < BeltwayConfiguration.getNumberOfBelts(); i++) {
             size = size.plus(belts.get(i).size());
         }

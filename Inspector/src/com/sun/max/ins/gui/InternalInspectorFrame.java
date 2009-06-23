@@ -36,20 +36,20 @@ import com.sun.max.ins.*;
  */
 public final class InternalInspectorFrame extends JInternalFrame implements InspectorFrame {
 
-    private final Inspector _inspector;
+    private final Inspector inspector;
 
     public Inspector inspector() {
-        return _inspector;
+        return inspector;
     }
 
-    private InspectorMenu _menu;
+    private InspectorMenu menu;
 
     public InspectorMenu menu() {
-        return _menu;
+        return menu;
     }
 
     public void setMenu(InspectorMenu menu) {
-        _menu = menu;
+        this.menu = menu;
     }
 
     public void add(InspectorMenuItems inspectorMenuItems) {
@@ -57,7 +57,7 @@ public final class InternalInspectorFrame extends JInternalFrame implements Insp
     }
 
     public Inspection inspection() {
-        return _inspector.inspection();
+        return inspector.inspection();
     }
 
     public void refresh(boolean force) {
@@ -73,20 +73,20 @@ public final class InternalInspectorFrame extends JInternalFrame implements Insp
 
     /**
      * Creates an internal frame for an Inspector.
-     * @param inspector
+     * @param ins
      * @param menu an optional menu, replaces default inspector menu if non-null
      */
-    public InternalInspectorFrame(Inspector inspector, InspectorMenu menu) {
-        _inspector = inspector;
-        _menu = menu;
+    public InternalInspectorFrame(Inspector ins, InspectorMenu menu) {
+        this.inspector = ins;
+        this.menu = menu;
 
         setResizable(true);
         setClosable(true);
         setIconifiable(false);
         setVisible(false);
 
-        if (_menu == null) {
-            _menu = new InspectorMenu(inspector);
+        if (this.menu == null) {
+            this.menu = new InspectorMenu(ins);
         }
         setFrameIcon(FRAME_ICON);
 
@@ -94,12 +94,12 @@ public final class InternalInspectorFrame extends JInternalFrame implements Insp
 
             @Override
             public void internalFrameActivated(InternalFrameEvent e) {
-                _inspector.inspectorGetsWindowFocus();
+                inspector.inspectorGetsWindowFocus();
             }
 
             @Override
             public void internalFrameDeactivated(InternalFrameEvent e) {
-                _inspector.inspectorLosesWindowFocus();
+                inspector.inspectorLosesWindowFocus();
             }
         });
     }
@@ -118,25 +118,25 @@ public final class InternalInspectorFrame extends JInternalFrame implements Insp
     @Override
     public void dispose() {
         super.dispose();
-        _inspector.inspectorClosing();
+        inspector.inspectorClosing();
     }
 
-    private InspectorAction _frameClosingAction;
-    private InternalFrameListener _frameClosingListener;
+    private InspectorAction frameClosingAction;
+    private InternalFrameListener frameClosingListener;
 
     public void replaceFrameCloseAction(InspectorAction action) {
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        if (_frameClosingAction != null) {
-            removeInternalFrameListener(_frameClosingListener);
+        if (frameClosingAction != null) {
+            removeInternalFrameListener(frameClosingListener);
         }
-        _frameClosingAction = action;
-        _frameClosingListener = new InternalFrameAdapter() {
+        frameClosingAction = action;
+        frameClosingListener = new InternalFrameAdapter() {
             @Override
             public void internalFrameClosing(InternalFrameEvent we) {
-                _frameClosingAction.perform();
+                frameClosingAction.perform();
             }
         };
-        addInternalFrameListener(_frameClosingListener);
+        addInternalFrameListener(frameClosingListener);
     }
 
 }

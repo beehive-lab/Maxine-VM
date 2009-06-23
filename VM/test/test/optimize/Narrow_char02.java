@@ -26,13 +26,13 @@ package test.optimize;
  */
 public class Narrow_char02 {
     static class Char {
-        char _foo;
+        char foo;
     }
 
-    static Char _val = new Char();
+    static Char val = new Char();
 
     public static char test(char b) {
-        _val._foo = b;
-        return _val._foo;
+        val.foo = b;
+        return val.foo;
     }
 }

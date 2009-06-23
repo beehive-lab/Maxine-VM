@@ -39,7 +39,7 @@ import com.sun.max.ins.*;
  */
 public class TableRowTextSearcher extends AbstractInspectionHolder implements RowTextSearcher {
 
-    private final JTable _table;
+    private final JTable table;
 
     /**
      * Create a search session for a table.
@@ -49,14 +49,14 @@ public class TableRowTextSearcher extends AbstractInspectionHolder implements Ro
      */
     public TableRowTextSearcher(Inspection inspection, JTable jTable) {
         super(inspection);
-        _table = jTable;
+        table = jTable;
     }
 
     public IndexedSequence<Integer> search(Pattern pattern) {
         final AppendableIndexedSequence<Integer> matchingRows = new VectorSequence<Integer>(64);
-        final TableModel tableModel = _table.getModel();
+        final TableModel tableModel = table.getModel();
         final int rowCount = tableModel.getRowCount();
-        final TableColumnModel columnModel = _table.getColumnModel();
+        final TableColumnModel columnModel = table.getColumnModel();
         final int columnCount = columnModel.getColumnCount();
         for (int row = 0; row < rowCount; row++) {
             for (int col = 0; col < columnCount; col++) {
@@ -64,7 +64,7 @@ public class TableRowTextSearcher extends AbstractInspectionHolder implements Ro
                 final TableCellRenderer cellRenderer = column.getCellRenderer();
                 final int columnIndex = column.getModelIndex();
                 final Object valueAt = tableModel.getValueAt(row, columnIndex);
-                final Component tableCellRendererComponent = cellRenderer.getTableCellRendererComponent(_table, valueAt, false, false, row, columnIndex);
+                final Component tableCellRendererComponent = cellRenderer.getTableCellRendererComponent(table, valueAt, false, false, row, columnIndex);
                 final TextSearchable searchable = (TextSearchable) tableCellRendererComponent;
                 if (pattern.matcher(searchable.getSearchableText()).find()) {
                     matchingRows.append(row);

@@ -30,10 +30,10 @@ public final class Object_wait01 {
     private Object_wait01() {
     }
 
-    static final Object _object = new Object();
+    static final Object object = new Object();
 
     public static boolean test(int i) throws InterruptedException {
-        _object.wait();
+        object.wait();
         return true;
     }
 }

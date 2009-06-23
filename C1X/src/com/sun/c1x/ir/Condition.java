@@ -28,11 +28,11 @@ import com.sun.c1x.value.ConstType;
 public enum Condition {
     eql("=="), neq("!="), lss("<"), leq("<="), gtr(">"), geq(">=");
 
-    public final String _operator;
+    public final String operator;
 
 
     private Condition(String operator) {
-        _operator = operator;
+        this.operator = operator;
     }
 
     /**

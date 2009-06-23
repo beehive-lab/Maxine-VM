@@ -28,10 +28,10 @@ package test.bytecode;
  * @Runs: 0 = 7; 1 = 8; 2 = 9; 3 = 10; -4 = 3
  */
 public class BC_invokespecial2 {
-    static BC_invokespecial2 _object = new BC_invokespecial2();
+    static BC_invokespecial2 object = new BC_invokespecial2();
 
     public static int test(int a) {
-        return 3 + _object.id(a);
+        return 3 + object.id(a);
     }
 
     private int id(int i) {

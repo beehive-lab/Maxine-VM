@@ -36,9 +36,9 @@ import java.util.ArrayList;
  */
 public abstract class BlockEnd extends StateSplit {
 
-    BlockBegin _begin;
-    List<BlockBegin> _successors;
-    final ValueStack _stateBefore;
+    BlockBegin begin;
+    List<BlockBegin> successors;
+    final ValueStack stateBefore;
 
     /**
      * Constructs a new block end with the specified value type.
@@ -48,8 +48,8 @@ public abstract class BlockEnd extends StateSplit {
      */
     public BlockEnd(ValueType type, ValueStack stateBefore, boolean isSafepoint) {
         super(type);
-        _successors = new ArrayList<BlockBegin>(2);
-        _stateBefore = stateBefore;
+        this.successors = new ArrayList<BlockBegin>(2);
+        this.stateBefore = stateBefore;
         if (isSafepoint) {
             setFlag(Instruction.Flag.IsSafepoint);
         }
@@ -60,7 +60,7 @@ public abstract class BlockEnd extends StateSplit {
      * @return the value stack representing the state
      */
     public ValueStack stateBefore() {
-        return _stateBefore;
+        return stateBefore;
     }
 
     /**
@@ -76,7 +76,7 @@ public abstract class BlockEnd extends StateSplit {
      * @return the beginning of this basic block
      */
     public BlockBegin begin() {
-        return _begin;
+        return begin;
     }
 
     /**
@@ -86,7 +86,7 @@ public abstract class BlockEnd extends StateSplit {
      * @param block the beginning of this basic block
      */
     public void setBegin(BlockBegin block) {
-        _begin = block;
+        begin = block;
     }
 
     /**
@@ -96,7 +96,7 @@ public abstract class BlockEnd extends StateSplit {
      * @param newSucc the new successor
      */
     public void substituteSuccessor(BlockBegin oldSucc, BlockBegin newSucc) {
-        Util.replaceInList(oldSucc, newSucc, _successors);
+        Util.replaceInList(oldSucc, newSucc, successors);
     }
 
     /**
@@ -104,7 +104,7 @@ public abstract class BlockEnd extends StateSplit {
      * @return the default successor
      */
     public BlockBegin defaultSuccessor() {
-        return _successors.get(_successors.size() - 1);
+        return successors.get(successors.size() - 1);
     }
 
     /**
@@ -114,9 +114,9 @@ public abstract class BlockEnd extends StateSplit {
      * @return the index of the block in the list if found; </code>-1</code> otherwise
      */
     public int successorIndex(BlockBegin b) {
-        final int max = _successors.size();
+        final int max = successors.size();
         for (int i = 0; i < max; i++) {
-            if (_successors.get(i) == b) {
+            if (successors.get(i) == b) {
                 return i;
             }
         }
@@ -128,13 +128,13 @@ public abstract class BlockEnd extends StateSplit {
      * @return the successor list
      */
     public List<BlockBegin> successors() {
-        return _successors;
+        return successors;
     }
 
     @Override
     public void otherValuesDo(InstructionClosure closure) {
-        if (_stateBefore != null) {
-            _stateBefore.valuesDo(closure);
+        if (stateBefore != null) {
+            stateBefore.valuesDo(closure);
         }
     }
 }

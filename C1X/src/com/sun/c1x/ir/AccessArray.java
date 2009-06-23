@@ -31,8 +31,8 @@ import com.sun.c1x.util.InstructionClosure;
  */
 public abstract class AccessArray extends Instruction {
 
-    Instruction _array;
-    ValueStack _lockStack;
+    Instruction array;
+    ValueStack lockStack;
 
     /**
      * Creates a new AccessArray instruction.
@@ -42,8 +42,8 @@ public abstract class AccessArray extends Instruction {
      */
     public AccessArray(ValueType type, Instruction array, ValueStack lockStack) {
         super(type);
-        _array = array;
-        _lockStack = lockStack;
+        this.array = array;
+        this.lockStack = lockStack;
         pin();
     }
 
@@ -52,7 +52,7 @@ public abstract class AccessArray extends Instruction {
      * @return the instruction that produces the array object
      */
     public Instruction array() {
-        return _array;
+        return array;
     }
 
     /**
@@ -60,7 +60,7 @@ public abstract class AccessArray extends Instruction {
      * @return the lock stack
      */
     public ValueStack lockStack() {
-        return _lockStack;
+        return lockStack;
     }
 
     /**
@@ -68,7 +68,7 @@ public abstract class AccessArray extends Instruction {
      * @param lockStack the lock stack
      */
     public void setLockStack(ValueStack lockStack) {
-        _lockStack = lockStack;
+        this.lockStack = lockStack;
     }
 
     /**
@@ -86,7 +86,7 @@ public abstract class AccessArray extends Instruction {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        _array = closure.apply(_array);
+        array = closure.apply(array);
     }
 
     /**
@@ -95,8 +95,8 @@ public abstract class AccessArray extends Instruction {
      */
     @Override
     public void otherValuesDo(InstructionClosure closure) {
-        if (_lockStack != null) {
-            _lockStack.valuesDo(closure);
+        if (lockStack != null) {
+            lockStack.valuesDo(closure);
         }
     }
 }

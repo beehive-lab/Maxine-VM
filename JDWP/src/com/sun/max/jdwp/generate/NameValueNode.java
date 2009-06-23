@@ -27,7 +27,7 @@ package com.sun.max.jdwp.generate;
  */
 class NameValueNode extends NameNode {
 
-    private final String _val;
+    private final String val;
 
     NameValueNode(String name, String val) {
         super(name);
@@ -40,21 +40,21 @@ class NameValueNode extends NameNode {
             realVal = realVal.substring(wrongBeginning.length());
         }
 
-        this._val = realVal;
+        this.val = realVal;
     }
 
     NameValueNode(String name, int ival) {
         super(name);
-        this._val = Integer.toString(ival);
+        this.val = Integer.toString(ival);
     }
 
     @Override
     String value() {
-        return _val;
+        return val;
     }
 
     @Override
     public String toString() {
-        return this.text() + "=" + _val;
+        return this.text() + "=" + val;
     }
 }

@@ -34,11 +34,11 @@ import com.sun.max.vm.type.*;
  * @author Laurent Daynes
  */
 public class JITTest_compileSwitches extends JitCompilerTestCase {
-    int _i0;
-    int _i1;
-    int _i2;
-    int _i3;
-    int _i;
+    int i0;
+    int i1;
+    int i2;
+    int i3;
+    int iDefault;
 
     public static int perform_lookupswitch(int a) {
         int b = a;
@@ -74,19 +74,19 @@ public class JITTest_compileSwitches extends JitCompilerTestCase {
     public void perform_tableswitch(int i) {
         switch(i) {
             case 0:
-                _i0 += i;
+                i0 += i;
                 break;
             case 1:
-                _i1 += i;
+                i1 += i;
                 break;
             case 2:
-                _i2 += i;
+                i2 += i;
                 break;
             case 3:
-                _i3 += i;
+                i3 += i;
                 break;
             default:
-                _i += i;
+                iDefault += i;
                 break;
         }
     }

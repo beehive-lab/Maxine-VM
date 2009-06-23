@@ -275,7 +275,7 @@ public final class PrototypeGenerator {
                     graphPrototype = new GraphPrototype(compiledPrototype, tree);
                     graphTimer.stop();
 
-                    Code.bootCodeRegion().trim();
+                    Code.bootCodeRegion.trim();
 
                     JniNativeInterface.checkInvariants();
 

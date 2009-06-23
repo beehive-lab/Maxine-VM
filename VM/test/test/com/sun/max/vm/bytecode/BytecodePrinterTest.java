@@ -62,12 +62,12 @@ public class BytecodePrinterTest extends MaxTestCase {
         }
     }
 
-    private A _a = new A();
-    private B _b = new B();
+    private A a = new A();
+    private B b = new B();
 
     private void perform() {
-        _a.f();
-        _b.f();
+        a.f();
+        b.f();
     }
 
     public void test() {

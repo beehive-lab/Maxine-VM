@@ -98,7 +98,7 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      * The current code region that is the default for allocating new target methods.
      */
     @INSPECTED
-    private CodeRegion currentCodeRegion = Code.bootCodeRegion();
+    private CodeRegion currentCodeRegion = Code.bootCodeRegion;
 
     /**
      * Allocates a new code region with free space, if necessary.
@@ -164,8 +164,8 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      *         the code pointer lies outside of all code regions
      */
     CodeRegion codePointerToCodeRegion(Address codePointer) {
-        if (Code.bootCodeRegion().contains(codePointer)) {
-            return Code.bootCodeRegion();
+        if (Code.bootCodeRegion.contains(codePointer)) {
+            return Code.bootCodeRegion;
         }
         if (!contains(codePointer)) {
             return null;
@@ -227,7 +227,7 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      */
     void visitCells(CellVisitor cellVisitor, boolean includeBootCode) {
         if (includeBootCode) {
-            Code.bootCodeRegion().visitCells(cellVisitor);
+            Code.bootCodeRegion.visitCells(cellVisitor);
         }
         for (CodeRegion codeRegion : runtimeCodeRegions) {
             if (codeRegion != null) {

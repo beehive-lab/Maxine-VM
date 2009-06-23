@@ -30,20 +30,20 @@ public final class Class_isInstance04 {
     private Class_isInstance04() {
     }
 
-    static final String _string = "";
-    static final Object[] _oarray = {};
-    static final String[] _sarray = {};
+    static final String string = "";
+    static final Object[] oarray = {};
+    static final String[] sarray = {};
 
     public static boolean test(int i) {
         Object object = null;
         if (i == 0) {
-            object = _oarray;
+            object = oarray;
         }
         if (i == 1) {
-            object = _string;
+            object = string;
         }
         if (i == 2) {
-            object = _sarray;
+            object = sarray;
         }
         return String[].class.isInstance(object);
     }

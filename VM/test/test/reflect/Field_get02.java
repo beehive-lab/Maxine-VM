@@ -26,7 +26,7 @@ package test.reflect;
  */
 public class Field_get02 {
 
-    private static final Field_get02 _object = new Field_get02();
+    private static final Field_get02 object = new Field_get02();
 
     public final byte byteField = 11;
     public final short shortField = 12;
@@ -39,21 +39,21 @@ public class Field_get02 {
 
     public static boolean test(int arg) throws NoSuchFieldException, IllegalAccessException {
         if (arg == 0) {
-            return Field_get02.class.getField("byteField").get(_object).equals(_object.byteField);
+            return Field_get02.class.getField("byteField").get(object).equals(object.byteField);
         } else if (arg == 1) {
-            return Field_get02.class.getField("shortField").get(_object).equals(_object.shortField);
+            return Field_get02.class.getField("shortField").get(object).equals(object.shortField);
         } else if (arg == 2) {
-            return Field_get02.class.getField("charField").get(_object).equals(_object.charField);
+            return Field_get02.class.getField("charField").get(object).equals(object.charField);
         } else if (arg == 3) {
-            return Field_get02.class.getField("intField").get(_object).equals(_object.intField);
+            return Field_get02.class.getField("intField").get(object).equals(object.intField);
         } else if (arg == 4) {
-            return Field_get02.class.getField("longField").get(_object).equals(_object.longField);
+            return Field_get02.class.getField("longField").get(object).equals(object.longField);
         } else if (arg == 5) {
-            return Field_get02.class.getField("floatField").get(_object).equals(_object.floatField);
+            return Field_get02.class.getField("floatField").get(object).equals(object.floatField);
         } else if (arg == 6) {
-            return Field_get02.class.getField("doubleField").get(_object).equals(_object.doubleField);
+            return Field_get02.class.getField("doubleField").get(object).equals(object.doubleField);
         } else if (arg == 7) {
-            return Field_get02.class.getField("booleanField").get(_object).equals(_object.booleanField);
+            return Field_get02.class.getField("booleanField").get(object).equals(object.booleanField);
         }
         return false;
     }

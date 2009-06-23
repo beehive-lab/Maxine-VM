@@ -40,14 +40,14 @@ public abstract class BytecodeTest_getfield<Method_Type extends IrMethod> extend
         super(name);
     }
 
-    private byte _byteField = 111;
+    private byte byteField = 111;
 
     /**
      * Testing for a byte field when the field is resolved at compile-time
      * (so the compiler will not issue a guarded field load).
      */
     private byte perform_getfield_byte() {
-        return _byteField;
+        return byteField;
     }
 
     /**
@@ -55,7 +55,7 @@ public abstract class BytecodeTest_getfield<Method_Type extends IrMethod> extend
      * (so the compiler will issue a guarded field load).
      */
     private byte perform_getfield_byte(UnresolvedClassUnderTest u) {
-        return u._byteField;
+        return u.byteField;
     }
 
     private void do_getfield_byte(Method_Type method, UnresolvedClassUnderTest u) {
@@ -68,10 +68,10 @@ public abstract class BytecodeTest_getfield<Method_Type extends IrMethod> extend
         Value result = null;
         if (u == null) {
             result = executeWithReceiver(method);
-            assertTrue(result.asByte() == _byteField);
+            assertTrue(result.asByte() == byteField);
         } else {
             result = executeWithReceiver(method, ReferenceValue.from(u));
-            assertTrue(result.asByte() == u._byteField);
+            assertTrue(result.asByte() == u.byteField);
         }
         assertTrue(result.asByte() == 111);
     }
@@ -87,13 +87,13 @@ public abstract class BytecodeTest_getfield<Method_Type extends IrMethod> extend
         do_getfield_byte(method, new UnresolvedClassUnderTest());
     }
 
-    private boolean _booleanField = true;
+    private boolean booleanField = true;
 
     private boolean perform_getfield_boolean() {
-        return _booleanField;
+        return booleanField;
     }
     private boolean perform_getfield_boolean(UnresolvedClassUnderTest u) {
-        return u._booleanField;
+        return u.booleanField;
     }
 
     public void test_resolved_getfield_boolean() {
@@ -116,23 +116,23 @@ public abstract class BytecodeTest_getfield<Method_Type extends IrMethod> extend
         Value result = null;
         if (u == null) {
             result = executeWithReceiver(method);
-            assertTrue(result.asBoolean() == _booleanField);
+            assertTrue(result.asBoolean() == booleanField);
         } else {
             result = executeWithReceiver(method, ReferenceValue.from(u));
-            assertTrue(result.asBoolean() == u._booleanField);
+            assertTrue(result.asBoolean() == u.booleanField);
         }
         assertTrue(result.asBoolean());
     }
 
 
-    private short _shortField = 333;
+    private short shortField = 333;
 
     private short perform_getfield_short() {
-        return _shortField;
+        return shortField;
     }
 
     private short perform_getfield_short(UnresolvedClassUnderTest u) {
-        return u._shortField;
+        return u.shortField;
     }
 
     public void test_resolved_getfield_short() {
@@ -155,22 +155,22 @@ public abstract class BytecodeTest_getfield<Method_Type extends IrMethod> extend
         Value result = null;
         if (u == null) {
             result = executeWithReceiver(method);
-            assertTrue(result.asShort() == _shortField);
+            assertTrue(result.asShort() == shortField);
         } else {
             result = executeWithReceiver(method, ReferenceValue.from(u));
-            assertTrue(result.asShort() == u._shortField);
+            assertTrue(result.asShort() == u.shortField);
         }
         assertTrue(result.asShort() == 333);
     }
 
-    private char _charField = 444;
+    private char charField = 444;
 
     private char perform_getfield_char() {
-        return _charField;
+        return charField;
     }
 
     private char perform_getfield_char(UnresolvedClassUnderTest u) {
-        return u._charField;
+        return u.charField;
     }
 
     public void test_resolved_getfield_char() {
@@ -192,21 +192,21 @@ public abstract class BytecodeTest_getfield<Method_Type extends IrMethod> extend
         Value result = null;
         if (u == null) {
             result = executeWithReceiver(method);
-            assertTrue(result.asChar() == _charField);
+            assertTrue(result.asChar() == charField);
         } else {
             result = executeWithReceiver(method, ReferenceValue.from(u));
-            assertTrue(result.asChar() == _charField);
+            assertTrue(result.asChar() == charField);
         }
         assertTrue(result.asChar() == 444);
     }
 
-    private int _intField = 55;
+    private int intField = 55;
 
     private int perform_getfield_int() {
-        return _intField;
+        return intField;
     }
     private int perform_getfield_int(UnresolvedClassUnderTest u) {
-        return u._intField;
+        return u.intField;
     }
 
     public void test_resolved_getfield_int() {
@@ -229,21 +229,21 @@ public abstract class BytecodeTest_getfield<Method_Type extends IrMethod> extend
         Value result = null;
         if (u == null) {
             result = executeWithReceiver(method);
-            assertTrue(result.asInt() == _intField);
+            assertTrue(result.asInt() == intField);
         } else {
             result = executeWithReceiver(method, ReferenceValue.from(u));
-            assertTrue(result.asInt() == u._intField);
+            assertTrue(result.asInt() == u.intField);
         }
         assertTrue(result.asInt() == 55);
     }
 
-    private float _floatField = 6.6F;
+    private float floatField = 6.6F;
 
     private float perform_getfield_float() {
-        return _floatField;
+        return floatField;
     }
     private float perform_getfield_float(UnresolvedClassUnderTest u) {
-        return u._floatField;
+        return u.floatField;
     }
     public void test_resolved_getfield_float() {
         final Method_Type method = compileMethod("perform_getfield_float", SignatureDescriptor.create(float.class));
@@ -264,21 +264,21 @@ public abstract class BytecodeTest_getfield<Method_Type extends IrMethod> extend
         Value result = null;
         if (u == null) {
             result = executeWithReceiver(method);
-            assertTrue(result.asFloat() == _floatField);
+            assertTrue(result.asFloat() == floatField);
         } else {
             result = executeWithReceiver(method, ReferenceValue.from(u));
-            assertTrue(result.asFloat() == u._floatField);
+            assertTrue(result.asFloat() == u.floatField);
         }
         assertTrue(result.asFloat() == 6.6F);
     }
 
-    private long _longField = 77L;
+    private long longField = 77L;
 
     private long perform_getfield_long() {
-        return _longField;
+        return longField;
     }
     private long perform_getfield_long(UnresolvedClassUnderTest u) {
-        return u._longField;
+        return u.longField;
     }
     public void test_resolved_getfield_long() {
         final Method_Type method = compileMethod("perform_getfield_long", SignatureDescriptor.create(long.class));
@@ -300,21 +300,21 @@ public abstract class BytecodeTest_getfield<Method_Type extends IrMethod> extend
         Value result = null;
         if (u == null) {
             result = executeWithReceiver(method);
-            assertTrue(result.asLong() == _longField);
+            assertTrue(result.asLong() == longField);
         } else {
             result = executeWithReceiver(method, ReferenceValue.from(u));
-            assertTrue(result.asLong() == u._longField);
+            assertTrue(result.asLong() == u.longField);
         }
         assertTrue(result.asLong() == 77L);
     }
 
-    private double _doubleField = 8.8;
+    private double doubleField = 8.8;
 
     private double perform_getfield_double() {
-        return _doubleField;
+        return doubleField;
     }
     private double perform_getfield_double(UnresolvedClassUnderTest u) {
-        return _doubleField;
+        return doubleField;
     }
 
     public void test_resolved_getfield_double() {
@@ -336,22 +336,22 @@ public abstract class BytecodeTest_getfield<Method_Type extends IrMethod> extend
         Value result = null;
         if (u == null) {
             result = executeWithReceiver(method);
-            assertTrue(result.asDouble() == _doubleField);
+            assertTrue(result.asDouble() == doubleField);
         } else {
             result = executeWithReceiver(method, ReferenceValue.from(u));
-            assertTrue(result.asDouble() == u._doubleField);
+            assertTrue(result.asDouble() == u.doubleField);
         }
         assertTrue(result.asDouble() == 8.8);
     }
 
-    private Word _wordField;
+    private Word wordField;
 
     private Word perform_getfield_word() {
-        return _wordField;
+        return wordField;
     }
 
     private Word perform_getfield_word(UnresolvedClassUnderTest u) {
-        return u._wordField;
+        return u.wordField;
     }
     public void test_unresolved_getfield_word() {
         final Method_Type method = compileMethod("perform_getfield_word", SignatureDescriptor.create(Word.class));
@@ -360,7 +360,7 @@ public abstract class BytecodeTest_getfield<Method_Type extends IrMethod> extend
     public void test_resolved_getfield_word() {
         final Method_Type method = compileMethod("perform_getfield_word", SignatureDescriptor.create(Word.class, UnresolvedClassUnderTest.class));
         final UnresolvedClassUnderTest u = new UnresolvedClassUnderTest();
-        u._wordField = Offset.fromInt(88);
+        u.wordField = Offset.fromInt(88);
         do_getfield_word(method, u);
     }
 
@@ -372,26 +372,26 @@ public abstract class BytecodeTest_getfield<Method_Type extends IrMethod> extend
                 confirmPresence();
             }
         };
-        _wordField = Offset.fromInt(88);
+        wordField = Offset.fromInt(88);
         Value result = null;
         if (u == null) {
             result = executeWithReceiver(method);
-            assertTrue(result.asWord().equals(_wordField));
+            assertTrue(result.asWord().equals(wordField));
         } else {
             result = executeWithReceiver(method, ReferenceValue.from(u));
-            assertTrue(result.asWord().equals(u._wordField));
+            assertTrue(result.asWord().equals(u.wordField));
         }
         assertTrue(result.asWord().asOffset().toInt() == 88);
     }
 
-    private Object _referenceField = this;
+    private Object referenceField = this;
 
     private Object perform_getfield_reference() {
-        return _referenceField;
+        return referenceField;
     }
 
     private Object perform_getfield_reference(UnresolvedClassUnderTest u) {
-        return u._referenceField;
+        return u.referenceField;
     }
 
     public void test_resolved_getfield_reference() {
@@ -413,11 +413,11 @@ public abstract class BytecodeTest_getfield<Method_Type extends IrMethod> extend
         Value result = null;
         if (u == null) {
             result = executeWithReceiver(method);
-            assertTrue(result.asObject() == _referenceField);
+            assertTrue(result.asObject() == referenceField);
             assertTrue(result.asObject() == this);
         } else {
             result = executeWithReceiver(method, ReferenceValue.from(u));
-            assertTrue(result.asObject() == u._referenceField);
+            assertTrue(result.asObject() == u.referenceField);
             assertTrue(result.asObject() == u);
         }
     }

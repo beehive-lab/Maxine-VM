@@ -79,17 +79,17 @@ public class LoadField extends AccessField {
 
     @Override
     public int valueNumber() {
-        if (_object != null) {
-            return Util.hash1(_field.hashCode(), _object);
+        if (object != null) {
+            return Util.hash1(field.hashCode(), object);
         }
-        return 0x60000000 | _field.hashCode();
+        return 0x60000000 | field.hashCode();
     }
 
     @Override
     public boolean valueEqual(Instruction i) {
         if (i instanceof LoadField) {
             LoadField o = (LoadField) i;
-            return _field == o._field && _object == o._object;
+            return field == o.field && object == o.object;
         }
         return false;
     }

@@ -35,10 +35,10 @@ import com.sun.c1x.C1XIntrinsic;
  */
 public class Intrinsic extends StateSplit {
 
-    final C1XIntrinsic _intrinsic;
-    final boolean _hasReceiver;
-    Instruction[] _arguments;
-    ValueStack _lockStack;
+    final C1XIntrinsic intrinsic;
+    final boolean hasReceiver;
+    Instruction[] arguments;
+    ValueStack lockStack;
 
     /**
      * Creates a new Intrinsic instruction.
@@ -53,10 +53,10 @@ public class Intrinsic extends StateSplit {
     public Intrinsic(ValueType type, C1XIntrinsic intrinsic, Instruction[] arguments, boolean hasReceiver,
                      ValueStack lockStack, boolean preservesState, boolean canTrap) {
         super(type);
-        _intrinsic = intrinsic;
-        _arguments = arguments;
-        _lockStack = lockStack;
-        _hasReceiver = hasReceiver;
+        this.intrinsic = intrinsic;
+        this.arguments = arguments;
+        this.lockStack = lockStack;
+        this.hasReceiver = hasReceiver;
         // Preserves state means that the intrinsic preserves register state across all cases,
         // including slow cases--even if it causes a trap. If so, it can still be a candidate
         // for load elimination and common subexpression elimination
@@ -73,7 +73,7 @@ public class Intrinsic extends StateSplit {
      * @return the intrinsic
      */
     public C1XIntrinsic intrinsic() {
-        return _intrinsic;
+        return intrinsic;
     }
 
     /**
@@ -81,7 +81,7 @@ public class Intrinsic extends StateSplit {
      * @return the list of instructions that produce input
      */
     public Instruction[] arguments() {
-        return _arguments;
+        return arguments;
     }
 
     /**
@@ -89,7 +89,7 @@ public class Intrinsic extends StateSplit {
      * @return the lock stack
      */
     public ValueStack lockStack() {
-        return _lockStack;
+        return lockStack;
     }
 
     /**
@@ -97,7 +97,7 @@ public class Intrinsic extends StateSplit {
      * @return <code>true</code> if this intrinsic has a receiver object
      */
     public boolean hasReceiver() {
-        return _hasReceiver;
+        return hasReceiver;
     }
 
     /**
@@ -105,8 +105,8 @@ public class Intrinsic extends StateSplit {
      * @return the instruction producing the receiver object
      */
     public Instruction receiver() {
-        assert _hasReceiver;
-        return _arguments[0];
+        assert hasReceiver;
+        return arguments[0];
     }
 
     /**
@@ -132,8 +132,8 @@ public class Intrinsic extends StateSplit {
      */
     @Override
     public void stateValuesDo(InstructionClosure closure) {
-        if (_lockStack != null) {
-            _lockStack.valuesDo(closure);
+        if (lockStack != null) {
+            lockStack.valuesDo(closure);
         }
     }
 
@@ -143,8 +143,8 @@ public class Intrinsic extends StateSplit {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        for (int i = 0; i < _arguments.length; i++) {
-            _arguments[i] = closure.apply(_arguments[i]);
+        for (int i = 0; i < arguments.length; i++) {
+            arguments[i] = closure.apply(arguments[i]);
         }
     }
 

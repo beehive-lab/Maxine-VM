@@ -44,13 +44,13 @@ import com.sun.max.vm.value.*;
 public class MemoryWordsTable extends InspectorTable {
 
     //private final ObjectInspector _objectInspector;
-    private final Address _startAddress;
-    private final int _wordCount;
-    private final MemoryWordsTableModel _model;
-    private final MemoryWordsColumnModel _columnModel;
-    private final TableColumn[] _columns;
+    private final Address startAddress;
+    private final int wordCount;
+    private final MemoryWordsTableModel model;
+    private final MemoryWordsColumnModel columnModel;
+    private final TableColumn[] columns;
 
-    private MaxVMState _lastRefreshedState = null;
+    private MaxVMState lastRefreshedState = null;
 
     public MemoryWordsTable(final ObjectInspector objectInspector, TeleObject teleObject) {
         this(objectInspector, teleObject.getCurrentOrigin(), teleObject.getCurrentSize().toInt());
@@ -60,15 +60,15 @@ public class MemoryWordsTable extends InspectorTable {
     public MemoryWordsTable(final ObjectInspector objectInspector, Address startAddress, int wordCount) {
         super(objectInspector.inspection());
         //_objectInspector = objectInspector;
-        _startAddress = startAddress.aligned();
-        _wordCount = wordCount;
+        this.startAddress = startAddress.aligned();
+        this.wordCount = wordCount;
 
-        _model = new MemoryWordsTableModel();
-        _columns = new TableColumn[MemoryWordsColumnKind.VALUES.length()];
-        _columnModel = new MemoryWordsColumnModel();
+        model = new MemoryWordsTableModel();
+        columns = new TableColumn[MemoryWordsColumnKind.VALUES.length()];
+        columnModel = new MemoryWordsColumnModel();
 
-        setModel(_model);
-        setColumnModel(_columnModel);
+        setModel(model);
+        setColumnModel(columnModel);
         setShowHorizontalLines(style().defaultTableShowHorizontalLines());
         setShowVerticalLines(style().defaultTableShowVerticalLines());
         setIntercellSpacing(style().defaultTableIntercellSpacing());
@@ -81,10 +81,10 @@ public class MemoryWordsTable extends InspectorTable {
     }
 
     public void refresh(boolean force) {
-        if (maxVMState().newerThan(_lastRefreshedState) || force) {
-            _lastRefreshedState = maxVMState();
-            _model.refresh();
-            for (TableColumn column : _columns) {
+        if (maxVMState().newerThan(lastRefreshedState) || force) {
+            lastRefreshedState = maxVMState();
+            model.refresh();
+            for (TableColumn column : columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
                 prober.refresh(force);
             }
@@ -92,7 +92,7 @@ public class MemoryWordsTable extends InspectorTable {
     }
 
     public void redisplay() {
-        for (TableColumn column : _columns) {
+        for (TableColumn column : columns) {
             final Prober prober = (Prober) column.getCellRenderer();
             prober.redisplay();
         }
@@ -102,12 +102,12 @@ public class MemoryWordsTable extends InspectorTable {
 
     @Override
     protected JTableHeader createDefaultTableHeader() {
-        return new JTableHeader(_columnModel) {
+        return new JTableHeader(columnModel) {
             @Override
             public String getToolTipText(MouseEvent mouseEvent) {
                 final Point p = mouseEvent.getPoint();
-                final int index = _columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = _columnModel.getColumn(index).getModelIndex();
+                final int index = columnModel.getColumnIndexAtX(p.x);
+                final int modelIndex = columnModel.getColumn(index).getModelIndex();
                 return MemoryWordsColumnKind.VALUES.get(modelIndex).toolTipText();
             }
         };
@@ -115,18 +115,18 @@ public class MemoryWordsTable extends InspectorTable {
 
     private final class MemoryWordsColumnModel extends DefaultTableColumnModel {
 
-        private final MemoryWordsViewPreferences _localPreferences;
+        private final MemoryWordsViewPreferences localPreferences;
 
         private MemoryWordsColumnModel() {
-            _localPreferences = new MemoryWordsViewPreferences(MemoryWordsViewPreferences.globalPreferences(inspection())) {
+            localPreferences = new MemoryWordsViewPreferences(MemoryWordsViewPreferences.globalPreferences(inspection())) {
                 @Override
                 public void setIsVisible(MemoryWordsColumnKind columnKind, boolean visible) {
                     super.setIsVisible(columnKind, visible);
                     final int col = columnKind.ordinal();
                     if (visible) {
-                        addColumn(_columns[col]);
+                        addColumn(columns[col]);
                     } else {
-                        removeColumn(_columns[col]);
+                        removeColumn(columns[col]);
                     }
                     fireColumnPreferenceChanged();
                 }
@@ -140,13 +140,13 @@ public class MemoryWordsTable extends InspectorTable {
 
         private void createColumn(MemoryWordsColumnKind columnKind, TableCellRenderer renderer) {
             final int col = columnKind.ordinal();
-            _columns[col] = new TableColumn(col, 0, renderer, null);
-            _columns[col].setHeaderValue(columnKind.label());
-            _columns[col].setMinWidth(columnKind.minWidth());
-            if (_localPreferences.isVisible(columnKind)) {
-                addColumn(_columns[col]);
+            columns[col] = new TableColumn(col, 0, renderer, null);
+            columns[col].setHeaderValue(columnKind.label());
+            columns[col].setMinWidth(columnKind.minWidth());
+            if (localPreferences.isVisible(columnKind)) {
+                addColumn(columns[col]);
             }
-            _columns[col].setIdentifier(columnKind);
+            columns[col].setIdentifier(columnKind);
         }
     }
 
@@ -167,7 +167,7 @@ public class MemoryWordsTable extends InspectorTable {
         }
 
         public int getRowCount() {
-            return _wordCount;
+            return wordCount;
         }
 
         public Object getValueAt(int row, int col) {
@@ -203,11 +203,11 @@ public class MemoryWordsTable extends InspectorTable {
     private final class AddressRenderer extends LocationLabel.AsAddressWithPosition implements TableCellRenderer {
 
         AddressRenderer(Inspection inspection) {
-              super(inspection, 0, _startAddress);
+              super(inspection, 0, startAddress);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(_startAddress.plus(row * maxVM().wordSize()).toInt());
+            setValue(startAddress.plus(row * maxVM().wordSize()).toInt());
             return this;
         }
     }
@@ -215,7 +215,7 @@ public class MemoryWordsTable extends InspectorTable {
     private final class PositionRenderer extends LocationLabel.AsPosition implements TableCellRenderer {
 
         public PositionRenderer(Inspection inspection) {
-            super(inspection, 0, _startAddress);
+            super(inspection, 0, startAddress);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
@@ -231,7 +231,7 @@ public class MemoryWordsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
-            setValue(WordValue.from(maxVM().readWord(_startAddress.plus(row * maxVM().wordSize()))));
+            setValue(WordValue.from(maxVM().readWord(startAddress.plus(row * maxVM().wordSize()))));
             return this;
         }
     }
@@ -243,7 +243,7 @@ public class MemoryWordsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
-            setValue(WordValue.from(maxVM().readWord(_startAddress.plus(row * maxVM().wordSize()))));
+            setValue(WordValue.from(maxVM().readWord(startAddress.plus(row * maxVM().wordSize()))));
             return this;
         }
     }

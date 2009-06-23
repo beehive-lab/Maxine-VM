@@ -33,30 +33,30 @@ import com.sun.max.vm.layout.*;
  */
 public class TupleInspector extends ObjectInspector {
 
-    private ObjectPane _fieldsPane;
-    private final InspectorMenuItems _classMethodInspectorMenuItems;
-    private final InspectorMenuItems _targetMethodInspectorMenuItems;
+    private ObjectPane fieldsPane;
+    private final InspectorMenuItems classMethodInspectorMenuItems;
+    private final InspectorMenuItems targetMethodInspectorMenuItems;
 
     TupleInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
         super(inspection, factory, teleObject);
         createFrame(null);
         final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
         if (teleClassMethodActor != null) {
-            _classMethodInspectorMenuItems = new ClassMethodMenuItems(inspection(), teleClassMethodActor);
+            classMethodInspectorMenuItems = new ClassMethodMenuItems(inspection(), teleClassMethodActor);
         } else {
-            _classMethodInspectorMenuItems = null;
+            classMethodInspectorMenuItems = null;
         }
         if (TeleTargetMethod.class.isAssignableFrom(teleObject.getClass())) {
             final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleObject;
-            _targetMethodInspectorMenuItems = new TargetMethodMenuItems(inspection(), teleTargetMethod);
+            targetMethodInspectorMenuItems = new TargetMethodMenuItems(inspection(), teleTargetMethod);
         } else {
-            _targetMethodInspectorMenuItems = null;
+            targetMethodInspectorMenuItems = null;
         }
-        if (_classMethodInspectorMenuItems != null) {
-            frame().add(_classMethodInspectorMenuItems);
+        if (classMethodInspectorMenuItems != null) {
+            frame().add(classMethodInspectorMenuItems);
         }
-        if (_targetMethodInspectorMenuItems != null) {
-            frame().add(_targetMethodInspectorMenuItems);
+        if (targetMethodInspectorMenuItems != null) {
+            frame().add(targetMethodInspectorMenuItems);
         }
     }
 
@@ -64,19 +64,19 @@ public class TupleInspector extends ObjectInspector {
     protected void createView() {
         super.createView();
         final TeleTupleObject teleTupleObject = (TeleTupleObject) teleObject();
-        _fieldsPane = ObjectPane.createFieldsPane(this, teleTupleObject);
-        frame().getContentPane().add(_fieldsPane);
+        fieldsPane = ObjectPane.createFieldsPane(this, teleTupleObject);
+        frame().getContentPane().add(fieldsPane);
     }
 
     @Override
     protected void refreshView(boolean force) {
         if (isShowing() || force) {
-            _fieldsPane.refresh(force);
-            if (_classMethodInspectorMenuItems != null) {
-                _classMethodInspectorMenuItems.refresh(force);
+            fieldsPane.refresh(force);
+            if (classMethodInspectorMenuItems != null) {
+                classMethodInspectorMenuItems.refresh(force);
             }
-            if (_targetMethodInspectorMenuItems != null) {
-                _targetMethodInspectorMenuItems.refresh(force);
+            if (targetMethodInspectorMenuItems != null) {
+                targetMethodInspectorMenuItems.refresh(force);
             }
             super.refreshView(force);
         }

@@ -37,28 +37,28 @@ import com.sun.max.vm.thread.*;
  */
 public class TeleThreadLocalValues {
 
-    private final Map<String, Long> _values = new LinkedHashMap<String, Long>(VmThreadLocal.THREAD_LOCAL_STORAGE_SIZE.dividedBy(Word.size()).toInt());
+    private final Map<String, Long> values = new LinkedHashMap<String, Long>(VmThreadLocal.THREAD_LOCAL_STORAGE_SIZE.dividedBy(Word.size()).toInt());
 
-    private final Safepoint.State _safepointState;
+    private final Safepoint.State safepointState;
 
     public TeleThreadLocalValues(Safepoint.State safepointState, Pointer start) {
         assert !start.isZero();
         for (String name : VmThreadLocal.NAMES) {
-            _values.put(name, null);
+            values.put(name, null);
         }
-        _safepointState = safepointState;
-        _start = start;
+        this.safepointState = safepointState;
+        this.start = start;
     }
 
     public void refresh(DataAccess dataAccess) {
         int offset = 0;
         for (String name : VmThreadLocal.NAMES) {
-            if (offset != 0 || _safepointState != State.TRIGGERED) {
+            if (offset != 0 || safepointState != State.TRIGGERED) {
                 try {
-                    final Word value = dataAccess.readWord(_start, offset);
-                    _values.put(name, value.asAddress().toLong());
+                    final Word value = dataAccess.readWord(start, offset);
+                    values.put(name, value.asAddress().toLong());
                 } catch (DataIOError dataIOError) {
-                    ProgramError.unexpected("Could not read value of " + name + " from safepoints-" + _safepointState.name().toLowerCase() + " VM thread locals");
+                    ProgramError.unexpected("Could not read value of " + name + " from safepoints-" + safepointState.name().toLowerCase() + " VM thread locals");
                 }
             }
             offset += Word.size();
@@ -66,7 +66,7 @@ public class TeleThreadLocalValues {
     }
 
     public Safepoint.State safepointState() {
-        return _safepointState;
+        return safepointState;
     }
 
     /**
@@ -88,7 +88,7 @@ public class TeleThreadLocalValues {
      */
     public long get(VmThreadLocal threadLocalVariable) {
         final String name = VmThreadLocal.NAMES.get(threadLocalVariable.index());
-        return _values.get(name);
+        return values.get(name);
     }
 
     /**
@@ -97,16 +97,16 @@ public class TeleThreadLocalValues {
      * is in mprotected memory (e.g. the safepoint latch in the safepoints-triggered VM thread locals).
      */
     public boolean isValid(String name) {
-        assert _values.containsKey(name) : "Unknown VM thread local: " + name;
-        return _values.get(name) != null;
+        assert values.containsKey(name) : "Unknown VM thread local: " + name;
+        return values.get(name) != null;
     }
 
     /**
      * Gets the value of a named thread local variable.
      */
     public long get(String name) {
-        assert _values.containsKey(name) : "Unknown VM thread local: " + name;
-        return _values.get(name);
+        assert values.containsKey(name) : "Unknown VM thread local: " + name;
+        return values.get(name);
     }
 
     public boolean isInJavaCode() {
@@ -115,10 +115,10 @@ public class TeleThreadLocalValues {
 
     @Override
     public String toString() {
-        return _values.toString();
+        return values.toString();
     }
 
-    private final Address _start;
+    private final Address start;
 
     /**
      * Gets the base of address of the VM thread locals represented by this object.
@@ -126,7 +126,7 @@ public class TeleThreadLocalValues {
      * @return {@link Address#zero()} if the VM thread locals represented by this object are invalid
      */
     public Address start() {
-        return _start;
+        return start;
     }
 
     /**
@@ -135,14 +135,14 @@ public class TeleThreadLocalValues {
      * @return {@link Address#zero()} if the VM thread locals represented by this object are invalid
      */
     public Address end() {
-        if (_start.isZero()) {
-            return _start;
+        if (start.isZero()) {
+            return start;
         }
-        return _start.plus(size());
+        return start.plus(size());
     }
 
     public Size size() {
-        if (_start.isZero()) {
+        if (start.isZero()) {
             return Size.zero();
         }
         return VmThreadLocal.THREAD_LOCAL_STORAGE_SIZE;

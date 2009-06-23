@@ -96,10 +96,10 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
         return result;
     }
 
-    private final TargetCodeRegion _targetCodeRegion;
+    private final TargetCodeRegion targetCodeRegion;
 
     public TargetCodeRegion targetCodeRegion() {
-        return _targetCodeRegion;
+        return targetCodeRegion;
     }
 
     TeleTargetMethod(TeleVM teleVM, Reference targetMethodReference) {
@@ -107,28 +107,28 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
         // Exception to the general policy of not performing VM i/o during object
         // construction.  This is needed for the code registry.
         // A consequence is synchronized call to the registry from within a synchronized call to {@link TeleObject} construction.
-        _targetCodeRegion = new TargetCodeRegion(this, start(), size());
+        targetCodeRegion = new TargetCodeRegion(this, start(), size());
         // Register every method compilation, so that they can be located by code address.
         teleVM.registerTeleTargetRoutine(this);
     }
 
-    private Pointer _codeStart = Pointer.zero();
+    private Pointer codeStart = Pointer.zero();
 
     /**
      * @see TargetMethod#codeStart()
      */
     public Pointer getCodeStart() {
-        if (_codeStart.isZero()) {
-            _codeStart = teleVM().fields().TargetMethod_codeStart.readWord(reference()).asPointer();
+        if (codeStart.isZero()) {
+            codeStart = teleVM().fields().TargetMethod_codeStart.readWord(reference()).asPointer();
         }
-        return _codeStart;
+        return codeStart;
     }
 
     public String getName() {
         return getClass().getSimpleName() + " for " + classMethodActor().simpleName();
     }
 
-    private TeleClassMethodActor _teleClassMethodActor;
+    private TeleClassMethodActor teleClassMethodActor;
 
     /**
      * Gets the tele class method actor for this target method.
@@ -136,11 +136,11 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
      * @return {@code null} if the class method actor is null the target method
      */
     public TeleClassMethodActor getTeleClassMethodActor() {
-        if (_teleClassMethodActor == null) {
+        if (teleClassMethodActor == null) {
             final Reference classMethodActorReference = teleVM().fields().TargetMethod_classMethodActor.readReference(reference());
-            _teleClassMethodActor = (TeleClassMethodActor) teleVM().makeTeleObject(classMethodActorReference);
+            teleClassMethodActor = (TeleClassMethodActor) teleVM().makeTeleObject(classMethodActorReference);
         }
-        return _teleClassMethodActor;
+        return teleClassMethodActor;
     }
 
     public TeleRoutine teleRoutine() {
@@ -203,41 +203,41 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
         return teleCodeArrayObject.getLength();
     }
 
-    private IndexedSequence<TargetCodeInstruction> _instructions;
+    private IndexedSequence<TargetCodeInstruction> instructions;
 
     public final  IndexedSequence<TargetCodeInstruction> getInstructions() {
-        if (_instructions == null) {
+        if (instructions == null) {
             final byte[] code = getCode();
             if (code != null) {
-                _instructions = TeleDisassembler.decode(teleVM().vmConfiguration().platform().processorKind(), getCodeStart(), code, getEncodedInlineDataDescriptors());
+                instructions = TeleDisassembler.decode(teleVM().vmConfiguration().platform().processorKind(), getCodeStart(), code, getEncodedInlineDataDescriptors());
             }
         }
-        return _instructions;
+        return instructions;
     }
 
     /**
      * @see  TargetMethod#stopPositions()
      */
-    private int[] _stopPositions;
+    private int[] stopPositions;
 
     /**
      * @see TargetMethod#stopPositions()
      */
     public int[] getStopPositions() {
-        if (_stopPositions == null) {
+        if (stopPositions == null) {
             final Reference intArrayReference = teleVM().fields().TargetMethod_stopPositions.readReference(reference());
             final TeleArrayObject teleIntArrayObject = (TeleArrayObject) teleVM().makeTeleObject(intArrayReference);
             if (teleIntArrayObject == null) {
                 return null;
             }
-            _stopPositions = (int[]) teleIntArrayObject.shallowCopy();
+            stopPositions = (int[]) teleIntArrayObject.shallowCopy();
 
             // Since only the VM's deoptimization algorithm cares about these flags, we omit them here:
-            for (int i = 0; i < _stopPositions.length; i++) {
-                _stopPositions[i] &= ~TargetMethod.REFERENCE_RETURN_FLAG;
+            for (int i = 0; i < stopPositions.length; i++) {
+                stopPositions[i] &= ~TargetMethod.REFERENCE_RETURN_FLAG;
             }
         }
-        return _stopPositions;
+        return stopPositions;
     }
 
     /**
@@ -365,10 +365,10 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
         return teleEncodedInlineDataDescriptors == null ? null : (byte[]) teleEncodedInlineDataDescriptors.shallowCopy();
     }
 
-    private IndexedSequence<TargetJavaFrameDescriptor> _javaFrameDescriptors = null;
+    private IndexedSequence<TargetJavaFrameDescriptor> javaFrameDescriptors = null;
 
     public IndexedSequence<TargetJavaFrameDescriptor> getJavaFrameDescriptors() {
-        if (_javaFrameDescriptors == null) {
+        if (javaFrameDescriptors == null) {
             final Reference byteArrayReference = teleVM().fields().TargetMethod_compressedJavaFrameDescriptors.readReference(reference());
             final TeleArrayObject teleByteArrayObject = (TeleArrayObject) teleVM().makeTeleObject(byteArrayReference);
             if (teleByteArrayObject == null) {
@@ -376,7 +376,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
             }
             final byte[] compressedDescriptors = (byte[]) teleByteArrayObject.shallowCopy();
             try {
-                _javaFrameDescriptors = TeleClassRegistry.usingTeleClassIDs(new Function<IndexedSequence<TargetJavaFrameDescriptor>>() {
+                javaFrameDescriptors = TeleClassRegistry.usingTeleClassIDs(new Function<IndexedSequence<TargetJavaFrameDescriptor>>() {
                     public IndexedSequence<TargetJavaFrameDescriptor> call() {
                         return TargetJavaFrameDescriptor.inflate(compressedDescriptors);
                     }
@@ -385,7 +385,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
                 e.printStackTrace();
             }
         }
-        return _javaFrameDescriptors;
+        return javaFrameDescriptors;
     }
 
     /**
@@ -403,17 +403,17 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
         return null;
     }
 
-    private TargetABI _abi;
+    private TargetABI abi;
 
     public TargetABI getAbi() {
-        if (_abi == null) {
+        if (abi == null) {
             final Reference abiReference = teleVM().fields().TargetMethod_abi.readReference(reference());
             final TeleObject teleTargetABI = teleVM().makeTeleObject(abiReference);
             if (teleTargetABI != null) {
-                _abi = (TargetABI) teleTargetABI.deepCopy();
+                abi = (TargetABI) teleTargetABI.deepCopy();
             }
         }
-        return _abi;
+        return abi;
     }
 
     /**
@@ -456,7 +456,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
     public final void traceDirectCallees(IndentWriter writer) {
         final Reference[] directCallees = getDirectCallees();
         if (directCallees != null) {
-            assert _stopPositions != null && directCallees.length <= getNumberOfStopPositions();
+            assert stopPositions != null && directCallees.length <= getNumberOfStopPositions();
             writer.println("Direct Calls: ");
             writer.indent();
             for (int i = 0; i < directCallees.length; i++) {
@@ -500,7 +500,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
     }
 
     public MethodProvider getMethodProvider() {
-        return this._teleClassMethodActor;
+        return this.teleClassMethodActor;
     }
 
     /**
@@ -553,7 +553,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
     /**
      * Speeds up repeated copying. This is safe as long as TargetMethods are immutable and don't move.
      */
-    private static final Map<TeleTargetMethod, TargetMethod> _teleTargetMethodToTargetMethod = new HashMap<TeleTargetMethod, TargetMethod>();
+    private static final Map<TeleTargetMethod, TargetMethod> teleTargetMethodToTargetMethod = new HashMap<TeleTargetMethod, TargetMethod>();
 
     /**
      * Gets a special, reduced shallow copy, (newly created if not in cache)  that excludes the
@@ -561,20 +561,20 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
      * literals of the method or its {@linkplain TargetMethod#code() compiled code}.
      */
     public synchronized TargetMethod reducedShallowCopy() {
-        TargetMethod targetMethod = _teleTargetMethodToTargetMethod.get(this);
+        TargetMethod targetMethod = teleTargetMethodToTargetMethod.get(this);
         if (targetMethod == null) {
             targetMethod = (TargetMethod) deepCopy(new OmittedTargetMethodFields());
-            _teleTargetMethodToTargetMethod.put(this, targetMethod);
+            teleTargetMethodToTargetMethod.put(this, targetMethod);
         }
         return targetMethod;
     }
 
     private static class OmittedTargetMethodFields implements FieldIncludeChecker {
-        private static final FieldActor _scalarLiteralBytes = TeleFieldAccess.findFieldActor(TargetMethod.class, "_scalarLiteralBytes");
-        private static final FieldActor _referenceLiterals = TeleFieldAccess.findFieldActor(TargetMethod.class, "_referenceLiterals");
+        private static final FieldActor scalarLiteralBytes = TeleFieldAccess.findFieldActor(TargetMethod.class, "_scalarLiteralBytes");
+        private static final FieldActor referenceLiterals = TeleFieldAccess.findFieldActor(TargetMethod.class, "_referenceLiterals");
 
         public boolean include(int level, FieldActor fieldActor) {
-            return !(fieldActor.equals(_referenceLiterals) || fieldActor.equals(_scalarLiteralBytes));
+            return !(fieldActor.equals(referenceLiterals) || fieldActor.equals(scalarLiteralBytes));
         }
     }
 

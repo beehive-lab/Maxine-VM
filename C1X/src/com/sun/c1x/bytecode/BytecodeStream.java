@@ -31,17 +31,17 @@ import com.sun.c1x.util.Bytes;
  */
 public class BytecodeStream {
 
-    final byte[] _code;
-    int _opcode;
-    int _curBCI;
-    int _nextBCI;
+    final byte[] code;
+    int opcode;
+    int curBCI;
+    int nextBCI;
 
     /**
      * Creates a new <code>BytecodeStream</code> for the specified bytecode.
      * @param code the array of bytes that contains the bytecode
      */
     public BytecodeStream(byte[] code) {
-        _code = code;
+        this.code = code;
         setBCI(0);
     }
 
@@ -49,7 +49,7 @@ public class BytecodeStream {
      * Advances to the next bytecode.
      */
     public void next() {
-        setBCI(_nextBCI);
+        setBCI(nextBCI);
     }
 
     /**
@@ -57,7 +57,7 @@ public class BytecodeStream {
      * @return the next bytecode index
      */
     public int nextBCI() {
-        return _nextBCI;
+        return nextBCI;
     }
 
     /**
@@ -65,7 +65,7 @@ public class BytecodeStream {
      * @return the current bytecode index
      */
     public int currentBCI() {
-        return _curBCI;
+        return curBCI;
     }
 
     /**
@@ -73,7 +73,7 @@ public class BytecodeStream {
      * @return the end of the code
      */
     public int endBCI() {
-        return _code.length;
+        return code.length;
     }
 
     /**
@@ -83,10 +83,10 @@ public class BytecodeStream {
      * @return the current opcode; {@link Bytecodes#END} if at or beyond the end of the code
      */
     public int currentBC() {
-        if (_opcode == Bytecodes.WIDE) {
-            return Bytes.beU1(_code, _curBCI + 1);
+        if (opcode == Bytecodes.WIDE) {
+            return Bytes.beU1(code, curBCI + 1);
         } else {
-            return _opcode;
+            return opcode;
         }
     }
 
@@ -97,10 +97,10 @@ public class BytecodeStream {
      */
     public int readLocalIndex() {
         // read local variable index for load/store
-        if (_opcode == Bytecodes.WIDE) {
-            return Bytes.beU2(_code, _curBCI + 2);
+        if (opcode == Bytecodes.WIDE) {
+            return Bytes.beU2(code, curBCI + 2);
         }
-        return Bytes.beU1(_code, _curBCI + 1);
+        return Bytes.beU1(code, curBCI + 1);
     }
 
     /**
@@ -109,10 +109,10 @@ public class BytecodeStream {
      */
     public int readIncrement() {
         // read the delta for the iinc bytecode
-        if (_opcode == Bytecodes.WIDE) {
-            return Bytes.beS2(_code, _curBCI + 4);
+        if (opcode == Bytecodes.WIDE) {
+            return Bytes.beS2(code, curBCI + 4);
         }
-        return Bytes.beS1(_code, _curBCI + 2);
+        return Bytes.beS1(code, curBCI + 2);
     }
 
     /**
@@ -121,7 +121,7 @@ public class BytecodeStream {
      */
     public int readBranchDest() {
         // reads the destination for a branch bytecode
-        return _curBCI + Bytes.beS2(_code, _curBCI + 1);
+        return curBCI + Bytes.beS2(code, curBCI + 1);
     }
 
     /**
@@ -130,7 +130,7 @@ public class BytecodeStream {
      */
     public int readFarBranchDest() {
         // reads the destination for a wide branch bytecode
-        return _curBCI + Bytes.beS4(_code, _curBCI + 2);
+        return curBCI + Bytes.beS4(code, curBCI + 2);
     }
 
     /**
@@ -140,7 +140,7 @@ public class BytecodeStream {
      */
     public int readInt(int bci) {
         // reads a 4-byte signed value
-        return Bytes.beS4(_code, bci);
+        return Bytes.beS4(code, bci);
     }
 
     /**
@@ -150,7 +150,7 @@ public class BytecodeStream {
      */
     public int readUByte(int bci) {
         // reads a 1-byte unsigned value
-        return Bytes.beU1(_code, bci);
+        return Bytes.beU1(code, bci);
     }
 
     /**
@@ -158,10 +158,10 @@ public class BytecodeStream {
      * @return the constant pool index
      */
     public char readCPI() {
-        if (_opcode == Bytecodes.LDC) {
-            return (char) Bytes.beU1(_code, _curBCI + 1);
+        if (opcode == Bytecodes.LDC) {
+            return (char) Bytes.beU1(code, curBCI + 1);
         }
-        return (char) Bytes.beU2(_code, _curBCI + 1);
+        return (char) Bytes.beU2(code, curBCI + 1);
     }
 
     /**
@@ -169,7 +169,7 @@ public class BytecodeStream {
      * @return the byte
      */
     public byte readByte() {
-        return _code[_curBCI + 1];
+        return code[curBCI + 1];
     }
 
     /**
@@ -177,7 +177,7 @@ public class BytecodeStream {
      * @return the short value
      */
     public short readShort() {
-        return (short) Bytes.beS2(_code, _curBCI + 1);
+        return (short) Bytes.beS2(code, curBCI + 1);
     }
 
     /**
@@ -185,13 +185,13 @@ public class BytecodeStream {
      * @param bci the new bytecode index
      */
     public void setBCI(int bci) {
-        _curBCI = bci;
-        if (_curBCI < _code.length) {
-            _opcode = Bytes.beU1(_code, bci);
-            _nextBCI = bci + Bytecodes.length(_code, bci);
+        curBCI = bci;
+        if (curBCI < code.length) {
+            opcode = Bytes.beU1(code, bci);
+            nextBCI = bci + Bytecodes.length(code, bci);
         } else {
-            _opcode = Bytecodes.END;
-            _nextBCI = _curBCI;
+            opcode = Bytecodes.END;
+            nextBCI = curBCI;
         }
     }
 }

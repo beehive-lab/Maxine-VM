@@ -26,12 +26,12 @@ package test.bytecode;
  */
 public class BC_putfield {
 
-    private static BC_putfield _object = new BC_putfield();
+    private static BC_putfield object = new BC_putfield();
 
-    private int _field;
+    private int field;
 
     public static int test(int arg) {
-        _object._field = arg;
-        return _object._field;
+        object.field = arg;
+        return object.field;
     }
 }

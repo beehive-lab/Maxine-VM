@@ -45,28 +45,28 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     public InspectorNameDisplay(Inspection inspection) {
         super(inspection);
 
-        _referenceRenderers.put(TeleArrayObject.class, new ArrayReferenceRenderer());
-        _referenceRenderers.put(TeleHub.class, new HubReferenceRenderer());
-        _referenceRenderers.put(TeleTupleObject.class, new TupleObjectReferenceRenderer());
-        _referenceRenderers.put(TeleStaticTuple.class, new StaticTupleReferenceRenderer());
-        _referenceRenderers.put(TeleMethodActor.class, new MethodActorReferenceRenderer());
-        _referenceRenderers.put(TeleFieldActor.class, new FieldActorReferenceRenderer());
-        _referenceRenderers.put(TeleClassActor.class, new ClassActorReferenceRenderer());
-        _referenceRenderers.put(TeleString.class, new StringReferenceRenderer());
-        _referenceRenderers.put(TeleUtf8Constant.class, new Utf8ConstantReferenceRenderer());
-        _referenceRenderers.put(TeleStringConstant.class, new StringConstantReferenceRenderer());
-        _referenceRenderers.put(TeleClass.class, new ClassReferenceRenderer());
-        _referenceRenderers.put(TeleConstructor.class, new ConstructorReferenceRenderer());
-        _referenceRenderers.put(TeleField.class, new FieldReferenceRenderer());
-        _referenceRenderers.put(TeleMethod.class, new MethodReferenceRenderer());
-        _referenceRenderers.put(TeleEnum.class, new EnumReferenceRenderer());
-        _referenceRenderers.put(TeleConstantPool.class, new ConstantPoolReferenceRenderer());
-        _referenceRenderers.put(TeleClassConstant.Resolved.class, new ClassConstantResolvedReferenceRenderer());
-        _referenceRenderers.put(TeleFieldRefConstant.Resolved.class, new FieldRefConstantResolvedReferenceRenderer());
-        _referenceRenderers.put(TeleClassMethodRefConstant.Resolved.class, new ClassMethodRefConstantResolvedReferenceRenderer());
-        _referenceRenderers.put(TeleInterfaceMethodRefConstant.Resolved.class, new InterfaceMethodRefConstantResolvedReferenceRenderer());
-        _referenceRenderers.put(TelePoolConstant.class, new PoolConstantReferenceRenderer());
-        _referenceRenderers.put(TeleVmThread.class, new VmThreadReferenceRenderer());
+        referenceRenderers.put(TeleArrayObject.class, new ArrayReferenceRenderer());
+        referenceRenderers.put(TeleHub.class, new HubReferenceRenderer());
+        referenceRenderers.put(TeleTupleObject.class, new TupleObjectReferenceRenderer());
+        referenceRenderers.put(TeleStaticTuple.class, new StaticTupleReferenceRenderer());
+        referenceRenderers.put(TeleMethodActor.class, new MethodActorReferenceRenderer());
+        referenceRenderers.put(TeleFieldActor.class, new FieldActorReferenceRenderer());
+        referenceRenderers.put(TeleClassActor.class, new ClassActorReferenceRenderer());
+        referenceRenderers.put(TeleString.class, new StringReferenceRenderer());
+        referenceRenderers.put(TeleUtf8Constant.class, new Utf8ConstantReferenceRenderer());
+        referenceRenderers.put(TeleStringConstant.class, new StringConstantReferenceRenderer());
+        referenceRenderers.put(TeleClass.class, new ClassReferenceRenderer());
+        referenceRenderers.put(TeleConstructor.class, new ConstructorReferenceRenderer());
+        referenceRenderers.put(TeleField.class, new FieldReferenceRenderer());
+        referenceRenderers.put(TeleMethod.class, new MethodReferenceRenderer());
+        referenceRenderers.put(TeleEnum.class, new EnumReferenceRenderer());
+        referenceRenderers.put(TeleConstantPool.class, new ConstantPoolReferenceRenderer());
+        referenceRenderers.put(TeleClassConstant.Resolved.class, new ClassConstantResolvedReferenceRenderer());
+        referenceRenderers.put(TeleFieldRefConstant.Resolved.class, new FieldRefConstantResolvedReferenceRenderer());
+        referenceRenderers.put(TeleClassMethodRefConstant.Resolved.class, new ClassMethodRefConstantResolvedReferenceRenderer());
+        referenceRenderers.put(TeleInterfaceMethodRefConstant.Resolved.class, new InterfaceMethodRefConstantResolvedReferenceRenderer());
+        referenceRenderers.put(TelePoolConstant.class, new PoolConstantReferenceRenderer());
+        referenceRenderers.put(TeleVmThread.class, new VmThreadReferenceRenderer());
     }
 
     /**
@@ -419,7 +419,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      * implemented as tuples, hubs. or arrays, so there should always be at least
      * a generic match for every type.
      */
-    private final Map<Class, ReferenceRenderer> _referenceRenderers = new HashMap<Class, ReferenceRenderer>();
+    private final Map<Class, ReferenceRenderer> referenceRenderers = new HashMap<Class, ReferenceRenderer>();
 
     /**
      * @return a short textual presentation of a reference to a heap object in the VM, if possible, null if not.
@@ -428,7 +428,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (teleObject != null) {
             Class teleObjectClass = teleObject.getClass();
             while (teleObjectClass != null) {
-                final ReferenceRenderer objectReferenceRenderer = _referenceRenderers.get(teleObjectClass);
+                final ReferenceRenderer objectReferenceRenderer = referenceRenderers.get(teleObjectClass);
                 if (objectReferenceRenderer != null) {
                     try {
                         return objectReferenceRenderer.referenceLabelText(teleObject);
@@ -451,7 +451,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (teleObject != null) {
             Class teleObjectClass = teleObject.getClass();
             while (teleObjectClass != null) {
-                final ReferenceRenderer objectReferenceRenderer = _referenceRenderers.get(teleObjectClass);
+                final ReferenceRenderer objectReferenceRenderer = referenceRenderers.get(teleObjectClass);
                 if (objectReferenceRenderer != null) {
                     try {
                         return objectReferenceRenderer.referenceToolTipText(teleObject);

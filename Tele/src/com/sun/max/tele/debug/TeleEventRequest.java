@@ -36,18 +36,18 @@ public abstract class TeleEventRequest {
      * The thread to which this execution request is specific. This value will be null for requests that don't pertain
      * to a single thread.
      */
-    public final TeleNativeThread _thread;
+    public final TeleNativeThread thread;
 
     /**
      * A descriptive name for this execution request (e.g. "single-step").
      */
-    public final String _name;
+    public final String name;
 
-    private boolean _complete = false;
+    private boolean complete = false;
 
     public TeleEventRequest(String name, TeleNativeThread thread) {
-        _name = name;
-        _thread = thread;
+        this.name = name;
+        this.thread = thread;
     }
 
     /**
@@ -65,16 +65,16 @@ public abstract class TeleEventRequest {
 
     @Override
     public String toString() {
-        return _name;
+        return name;
     }
 
     public synchronized void notifyOfCompletion() {
-        _complete = true;
+        complete = true;
         notify();
     }
 
     public synchronized void waitUntilComplete() {
-        while (!_complete) {
+        while (!complete) {
             try {
                 wait();
             } catch (InterruptedException e) {

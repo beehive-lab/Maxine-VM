@@ -42,9 +42,9 @@ public class BytecodeStopsIteratorTest extends MaxTestCase {
     }
 
     static class Stop {
-        final int _index;
+        final int index;
         public Stop(int index) {
-            _index = index;
+            this.index = index;
         }
     }
 
@@ -56,28 +56,28 @@ public class BytecodeStopsIteratorTest extends MaxTestCase {
     }
 
     static class Entry {
-        final int _bcp;
-        final Stop[] _stops;
+        final int bcp;
+        final Stop[] stops;
 
         public Entry(int bcp, Stop... stops) {
-            _bcp = bcp;
-            _stops = stops;
+            this.bcp = bcp;
+            this.stops = stops;
         }
 
         static int[] encode(Entry... entries) {
             int size = 0;
             for (Entry e : entries) {
-                size += 1 + e._stops.length;
+                size += 1 + e.stops.length;
             }
             final int[] table = new int[size];
             int i = 0;
             for (Entry e : entries) {
-                table[i++] = e._bcp | BytecodeStopsIterator.BCP_BIT;
-                for (Stop s : e._stops) {
+                table[i++] = e.bcp | BytecodeStopsIterator.BCP_BIT;
+                for (Stop s : e.stops) {
                     if (s instanceof DRCStop) {
-                        table[i++] = s._index | BytecodeStopsIterator.DIRECT_RUNTIME_CALL_BIT;
+                        table[i++] = s.index | BytecodeStopsIterator.DIRECT_RUNTIME_CALL_BIT;
                     } else {
-                        table[i++] = s._index;
+                        table[i++] = s.index;
                     }
                 }
             }
@@ -89,22 +89,22 @@ public class BytecodeStopsIteratorTest extends MaxTestCase {
         int i = 0;
         for (int bcp = bsi.bytecodePosition(); bcp != -1; bcp = bsi.next()) {
             final Entry entry = entries[i++];
-            assertEquals(bcp, entry._bcp);
+            assertEquals(bcp, entry.bcp);
             int j = 0;
             for (int stopIndex = bsi.nextStopIndex(true); stopIndex != -1; stopIndex = bsi.nextStopIndex(false)) {
-                final Stop stop = entry._stops[j++];
-                assertEquals(stop._index, stopIndex);
+                final Stop stop = entry.stops[j++];
+                assertEquals(stop.index, stopIndex);
                 assertEquals(stop instanceof DRCStop, bsi.isDirectRuntimeCall());
             }
 
             j = 0;
             for (int stopIndex = bsi.nextStopIndex(true); stopIndex != -1; stopIndex = bsi.nextStopIndex(false)) {
-                final Stop stop = entry._stops[j++];
-                assertEquals(stop._index, stopIndex);
+                final Stop stop = entry.stops[j++];
+                assertEquals(stop.index, stopIndex);
                 assertEquals(stop instanceof DRCStop, bsi.isDirectRuntimeCall());
             }
 
-            assertEquals(entry._stops.length, j);
+            assertEquals(entry.stops.length, j);
         }
         assertEquals(entries.length, i);
     }

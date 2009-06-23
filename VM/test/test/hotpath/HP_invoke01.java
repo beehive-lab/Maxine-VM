@@ -26,16 +26,16 @@ package test.hotpath;
  * @Runs: 40 = 3049480; 80 = 6098960;
  */
 public class HP_invoke01 {
-    private static int _sum;
+    private static int sum;
 
     public static int test(int count) {
-        _sum = 0;
+        sum = 0;
         final Instruction[] instructions = new Instruction [] {new Instruction.Add(), new Instruction.Sub(), new Instruction.Mul(), new Instruction.Div()};
         final Visitor v = new Visitor();
         for (int i = 0; i < count; i++) {
             instructions[i % 4].accept(v);
         }
-        return _sum;
+        return sum;
     }
 
     public static abstract class Instruction {
@@ -76,19 +76,19 @@ public class HP_invoke01 {
 
     public static class Visitor {
         public void visit(Instruction.Add i) {
-            _sum += 7;
+            sum += 7;
         }
 
         public void visit(Instruction.Sub i) {
-            _sum += 194127;
+            sum += 194127;
         }
 
         public void visit(Instruction.Mul i) {
-            _sum += 18991;
+            sum += 18991;
         }
 
         public void visit(Instruction.Div i) {
-            _sum += 91823;
+            sum += 91823;
         }
     }
 }

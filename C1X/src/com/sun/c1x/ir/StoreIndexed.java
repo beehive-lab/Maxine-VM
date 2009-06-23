@@ -34,7 +34,7 @@ import com.sun.c1x.value.ValueType;
  */
 public class StoreIndexed extends AccessIndexed {
 
-    Instruction _value;
+    Instruction value;
 
     /**
      * Creates a new StoreIndexed instruction.
@@ -47,7 +47,7 @@ public class StoreIndexed extends AccessIndexed {
      */
     public StoreIndexed(Instruction array, Instruction index, Instruction length, BasicType elementType, Instruction value, ValueStack lockStack) {
         super(array, index, length, elementType, lockStack);
-        _value = value;
+        this.value = value;
         if (ValueType.fromBasicType(elementType).isObject()) {
             setFlag(Flag.NeedsWriteBarrier);
             setFlag(Flag.NeedsStoreCheck);
@@ -59,7 +59,7 @@ public class StoreIndexed extends AccessIndexed {
      * @return the value to write into the array
      */
     public Instruction value() {
-        return _value;
+        return value;
     }
 
     /**
@@ -67,7 +67,7 @@ public class StoreIndexed extends AccessIndexed {
      * @return the IR scope associated with this instruction
      */
     public IRScope scope() {
-        return _lockStack.scope();
+        return lockStack.scope();
     }
 
     /**
@@ -93,7 +93,7 @@ public class StoreIndexed extends AccessIndexed {
     @Override
     public void inputValuesDo(InstructionClosure closure) {
         super.inputValuesDo(closure);
-        _value = closure.apply(_value);
+        value = closure.apply(value);
     }
 
     /**
@@ -107,14 +107,14 @@ public class StoreIndexed extends AccessIndexed {
 
     @Override
     public int valueNumber() {
-        return Util.hash3(125, _array, _index, _value);
+        return Util.hash3(125, array, index, value);
     }
 
     @Override
     public boolean valueEqual(Instruction i) {
         if (i instanceof StoreIndexed) {
             StoreIndexed o = (StoreIndexed) i;
-            return _array == o._array && _index == o._index && _value == o._value;
+            return array == o.array && index == o.index && value == o.value;
         }
         return false;
     }

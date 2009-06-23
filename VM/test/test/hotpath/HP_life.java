@@ -35,8 +35,8 @@ public class HP_life {
             step();
         }
         int sum = 0;
-        for (int row = 0; row < _rows; ++row) {
-            for (int col = 0; col < _cols; ++col) {
+        for (int row = 0; row < rows; ++row) {
+            for (int col = 0; col < cols; ++col) {
                 boolean value = cell(row, col);
                 // System.out.print(value ? "1" : "0");
                 sum += (row * 15223242 + col * 21623234) ^ ((value ? 1 : 0) * 15323142);
@@ -45,20 +45,20 @@ public class HP_life {
         return sum;
     }
 
-    private static final int _rows = 20;
-    private static final int _cols = 20;
-    private static boolean _cells[] = new boolean[_rows * _cols];
+    private static final int rows = 20;
+    private static final int cols = 20;
+    private static boolean cells[] = new boolean[rows * cols];
 
     private static boolean cell(int row, int col) {
-        return ((row >= 0) && (row < _rows) && (col >= 0) && (col < _cols) && _cells[row * _cols + col]);
+        return ((row >= 0) && (row < rows) && (col >= 0) && (col < cols) && cells[row * cols + col]);
     }
 
     private static boolean step() {
-        boolean next[] = new boolean[_rows * _cols];
+        boolean next[] = new boolean[rows * cols];
         boolean changed = false;
-        for (int row = _rows - 1; row >= 0; --row) {
-            int row_offset = row * _cols;
-            for (int col = _cols - 1; col >= 0; --col) {
+        for (int row = rows - 1; row >= 0; --row) {
+            int row_offset = row * cols;
+            for (int col = cols - 1; col >= 0; --col) {
                 int count = 0;
                 if (cell(row - 1, col - 1)) {
                     count++;
@@ -84,7 +84,7 @@ public class HP_life {
                 if (cell(row + 1, col + 1)) {
                     count++;
                 }
-                boolean old_state = _cells[row_offset + col];
+                boolean old_state = cells[row_offset + col];
                 boolean new_state = (!old_state && count == 3) || (old_state && (count == 2 || count == 3));
                 if (!changed && new_state != old_state) {
                     changed = true;
@@ -92,13 +92,13 @@ public class HP_life {
                 next[row_offset + col] = new_state;
             }
         }
-        _cells = next;
+        cells = next;
         return changed;
     }
 
     private static void reset() {
         Random random = new Random(0);
-        boolean cells[] = _cells;
+        boolean cells[] = HP_life.cells;
         for (int offset = 0; offset < cells.length; ++offset) {
             cells[offset] = random.nextDouble() > 0.5;
         }

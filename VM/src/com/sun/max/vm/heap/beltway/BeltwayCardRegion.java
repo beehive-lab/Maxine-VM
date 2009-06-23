@@ -222,7 +222,7 @@ public class BeltwayCardRegion {
         // copy cards from primordial card table to the newly created cardtable
         final Pointer primordialCardTable = VmThreadLocal.ADJUSTED_CARDTABLE_BASE.getConstantWord(MaxineVM.primordialVmThreadLocals()).asPointer().plus(
                         Heap.bootHeapRegion().start().unsignedShiftedRight(BeltwayCardRegion.CARD_SHIFT));
-        final int primordialCardTableSize = Heap.bootHeapRegion().size().plus(Code.bootCodeRegion().size()).unsignedShiftedRight(CARD_SHIFT).toInt();
+        final int primordialCardTableSize = Heap.bootHeapRegion().size().plus(Code.bootCodeRegion.size()).unsignedShiftedRight(CARD_SHIFT).toInt();
 
 
         adjustedCardTable = BeltwayCardRegion.adjustedCardTableBase(regularCardTable);

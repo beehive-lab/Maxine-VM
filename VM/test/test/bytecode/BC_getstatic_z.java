@@ -28,8 +28,8 @@ package test.bytecode;
  * @Runs: 0 = true; 1 = true
  */
 public class BC_getstatic_z {
-    private static boolean _field = true;
+    private static boolean field = true;
     public static boolean test(int a) {
-        return _field;
+        return field;
     }
 }

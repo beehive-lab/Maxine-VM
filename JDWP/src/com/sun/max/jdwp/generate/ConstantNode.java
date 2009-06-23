@@ -35,14 +35,14 @@ class ConstantNode extends AbstractNamedNode {
     }
 
     ConstantNode(List<Node> components) {
-        this._kind = "Constant";
-        this._components = components;
-        this._lineno = 0;
+        this.kind = "Constant";
+        this.components = components;
+        this.lineno = 0;
     }
 
     @Override
     void constrain(Context ctx) {
-        if (_components.size() != 0) {
+        if (components.size() != 0) {
             error("Constants have no internal structure");
         }
         super.constrain(ctx);

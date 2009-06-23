@@ -33,10 +33,10 @@ public abstract class BytecodeTest_putfield<Method_Type extends IrMethod> extend
         super(name);
     }
 
-    private byte _byteField = 0;
+    private byte byteField = 0;
 
     private void perform_putfield_byte() {
-        _byteField = 111;
+        byteField = 111;
     }
 
     public void test_putfield_byte() {
@@ -50,13 +50,13 @@ public abstract class BytecodeTest_putfield<Method_Type extends IrMethod> extend
         };
         final Value result = executeWithReceiver(method);
         assertTrue(result == VoidValue.VOID);
-        assertTrue(_byteField == 111);
+        assertTrue(byteField == 111);
     }
 
-    private boolean _booleanField = false;
+    private boolean booleanField = false;
 
     private void perform_putfield_boolean() {
-        _booleanField = true;
+        booleanField = true;
     }
 
     public void test_putfield_boolean() {
@@ -70,13 +70,13 @@ public abstract class BytecodeTest_putfield<Method_Type extends IrMethod> extend
         };
         final Value result = executeWithReceiver(method);
         assertTrue(result == VoidValue.VOID);
-        assertTrue(_booleanField);
+        assertTrue(booleanField);
     }
 
-    private short _shortField = 0;
+    private short shortField = 0;
 
     private void perform_putfield_short() {
-        _shortField = 222;
+        shortField = 222;
     }
 
     public void test_putfield_short() {
@@ -90,13 +90,13 @@ public abstract class BytecodeTest_putfield<Method_Type extends IrMethod> extend
         };
         final Value result = executeWithReceiver(method);
         assertTrue(result == VoidValue.VOID);
-        assertTrue(_shortField == 222);
+        assertTrue(shortField == 222);
     }
 
-    private char _charField = 0;
+    private char charField = 0;
 
     private void perform_putfield_char() {
-        _charField = 333;
+        charField = 333;
     }
 
     public void test_putfield_char() {
@@ -110,13 +110,13 @@ public abstract class BytecodeTest_putfield<Method_Type extends IrMethod> extend
         };
         final Value result = executeWithReceiver(method);
         assertTrue(result == VoidValue.VOID);
-        assertTrue(_charField == 333);
+        assertTrue(charField == 333);
     }
 
-    private int _intField = 0;
+    private int intField = 0;
 
     private void perform_putfield_int() {
-        _intField = 44;
+        intField = 44;
     }
 
     public void test_putfield_int() {
@@ -130,13 +130,13 @@ public abstract class BytecodeTest_putfield<Method_Type extends IrMethod> extend
         };
         final Value result = executeWithReceiver(method);
         assertTrue(result == VoidValue.VOID);
-        assertTrue(_intField == 44);
+        assertTrue(intField == 44);
     }
 
-    private float _floatField = 0;
+    private float floatField = 0;
 
     private void perform_putfield_float() {
-        _floatField = 55;
+        floatField = 55;
     }
 
     public void test_putfield_float() {
@@ -150,13 +150,13 @@ public abstract class BytecodeTest_putfield<Method_Type extends IrMethod> extend
         };
         final Value result = executeWithReceiver(method);
         assertTrue(result == VoidValue.VOID);
-        assertTrue(_floatField == 55);
+        assertTrue(floatField == 55);
     }
 
-    private long _longField = 0;
+    private long longField = 0;
 
     private void perform_putfield_long() {
-        _longField = 66;
+        longField = 66;
     }
 
     public void test_putfield_long() {
@@ -170,13 +170,13 @@ public abstract class BytecodeTest_putfield<Method_Type extends IrMethod> extend
         };
         final Value result = executeWithReceiver(method);
         assertTrue(result == VoidValue.VOID);
-        assertTrue(_longField == 66);
+        assertTrue(longField == 66);
     }
 
-    private double _doubleField = 0;
+    private double doubleField = 0;
 
     private void perform_putfield_double() {
-        _doubleField = 77;
+        doubleField = 77;
     }
 
     public void test_putfield_double() {
@@ -190,17 +190,17 @@ public abstract class BytecodeTest_putfield<Method_Type extends IrMethod> extend
         };
         final Value result = executeWithReceiver(method);
         assertTrue(result == VoidValue.VOID);
-        assertTrue(_doubleField == 77);
+        assertTrue(doubleField == 77);
     }
 
-    private Word _wordField;
+    private Word wordField;
 
     private void perform_putfield_word() {
-        _wordField = Offset.fromInt(88);
+        wordField = Offset.fromInt(88);
     }
 
     public void test_putfield_word() {
-        _wordField = Offset.zero();
+        wordField = Offset.zero();
         final Method_Type method = compileMethod("perform_putfield_word", SignatureDescriptor.create(void.class));
         new BytecodeConfirmation(method.classMethodActor()) {
 
@@ -211,13 +211,13 @@ public abstract class BytecodeTest_putfield<Method_Type extends IrMethod> extend
         };
         final Value result = executeWithReceiver(method);
         assertTrue(result == VoidValue.VOID);
-        assertTrue(_wordField.asOffset().toInt() == 88);
+        assertTrue(wordField.asOffset().toInt() == 88);
     }
 
-    private Object _referenceField = null;
+    private Object referenceField = null;
 
     private void perform_putfield_reference() {
-        _referenceField = Kind.REFERENCE;
+        referenceField = Kind.REFERENCE;
     }
 
     public void test_putfield_reference() {
@@ -231,7 +231,7 @@ public abstract class BytecodeTest_putfield<Method_Type extends IrMethod> extend
         };
         final Value result = executeWithReceiver(method);
         assertTrue(result == VoidValue.VOID);
-        assertTrue(_referenceField == Kind.REFERENCE);
+        assertTrue(referenceField == Kind.REFERENCE);
     }
 
 }

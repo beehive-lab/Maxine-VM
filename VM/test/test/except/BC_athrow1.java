@@ -25,11 +25,11 @@ package test.except;
  * @Runs: 0 = 0; 1 = 1; 2 = !java.lang.Throwable; 3 = 3
  */
 public class BC_athrow1 {
-    static Throwable _throwable = new Throwable();
+    static Throwable throwable = new Throwable();
 
     public static int test(int arg) throws Throwable {
         if (arg == 2) {
-            throw _throwable;
+            throw throwable;
         }
         return arg;
     }

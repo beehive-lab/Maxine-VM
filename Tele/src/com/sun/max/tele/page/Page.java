@@ -43,32 +43,32 @@ public class Page {
     /**
      * Access to memory in the {@link TeleVM}.
      */
-    private TeleIO _teleIO;
+    private TeleIO teleIO;
 
     /**
      * Generation count of remote memory modification as of the last time this page was refreshed.
      */
-    private long _epoch = -1;
+    private long epoch = -1;
 
-    private final long _index;
+    private final long index;
 
     /**
      * The buffer for this page.
      */
-    private final ByteBuffer _buffer;
+    private final ByteBuffer buffer;
 
     /**
      * A global option set according to the {@code "max.tele.page.noDirectBuffers"} system property.
-     * If this property is {@code null} then the {@link #_buffer} for each page is allocated from
-     * {@link #_globalBuffer this} global buffer until the global buffer is exhausted. If the property
+     * If this property is {@code null} then the {@link #buffer} for each page is allocated from
+     * {@link #globalBuffer this} global buffer until the global buffer is exhausted. If the property
      * is non-{@code null} or the global buffer has been exhausted, then the buffer for each page is
      * a heap allocated byte array.
      */
-    private static final boolean _noDirectBuffers = System.getProperty("max.tele.page.noDirectBuffers") != null;
+    private static final boolean noDirectBuffers = System.getProperty("max.tele.page.noDirectBuffers") != null;
 
     private static final long DEFAULT_GLOBAL_DIRECTBUFFER_POOL_SIZE = 100 * 1024 * 1024;
 
-    public static final long _globalDirectBufferPoolSize;
+    public static final long globalDirectBufferPoolSize;
     static {
         long size = DEFAULT_GLOBAL_DIRECTBUFFER_POOL_SIZE;
         final String value = System.getProperty("max.tele.page.directBufferPoolSize");
@@ -79,24 +79,24 @@ public class Page {
                 ProgramWarning.message("Malformed value for the \"max.tele.page.directBuffersPoolSize\" property: " + numberFormatException.getMessage());
             }
         }
-        _globalDirectBufferPoolSize = size;
+        globalDirectBufferPoolSize = size;
     }
 
-    private static ByteBuffer _globalBuffer;
+    private static ByteBuffer globalBuffer;
 
     /**
-     * Allocates the buffer for a page according to whether or not {@linkplain Page#_noDirectBuffers direct buffers}
+     * Allocates the buffer for a page according to whether or not {@linkplain Page#noDirectBuffers direct buffers}
      * are being used.
      */
     private static synchronized ByteBuffer allocate(TeleIO teleIO, ByteOrder byteOrder, long index) {
         final int pageSize = teleIO.pageSize();
-        if (!_noDirectBuffers) {
-            if (_globalBuffer == null) {
-                _globalBuffer = ByteBuffer.allocateDirect(1024 * 1024 * 100).order(byteOrder);
+        if (!noDirectBuffers) {
+            if (globalBuffer == null) {
+                globalBuffer = ByteBuffer.allocateDirect(1024 * 1024 * 100).order(byteOrder);
             }
-            if (_globalBuffer.remaining() >= pageSize) {
-                final ByteBuffer buffer = _globalBuffer.slice().order(byteOrder);
-                _globalBuffer.position(_globalBuffer.position() + pageSize);
+            if (globalBuffer.remaining() >= pageSize) {
+                final ByteBuffer buffer = globalBuffer.slice().order(byteOrder);
+                globalBuffer.position(globalBuffer.position() + pageSize);
                 buffer.limit(pageSize);
                 return buffer;
             }
@@ -106,30 +106,30 @@ public class Page {
     }
 
     public Page(TeleIO teleIO, long index, ByteOrder byteOrder) {
-        _teleIO = teleIO;
-        _index = index;
-        _buffer = allocate(teleIO, byteOrder, index);
+        this.teleIO = teleIO;
+        this.index = index;
+        this.buffer = allocate(teleIO, byteOrder, index);
     }
 
     /**
      * @return size of the page in bytes.
      */
     public int size() {
-        return _teleIO.pageSize();
+        return teleIO.pageSize();
     }
 
     /**
      * @return starting location of the page in remote memory.
      */
     public Address address() {
-        return Address.fromLong(_index * size());
+        return Address.fromLong(index * size());
     }
 
     /**
      * Mark page contents as needful of refreshing, independent of any prior reads.
      */
     public void invalidate() {
-        _epoch = -1;
+        epoch = -1;
     }
 
     /**
@@ -138,31 +138,31 @@ public class Page {
      * @throws DataIOError
      */
     private void refreshRead() throws DataIOError {
-        if (_epoch < _teleIO.epoch()) {
-            DataIO.Static.readFully(_teleIO, address(), _buffer);
-            _epoch = _teleIO.epoch();
+        if (epoch < teleIO.epoch()) {
+            DataIO.Static.readFully(teleIO, address(), buffer);
+            epoch = teleIO.epoch();
         }
     }
 
     public byte readByte(int offset) throws DataIOError {
         refreshRead();
-        return _buffer.get(offset);
+        return buffer.get(offset);
     }
 
     public short readShort(int offset) {
         refreshRead();
-        return _buffer.getShort(offset);
+        return buffer.getShort(offset);
     }
 
     public int readInt(int offset) {
         refreshRead();
-        final int result = _buffer.getInt(offset);
+        final int result = buffer.getInt(offset);
         return result;
     }
 
     public long readLong(int offset) {
         refreshRead();
-        final long result = _buffer.getLong(offset);
+        final long result = buffer.getLong(offset);
         return result;
     }
 
@@ -180,7 +180,7 @@ public class Page {
 
         final int n = Math.min(dst.limit() - dstOffset, size() - offset);
 
-        final ByteBuffer srcSlice = _buffer.duplicate();
+        final ByteBuffer srcSlice = buffer.duplicate();
         final ByteBuffer dstSlice = dst.duplicate();
 
         srcSlice.position(offset).limit(offset + n);

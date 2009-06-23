@@ -32,7 +32,7 @@ import com.sun.c1x.bytecode.Bytecodes;
  */
 public class NegateOp extends Instruction {
 
-    Instruction _x;
+    Instruction x;
 
     /**
      * Creates new NegateOp instance.
@@ -40,7 +40,7 @@ public class NegateOp extends Instruction {
      */
     public NegateOp(Instruction x) {
         super(x.type().base());
-        _x = x;
+        this.x = x;
     }
 
     /**
@@ -48,7 +48,7 @@ public class NegateOp extends Instruction {
      * @return the instruction that produces this instruction's input
      */
     public Instruction x() {
-        return _x;
+        return x;
     }
 
     /**
@@ -57,7 +57,7 @@ public class NegateOp extends Instruction {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        _x = closure.apply(_x);
+        x = closure.apply(x);
     }
 
     /**
@@ -71,14 +71,14 @@ public class NegateOp extends Instruction {
 
     @Override
     public int valueNumber() {
-        return Util.hash1(Bytecodes.INEG, _x);
+        return Util.hash1(Bytecodes.INEG, x);
     }
 
     @Override
     public boolean valueEqual(Instruction i) {
         if (i instanceof NegateOp) {
             NegateOp o = (NegateOp) i;
-            return _x == o._x;
+            return x == o.x;
         }
         return false;
     }

@@ -50,7 +50,7 @@ public final class TargetMethodSearchDialog extends TeleObjectSearchDialog {
         final String filterLowerCase = filterText.toLowerCase();
         final List<NamedTeleObject> namedTeleTargetMethods = new ArrayList<NamedTeleObject>();
 
-        for (TeleClassMethodActor teleClassMethodActor : _localTeleClassMethodActors) {
+        for (TeleClassMethodActor teleClassMethodActor : localTeleClassMethodActors) {
             final MethodActor methodActor = teleClassMethodActor.methodActor();
             final String methodNameLowerCase = methodActor.name.toString().toLowerCase();
             if (filterLowerCase.isEmpty() ||
@@ -64,18 +64,18 @@ public final class TargetMethodSearchDialog extends TeleObjectSearchDialog {
         }
         Collections.sort(namedTeleTargetMethods);
         for (NamedTeleObject namedTeleObject : namedTeleTargetMethods) {
-            _listModel.addElement(namedTeleObject);
+            listModel.addElement(namedTeleObject);
         }
     }
 
-    private final AppendableSequence<TeleClassMethodActor> _localTeleClassMethodActors = new LinkSequence<TeleClassMethodActor>();
+    private final AppendableSequence<TeleClassMethodActor> localTeleClassMethodActors = new LinkSequence<TeleClassMethodActor>();
 
     // TODO (mlvdv)  Include all compilations
     private TargetMethodSearchDialog(Inspection inspection, TeleClassActor teleClassActor, String title, String actionName, boolean multiSelection) {
         super(inspection, title == null ? "Select Target Method" : title, "Method Name", actionName, multiSelection);
         for (TeleClassMethodActor teleClassMethodActor : teleClassActor.getTeleClassMethodActors()) {
             if (teleClassMethodActor.getCurrentJavaTargetMethod() != null) {
-                _localTeleClassMethodActors.append(teleClassMethodActor);
+                localTeleClassMethodActors.append(teleClassMethodActor);
             }
         }
         rebuildList();

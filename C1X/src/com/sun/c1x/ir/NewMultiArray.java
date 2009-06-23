@@ -32,8 +32,8 @@ import com.sun.c1x.value.ValueStack;
  * @author Ben L. Titzer
  */
 public class NewMultiArray extends NewArray {
-    CiType _elementType;
-    Instruction[] _dimensions;
+    CiType elementType;
+    Instruction[] dimensions;
 
     /**
      * Constructs a new NewMultiArray instruction.
@@ -43,8 +43,8 @@ public class NewMultiArray extends NewArray {
      */
     public NewMultiArray(CiType elementType, Instruction[] dimensions, ValueStack stateBefore) {
         super(null, stateBefore); // note that this instruction doesn't have a "length" per-se
-        _elementType = elementType;
-        _dimensions = dimensions;
+        this.elementType = elementType;
+        this.dimensions = dimensions;
     }
 
     /**
@@ -52,7 +52,7 @@ public class NewMultiArray extends NewArray {
      * @return the array element type
      */
     public CiType elementType() {
-        return _elementType;
+        return elementType;
     }
 
     /**
@@ -60,7 +60,7 @@ public class NewMultiArray extends NewArray {
      * @return the list of instructions which produce input
      */
     public Instruction[] dimensions() {
-        return _dimensions;
+        return dimensions;
     }
 
     /**
@@ -68,7 +68,7 @@ public class NewMultiArray extends NewArray {
      * @return the rank of the array allocated
      */
     public int rank() {
-        return _dimensions.length;
+        return dimensions.length;
     }
 
     /**
@@ -77,8 +77,8 @@ public class NewMultiArray extends NewArray {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        for (int i = 0; i < _dimensions.length; i++) {
-            _dimensions[i] = closure.apply(_dimensions[i]);
+        for (int i = 0; i < dimensions.length; i++) {
+            dimensions[i] = closure.apply(dimensions[i]);
         }
     }
     /**

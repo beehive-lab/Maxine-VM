@@ -28,19 +28,19 @@ package com.sun.max.jdwp.vm.data;
  */
 public class LineTableEntry extends AbstractSerializableObject {
 
-    private long _codeIndex;
-    private int _lineNumber;
+    private final long codeIndex;
+    private final int lineNumber;
 
     public LineTableEntry(long codeIndex, int lineNumber) {
-        _codeIndex = codeIndex;
-        _lineNumber = lineNumber;
+        this.codeIndex = codeIndex;
+        this.lineNumber = lineNumber;
     }
 
     public long getCodeIndex() {
-        return _codeIndex;
+        return codeIndex;
     }
 
     public int getLineNumber() {
-        return _lineNumber;
+        return lineNumber;
     }
 }

@@ -28,18 +28,18 @@ package com.sun.c1x.util;
  */
 public class BitMap {
 
-    private final int _length;
-    private int _low32;
-    private int[] _extra32;
+    private final int length;
+    private int low32;
+    private int[] extra32;
 
     /**
      * Construct a new bit map with the specified length.
      * @param length the length of the bitmap
      */
     public BitMap(int length) {
-        this._length = length;
+        this.length = length;
         if (length > 32) {
-            _extra32 = new int[length >> 5];
+            extra32 = new int[length >> 5];
         }
     }
 
@@ -49,11 +49,11 @@ public class BitMap {
      */
     public void set(int i) {
         if (checkIndex(i) < 32) {
-            _low32 |= 1 << i;
+            low32 |= 1 << i;
         } else {
             int pos = (i >> 5) - 1;
             int index = i & 31;
-            _extra32[pos] |= 1 << index;
+            extra32[pos] |= 1 << index;
         }
     }
 
@@ -63,11 +63,11 @@ public class BitMap {
      */
     public void clear(int i) {
         if (checkIndex(i) < 32) {
-            _low32 &= ~(1 << i);
+            low32 &= ~(1 << i);
         } else {
             int pos = (i >> 5) - 1;
             int index = i & 31;
-            _extra32[pos] &= ~(1 << index);
+            extra32[pos] &= ~(1 << index);
         }
     }
 
@@ -75,10 +75,10 @@ public class BitMap {
      * Sets all the bits in this bitmap.
      */
     public void setAll() {
-        _low32 = -1;
-        if (_extra32 != null) {
-            for (int i = 0; i < _extra32.length; i++) {
-                _extra32[i] = -1;
+        low32 = -1;
+        if (extra32 != null) {
+            for (int i = 0; i < extra32.length; i++) {
+                extra32[i] = -1;
             }
         }
     }
@@ -87,10 +87,10 @@ public class BitMap {
      * Clears all the bits in this bitmap.
      */
     public void clearAll() {
-        _low32 = 0;
-        if (_extra32 != null) {
-            for (int i = 0; i < _extra32.length; i++) {
-                _extra32[i] = 0;
+        low32 = 0;
+        if (extra32 != null) {
+            for (int i = 0; i < extra32.length; i++) {
+                extra32[i] = 0;
             }
         }
     }
@@ -102,11 +102,11 @@ public class BitMap {
      */
     public boolean get(int i) {
         if (checkIndex(i) < 32) {
-            return ((_low32 >> i) & 1) != 0;
+            return ((low32 >> i) & 1) != 0;
         }
         int pos = (i >> 5) - 1;
         int index = i & 31;
-        int bits = _extra32[pos];
+        int bits = extra32[pos];
         return ((bits >> index) & 1) != 0;
     }
 
@@ -117,10 +117,10 @@ public class BitMap {
      * @param other the other bitmap for the union operation
      */
     public void setUnion(BitMap other) {
-        _low32 |= other._low32;
-        if (_extra32 != null) {
-            for (int i = 0; i < _extra32.length; i++) {
-                _extra32[i] |= other._extra32[i];
+        low32 |= other.low32;
+        if (extra32 != null) {
+            for (int i = 0; i < extra32.length; i++) {
+                extra32[i] |= other.extra32[i];
             }
         }
     }
@@ -130,11 +130,11 @@ public class BitMap {
      * @return the size of this bitmap
      */
     public int size() {
-        return _length;
+        return length;
     }
 
     private int checkIndex(int i) {
-        if (i < 0 || i >= _length) {
+        if (i < 0 || i >= length) {
             throw new IndexOutOfBoundsException();
         }
         return i;

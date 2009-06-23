@@ -31,16 +31,16 @@ public final class MemoryDataStreamFactory implements DataStreamFactory {
     }
 
     private final class MemoryInputStream extends InputStream {
-        private Pointer _pointer;
+        private Pointer pointer;
 
         private MemoryInputStream(Pointer pointer) {
-            _pointer = pointer;
+            this.pointer = pointer;
         }
 
         @Override
         public int read() throws IOException {
-            final Pointer p = _pointer;
-            _pointer = _pointer.plus(1);
+            final Pointer p = pointer;
+            this.pointer = pointer.plus(1);
             return p.readByte(0) & 0xff;
         }
     }
@@ -50,16 +50,16 @@ public final class MemoryDataStreamFactory implements DataStreamFactory {
     }
 
     private final class MemoryOutputStream extends OutputStream {
-        private Pointer _pointer;
+        private Pointer pointer;
 
         private MemoryOutputStream(Pointer pointer) {
-            _pointer = pointer;
+            this.pointer = pointer;
         }
 
         @Override
         public void write(int value) throws IOException {
-            _pointer.writeByte(0, (byte) value);
-            _pointer = _pointer.plus(1);
+            pointer.writeByte(0, (byte) value);
+            pointer = pointer.plus(1);
         }
     }
 

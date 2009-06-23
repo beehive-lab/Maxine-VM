@@ -31,7 +31,7 @@ import com.sun.c1x.value.BasicType;
  */
 public class UnsafePutObject extends UnsafeObjectOp {
 
-    Instruction _value;
+    Instruction value;
 
     /**
      * Creates a new UnsafePutObject instruction.
@@ -43,7 +43,7 @@ public class UnsafePutObject extends UnsafeObjectOp {
      */
     public UnsafePutObject(BasicType basicType, Instruction object, Instruction offset, Instruction value, boolean isVolatile) {
         super(basicType, object, offset, true, isVolatile);
-        _value = value;
+        this.value = value;
     }
 
     /**
@@ -51,7 +51,7 @@ public class UnsafePutObject extends UnsafeObjectOp {
      * @return the instruction generating the value
      */
     public Instruction value() {
-        return _value;
+        return value;
     }
 
     /**
@@ -61,7 +61,7 @@ public class UnsafePutObject extends UnsafeObjectOp {
     @Override
     public void inputValuesDo(InstructionClosure closure) {
         super.inputValuesDo(closure);
-        _value = closure.apply(_value);
+        value = closure.apply(value);
     }
 
     /**

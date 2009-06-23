@@ -35,16 +35,16 @@ import com.sun.max.vm.stack.*;
  */
 public final class LocalsPanel extends InspectorPanel {
 
-    public final int _maxLocals;
-    public final int _maxStacks;
-    public final int _numArguments;
+    public final int maxLocals;
+    public final int maxStacks;
+    public final int numArguments;
 
     public LocalsPanel(Inspection inspection, JavaStackFrame javaStackFrame) {
         super(inspection, new SpringLayout());
         final ClassMethodActor classMethodActor = javaStackFrame.targetMethod().classMethodActor();
-        _maxLocals = classMethodActor.codeAttribute().maxLocals();
-        _maxStacks = classMethodActor.codeAttribute().maxStack();
-        _numArguments = classMethodActor.numberOfParameterSlots();
+        maxLocals = classMethodActor.codeAttribute().maxLocals();
+        maxStacks = classMethodActor.codeAttribute().maxStack();
+        numArguments = classMethodActor.numberOfParameterSlots();
     }
 
     @Override

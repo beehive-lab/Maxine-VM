@@ -453,7 +453,7 @@ public final class BinaryImageGenerator {
         int zeroDirectCallees = 0;
         int zeroReferenceMaps = 0;
         int zeroScalarLiterals = 0;
-        for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
+        for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
             final Object[] referenceLiterals = targetMethod.referenceLiterals();
             if (referenceLiterals != null) {
                 for (int i = 0; i < referenceLiterals.length; i++) {

@@ -25,9 +25,9 @@ package test.bytecode;
  * @Runs: 0 = 0; 1 = 1; 2 = 2; 3 = 3; -4 = -4
  */
 public class BC_putstatic {
-    private static int _field;
+    private static int field;
     public static int test(int a) {
-        _field = a;
-        return _field;
+        field = a;
+        return field;
     }
 }

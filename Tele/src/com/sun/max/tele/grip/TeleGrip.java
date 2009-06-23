@@ -29,35 +29,35 @@ import com.sun.max.vm.reference.*;
  */
 public abstract class TeleGrip extends Grip {
 
-    private long _gripOID = 0;
+    private long gripOID = 0;
 
     protected TeleGrip() {
     }
 
-    private Reference _reference;
+    private Reference reference;
 
     public synchronized Reference makeReference(TeleReferenceScheme teleReferenceScheme) {
-        if (_reference == null) {
-            _reference = teleReferenceScheme.createReference(this);
+        if (reference == null) {
+            reference = teleReferenceScheme.createReference(this);
         }
-        return _reference;
+        return reference;
     }
 
     /**
      * @return a non-zero integer uniquely identifying the referred-to object in the tele VM, assigned lazily
      */
     public synchronized long makeOID() {
-        if (_gripOID == 0) {
-            _gripOID = getNextOID();
+        if (gripOID == 0) {
+            gripOID = getNextOID();
         }
-        return _gripOID;
+        return gripOID;
     }
 
 
-    private static long _nextOID = 1;
+    private static long nextOID = 1;
 
     private static synchronized long getNextOID() {
-        return _nextOID++;
+        return nextOID++;
     }
 
     public boolean isLocal() {

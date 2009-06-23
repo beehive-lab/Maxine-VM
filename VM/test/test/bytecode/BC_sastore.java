@@ -26,10 +26,10 @@ package test.bytecode;
  */
 public class BC_sastore {
 
-    static short[] _array = {0, 0, 0, 0};
+    static short[] array = {0, 0, 0, 0};
 
     public static short test(int arg, short val) {
-        _array[arg] = val;
-        return _array[arg];
+        array[arg] = val;
+        return array[arg];
     }
 }

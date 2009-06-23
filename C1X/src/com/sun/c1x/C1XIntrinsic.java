@@ -199,12 +199,12 @@ public enum C1XIntrinsic {
     sun_misc_Unsafe$prefetchReadStatic   ("(Ljava/lang/Object;J)V"),
     sun_misc_Unsafe$prefetchWriteStatic  ("(Ljava/lang/Object;J)V");
 
-    private static HashMap<String, HashMap<String, C1XIntrinsic>> _intrinsicMap = new HashMap<String, HashMap<String, C1XIntrinsic>>(100);
+    private static HashMap<String, HashMap<String, C1XIntrinsic>> intrinsicMap = new HashMap<String, HashMap<String, C1XIntrinsic>>(100);
 
-    private final String _className;
-    private final String _simpleClassName;
-    private final String _methodName;
-    private final String _signature;
+    private final String className;
+    private final String simpleClassName;
+    private final String methodName;
+    private final String signature;
 
     C1XIntrinsic(String signature) {
         this(null, signature);
@@ -215,14 +215,14 @@ public enum C1XIntrinsic {
         // parse the class name from the name of this enum
         int index = name.indexOf('$');
         assert index != -1;
-        _className = name.substring(0, index).replace('_', '.');
-        _methodName = methodName == null ? name.substring(index + 1) : methodName;
-        _signature = signature;
-        index = _className.lastIndexOf('.');
+        this.className = name.substring(0, index).replace('_', '.');
+        this.methodName = methodName == null ? name.substring(index + 1) : methodName;
+        this.signature = signature;
+        index = className.lastIndexOf('.');
         if (index == -1) {
-            _simpleClassName = _className;
+            this.simpleClassName = className;
         } else {
-            _simpleClassName = _className.substring(index + 1);
+            this.simpleClassName = className.substring(index + 1);
         }
     }
 
@@ -231,7 +231,7 @@ public enum C1XIntrinsic {
      * @return the name of the class declaring this intrinsic method
      */
     public String className() {
-        return _className;
+        return className;
     }
 
     /**
@@ -239,7 +239,7 @@ public enum C1XIntrinsic {
      * @return the simple name of the class declaring this intrinsic method
      */
     public String simpleClassName() {
-        return _simpleClassName;
+        return simpleClassName;
     }
 
     /**
@@ -247,7 +247,7 @@ public enum C1XIntrinsic {
      * @return the name of this method
      */
     public String methodName() {
-        return _methodName;
+        return methodName;
     }
 
     /**
@@ -255,7 +255,7 @@ public enum C1XIntrinsic {
      * @return the signature
      */
     public String signature() {
-        return _signature;
+        return signature;
     }
 
     static {
@@ -263,10 +263,10 @@ public enum C1XIntrinsic {
         for (C1XIntrinsic i : C1XIntrinsic.values()) {
             // note that the map uses internal names to map lookup faster
             String className = Util.toInternalName(i.className());
-            HashMap<String, C1XIntrinsic> map = _intrinsicMap.get(className);
+            HashMap<String, C1XIntrinsic> map = intrinsicMap.get(className);
             if (map == null) {
                 map = new HashMap<String, C1XIntrinsic>();
-                _intrinsicMap.put(className, map);
+                intrinsicMap.put(className, map);
             }
             map.put(i.methodName() + i.signature(), i);
         }
@@ -282,7 +282,7 @@ public enum C1XIntrinsic {
         CiType holder = method.holder();
         if (method.isLoaded() && holder.isLoaded() && holder.isInitialized()) {
             // note that the map uses internal names to map lookup faster
-            HashMap<String, C1XIntrinsic> map = _intrinsicMap.get(holder.name());
+            HashMap<String, C1XIntrinsic> map = intrinsicMap.get(holder.name());
             if (map != null) {
                 return map.get(method.name() + method.signatureType().asString());
             }

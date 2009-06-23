@@ -29,14 +29,14 @@ import com.sun.c1x.util.BitMap;
  */
 public class LIRBlock {
 
-    BitMap _liveIn;
-    BitMap _liveOut;
-    BitMap _liveGen;
-    BitMap _liveKill;
+    BitMap liveIn;
+    BitMap liveOut;
+    BitMap liveGen;
+    BitMap liveKill;
 
-    BitMap _fpuRegisterUsage;
-    int[] _fpuStackState;
-    int _firstLirInstructionID;
-    int _lastLirInstructionID;
-    int _exceptionHandlerPCO;
+    BitMap fpuRegisterUsage;
+    int[] fpuStackState;
+    int firstLirInstructionID;
+    int lastLirInstructionID;
+    int exceptionHandlerPCO;
 }

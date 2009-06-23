@@ -34,33 +34,33 @@ public class LinuxTeleNativeThread extends TeleNativeThread {
         return (LinuxTeleProcess) super.teleProcess();
     }
 
-    private int _type;
+    private int type;
 
     public int type() {
-        return _type;
+        return type;
     }
 
-    private short _flags;
+    private short flags;
 
     public int flags() {
-        return _flags;
+        return flags;
     }
 
-    private int _priority;
+    private int priority;
 
     public int priority() {
-        return _priority;
+        return priority;
     }
 
-    private final LinuxTask _task;
+    private final LinuxTask task;
 
     LinuxTask task() {
-        return _task;
+        return task;
     }
 
     LinuxTeleNativeThread(LinuxTeleProcess teleProcess, int id, long tid, long stackBase, long stackSize) {
         super(teleProcess, id, tid, stackBase, stackSize);
-        _task = new LinuxTask(teleProcess.task(), (int) tid);
+        task = new LinuxTask(teleProcess.task(), (int) tid);
     }
 
     @Override

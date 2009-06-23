@@ -56,40 +56,40 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
         NAME("Name", "Inspector user focus kind", -1),
         VALUE("Value", "Value/status of Inspector user focus", 25);
 
-        private final String _label;
-        private final String _toolTipText;
-        private final int _minWidth;
+        private final String label;
+        private final String toolTipText;
+        private final int minWidth;
 
         private FocusColumnKind(String label, String toolTipText, int minWidth) {
-            _label = label;
-            _toolTipText = toolTipText;
-            _minWidth = minWidth;
+            this.label = label;
+            this.toolTipText = toolTipText;
+            this.minWidth = minWidth;
         }
 
         /**
          * @return text to appear in the column header
          */
         public String label() {
-            return _label;
+            return label;
         }
 
         /**
          * @return text to appear in the column header's toolTip, null if none specified.
          */
         public String toolTipText() {
-            return _toolTipText;
+            return toolTipText;
         }
 
         /**
          * @return minimum width allowed for this column when resized by user; -1 if none specified.
          */
         public int minWidth() {
-            return _minWidth;
+            return minWidth;
         }
 
         @Override
         public String toString() {
-            return _label;
+            return label;
         }
 
         public static final IndexedSequence<FocusColumnKind> VALUES = new ArraySequence<FocusColumnKind>(values());
@@ -110,48 +110,48 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
         OBJECT("Heap Object", "Current heap object of interest in the Inspector"),
         REGION("Memory Region", "Current memory region of interest in the Inspector");
 
-        private final String _label;
-        private final String _toolTipText;
+        private final String label;
+        private final String toolTipText;
 
         private FocusRowKind(String label, String toolTipText) {
-            _label = label;
-            _toolTipText = toolTipText;
+            this.label = label;
+            this.toolTipText = toolTipText;
         }
 
         /**
          * @return text to appear in the row's name field.
          */
         public String label() {
-            return _label;
+            return label;
         }
 
         /**
          * @return text to appear in the row's name field toolTip.
          */
         public String toolTipText() {
-            return _toolTipText;
+            return toolTipText;
         }
 
         @Override
         public String toString() {
-            return _label;
+            return label;
         }
 
         public static final IndexedSequence<FocusRowKind> VALUES = new ArraySequence<FocusRowKind>(values());
     }
 
-    private final FocusTableModel _model;
-    private final FocusColumnModel _columnModel;
-    private final TableColumn[] _columns;
+    private final FocusTableModel model;
+    private final FocusColumnModel columnModel;
+    private final TableColumn[] columns;
 
     FocusTable(Inspection inspection) {
         super(inspection);
-        _model = new FocusTableModel();
-        _columns = new TableColumn[FocusColumnKind.VALUES.length()];
-        _columnModel = new FocusColumnModel();
+        model = new FocusTableModel();
+        columns = new TableColumn[FocusColumnKind.VALUES.length()];
+        columnModel = new FocusColumnModel();
 
-        setModel(_model);
-        setColumnModel(_columnModel);
+        setModel(model);
+        setColumnModel(columnModel);
         setShowHorizontalLines(style().defaultTableShowHorizontalLines());
         setShowVerticalLines(style().defaultTableShowVerticalLines());
         setIntercellSpacing(style().defaultTableIntercellSpacing());
@@ -167,11 +167,11 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
 
     public void refresh(boolean force) {
         if (force) {
-            for (TableColumn column : _columns) {
+            for (TableColumn column : columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
                 prober.refresh(force);
             }
-            _model.refresh();
+            model.refresh();
         }
     }
 
@@ -180,12 +180,12 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
 
     @Override
     protected JTableHeader createDefaultTableHeader() {
-        return new JTableHeader(_columnModel) {
+        return new JTableHeader(columnModel) {
             @Override
             public String getToolTipText(MouseEvent mouseEvent) {
                 final Point p = mouseEvent.getPoint();
-                final int index = _columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = _columnModel.getColumn(index).getModelIndex();
+                final int index = columnModel.getColumnIndexAtX(p.x);
+                final int modelIndex = columnModel.getColumn(index).getModelIndex();
                 return FocusColumnKind.VALUES.get(modelIndex).toolTipText();
             }
         };
@@ -200,11 +200,11 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
 
         private void createColumn(FocusColumnKind columnKind, TableCellRenderer renderer) {
             final int col = columnKind.ordinal();
-            _columns[col] = new TableColumn(col, 0, renderer, null);
-            _columns[col].setHeaderValue(columnKind.label());
-            _columns[col].setMinWidth(columnKind.minWidth());
-            addColumn(_columns[col]);
-            _columns[col].setIdentifier(columnKind);
+            columns[col] = new TableColumn(col, 0, renderer, null);
+            columns[col].setHeaderValue(columnKind.label());
+            columns[col].setMinWidth(columnKind.minWidth());
+            addColumn(columns[col]);
+            columns[col].setIdentifier(columnKind);
         }
     }
 
@@ -256,10 +256,10 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
     private final class ValueCellRenderer  implements TableCellRenderer, Prober {
 
         // A "value" label per row, each suitable for the particular kind of value.
-        private InspectorLabel[] _labels = new InspectorLabel[FocusRowKind.VALUES.length()];
+        private InspectorLabel[] labels = new InspectorLabel[FocusRowKind.VALUES.length()];
 
         public ValueCellRenderer(Inspection inspection) {
-            _labels[FocusRowKind.THREAD.ordinal()] = new JavaNameLabel(inspection, "") {
+            labels[FocusRowKind.THREAD.ordinal()] = new JavaNameLabel(inspection, "") {
                 @Override
                 public void refresh(boolean force) {
                     final MaxThread thread = inspection().focus().thread();
@@ -271,7 +271,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
                     }
                 }
             };
-            _labels[FocusRowKind.FRAME.ordinal()] = new PlainLabel(inspection, "") {
+            labels[FocusRowKind.FRAME.ordinal()] = new PlainLabel(inspection, "") {
                 @Override
                 public void refresh(boolean force) {
                     final StackFrame stackFrame = inspection().focus().stackFrame();
@@ -284,7 +284,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
                     }
                 }
             };
-            _labels[FocusRowKind.CODE.ordinal()] = new PlainLabel(inspection, "") {
+            labels[FocusRowKind.CODE.ordinal()] = new PlainLabel(inspection, "") {
                 @Override
                 public void refresh(boolean force) {
                     final TeleCodeLocation teleCodeLocation = inspection().focus().codeLocation();
@@ -296,7 +296,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
                     }
                 }
             };
-            _labels[FocusRowKind.BREAKPOINT.ordinal()] = new PlainLabel(inspection, "") {
+            labels[FocusRowKind.BREAKPOINT.ordinal()] = new PlainLabel(inspection, "") {
                 @Override
                 public void refresh(boolean force) {
                     final TeleBreakpoint teleBreakpoint = inspection().focus().breakpoint();
@@ -308,7 +308,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
                     }
                 }
             };
-            _labels[FocusRowKind.WATCHPOINT.ordinal()] = new PlainLabel(inspection, "") {
+            labels[FocusRowKind.WATCHPOINT.ordinal()] = new PlainLabel(inspection, "") {
                 @Override
                 public void refresh(boolean force) {
                     final MaxWatchpoint watchpoint = inspection().focus().watchpoint();
@@ -320,7 +320,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
                     }
                 }
             };
-            _labels[FocusRowKind.ADDRESS.ordinal()] = new WordValueLabel(inspection, WordValueLabel.ValueMode.WORD, FocusTable.this) {
+            labels[FocusRowKind.ADDRESS.ordinal()] = new WordValueLabel(inspection, WordValueLabel.ValueMode.WORD, FocusTable.this) {
                 @Override
                 public Value fetchValue() {
                     Address address = inspection().focus().address();
@@ -330,7 +330,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
                     return new WordValue(address);
                 }
             };
-            _labels[FocusRowKind.OBJECT.ordinal()] = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, FocusTable.this) {
+            labels[FocusRowKind.OBJECT.ordinal()] = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, FocusTable.this) {
                 @Override
                 public Value fetchValue() {
                     final TeleObject teleObject = inspection().focus().heapObject();
@@ -341,7 +341,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
                     return new WordValue(address);
                 }
             };
-            _labels[FocusRowKind.REGION.ordinal()] = new PlainLabel(inspection, "") {
+            labels[FocusRowKind.REGION.ordinal()] = new PlainLabel(inspection, "") {
                 @Override
                 public void refresh(boolean force) {
                     final MemoryRegion memoryRegion = inspection().focus().memoryRegion();
@@ -355,7 +355,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
         }
 
         public void refresh(boolean force) {
-            for (InspectorLabel label : _labels) {
+            for (InspectorLabel label : labels) {
                 if (label != null) {
                     label.refresh(force);
                 }
@@ -363,7 +363,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
         }
 
         public void redisplay() {
-            for (InspectorLabel label : _labels) {
+            for (InspectorLabel label : labels) {
                 if (label != null) {
                     label.redisplay();
                 }
@@ -371,8 +371,8 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            if (_labels[row] != null) {
-                return _labels[row];
+            if (labels[row] != null) {
+                return labels[row];
             }
             return new PlainLabel(inspection(), "unimplemented");
         }

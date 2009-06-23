@@ -24,21 +24,21 @@ package test.hotpath;
  * @Runs: 80 = 15645;
  */
 public class HP_array04 {
-    public static byte[] _b = new byte[40];
-    public static char[] _c = new char[40];
+    public static byte[] b = new byte[40];
+    public static char[] c = new char[40];
 
     public static int test(int count) {
         int sum = 0;
 
-        for (int i = 0; i < _b.length; i++) {
-            _b[i] = (byte) i;
-            _c[i] = (char) i;
+        for (int i = 0; i < b.length; i++) {
+            b[i] = (byte) i;
+            c[i] = (char) i;
         }
 
         for (int j = 0; j < 10; j++) {
             try {
                 for (int i = 0; i < count; i++) {
-                    sum += _b[i] + _c[i];
+                    sum += b[i] + c[i];
                 }
             } catch (IndexOutOfBoundsException e) {
                 sum += j;

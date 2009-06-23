@@ -27,10 +27,10 @@ package test.lang;
 
 public class Object_clone02 implements Cloneable {
 
-    static final Object_clone02 _field = new Object_clone02();
+    static final Object_clone02 field = new Object_clone02();
 
     public static boolean test(int i) throws CloneNotSupportedException {
-        return _field.tryClone(i);
+        return field.tryClone(i);
     }
 
     private boolean tryClone(int i) throws CloneNotSupportedException {

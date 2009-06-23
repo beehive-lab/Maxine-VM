@@ -48,13 +48,13 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     public Color frameBorderFlashColor() {
         return InspectorStyle.Red;
     }
-    private Border _defaultPaneTopBorder = BorderFactory.createMatteBorder(2, 0, 0, 0, defaultBorderColor());
+    private Border defaultPaneTopBorder = BorderFactory.createMatteBorder(2, 0, 0, 0, defaultBorderColor());
     public Border defaultPaneTopBorder() {
-        return _defaultPaneTopBorder;
+        return defaultPaneTopBorder;
     }
-    private Border _defaultPaneBottomBorder = BorderFactory.createMatteBorder(0, 0, 2, 0, defaultBorderColor());
+    private Border defaultPaneBottomBorder = BorderFactory.createMatteBorder(0, 0, 2, 0, defaultBorderColor());
     public Border defaultPaneBottomBorder() {
-        return _defaultPaneBottomBorder;
+        return defaultPaneBottomBorder;
     }
     // Default text
     public Color defaultTextColor() {
@@ -255,9 +255,9 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     public Color defaultCodeStopBackgroundColor() {
         return defaultCodeBackgroundColor();
     }
-    private static final Icon _codeViewCloseIcon = IconFactory.createCrossIcon(16, 16);
+    private static final Icon codeViewCloseIcon = IconFactory.createCrossIcon(16, 16);
     public Icon codeViewCloseIcon() {
-        return _codeViewCloseIcon;
+        return codeViewCloseIcon;
     }
 
     // Display of machine code
@@ -332,32 +332,32 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return defaultBackgroundColor();
     }
 
-    private static final Dimension _debugTagIconSize = new Dimension(16, 12);
+    private static final Dimension debugTagIconSize = new Dimension(16, 12);
 
     public Color debugSelectedCodeBorderColor() {
         return Color.black;
     }
 
-    private static final Border _debugDefaultTagBorder = BorderFactory.createEmptyBorder(2, 2, 2, 2);
+    private static final Border debugDefaultTagBorder = BorderFactory.createEmptyBorder(2, 2, 2, 2);
     public Border debugDefaultTagBorder() {
-        return _debugDefaultTagBorder;
+        return debugDefaultTagBorder;
     }
     public Color debugDefaultTagColor() {
         return InspectorStyle.Black;
     }
-    private static final Icon _debugDefaultTagIcon = IconFactory.createBlank(_debugTagIconSize);
+    private static final Icon debugDefaultTagIcon = IconFactory.createBlank(debugTagIconSize);
     public Icon debugDefaultTagIcon() {
-        return _debugDefaultTagIcon;
+        return debugDefaultTagIcon;
     }
 
-    private static final Border _debugEnabledBreakpointTagBorder = BorderFactory.createLineBorder(Color.black, 2);
+    private static final Border debugEnabledBreakpointTagBorder = BorderFactory.createLineBorder(Color.black, 2);
     public Border debugEnabledTargetBreakpointTagBorder() {
-        return _debugEnabledBreakpointTagBorder;
+        return debugEnabledBreakpointTagBorder;
     }
 
-    private static final Border _debugDisabledBreakpointTagBorder = BorderFactory.createLineBorder(Color.black, 1);
+    private static final Border debugDisabledBreakpointTagBorder = BorderFactory.createLineBorder(Color.black, 1);
     public Border debugDisabledTargetBreakpointTagBorder() {
-        return _debugDisabledBreakpointTagBorder;
+        return debugDisabledBreakpointTagBorder;
     }
 
     public Border debugEnabledBytecodeBreakpointTagBorder() {
@@ -369,7 +369,7 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     }
 
     public Border watchpointTagBorder() {
-        return _debugEnabledBreakpointTagBorder;
+        return debugEnabledBreakpointTagBorder;
     }
 
     public Color debugIPTextColor() {
@@ -378,9 +378,9 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     public  Color debugIPTagColor() {
         return debugDefaultTagColor();
     }
-    private static final Icon _debugIPTagIcon = IconFactory.createRightArrow(_debugTagIconSize);
+    private static final Icon debugIPTagIcon = IconFactory.createRightArrow(debugTagIconSize);
     public Icon debugIPTagIcon() {
-        return _debugIPTagIcon;
+        return debugIPTagIcon;
     }
 
     public Color debugCallReturnTextColor() {
@@ -389,43 +389,43 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     public Color debugCallReturnTagColor() {
         return debugDefaultTagColor();
     }
-    private static final Icon _debugCallReturnTagIcon = IconFactory.createLeftArrow(_debugTagIconSize);
+    private static final Icon debugCallReturnTagIcon = IconFactory.createLeftArrow(debugTagIconSize);
     public Icon debugCallReturnTagIcon() {
-        return _debugCallReturnTagIcon;
+        return debugCallReturnTagIcon;
     }
 
-    private final Icon _debugPauseButtonIcon = createImageIcon("image/NB3Pause.gif", "Continue");
-    private final Icon _debugContinueButtonIcon = createImageIcon("image/NB3Continue.gif", "Continue");
-    private final Icon _debugRunToCursorButtonIcon = createImageIcon("image/NB3RunToCursor.gif", "Continue");
-    private final Icon _debugStepInButtonIcon = createImageIcon("image/NB3StepIn.gif", "Step In");
-    private final Icon _debugStepOutButtonIcon = createImageIcon("image/NB3StepOut.gif", "Step In");
-    private final Icon _debugStepOverButtonIcon = createImageIcon("image/NB3StepOver.gif", "Step In");
-    private final Icon _debugToggleBreakpointButtonIcon = createImageIcon("image/NB3ToggleBreakpoint.gif", "Step In");
+    private final Icon debugPauseButtonIcon = createImageIcon("image/NB3Pause.gif", "Continue");
+    private final Icon debugContinueButtonIcon = createImageIcon("image/NB3Continue.gif", "Continue");
+    private final Icon debugRunToCursorButtonIcon = createImageIcon("image/NB3RunToCursor.gif", "Continue");
+    private final Icon debugStepInButtonIcon = createImageIcon("image/NB3StepIn.gif", "Step In");
+    private final Icon debugStepOutButtonIcon = createImageIcon("image/NB3StepOut.gif", "Step In");
+    private final Icon debugStepOverButtonIcon = createImageIcon("image/NB3StepOver.gif", "Step In");
+    private final Icon debugToggleBreakpointButtonIcon = createImageIcon("image/NB3ToggleBreakpoint.gif", "Step In");
     public Icon debugPauseButtonIcon() {
-        return _debugPauseButtonIcon;
+        return debugPauseButtonIcon;
     }
     public Icon debugContinueButtonIcon() {
-        return _debugContinueButtonIcon;
+        return debugContinueButtonIcon;
     }
     public Icon debugRunToCursorButtonIcon() {
-        return _debugRunToCursorButtonIcon;
+        return debugRunToCursorButtonIcon;
     }
     public Icon debugStepInButtonIcon() {
-        return _debugStepInButtonIcon;
+        return debugStepInButtonIcon;
     }
     public Icon debugStepOutButtonIcon() {
-        return _debugStepOutButtonIcon;
+        return debugStepOutButtonIcon;
     }
     public Icon debugStepOverButtonIcon() {
-        return _debugStepOverButtonIcon;
+        return debugStepOverButtonIcon;
     }
     public Icon debugToggleBreakpointbuttonIcon() {
-        return _debugToggleBreakpointButtonIcon;
+        return debugToggleBreakpointButtonIcon;
     }
 
-    private final Icon _debugActiveRowButtonIcon = IconFactory.createRightArrow(16, 16);
+    private final Icon debugActiveRowButtonIcon = IconFactory.createRightArrow(16, 16);
     public Icon debugActiveRowButtonIcon() {
-        return _debugActiveRowButtonIcon;
+        return debugActiveRowButtonIcon;
     }
 
     // Display of memory locations:  object fields, array elements, thread locals, etc.
@@ -458,13 +458,13 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
 
 
     // Search related
-    private final Icon _searchNextMatchButtonIcon = IconFactory.createDownArrow(14, 14);
+    private final Icon searchNextMatchButtonIcon = IconFactory.createDownArrow(14, 14);
     public Icon searchNextMatchButtonIcon() {
-        return _searchNextMatchButtonIcon;
+        return searchNextMatchButtonIcon;
     }
-    private final Icon _searchPreviousMatchButtonIcon = IconFactory.createUpArrow(14, 14);
+    private final Icon searchPreviousMatchButtonIcon = IconFactory.createUpArrow(14, 14);
     public Icon searchPreviousMatchButtonIcon() {
-        return _searchPreviousMatchButtonIcon;
+        return searchPreviousMatchButtonIcon;
     }
     public Color searchFailedBackground() {
         return Color.red;
@@ -474,25 +474,25 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     }
 
     // Table-display related
-    private final Dimension _zeroTableIntercellSpacing  = new Dimension(0, 0);
+    private final Dimension zeroTableIntercellSpacing  = new Dimension(0, 0);
     public Dimension zeroTableIntercellSpacing() {
-        return _zeroTableIntercellSpacing;
+        return zeroTableIntercellSpacing;
     }
-    private final Dimension _defaultTableIntercellSpacing = new Dimension(1, 1);
+    private final Dimension defaultTableIntercellSpacing = new Dimension(1, 1);
     public Dimension defaultTableIntercellSpacing() {
-        return _defaultTableIntercellSpacing;
+        return defaultTableIntercellSpacing;
     }
-    private final int _defaultTableRowHeight = 20;
+    private final int defaultTableRowHeight = 20;
     public int defaultTableRowHeight() {
-        return _defaultTableRowHeight;
+        return defaultTableRowHeight;
     }
-    private final boolean _defaultTableShowHorizontalLines = true;
+    private final boolean defaultTableShowHorizontalLines = true;
     public boolean defaultTableShowHorizontalLines() {
-        return _defaultTableShowHorizontalLines;
+        return defaultTableShowHorizontalLines;
     }
-    private final boolean _defaultTableShowVertictalLines = true;
+    private final boolean defaultTableShowVertictalLines = true;
     public boolean defaultTableShowVerticalLines() {
-        return _defaultTableShowVertictalLines;
+        return defaultTableShowVertictalLines;
     }
 
     public Dimension memoryTableIntercellSpacing() {

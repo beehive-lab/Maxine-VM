@@ -25,11 +25,11 @@ package test.except;
  * @Runs: 0=true; 1=!java.lang.NullPointerException
  */
 public class BC_invokevirtual01 {
-    private static final BC_invokevirtual01 _object = new BC_invokevirtual01();
+    private static final BC_invokevirtual01 obj = new BC_invokevirtual01();
     public static boolean test(int arg) {
         BC_invokevirtual01 object = null;
         if (arg == 0) {
-            object = _object;
+            object = obj;
         }
         return object.method();
     }

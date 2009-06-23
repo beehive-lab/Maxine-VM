@@ -73,11 +73,11 @@ public class VirtualMachineHandlers extends Handlers {
         @Override
         public Version.Reply handle(Version.IncomingRequest incomingRequest) throws JDWPException {
             final Version.Reply reply = new Version.Reply();
-            reply._jdwpMajor = 1;
-            reply._jdwpMinor = 5;
-            reply._vmName = session().vm().getName();
-            reply._vmVersion = session().vm().getVersion();
-            reply._description = session().vm().getDescription();
+            reply.jdwpMajor = 1;
+            reply.jdwpMinor = 5;
+            reply.vmName = session().vm().getName();
+            reply.vmVersion = session().vm().getVersion();
+            reply.description = session().vm().getDescription();
             return reply;
         }
     }
@@ -91,16 +91,16 @@ public class VirtualMachineHandlers extends Handlers {
 
         @Override
         public ClassesBySignature.Reply handle(ClassesBySignature.IncomingRequest incomingRequest) throws JDWPException {
-            final ReferenceTypeProvider[] refs = vm().getReferenceTypesBySignature(incomingRequest._signature);
+            final ReferenceTypeProvider[] refs = vm().getReferenceTypesBySignature(incomingRequest.signature);
             final ClassesBySignature.Reply reply = new ClassesBySignature.Reply();
-            reply._classes = new ClassesBySignature.ClassInfo[refs.length];
+            reply.classes = new ClassesBySignature.ClassInfo[refs.length];
             for (int i = 0; i < refs.length; i++) {
                 final ClassesBySignature.ClassInfo classInfo = new ClassesBySignature.ClassInfo();
-                classInfo._typeID = session().toID(refs[i]);
+                classInfo.typeID = session().toID(refs[i]);
                 final ReferenceTypeProvider refType = refs[i];
-                classInfo._status = refType.getStatus();
-                classInfo._refTypeTag = session().getTypeTag(refType);
-                reply._classes[i] = classInfo;
+                classInfo.status = refType.getStatus();
+                classInfo.refTypeTag = session().getTypeTag(refType);
+                reply.classes[i] = classInfo;
             }
             return reply;
         }
@@ -117,15 +117,15 @@ public class VirtualMachineHandlers extends Handlers {
         public AllClasses.Reply handle(AllClasses.IncomingRequest incomingRequest) throws JDWPException {
             final ReferenceTypeProvider[] refs = vm().getAllReferenceTypes();
             final AllClasses.Reply reply = new AllClasses.Reply();
-            reply._classes = new AllClasses.ClassInfo[refs.length];
+            reply.classes = new AllClasses.ClassInfo[refs.length];
             for (int i = 0; i < refs.length; i++) {
                 final AllClasses.ClassInfo c = new AllClasses.ClassInfo();
-                c._typeID = session().toID(refs[i]);
+                c.typeID = session().toID(refs[i]);
                 final ReferenceTypeProvider refType = refs[i];
-                c._status = refType.getStatus();
-                c._refTypeTag = session().getTypeTag(refType);
-                c._signature = refType.getSignature();
-                reply._classes[i] = c;
+                c.status = refType.getStatus();
+                c.refTypeTag = session().getTypeTag(refType);
+                c.signature = refType.getSignature();
+                reply.classes[i] = c;
             }
             return reply;
         }
@@ -146,7 +146,7 @@ public class VirtualMachineHandlers extends Handlers {
             for (int i = 0; i < threads.length; i++) {
                 threads[i] = session().toID(threadProvider[i]);
             }
-            reply._threads = threads;
+            reply.threads = threads;
             return reply;
         }
     }
@@ -162,9 +162,9 @@ public class VirtualMachineHandlers extends Handlers {
         public TopLevelThreadGroups.Reply handle(TopLevelThreadGroups.IncomingRequest incomingRequest) throws JDWPException {
             final TopLevelThreadGroups.Reply reply = new TopLevelThreadGroups.Reply();
             final ThreadGroupProvider[] threadGroups = session().vm().getThreadGroups();
-            reply._groups = new ID.ThreadGroupID[threadGroups.length];
+            reply.groups = new ID.ThreadGroupID[threadGroups.length];
             for (int i = 0; i < threadGroups.length; i++) {
-                reply._groups[i] = session().toID(threadGroups[i]);
+                reply.groups[i] = session().toID(threadGroups[i]);
             }
             return reply;
         }
@@ -194,11 +194,11 @@ public class VirtualMachineHandlers extends Handlers {
         @Override
         public IDSizes.Reply handle(IDSizes.IncomingRequest incomingRequest) throws JDWPException {
             final IDSizes.Reply reply = new IDSizes.Reply();
-            reply._fieldIDSize = ID_SIZE;
-            reply._frameIDSize = ID_SIZE;
-            reply._methodIDSize = ID_SIZE;
-            reply._objectIDSize = ID_SIZE;
-            reply._referenceTypeIDSize = ID_SIZE;
+            reply.fieldIDSize = ID_SIZE;
+            reply.frameIDSize = ID_SIZE;
+            reply.methodIDSize = ID_SIZE;
+            reply.objectIDSize = ID_SIZE;
+            reply.referenceTypeIDSize = ID_SIZE;
             return reply;
         }
     }
@@ -237,7 +237,7 @@ public class VirtualMachineHandlers extends Handlers {
 
         @Override
         public Exit.Reply handle(Exit.IncomingRequest incomingRequest) throws JDWPException {
-            vm().exit(incomingRequest._exitCode);
+            vm().exit(incomingRequest.exitCode);
             return new Exit.Reply();
         }
     }
@@ -252,8 +252,8 @@ public class VirtualMachineHandlers extends Handlers {
         @Override
         public CreateString.Reply handle(CreateString.IncomingRequest incomingRequest) throws JDWPException {
             final CreateString.Reply reply = new CreateString.Reply();
-            reply._stringObject = session().toID(vm().createString(incomingRequest._utf));
-            if (reply._stringObject.value() == 0) {
+            reply.stringObject = session().toID(vm().createString(incomingRequest.utf));
+            if (reply.stringObject.value() == 0) {
                 throw new JDWPNotImplementedException();
             }
             return reply;
@@ -270,13 +270,13 @@ public class VirtualMachineHandlers extends Handlers {
         @Override
         public Capabilities.Reply handle(Capabilities.IncomingRequest incomingRequest) throws JDWPException {
             final Capabilities.Reply reply = new Capabilities.Reply();
-            reply._canGetBytecodes = false;
-            reply._canGetCurrentContendedMonitor = false;
-            reply._canGetMonitorInfo = false;
-            reply._canGetOwnedMonitorInfo = false;
-            reply._canGetSyntheticAttribute = false;
-            reply._canWatchFieldAccess = false;
-            reply._canWatchFieldModification = false;
+            reply.canGetBytecodes = false;
+            reply.canGetCurrentContendedMonitor = false;
+            reply.canGetMonitorInfo = false;
+            reply.canGetOwnedMonitorInfo = false;
+            reply.canGetSyntheticAttribute = false;
+            reply.canWatchFieldAccess = false;
+            reply.canWatchFieldModification = false;
             return reply;
         }
     }
@@ -291,9 +291,9 @@ public class VirtualMachineHandlers extends Handlers {
         @Override
         public ClassPaths.Reply handle(ClassPaths.IncomingRequest incomingRequest) throws JDWPException {
             final ClassPaths.Reply reply = new ClassPaths.Reply();
-            reply._baseDir = "";
-            reply._classpaths = vm().getClassPath();
-            reply._bootclasspaths = vm().getBootClassPath();
+            reply.baseDir = "";
+            reply.classpaths = vm().getClassPath();
+            reply.bootclasspaths = vm().getBootClassPath();
             return reply;
         }
 
@@ -351,27 +351,27 @@ public class VirtualMachineHandlers extends Handlers {
         @Override
         public CapabilitiesNew.Reply handle(CapabilitiesNew.IncomingRequest incomingRequest) throws JDWPException {
             final CapabilitiesNew.Reply reply = new CapabilitiesNew.Reply();
-            reply._canAddMethod = false;
-            reply._canForceEarlyReturn = false;
-            reply._canGetBytecodes = false;
-            reply._canGetConstantPool = false;
-            reply._canGetCurrentContendedMonitor = false;
-            reply._canGetInstanceInfo = false;
-            reply._canGetMonitorFrameInfo = false;
-            reply._canGetMonitorInfo = false;
-            reply._canGetOwnedMonitorInfo = false;
-            reply._canGetSourceDebugExtension = false;
-            reply._canGetSyntheticAttribute = false;
-            reply._canPopFrames = false;
-            reply._canRedefineClasses = false;
-            reply._canRequestMonitorEvents = false;
-            reply._canRequestVMDeathEvent = false;
-            reply._canSetDefaultStratum = false;
-            reply._canUnrestrictedlyRedefineClasses = false;
-            reply._canUseInstanceFilters = false;
-            reply._canUseSourceNameFilters = false;
-            reply._canWatchFieldAccess = false;
-            reply._canWatchFieldModification = false;
+            reply.canAddMethod = false;
+            reply.canForceEarlyReturn = false;
+            reply.canGetBytecodes = false;
+            reply.canGetConstantPool = false;
+            reply.canGetCurrentContendedMonitor = false;
+            reply.canGetInstanceInfo = false;
+            reply.canGetMonitorFrameInfo = false;
+            reply.canGetMonitorInfo = false;
+            reply.canGetOwnedMonitorInfo = false;
+            reply.canGetSourceDebugExtension = false;
+            reply.canGetSyntheticAttribute = false;
+            reply.canPopFrames = false;
+            reply.canRedefineClasses = false;
+            reply.canRequestMonitorEvents = false;
+            reply.canRequestVMDeathEvent = false;
+            reply.canSetDefaultStratum = false;
+            reply.canUnrestrictedlyRedefineClasses = false;
+            reply.canUseInstanceFilters = false;
+            reply.canUseSourceNameFilters = false;
+            reply.canWatchFieldAccess = false;
+            reply.canWatchFieldModification = false;
             return reply;
         }
     }
@@ -415,19 +415,19 @@ public class VirtualMachineHandlers extends Handlers {
         public AllClassesWithGeneric.Reply handle(AllClassesWithGeneric.IncomingRequest incomingRequest) throws JDWPException {
             final ReferenceTypeProvider[] refs = vm().getAllReferenceTypes();
             final AllClassesWithGeneric.Reply reply = new AllClassesWithGeneric.Reply();
-            reply._classes = new AllClassesWithGeneric.ClassInfo[refs.length];
+            reply.classes = new AllClassesWithGeneric.ClassInfo[refs.length];
             for (int i = 0; i < refs.length; i++) {
                 final AllClassesWithGeneric.ClassInfo classInfo = new AllClassesWithGeneric.ClassInfo();
-                classInfo._typeID = session().toID(refs[i]);
+                classInfo.typeID = session().toID(refs[i]);
                 final ReferenceTypeProvider refType = refs[i];
-                classInfo._status = refType.getStatus();
-                classInfo._refTypeTag = session().getTypeTag(refType);
-                classInfo._signature = refType.getSignature();
-                classInfo._genericSignature = refType.getSignatureWithGeneric();
-                if (classInfo._genericSignature == null) {
-                    classInfo._genericSignature = classInfo._signature;
+                classInfo.status = refType.getStatus();
+                classInfo.refTypeTag = session().getTypeTag(refType);
+                classInfo.signature = refType.getSignature();
+                classInfo.genericSignature = refType.getSignatureWithGeneric();
+                if (classInfo.genericSignature == null) {
+                    classInfo.genericSignature = classInfo.signature;
                 }
-                reply._classes[i] = classInfo;
+                reply.classes[i] = classInfo;
             }
             return reply;
         }

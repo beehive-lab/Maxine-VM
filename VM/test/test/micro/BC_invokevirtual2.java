@@ -27,7 +27,7 @@ package test.micro;
   * @Runs: 0 = 0; 1 = 1; 2 = 2; 3 = 3; -4 = -4
   */
 public class BC_invokevirtual2 {
-     static Unresolved _object;
+     static Unresolved object;
 
      public static class Unresolved {
          public int id(int i) {
@@ -36,10 +36,10 @@ public class BC_invokevirtual2 {
      }
 
      private static Unresolved object() {
-         if (_object == null) {
-             _object = new Unresolved();
+         if (object == null) {
+             object = new Unresolved();
          }
-         return _object;
+         return object;
      }
 
      public static int test(int a) {

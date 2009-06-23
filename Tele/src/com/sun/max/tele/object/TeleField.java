@@ -32,7 +32,7 @@ import com.sun.max.vm.reference.*;
 */
 public class TeleField extends TeleTupleObject {
 
-    private Field _field;
+    private Field field;
 
     protected TeleField(TeleVM teleVM, Reference fieldReference) {
         super(teleVM, fieldReference);
@@ -42,12 +42,12 @@ public class TeleField extends TeleTupleObject {
      * @return the local instance of {@link Field} equivalent to this object in the {@link TeleVM}.
      */
     public Field toJava() {
-        if (_field == null) {
+        if (field == null) {
             final Reference fieldActorReference = teleVM().fields().Field_fieldActor.readReference(reference());
             final TeleFieldActor teleFieldActor = (TeleFieldActor) teleVM().makeTeleObject(fieldActorReference);
-            _field = teleFieldActor.fieldActor().toJava();
+            field = teleFieldActor.fieldActor().toJava();
         }
-        return _field;
+        return field;
     }
     @Override
     public String maxineRole() {

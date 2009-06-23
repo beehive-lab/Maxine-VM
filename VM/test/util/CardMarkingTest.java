@@ -27,33 +27,33 @@ package util;
  */
 public class CardMarkingTest {
 
-    char[] _charArray = new char[500];
-    int _nodeNum;
-    public CardMarkingTest _next;
-    public static CardMarkingTest _end;
-    public static CardMarkingTest _start;
+    char[] charArray = new char[500];
+    int nodeNum;
+    public CardMarkingTest next;
+    public static CardMarkingTest end;
+    public static CardMarkingTest start;
 
-    public static int _currentNodeNum = 0;
+    public static int currentNodeNum = 0;
 
     public static void addNode(CardMarkingTest node) {
-        _end._next = node;
-        _end = node;
-        node._nodeNum = _currentNodeNum++;
-        node._next = null;
+        end.next = node;
+        end = node;
+        node.nodeNum = currentNodeNum++;
+        node.next = null;
     }
 
     public static void printList() {
-        CardMarkingTest node = _start;
+        CardMarkingTest node = start;
         while (node != null) {
-            System.out.println("node number " + node._nodeNum);
-            node = node._next;
+            System.out.println("node number " + node.nodeNum);
+            node = node.next;
         }
     }
 
     public static void main(String[] args) {
-        _start = new CardMarkingTest();
-        _start._nodeNum = _currentNodeNum++;
-        _end = _start;
+        start = new CardMarkingTest();
+        start.nodeNum = currentNodeNum++;
+        end = start;
         addNode(new CardMarkingTest());
         addNode(new CardMarkingTest());
         addNode(new CardMarkingTest());

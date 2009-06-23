@@ -36,18 +36,18 @@ import java.util.ArrayList;
  */
 public class ValueStack {
 
-    private final Instruction[] _values; // manages both stack and locals
-    private int _stackIndex;
-    private final int _maxLocals;
+    private final Instruction[] values; // manages both stack and locals
+    private int stackIndex;
+    private final int maxLocals;
 
-    private final IRScope _scope;
-    private ArrayList<Instruction> _locks;
-    private boolean _lockStack;
+    private final IRScope scope;
+    private ArrayList<Instruction> locks;
+    private boolean lockStack;
 
     public ValueStack(IRScope irScope, int maxLocals, int maxStack) {
-        this._scope = irScope;
-        _values = new Instruction[maxLocals + maxStack];
-        _maxLocals = maxLocals;
+        this.scope = irScope;
+        this.values = new Instruction[maxLocals + maxStack];
+        this.maxLocals = maxLocals;
     }
 
     /**
@@ -59,11 +59,11 @@ public class ValueStack {
      * @return a new value stack with the specified components
      */
     public ValueStack copy(boolean withLocals, boolean withStack, boolean withLocks) {
-        final ValueStack other = new ValueStack(_scope, localsSize(), maxStackSize());
+        final ValueStack other = new ValueStack(scope, localsSize(), maxStackSize());
         if (withLocals && withStack) {
             // fast path: use array copy
-            System.arraycopy(_values, 0, other._values, 0, valuesSize());
-            other._stackIndex = _stackIndex;
+            System.arraycopy(values, 0, other.values, 0, valuesSize());
+            other.stackIndex = stackIndex;
         } else {
             if (withLocals) {
                 other.replaceLocals(this);
@@ -84,11 +84,11 @@ public class ValueStack {
             size = 0;
         }
         ValueStack s = new ValueStack(scope(), localsSize(), maxStackSize());
-        s._lockStack = true;
+        s.lockStack = true;
         s.replaceLocks(this);
         s.replaceLocals(this);
         s.replaceStack(this);
-        s._stackIndex = size; // trim stack back to lockstack size
+        s.stackIndex = size; // trim stack back to lockstack size
         return s;
     }
 
@@ -106,15 +106,15 @@ public class ValueStack {
         assert stackSize() == other.stackSize();
         assert localsSize() == other.localsSize();
         assert locksSize() == other.locksSize();
-        for (int i = 0; i < _stackIndex; i++) {
+        for (int i = 0; i < stackIndex; i++) {
             Instruction x = stackAt(i);
             Instruction y = other.stackAt(i);
             if (x != y && typeMismatch(x, y)) {
                 return false;
             }
         }
-        if (_locks != null) {
-            for (int i = 0; i < _locks.size(); i++) {
+        if (locks != null) {
+            for (int i = 0; i < locks.size(); i++) {
                 if (lockAt(i) != other.lockAt(i)) {
                     return false;
                 }
@@ -128,7 +128,7 @@ public class ValueStack {
      * @return the inlining context
      */
     public final IRScope scope() {
-        return _scope;
+        return scope;
     }
 
     /**
@@ -136,7 +136,7 @@ public class ValueStack {
      * @return <code>true</code> if this stack is locked
      */
     public final boolean isLockStack() {
-        return _lockStack;
+        return lockStack;
     }
 
     /**
@@ -144,7 +144,7 @@ public class ValueStack {
      * @return the size of the local variables
      */
     public final int localsSize() {
-        return _maxLocals;
+        return maxLocals;
     }
 
     /**
@@ -152,7 +152,7 @@ public class ValueStack {
      * @return the size of the locks
      */
     public final int locksSize() {
-        return _locks == null ? 0 : _locks.size();
+        return locks == null ? 0 : locks.size();
     }
 
     /**
@@ -160,7 +160,7 @@ public class ValueStack {
      * @return the size of the stack
      */
     public final int stackSize() {
-        return _stackIndex;
+        return stackIndex;
     }
 
     /**
@@ -168,7 +168,7 @@ public class ValueStack {
      * @return the maximum size of the stack
      */
     public final int maxStackSize() {
-        return _values.length - _maxLocals;
+        return values.length - maxLocals;
     }
 
     /**
@@ -176,7 +176,7 @@ public class ValueStack {
      * @return <code>true</code> the stack is currently empty
      */
     public final boolean stackEmpty() {
-        return _stackIndex == 0;
+        return stackIndex == 0;
     }
 
     /**
@@ -193,12 +193,12 @@ public class ValueStack {
      * @param i the index of the local to invalidate
      */
     public void invalidateLocal(int i) {
-        Instruction x = _values[i];
+        Instruction x = values[i];
         if (isDoubleWord(x)) {
-            assertHigh(_values[i + 1]);
-            _values[i + 1] = null;
+            assertHigh(values[i + 1]);
+            values[i + 1] = null;
         }
-        _values[i] = null;
+        values[i] = null;
     }
 
     /**
@@ -207,12 +207,12 @@ public class ValueStack {
      * @return the instruction that produced the specified local
      */
     public Instruction loadLocal(int i) {
-        Instruction x = _values[i];
+        Instruction x = values[i];
         if (x != null) {
             if (x.type().isIllegal()) {
                 return null;
             }
-            assert x.type().isSingleWord() || _values[i + 1] == null || _values[i + 1] instanceof Phi;
+            assert x.type().isSingleWord() || values[i + 1] == null || values[i + 1] instanceof Phi;
         }
         return x;
     }
@@ -225,19 +225,19 @@ public class ValueStack {
      */
     public void storeLocal(int i, Instruction x) {
         invalidateLocal(i);
-        _values[i] = x;
+        values[i] = x;
         if (isDoubleWord(x)) {
             // if this was a double word and i + 1 was a double word, then kill i + 2
-            Instruction h = _values[i + 1];
+            Instruction h = values[i + 1];
             if (isDoubleWord(h)) {
-                _values[i + 2] = null;
+                values[i + 2] = null;
             }
         }
         if (i > 0) {
             // if there was a double word at i - 1, then kill it
-            Instruction p = _values[i - 1];
+            Instruction p = values[i - 1];
             if (isDoubleWord(p)) {
-                _values[i - 1] = null;
+                values[i - 1] = null;
             }
         }
     }
@@ -248,8 +248,8 @@ public class ValueStack {
      * @param with the value stack containing the new local variables
      */
     public void replaceLocals(ValueStack with) {
-        assert with._maxLocals == _maxLocals;
-        System.arraycopy(with._values, 0, _values, 0, _maxLocals);
+        assert with.maxLocals == maxLocals;
+        System.arraycopy(with.values, 0, values, 0, maxLocals);
     }
 
     /**
@@ -258,8 +258,8 @@ public class ValueStack {
      * @param with the value stack containing the new local variables
      */
     public void replaceStack(ValueStack with) {
-        System.arraycopy(with._values, with._maxLocals, _values, _maxLocals, with._stackIndex);
-        _stackIndex = with._stackIndex;
+        System.arraycopy(with.values, with.maxLocals, values, maxLocals, with.stackIndex);
+        stackIndex = with.stackIndex;
     }
 
     /**
@@ -268,10 +268,10 @@ public class ValueStack {
      * @param with the value stack containing the new local variables
      */
     public void replaceLocks(ValueStack with) {
-        if (with._locks == null) {
-            _locks = null;
+        if (with.locks == null) {
+            locks = null;
         } else {
-            _locks = Util.uncheckedCast(with._locks.clone());
+            locks = Util.uncheckedCast(with.locks.clone());
         }
     }
 
@@ -281,8 +281,8 @@ public class ValueStack {
      * @return the instruction at the specified position in the stack
      */
     public Instruction stackAt(int i) {
-        final Instruction x = _values[i + _maxLocals];
-        assert i < _stackIndex;
+        final Instruction x = values[i + maxLocals];
+        assert i < stackIndex;
         return x;
     }
 
@@ -292,19 +292,19 @@ public class ValueStack {
      * @return the instruction that produced the value for the specified local
      */
     public Instruction localAt(int i) {
-        return _values[i];
+        return values[i];
     }
 
     /**
      * Clears all values on this stack.
      */
     public void clearStack() {
-        _stackIndex = 0;
+        stackIndex = 0;
     }
 
     public void clearLocals() {
-        for (int i = 0; i < _values.length; i++) {
-            _values[i] = null;
+        for (int i = 0; i < values.length; i++) {
+            values[i] = null;
         }
     }
 
@@ -313,7 +313,7 @@ public class ValueStack {
      * @param size the size to truncate to
      */
     public void truncateStack(int size) {
-        _stackIndex = size;
+        stackIndex = size;
     }
 
     /**
@@ -333,8 +333,8 @@ public class ValueStack {
      * @param x the instruction to push onto the stack
      */
     public void xpush(Instruction x) {
-        assert _stackIndex >= 0;
-        _values[_maxLocals + _stackIndex++] = x;
+        assert stackIndex >= 0;
+        values[maxLocals + stackIndex++] = x;
     }
 
     /**
@@ -404,8 +404,8 @@ public class ValueStack {
      * @return x the instruction popped off the stack
      */
     public Instruction xpop() {
-        assert _stackIndex >= 1;
-        return _values[_maxLocals + --_stackIndex];
+        assert stackIndex >= 1;
+        return values[maxLocals + --stackIndex];
     }
 
     /**
@@ -465,10 +465,10 @@ public class ValueStack {
      * @return an array containing the arguments off of the stack
      */
     public Instruction[] popArguments(int size) {
-        int base = _stackIndex - size;
+        int base = stackIndex - size;
         Instruction[] r = new Instruction[size];
-        System.arraycopy(_values, _maxLocals + base, r, 0, size);
-        _stackIndex = base;
+        System.arraycopy(values, maxLocals + base, r, 0, size);
+        stackIndex = base;
         return r;
     }
 
@@ -479,11 +479,11 @@ public class ValueStack {
      * @return the index of the lock within the lock stack
      */
     public int lock(IRScope scope, Instruction obj) {
-        if (_locks == null) {
-            _locks = new ArrayList<Instruction>();
+        if (locks == null) {
+            locks = new ArrayList<Instruction>();
         }
-        _locks.add(obj);
-        int size = _locks.size();
+        locks.add(obj);
+        int size = locks.size();
         scope.setMinimumNumberOfLocks(size);
         return size - 1;
     }
@@ -493,8 +493,8 @@ public class ValueStack {
      * @return the index of the lock just unlocked.
      */
     public int unlock() {
-        _locks.remove(_locks.size() - 1);
-        return _locks.size();
+        locks.remove(locks.size() - 1);
+        return locks.size();
     }
 
     /**
@@ -503,7 +503,7 @@ public class ValueStack {
      * @return the instruction which produced the object at the specified location in the lock stack
      */
     public Instruction lockAt(int i) {
-        return _locks.get(i);
+        return locks.get(i);
     }
 
     /**
@@ -514,7 +514,7 @@ public class ValueStack {
      * method into this one
      */
     public ValueStack pushScope(IRScope scope) {
-        assert scope.caller == _scope;
+        assert scope.caller == this.scope;
         CiMethod method = scope.method;
         ValueStack res = new ValueStack(scope, method.maxLocals(), maxStackSize() + method.maxStackSize());
         res.replaceStack(this);
@@ -528,8 +528,8 @@ public class ValueStack {
      * @return a new value stack representing the state at exit from this value stack
      */
     public ValueStack popScope() {
-        IRScope callingScope = _scope.caller;
-        int maxStack = maxStackSize() - _scope.method.maxStackSize();
+        IRScope callingScope = scope.caller;
+        int maxStack = maxStackSize() - scope.method.maxStackSize();
         assert callingScope != null;
         assert maxStack >= 0;
         ValueStack res = new ValueStack(callingScope, callingScope.method.maxLocals(), maxStack);
@@ -548,7 +548,7 @@ public class ValueStack {
         Instruction p = stackAt(i);
         assert !(p instanceof Phi) || ((Phi) p).block() != block : "phi already created for this block";
         Instruction phi = new Phi(p.type(), block, -i - 1);
-        _values[_maxLocals + i] = phi;
+        values[maxLocals + i] = phi;
     }
 
     /**
@@ -557,7 +557,7 @@ public class ValueStack {
      * @param i the index of the local variable for which to create the phi
      */
     public void setupPhiForLocal(BlockBegin block, int i) {
-        Instruction p = _values[i];
+        Instruction p = values[i];
         assert !(p instanceof Phi) || ((Phi) p).block() != block : "phi already created for this block";
         Instruction phi = new Phi(p.type(), block, i);
         storeLocal(i, phi);
@@ -570,11 +570,11 @@ public class ValueStack {
     public void valuesDo(InstructionClosure closure) {
         final int max = valuesSize();
         for (int i = 0; i < max; i++) {
-            _values[i] = closure.apply(_values[i]);
+            values[i] = closure.apply(values[i]);
         }
-        if (_locks != null) {
-            for (int i = 0; i < _locks.size(); i++) {
-                _locks.set(i, closure.apply(_locks.get(i)));
+        if (locks != null) {
+            for (int i = 0; i < locks.size(); i++) {
+                locks.set(i, closure.apply(locks.get(i)));
             }
         }
         ValueStack state = this.scope().callerState();
@@ -585,14 +585,14 @@ public class ValueStack {
 
     public void invalidateMismatchedLocalPhis(BlockBegin block, ValueStack other) {
         checkSize(other);
-        for (int i = 0; i < _maxLocals; i++) {
-            Instruction x = _values[i];
+        for (int i = 0; i < maxLocals; i++) {
+            Instruction x = values[i];
             if (x != null) {
-                Instruction y = other._values[i];
+                Instruction y = other.values[i];
                 if (x != y) {
                     if (typeMismatch(x, y)) {
                         if (x instanceof Phi && ((Phi) x).block() == block) {
-                            _values[i] = null;
+                            values[i] = null;
                         } else {
                             throw new Bailout("type mismatch at " + i + " @ " + block.bci() + " in " + block + " in " + scope().method);
                         }
@@ -603,15 +603,15 @@ public class ValueStack {
     }
 
     private int valuesSize() {
-        return _maxLocals + _stackIndex;
+        return maxLocals + stackIndex;
     }
 
     public void checkPhis(BlockBegin block, ValueStack other) {
         checkSize(other);
         final int max = valuesSize();
         for (int i = 0; i < max; i++) {
-            Instruction x = _values[i];
-            Instruction y = other._values[i];
+            Instruction x = values[i];
+            Instruction y = other.values[i];
             if (x != null && x != y) {
                 if (!(x instanceof Phi) || ((Phi) x).block() != block) {
                     // x is not a phi, or is not a phi for this block
@@ -622,9 +622,9 @@ public class ValueStack {
     }
 
     private void checkSize(ValueStack other) {
-        if (other._stackIndex != _stackIndex) {
+        if (other.stackIndex != stackIndex) {
             throw new Bailout("stack sizes do not match");
-        } else if (other._values.length != _values.length) {
+        } else if (other.values.length != values.length) {
             throw new Bailout("value sizes do not match");
         }
     }
@@ -632,14 +632,14 @@ public class ValueStack {
     public void merge(BlockBegin block, ValueStack other) {
         checkSize(other);
         for (int i = 0; i < valuesSize(); i++) {
-            Instruction x = _values[i];
-            Instruction y = other._values[i];
+            Instruction x = values[i];
+            Instruction y = other.values[i];
             if (x != null && x != y) {
                 // XXX: merging of constants would be possible here?
                 if (x instanceof Phi && ((Phi) x).block() == block) {
                     continue; // phi already exists, continue
                 }
-                if (i < _maxLocals) {
+                if (i < maxLocals) {
                     // this a local
                     if (y == null || typeMismatch(x, y)) {
                         invalidateLocal(i); // it has become invalid
@@ -648,7 +648,7 @@ public class ValueStack {
                     }
                 } else {
                     // this is a stack slot
-                    setupPhiForStack(block, i - _maxLocals);
+                    setupPhiForStack(block, i - maxLocals);
                 }
             }
         }

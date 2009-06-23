@@ -28,10 +28,10 @@ package test.except;
 
 public class BC_iastore {
 
-    static int[] _array = {0, 0, 0, 0};
+    static int[] arr = {0, 0, 0, 0};
 
     public static int test(int arg, int val) {
-        final int[] array = arg == -2 ? null : _array;
+        final int[] array = arg == -2 ? null : arr;
         array[arg] = val;
         return array[arg];
     }

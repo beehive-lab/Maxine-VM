@@ -42,10 +42,10 @@ public abstract class BytecodeTest_throw<Method_Type extends IrMethod> extends C
     private static final class TestException extends Exception {
         // an arbitrary exception type, distinct from any other throwable
 
-        public final int _trigger;
+        public final int trigger;
 
         public TestException(int trigger) {
-            _trigger = trigger;
+            this.trigger = trigger;
         }
     }
 
@@ -157,7 +157,7 @@ public abstract class BytecodeTest_throw<Method_Type extends IrMethod> extends C
     }
 
     public int trigger(TestException exception, int value) throws TestException {
-        if (value == exception._trigger) {
+        if (value == exception.trigger) {
             throw exception;
         }
         return value;
@@ -269,7 +269,7 @@ public abstract class BytecodeTest_throw<Method_Type extends IrMethod> extends C
         return 2;
     }
 
-    private static boolean _condition;
+    private static boolean condition;
 
     private int perform_blocks() {
         try {

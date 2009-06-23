@@ -40,7 +40,7 @@ abstract class AbstractTypeListNode extends AbstractNamedNode {
     }
 
     void genJavaClassBodyComponents(PrintWriter writer, int depth) {
-        for (final Iterator it = _components.iterator(); it.hasNext();) {
+        for (final Iterator it = components.iterator(); it.hasNext();) {
             final TypeNode tn = (TypeNode) it.next();
 
             tn.genJavaDeclaration(writer, depth);
@@ -48,7 +48,7 @@ abstract class AbstractTypeListNode extends AbstractNamedNode {
     }
 
     void genJavaReads(PrintWriter writer, int depth) {
-        for (final Iterator it = _components.iterator(); it.hasNext();) {
+        for (final Iterator it = components.iterator(); it.hasNext();) {
             final TypeNode tn = (TypeNode) it.next();
             tn.genJavaRead(writer, depth, tn.fieldName());
         }
@@ -70,7 +70,7 @@ abstract class AbstractTypeListNode extends AbstractNamedNode {
         printJavaParams(writer, depth + 1);
         writer.println(") {");
         int z = 0;
-        for (Node node : _components) {
+        for (Node node : components) {
             final TypeNode tn = (TypeNode) node;
             indent(writer, depth + 1);
             writer.println("this." + tn.fieldName() + " = " + tn.name() + ";");
@@ -121,7 +121,7 @@ abstract class AbstractTypeListNode extends AbstractNamedNode {
     }
 
     private void printJavaParams(PrintWriter writer, int depth) {
-        for (final Iterator it = _components.iterator(); it.hasNext();) {
+        for (final Iterator it = components.iterator(); it.hasNext();) {
             final TypeNode tn = (TypeNode) it.next();
             writer.print(tn.javaParam());
             if (it.hasNext()) {
@@ -133,7 +133,7 @@ abstract class AbstractTypeListNode extends AbstractNamedNode {
 
     String javaParams() {
         final StringBuffer sb = new StringBuffer();
-        for (final Iterator it = _components.iterator(); it.hasNext();) {
+        for (final Iterator it = components.iterator(); it.hasNext();) {
             final TypeNode tn = (TypeNode) it.next();
             sb.append(tn.javaParam());
             if (it.hasNext()) {
@@ -144,7 +144,7 @@ abstract class AbstractTypeListNode extends AbstractNamedNode {
     }
 
     void genJavaWrites(PrintWriter writer, int depth) {
-        for (Node node : _components) {
+        for (Node node : components) {
             final TypeNode tn = (TypeNode) node;
             tn.genJavaWrite(writer, depth, tn.fieldName());
         }
@@ -152,7 +152,7 @@ abstract class AbstractTypeListNode extends AbstractNamedNode {
 
     void genJavaToString(PrintWriter writer, int depth) {
         int z = 0;
-        for (Node node : _components) {
+        for (Node node : components) {
             if (z != 0) {
                 indent(writer, depth);
                 writer.println("stringBuilder.append(\", \");");
@@ -168,7 +168,7 @@ abstract class AbstractTypeListNode extends AbstractNamedNode {
         writer.print(className + "(");
         printJavaParams(writer, depth + 1);
         writer.println(") {");
-        for (Node node : _components) {
+        for (Node node : components) {
             final TypeNode tn = (TypeNode) node;
             indent(writer, depth + 1);
             writer.println("this." + tn.fieldName() + " = " + tn.name() + ";");

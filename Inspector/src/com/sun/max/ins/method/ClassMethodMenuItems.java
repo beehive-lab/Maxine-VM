@@ -46,13 +46,13 @@ import com.sun.max.vm.value.*;
  */
 public final class ClassMethodMenuItems implements InspectorMenuItems {
 
-    private final Inspection _inspection;
+    private final Inspection inspection;
 
     public Inspection inspection() {
-        return _inspection;
+        return inspection;
     }
 
-    private final TeleClassMethodActor _teleClassMethodActor;
+    private final TeleClassMethodActor teleClassMethodActor;
 
     private final class InspectClassMethodActorAction extends InspectorAction {
         private InspectClassMethodActorAction() {
@@ -61,11 +61,11 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
 
         @Override
         public void procedure() {
-            inspection().focus().setHeapObject(_teleClassMethodActor);
+            inspection().focus().setHeapObject(teleClassMethodActor);
         }
     }
 
-    private final InspectClassMethodActorAction _inspectClassMethodActorAction;
+    private final InspectClassMethodActorAction inspectClassMethodActorAction;
 
     private final class InspectSubstitutionSourceClassActorAction extends InspectorAction {
         private InspectSubstitutionSourceClassActorAction() {
@@ -74,11 +74,11 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
 
         @Override
         public void procedure() {
-            inspection().focus().setHeapObject(_teleClassMethodActor.teleClassActorSubstitutedFrom());
+            inspection().focus().setHeapObject(teleClassMethodActor.teleClassActorSubstitutedFrom());
         }
     }
 
-    private final InspectSubstitutionSourceClassActorAction _inspectSubstitutionSourceClassActorAction;
+    private final InspectSubstitutionSourceClassActorAction inspectSubstitutionSourceClassActorAction;
 
     private final class ViewJavaSourceAction extends InspectorAction {
         private ViewJavaSourceAction() {
@@ -87,11 +87,11 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
 
         @Override
         public void procedure() {
-            inspection().viewSourceExternally(new BytecodeLocation(_teleClassMethodActor.classMethodActor(), 0));
+            inspection().viewSourceExternally(new BytecodeLocation(teleClassMethodActor.classMethodActor(), 0));
         }
     }
 
-    private final ViewJavaSourceAction _viewJavaSourceAction;
+    private final ViewJavaSourceAction viewJavaSourceAction;
 
 
     private final class ViewBytecodeAction extends InspectorAction {
@@ -101,12 +101,12 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
 
         @Override
         public void procedure() {
-            final TeleCodeLocation teleCodeLocation = maxVM().createCodeLocation(_teleClassMethodActor, 0);
+            final TeleCodeLocation teleCodeLocation = maxVM().createCodeLocation(teleClassMethodActor, 0);
             inspection().focus().setCodeLocation(teleCodeLocation, false);
         }
     }
 
-    private final ViewBytecodeAction _viewBytecodeAction;
+    private final ViewBytecodeAction viewBytecodeAction;
 
 
     private final class BytecodeBreakOnEntryAction extends InspectorAction {
@@ -116,12 +116,12 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
 
         @Override
         public void procedure() {
-            final MethodKey methodKey = new MethodActorKey(_teleClassMethodActor.classMethodActor());
+            final MethodKey methodKey = new MethodActorKey(teleClassMethodActor.classMethodActor());
             maxVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0));
         }
     }
 
-    private final BytecodeBreakOnEntryAction _bytecodeBreakOnEntryAction;
+    private final BytecodeBreakOnEntryAction bytecodeBreakOnEntryAction;
 
 
     private final class InvokeMethodAction extends InspectorAction {
@@ -131,7 +131,7 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
 
         @Override
         public void procedure() {
-            ClassMethodActor classMethodActor = _teleClassMethodActor.classMethodActor();
+            ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
             ReferenceValue receiver = null;
 
             if (classMethodActor instanceof VirtualMethodActor) {
@@ -162,58 +162,58 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
         }
     }
 
-    private final InvokeMethodAction _invokeMethodAction;
+    private final InvokeMethodAction invokeMethodAction;
 
-    private InspectorMenu _inspectCompilationsMenu = new InspectorMenu(null, "Method Compilations");
+    private InspectorMenu inspectCompilationsMenu = new InspectorMenu(null, "Method Compilations");
 
 
     public ClassMethodMenuItems(Inspection inspection, TeleClassMethodActor teleClassMethodActor) {
-        _inspection = inspection;
-        _teleClassMethodActor = teleClassMethodActor;
-        _viewJavaSourceAction = new ViewJavaSourceAction();
-        _viewBytecodeAction = new ViewBytecodeAction();
-        _bytecodeBreakOnEntryAction = new BytecodeBreakOnEntryAction();
-        _invokeMethodAction = new InvokeMethodAction();
-        _inspectClassMethodActorAction = new InspectClassMethodActorAction();
-        _inspectSubstitutionSourceClassActorAction = new InspectSubstitutionSourceClassActorAction();
+        this.inspection = inspection;
+        this.teleClassMethodActor = teleClassMethodActor;
+        this.viewJavaSourceAction = new ViewJavaSourceAction();
+        this.viewBytecodeAction = new ViewBytecodeAction();
+        bytecodeBreakOnEntryAction = new BytecodeBreakOnEntryAction();
+        invokeMethodAction = new InvokeMethodAction();
+        inspectClassMethodActorAction = new InspectClassMethodActorAction();
+        inspectSubstitutionSourceClassActorAction = new InspectSubstitutionSourceClassActorAction();
         refresh(true);
     }
 
     public void addTo(InspectorMenu menu) {
 
-        menu.add(_viewJavaSourceAction);
-        menu.add(_viewBytecodeAction);
+        menu.add(viewJavaSourceAction);
+        menu.add(viewBytecodeAction);
 
         menu.addSeparator();
-        menu.add(_bytecodeBreakOnEntryAction);
-        menu.add(_invokeMethodAction);
+        menu.add(bytecodeBreakOnEntryAction);
+        menu.add(invokeMethodAction);
 
         menu.addSeparator();
-        menu.add(_inspectClassMethodActorAction);
-        menu.add(_inspectSubstitutionSourceClassActorAction);
-        menu.add(_inspectCompilationsMenu);
+        menu.add(inspectClassMethodActorAction);
+        menu.add(inspectSubstitutionSourceClassActorAction);
+        menu.add(inspectCompilationsMenu);
     }
 
     private MaxVM maxVM() {
-        return _inspection.maxVM();
+        return inspection.maxVM();
     }
 
     public void refresh(boolean force) {
-        _teleClassMethodActor.refreshView();
-        final boolean hasCodeAttribute =  _teleClassMethodActor.hasCodeAttribute();
-        final File javaSourceFile = maxVM().findJavaSourceFile(_teleClassMethodActor.getTeleHolder().classActor());
-        _viewJavaSourceAction.setEnabled(javaSourceFile != null);
-        _viewBytecodeAction.setEnabled(hasCodeAttribute);
-        _bytecodeBreakOnEntryAction.setEnabled(hasCodeAttribute);
-        _inspectSubstitutionSourceClassActorAction.setEnabled(_teleClassMethodActor.isSubstituted());
-        if (_inspectCompilationsMenu.length() < _teleClassMethodActor.numberOfCompilations()) {
-            for (int index = _inspectCompilationsMenu.length(); index < _teleClassMethodActor.numberOfCompilations(); index++) {
-                final TeleTargetMethod teleTargetMethod = _teleClassMethodActor.getJavaTargetMethod(index);
+        teleClassMethodActor.refreshView();
+        final boolean hasCodeAttribute =  teleClassMethodActor.hasCodeAttribute();
+        final File javaSourceFile = maxVM().findJavaSourceFile(teleClassMethodActor.getTeleHolder().classActor());
+        viewJavaSourceAction.setEnabled(javaSourceFile != null);
+        viewBytecodeAction.setEnabled(hasCodeAttribute);
+        bytecodeBreakOnEntryAction.setEnabled(hasCodeAttribute);
+        inspectSubstitutionSourceClassActorAction.setEnabled(teleClassMethodActor.isSubstituted());
+        if (inspectCompilationsMenu.length() < teleClassMethodActor.numberOfCompilations()) {
+            for (int index = inspectCompilationsMenu.length(); index < teleClassMethodActor.numberOfCompilations(); index++) {
+                final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getJavaTargetMethod(index);
                 final StringBuilder name = new StringBuilder();
                 name.append(inspection().nameDisplay().methodCompilationID(teleTargetMethod));
                 name.append("  ");
                 name.append(teleTargetMethod.classActorForType().simpleName());
-                _inspectCompilationsMenu.add(inspection().actions().inspectObject(teleTargetMethod, name.toString()));
+                inspectCompilationsMenu.add(inspection().actions().inspectObject(teleTargetMethod, name.toString()));
             }
         }
     }

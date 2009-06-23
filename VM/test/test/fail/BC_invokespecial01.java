@@ -25,11 +25,11 @@ package test.fail;
  * @Runs: 0=true; 1=!java.lang.NullPointerException
  */
 public class BC_invokespecial01 {
-    private static final BC_invokespecial01 _object = new BC_invokespecial01();
+    private static final BC_invokespecial01 obj = new BC_invokespecial01();
     public static boolean test(int arg) {
         BC_invokespecial01 object = null;
         if (arg == 0) {
-            object = _object;
+            object = obj;
         }
         return object.method();
     }

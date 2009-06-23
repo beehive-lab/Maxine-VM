@@ -130,11 +130,11 @@ public final class TeleDisassembler {
     }
 
     private abstract static class LoadLiteralParser {
-        protected Disassembler _disassembler;
-        protected Address _literalBase;
+        protected Disassembler disassembler;
+        protected Address literalBase;
         LoadLiteralParser(Disassembler disassembler, Address literalBase) {
-            _disassembler = disassembler;
-            _literalBase = literalBase;
+            this.disassembler = disassembler;
+            this.literalBase = literalBase;
         }
 
         /**
@@ -333,7 +333,7 @@ public final class TeleDisassembler {
         @Override
         Address literalAddress(DisassembledInstruction disassembledInstruction) {
             final Immediate32Argument immediateArgument = (Immediate32Argument) disassembledInstruction.arguments().get(1);
-            return _literalBase.plus(immediateArgument.value());
+            return literalBase.plus(immediateArgument.value());
         }
     }
 

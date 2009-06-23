@@ -49,15 +49,15 @@ public class ClassLoaderReferenceHandlers extends Handlers {
 
         @Override
         public VisibleClasses.Reply handle(VisibleClasses.IncomingRequest incomingRequest) throws JDWPException {
-            final ClassLoaderProvider classLoader = session().getClassLoader(incomingRequest._classLoaderObject);
+            final ClassLoaderProvider classLoader = session().getClassLoader(incomingRequest.classLoaderObject);
             final VisibleClasses.Reply r = new VisibleClasses.Reply();
             final ReferenceTypeProvider[] visibleClasses = classLoader.visibleClasses();
-            r._classes = new VisibleClasses.ClassInfo[visibleClasses.length];
-            for (int i = 0; i < r._classes.length; i++) {
+            r.classes = new VisibleClasses.ClassInfo[visibleClasses.length];
+            for (int i = 0; i < r.classes.length; i++) {
                 final VisibleClasses.ClassInfo ci = new VisibleClasses.ClassInfo();
-                ci._refTypeTag = session().getTypeTag(visibleClasses[i]);
-                ci._typeID = session().toID(visibleClasses[i]);
-                r._classes[i] = ci;
+                ci.refTypeTag = session().getTypeTag(visibleClasses[i]);
+                ci.typeID = session().toID(visibleClasses[i]);
+                r.classes[i] = ci;
             }
             return r;
         }

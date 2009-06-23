@@ -45,22 +45,22 @@ public final class ClassObjectReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ClassObjectID _classObject;
+            public ID.ClassObjectID classObject;
             public IncomingRequest(ID.ClassObjectID classObject) {
-                this._classObject = classObject;
+                this.classObject = classObject;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _classObject = ID.read(ps.getInputStream(), ID.ClassObjectID.class);
+                classObject = ID.read(ps.getInputStream(), ID.ClassObjectID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _classObject.write(ps.getOutputStream());
+                classObject.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_classObject=" + _classObject);
+                stringBuilder.append("classObject=" + classObject);
                 return stringBuilder.toString();
             }
         }
@@ -69,30 +69,30 @@ public final class ClassObjectReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public byte _refTypeTag;
+            public byte refTypeTag;
 
-            public ID.ReferenceTypeID _typeID;
+            public ID.ReferenceTypeID typeID;
             public Reply(byte refTypeTag,
                 ID.ReferenceTypeID typeID) {
-                this._refTypeTag = refTypeTag;
-                this._typeID = typeID;
+                this.refTypeTag = refTypeTag;
+                this.typeID = typeID;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _refTypeTag = ps.readByte();
-                _typeID = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
+                refTypeTag = ps.readByte();
+                typeID = ID.read(ps.getInputStream(), ID.ReferenceTypeID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_refTypeTag);
-                _typeID.write(ps.getOutputStream());
+                ps.write(refTypeTag);
+                typeID.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_refTypeTag=" + _refTypeTag);
+                stringBuilder.append("refTypeTag=" + refTypeTag);
                 stringBuilder.append(", ");
-                stringBuilder.append("_typeID=" + _typeID);
+                stringBuilder.append("typeID=" + typeID);
                 return stringBuilder.toString();
             }
         }

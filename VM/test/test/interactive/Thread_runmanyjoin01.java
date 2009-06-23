@@ -43,24 +43,24 @@ public final class Thread_runmanyjoin01 {
     }
 
     static class Runner implements Runnable {
-        private int _id;
+        private int id;
         Runner(int id) {
-            _id = id;
+            this.id = id;
         }
 
         public void run() {
             long startTime = System.currentTimeMillis();
             long now = startTime;
             long count = 0;
-            debug("Runner " + _id + " starting at " + startTime);
-            while (now < startTime + 10000 + _id * 2000) {
+            debug("Runner " + id + " starting at " + startTime);
+            while (now < startTime + 10000 + id * 2000) {
                 count ++;
                 if (count % 10000000 == 0) {
                     now = System.currentTimeMillis();
-                    debug("Runner " + _id + " time now " + now);
+                    debug("Runner " + id + " time now " + now);
                 }
             }
-            debug("Runner " + _id + " finished");
+            debug("Runner " + id + " finished");
         }
     }
 

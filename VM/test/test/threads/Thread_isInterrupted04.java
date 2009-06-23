@@ -39,18 +39,18 @@ public class Thread_isInterrupted04 {
 
     private static class Thread1 extends java.lang.Thread {
 
-        private volatile boolean _stop = false;
+        private volatile boolean stop = false;
         private long i = 0;
 
         @Override
         public void run() {
-            while (!_stop) {
+            while (!stop) {
                 i++;
             }
         }
 
         public void setStop(boolean value) {
-            _stop = value;
+            stop = value;
         }
 
     }

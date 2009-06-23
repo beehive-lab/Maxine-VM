@@ -39,15 +39,15 @@ import com.sun.max.vm.actor.holder.*;
  */
 public final class ObjectInspectorFactory extends AbstractInspectionHolder {
 
-    private static ObjectInspectorFactory _factory;
+    private static ObjectInspectorFactory factory;
 
     /**
      * Creates the singleton factory that listens for events and will find or create instances
      * of {@link ObjectInspector} as needed.
      */
     public static void make(final Inspection inspection) {
-        if (_factory == null) {
-            _factory = new ObjectInspectorFactory(inspection);
+        if (factory == null) {
+            factory = new ObjectInspectorFactory(inspection);
         }
     }
 
@@ -55,49 +55,49 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
      * Map:   {@link TeleObject} -- > the {@link ObjectInspector}, if it exists, for the corresponding
      * object in the VM.  Relies on {@link ObjectInspector}s being canonical.
      */
-    private  final VariableMapping<TeleObject, ObjectInspector> _teleObjectToInspector = HashMapping.createVariableIdentityMapping();
+    private  final VariableMapping<TeleObject, ObjectInspector> teleObjectToInspector = HashMapping.createVariableIdentityMapping();
 
     /**
      * ObjectInspector constructors for specific tuple-implemented subclasses of {@link TeleObject}s.
      * The most specific class that matches a particular {@link TeleObject} will
      * be used, in an emulation of virtual method dispatch.
      */
-    private final Map<Class, Constructor> _teleTupleObjectClassToObjectInspectorConstructor = new HashMap<Class, Constructor>();
+    private final Map<Class, Constructor> teleTupleObjectClassToObjectInspectorConstructor = new HashMap<Class, Constructor>();
 
     /**
      * ObjectInspector constructors for specific array-implemented subclasses of {@link TeleObject}s.
      * The most specific class that matches a particular array component type will
      * be used, in an emulation of virtual method dispatch.
      */
-    private final Map<Class, Constructor> _arrayComponentClassToObjectInspectorConstructor = new HashMap<Class, Constructor>();
+    private final Map<Class, Constructor> arrayComponentClassToObjectInspectorConstructor = new HashMap<Class, Constructor>();
 
-    private final Constructor _defaultArrayInspectorConstructor;
-    private final Constructor _defaultTupleInspectorConstructor;
+    private final Constructor defaultArrayInspectorConstructor;
+    private final Constructor defaultTupleInspectorConstructor;
 
     private ObjectInspectorFactory(final Inspection inspection) {
         super(inspection);
         Trace.begin(1, tracePrefix() + "initializing");
 
         // Use this if there is no subclass of array component type is matched, or if the component type is an interface.
-        _defaultArrayInspectorConstructor = getConstructor(ArrayInspector.class);
+        defaultArrayInspectorConstructor = getConstructor(ArrayInspector.class);
         // Array inspectors for specific subclasses of component type
-        _arrayComponentClassToObjectInspectorConstructor.put(Character.class, getConstructor(CharacterArrayInspector.class));
+        arrayComponentClassToObjectInspectorConstructor.put(Character.class, getConstructor(CharacterArrayInspector.class));
 
         // Use this if there is no object type subclass matched
-        _defaultTupleInspectorConstructor = getConstructor(TupleInspector.class);
+        defaultTupleInspectorConstructor = getConstructor(TupleInspector.class);
         // Tuple inspectors for specific subclasses
-        _teleTupleObjectClassToObjectInspectorConstructor.put(TeleDescriptor.class, getConstructor(DescriptorInspector.class));
-        _teleTupleObjectClassToObjectInspectorConstructor.put(TeleEnum.class, getConstructor(EnumInspector.class));
-        _teleTupleObjectClassToObjectInspectorConstructor.put(TeleString.class, getConstructor(StringInspector.class));
-        _teleTupleObjectClassToObjectInspectorConstructor.put(TeleStringConstant.class, getConstructor(StringConstantInspector.class));
-        _teleTupleObjectClassToObjectInspectorConstructor.put(TeleUtf8Constant.class, getConstructor(Utf8ConstantInspector.class));
+        teleTupleObjectClassToObjectInspectorConstructor.put(TeleDescriptor.class, getConstructor(DescriptorInspector.class));
+        teleTupleObjectClassToObjectInspectorConstructor.put(TeleEnum.class, getConstructor(EnumInspector.class));
+        teleTupleObjectClassToObjectInspectorConstructor.put(TeleString.class, getConstructor(StringInspector.class));
+        teleTupleObjectClassToObjectInspectorConstructor.put(TeleStringConstant.class, getConstructor(StringConstantInspector.class));
+        teleTupleObjectClassToObjectInspectorConstructor.put(TeleUtf8Constant.class, getConstructor(Utf8ConstantInspector.class));
 
         inspection.focus().addListener(new InspectionFocusAdapter() {
 
             @Override
             public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
                 if (teleObject != null) {
-                    _factory.makeObjectInspector(inspection, teleObject);
+                    factory.makeObjectInspector(inspection, teleObject);
                 }
             }
         });
@@ -105,7 +105,7 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
     }
 
     private void makeObjectInspector(Inspection inspection, TeleObject teleObject) {
-        ObjectInspector objectInspector =  _teleObjectToInspector.get(teleObject);
+        ObjectInspector objectInspector =  teleObjectToInspector.get(teleObject);
         if (objectInspector == null) {
             switch (teleObject.getObjectKind()) {
                 case HYBRID: {
@@ -113,9 +113,9 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
                     break;
                 }
                 case TUPLE: {
-                    Constructor constructor = lookupInspectorConstructor(_teleTupleObjectClassToObjectInspectorConstructor, teleObject.getClass());
+                    Constructor constructor = lookupInspectorConstructor(teleTupleObjectClassToObjectInspectorConstructor, teleObject.getClass());
                     if (constructor == null) {
-                        constructor = _defaultTupleInspectorConstructor;
+                        constructor = defaultTupleInspectorConstructor;
                     }
                     try {
                         objectInspector = (ObjectInspector) constructor.newInstance(inspection, this, teleObject);
@@ -134,9 +134,9 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
                         final PrimitiveClassActor primitiveClassActor = (PrimitiveClassActor) componentClassActor;
                         componentClassActor = primitiveClassActor.toWrapperClassActor();
                     }
-                    Constructor constructor = lookupInspectorConstructor(_arrayComponentClassToObjectInspectorConstructor, componentClassActor.toJava());
+                    Constructor constructor = lookupInspectorConstructor(arrayComponentClassToObjectInspectorConstructor, componentClassActor.toJava());
                     if (constructor == null) {
-                        constructor = _defaultArrayInspectorConstructor;
+                        constructor = defaultArrayInspectorConstructor;
                     }
                     try {
                         objectInspector = (ObjectInspector) constructor.newInstance(inspection, this, teleObject);
@@ -151,7 +151,7 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
                 }
             }
             if (objectInspector != null) {
-                _teleObjectToInspector.put(teleObject, objectInspector);
+                teleObjectToInspector.put(teleObject, objectInspector);
             }
         }
         if (objectInspector != null) {
@@ -178,7 +178,7 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
 
 
     void objectInspectorClosing(ObjectInspector objectInspector) {
-        _teleObjectToInspector.remove(objectInspector.teleObject());
+        teleObjectToInspector.remove(objectInspector.teleObject());
     }
 
 

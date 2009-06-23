@@ -49,7 +49,7 @@ public class ClassObjectReferenceHandlers extends Handlers {
 
         @Override
         public ReflectedType.Reply handle(ReflectedType.IncomingRequest incomingRequest) throws JDWPException {
-            final ClassObjectProvider classObjectProvider = session().getClassObject(incomingRequest._classObject);
+            final ClassObjectProvider classObjectProvider = session().getClassObject(incomingRequest.classObject);
             final ReferenceTypeProvider refType = classObjectProvider.getReflectedType();
             return new ReflectedType.Reply((byte) JDWPSession.getValueTypeTag(refType.getType()), session().toID(refType));
         }

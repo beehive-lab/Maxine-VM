@@ -33,9 +33,9 @@ import com.sun.c1x.value.ValueType;
  */
 public abstract class AccessIndexed extends AccessArray {
 
-    Instruction _index;
-    Instruction _length;
-    BasicType _elementType;
+    Instruction index;
+    Instruction length;
+    BasicType elementType;
 
     /**
      * Create an new AccessIndexed instruction.
@@ -47,9 +47,9 @@ public abstract class AccessIndexed extends AccessArray {
      */
     AccessIndexed(Instruction array, Instruction index, Instruction length, BasicType elementType, ValueStack lockStack) {
         super(ValueType.fromBasicType(elementType), array, lockStack);
-        _index = index;
-        _length = length;
-        _elementType = elementType;
+        this.index = index;
+        this.length = length;
+        this.elementType = elementType;
     }
 
     /**
@@ -57,7 +57,7 @@ public abstract class AccessIndexed extends AccessArray {
      * @return the index
      */
     public Instruction index() {
-        return _index;
+        return index;
     }
 
     /**
@@ -65,7 +65,7 @@ public abstract class AccessIndexed extends AccessArray {
      * @return the length
      */
     public Instruction length() {
-        return _length;
+        return length;
     }
 
     /**
@@ -73,7 +73,7 @@ public abstract class AccessIndexed extends AccessArray {
      * @return the element type
      */
     public BasicType elementType() {
-        return _elementType;
+        return elementType;
     }
 
     /**
@@ -92,7 +92,7 @@ public abstract class AccessIndexed extends AccessArray {
     @Override
     public void inputValuesDo(InstructionClosure closure) {
         super.inputValuesDo(closure);
-        _index = closure.apply(_index);
-        _length = closure.apply(_length);
+        index = closure.apply(index);
+        length = closure.apply(length);
     }
 }

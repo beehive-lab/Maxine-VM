@@ -60,7 +60,7 @@ public class BytecodeConfirmation extends BytecodeAdapter {
 
     private enum Pass {REQUEST, CONFIRM}
 
-    private Pass _pass = Pass.REQUEST;
+    private Pass pass = Pass.REQUEST;
 
     public BytecodeConfirmation(ClassMethodActor classMethodActor) {
         try {
@@ -78,7 +78,7 @@ public class BytecodeConfirmation extends BytecodeAdapter {
                     }
                 }
             }
-            _pass = Pass.CONFIRM;
+            pass = Pass.CONFIRM;
             bytecodeScanner.scan(classMethodActor);
         } catch (Throwable throwable) {
             ProgramError.unexpected("error scanning byte codes in method: " + classMethodActor, throwable);
@@ -86,14 +86,14 @@ public class BytecodeConfirmation extends BytecodeAdapter {
         check();
     }
 
-    private boolean[] _isOpcodePresenceRequested = new boolean[256];
-    private boolean[] _isOpcodeAbsencePresent = new boolean[256];
-    private boolean[] _isOpcodePresent = new boolean[256];
+    private boolean[] isOpcodePresenceRequested = new boolean[256];
+    private boolean[] isOpcodeAbsencePresent = new boolean[256];
+    private boolean[] isOpcodePresent = new boolean[256];
 
     private void check() {
         int n = 0;
         for (int i = 0; i < 256; i++) {
-            if (_isOpcodePresenceRequested[i] != _isOpcodePresent[i]) {
+            if (isOpcodePresenceRequested[i] != isOpcodePresent[i]) {
                 throw new BytecodeAbsent(i);
             }
             n++;
@@ -109,15 +109,15 @@ public class BytecodeConfirmation extends BytecodeAdapter {
      */
     protected void confirmPresence() {
         int opcode = code()[currentOpcodePosition()] & 0xff;
-        switch (_pass) {
+        switch (pass) {
             case REQUEST:
-                _isOpcodePresenceRequested[opcode] = true;
+                isOpcodePresenceRequested[opcode] = true;
                 break;
             case CONFIRM:
-                _isOpcodePresent[opcode] = true;
+                isOpcodePresent[opcode] = true;
                 if (opcode == WIDE.ordinal()) {
                     opcode = code()[currentOpcodePosition() + 1] & 0xff;
-                    _isOpcodePresent[opcode] = true;
+                    isOpcodePresent[opcode] = true;
                 }
                 break;
         }

@@ -38,8 +38,8 @@ import com.sun.max.vm.value.*;
  */
 public class MemoryRegionValueLabel extends ValueLabel {
 
-    private Address _address;
-    private MemoryRegion _memoryRegion = null;
+    private Address address;
+    private MemoryRegion memoryRegion = null;
 
     private final class MemoryRegionMouseClickAdapter extends InspectorMouseClickAdapter {
 
@@ -49,17 +49,17 @@ public class MemoryRegionValueLabel extends ValueLabel {
 
         @Override
         public void procedure(MouseEvent mouseEvent) {
-            if (_memoryRegion != null) {
+            if (memoryRegion != null) {
                 switch (MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
                     case MouseEvent.BUTTON1: {
-                        inspection().focus().setMemoryRegion(_memoryRegion);
+                        inspection().focus().setMemoryRegion(memoryRegion);
                         break;
                     }
                     case MouseEvent.BUTTON3: {
                         final InspectorMenu menu = new InspectorMenu();
-                        menu.add(inspection().actions().selectMemoryRegion(_memoryRegion));
-                        menu.add(inspection().actions().inspectMemory(_address, "Inspect memory"));
-                        menu.add(inspection().actions().inspectMemoryWords(_address, "Inspect memory words"));
+                        menu.add(inspection().actions().selectMemoryRegion(memoryRegion));
+                        menu.add(inspection().actions().inspectMemory(address, "Inspect memory"));
+                        menu.add(inspection().actions().inspectMemoryWords(address, "Inspect memory words"));
                         menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         break;
                     }
@@ -86,15 +86,15 @@ public class MemoryRegionValueLabel extends ValueLabel {
     @Override
     protected void updateText() {
         if (value() != null) {
-            _address = value().toWord().asAddress();
-            _memoryRegion = maxVM().memoryRegionContaining(_address);
+            address = value().toWord().asAddress();
+            memoryRegion = maxVM().memoryRegionContaining(address);
         }
-        if (_memoryRegion == null) {
+        if (memoryRegion == null) {
             setText("");
             setToolTipText("");
         } else {
-            setText(_memoryRegion.description());
-            setToolTipText("0x" + _address.toHexString() + " in \"" + _memoryRegion.description() + "\" region");
+            setText(memoryRegion.description());
+            setToolTipText("0x" + address.toHexString() + " in \"" + memoryRegion.description() + "\" region");
         }
     }
 

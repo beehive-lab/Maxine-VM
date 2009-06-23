@@ -43,14 +43,14 @@ public class Invoke_virtual01 {
 
     public static class HelperTest {
 
-        private int _intField;
+        private int intField;
 
         public int getInt() {
-            return _intField;
+            return intField;
         }
 
         public HelperTest(int i) {
-            _intField = i;
+            intField = i;
         }
     }
 

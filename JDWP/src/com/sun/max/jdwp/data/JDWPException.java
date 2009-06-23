@@ -30,8 +30,8 @@ import com.sun.max.jdwp.constants.Error;
  */
 public class JDWPException extends Exception {
 
-    private final short _errorCode;
-    private final String _message;
+    private final short errorCode;
+    private final String message;
 
     public JDWPException() {
         this((short) Error.INTERNAL);
@@ -46,8 +46,8 @@ public class JDWPException extends Exception {
     }
 
     public JDWPException(short errorCode, String message) {
-        _errorCode = errorCode;
-        _message = message;
+        this.errorCode = errorCode;
+        this.message = message;
     }
 
     /**
@@ -55,7 +55,7 @@ public class JDWPException extends Exception {
      * @return the JDWP error code
      */
     public int errorCode() {
-        return _errorCode;
+        return errorCode;
     }
 
     /**
@@ -63,11 +63,11 @@ public class JDWPException extends Exception {
      * @return the exception description
      */
     public String message() {
-        return _message;
+        return message;
     }
 
     @Override
     public String toString() {
-        return "JDWPException(" + _errorCode + ", " + _message + ")";
+        return "JDWPException(" + errorCode + ", " + message + ")";
     }
 }

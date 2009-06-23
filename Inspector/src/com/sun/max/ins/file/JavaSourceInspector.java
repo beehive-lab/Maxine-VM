@@ -37,7 +37,7 @@ import com.sun.max.vm.actor.holder.*;
  */
 public final class JavaSourceInspector  extends FileInspector {
 
-    private JTextArea _textArea;
+    private JTextArea textArea;
 
     @Override
     public String getTextForTitle() {
@@ -46,12 +46,12 @@ public final class JavaSourceInspector  extends FileInspector {
 
     @Override
     public void createView() {
-        _textArea = new JTextArea(readFile());
-        _textArea.setEditable(false);
-        _textArea.setFont(style().javaNameFont());
-        _textArea.setCaretPosition(0);
+        textArea = new JTextArea(readFile());
+        textArea.setEditable(false);
+        textArea.setFont(style().javaNameFont());
+        textArea.setCaretPosition(0);
 
-        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _textArea);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), textArea);
         scrollPane.setPreferredSize(inspection().geometry().javaSourceFramePrefSize());
         //frame().setLocation(geometry().javaSourceFrameDefaultLocation());
         frame().setContentPane(scrollPane);
@@ -81,8 +81,8 @@ public final class JavaSourceInspector  extends FileInspector {
     @Override
     public void highlightLine(int lineNumber) {
         try {
-            _textArea.setCaretPosition(_textArea.getLineStartOffset(lineNumber));
-            _textArea.moveCaretPosition(_textArea.getLineEndOffset(lineNumber));
+            textArea.setCaretPosition(textArea.getLineStartOffset(lineNumber));
+            textArea.moveCaretPosition(textArea.getLineEndOffset(lineNumber));
         } catch (BadLocationException badLocationException) {
         }
     }

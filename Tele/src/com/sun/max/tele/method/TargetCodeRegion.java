@@ -31,16 +31,16 @@ import com.sun.max.unsafe.*;
   */
 public class TargetCodeRegion extends RuntimeMemoryRegion {
 
-    private final TeleTargetRoutine _teleTargetRoutine;
+    private final TeleTargetRoutine teleTargetRoutine;
 
     public TeleTargetRoutine teleTargetRoutine() {
-        return _teleTargetRoutine;
+        return teleTargetRoutine;
     }
 
     public TargetCodeRegion(TeleTargetRoutine teleTargetRoutine, Address start, Size size) {
         super(start, size);
-        _teleTargetRoutine = teleTargetRoutine;
-        setDescription("TeleTarget-" + _teleTargetRoutine.toString());
+        this.teleTargetRoutine = teleTargetRoutine;
+        setDescription("TeleTarget-" + teleTargetRoutine.toString());
     }
 
 }

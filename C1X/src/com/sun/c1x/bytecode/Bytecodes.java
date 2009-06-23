@@ -243,9 +243,9 @@ public class Bytecodes {
     private static final int FLAG_LOAD = 8;
     private static final int FLAG_STORE = 16;
 
-    private static final String[] _names = new String[NUM_JAVA_CODES];
-    private static final byte[] _flags = new byte[NUM_JAVA_CODES];
-    private static final byte[] _length = new byte[NUM_JAVA_CODES];
+    private static final String[] names = new String[NUM_JAVA_CODES];
+    private static final byte[] flags = new byte[NUM_JAVA_CODES];
+    private static final byte[] length = new byte[NUM_JAVA_CODES];
 
     // Checkstyle: stop
     static {
@@ -456,16 +456,16 @@ public class Bytecodes {
     // Checkstyle: resume
 
     public static boolean isCommutative(int op) {
-        return (_flags[op] & FLAG_COMMUTATIVE) != 0;
+        return (flags[op] & FLAG_COMMUTATIVE) != 0;
     }
 
     public static int length(int opcode) {
-        return _length[opcode];
+        return length[opcode];
     }
 
     public static int length(byte[] code, int bci) {
         int opcode = Bytes.beU1(code, bci);
-        int length = _length[opcode];
+        int length = Bytecodes.length[opcode];
         if (length == 0) {
             switch (opcode) {
                 case Bytecodes.TABLESWITCH: {
@@ -499,7 +499,7 @@ public class Bytecodes {
      * @throws IndexOutOfBoundsException if {@code opcode} is not a legal opcode
      */
     public static String name(int opcode) {
-        return _names[opcode];
+        return names[opcode];
     }
 
     /**
@@ -509,7 +509,7 @@ public class Bytecodes {
      * @return {@code true} if {@code opcode} can cause an implicit exception, {@code false} otherwise
      */
     public static boolean canTrap(int opcode) {
-        return (_flags[opcode] & FLAG_TRAP) != 0;
+        return (flags[opcode] & FLAG_TRAP) != 0;
     }
 
     /**
@@ -519,7 +519,7 @@ public class Bytecodes {
      * @return {@code true} if {@code opcode} loads a local variable to the operand stack, {@code false} otherwise
      */
     public static boolean isLoad(int opcode) {
-        return (_flags[opcode] & FLAG_LOAD) != 0;
+        return (flags[opcode] & FLAG_LOAD) != 0;
     }
 
     /**
@@ -530,7 +530,7 @@ public class Bytecodes {
      * @return {@code true} if {@code opcode} stores a value to a local variable, {@code false} otherwise
      */
     public static boolean isStore(int opcode) {
-        return (_flags[opcode] & FLAG_STORE) != 0;
+        return (flags[opcode] & FLAG_STORE) != 0;
     }
 
     /**
@@ -736,8 +736,8 @@ public class Bytecodes {
     }
 
     private static void def(int opcode, String name, String format, int flags) {
-        _names[opcode] = name;
-        _length[opcode] = (byte) format.length();
-        _flags[opcode] = (byte) flags;
+        names[opcode] = name;
+        length[opcode] = (byte) format.length();
+        Bytecodes.flags[opcode] = (byte) flags;
     }
 }

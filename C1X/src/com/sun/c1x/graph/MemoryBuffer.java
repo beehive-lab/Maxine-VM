@@ -40,17 +40,17 @@ import java.util.IdentityHashMap;
  */
 public class MemoryBuffer {
 
-    private final HashMap<CiField, Instruction> _objectMap = new HashMap<CiField, Instruction>();
-    private final HashMap<CiField, Instruction> _valueMap = new HashMap<CiField, Instruction>();
-    private final IdentityHashMap<Instruction, Instruction> _newObjects = new IdentityHashMap<Instruction, Instruction>();
+    private final HashMap<CiField, Instruction> objectMap = new HashMap<CiField, Instruction>();
+    private final HashMap<CiField, Instruction> valueMap = new HashMap<CiField, Instruction>();
+    private final IdentityHashMap<Instruction, Instruction> newObjects = new IdentityHashMap<Instruction, Instruction>();
 
     /**
      * Kills all memory locations.
      */
     public void kill() {
-        _objectMap.clear();
-        _valueMap.clear();
-        _newObjects.clear();
+        objectMap.clear();
+        valueMap.clear();
+        newObjects.clear();
     }
 
     /**
@@ -58,7 +58,7 @@ public class MemoryBuffer {
      * @param x the instruction that just escaped
      */
     public void storeValue(Instruction x) {
-        _newObjects.remove(x);
+        newObjects.remove(x);
     }
 
     /**
@@ -66,7 +66,7 @@ public class MemoryBuffer {
      * @param n the instruction generating the new object
      */
     public void newInstance(NewInstance n) {
-        _newObjects.put(n, n);
+        newObjects.put(n, n);
     }
 
     /**
@@ -84,18 +84,18 @@ public class MemoryBuffer {
         CiField field = load.field();
         if (load.isStatic()) {
             // the field is static, look in the static map
-            Instruction r = _valueMap.get(field);
+            Instruction r = valueMap.get(field);
             if (r != null) {
                 return r;
             }
-            _valueMap.put(field, load);
+            valueMap.put(field, load);
         } else {
             // see if the value for this object for this field is in the map
-            if (_objectMap.get(field) == load.object()) {
-                return _valueMap.get(field);
+            if (objectMap.get(field) == load.object()) {
+                return valueMap.get(field);
             }
-            _objectMap.put(field, load.object());
-            _valueMap.put(field, load);
+            objectMap.put(field, load.object());
+            valueMap.put(field, load);
         }
 
         return load; // load cannot be eliminated
@@ -117,9 +117,9 @@ public class MemoryBuffer {
         Instruction value = store.value();
         if (store.isStatic()) {
             // the field is static, overwrite it into the static map
-            _valueMap.put(field, value);
+            valueMap.put(field, value);
         } else {
-            if (_newObjects.containsKey(store.object())) {
+            if (newObjects.containsKey(store.object())) {
                 // this is a store to a new object's field
                 ValueType vt = value.type();
                 if (fieldHasNoStores(field) && vt.isConstant() && vt.asConstant().isDefaultValue()) {
@@ -127,21 +127,21 @@ public class MemoryBuffer {
                     return null;
                 }
             }
-            Instruction obj = _objectMap.get(field);
+            Instruction obj = objectMap.get(field);
             if (obj == store.object()) {
                 // is this a redundant store?
-                if (value == _valueMap.get(field) && !field.isVolatile()) {
+                if (value == valueMap.get(field) && !field.isVolatile()) {
                     return null;
                 }
             }
-            _objectMap.put(field, store.object());
-            _valueMap.put(field, value);
+            objectMap.put(field, store.object());
+            valueMap.put(field, value);
         }
         storeValue(value); // the value stored just escaped
         return store; // the store cannot be eliminated
     }
 
     private boolean fieldHasNoStores(CiField field) {
-        return _objectMap.get(field) == null;
+        return objectMap.get(field) == null;
     }
 }

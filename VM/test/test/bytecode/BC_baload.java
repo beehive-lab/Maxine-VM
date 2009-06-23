@@ -26,10 +26,10 @@ package test.bytecode;
  */
 public class BC_baload {
 
-    static boolean[] _array = {true, false, true, false};
+    static boolean[] array = {true, false, true, false};
 
     public static boolean test(int arg) {
-        return _array[arg];
+        return array[arg];
     }
 
 }

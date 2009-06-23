@@ -48,8 +48,8 @@ public class ArrayTypeHandlers extends Handlers {
 
         @Override
         public NewInstance.Reply handle(NewInstance.IncomingRequest incomingRequest) throws JDWPException {
-            final ArrayTypeProvider array = session().getArrayType(incomingRequest._arrType);
-            final ArrayProvider newInstance = array.newInstance(incomingRequest._length);
+            final ArrayTypeProvider array = session().getArrayType(incomingRequest.arrType);
+            final ArrayProvider newInstance = array.newInstance(incomingRequest.length);
             return new NewInstance.Reply(new JDWPValue(session().toID(newInstance)));
         }
     }

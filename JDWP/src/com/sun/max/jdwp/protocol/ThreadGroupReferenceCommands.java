@@ -45,22 +45,22 @@ public final class ThreadGroupReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ThreadGroupID _group;
+            public ID.ThreadGroupID group;
             public IncomingRequest(ID.ThreadGroupID group) {
-                this._group = group;
+                this.group = group;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _group = ID.read(ps.getInputStream(), ID.ThreadGroupID.class);
+                group = ID.read(ps.getInputStream(), ID.ThreadGroupID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _group.write(ps.getOutputStream());
+                group.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_group=" + _group);
+                stringBuilder.append("group=" + group);
                 return stringBuilder.toString();
             }
         }
@@ -69,22 +69,22 @@ public final class ThreadGroupReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public String _groupName;
+            public String groupName;
             public Reply(String groupName) {
-                this._groupName = groupName;
+                this.groupName = groupName;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _groupName = ps.readString();
+                groupName = ps.readString();
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_groupName);
+                ps.write(groupName);
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_groupName=" + _groupName);
+                stringBuilder.append("groupName=" + groupName);
                 return stringBuilder.toString();
             }
         }
@@ -102,22 +102,22 @@ public final class ThreadGroupReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ThreadGroupID _group;
+            public ID.ThreadGroupID group;
             public IncomingRequest(ID.ThreadGroupID group) {
-                this._group = group;
+                this.group = group;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _group = ID.read(ps.getInputStream(), ID.ThreadGroupID.class);
+                group = ID.read(ps.getInputStream(), ID.ThreadGroupID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _group.write(ps.getOutputStream());
+                group.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_group=" + _group);
+                stringBuilder.append("group=" + group);
                 return stringBuilder.toString();
             }
         }
@@ -126,22 +126,22 @@ public final class ThreadGroupReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public ID.ThreadGroupID _parentGroup;
+            public ID.ThreadGroupID parentGroup;
             public Reply(ID.ThreadGroupID parentGroup) {
-                this._parentGroup = parentGroup;
+                this.parentGroup = parentGroup;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _parentGroup = ID.read(ps.getInputStream(), ID.ThreadGroupID.class);
+                parentGroup = ID.read(ps.getInputStream(), ID.ThreadGroupID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _parentGroup.write(ps.getOutputStream());
+                parentGroup.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_parentGroup=" + _parentGroup);
+                stringBuilder.append("parentGroup=" + parentGroup);
                 return stringBuilder.toString();
             }
         }
@@ -159,22 +159,22 @@ public final class ThreadGroupReferenceCommands {
         }
 
         public static class IncomingRequest implements IncomingData {
-            public ID.ThreadGroupID _group;
+            public ID.ThreadGroupID group;
             public IncomingRequest(ID.ThreadGroupID group) {
-                this._group = group;
+                this.group = group;
             }
             public IncomingRequest() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
-                _group = ID.read(ps.getInputStream(), ID.ThreadGroupID.class);
+                group = ID.read(ps.getInputStream(), ID.ThreadGroupID.class);
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                _group.write(ps.getOutputStream());
+                group.write(ps.getOutputStream());
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_group=" + _group);
+                stringBuilder.append("group=" + group);
                 return stringBuilder.toString();
             }
         }
@@ -183,52 +183,52 @@ public final class ThreadGroupReferenceCommands {
             public byte getCommandId() { return COMMAND; }
             public byte getCommandSetId() { return COMMAND_SET; }
 
-            public ID.ThreadID[] _childThreads;
+            public ID.ThreadID[] childThreads;
 
-            public ID.ThreadGroupID[] _childGroups;
+            public ID.ThreadGroupID[] childGroups;
             public Reply(ID.ThreadID[] childThreads,
                 ID.ThreadGroupID[] childGroups) {
-                this._childThreads = childThreads;
-                this._childGroups = childGroups;
+                this.childThreads = childThreads;
+                this.childGroups = childGroups;
             }
             public Reply() {
             }
             public void read(JDWPInputStream ps) throws java.io.IOException, JDWPException {
                 final int childThreadsCount = ps.readInt();
-                _childThreads = new ID.ThreadID[childThreadsCount];
+                childThreads = new ID.ThreadID[childThreadsCount];
                 for (int i = 0; i < childThreadsCount; i++) {
-                    _childThreads[i] = ID.read(ps.getInputStream(), ID.ThreadID.class);
+                    childThreads[i] = ID.read(ps.getInputStream(), ID.ThreadID.class);
                 }
                 final int childGroupsCount = ps.readInt();
-                _childGroups = new ID.ThreadGroupID[childGroupsCount];
+                childGroups = new ID.ThreadGroupID[childGroupsCount];
                 for (int i = 0; i < childGroupsCount; i++) {
-                    _childGroups[i] = ID.read(ps.getInputStream(), ID.ThreadGroupID.class);
+                    childGroups[i] = ID.read(ps.getInputStream(), ID.ThreadGroupID.class);
                 }
             }
             public void write(JDWPOutputStream ps) throws java.io.IOException {
-                ps.write(_childThreads.length);
-                for (int i = 0; i < _childThreads.length; i++) {
-                    _childThreads[i].write(ps.getOutputStream());
+                ps.write(childThreads.length);
+                for (int i = 0; i < childThreads.length; i++) {
+                    childThreads[i].write(ps.getOutputStream());
                 }
-                ps.write(_childGroups.length);
-                for (int i = 0; i < _childGroups.length; i++) {
-                    _childGroups[i].write(ps.getOutputStream());
+                ps.write(childGroups.length);
+                for (int i = 0; i < childGroups.length; i++) {
+                    childGroups[i].write(ps.getOutputStream());
                 }
             }
             @Override
             public String toString() {
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("_childThreads=[" + _childThreads.length + "]{");
-                for (int i = 0; i < _childThreads.length; i++) {
+                stringBuilder.append("childThreads=[" + childThreads.length + "]{");
+                for (int i = 0; i < childThreads.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_childThreads[i]=" + _childThreads[i]);
+                    stringBuilder.append("childThreads[i]=" + childThreads[i]);
                 }
                 stringBuilder.append("}");
                 stringBuilder.append(", ");
-                stringBuilder.append("_childGroups=[" + _childGroups.length + "]{");
-                for (int i = 0; i < _childGroups.length; i++) {
+                stringBuilder.append("childGroups=[" + childGroups.length + "]{");
+                for (int i = 0; i < childGroups.length; i++) {
                     if (i != 0) { stringBuilder.append(", "); }
-                    stringBuilder.append("_childGroups[i]=" + _childGroups[i]);
+                    stringBuilder.append("childGroups[i]=" + childGroups[i]);
                 }
                 stringBuilder.append("}");
                 return stringBuilder.toString();

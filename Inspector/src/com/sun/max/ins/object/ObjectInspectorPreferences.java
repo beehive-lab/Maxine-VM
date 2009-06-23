@@ -33,16 +33,16 @@ import com.sun.max.program.option.*;
 
 public final class ObjectInspectorPreferences extends AbstractInspectionHolder {
 
-    private static ObjectInspectorPreferences _globalPreferences;
+    private static ObjectInspectorPreferences globalPreferences;
 
     /**
      * @return the global, persistent set of user preferences for viewing heap objects
      */
     static ObjectInspectorPreferences globalPreferences(Inspection inspection) {
-        if (_globalPreferences == null) {
-            _globalPreferences = new ObjectInspectorPreferences(inspection);
+        if (globalPreferences == null) {
+            globalPreferences = new ObjectInspectorPreferences(inspection);
         }
-        return _globalPreferences;
+        return globalPreferences;
     }
 
     /**
@@ -59,40 +59,40 @@ public final class ObjectInspectorPreferences extends AbstractInspectionHolder {
     private static final String SHOW_MEMORY_REGIONS_PREFERENCE = "showMemoryRegions";
     private static final String HIDE_NULL_ARRAY_ELEMENTS_PREFERENCE = "hideNullArrayElements";
 
-    private boolean _showHeader;
+    private boolean showHeader;
 
     public boolean showHeader() {
-        return _showHeader;
+        return showHeader;
     }
 
-    private boolean _showAddresses;
+    private boolean showAddresses;
 
     public boolean showAddresses() {
-        return _showAddresses;
+        return showAddresses;
     }
 
-    private boolean _showOffsets;
+    private boolean showOffsets;
 
     public boolean showOffsets() {
-        return _showOffsets;
+        return showOffsets;
     }
 
-    private boolean _showFieldTypes;
+    private boolean showFieldTypes;
 
     public boolean showFieldTypes() {
-        return _showFieldTypes;
+        return showFieldTypes;
     }
 
-    private boolean _showMemoryRegions;
+    private boolean showMemoryRegions;
 
     public boolean showMemoryRegions() {
-        return _showMemoryRegions;
+        return showMemoryRegions;
     }
 
-    private boolean _hideNullArrayElements;
+    private boolean hideNullArrayElements;
 
     public boolean hideNullArrayElements() {
-        return _hideNullArrayElements;
+        return hideNullArrayElements;
     }
 
     private ObjectInspectorPreferences(Inspection inspection) {
@@ -100,22 +100,22 @@ public final class ObjectInspectorPreferences extends AbstractInspectionHolder {
         final InspectionSettings settings = inspection.settings();
         final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener("objectInspectorPrefs") {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
-                saveSettingsEvent.save(SHOW_HEADER_PREFERENCE, _showHeader);
-                saveSettingsEvent.save(SHOW_ADDRESSES_PREFERENCE, _showAddresses);
-                saveSettingsEvent.save(SHOW_OFFSETS_PREFERENCE, _showOffsets);
-                saveSettingsEvent.save(SHOW_FIELD_TYPES_PREFERENCE, _showFieldTypes);
-                saveSettingsEvent.save(SHOW_MEMORY_REGIONS_PREFERENCE,  _showMemoryRegions);
-                saveSettingsEvent.save(HIDE_NULL_ARRAY_ELEMENTS_PREFERENCE,  _hideNullArrayElements);
+                saveSettingsEvent.save(SHOW_HEADER_PREFERENCE, showHeader);
+                saveSettingsEvent.save(SHOW_ADDRESSES_PREFERENCE, showAddresses);
+                saveSettingsEvent.save(SHOW_OFFSETS_PREFERENCE, showOffsets);
+                saveSettingsEvent.save(SHOW_FIELD_TYPES_PREFERENCE, showFieldTypes);
+                saveSettingsEvent.save(SHOW_MEMORY_REGIONS_PREFERENCE,  showMemoryRegions);
+                saveSettingsEvent.save(HIDE_NULL_ARRAY_ELEMENTS_PREFERENCE,  hideNullArrayElements);
             }
         };
         settings.addSaveSettingsListener(saveSettingsListener);
 
-        _showHeader = settings.get(saveSettingsListener, SHOW_HEADER_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
-        _showAddresses = settings.get(saveSettingsListener, SHOW_ADDRESSES_PREFERENCE, OptionTypes.BOOLEAN_TYPE, false);
-        _showOffsets = settings.get(saveSettingsListener, SHOW_OFFSETS_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
-        _showFieldTypes = settings.get(saveSettingsListener, SHOW_FIELD_TYPES_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
-        _showMemoryRegions = settings.get(saveSettingsListener, SHOW_MEMORY_REGIONS_PREFERENCE, OptionTypes.BOOLEAN_TYPE, false);
-        _hideNullArrayElements = settings.get(saveSettingsListener, HIDE_NULL_ARRAY_ELEMENTS_PREFERENCE, OptionTypes.BOOLEAN_TYPE, false);
+        showHeader = settings.get(saveSettingsListener, SHOW_HEADER_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
+        showAddresses = settings.get(saveSettingsListener, SHOW_ADDRESSES_PREFERENCE, OptionTypes.BOOLEAN_TYPE, false);
+        showOffsets = settings.get(saveSettingsListener, SHOW_OFFSETS_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
+        showFieldTypes = settings.get(saveSettingsListener, SHOW_FIELD_TYPES_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
+        showMemoryRegions = settings.get(saveSettingsListener, SHOW_MEMORY_REGIONS_PREFERENCE, OptionTypes.BOOLEAN_TYPE, false);
+        hideNullArrayElements = settings.get(saveSettingsListener, HIDE_NULL_ARRAY_ELEMENTS_PREFERENCE, OptionTypes.BOOLEAN_TYPE, false);
     }
 
     /**
@@ -123,33 +123,33 @@ public final class ObjectInspectorPreferences extends AbstractInspectionHolder {
      */
     private JPanel getPanel() {
         final JCheckBox alwaysShowHeaderCheckBox =
-            new InspectorCheckBox(inspection(), "Header", "Should new Object Inspectors initially display the header?", _showHeader);
+            new InspectorCheckBox(inspection(), "Header", "Should new Object Inspectors initially display the header?", showHeader);
         final JCheckBox alwaysShowAddressesCheckBox =
-            new InspectorCheckBox(inspection(), "Addresses", "Should new Object Inspectors initially display addresses?", _showAddresses);
+            new InspectorCheckBox(inspection(), "Addresses", "Should new Object Inspectors initially display addresses?", showAddresses);
         final JCheckBox alwaysShowOffsetsCheckBox =
-            new InspectorCheckBox(inspection(), "Offsets", "Should new Object Inspectors initially display offsets?", _showOffsets);
+            new InspectorCheckBox(inspection(), "Offsets", "Should new Object Inspectors initially display offsets?", showOffsets);
         final JCheckBox alwaysShowTupleTypeCheckBox =
-            new InspectorCheckBox(inspection(), "Type", "Should new Object Inspectors initially display types?", _showFieldTypes);
+            new InspectorCheckBox(inspection(), "Type", "Should new Object Inspectors initially display types?", showFieldTypes);
         final JCheckBox alwaysShowMemoryRegionCheckBox =
-            new InspectorCheckBox(inspection(), "Region", "Should new Object Inspectors initially display memory regions?", _showMemoryRegions);
+            new InspectorCheckBox(inspection(), "Region", "Should new Object Inspectors initially display memory regions?", showMemoryRegions);
         final JCheckBox hideNullArrayElementsCheckBox =
-            new InspectorCheckBox(inspection(), "Hide null array elements", "Should new Object Inspectors initially hide null elements in arrays?", _hideNullArrayElements);
+            new InspectorCheckBox(inspection(), "Hide null array elements", "Should new Object Inspectors initially hide null elements in arrays?", hideNullArrayElements);
 
         final ItemListener itemListener = new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 final Object source = e.getItemSelectable();
                 if (source == alwaysShowHeaderCheckBox) {
-                    _showHeader = alwaysShowHeaderCheckBox.isSelected();
+                    showHeader = alwaysShowHeaderCheckBox.isSelected();
                 } else if (source == alwaysShowAddressesCheckBox) {
-                    _showAddresses = alwaysShowAddressesCheckBox.isSelected();
+                    showAddresses = alwaysShowAddressesCheckBox.isSelected();
                 } else if (source == alwaysShowOffsetsCheckBox) {
-                    _showOffsets = alwaysShowOffsetsCheckBox.isSelected();
+                    showOffsets = alwaysShowOffsetsCheckBox.isSelected();
                 } else if (source == alwaysShowTupleTypeCheckBox) {
-                    _showFieldTypes = alwaysShowTupleTypeCheckBox.isSelected();
+                    showFieldTypes = alwaysShowTupleTypeCheckBox.isSelected();
                 } else if (source == alwaysShowMemoryRegionCheckBox) {
-                    _showMemoryRegions = alwaysShowMemoryRegionCheckBox.isSelected();
+                    showMemoryRegions = alwaysShowMemoryRegionCheckBox.isSelected();
                 } else if (source == hideNullArrayElementsCheckBox) {
-                    _hideNullArrayElements = hideNullArrayElementsCheckBox.isSelected();
+                    hideNullArrayElements = hideNullArrayElementsCheckBox.isSelected();
                 }
                 inspection().settings().save();
             }

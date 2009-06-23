@@ -26,14 +26,14 @@ package test.bytecode;
  */
 public class BC_aastore {
 
-    static Object[] _param = {new Object(), null, "h"};
+    static Object[] param = {new Object(), null, "h"};
     static Object[] array1 = {null, null, null};
     static String[] array2 = {null, null, null};
 
     public static int test(boolean a, int indx) {
         Object[] array = a ? array1 : array2;
         Object val;
-        val = _param[indx];
+        val = param[indx];
         array[indx] = val;
         return indx;
     }

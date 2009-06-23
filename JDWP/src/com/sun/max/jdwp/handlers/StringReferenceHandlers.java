@@ -48,14 +48,14 @@ public class StringReferenceHandlers extends Handlers {
 
         @Override
         public Value.Reply handle(Value.IncomingRequest incomingRequest) throws JDWPException {
-            final ID.ObjectID objectID = incomingRequest._stringObject;
+            final ID.ObjectID objectID = incomingRequest.stringObject;
 
             // Must be a string ID, seems to be an error in the protocol.
             final ID.StringID stringID = new ID.StringID(objectID.value());
 
             final StringProvider stringProvider = session().getString(stringID);
             final Value.Reply r = new Value.Reply();
-            r._stringValue = stringProvider.stringValue();
+            r.stringValue = stringProvider.stringValue();
             return r;
         }
     }

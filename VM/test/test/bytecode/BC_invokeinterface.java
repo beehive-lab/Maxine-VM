@@ -37,9 +37,9 @@ public class BC_invokeinterface {
         }
     }
 
-    static ITest _object = new IClass();
+    static ITest object = new IClass();
 
     public static int test(int a) {
-        return _object.id(a);
+        return object.id(a);
     }
 }

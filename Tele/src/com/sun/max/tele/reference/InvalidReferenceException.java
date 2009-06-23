@@ -30,14 +30,14 @@ import com.sun.max.vm.reference.*;
  */
 public class InvalidReferenceException extends RuntimeException {
 
-    private final Reference _reference;
+    private final Reference reference;
 
     public InvalidReferenceException(Reference reference) {
-        _reference = reference;
+        this.reference = reference;
     }
 
     public Reference getReference() {
-        return _reference;
+        return reference;
     }
 
 }

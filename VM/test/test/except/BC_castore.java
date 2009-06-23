@@ -28,10 +28,10 @@ package test.except;
 
 public class BC_castore {
 
-    static char[] _array = {0, 0, 0, 0};
+    static char[] arr = {0, 0, 0, 0};
 
     public static char test(int arg, char val) {
-        final char[] array = arg == -2 ? null : _array;
+        final char[] array = arg == -2 ? null : arr;
         array[arg] = val;
         return array[arg];
     }

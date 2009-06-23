@@ -30,8 +30,8 @@ import com.sun.max.gui.*;
  */
 public class InspectorError extends Error {
     private static final String ERROR_DISPLAY_PROPERTY = "maxine.ins.errordisplay";
-    private static final String _dialogDisplayProperty = System.getProperty(ERROR_DISPLAY_PROPERTY);
-    private static final boolean _dialogDisplay = _dialogDisplayProperty == null || _dialogDisplayProperty.equals("dialog");
+    private static final String dialogDisplayProperty = System.getProperty(ERROR_DISPLAY_PROPERTY);
+    private static final boolean dialogDisplay = dialogDisplayProperty == null || dialogDisplayProperty.equals("dialog");
 
     public InspectorError() {
         super();
@@ -51,7 +51,7 @@ public class InspectorError extends Error {
 
     public void display(Inspection inspection) {
         printStackTrace();
-        if (_dialogDisplay) {
+        if (dialogDisplay) {
             ThrowableDialog.showLater(this, inspection.gui().frame(), "Inspector Error");
         }
     }

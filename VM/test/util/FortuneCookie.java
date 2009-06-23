@@ -30,15 +30,15 @@ package util;
 
 public class FortuneCookie {
 
-    int _x = 1;
-    int _y = 2;
-    int _z = 3;
-    int _r = 4;
-    int _s = 5;
-    int _t = 6;
+    int x = 1;
+    int y = 2;
+    int z = 3;
+    int r = 4;
+    int s = 5;
+    int t = 6;
 
     public static int getfields(FortuneCookie f) {
-        return f._x + f._y + f._z + f._r + f._s + f._t;
+        return f.x + f.y + f.z + f.r + f.s + f.t;
     }
 
     public static void main(String[] args) {

@@ -35,10 +35,10 @@ import com.sun.max.vm.type.*;
  */
 public class JITTest_resolvedGetField extends CompilerTestCase<TargetMethod> {
 
-    private int _intField;
+    private int intField;
 
     static class ResolvedAtCompileTime {
-        int _intField;
+        int intField;
     }
 
     public int perform_not_equal(int a, int b) {
@@ -59,7 +59,7 @@ public class JITTest_resolvedGetField extends CompilerTestCase<TargetMethod> {
     }
 
     public int perform_visitor(ResolvedAtCompileTime resolvedAtCompileTime) {
-        return resolvedAtCompileTime._intField;
+        return resolvedAtCompileTime.intField;
     }
 
     public void test_visitor() throws ClassNotFoundException {
@@ -70,9 +70,9 @@ public class JITTest_resolvedGetField extends CompilerTestCase<TargetMethod> {
     }
 
     public void perform_increment() {
-        int i = _intField;
+        int i = intField;
         i += 5;
-        _intField = i;
+        intField = i;
     }
 
     public void test_increment() {

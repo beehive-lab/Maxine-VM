@@ -45,13 +45,13 @@ import com.sun.max.util.*;
  */
 public final class InspectorMainFrame extends JFrame implements InspectorGUI, Prober {
 
-    private final Inspection _inspection;
-    private final Cursor _busyCursor = new Cursor(Cursor.WAIT_CURSOR);
-    private final JDesktopPane _desktopPane;
-    private final JScrollPane _scrollPane;
-    private final InspectorMainMenuBar _menuBar;
-    private final InspectorMenu _desktopMenu = new InspectorMenu();
-    private final InspectorLabel _missingDataTableCellRenderer;
+    private final Inspection inspection;
+    private final Cursor busyCursor = new Cursor(Cursor.WAIT_CURSOR);
+    private final JDesktopPane desktopPane;
+    private final JScrollPane scrollPane;
+    private final InspectorMainMenuBar menuBar;
+    private final InspectorMenu desktopMenu = new InspectorMenu();
+    private final InspectorLabel missingDataTableCellRenderer;
 
     /**
      * Manages saving and restoring the geometry of the main GUI window, accounting
@@ -68,11 +68,11 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         private static final String FRAME_HEIGHT_KEY = "frameHeight";
         private static final String FRAME_WIDTH_KEY = "frameWidth";
 
-        private final JFrame _frame;
+        private final JFrame frame;
 
         public InspectorMainFrameSaveSettingsListener(JFrame frame, InspectionSettings settings) {
             super(FRAME_SETTINGS_NAME);
-            _frame = frame;
+            this.frame = frame;
             settings.addSaveSettingsListener(this);
             try {
                 if (settings.containsKey(this, FRAME_X_KEY)) {
@@ -83,7 +83,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                     final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
                     final int width = Math.min(settings.get(this, FRAME_WIDTH_KEY, OptionTypes.INT_TYPE, -1), screenSize.width);
                     final int height = Math.min(settings.get(this, FRAME_HEIGHT_KEY, OptionTypes.INT_TYPE, -1), screenSize.height);
-                    _frame.setBounds(x, y, width, height);
+                    this.frame.setBounds(x, y, width, height);
                 }
             } catch (Option.Error optionError) {
                 ProgramWarning.message("Inspector Main Frame settings: " + optionError.getMessage());
@@ -91,7 +91,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         }
 
         public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
-            final Rectangle bounds = _frame.getBounds();
+            final Rectangle bounds = frame.getBounds();
             saveSettingsEvent.save(FRAME_X_KEY, bounds.x);
             saveSettingsEvent.save(FRAME_Y_KEY, bounds.y);
             saveSettingsEvent.save(FRAME_WIDTH_KEY, bounds.width);
@@ -110,7 +110,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
      */
     public InspectorMainFrame(Inspection inspection, String inspectorName, InspectionSettings settings, InspectionActions actions) {
         super(inspectorName);
-        _inspection = inspection;
+        this.inspection = inspection;
 
         setDefaultLookAndFeelDecorated(true);
         InspectorFrame.TitleBarListener.initialize();
@@ -124,10 +124,10 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent windowevent) {
-                _inspection.quit();
+                InspectorMainFrame.this.inspection.quit();
             }
         });
-        _desktopPane = new JDesktopPane() {
+        desktopPane = new JDesktopPane() {
 
             /**
              * Any component added to the desktop pane is brought to the front.
@@ -139,41 +139,41 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                 return component;
             }
         };
-        _desktopPane.setOpaque(true);
-        _scrollPane = new InspectorScrollPane(_inspection, _desktopPane);
-        setContentPane(_scrollPane);
-        _menuBar = new InspectorMainMenuBar(actions);
-        setJMenuBar(_menuBar);
+        desktopPane.setOpaque(true);
+        scrollPane = new InspectorScrollPane(inspection, desktopPane);
+        setContentPane(scrollPane);
+        menuBar = new InspectorMainMenuBar(actions);
+        setJMenuBar(menuBar);
 
-        _desktopMenu.add(actions.viewBootImage());
-        _desktopMenu.add(actions.viewMemoryRegions());
-        _desktopMenu.add(actions.viewThreads());
-        _desktopMenu.add(actions.viewVmThreadLocals());
-        _desktopMenu.add(actions.viewRegisters());
-        _desktopMenu.add(actions.viewStack());
-        _desktopMenu.add(actions.viewMethodCode());
-        _desktopMenu.add(actions.viewBreakpoints());
-        if (_inspection.maxVM().watchpointsEnabled()) {
-            _desktopMenu.add(actions.viewWatchpoints());
+        desktopMenu.add(actions.viewBootImage());
+        desktopMenu.add(actions.viewMemoryRegions());
+        desktopMenu.add(actions.viewThreads());
+        desktopMenu.add(actions.viewVmThreadLocals());
+        desktopMenu.add(actions.viewRegisters());
+        desktopMenu.add(actions.viewStack());
+        desktopMenu.add(actions.viewMethodCode());
+        desktopMenu.add(actions.viewBreakpoints());
+        if (inspection.maxVM().watchpointsEnabled()) {
+            desktopMenu.add(actions.viewWatchpoints());
         }
 
-        _desktopPane.addMouseListener(new InspectorMouseClickAdapter(_inspection) {
+        desktopPane.addMouseListener(new InspectorMouseClickAdapter(inspection) {
             @Override
             public void procedure(final MouseEvent mouseEvent) {
                 if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
-                    _desktopMenu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                    desktopMenu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                 }
             }
         });
         pack();
         settings.addSaveSettingsListener(new InspectorMainFrameSaveSettingsListener(this, settings));
 
-        _missingDataTableCellRenderer = new MissingDataTableCellRenderer(inspection);
+        missingDataTableCellRenderer = new MissingDataTableCellRenderer(inspection);
     }
 
     public void addInspector(Inspector inspector) {
         final InspectorFrame inspectorFrame = inspector.frame();
-        _desktopPane.add((Component) inspectorFrame);
+        desktopPane.add((Component) inspectorFrame);
         inspectorFrame.setVisible(true);
         repaint();
     }
@@ -182,9 +182,9 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
      * Removes and disposes all top-level instances of {@link Inspector} in the GUI display.
      */
     public void removeInspectors(Predicate<Inspector> predicate) {
-        for (int i = _desktopPane.getComponentCount() - 1; i >= 0; i--) {
+        for (int i = desktopPane.getComponentCount() - 1; i >= 0; i--) {
             // Delete backwards so that the indices don't change
-            final Component component = _desktopPane.getComponent(i);
+            final Component component = desktopPane.getComponent(i);
             if (component instanceof InspectorFrame) {
                 final InspectorFrame inspectorFrame = (InspectorFrame) component;
                 final Inspector inspector = inspectorFrame.inspector();
@@ -196,9 +196,9 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     }
 
     public Inspector findInspector(Predicate<Inspector> predicate) {
-        final int componentCount = _desktopPane.getComponentCount();
+        final int componentCount = desktopPane.getComponentCount();
         for (int i = 0; i < componentCount; i++) {
-            final Component component = _desktopPane.getComponent(i);
+            final Component component = desktopPane.getComponent(i);
             if (component instanceof InspectorFrame) {
                 final InspectorFrame inspectorFrame = (InspectorFrame) component;
                 final Inspector inspector = inspectorFrame.inspector();
@@ -231,9 +231,9 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
 
     public void showInspectorBusy(boolean busy) {
         if (busy) {
-            _desktopPane.setCursor(_busyCursor);
+            desktopPane.setCursor(busyCursor);
         } else {
-            _desktopPane.setCursor(null);
+            desktopPane.setCursor(null);
         }
     }
 
@@ -241,28 +241,28 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
      * Displays an information message in a modal dialog with specified frame title.
      */
     public void informationMessage(String message, String title) {
-        JOptionPane.showMessageDialog(_desktopPane, message, title, JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(desktopPane, message, title, JOptionPane.INFORMATION_MESSAGE);
     }
 
     /**
      * Displays an information message in a modal dialog with default frame title.
      */
     public void informationMessage(String message) {
-        informationMessage(message, _inspection.currentActionTitle());
+        informationMessage(message, inspection.currentActionTitle());
     }
 
     /**
      * Displays an error message in a modal dialog with specified frame title.
      */
     public void errorMessage(String message, String title) {
-        JOptionPane.showMessageDialog(_desktopPane, message, title, JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(desktopPane, message, title, JOptionPane.ERROR_MESSAGE);
     }
 
     /**
      * Displays an error message in a modal dialog with default frame title.
      */
     public void errorMessage(String message) {
-        errorMessage(message, _inspection.currentActionTitle());
+        errorMessage(message, inspection.currentActionTitle());
     }
 
     /**
@@ -273,11 +273,11 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
      * @return text typed by user
      */
     public String inputDialog(String message, String initialValue) {
-        return JOptionPane.showInputDialog(_desktopPane, message, initialValue);
+        return JOptionPane.showInputDialog(desktopPane, message, initialValue);
     }
 
     public boolean yesNoDialog(String message) {
-        return JOptionPane.showConfirmDialog(this, message, _inspection.currentActionTitle(), JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+        return JOptionPane.showConfirmDialog(this, message, inspection.currentActionTitle(), JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
     }
 
     /**
@@ -286,7 +286,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
      * @return text typed by user.
      */
     public String questionMessage(String message) {
-        return JOptionPane.showInputDialog(_desktopPane, message, _inspection.currentActionTitle(), JOptionPane.QUESTION_MESSAGE);
+        return JOptionPane.showInputDialog(desktopPane, message, inspection.currentActionTitle(), JOptionPane.QUESTION_MESSAGE);
     }
 
     public void postToClipboard(String text) {
@@ -295,7 +295,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     }
 
     public void setLocationRelativeToMouse(Inspector inspector) {
-        setLocationRelativeToMouse(inspector, _inspection.geometry().defaultNewFrameXOffset(), _inspection.geometry().defaultNewFrameYOffset());
+        setLocationRelativeToMouse(inspector, inspection.geometry().defaultNewFrameXOffset(), inspection.geometry().defaultNewFrameYOffset());
     }
 
     /**
@@ -321,7 +321,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     }
 
     public InspectorLabel getMissingDataTableCellRenderer() {
-        return _missingDataTableCellRenderer;
+        return missingDataTableCellRenderer;
     }
 
     private Point getMiddle(Component component) {
@@ -380,26 +380,26 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         refresh(true);
     }
 
-    private MaxVMState _lastRefreshedState = null;
+    private MaxVMState lastRefreshedState = null;
 
     public void refresh(boolean force) {
-        final MaxVMState maxVMState = _inspection.maxVM().maxVMState();
-        if (maxVMState.newerThan(_lastRefreshedState)) {
-            _lastRefreshedState = maxVMState;
-            setTitle(_inspection.currentInspectionTitle());
+        final MaxVMState maxVMState = inspection.maxVM().maxVMState();
+        if (maxVMState.newerThan(lastRefreshedState)) {
+            lastRefreshedState = maxVMState;
+            setTitle(inspection.currentInspectionTitle());
             switch (maxVMState.processState()) {
                 case STOPPED:
                     if (maxVMState.isInGC()) {
-                        _menuBar.setStateColor(_inspection.style().vmStoppedinGCBackgroundColor());
+                        menuBar.setStateColor(inspection.style().vmStoppedinGCBackgroundColor());
                     } else {
-                        _menuBar.setStateColor(_inspection.style().vmStoppedBackgroundColor());
+                        menuBar.setStateColor(inspection.style().vmStoppedBackgroundColor());
                     }
                     break;
                 case RUNNING:
-                    _menuBar.setStateColor(_inspection.style().vmRunningBackgroundColor());
+                    menuBar.setStateColor(inspection.style().vmRunningBackgroundColor());
                     break;
                 case TERMINATED:
-                    _menuBar.setStateColor(_inspection.style().vmTerminatedBackgroundColor());
+                    menuBar.setStateColor(inspection.style().vmTerminatedBackgroundColor());
                     break;
                 default:
                     ProgramError.unknownCase(maxVMState.processState().toString());

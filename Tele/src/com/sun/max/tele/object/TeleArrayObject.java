@@ -42,7 +42,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     private static final Logger LOGGER = Logger.getLogger(TeleArrayObject.class.getName());
 
-    private int _length = -1;
+    private int length = -1;
 
     protected TeleArrayObject(TeleVM teleVM, Reference reference) {
         super(teleVM, reference);
@@ -57,10 +57,10 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
      * @return length of this array in the {@link TeleVM}.
      */
     public int getLength() {
-        if (_length < 0) {
-            _length = teleVM().layoutScheme().arrayHeaderLayout.readLength(reference());
+        if (length < 0) {
+            length = teleVM().layoutScheme().arrayHeaderLayout.readLength(reference());
         }
-        return _length;
+        return length;
     }
 
     public Kind componentKind() {

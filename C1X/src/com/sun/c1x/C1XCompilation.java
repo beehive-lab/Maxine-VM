@@ -41,20 +41,20 @@ import com.sun.c1x.util.*;
  */
 public class C1XCompilation {
 
-    public final CiRuntime _runtime;
-    public final CiMethod _method;
-    final int _osrBCI;
+    public final CiRuntime runtime;
+    public final CiMethod method;
+    final int osrBCI;
 
-    BlockBegin _start;
-    int _maxSpills;
-    boolean _needsDebugInfo;
-    boolean _hasExceptionHandlers;
-    boolean _hasFpuCode;
-    boolean _hasUnsafeAccess;
-    Bailout _bailout;
+    BlockBegin start;
+    int maxSpills;
+    boolean needsDebugInfo;
+    boolean hasExceptionHandlers;
+    boolean hasFpuCode;
+    boolean hasUnsafeAccess;
+    Bailout bailout;
 
-    int _totalBlocks;
-    int _totalInstructions;
+    int totalBlocks;
+    int totalInstructions;
 
     /**
      * Creates a new compilation for the specified method and runtime.
@@ -63,9 +63,9 @@ public class C1XCompilation {
      * @param osrBCI the bytecode index for on-stack replacement, if requested
      */
     public C1XCompilation(CiRuntime runtime, CiMethod method, int osrBCI) {
-        _runtime = runtime;
-        _method = method;
-        _osrBCI = osrBCI;
+        this.runtime = runtime;
+        this.method = method;
+        this.osrBCI = osrBCI;
     }
 
     /**
@@ -74,9 +74,9 @@ public class C1XCompilation {
      * @param method the method to be compiled
      */
     public C1XCompilation(CiRuntime runtime, CiMethod method) {
-        _runtime = runtime;
-        _method = method;
-        _osrBCI = -1;
+        this.runtime = runtime;
+        this.method = method;
+        this.osrBCI = -1;
     }
 
     /**
@@ -84,7 +84,7 @@ public class C1XCompilation {
      */
     public BlockBegin startBlock() {
         try {
-            if (_start == null && _bailout == null) {
+            if (start == null && bailout == null) {
                 CFGPrinter cfgPrinter = null;
                 if (C1XOptions.PrintCFGToFile) {
                     OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
@@ -94,20 +94,20 @@ public class C1XCompilation {
                     }
                 }
 
-                final GraphBuilder builder = new GraphBuilder(this, new IRScope(this, null, 0, _method, _osrBCI));
-                _start = builder.start();
-                _totalInstructions = builder.instructionCount();
+                final GraphBuilder builder = new GraphBuilder(this, new IRScope(this, null, 0, method, osrBCI));
+                start = builder.start();
+                totalInstructions = builder.instructionCount();
 
                 if (C1XOptions.PrintCFGToFile && cfgPrinter != null) {
-                    cfgPrinter.printCFG(_start, "After Generation of HIR", true, false);
+                    cfgPrinter.printCFG(start, "After Generation of HIR", true, false);
                 }
             }
         } catch (Bailout b) {
-            _bailout = b;
+            bailout = b;
         } catch (Throwable t) {
-            _bailout = new Bailout("Unexpected exception while compiling: " + this.method(), t);
+            bailout = new Bailout("Unexpected exception while compiling: " + this.method(), t);
         }
-        return _start;
+        return start;
     }
 
     /**
@@ -115,7 +115,7 @@ public class C1XCompilation {
      * @return the bailout condition
      */
     public Bailout bailout() {
-        return _bailout;
+        return bailout;
     }
 
     /**
@@ -123,14 +123,14 @@ public class C1XCompilation {
      * @return the method being compiled
      */
     public CiMethod method() {
-        return _method;
+        return method;
     }
 
     /**
      * Records that this compilation has exception handlers.
      */
     public void setHasExceptionHandlers() {
-        _hasExceptionHandlers = true;
+        hasExceptionHandlers = true;
     }
 
     /**
@@ -138,7 +138,7 @@ public class C1XCompilation {
      * @return <code>true</code> if this compilation is for an on-stack replacement
      */
     public boolean isOsrCompilation() {
-        return _osrBCI >= 0;
+        return osrBCI >= 0;
     }
 
     /**
@@ -146,7 +146,7 @@ public class C1XCompilation {
      * @return the bytecode index
      */
     public int osrBCI() {
-        return _osrBCI;
+        return osrBCI;
     }
 
     /**
@@ -154,7 +154,7 @@ public class C1XCompilation {
      * @return the OSR frame
      */
     public CiOsrFrame getOsrFrame() {
-        return _runtime.getOsrFrame(_method, _osrBCI);
+        return runtime.getOsrFrame(method, osrBCI);
     }
 
     /**
@@ -189,7 +189,7 @@ public class C1XCompilation {
      * @return the compiler interface type for Throwable
      */
     public CiType throwableType() {
-        return _runtime.resolveType("java.lang.Throwable");
+        return runtime.resolveType("java.lang.Throwable");
     }
 
     /**
@@ -216,9 +216,9 @@ public class C1XCompilation {
     @Override
     public String toString() {
         if (isOsrCompilation()) {
-            return "osr-compile @ " + _osrBCI + ": " + _method;
+            return "osr-compile @ " + osrBCI + ": " + method;
         }
-        return "compile: " + _method;
+        return "compile: " + method;
     }
 
     /**
@@ -229,10 +229,10 @@ public class C1XCompilation {
      */
     public BlockMap getBlockMap(CiMethod method, int osrBCI) {
         // XXX: cache the block map for methods that are compiled or inlined often
-        if (_totalBlocks == 0) {
-            _totalBlocks = 1; // start at block 1 to skip header block
+        if (totalBlocks == 0) {
+            totalBlocks = 1; // start at block 1 to skip header block
         }
-        BlockMap map = new BlockMap(method, _totalBlocks);
+        BlockMap map = new BlockMap(method, totalBlocks);
         boolean isOsrCompilation = false;
         if (osrBCI >= 0) {
             map.addEntrypoint(osrBCI, BlockBegin.BlockFlag.OsrEntry);
@@ -250,7 +250,7 @@ public class C1XCompilation {
             }
         }
         map.cleanup();
-        _totalBlocks += map.numberOfBlocks();
+        totalBlocks += map.numberOfBlocks();
         return map;
     }
 
@@ -259,6 +259,6 @@ public class C1XCompilation {
      * @return the number of bytecodes
      */
     public int totalInstructions() {
-        return _totalInstructions;
+        return totalInstructions;
     }
 }

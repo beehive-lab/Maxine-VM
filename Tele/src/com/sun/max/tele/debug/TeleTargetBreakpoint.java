@@ -42,54 +42,54 @@ import com.sun.max.vm.value.*;
  */
 public final class TeleTargetBreakpoint extends TeleBreakpoint {
 
-    private final Factory _factory;
+    private final Factory factory;
 
-    private final TeleCodeLocation _teleCodeLocation;
+    private final TeleCodeLocation teleCodeLocation;
 
     @Override
     public TeleCodeLocation teleCodeLocation() {
-        return _teleCodeLocation;
+        return teleCodeLocation;
     }
 
     public Address address() {
-        return _teleCodeLocation.targetCodeInstructionAddresss();
+        return teleCodeLocation.targetCodeInstructionAddresss();
     }
 
-    private final byte[] _originalCode;
+    private final byte[] originalCode;
 
     public byte[] originalCode() {
-        return _originalCode;
+        return originalCode;
     }
 
-    private boolean _enabled = true;
+    private boolean enabled = true;
 
-    private boolean _activated;
+    private boolean activated;
 
     @Override
     public boolean isEnabled() {
-        return _enabled;
+        return enabled;
     }
 
     @Override
     public boolean setEnabled(boolean enabled) {
         assert !isTransient() : "cannot disable a transient breakpoint: " + this;
-        if (enabled != _enabled) {
-            _enabled = enabled;
+        if (enabled != this.enabled) {
+            this.enabled = enabled;
             return true;
         }
         return false;
     }
 
-    private BreakpointCondition _condition;
+    private BreakpointCondition condition;
 
     @Override
     public BreakpointCondition condition() {
-        return _condition;
+        return condition;
     }
 
     @Override
     public void remove() {
-        _factory.removeBreakpointAt(address());
+        factory.removeBreakpointAt(address());
     }
 
     /**
@@ -105,9 +105,9 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
      */
     private TeleTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode, boolean isTransient) {
         super(teleVM, isTransient);
-        _factory = factory;
-        _teleCodeLocation = new TeleCodeLocation(teleVM(), address);
-        _originalCode = originalCode == null ? teleVM.dataAccess().readFully(address, _factory.codeSize()) : originalCode;
+        this.factory = factory;
+        this.teleCodeLocation = new TeleCodeLocation(teleVM(), address);
+        this.originalCode = originalCode == null ? teleVM.dataAccess().readFully(address, factory.codeSize()) : originalCode;
     }
 
     /**
@@ -116,7 +116,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
      * @return the current contents at this breakpoint's address of length {@link Factory#codeSize()}
      */
     public byte[] readCode() {
-        return teleVM().dataAccess().readFully(address(), _originalCode.length);
+        return teleVM().dataAccess().readFully(address(), originalCode.length);
     }
 
     /**
@@ -124,27 +124,27 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
      * platform dependent instruction(s) implementing a breakpoint.
      */
     public boolean isActivated() {
-        return _activated;
+        return activated;
     }
 
     /**
      * Patches the target code at this breakpoint's address with platform dependent instruction(s) implementing a breakpoint.
      */
     public void activate() {
-        teleVM().dataAccess().writeBytes(address(), _factory.code());
-        _activated = true;
+        teleVM().dataAccess().writeBytes(address(), factory.code());
+        activated = true;
     }
 
     /**
      * Patches the target code at this breakpoint's address with the original code that was compiled at that address.
      */
     public void deactivate() {
-        teleVM().dataAccess().writeBytes(address(), _originalCode);
-        _activated = false;
+        teleVM().dataAccess().writeBytes(address(), originalCode);
+        activated = false;
     }
 
     public void setCondition(String condition) throws ExpressionException {
-        _condition = new BreakpointCondition(teleVM(), condition);
+        this.condition = new BreakpointCondition(teleVM(), condition);
     }
 
     @Override
@@ -154,22 +154,22 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
 
     public static class Factory extends Observable {
 
-        private final TeleVM _teleVM;
-        private final byte[] _code;
+        private final TeleVM teleVM;
+        private final byte[] code;
 
         // The map implementations are not thread-safe; the factory must take care of that.
-        private final Map<Long, TeleTargetBreakpoint> _breakpoints = new HashMap<Long, TeleTargetBreakpoint>();
-        private final Map<Long, TeleTargetBreakpoint> _transientBreakpoints = new HashMap<Long, TeleTargetBreakpoint>();
+        private final Map<Long, TeleTargetBreakpoint> breakpoints = new HashMap<Long, TeleTargetBreakpoint>();
+        private final Map<Long, TeleTargetBreakpoint> transientBreakpoints = new HashMap<Long, TeleTargetBreakpoint>();
 
         public Factory(TeleVM teleVM) {
-            _teleVM = teleVM;
-            _code = TargetBreakpoint.createBreakpointCode(_teleVM.vmConfiguration().platform().processorKind().instructionSet());
+            this.teleVM = teleVM;
+            this.code = TargetBreakpoint.createBreakpointCode(teleVM.vmConfiguration().platform().processorKind().instructionSet());
             teleVM.addVMStateObserver(new TeleVMStateObserver() {
 
                 public void upate(MaxVMState maxVMState) {
                     if (maxVMState.processState() == ProcessState.TERMINATED) {
-                        _breakpoints.clear();
-                        _transientBreakpoints.clear();
+                        breakpoints.clear();
+                        transientBreakpoints.clear();
                         setChanged();
                         notifyObservers();
                     }
@@ -181,14 +181,14 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
          * Gets the bytes encoding the platform dependent instruction(s) representing a breakpoint.
          */
         public byte[] code() {
-            return _code.clone();
+            return code.clone();
         }
 
         /**
          * Gets number of bytes that encode the platform dependent instruction(s) representing a breakpoint.
          */
         public int codeSize() {
-            return _code.length;
+            return code.length;
         }
 
         /**
@@ -198,9 +198,9 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
          * @param omitTransientBreakpoints specifies whether or not {@linkplain TeleBreakpoint#isTransient()}
          */
         public synchronized Iterable<TeleTargetBreakpoint> breakpoints(boolean omitTransientBreakpoints) {
-            final AppendableSequence<TeleTargetBreakpoint> targetBreakpoints = new ArrayListSequence<TeleTargetBreakpoint>(_breakpoints.values());
+            final AppendableSequence<TeleTargetBreakpoint> targetBreakpoints = new ArrayListSequence<TeleTargetBreakpoint>(breakpoints.values());
             if (!omitTransientBreakpoints) {
-                for (TeleTargetBreakpoint transientBreakpoint : _transientBreakpoints.values()) {
+                for (TeleTargetBreakpoint transientBreakpoint : transientBreakpoints.values()) {
                     targetBreakpoints.append(transientBreakpoint);
                 }
             }
@@ -212,9 +212,9 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
          * @return the number of existing target breakpoints in the {@link TeleVM}.
          */
         public synchronized int size(boolean omitTransientBreakpoints) {
-            int result = _breakpoints.size();
+            int result = breakpoints.size();
             if (!omitTransientBreakpoints) {
-                result += _transientBreakpoints.size();
+                result += transientBreakpoints.size();
             }
             return result;
         }
@@ -226,11 +226,11 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
          * non-transient breakpoint is returned.
          */
         public synchronized TeleTargetBreakpoint getBreakpointAt(Address address) {
-            final TeleTargetBreakpoint breakpoint = _breakpoints.get(address.toLong());
+            final TeleTargetBreakpoint breakpoint = breakpoints.get(address.toLong());
             if (breakpoint != null) {
                 return breakpoint;
             }
-            return _transientBreakpoints.get(address.toLong());
+            return transientBreakpoints.get(address.toLong());
         }
 
         /**
@@ -238,7 +238,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
          * address in the {@link TeleVM}, if it exists, null otherwise.
          */
         public synchronized TeleTargetBreakpoint getTransientBreakpointAt(Address address) {
-            return _transientBreakpoints.get(address.toLong());
+            return transientBreakpoints.get(address.toLong());
         }
 
         /**
@@ -246,7 +246,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
          * address in the {@link TeleVM}., if it exists, null otherwise.
          */
         public synchronized TeleTargetBreakpoint getNonTransientBreakpointAt(Address address) {
-            return _breakpoints.get(address.toLong());
+            return breakpoints.get(address.toLong());
         }
 
         /**
@@ -260,14 +260,14 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
          * @return the created breakpoint
          */
         public synchronized TeleTargetBreakpoint createBreakpoint(Address address, byte[] originalCode, boolean isTransient) {
-            final TeleTargetBreakpoint breakpoint = new TeleTargetBreakpoint(_teleVM, this, address, originalCode, isTransient);
+            final TeleTargetBreakpoint breakpoint = new TeleTargetBreakpoint(teleVM, this, address, originalCode, isTransient);
             if (!isTransient) {
-                final TeleTargetBreakpoint oldBreakpoint = _breakpoints.put(address.toLong(), breakpoint);
+                final TeleTargetBreakpoint oldBreakpoint = breakpoints.put(address.toLong(), breakpoint);
                 assert oldBreakpoint == null;
                 setChanged();
                 notifyObservers();
             } else {
-                final TeleTargetBreakpoint oldBreakpoint = _transientBreakpoints.put(address.toLong(), breakpoint);
+                final TeleTargetBreakpoint oldBreakpoint = transientBreakpoints.put(address.toLong(), breakpoint);
                 assert oldBreakpoint == null;
             }
             return breakpoint;
@@ -289,7 +289,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
         }
 
         private byte[] recoverOriginalCodeForBreakpoint(Address instructionPointer) {
-            final Value result = _teleVM.methods().TargetBreakpoint_findOriginalCode.interpret(LongValue.from(instructionPointer.toLong()));
+            final Value result = teleVM.methods().TargetBreakpoint_findOriginalCode.interpret(LongValue.from(instructionPointer.toLong()));
             final Reference reference = result.asReference();
             if (reference.isZero()) {
                 return null;
@@ -306,8 +306,8 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
          */
         public void registerBreakpointSetByVM(TeleNativeThread thread) {
             final Address breakpointAddress = thread.breakpointAddressFromInstructionPointer();
-            final byte[] codeBuffer = _teleVM.dataAccess().readFully(breakpointAddress, codeSize());
-            if (Bytes.equals(codeBuffer, _code)) {
+            final byte[] codeBuffer = teleVM.dataAccess().readFully(breakpointAddress, codeSize());
+            if (Bytes.equals(codeBuffer, code)) {
                 TeleTargetBreakpoint breakpoint = getBreakpointAt(breakpointAddress);
                 if (breakpoint == null) {
                     final byte[] originalCode = recoverOriginalCodeForBreakpoint(breakpointAddress);
@@ -330,7 +330,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
          * Removes the breakpoint, if it exists, at specified target code address in the {@link TeleVM}.
          */
         private synchronized void removeBreakpointAt(Address address) {
-            _breakpoints.remove(address.toLong());
+            breakpoints.remove(address.toLong());
             setChanged();
             notifyObservers();
         }
@@ -339,12 +339,12 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
          * {@linkplain TeleTargetBreakpoint#activate() Activates} all breakpoints (including transient breakpoints).
          */
         public synchronized void activateAll() {
-            for (TeleTargetBreakpoint breakpoint : _breakpoints.values()) {
-                if (breakpoint._enabled) {
+            for (TeleTargetBreakpoint breakpoint : breakpoints.values()) {
+                if (breakpoint.enabled) {
                     breakpoint.activate();
                 }
             }
-            for (TeleTargetBreakpoint breakpoint : _transientBreakpoints.values()) {
+            for (TeleTargetBreakpoint breakpoint : transientBreakpoints.values()) {
                 breakpoint.activate();
             }
         }
@@ -354,17 +354,17 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
          */
         public synchronized Sequence<TeleTargetBreakpoint> deactivateAll() {
             final AppendableSequence<TeleTargetBreakpoint> deactivated = new ArrayListSequence<TeleTargetBreakpoint>();
-            for (TeleTargetBreakpoint breakpoint : _breakpoints.values()) {
-                if (breakpoint._enabled) {
+            for (TeleTargetBreakpoint breakpoint : breakpoints.values()) {
+                if (breakpoint.enabled) {
                     breakpoint.deactivate();
                     deactivated.append(breakpoint);
                 }
             }
-            for (TeleTargetBreakpoint breakpoint : _transientBreakpoints.values()) {
+            for (TeleTargetBreakpoint breakpoint : transientBreakpoints.values()) {
                 breakpoint.deactivate();
                 deactivated.append(breakpoint);
             }
-            _transientBreakpoints.clear();
+            transientBreakpoints.clear();
             return deactivated;
         }
     }

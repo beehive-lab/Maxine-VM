@@ -50,7 +50,7 @@ public final class MaxineInspector {
 
     private static final int TRACE_VALUE = 1;
 
-    private static final String _tracePrefix = "[MaxineInspector] ";
+    private static final String tracePrefix = "[MaxineInspector] ";
 
     public static int mouseButtonWithModifiers(MouseEvent mouseEvent) {
         if (OperatingSystem.current() == OperatingSystem.DARWIN && mouseEvent.getButton() == MouseEvent.BUTTON1) {
@@ -86,7 +86,7 @@ public final class MaxineInspector {
     }
 
     public static void main(final String[] args) {
-        Trace.begin(TRACE_VALUE, _tracePrefix + "Initializing");
+        Trace.begin(TRACE_VALUE, tracePrefix + "Initializing");
         final long startTimeMillis = System.currentTimeMillis();
 
         initializeSwing();
@@ -110,9 +110,9 @@ public final class MaxineInspector {
         } catch (BootImageException bootImageException) {
             ProgramError.unexpected("could not load boot image", bootImageException);
         } catch (Exception exception) {
-            ProgramError.unexpected(_tracePrefix + "failed: " + exception);
+            ProgramError.unexpected(tracePrefix + "failed: " + exception);
         }
-        Trace.end(TRACE_VALUE, _tracePrefix + "Initializing", startTimeMillis);
+        Trace.end(TRACE_VALUE, tracePrefix + "Initializing", startTimeMillis);
     }
 
 }

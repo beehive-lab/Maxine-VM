@@ -48,14 +48,13 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         void columnPreferenceChanged();
     }
 
-    private final Inspection _inspection;
+    private final Inspection inspection;
 
     /**
      * Creates a new {@JTable} for use in the {@link Inspection}.
      */
     protected InspectorTable(Inspection inspection) {
-        super();
-        _inspection = inspection;
+        this.inspection = inspection;
         initialize();
     }
 
@@ -67,65 +66,65 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      */
     protected InspectorTable(Inspection inspection, TableModel model, TableColumnModel tableColumnModel) {
         super(model, tableColumnModel);
-        _inspection = inspection;
+        this.inspection = inspection;
         initialize();
     }
 
     private void initialize() {
         setOpaque(true);
-        setBackground(_inspection.style().defaultBackgroundColor());
-        getTableHeader().setBackground(_inspection.style().defaultBackgroundColor());
+        setBackground(inspection.style().defaultBackgroundColor());
+        getTableHeader().setBackground(inspection.style().defaultBackgroundColor());
         getTableHeader().setFont(style().defaultTextFont());
     }
     public final Inspection inspection() {
-        return _inspection;
+        return inspection;
     }
 
     public final MaxVM maxVM() {
-        return _inspection.maxVM();
+        return inspection.maxVM();
     }
 
     public final MaxVMState maxVMState() {
-        return _inspection.maxVM().maxVMState();
+        return inspection.maxVM().maxVMState();
     }
 
     public final InspectorGUI gui() {
-        return _inspection.gui();
+        return inspection.gui();
     }
 
     public final InspectorStyle style() {
-        return _inspection.style();
+        return inspection.style();
     }
 
     public final InspectionFocus focus() {
-        return _inspection.focus();
+        return inspection.focus();
     }
 
     public InspectionActions actions() {
-        return _inspection.actions();
+        return inspection.actions();
     }
 
-    private IdentityHashSet<ColumnChangeListener> _columnChangeListeners = new IdentityHashSet<ColumnChangeListener>();
+    private IdentityHashSet<ColumnChangeListener> columnChangeListeners = new IdentityHashSet<ColumnChangeListener>();
 
     /**
      * Adds a listener for view update when column visibility changes.
      */
     public void addColumnChangeListener(ColumnChangeListener listener) {
-        _columnChangeListeners.add(listener);
+        columnChangeListeners.add(listener);
     }
 
     /**
      * Remove a listener for view update when column visibility changed.
      */
     public void removeColumnChangeListener(ColumnChangeListener listener) {
-        _columnChangeListeners.remove(listener);
+        columnChangeListeners.remove(listener);
     }
 
     /**
      * Notifies listeners that the column visibility preferences for the table have changed.
      */
     public void fireColumnPreferenceChanged() {
-        for (ColumnChangeListener listener : _columnChangeListeners.clone()) {
+        for (ColumnChangeListener listener : columnChangeListeners.clone()) {
             listener.columnPreferenceChanged();
         }
     }

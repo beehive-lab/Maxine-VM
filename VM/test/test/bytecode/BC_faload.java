@@ -26,9 +26,9 @@ package test.bytecode;
  */
 public class BC_faload {
 
-    static float[] _array = {0.0f, -1.1f, 4.32f, 6.06f};
+    static float[] array = {0.0f, -1.1f, 4.32f, 6.06f};
 
     public static float test(int arg) {
-        return _array[arg];
+        return array[arg];
     }
 }

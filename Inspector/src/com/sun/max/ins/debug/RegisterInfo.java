@@ -35,18 +35,18 @@ import com.sun.max.vm.value.*;
  */
 public abstract class RegisterInfo {
 
-    private final TeleRegisters _teleRegisters;
-    private final Symbol _register;
-    private final ValueHistory<Value> _valueHistory;
+    private final TeleRegisters teleRegisters;
+    private final Symbol register;
+    private final ValueHistory<Value> valueHistory;
 
     protected RegisterInfo(TeleRegisters teleRegisters, Symbol register) {
-        _teleRegisters = teleRegisters;
-        _register = register;
-        _valueHistory = new ArrayValueHistory<Value>(6);
+        this.teleRegisters = teleRegisters;
+        this.register = register;
+        this.valueHistory = new ArrayValueHistory<Value>(6);
     }
 
     public String name() {
-        return _register.name();
+        return register.name();
     }
 
     /**
@@ -59,7 +59,7 @@ public abstract class RegisterInfo {
      * @return the current value of the register, as cached by most recent {@link #refresh()}.
      */
     public Value value() {
-        return _valueHistory.get();
+        return valueHistory.get();
     }
 
     /**
@@ -67,15 +67,15 @@ public abstract class RegisterInfo {
      * 0 if different from immediate predecessor; -1 if no different value ever recorded
      */
     public int age() {
-        return _valueHistory.getAge();
+        return valueHistory.getAge();
     }
 
     /**
      * Read and cache the current value of the register; increment generation count.
      */
     public void refresh() {
-        final Address address = _teleRegisters.get(_register);
-        _valueHistory.add(new WordValue(address));
+        final Address address = teleRegisters.get(register);
+        valueHistory.add(new WordValue(address));
     }
 
     /**
@@ -103,22 +103,22 @@ public abstract class RegisterInfo {
      */
     public static final class StateRegisterInfo extends RegisterInfo {
 
-        private final WordValueLabel.ValueMode _displayMode;
+        private final WordValueLabel.ValueMode displayMode;
 
         public StateRegisterInfo(TeleStateRegisters registers, Symbol register) {
             super(registers, register);
             if (registers.isFlagsRegister(register)) {
-                _displayMode = WordValueLabel.ValueMode.FLAGS_REGISTER;
+                displayMode = WordValueLabel.ValueMode.FLAGS_REGISTER;
             } else if (registers.isInstructionPointerRegister(register)) {
-                _displayMode = WordValueLabel.ValueMode.CALL_ENTRY_POINT;
+                displayMode = WordValueLabel.ValueMode.CALL_ENTRY_POINT;
             } else {
-                _displayMode = WordValueLabel.ValueMode.INTEGER_REGISTER;
+                displayMode = WordValueLabel.ValueMode.INTEGER_REGISTER;
             }
         }
 
         @Override
         public WordValueLabel.ValueMode registerLabelValueMode() {
-            return _displayMode;
+            return displayMode;
         }
     }
 

@@ -46,12 +46,12 @@ import com.sun.max.vm.value.*;
  */
 public final class MiscWordLabel extends ValueLabel {
 
-    private final TeleObject _teleObject;
-    private TeleObject _teleJavaMonitor = null;
+    private final TeleObject teleObject;
+    private TeleObject teleJavaMonitor = null;
 
     public MiscWordLabel(Inspection inspection, TeleObject teleObject) {
         super(inspection, null);
-        _teleObject = teleObject;
+        this.teleObject = teleObject;
         addMouseListener(new InspectorMouseClickAdapter(inspection()) {
             @Override
             public void procedure(final MouseEvent mouseEvent) {
@@ -82,7 +82,7 @@ public final class MiscWordLabel extends ValueLabel {
 
     @Override
     public Value fetchValue() {
-        return new WordValue(_teleObject.getMiscWord());
+        return new WordValue(teleObject.getMiscWord());
     }
 
     public void redisplay() {
@@ -92,7 +92,7 @@ public final class MiscWordLabel extends ValueLabel {
         updateText();
     }
 
-    private static ModalLockWordDecoder _modalLockWordDecoder;
+    private static ModalLockWordDecoder modalLockWordDecoder;
 
     @Override
     public void updateText() {
@@ -100,13 +100,13 @@ public final class MiscWordLabel extends ValueLabel {
         final String hexString = miscWord.toHexString();
         final MonitorScheme monitorScheme = maxVM().bootImage().vmConfiguration().monitorScheme();
         if (monitorScheme instanceof ModalMonitorScheme) {
-            _teleJavaMonitor = null;
-            if (_modalLockWordDecoder == null) {
+            teleJavaMonitor = null;
+            if (modalLockWordDecoder == null) {
                 final ModalMonitorScheme modalMonitorScheme = (ModalMonitorScheme) monitorScheme;
-                _modalLockWordDecoder = modalMonitorScheme.getModalLockWordDecoder();
+                modalLockWordDecoder = modalMonitorScheme.getModalLockWordDecoder();
             }
             final ModalLockWord64 modalLockWord = ModalLockWord64.from(miscWord);
-            if (_modalLockWordDecoder.isLockWordInMode(modalLockWord, BiasedLockWord64.class)) {
+            if (modalLockWordDecoder.isLockWordInMode(modalLockWord, BiasedLockWord64.class)) {
                 final BiasedLockWord64 biasedLockWord = BiasedLockWord64.from(modalLockWord);
                 final int hashcode = biasedLockWord.getHashcode();
                 final int recursion = biasedLockWord.getRecursionCount();
@@ -117,7 +117,7 @@ public final class MiscWordLabel extends ValueLabel {
                 setText("BiasedLock(" + recursion + "): " + hexString);
                 setToolTipText("BiasedLockWord64:  recursion=" + recursion +   ";  thread=" +
                                 threadName + ";  biasEpoch=" + biasEpoch  + "; hashcode=" + hashcode);
-            } else if (_modalLockWordDecoder.isLockWordInMode(modalLockWord, ThinLockWord64.class)) {
+            } else if (modalLockWordDecoder.isLockWordInMode(modalLockWord, ThinLockWord64.class)) {
                 final ThinLockWord64 thinLockWord = ThinLockWord64.from(modalLockWord);
                 final int hashcode = thinLockWord.getHashcode();
                 final int recursionCount = thinLockWord.getRecursionCount();
@@ -127,7 +127,7 @@ public final class MiscWordLabel extends ValueLabel {
                 setText("ThinLock(" + recursionCount + "): " + hexString);
                 setToolTipText("ThinLockWord64:  recursion=" + recursionCount +   ";  thread=" +
                                 threadName  + "; hashcode=" + hashcode);
-            } else if (_modalLockWordDecoder.isLockWordInMode(modalLockWord, InflatedMonitorLockWord64.class)) {
+            } else if (modalLockWordDecoder.isLockWordInMode(modalLockWord, InflatedMonitorLockWord64.class)) {
                 setText("InflatedMonitorLock: " + hexString);
                 final InflatedMonitorLockWord64 inflatedLockWord = InflatedMonitorLockWord64.from(modalLockWord);
                 final boolean isBound = inflatedLockWord.isBound();
@@ -137,8 +137,8 @@ public final class MiscWordLabel extends ValueLabel {
                     if (javaMonitorReference.isZero()) {
                         setToolTipText("InflatedMonitorLockWord64:  bound, monitor=null");
                     } else {
-                        _teleJavaMonitor = maxVM().makeTeleObject(javaMonitorReference);
-                        final String name = _teleJavaMonitor.classActorForType().qualifiedName();
+                        teleJavaMonitor = maxVM().makeTeleObject(javaMonitorReference);
+                        final String name = teleJavaMonitor.classActorForType().qualifiedName();
                         setToolTipText("InflatedMonitorLockWord64:  bound, monitor=" + name);
                     }
                 } else {
@@ -161,8 +161,8 @@ public final class MiscWordLabel extends ValueLabel {
     }
 
     private InspectorAction getInspectJavaMonitorAction() {
-        final InspectorAction action = inspection().actions().inspectObject(_teleJavaMonitor, "Inspect JavaMonitor (left-button)");
-        action.setEnabled(_teleJavaMonitor != null);
+        final InspectorAction action = inspection().actions().inspectObject(teleJavaMonitor, "Inspect JavaMonitor (left-button)");
+        action.setEnabled(teleJavaMonitor != null);
         return action;
     }
 }

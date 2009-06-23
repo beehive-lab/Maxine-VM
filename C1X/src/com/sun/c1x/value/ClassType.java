@@ -31,8 +31,8 @@ import com.sun.c1x.ci.CiType;
  */
 public class ClassType extends ValueType {
 
-    final CiType _type;
-    ConstType _constant;
+    final CiType type;
+    ConstType constant;
 
     /**
      * Creates a new ClassType representing the specified compiler interface type.
@@ -40,9 +40,9 @@ public class ClassType extends ValueType {
      */
     public ClassType(CiType type) {
         super(BasicType.Object);
-        _type = type;
+        this.type = type;
         if (type.isLoaded()) {
-            _constant = new ConstType(BasicType.Object, type.javaClass(), true);
+            constant = new ConstType(BasicType.Object, type.javaClass(), true);
         }
     }
 
@@ -58,7 +58,7 @@ public class ClassType extends ValueType {
      * Gets the compiler interface type represented by this type.
      */
     public CiType ciType() {
-        return _type;
+        return type;
     }
 
     /**
@@ -68,7 +68,7 @@ public class ClassType extends ValueType {
      */
     @Override
     public boolean isConstant() {
-        return _type.isLoaded();
+        return type.isLoaded();
     }
 
     /**
@@ -78,6 +78,6 @@ public class ClassType extends ValueType {
      */
     @Override
     public ConstType asConstant() {
-        return _constant;
+        return constant;
     }
 }

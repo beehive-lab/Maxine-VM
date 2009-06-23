@@ -32,16 +32,16 @@ import com.sun.max.ins.*;
   */
 public final class ThreadsViewPreferences extends com.sun.max.ins.gui.TableColumnVisibilityPreferences<ThreadsColumnKind> {
 
-    private static ThreadsViewPreferences _globalPreferences;
+    private static ThreadsViewPreferences globalPreferences;
 
     /**
      * @return the global, persistent set of user preferences for viewing a table of memory regions.
      */
     static ThreadsViewPreferences globalPreferences(Inspection inspection) {
-        if (_globalPreferences == null) {
-            _globalPreferences = new ThreadsViewPreferences(inspection);
+        if (globalPreferences == null) {
+            globalPreferences = new ThreadsViewPreferences(inspection);
         }
-        return _globalPreferences;
+        return globalPreferences;
     }
 
     /**

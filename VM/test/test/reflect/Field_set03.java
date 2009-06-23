@@ -25,7 +25,7 @@ package test.reflect;
  * @Runs: 0=true; 1=true; 2=true; 3=true; 4=true; 5=true; 6=true; 7=true; 8=false
  */
 public class Field_set03 {
-    private static final Field_set03 _object = new Field_set03();
+    private static final Field_set03 object = new Field_set03();
 
     public byte byteField;
     public short shortField;
@@ -38,29 +38,29 @@ public class Field_set03 {
 
     public static boolean test(int arg) throws NoSuchFieldException, IllegalAccessException {
         if (arg == 0) {
-            Field_set03.class.getField("byteField").setByte(_object, (byte) 11);
-            return _object.byteField == 11;
+            Field_set03.class.getField("byteField").setByte(object, (byte) 11);
+            return object.byteField == 11;
         } else if (arg == 1) {
-            Field_set03.class.getField("shortField").setShort(_object, (short) 12);
-            return _object.shortField == 12;
+            Field_set03.class.getField("shortField").setShort(object, (short) 12);
+            return object.shortField == 12;
         } else if (arg == 2) {
-            Field_set03.class.getField("charField").setChar(_object, (char) 13);
-            return _object.charField == 13;
+            Field_set03.class.getField("charField").setChar(object, (char) 13);
+            return object.charField == 13;
         } else if (arg == 3) {
-            Field_set03.class.getField("intField").setInt(_object, 14);
-            return _object.intField == 14;
+            Field_set03.class.getField("intField").setInt(object, 14);
+            return object.intField == 14;
         } else if (arg == 4) {
-            Field_set03.class.getField("longField").setLong(_object, 15L);
-            return _object.longField == 15;
+            Field_set03.class.getField("longField").setLong(object, 15L);
+            return object.longField == 15;
         } else if (arg == 5) {
-            Field_set03.class.getField("floatField").setFloat(_object, 16);
-            return _object.floatField == 16;
+            Field_set03.class.getField("floatField").setFloat(object, 16);
+            return object.floatField == 16;
         } else if (arg == 6) {
-            Field_set03.class.getField("doubleField").setDouble(_object, 17);
-            return _object.doubleField == 17;
+            Field_set03.class.getField("doubleField").setDouble(object, 17);
+            return object.doubleField == 17;
         } else if (arg == 7) {
-            Field_set03.class.getField("booleanField").setBoolean(_object, true);
-            return _object.booleanField == true;
+            Field_set03.class.getField("booleanField").setBoolean(object, true);
+            return object.booleanField == true;
         }
         return false;
     }

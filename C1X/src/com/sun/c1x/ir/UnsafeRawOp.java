@@ -31,9 +31,9 @@ import com.sun.c1x.value.ValueType;
  */
 public abstract class UnsafeRawOp extends UnsafeOp {
 
-    Instruction _base;
-    Instruction _index;
-    int _log2Scale;
+    Instruction base;
+    Instruction index;
+    int log2Scale;
 
     /**
      * Creates a new UnsafeRawOp instruction.
@@ -44,7 +44,7 @@ public abstract class UnsafeRawOp extends UnsafeOp {
     public UnsafeRawOp(BasicType basicType, Instruction addr, boolean isStore) {
         super(basicType, isStore);
         assert addr == null || addr.type().base() == ValueType.LONG_TYPE;
-        _base = addr;
+        base = addr;
     }
 
     /**
@@ -57,9 +57,9 @@ public abstract class UnsafeRawOp extends UnsafeOp {
      */
     public UnsafeRawOp(BasicType basicType, Instruction addr, Instruction index, int log2scale, boolean isStore) {
         this(basicType, addr, isStore);
-        _base = addr;
-        _index = index;
-        _log2Scale = log2scale;
+        this.base = addr;
+        this.index = index;
+        this.log2Scale = log2scale;
     }
 
     /**
@@ -67,7 +67,7 @@ public abstract class UnsafeRawOp extends UnsafeOp {
      * @return the instruction generating the base
      */
     public Instruction base() {
-        return _base;
+        return base;
     }
 
     /**
@@ -75,7 +75,7 @@ public abstract class UnsafeRawOp extends UnsafeOp {
      * @return the instruction generating the index
      */
     public Instruction index() {
-        return _index;
+        return index;
     }
 
     /**
@@ -83,7 +83,7 @@ public abstract class UnsafeRawOp extends UnsafeOp {
      * @return <code>true</code> if this instruction has an index
      */
     public boolean hasIndex() {
-        return _index != null;
+        return index != null;
     }
 
     /**
@@ -91,7 +91,7 @@ public abstract class UnsafeRawOp extends UnsafeOp {
      * @return the log base 2 of the scaling factor
      */
     public int log2Scale() {
-        return _log2Scale;
+        return log2Scale;
     }
 
     /**
@@ -99,7 +99,7 @@ public abstract class UnsafeRawOp extends UnsafeOp {
      * @param base the instruction generating the base address
      */
     public void setBase(Instruction base) {
-        _base = base;
+        this.base = base;
     }
 
     /**
@@ -107,7 +107,7 @@ public abstract class UnsafeRawOp extends UnsafeOp {
      * @param index the instruction generating the index
      */
     public void setIndex(Instruction index) {
-        _index = index;
+        this.index = index;
     }
 
     /**
@@ -115,7 +115,7 @@ public abstract class UnsafeRawOp extends UnsafeOp {
      * @param log2scale the log base 2 of the scaling factor for this instruction
      */
     public void setLog2Scale(int log2scale) {
-        _log2Scale = log2scale;
+        this.log2Scale = log2scale;
     }
 
     /**
@@ -125,9 +125,9 @@ public abstract class UnsafeRawOp extends UnsafeOp {
     @Override
     public void inputValuesDo(InstructionClosure closure) {
         super.inputValuesDo(closure);
-        _base = closure.apply(_base);
-        if (_index != null) {
-            _index = closure.apply(_index);
+        base = closure.apply(base);
+        if (index != null) {
+            index = closure.apply(index);
         }
     }
 }

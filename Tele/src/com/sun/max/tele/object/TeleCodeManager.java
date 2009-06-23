@@ -42,24 +42,24 @@ public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
         return "[TeleCodeManager] ";
     }
 
-    private static TeleCodeManager _teleCodeManager;
+    private static TeleCodeManager teleCodeManager;
 
     public static TeleCodeManager make(TeleVM teleVM) {
-        if (_teleCodeManager ==  null) {
-            _teleCodeManager = (TeleCodeManager) teleVM.makeTeleObject(teleVM.fields().Code_codeManager.readReference(teleVM));
-            _teleCodeManager.initialize();
+        if (teleCodeManager ==  null) {
+            teleCodeManager = (TeleCodeManager) teleVM.makeTeleObject(teleVM.fields().Code_codeManager.readReference(teleVM));
+            teleCodeManager.initialize();
         }
-        return _teleCodeManager;
+        return teleCodeManager;
     }
 
-    private TeleCodeRegion _teleBootCodeRegion = null;
+    private TeleCodeRegion teleBootCodeRegion = null;
 
     /**
      * Surrogates for each of the code regions created by the {@link CodeManager} in the {@link TeleVM}.
      * Assume that the regions are all created at startup, and that their identity doesn't change, just their
      * address as they have memory allocated for them.
      */
-    private TeleCodeRegion[] _teleCodeRegions = new TeleCodeRegion[0];
+    private TeleCodeRegion[] teleCodeRegions = new TeleCodeRegion[0];
 
     TeleCodeManager(TeleVM teleVM, Reference codeManagerReference) {
         super(teleVM, codeManagerReference);
@@ -72,16 +72,16 @@ public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
         Trace.begin(TRACE_VALUE, tracePrefix() + "initializing");
         final long startTimeMillis = System.currentTimeMillis();
         final Reference bootCodeRegionReference = teleVM().fields().Code_bootCodeRegion.readReference(teleVM());
-        _teleBootCodeRegion = (TeleCodeRegion) teleVM().makeTeleObject(bootCodeRegionReference);
+        teleBootCodeRegion = (TeleCodeRegion) teleVM().makeTeleObject(bootCodeRegionReference);
 
         final Reference runtimeCodeRegionsArrayReference = teleVM().fields().CodeManager_runtimeCodeRegions.readReference(reference());
         final TeleArrayObject teleArrayObject = (TeleArrayObject) teleVM().makeTeleObject(runtimeCodeRegionsArrayReference);
         final Reference[] codeRegionReferences = (Reference[]) teleArrayObject.shallowCopy();
-        _teleCodeRegions = new TeleCodeRegion[codeRegionReferences.length];
+        teleCodeRegions = new TeleCodeRegion[codeRegionReferences.length];
         for (int i = 0; i < codeRegionReferences.length; i++) {
-            _teleCodeRegions[i] = (TeleCodeRegion) teleVM().makeTeleObject(codeRegionReferences[i]);
+            teleCodeRegions[i] = (TeleCodeRegion) teleVM().makeTeleObject(codeRegionReferences[i]);
         }
-        Trace.end(TRACE_VALUE, tracePrefix() + "initializing, contains " + _teleCodeRegions.length + " regions", startTimeMillis);
+        Trace.end(TRACE_VALUE, tracePrefix() + "initializing, contains " + teleCodeRegions.length + " regions", startTimeMillis);
     }
 
     @Override
@@ -93,7 +93,7 @@ public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
      * @return surrogate for the special {@link CodeRegion} in the {@link BootImage} of the {@link TeleVM}.
      */
     public TeleCodeRegion teleBootCodeRegion() {
-        return _teleBootCodeRegion;
+        return teleBootCodeRegion;
     }
 
     /**
@@ -101,7 +101,7 @@ public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
      * Sorted in order of allocation.  Does not include the boot code region.
      */
     public IndexedSequence<TeleCodeRegion> teleCodeRegions() {
-        return new ArraySequence<TeleCodeRegion>(_teleCodeRegions);
+        return new ArraySequence<TeleCodeRegion>(teleCodeRegions);
     }
 
     /**
@@ -109,10 +109,10 @@ public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
      * possibly the boot code region; null if none.
      */
     public TeleCodeRegion regionContaining(Address address) {
-        if (_teleBootCodeRegion.contains(address)) {
-            return _teleBootCodeRegion;
+        if (teleBootCodeRegion.contains(address)) {
+            return teleBootCodeRegion;
         }
-        for (TeleCodeRegion teleCodeRegion : _teleCodeRegions) {
+        for (TeleCodeRegion teleCodeRegion : teleCodeRegions) {
             if (teleCodeRegion.contains(address)) {
                 return teleCodeRegion;
             }

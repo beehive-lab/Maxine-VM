@@ -38,16 +38,16 @@ public class JDWPServer {
     private static final Logger LOGGER = Logger.getLogger(JDWPServer.class.getName());
     private static final int TIMEOUT = 2000;
 
-    private ServerSocket _serverSocket;
-    private boolean _shutdown;
+    private ServerSocket serverSocket;
+    private boolean shutdown;
 
     /**
      * Shuts down the JDWP server. The server must be running.
      */
     public void shutdown() {
-        assert _serverSocket != null : "Not running!";
-        assert !_shutdown : "Already shutting down!";
-        _shutdown = true;
+        assert serverSocket != null : "Not running!";
+        assert !shutdown : "Already shutting down!";
+        shutdown = true;
     }
 
     /**
@@ -57,10 +57,10 @@ public class JDWPServer {
      * @throws IOException this exception is thrown, when the server socket could not be created
      */
     public void start(ServerSocket serverSocket) throws IOException {
-        assert _serverSocket == null : "Already started!";
-        _serverSocket = serverSocket;
-        _serverSocket.setSoTimeout(TIMEOUT);
-        new Thread(_waitForClientsThread).start();
+        assert this.serverSocket == null : "Already started!";
+        this.serverSocket = serverSocket;
+        this.serverSocket.setSoTimeout(TIMEOUT);
+        new Thread(waitForClientsThread).start();
     }
 
     /**
@@ -69,19 +69,19 @@ public class JDWPServer {
      * @return the command handler registry
      */
     public CommandHandlerRegistry commandHandlerRegistry() {
-        return _commandHandlerRegistry;
+        return commandHandlerRegistry;
     }
 
     /**
      * Thread waiting for clients to connect to the JDWP server.
      */
-    private Runnable _waitForClientsThread = new Runnable() {
+    private Runnable waitForClientsThread = new Runnable() {
         public void run() {
             LOGGER.info("JDWPServer waiting for clients");
             try {
-                while (!_shutdown) {
+                while (!shutdown) {
                     try {
-                        final Socket clientSocket = _serverSocket.accept();
+                        final Socket clientSocket = serverSocket.accept();
                         new ClientThread(clientSocket).start();
                     } catch (SocketTimeoutException e) {
                     }
@@ -90,8 +90,8 @@ public class JDWPServer {
                 LOGGER.severe("Exception occurred while waiting for clients: " + e.toString());
             } finally {
                 LOGGER.info("JDWP server is shut down");
-                _serverSocket = null;
-                _shutdown = false;
+                serverSocket = null;
+                shutdown = false;
             }
         }
 
@@ -100,28 +100,28 @@ public class JDWPServer {
     /**
      * Registry that manages the set of command handlers.
      */
-    private final CommandHandlerRegistry _commandHandlerRegistry = new CommandHandlerRegistry() {
+    private final CommandHandlerRegistry commandHandlerRegistry = new CommandHandlerRegistry() {
 
-        private Map<Byte, Map<Byte, CommandHandler<? extends IncomingData, ? extends OutgoingData>>> _commandHandlerCache = new HashMap<Byte, Map<Byte, CommandHandler<? extends IncomingData, ? extends OutgoingData>>>();
+        private Map<Byte, Map<Byte, CommandHandler<? extends IncomingData, ? extends OutgoingData>>> commandHandlerCache = new HashMap<Byte, Map<Byte, CommandHandler<? extends IncomingData, ? extends OutgoingData>>>();
 
         public CommandHandler<? extends IncomingData, ? extends OutgoingData> findCommandHandler(byte commandSetId, byte commandId) {
-            if (!_commandHandlerCache.containsKey(commandSetId)) {
+            if (!commandHandlerCache.containsKey(commandSetId)) {
                 return null;
             }
-            final CommandHandler<? extends IncomingData, ? extends OutgoingData> result = _commandHandlerCache.get(commandSetId).get(commandId);
+            final CommandHandler<? extends IncomingData, ? extends OutgoingData> result = commandHandlerCache.get(commandSetId).get(commandId);
             assert result == null || result.getCommandSetId() == commandSetId : "Command set ID must match.";
             assert result == null || result.getCommandId() == commandId : "Command ID must match.";
             return result;
         }
 
         public void addCommandHandler(CommandHandler<? extends IncomingData, ? extends OutgoingData> commandHandler) {
-            if (!_commandHandlerCache.containsKey(commandHandler.getCommandSetId())) {
-                _commandHandlerCache.put(commandHandler.getCommandSetId(), new HashMap<Byte, CommandHandler<? extends IncomingData, ? extends OutgoingData>>());
+            if (!commandHandlerCache.containsKey(commandHandler.getCommandSetId())) {
+                commandHandlerCache.put(commandHandler.getCommandSetId(), new HashMap<Byte, CommandHandler<? extends IncomingData, ? extends OutgoingData>>());
             }
 
-            assert _commandHandlerCache.containsKey(commandHandler.getCommandSetId());
+            assert commandHandlerCache.containsKey(commandHandler.getCommandSetId());
 
-            final Map<Byte, CommandHandler<? extends IncomingData, ? extends OutgoingData>> map = _commandHandlerCache.get(commandHandler.getCommandSetId());
+            final Map<Byte, CommandHandler<? extends IncomingData, ? extends OutgoingData>> map = commandHandlerCache.get(commandHandler.getCommandSetId());
 
             if (map.containsKey(commandHandler.getCommandId())) {
                 throw new IllegalArgumentException("Command handler with set id " + commandHandler.getCommandSetId() + " and command id " + commandHandler.getCommandId() + " is already installed.");
@@ -138,23 +138,23 @@ public class JDWPServer {
      */
     private class ClientThread extends Thread {
 
-        private Socket _socket;
+        private Socket socket;
 
         public ClientThread(Socket socket) {
-            _socket = socket;
+            this.socket = socket;
         }
 
         @Override
         public void run() {
 
             try {
-                final JDWPStream stream = new JDWPStream(_socket.getInputStream(), _socket.getOutputStream());
+                final JDWPStream stream = new JDWPStream(socket.getInputStream(), socket.getOutputStream());
                 stream.handshake();
                 LOGGER.info("Handshake passed successfully!");
 
-                while (!_shutdown) {
+                while (!shutdown) {
                     try {
-                        final IncomingPacket<? extends IncomingData, ? extends OutgoingData> incomingPacket = stream.receive(_commandHandlerRegistry);
+                        final IncomingPacket<? extends IncomingData, ? extends OutgoingData> incomingPacket = stream.receive(commandHandlerRegistry);
                         try {
                             final ReplyPacket<? extends IncomingData, ? extends OutgoingData> replyPacket = incomingPacket.handle(stream);
                             if (replyPacket == null) {
@@ -181,7 +181,7 @@ public class JDWPServer {
             } finally {
 
                 try {
-                    _socket.close();
+                    socket.close();
                 } catch (IOException e) {
                     LOGGER.log(Level.SEVERE, "IO exception when closing socket", e);
                 }

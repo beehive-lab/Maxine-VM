@@ -46,7 +46,7 @@ public class TeleCodeRegistry extends AbstractTeleVMHolder {
         Trace.end(1, tracePrefix() + " initializing", startTimeMillis);
     }
 
-    private final SortedMemoryRegionList<TargetCodeRegion> _targetCodeRegions = new SortedMemoryRegionList<TargetCodeRegion>();
+    private final SortedMemoryRegionList<TargetCodeRegion> targetCodeRegions = new SortedMemoryRegionList<TargetCodeRegion>();
 
     /**
      * Adds a {@link TeleTargetRoutine} entry to the code registry, indexed by code address. Should only be called from
@@ -57,7 +57,7 @@ public class TeleCodeRegistry extends AbstractTeleVMHolder {
      * @throws IllegalArgumentException when the memory region of {@code teleTargetRoutine} overlaps one already in this registry.
      */
     public synchronized void add(TeleTargetRoutine teleTargetRoutine) {
-        _targetCodeRegions.add(teleTargetRoutine.targetCodeRegion());
+        targetCodeRegions.add(teleTargetRoutine.targetCodeRegion());
     }
 
     /**
@@ -70,7 +70,7 @@ public class TeleCodeRegistry extends AbstractTeleVMHolder {
      *         address} or null if no such tele target routine of the requested type exists
      */
     public synchronized <TeleTargetRoutine_Type extends TeleTargetRoutine> TeleTargetRoutine_Type get(Class<TeleTargetRoutine_Type> teleTargetRoutineType, Address address) {
-        final TargetCodeRegion targetCodeRegion = _targetCodeRegions.find(address);
+        final TargetCodeRegion targetCodeRegion = targetCodeRegions.find(address);
         if (targetCodeRegion != null) {
             final TeleTargetRoutine teleTargetRoutine = targetCodeRegion.teleTargetRoutine();
             if (teleTargetRoutineType.isInstance(teleTargetRoutine)) {
@@ -85,12 +85,12 @@ public class TeleCodeRegistry extends AbstractTeleVMHolder {
      * in target VM, arranged for lookup by address.
      */
     public Iterable<TargetCodeRegion> targetCodeRegions() {
-        return _targetCodeRegions;
+        return targetCodeRegions;
     }
 
     public void writeSummaryToStream(PrintStream printStream) {
         Address lastEndAddress = null;
-        for (TargetCodeRegion targetCodeRegion : _targetCodeRegions) {
+        for (TargetCodeRegion targetCodeRegion : targetCodeRegions) {
             final TeleTargetRoutine teleTargetRoutine = targetCodeRegion.teleTargetRoutine();
             final String name = teleTargetRoutine.teleRoutine().getUniqueName();
             if (lastEndAddress != null && !lastEndAddress.equals(targetCodeRegion.start())) {

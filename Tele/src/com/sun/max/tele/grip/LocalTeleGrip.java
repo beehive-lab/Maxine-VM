@@ -29,28 +29,28 @@ import com.sun.max.vm.grip.*;
  */
 public class LocalTeleGrip extends TeleGrip {
 
-    private final Object _object;
+    private final Object object;
 
     public Object object() {
-        return _object;
+        return object;
     }
 
-    private final TeleGripScheme _teleGripScheme;
+    private final TeleGripScheme teleGripScheme;
 
     LocalTeleGrip(TeleGripScheme teleGripScheme, Object object) {
-        _teleGripScheme = teleGripScheme;
-        _object = object;
+        this.teleGripScheme = teleGripScheme;
+        this.object = object;
     }
 
     @Override
     protected void finalize() throws Throwable {
-        _teleGripScheme.disposeCanonicalLocalGrip(_object);
+        teleGripScheme.disposeCanonicalLocalGrip(object);
         super.finalize();
     }
 
     @Override
     public String toString() {
-        return _object.toString();
+        return object.toString();
     }
 
     @Override
@@ -62,13 +62,13 @@ public class LocalTeleGrip extends TeleGrip {
     public boolean equals(Object other) {
         if (other instanceof LocalTeleGrip) {
             final LocalTeleGrip localTeleGrip = (LocalTeleGrip) other;
-            return _object == localTeleGrip.object();
+            return object == localTeleGrip.object();
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return System.identityHashCode(_object);
+        return System.identityHashCode(object);
     }
 }

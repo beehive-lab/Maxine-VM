@@ -37,20 +37,20 @@ public abstract class TeleFieldAccess {
         return classActor.findFieldActor(SymbolTable.makeSymbol(name));
     }
 
-    private final FieldActor _fieldActor;
+    private final FieldActor fieldActor;
 
     public FieldActor fieldActor() {
-        return _fieldActor;
+        return fieldActor;
     }
 
     protected TeleFieldAccess(Class holder, String name, Kind kind) {
-        _fieldActor = findFieldActor(holder, name);
-        ProgramError.check(_fieldActor != null, "could not find field: " + name + " in class: " + holder);
-        ProgramError.check(_fieldActor.kind == kind, "field has wrong kind: " + name + " in class: " + holder);
+        fieldActor = findFieldActor(holder, name);
+        ProgramError.check(fieldActor != null, "could not find field: " + name + " in class: " + holder);
+        ProgramError.check(fieldActor.kind == kind, "field has wrong kind: " + name + " in class: " + holder);
     }
 
     @Override
     public String toString() {
-        return _fieldActor.toString();
+        return fieldActor.toString();
     }
 }

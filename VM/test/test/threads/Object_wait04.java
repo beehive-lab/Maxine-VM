@@ -25,27 +25,27 @@
 package test.threads;
 
 public class Object_wait04  implements Runnable {
-    static volatile boolean _done;
-    static final Object _object = new Object();
-    static int _sleep;
+    static volatile boolean done;
+    static final Object object = new Object();
+    static int sleep;
 
     public static boolean test(int i) throws InterruptedException {
-        _done = false;
-        _sleep = i * 50;
-        synchronized (_object) {
+        done = false;
+        sleep = i * 50;
+        synchronized (object) {
             new Thread(new Object_wait04()).start();
             dowait(i);
         }
-        return _done;
+        return done;
     }
 
     private static void dowait(int i) throws InterruptedException {
         if (i == 0) {
-            while (!_done) {
-                _object.wait(100);
+            while (!done) {
+                object.wait(100);
             }
         } else {
-            synchronized (_object) {
+            synchronized (object) {
                 dowait(i - 1);
             }
         }
@@ -53,13 +53,13 @@ public class Object_wait04  implements Runnable {
 
     public void run() {
         try {
-            Thread.sleep(_sleep);
+            Thread.sleep(sleep);
         } catch (InterruptedException ex) {
 
         }
-        synchronized (_object) {
-            _done = true;
-            _object.notifyAll();
+        synchronized (object) {
+            done = true;
+            object.notifyAll();
         }
     }
 

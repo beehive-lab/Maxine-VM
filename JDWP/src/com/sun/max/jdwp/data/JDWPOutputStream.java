@@ -33,26 +33,26 @@ import com.sun.max.jdwp.constants.*;
  */
 public class JDWPOutputStream {
 
-    private DataOutputStream _out;
+    private DataOutputStream out;
 
     public JDWPOutputStream(OutputStream out) {
-        _out = new DataOutputStream(out);
+        this.out = new DataOutputStream(out);
     }
 
     public void write(boolean b) throws IOException {
-        _out.writeBoolean(b);
+        out.writeBoolean(b);
     }
 
     public void write(byte b) throws IOException {
-        _out.writeByte(b);
+        out.writeByte(b);
     }
 
     public void write(int i) throws IOException {
-        _out.writeInt(i);
+        out.writeInt(i);
     }
 
     public void write(long l) throws IOException {
-        _out.writeLong(l);
+        out.writeLong(l);
     }
 
     /**
@@ -60,25 +60,25 @@ public class JDWPOutputStream {
      * @return the underlying stream object
      */
     public OutputStream getOutputStream() {
-        return _out;
+        return out;
     }
 
     public void write(String s) throws IOException {
         final byte[] bytes = s.getBytes(Charset.forName("UTF-8"));
         write(bytes.length);
-        _out.write(bytes);
+        out.write(bytes);
     }
 
     public void write(JDWPLocation l) throws IOException {
-        l.write(_out);
+        l.write(out);
     }
 
     public void write(JDWPValue v) throws IOException {
-        v.write(_out);
+        v.write(out);
     }
 
     public void writeUntagged(JDWPValue v) throws IOException {
-        v.writeUntagged(_out);
+        v.writeUntagged(out);
     }
 
     /**
@@ -125,8 +125,8 @@ public class JDWPOutputStream {
             throw new IOException("If array has primtive type objects, they must be all of the same type! Array is: " + list);
         }
 
-        _out.writeByte(tag);
-        _out.writeInt(list.size());
+        out.writeByte(tag);
+        out.writeInt(list.size());
 
         // There can only be either objects or primitives in the array.
         assert !(hasObjects && hasPrimitives);

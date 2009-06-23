@@ -42,22 +42,22 @@ import com.sun.max.vm.runtime.*;
  */
 public final class DirectInspectorGripScheme extends TeleGripScheme {
 
-    private DataModel _dataModel;
+    private DataModel dataModel;
 
     public DataModel dataModel() {
-        return _dataModel;
+        return dataModel;
     }
 
-    private WordWidth _gripWidth;
+    private WordWidth gripWidth;
 
     public WordWidth gripWidth() {
-        return _gripWidth;
+        return gripWidth;
     }
 
     public DirectInspectorGripScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        _dataModel = vmConfiguration.platform().processorKind().dataModel();
-        _gripWidth = _dataModel.wordWidth();
+        dataModel = vmConfiguration.platform().processorKind().dataModel();
+        gripWidth = dataModel.wordWidth();
     }
 
     public boolean isConstant() {

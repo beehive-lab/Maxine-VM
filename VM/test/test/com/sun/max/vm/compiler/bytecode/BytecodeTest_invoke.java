@@ -161,20 +161,20 @@ public abstract class BytecodeTest_invoke<Method_Type extends IrMethod> extends 
         assertTrue(result.asDouble() == b * (a - 12345));
     }
 
-    private TestInterface _interfaceInstance;
+    private TestInterface interfaceInstance;
 
     private double perform_invokeinterface_2(int a, double b) {
-        return _interfaceInstance.interface_2(a, b);
+        return interfaceInstance.interface_2(a, b);
     }
 
     public void test_invokeinterface_2() {
-        _interfaceInstance = new TestInterface() {
+        interfaceInstance = new TestInterface() {
             public double interface_2(int a, double b) {
                 return a - b;
             }
         };
         PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(TestInterface.class));
-        PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(_interfaceInstance.getClass()));
+        PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(interfaceInstance.getClass()));
         final Method_Type method = compileMethod("perform_invokeinterface_2", SignatureDescriptor.create(double.class, int.class, double.class));
         new BytecodeConfirmation(method.classMethodActor()) {
             @Override

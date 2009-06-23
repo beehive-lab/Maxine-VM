@@ -33,8 +33,8 @@ public class ArrayMap<T> {
     private static final int INITIAL_SIZE = 5; // how big the initial array should be
     private static final int EXTRA = 2; // how far on the left or right of a new element to grow
 
-    Object[] _map;
-    int _low;
+    Object[] map;
+    int low;
 
     /**
      * Constructs a new <code>ArrayMap</code> with no initial assumptions.
@@ -49,8 +49,8 @@ public class ArrayMap<T> {
      * @param high the high index, exclusive
      */
     public ArrayMap(int low, int high) {
-        _low = low;
-        _map = new Object[high - low + 1];
+        this.low = low;
+        this.map = new Object[high - low + 1];
     }
 
     /**
@@ -59,21 +59,21 @@ public class ArrayMap<T> {
      * @param value the value to store at the specified index
      */
     public void put(int i, T value) {
-        int index = i - _low;
-        if (_map == null) {
+        int index = i - low;
+        if (map == null) {
             // no map yet
-            _map = new Object[INITIAL_SIZE];
-            _low = index - 2;
-            _map[INITIAL_SIZE / 2] = value;
+            map = new Object[INITIAL_SIZE];
+            low = index - 2;
+            map[INITIAL_SIZE / 2] = value;
         } else if (index < 0) {
             // grow backwards
             growBackward(i, value);
-        } else if (index >= _map.length) {
+        } else if (index >= map.length) {
             // grow forwards
             growForward(i, value);
         } else {
             // no growth necessary
-            _map[index] = value;
+            map[index] = value;
         }
     }
 
@@ -84,29 +84,29 @@ public class ArrayMap<T> {
      * or if the index is out of the currently stored range
      */
     public T get(int i) {
-        int index = i - _low;
-        if (_map == null || index < 0 || index >= _map.length) {
+        int index = i - low;
+        if (map == null || index < 0 || index >= map.length) {
             return null;
         }
         Class<T> type = null;
-        return Util.uncheckedCast(type, _map[index]);
+        return Util.uncheckedCast(type, map[index]);
     }
 
     private void growBackward(int i, T value) {
         int nlow = i - EXTRA;
-        Object[] nmap = new Object[_low - nlow + _map.length];
-        System.arraycopy(_map, 0, nmap, _low - nlow, _map.length);
-        _map = nmap;
-        _low = nlow;
-        _map[i - _low] = value;
+        Object[] nmap = new Object[low - nlow + map.length];
+        System.arraycopy(map, 0, nmap, low - nlow, map.length);
+        map = nmap;
+        low = nlow;
+        map[i - low] = value;
     }
 
     private void growForward(int i, T value) {
-        int nlen = i - _low + 1 + EXTRA;
+        int nlen = i - low + 1 + EXTRA;
         Object[] nmap = new Object[nlen];
-        System.arraycopy(_map, 0, nmap, 0, _map.length);
-        _map = nmap;
-        _map[i - _low] = value;
+        System.arraycopy(map, 0, nmap, 0, map.length);
+        map = nmap;
+        map[i - low] = value;
     }
 
 }

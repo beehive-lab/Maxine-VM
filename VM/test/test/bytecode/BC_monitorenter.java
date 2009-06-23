@@ -25,10 +25,10 @@ package test.bytecode;
  * @Runs: 0 = 0; 1 = 1; -2 = -2
  */
 public class BC_monitorenter {
-    static BC_monitorenter _object = new BC_monitorenter();
+    static BC_monitorenter object = new BC_monitorenter();
 
     public static int test(int arg) {
-        synchronized (_object) {
+        synchronized (object) {
             return arg;
         }
     }

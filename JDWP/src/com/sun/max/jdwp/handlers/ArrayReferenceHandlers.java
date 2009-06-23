@@ -52,7 +52,7 @@ public class ArrayReferenceHandlers extends Handlers {
 
         @Override
         public Length.Reply handle(Length.IncomingRequest incomingRequest) throws JDWPException {
-            return new Length.Reply(session().getArray(incomingRequest._arrayObject).length());
+            return new Length.Reply(session().getArray(incomingRequest.arrayObject).length());
         }
     }
 
@@ -65,9 +65,9 @@ public class ArrayReferenceHandlers extends Handlers {
         @Override
         public GetValues.Reply handle(GetValues.IncomingRequest incomingRequest) throws JDWPException {
 
-            final ArrayProvider array = session().getArray(incomingRequest._arrayObject);
-            final int firstIndex = incomingRequest._firstIndex;
-            final int length = incomingRequest._length;
+            final ArrayProvider array = session().getArray(incomingRequest.arrayObject);
+            final int firstIndex = incomingRequest.firstIndex;
+            final int length = incomingRequest.length;
 
             final List<JDWPValue> list = new ArrayList<JDWPValue>();
             for (int i = firstIndex; i < firstIndex + length; i++) {
@@ -89,18 +89,18 @@ public class ArrayReferenceHandlers extends Handlers {
          */
         @Override
         public int helpAtDecodingUntaggedValue(SetValues.IncomingRequest data) throws JDWPException {
-            return JDWPSession.getValueTypeTag(session().getArray(data._arrayObject).getArrayType().elementType().getType());
+            return JDWPSession.getValueTypeTag(session().getArray(data.arrayObject).getArrayType().elementType().getType());
         }
 
         @Override
         public SetValues.Reply handle(SetValues.IncomingRequest incomingRequest) throws JDWPException {
 
-            final ArrayProvider array = session().getArray(incomingRequest._arrayObject);
-            final int firstIndex = incomingRequest._firstIndex;
-            final int length = incomingRequest._values.length;
+            final ArrayProvider array = session().getArray(incomingRequest.arrayObject);
+            final int firstIndex = incomingRequest.firstIndex;
+            final int length = incomingRequest.values.length;
 
             for (int i = firstIndex; i < firstIndex + length; i++) {
-                array.setValue(i, session().toValue(incomingRequest._values[i - firstIndex]));
+                array.setValue(i, session().toValue(incomingRequest.values[i - firstIndex]));
             }
 
             return new SetValues.Reply();

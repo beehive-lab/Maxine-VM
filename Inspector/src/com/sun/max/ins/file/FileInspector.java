@@ -32,15 +32,15 @@ import com.sun.max.ins.gui.*;
  */
 public abstract class FileInspector extends UniqueInspector {
 
-    private File _file;
+    private File file;
 
     public File file() {
-        return _file;
+        return file;
     }
 
     protected FileInspector(Inspection inspection, File file) {
         super(inspection, file);
-        _file = file;
+        this.file = file;
     }
 
     public abstract void highlightLine(int lineNumber);
@@ -48,7 +48,7 @@ public abstract class FileInspector extends UniqueInspector {
     protected String readFile() {
         String text = null;
         try {
-            final FileInputStream fileInputStream = new FileInputStream(_file);
+            final FileInputStream fileInputStream = new FileInputStream(file);
             final int length = fileInputStream.available();
             final byte[] bytes = new byte[length];
             fileInputStream.read(bytes);

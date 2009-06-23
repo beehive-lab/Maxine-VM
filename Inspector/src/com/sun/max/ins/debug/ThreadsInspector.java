@@ -41,29 +41,29 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
     private static final int TRACE_VALUE = 1;
 
     // Set to null when inspector closed.
-    private static ThreadsInspector _threadsInspector;
+    private static ThreadsInspector threadsInspector;
     /**
      * Display the (singleton) threads inspector, creating it if needed.
      */
     public static ThreadsInspector make(Inspection inspection) {
-        if (_threadsInspector == null) {
-            _threadsInspector = new ThreadsInspector(inspection);
+        if (threadsInspector == null) {
+            threadsInspector = new ThreadsInspector(inspection);
         }
-        return _threadsInspector;
+        return threadsInspector;
     }
 
-    private final SaveSettingsListener _saveSettingsListener = createGeometrySettingsClient(this, "threadsInspector");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "threadsInspector");
 
-    private ThreadsTable _table;
+    private ThreadsTable table;
 
     // This is a singleton viewer, so only use a single level of view preferences.
-    private final ThreadsViewPreferences _viewPreferences;
+    private final ThreadsViewPreferences viewPreferences;
 
     private ThreadsInspector(Inspection inspection) {
         super(inspection);
         Trace.begin(TRACE_VALUE,  tracePrefix() + " initializing");
-        _viewPreferences = ThreadsViewPreferences.globalPreferences(inspection());
-        _viewPreferences.addListener(this);
+        viewPreferences = ThreadsViewPreferences.globalPreferences(inspection());
+        viewPreferences.addListener(this);
         createFrame(null);
         Trace.end(TRACE_VALUE,  tracePrefix() + " initializing");
     }
@@ -75,12 +75,12 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
 
     @Override
     protected SaveSettingsListener saveSettingsListener() {
-        return _saveSettingsListener;
+        return saveSettingsListener;
     }
 
     @Override
     protected InspectorTable getTable() {
-        return _table;
+        return table;
     }
 
     @Override
@@ -90,21 +90,21 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
 
     @Override
     public void createView() {
-        _table = new ThreadsTable(inspection(), _viewPreferences);
-        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _table);
+        table = new ThreadsTable(inspection(), viewPreferences);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), table);
         frame().setContentPane(scrollPane);
     }
 
     @Override
     protected void refreshView(boolean force) {
-        _table.refresh(force);
+        table.refresh(force);
         super.refreshView(force);
     }
 
     @Override
     public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
-        if (_table != null) {
-            _table.updateFocusSelection();
+        if (table != null) {
+            table.updateFocusSelection();
         }
     }
 
@@ -113,7 +113,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<ThreadsColumnKind>(inspection(), "Threads View Options", _viewPreferences);
+                new TableColumnVisibilityPreferences.Dialog<ThreadsColumnKind>(inspection(), "Threads View Options", viewPreferences);
             }
         };
     }
@@ -134,8 +134,8 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
     @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
-        _threadsInspector = null;
-        _viewPreferences.removeListener(this);
+        threadsInspector = null;
+        viewPreferences.removeListener(this);
         super.inspectorClosing();
     }
 

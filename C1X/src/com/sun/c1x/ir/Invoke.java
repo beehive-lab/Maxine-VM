@@ -31,11 +31,11 @@ import com.sun.c1x.value.*;
  */
 public class Invoke extends StateSplit {
 
-    final int _opcode;
-    Instruction _object;
-    Instruction[] _arguments;
-    int _vtableIndex;
-    final CiMethod _target;
+    final int opcode;
+    Instruction object;
+    Instruction[] arguments;
+    int vtableIndex;
+    final CiMethod target;
 
     /**
      * Constructs a new Invoke instruction.
@@ -48,11 +48,11 @@ public class Invoke extends StateSplit {
      */
     public Invoke(int opcode, ValueType result, Instruction object, Instruction[] args, int vtableIndex, CiMethod target) {
         super(result);
-        _opcode = opcode;
-        _object = object;
-        _arguments = args;
-        _vtableIndex = vtableIndex;
-        _target = target;
+        this.opcode = opcode;
+        this.object = object;
+        this.arguments = args;
+        this.vtableIndex = vtableIndex;
+        this.target = target;
         if (target.isLoaded()) {
             setFlag(Flag.TargetIsLoaded);
             initFlag(Flag.TargetIsFinal, target.isFinalMethod());
@@ -65,7 +65,7 @@ public class Invoke extends StateSplit {
      * @return the opcode
      */
     public int opcode() {
-        return _opcode;
+        return opcode;
     }
 
     /**
@@ -74,7 +74,7 @@ public class Invoke extends StateSplit {
      * if this invocation does not take a receiver object
      */
     public Instruction object() {
-        return _object;
+        return object;
     }
 
     /**
@@ -82,7 +82,7 @@ public class Invoke extends StateSplit {
      * @return the virtual table index
      */
     public int vtableIndex() {
-        return _vtableIndex;
+        return vtableIndex;
     }
 
     /**
@@ -90,7 +90,7 @@ public class Invoke extends StateSplit {
      * @return the target method
      */
     public CiMethod target() {
-        return _target;
+        return target;
     }
 
     /**
@@ -98,7 +98,7 @@ public class Invoke extends StateSplit {
      * @return the list of instructions that produce input
      */
     public Instruction[] arguments() {
-        return _arguments;
+        return arguments;
     }
 
     /**
@@ -116,7 +116,7 @@ public class Invoke extends StateSplit {
      * if this is a static call
      */
     public boolean hasReceiver() {
-        return _object != null;
+        return object != null;
     }
 
     /**
@@ -125,11 +125,11 @@ public class Invoke extends StateSplit {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        if (_object != null) {
-            _object = closure.apply(_object);
+        if (object != null) {
+            object = closure.apply(object);
         }
-        for (int i = 0; i < _arguments.length; i++) {
-            _arguments[i] = closure.apply(_arguments[i]);
+        for (int i = 0; i < arguments.length; i++) {
+            arguments[i] = closure.apply(arguments[i]);
         }
     }
 

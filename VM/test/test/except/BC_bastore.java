@@ -29,10 +29,10 @@ package test.except;
 
 public class BC_bastore {
 
-    static boolean[] _array = {false, false, false, false};
+    static boolean[] arr = {false, false, false, false};
 
     public static boolean test(int arg, boolean val) {
-        final boolean[] array = arg == -2 ? null : _array;
+        final boolean[] array = arg == -2 ? null : arr;
         array[arg] = val;
         return array[arg];
     }
