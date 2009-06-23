@@ -1015,6 +1015,7 @@ public class GraphBuilder {
             loadLocal(ValueType.OBJECT_TYPE, 0);
             append(new Intrinsic(ValueType.VOID_TYPE, C1XIntrinsic.java_lang_Object$init,
                                           curState.popArguments(1), true, lockStack(), true, true));
+            C1XMetrics.InlinedFinalizerChecks++;
         }
 
     }
@@ -1603,6 +1604,7 @@ public class GraphBuilder {
         }
 
         compilation.recordInlining(target);
+        C1XMetrics.InlinedMethods++;
         return true;
     }
 
@@ -1674,6 +1676,9 @@ public class GraphBuilder {
         if (!C1XOptions.InlineIntrinsics) {
             return cannotInline(target, "inlining of intrinsics is turned off");
         }
+        if (!target.isLoaded()) {
+            return cannotInline(target, "cannot inline unresolved intrinsic");
+        }
         boolean preservesState = true;
         boolean canTrap = false;
 
@@ -1681,7 +1686,8 @@ public class GraphBuilder {
         switch (intrinsic) {
             // java.lang.Object
             case java_lang_Object$init:     // fall through
-            case java_lang_Object$clone:    return false; // NOPE
+            case java_lang_Object$clone:    return false;
+            // TODO: preservesState and canTrap for complex intrinsics
         }
 
         // get the arguments for the intrinsic
@@ -1693,6 +1699,7 @@ public class GraphBuilder {
         Intrinsic result = new Intrinsic(resultType, intrinsic, args, hasReceiver, lockStack(), preservesState, canTrap);
         Instruction value = append(result);
         pushReturn(resultType, value);
+        C1XMetrics.InlinedIntrinsics++;
         return true;
     }
 

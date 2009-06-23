@@ -723,7 +723,7 @@ public class Canonicalizer extends InstructionVisitor {
         }
         Instruction[] args = i.arguments();
         for (Instruction arg : args) {
-            if (!arg.type().isConstant()) {
+            if (arg != null && !arg.type().isConstant()) {
                 // one input is not constant, give up
                 return;
             }
@@ -837,11 +837,11 @@ public class Canonicalizer extends InstructionVisitor {
             case java_lang_Math$sin:   setDoubleConstant(Math.sin(argAsDouble(args, 0))); return;
             case java_lang_Math$cos:   setDoubleConstant(Math.cos(argAsDouble(args, 0))); return;
             case java_lang_Math$tan:   setDoubleConstant(Math.tan(argAsDouble(args, 0))); return;
-            case java_lang_Math$atan2: setDoubleConstant(Math.atan2(argAsDouble(args, 0), argAsDouble(args, 1))); return;
+            case java_lang_Math$atan2: setDoubleConstant(Math.atan2(argAsDouble(args, 0), argAsDouble(args, 2))); return;
             case java_lang_Math$sqrt:  setDoubleConstant(Math.sqrt(argAsDouble(args, 0))); return;
             case java_lang_Math$log:   setDoubleConstant(Math.log(argAsDouble(args, 0))); return;
             case java_lang_Math$log10: setDoubleConstant(Math.log10(argAsDouble(args, 0))); return;
-            case java_lang_Math$pow:   setDoubleConstant(Math.pow(argAsDouble(args, 0), argAsDouble(args, 1))); return;
+            case java_lang_Math$pow:   setDoubleConstant(Math.pow(argAsDouble(args, 0), argAsDouble(args, 2))); return;
             case java_lang_Math$exp:   setDoubleConstant(Math.exp(argAsDouble(args, 0))); return;
             case java_lang_Math$min:   setIntConstant(Math.min(argAsInt(args, 0), argAsInt(args, 1))); return;
             case java_lang_Math$max:   setIntConstant(Math.max(argAsInt(args, 0), argAsInt(args, 1))); return;
