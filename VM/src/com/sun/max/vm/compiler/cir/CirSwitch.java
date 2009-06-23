@@ -111,7 +111,10 @@ public class CirSwitch extends CirProcedure implements CirFoldable, CirReducible
     }
 
     public boolean isFoldable(CirOptimizer cirOptimizer, CirValue[] arguments) {
-        assert arguments.length >= 4;
+        if (arguments.length == 2) {
+            // Only has the default continuation
+            return true;
+        }
         final CirValue tag = arguments[0];
         if (!(tag instanceof CirConstant)) {
             return false;
@@ -131,16 +134,18 @@ public class CirSwitch extends CirProcedure implements CirFoldable, CirReducible
     }
 
     public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
-        final CirConstant tag = (CirConstant) arguments[0];
-        final Value tagValue = comparisonKind.convert(tag.toStackValue());
-        final int n = numberOfMatches();
-        assert n == (arguments.length - 2) >> 1;
-        for (int i = 1; i <= n; i++) {
-            final CirConstant match = (CirConstant) arguments[i];
-            final Value matchValue = comparisonKind.convert(match.toStackValue());
-            if (valueComparator.evaluate(tagValue, matchValue)) {
-                final CirValue branchContinuation = arguments[n + i];
-                return new CirCall(branchContinuation, CirCall.NO_ARGUMENTS);
+        if (arguments.length > 2) {
+            final CirConstant tag = (CirConstant) arguments[0];
+            final Value tagValue = comparisonKind.convert(tag.toStackValue());
+            final int n = numberOfMatches();
+            assert n == (arguments.length - 2) >> 1;
+            for (int i = 1; i <= n; i++) {
+                final CirConstant match = (CirConstant) arguments[i];
+                final Value matchValue = comparisonKind.convert(match.toStackValue());
+                if (valueComparator.evaluate(tagValue, matchValue)) {
+                    final CirValue branchContinuation = arguments[n + i];
+                    return new CirCall(branchContinuation, CirCall.NO_ARGUMENTS);
+                }
             }
         }
         final CirValue defaultContinuation = arguments[arguments.length - 1];

@@ -21,7 +21,6 @@
 package test.com.sun.max.vm.compiler.bytecode;
 
 import test.com.sun.max.vm.compiler.*;
-import test.com.sun.max.vm.compiler.bytecode.BytecodeConfirmation.*;
 
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.type.*;
@@ -48,22 +47,27 @@ public abstract class BytecodeTest_switch<Method_Type extends IrMethod> extends 
 
     public void test_tableswitch_1() {
         final Method_Type method = compileMethod("perform_tableswitch_1", SignatureDescriptor.create(int.class, int.class));
-        try {
-            new BytecodeConfirmation(method.classMethodActor()) {
+        Value result = execute(method, IntValue.from(1));
+        assertTrue(result.asInt() == 10);
+        result = execute(method, IntValue.from(0));
+        assertTrue(result.asInt() == -1);
+    }
 
-                @Override
-                public void tableswitch(int defaultOffset, int lowMatch, int highMatch, int numberOfCases) {
-                    bytecodeScanner().skipBytes(numberOfCases * 4);
-                    confirmPresence();
-                }
-            };
-            Value result = execute(method, IntValue.from(1));
-            assertTrue(result.asInt() == 10);
-            result = execute(method, IntValue.from(0));
-            assertTrue(result.asInt() == -1);
-        } catch (BytecodeAbsent e) {
-            // The above code may compile as a lookupswitch or even nested if-then-else statements
-        }
+    public void test_lookupswitch_0() {
+        // Switch with only default case
+        final Method_Type method = new TestBytecodeAssembler(true, "perform_lookupswitch_0", SignatureDescriptor.create(int.class, int.class)) {
+            @Override
+            public void generateCode() {
+                final Label defaultTarget = newLabel();
+                iload(0);
+                lookupswitch(defaultTarget, new int[] {}, new Label[] {});
+                defaultTarget.bind();
+                iconst(1);
+                ireturn();
+            }
+        }.compile(getClass());
+        final Value result = execute(method, IntValue.from(1));
+        assertTrue(result.asInt() == 1);
     }
 
     private static int perform_tableswitch_3(int a) {
