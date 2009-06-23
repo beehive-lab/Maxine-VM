@@ -95,6 +95,10 @@ public class MaxineTesterConfiguration {
         test.hotpath.HP_array02.class,                 FAIL_SPARC,
         test.except.Catch_StackOverflowError_01.class, FAIL_SPARC,
         test.except.Catch_StackOverflowError_02.class, FAIL_SPARC,
+        test.except.Except_Synchronized01.class,       FAIL_SPARC,
+        test.except.Except_Synchronized02.class,       FAIL_SPARC,
+        test.except.Except_Synchronized03.class,       FAIL_SPARC,
+        test.except.Except_Synchronized04.class,       FAIL_SPARC,
     };
 
     static final String[] _dacapoTests = {
