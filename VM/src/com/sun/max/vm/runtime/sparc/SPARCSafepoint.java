@@ -59,27 +59,18 @@ import com.sun.max.vm.stack.sparc.*;
  *
  * The layout of the trap state area is described by the following C-like struct declaration:
 * trap_state {
- *     Word globalRegisters[15];  %g1 to %g5
- *     Word outputRegisters[16]   %o0 to %o7
- *     Word floatingPointRegisters[32]; %f0 to %f31
+ *     Word globalRegisters[5];         // %g1 to %g5
+ *     Word outputRegisters[8];         // %o0 to %o7
+ *     Word floatingPointRegisters[32]; // %f0 to %f31
  *     Word trapNumber;
  *     Word flagsRegister;
  * }
  *
  * @author Bernd Mathiske
  * @author Laurent Daynes
+ * @author Paul Caprioli
  */
 public final class SPARCSafepoint extends Safepoint {
-
-    @Override
-    public void setInstructionPointer(Pointer trapState, Pointer value) {
-        FatalError.unexpected("setInstructionPointer() not yet implemented");
-    }
-
-    @Override
-    public void setReturnValue(Pointer trapState, Pointer value) {
-        FatalError.unexpected("setReturnValue() not yet implemented");
-    }
 
     private final boolean is32Bit;
 
@@ -102,9 +93,9 @@ public final class SPARCSafepoint extends Safepoint {
 
     public static final int TRAP_STATE_SIZE;
     public static final int TRAP_NUMBER_OFFSET;
+    public static final int TRAP_RETURN_VALUE_OFFSET;
     public static final int TRAP_SP_OFFSET;
     public static final int TRAP_CALL_ADDRESS_OFFSET;
-
     public static final int TRAP_LATCH_OFFSET;
 
     static {
@@ -113,6 +104,8 @@ public final class SPARCSafepoint extends Safepoint {
         final int floatingPointRegisterWords = 32; // %f0-%f32
         final int stateRegisters = 2;
         TRAP_LATCH_OFFSET = Word.size();
+        // Offset to %o0 in trap state
+        TRAP_RETURN_VALUE_OFFSET =  Word.size() * globalRegisterWords;
         // Offset to %o6 in trap state.
         TRAP_SP_OFFSET = Word.size() * (globalRegisterWords + (O6.value() - O0.value()));
         // Offset to %o7 in trap state
@@ -160,11 +153,27 @@ public final class SPARCSafepoint extends Safepoint {
         return TRAP_INSTRUCTION_POINTER.pointer(Safepoint.getLatchRegister()).readWord(0).asPointer();
     }
 
+    /**
+     * Set the instruction pointer to which the trap stub should return.
+     */
     @Override
-    public Pointer getStackPointer(Pointer trapState, TargetMethod targetMethod) {
-        return trapState.readWord(SPARCSafepoint.TRAP_SP_OFFSET).asPointer();
+    public void setInstructionPointer(Pointer trapState, Pointer value) {
+        TRAP_INSTRUCTION_POINTER.pointer(Safepoint.getLatchRegister()).writeWord(0, value);
     }
 
+    @Override
+    public void setReturnValue(Pointer trapState, Pointer value) {
+        trapState.writeWord(TRAP_RETURN_VALUE_OFFSET, value);
+    }
+
+    @Override
+    public Pointer getStackPointer(Pointer trapState, TargetMethod targetMethod) {
+        return trapState.readWord(TRAP_SP_OFFSET).asPointer();
+    }
+
+    /**
+     * Get the frame pointer of the trapped frame.
+     */
     @Override
     public Pointer getFramePointer(Pointer trapState, TargetMethod targetMethod) {
         final Pointer registerWindow = getStackPointer(trapState, targetMethod);
