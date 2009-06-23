@@ -45,7 +45,7 @@ import java.lang.reflect.InvocationTargetException;
  */
 public class Canonicalizer extends InstructionVisitor {
 
-    private static final Object[] NO_ARGUMENTS = { };
+    private static final Object[] NO_ARGUMENTS = {};
 
     Instruction canonical;
     List<Instruction> extra;
