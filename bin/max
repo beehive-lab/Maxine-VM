@@ -440,7 +440,14 @@ function run_check() {
         shift
     done
     
-    test -n "${CHECKSTYLE_JAR}" || { echo "Need to use '-cs' option or CHECKSTYLE_JAR environment variable to specify location of Checkstyle jar file"; exit 1; }
+    if [ -z "$CHECKSTYLE_JAR" ]; then
+        if [ -f /proj/maxwell/bin/checkstyle-4.jar ]; then
+            CHECKSTYLE_JAR=/proj/maxwell/bin/checkstyle-4.jar
+        else
+            echo "Need to use '-cs' option or CHECKSTYLE_JAR environment variable to specify location of Checkstyle jar file"
+            exit 1
+        fi
+    fi
 
     if [ ! -f "$CHECKSTYLE_JAR" ]; then
         echo "No such file: $CHECKSTYLE_JAR"
