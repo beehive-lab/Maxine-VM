@@ -91,6 +91,7 @@ public class C1XOptions {
     public static boolean ComputeStoresInLoops               = TRUE;
     public static boolean AssumeVerifiedBytecode             = ____;
     public static boolean ExtraPhiChecking                   = TRUE;
+    public static boolean SimplifyPhis                       = TRUE;
 
     // miscellaneous settings
     public static boolean SupportObjectConstants             = TRUE;
