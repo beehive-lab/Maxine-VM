@@ -32,7 +32,7 @@ import com.sun.max.lang.*;
 
 /**
  * The fields used in defining the PowerPC instruction templates.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  * @author Dave Ungar
@@ -42,8 +42,6 @@ final class PPCFields {
 
     private PPCFields() {
     }
-
-    // Checkstyle: stop constant name checks
 
     /**
      * RA field that can also accept the constant 0.
@@ -453,8 +451,6 @@ final class PPCFields {
         withOption("_pt", BranchPredictionBits.PT).
         withOption("_pn", BranchPredictionBits.PN);
 
-    // Checkstyle: resume constant name checks
-
     static {
         StaticFieldName.Static.initialize(PPCFields.class, new StaticFieldName.StringFunction() {
             public String function(String name) {
@@ -464,6 +460,5 @@ final class PPCFields {
                 return name;
             }
         });
-//        StaticFieldLiteral.Static.initialize(PPCFields.class);
     }
 }

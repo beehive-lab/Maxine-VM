@@ -21,7 +21,7 @@
         <module name="LocalFinalVariableName"/>
         <module name="LocalVariableName"/>
         <module name="MemberName">
-            <property name="format" value="^(([a-z][a-zA-Z0-9]*$)|([A-Z][a-zA-Z0-9]*_[a-z][a-zA-Z0-9]*$))"/>
+            <property name="format" value="^[a-zA-Z0-9][a-zA-Z0-9_]*$"/>
         </module>
         <module name="MethodName">
             <property name="format" value="^[a-z][a-z_A-Z0-9]*$"/>
@@ -97,7 +97,7 @@
         <module name="UnnecessaryParentheses"/>
         <module name="Indentation"/>
         <module name="StaticVariableName">
-            <property name="format" value="^[a-zA-Z][a-zA-Z0-9]*$"/>
+            <property name="format" value="^[a-zA-Z0-9][a-zA-Z0-9_]*$"/>
         </module>
         <module name="EmptyForInitializerPad"/>
         <module name="EmptyForIteratorPad"/>
@@ -119,6 +119,9 @@
             <metadata name="com.atlassw.tools.eclipse.checkstyle.customMessage" value="Illegal whitespace before a comma."/>
             <property name="format" value=" ,"/>
             <property name="ignoreComments" value="true"/>
+        </module>
+        <module name="ConstantName">
+            <property name="format" value="^[a-zA-Z0-9][a-zA-Z0-9_]*$"/>
         </module>
     </module>
     <module name="NewlineAtEndOfFile"/>
