@@ -83,23 +83,6 @@ public class Constant extends Instruction {
     }
 
     /**
-     * Compare this instruction to another instruction. This method only
-     * returns true if this instruction and the other instruction are both
-     * the same constant (regardless of where they are computed). Note that
-     * this method is <b>not</b> the <code>equals()</code> method.
-     * @param i the other instruction
-     * @return <code>true</code> if this instruction and the other instruction are value-numbering equal.
-     */
-    public boolean isEqual(Instruction i) {
-        if (i instanceof Constant) {
-            Constant c = (Constant) i;
-            // XXX: why isn't this the equals method?
-            return c.type().asConstant().equivalent(type());
-        }
-        return false;
-    }
-
-    /**
      * Iterates over the "other" values in this instruction. In the case of constants,
      * this method iterates over any values in the state if this constant may need patching.
      * @param closure the closure to apply to each value
