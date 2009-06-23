@@ -65,10 +65,10 @@ public abstract class Safepoint {
 
         public static final IndexedSequence<State> CONSTANTS = new ArraySequence<State>(values());
 
-        private final VmThreadLocal _key;
+        private final VmThreadLocal key;
 
         State(VmThreadLocal key) {
-            _key = key;
+            this.key = key;
         }
 
         /**
@@ -77,7 +77,7 @@ public abstract class Safepoint {
          * @param vmThreadLocals a pointer to any one of the thread locals storage areas
          */
         public Pointer vmThreadLocalsArea(Pointer vmThreadLocals) {
-            return _key.getConstantWord(vmThreadLocals).asPointer();
+            return key.getConstantWord(vmThreadLocals).asPointer();
         }
 
         public int serial() {
@@ -85,7 +85,7 @@ public abstract class Safepoint {
         }
 
         public int offset() {
-            return _key.offset();
+            return key.offset();
         }
     }
 
@@ -101,14 +101,14 @@ public abstract class Safepoint {
         }
     }
 
-    private VMConfiguration _vmConfiguration;
+    private VMConfiguration vmConfiguration;
 
     public VMConfiguration vmConfiguration() {
-        return _vmConfiguration;
+        return vmConfiguration;
     }
 
     protected Safepoint(VMConfiguration vmConfiguration) {
-        _vmConfiguration = vmConfiguration;
+        this.vmConfiguration = vmConfiguration;
     }
 
     @INLINE
@@ -214,14 +214,14 @@ public abstract class Safepoint {
 
     protected abstract byte[] createCode();
 
-    private final byte[] _code = createCode();
+    private final byte[] code = createCode();
 
     public final byte[] code() {
-        return _code;
+        return code;
     }
 
     public boolean isAt(Pointer instructionPointer) {
-        return Memory.equals(instructionPointer, _code);
+        return Memory.equals(instructionPointer, code);
     }
 
     /**

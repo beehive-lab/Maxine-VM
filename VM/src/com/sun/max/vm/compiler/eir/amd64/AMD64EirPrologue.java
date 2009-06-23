@@ -89,11 +89,18 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
         // now allocate the frame for this method
         asm.subq(framePointer, endOfFrame - (2 * Word.size()));
 
+        // We want to copy into the trap state the value of the latch register at the instruction that causes the trap.
+        asm.mov(scratchRegister, VmThreadLocal.TRAP_LATCH_REGISTER.offset(), latchRegister.indirect());
+
         // save all the general purpose registers
         int offset = originalFrameSize;
         for (AMD64GeneralRegister64 register : AMD64GeneralRegister64.ENUMERATOR) {
-            // all registers are the same as when the trap occurred (except the frame pointer)
-            asm.mov(offset, framePointer.indirect(), register);
+            // all registers are the same as when the trap occurred (except the frame pointer and the latch register)
+            if (register == latchRegister) {
+                asm.mov(offset, framePointer.indirect(), scratchRegister);
+            } else {
+                asm.mov(offset, framePointer.indirect(), register);
+            }
             offset += Word.size();
         }
         // save all the floating point registers
@@ -101,13 +108,6 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
             asm.movdq(offset, framePointer.indirect(), register);
             offset += 2 * Word.size();
         }
-
-        // load the safepoint latch (which the C code overwrote the top of stack with)
-        asm.mov(latchRegister, endOfFrame, framePointer.indirect());
-
-        // restore the top of stack
-        asm.mov(scratchRegister, VmThreadLocal.TRAP_TOP_OF_STACK.offset(), latchRegister.indirect());
-        asm.mov(endOfFrame, framePointer.indirect(), scratchRegister);
 
         // write the return address pointer at the end of the frame
         asm.mov(scratchRegister, VmThreadLocal.TRAP_INSTRUCTION_POINTER.offset(), latchRegister.indirect());
