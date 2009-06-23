@@ -290,6 +290,7 @@ public class BlockBegin extends StateSplit {
             }
             BlockEnd e = end();
             iterateReverse(mark, closure, _exceptionHandlerBlocks, pre);
+            assert e != null : "block must have block end";
             iterateReverse(mark, closure, e.successors(), pre);
             if (!pre) {
                 closure.apply(this);

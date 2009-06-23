@@ -143,6 +143,7 @@ public class ScopeData {
                 BlockBegin p = this.parent.blockAt(bci);
                 if (p != null) {
                     BlockBegin newBlock = new BlockBegin(p.bci());
+                    // TODO: get a new block ID for this block 
                     newBlock.setDepthFirstNumber(p.depthFirstNumber());
                     newBlock.copyBlockFlags(p);
                     _jsrDuplicatedBlocks[bci] = newBlock;

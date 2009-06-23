@@ -84,6 +84,7 @@ public class GraphBuilder {
         if (method.isSynchronized()) {
             // setup and exception handler
             syncHandler = new BlockBegin(Instruction.SYNCHRONIZATION_ENTRY_BCI);
+            syncHandler.setBlockID(compilation.nextBlockNumber());
             syncHandler.setExceptionEntry();
             syncHandler.setBlockFlag(BlockBegin.BlockFlag.IsOnWorkList);
             syncHandler.setBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler);
@@ -126,6 +127,9 @@ public class GraphBuilder {
         if (syncHandler != null && syncHandler.state() != null) {
             Instruction lock = null;
             if (method.isSynchronized()) {
+                curBlock = syncHandler;
+                lastInstr = syncHandler;
+                curState = syncHandler.state().copy();
                 lock = synchronizedObject(initialState, method);
                 syncHandler.state().unlock(); // pop the null off the stack
                 syncHandler.state().lock(scope, lock);
@@ -135,7 +139,9 @@ public class GraphBuilder {
 
         this.startBlock = setupStartBlock(osrBCI, start, osrEntryBlock, initialState);
         // eliminate redundant phis
-        new PhiSimplifier(this.startBlock);
+        if (C1XOptions.SimplifyPhis) {
+            new PhiSimplifier(this.startBlock);
+        }
 
         if (osrBCI >= 0) {
             BlockBegin osrBlock = blockMap.get(osrBCI);
@@ -180,6 +186,7 @@ public class GraphBuilder {
 
     BlockBegin setupStartBlock(int osrBCI, BlockBegin stdEntry, BlockBegin osrEntry, ValueStack state) {
         BlockBegin start = new BlockBegin(0);
+        start.setBlockID(compilation.nextBlockNumber());
 
         BlockBegin newHeaderBlock;
         if (stdEntry.predecessors().size() == 0 && !profileBranches()) {
@@ -206,6 +213,7 @@ public class GraphBuilder {
         assert entry.checkBlockFlag(f);
         // create header block
         BlockBegin h = new BlockBegin(entry.bci());
+        h.setBlockID(compilation.nextBlockNumber());
         h.setDepthFirstNumber(0);
 
         Instruction l = h;
@@ -321,36 +329,52 @@ public class GraphBuilder {
     }
 
     void storeLocal(ValueType type, int index) {
-        storeLocal(curState, pop(type), type, index);
-    }
-
-    void storeLocal(ValueStack state, Instruction x, ValueType type, int index) {
         if (scopeData.parsingJsr()) {
             // We need to do additional tracking of the location of the return
             // address for jsrs since we don't handle arbitrary jsr/ret
             // constructs. Here we are figuring out in which circumstances we
             // need to bail out.
-            if (x.type().isJsr()) {
-                scopeData.setJsrEntryReturnAddressLocal(index);
-
-                // Also check parent jsrs (if any) at this time to see whether
-                // they are using this local. We don't handle skipping over a
-                // ret.
-                for (ScopeData cur = scopeData.parent;
-                        cur != null && cur.parsingJsr() && cur.scope == scope();
-                        cur = cur.parent) {
-                    if (cur.jsrEntryReturnAddressLocal() == index) {
-                        throw new Bailout("subroutine overwrites return address from previous subroutine");
-                    }
+            if (type == ValueType.OBJECT_TYPE) {
+                // might be storing the JSR return address
+                Instruction x = curState.xpop();
+                if (x.type().isJsr()) {
+                    setJsrReturnAddressLocal(index);
+                    curState.storeLocal(index, x);
+                } else {
+                    // nope, not storing the JSR return address
+                    assert x.type().isObject();
+                    curState.storeLocal(index, x);
+                    overwriteJsrReturnAddressLocal(index);
                 }
+                return;
             } else {
-                if (index == scopeData.jsrEntryReturnAddressLocal()) {
-                    scopeData.setJsrEntryReturnAddressLocal(-1);
-                }
+                // not storing the JSR return address local, but might overwrite it
+                overwriteJsrReturnAddressLocal(index);
             }
         }
 
-        state.storeLocal(index, roundFp(x));
+        curState.storeLocal(index, roundFp(pop(type)));
+    }
+
+    private void overwriteJsrReturnAddressLocal(int index) {
+        if (index == scopeData.jsrEntryReturnAddressLocal()) {
+            scopeData.setJsrEntryReturnAddressLocal(-1);
+        }
+    }
+
+    private void setJsrReturnAddressLocal(int index) {
+        scopeData.setJsrEntryReturnAddressLocal(index);
+
+        // Also check parent jsrs (if any) at this time to see whether
+        // they are using this local. We don't handle skipping over a
+        // ret.
+        for (ScopeData cur = scopeData.parent;
+                cur != null && cur.parsingJsr() && cur.scope == scope();
+                cur = cur.parent) {
+            if (cur.jsrEntryReturnAddressLocal() == index) {
+                throw new Bailout("subroutine overwrites return address from previous subroutine");
+            }
+        }
     }
 
     Instruction roundFp(Instruction x) {
@@ -766,69 +790,71 @@ public class GraphBuilder {
         apush(append(n));
     }
 
-    void accessField(int opcode) {
-        CiField field = constantPool().lookupField(opcode, stream().readCPI());
-        CiType holder = field.holder();
-        boolean isLoaded = holder.isLoaded() && field.willLink(method().holder(), opcode);
-        boolean isInitialized = isLoaded && holder.isInitialized();
+    void getField() {
+        CiField field = constantPool().lookupGetField(stream().readCPI());
+        boolean isLoaded = field.isLoaded() && !C1XOptions.TestPatching;
+        ValueStack stateCopy = !isLoaded ? curState.copy() : null;
+        LoadField load = new LoadField(apop(), field, false, lockStack(), stateCopy, isLoaded, true);
+        loadField(ValueType.fromBasicType(field.basicType()), load);
+    }
 
-        ValueStack stateCopy = null;
-        if (!isInitialized || C1XOptions.TestPatching) {
-            // save state before the instruction for debugging information when patching
-            stateCopy = curState.copy();
-        }
-
+    void putField() {
+        CiField field = constantPool().lookupPutField(stream().readCPI());
+        boolean isLoaded = field.isLoaded() && !C1XOptions.TestPatching;
+        ValueStack stateCopy = !isLoaded ? curState.copy() : null;
         ValueType type = ValueType.fromBasicType(field.basicType());
-        int offset = isLoaded ? field.offset() : -1;
+        Instruction value = pop(type);
+        storeField(new StoreField(apop(), field, value, false, lockStack(), stateCopy, isLoaded, true));
+    }
 
-        switch (opcode) {
-            case Bytecodes.GETSTATIC: {
-                // note that folding of constant static fields happens in canonicalizer now
-                Constant holderConstant = new Constant(new ClassType(holder), stateCopy);
-                loadField(type, new LoadField(append(holderConstant), offset, field, true, lockStack(), stateCopy, isLoaded, isInitialized));
-                break;
-            }
-            case Bytecodes.PUTSTATIC: {
-                Instruction value = pop(type);
-                Constant holderConstant = new Constant(new ClassType(holder), stateCopy);
-                storeField(new StoreField(append(holderConstant), offset, field, value, true, lockStack(), stateCopy, isLoaded, isInitialized));
-                break;
-            }
-            case Bytecodes.GETFIELD: {
-                LoadField load = new LoadField(apop(), offset, field, false, lockStack(), stateCopy, isLoaded, true);
-                loadField(type, load);
-                break;
-            }
-            case Bytecodes.PUTFIELD: {
-                Instruction value = pop(type);
-                storeField(new StoreField(apop(), offset, field, value, false, lockStack(), stateCopy, isLoaded, true));
-                break;
-            }
-            default:
-                throw Util.shouldNotReachHere();
-        }
+    void getStatic() {
+        CiField field = constantPool().lookupGetStatic(stream().readCPI());
+        CiType holder = field.holder();
+        boolean isLoaded = field.isLoaded() && holder.isLoaded() && !C1XOptions.TestPatching;
+        boolean isInitialized = isLoaded && holder.isInitialized();
+        ValueStack stateCopy = !isLoaded ? curState.copy() : null;
+        Instruction holderConstant = append(new Constant(new ClassType(holder), stateCopy));
+        LoadField load = new LoadField(holderConstant, field, true, lockStack(), stateCopy, isLoaded, isInitialized);
+        loadField(ValueType.fromBasicType(field.basicType()), load);
+    }
+
+    void putStatic() {
+        CiField field = constantPool().lookupPutStatic(stream().readCPI());
+        CiType holder = field.holder();
+        boolean isLoaded = field.isLoaded() && holder.isLoaded() && !C1XOptions.TestPatching;
+        boolean isInitialized = isLoaded && holder.isInitialized();
+        ValueStack stateCopy = !isLoaded ? curState.copy() : null;
+        Instruction holderConstant = append(new Constant(new ClassType(holder), stateCopy));
+        ValueType type = ValueType.fromBasicType(field.basicType());
+        StoreField store = new StoreField(holderConstant, field, pop(type), true, lockStack(), stateCopy, isLoaded, isInitialized);
+        storeField(store);
     }
 
     private void storeField(StoreField store) {
-        StoreField s;
-        if (memoryMap != null && (s = memoryMap.store(store)) != null) {
-            append(s);
+        if (memoryMap != null) {
+            StoreField previous = memoryMap.store(store);
+            if (previous == null) {
+                // the store is redundant, do not append
+                return;
+            }
         }
+        append(store);
     }
 
     private void loadField(ValueType type, LoadField load) {
-        Instruction replacement = memoryMap != null ? memoryMap.load(load) : load;
-        if (replacement != load) {
-            // the memory buffer found a replacement for this load
-            assert replacement.isAppended() || replacement instanceof Phi || replacement instanceof Local;
-            push(type, replacement);
-        } else {
-            push(type, append(load));
+        if (memoryMap != null) {
+            Instruction replacement = memoryMap.load(load);
+            if (replacement != load) {
+                // the memory buffer found a replacement for this load
+                assert replacement.isAppended() || replacement instanceof Phi || replacement instanceof Local;
+                push(type, replacement);
+                return;
+            }
         }
+        push(type, append(load));
     }
 
     void invokeStatic(CiMethod target) {
-        checkForLinkError(target, Bytecodes.INVOKESTATIC);
         if (!tryInline(target, null)) {
             profileInvocation(target);
             ValueType resultType = returnValueType(target);
@@ -838,7 +864,6 @@ public class GraphBuilder {
     }
 
     void invokeInterface(CiMethod target) {
-        checkForLinkError(target, Bytecodes.INVOKEINTERFACE);
         ValueType resultType = returnValueType(target);
         Instruction[] args = popArguments(target);
         Instruction receiver = apop();
@@ -847,7 +872,6 @@ public class GraphBuilder {
     }
 
     void invokeVirtual(CiMethod target) {
-        checkForLinkError(target, Bytecodes.INVOKEVIRTUAL);
         Instruction receiver = getReceiver(target);
         // attempt to devirtualize the call
         if (target.isLoaded() && target.holder().isLoaded()) {
@@ -892,7 +916,6 @@ public class GraphBuilder {
     }
 
     void invokeSpecial(CiMethod target, CiType knownHolder) {
-        checkForLinkError(target, Bytecodes.INVOKESPECIAL);
         if (!tryInline(target, knownHolder)) {
             profileInvocation(target);
             ValueType resultType = returnValueType(target);
@@ -943,19 +966,13 @@ public class GraphBuilder {
             return target;
         }
         CiType declared = receiver.declaredType();
-        if (declared != null) {
+        if (declared != null && declared.isLoaded() && !declared.isInterface()) {
             CiMethod impl = declared.resolveMethodImpl(target);
             if (impl != null && assumeLeafClass(declared)) {
                 return impl;
             }
         }
         return null;
-    }
-
-    void checkForLinkError(CiMethod target, int opcode) {
-        if (target.isLoaded() && target.isStatic() != (opcode == Bytecodes.INVOKESTATIC)) {
-            throw new Bailout("will cause link error");
-        }
     }
 
     Instruction getReceiver(CiMethod target) {
@@ -1003,6 +1020,7 @@ public class GraphBuilder {
             loadLocal(ValueType.OBJECT_TYPE, 0);
             append(new Intrinsic(ValueType.VOID_TYPE, C1XIntrinsic.java_lang_Object$init,
                                           curState.popArguments(1), true, lockStack(), true, true));
+            C1XMetrics.InlinedFinalizerChecks++;
         }
 
     }
@@ -1162,7 +1180,7 @@ public class GraphBuilder {
         } else if (array.type().isConstant()) {
             // the array itself is a constant
             return true;
-        } else if ((array instanceof AccessField && ((AccessField) array).field().isConstant())) {
+        } else if (array instanceof AccessField && ((AccessField) array).field().isConstant()) {
             // the length is derived from a constant array
             return true;
         } else  if (array instanceof NewArray) {
@@ -1417,9 +1435,6 @@ public class GraphBuilder {
         if (recursiveInlineLevel(target) > C1XOptions.MaximumRecursiveInlineLevel) {
             return cannotInline(target, "recursive inlining too depth");
         }
-        if (target.codeSize() > scopeData.maxInlineSize()) {
-            return cannotInline(target, "> " + scopeData.maxInlineSize() + " bytecodes");
-        }
         // TODO: check the total number of bytecodes is less than desired method limit
         if (!target.holder().isInitialized()) {
             return cannotInline(target, "holder is not initialized");
@@ -1447,6 +1462,9 @@ public class GraphBuilder {
         }
         if (C1XOptions.SSEVersion < 2 && target.isStrictFP() != method().isStrictFP()) {
             return cannotInline(target, "strictfp mismatch on x87");
+        }
+        if (target.codeSize() > scopeData.maxInlineSize()) {
+            return cannotInline(target, "> " + scopeData.maxInlineSize() + " bytecodes");
         }
         if ("<init>".equals(target.name()) && target.holder().isSubtypeOf(compilation.throwableType())) {
             // don't inline constructors of throwable classes unless the inlining tree is
@@ -1488,6 +1506,7 @@ public class GraphBuilder {
         if (continuationBlock == null) {
             // there was not already a block starting at the next BCI
             continuationBlock = new BlockBegin(nextBCI());
+            continuationBlock.setBlockID(compilation.nextBlockNumber());
             continuationBlock.setDepthFirstNumber(0);
             continuationExisted = false;
         }
@@ -1504,7 +1523,9 @@ public class GraphBuilder {
         for (int i = argsBase; i < callerState.stackSize(); i++) {
             int param = i - argsBase;
             Instruction arg = callerState.stackAt(i);
-            storeLocal(calleeState, arg, arg.type().base(), param);
+            if (arg != null) {
+                calleeState.storeLocal(param, roundFp(arg));
+            }
         }
 
         // remove arguments from the stack
@@ -1525,6 +1546,7 @@ public class GraphBuilder {
             // lock the receiver object if it is an instance method, the class object otherwise
             lock = synchronizedObject(curState, target);
             syncHandler = new BlockBegin(Instruction.SYNCHRONIZATION_ENTRY_BCI);
+            syncHandler.setBlockID(compilation.nextBlockNumber());
             inlineSyncEntry(lock, syncHandler);
             scope().computeLockStackSize();
         }
@@ -1575,7 +1597,7 @@ public class GraphBuilder {
             // Resume parsing in continuation block unless it was already parsed.
             // Note that if we don't change _last here, iteration in
             // iterateBytecodesForBlock will stop when we return.
-            if (scopeData.continuation().wasVisited()) {
+            if (!scopeData.continuation().wasVisited()) {
                 // add continuation to work list instead of parsing it immediately
                 assert lastInstr instanceof BlockEnd;
                 scopeData.parent.addToWorkList(scopeData.continuation());
@@ -1591,6 +1613,7 @@ public class GraphBuilder {
         }
 
         compilation.recordInlining(target);
+        C1XMetrics.InlinedMethods++;
         return true;
     }
 
@@ -1662,6 +1685,9 @@ public class GraphBuilder {
         if (!C1XOptions.InlineIntrinsics) {
             return cannotInline(target, "inlining of intrinsics is turned off");
         }
+        if (!target.isLoaded()) {
+            return cannotInline(target, "cannot inline unresolved intrinsic");
+        }
         boolean preservesState = true;
         boolean canTrap = false;
 
@@ -1669,7 +1695,8 @@ public class GraphBuilder {
         switch (intrinsic) {
             // java.lang.Object
             case java_lang_Object$init:     // fall through
-            case java_lang_Object$clone:    return false; // NOPE
+            case java_lang_Object$clone:    return false;
+            // TODO: preservesState and canTrap for complex intrinsics
         }
 
         // get the arguments for the intrinsic
@@ -1681,6 +1708,7 @@ public class GraphBuilder {
         Intrinsic result = new Intrinsic(resultType, intrinsic, args, hasReceiver, lockStack(), preservesState, canTrap);
         Instruction value = append(result);
         pushReturn(resultType, value);
+        C1XMetrics.InlinedIntrinsics++;
         return true;
     }
 
@@ -1730,6 +1758,7 @@ public class GraphBuilder {
 
         // create a new block to contain the OSR setup code
         osrEntryBlock = new BlockBegin(osrBCI);
+        osrEntryBlock.setBlockID(compilation.nextBlockNumber());
         osrEntryBlock.setOsrEntry(true);
         osrEntryBlock.setDepthFirstNumber(0);
 
@@ -1875,7 +1904,9 @@ public class GraphBuilder {
                 case Bytecodes.LSTORE         : storeLocal(ValueType.LONG_TYPE  , s.readLocalIndex()); break;
                 case Bytecodes.FSTORE         : storeLocal(ValueType.FLOAT_TYPE , s.readLocalIndex()); break;
                 case Bytecodes.DSTORE         : storeLocal(ValueType.DOUBLE_TYPE, s.readLocalIndex()); break;
-                case Bytecodes.ASTORE         : storeLocal(ValueType.OBJECT_TYPE, s.readLocalIndex()); break;
+                case Bytecodes.ASTORE         :
+                    storeLocal(ValueType.OBJECT_TYPE, s.readLocalIndex());
+                    break;
                 case Bytecodes.ISTORE_0       : storeLocal(ValueType.INT_TYPE   , 0); break;
                 case Bytecodes.ISTORE_1       : storeLocal(ValueType.INT_TYPE   , 1); break;
                 case Bytecodes.ISTORE_2       : storeLocal(ValueType.INT_TYPE   , 2); break;
@@ -1892,10 +1923,18 @@ public class GraphBuilder {
                 case Bytecodes.DSTORE_1       : storeLocal(ValueType.DOUBLE_TYPE, 1); break;
                 case Bytecodes.DSTORE_2       : storeLocal(ValueType.DOUBLE_TYPE, 2); break;
                 case Bytecodes.DSTORE_3       : storeLocal(ValueType.DOUBLE_TYPE, 3); break;
-                case Bytecodes.ASTORE_0       : storeLocal(ValueType.OBJECT_TYPE, 0); break;
-                case Bytecodes.ASTORE_1       : storeLocal(ValueType.OBJECT_TYPE, 1); break;
-                case Bytecodes.ASTORE_2       : storeLocal(ValueType.OBJECT_TYPE, 2); break;
-                case Bytecodes.ASTORE_3       : storeLocal(ValueType.OBJECT_TYPE, 3); break;
+                case Bytecodes.ASTORE_0       :
+                    storeLocal(ValueType.OBJECT_TYPE, 0);
+                    break;
+                case Bytecodes.ASTORE_1       :
+                    storeLocal(ValueType.OBJECT_TYPE, 1);
+                    break;
+                case Bytecodes.ASTORE_2       :
+                    storeLocal(ValueType.OBJECT_TYPE, 2);
+                    break;
+                case Bytecodes.ASTORE_3       :
+                    storeLocal(ValueType.OBJECT_TYPE, 3);
+                    break;
                 case Bytecodes.IASTORE        : storeIndexed(BasicType.Int   ); break;
                 case Bytecodes.LASTORE        : storeIndexed(BasicType.Long  ); break;
                 case Bytecodes.FASTORE        : storeIndexed(BasicType.Float ); break;
@@ -1995,14 +2034,14 @@ public class GraphBuilder {
                 case Bytecodes.DRETURN        : methodReturn(dpop()); break;
                 case Bytecodes.ARETURN        : methodReturn(apop()); break;
                 case Bytecodes.RETURN         : methodReturn(null  ); break;
-                case Bytecodes.GETSTATIC      : // fall through
-                case Bytecodes.PUTSTATIC      : // fall through
-                case Bytecodes.GETFIELD       : // fall through
-                case Bytecodes.PUTFIELD       : accessField(opcode); break;
-                case Bytecodes.INVOKEVIRTUAL  : invokeVirtual(readMethod(opcode)); break;
-                case Bytecodes.INVOKESPECIAL  : invokeSpecial(readMethod(opcode), null); break;
-                case Bytecodes.INVOKESTATIC   : invokeStatic(readMethod(opcode)); break;
-                case Bytecodes.INVOKEINTERFACE: invokeInterface(readMethod(opcode)); break;
+                case Bytecodes.GETSTATIC      : getStatic(); break;
+                case Bytecodes.PUTSTATIC      : putStatic(); break;
+                case Bytecodes.GETFIELD       : getField(); break;
+                case Bytecodes.PUTFIELD       : putField(); break;
+                case Bytecodes.INVOKEVIRTUAL  : invokeVirtual(constantPool().lookupInvokeVirtual(s.readCPI())); break;
+                case Bytecodes.INVOKESPECIAL  : invokeSpecial(constantPool().lookupInvokeSpecial(s.readCPI()), null); break;
+                case Bytecodes.INVOKESTATIC   : invokeStatic(constantPool().lookupInvokeStatic(s.readCPI())); break;
+                case Bytecodes.INVOKEINTERFACE: invokeInterface(constantPool().lookupInvokeInterface(s.readCPI())); break;
                 case Bytecodes.NEW            : newInstance(); break;
                 case Bytecodes.NEWARRAY       : newTypeArray(); break;
                 case Bytecodes.ANEWARRAY      : newObjectArray(); break;
@@ -2060,10 +2099,6 @@ public class GraphBuilder {
             scopeData.addToWorkList(succ);
         }
         return end;
-    }
-
-    private CiMethod readMethod(int opcode) {
-        return scopeData.constantPool.lookupMethod(opcode, scopeData.stream.readCPI());
     }
 
     void killValueAndMemoryMaps() {
