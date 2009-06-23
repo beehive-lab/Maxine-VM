@@ -100,6 +100,7 @@ public class GraphBuilder {
         if (intrinsic != null) {
             // the root method is an intrinsic; load the parameters onto the stack and try to inline it
             curState = initialState.copy();
+            lastInstr = curBlock;
             loadParameters(method);
 
             if (tryInlineIntrinsic(method)) {
