@@ -273,7 +273,6 @@ class CirToDirMethodTranslation {
     }
 
     private void generateDirSwitch(Translation translation, CirSwitch cirSwitch, CirValue[] cirArguments) {
-        assert cirArguments.length >= 4;
         final CirValue[] cirMatches = Arrays.subArray(cirArguments, 1, cirSwitch.numberOfMatches());
         final DirValue[] dirMatches = Arrays.map(cirMatches, DirValue.class, mapCirValueToDirValue);
         final DirBlock[] targetBlocks = new DirBlock[cirSwitch.numberOfMatches()];

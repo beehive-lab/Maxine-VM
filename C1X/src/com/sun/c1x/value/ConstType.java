@@ -127,6 +127,9 @@ public class ConstType extends ValueType {
             if (value instanceof Character) {
                 return (Character) value;
             }
+            if (value instanceof Boolean) {
+                return ((Boolean) value) ? 1 : 0; // note that we allow Boolean values to be used as ints
+            }
         }
         throw new Error("Invalid constant");
     }
@@ -151,6 +154,9 @@ public class ConstType extends ValueType {
             }
             if (value instanceof Character) {
                 return (Character) value;
+            }
+            if (value instanceof Boolean) {
+                return ((Boolean) value) ? 1 : 0; // note that we allow Boolean values to be used as ints
             }
         }
         throw new Error("Invalid constant");

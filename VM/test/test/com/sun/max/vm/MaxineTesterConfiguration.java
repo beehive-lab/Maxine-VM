@@ -95,6 +95,10 @@ public class MaxineTesterConfiguration {
         test.hotpath.HP_array02.class,                 FAIL_SPARC,
         test.except.Catch_StackOverflowError_01.class, FAIL_SPARC,
         test.except.Catch_StackOverflowError_02.class, FAIL_SPARC,
+        test.except.Except_Synchronized01.class,       FAIL_SPARC,
+        test.except.Except_Synchronized02.class,       FAIL_SPARC,
+        test.except.Except_Synchronized03.class,       FAIL_SPARC,
+        test.except.Except_Synchronized04.class,       FAIL_SPARC,
     };
 
     static final String[] dacapoTests = {
@@ -297,7 +301,6 @@ public class MaxineTesterConfiguration {
         }
     }
 
-    private static final String DEFAULT_MAXVM_OUTPUT_CONFIGS = "std,jit,pgi";
     private static final String DEFAULT_JAVA_TESTER_CONFIGS = "optopt,jitopt,optjit,jitjit";
 
     public static String defaultMaxvmOutputConfigs() {
@@ -384,8 +387,8 @@ public class MaxineTesterConfiguration {
     /**
      * Determines which JUnit test cases are known to take a non-trivial amount of time to execute.
      * These tests are omitted by the MaxineTester unless the
-     * @param testCase
-     * @return
+     * @param testCase the test case
+     * @return <code>true</code> if the test is probably slow
      */
     public static boolean isSlowAutoTestCase(TestCase testCase) {
         for (Class<?> c : slowAutoTestClasses) {
@@ -404,7 +407,7 @@ public class MaxineTesterConfiguration {
     }
 
     public static String[] shootoutTests() {
-        return shootoutInputs.keySet().toArray(new String[0]);
+        return shootoutInputs.keySet().toArray(new String[shootoutInputs.size()]);
     }
 
     public static Object[] shootoutInputs(String benchmark) {

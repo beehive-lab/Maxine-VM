@@ -56,9 +56,6 @@ public interface CiField {
      */
     CiType holder();
 
-
-    boolean willLink(CiType where, int opcode);
-
     /**
      * Checks whether this field is loaded (i.e. resolved).
      * @return {@code true} if this field is resolved
