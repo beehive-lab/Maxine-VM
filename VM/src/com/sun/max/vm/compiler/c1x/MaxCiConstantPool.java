@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.c1x;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.C1XOptions;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -62,6 +63,8 @@ public class MaxCiConstantPool implements CiConstantPool {
         this.constantPool = constantPool;
     }
 
+     // TODO: check for incompatible class changes in all resolution and lookup methods
+
     /**
      * Resolves a field reference for a getfield operation at runtime, and makes the
      * necessary runtime checks for getfield on the specified field.
@@ -70,7 +73,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @return the compiler interface field resolved at that index
      */
     public CiField resolveGetField(char cpi) {
-        return resolveField(cpi); // TODO: check for incompatible class changes
+        return resolveField(cpi);
     }
 
     /**
@@ -81,7 +84,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @return the compiler interface field resolved at that index
      */
     public CiField resolvePutField(char cpi) {
-        return resolveField(cpi); // TODO: check for incompatible class changes
+        return resolveField(cpi);
     }
 
     /**
@@ -92,7 +95,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @return the compiler interface field resolved at that index
      */
     public CiField resolveGetStatic(char cpi) {
-        return resolveField(cpi); // TODO: check for incompatible class changes
+        return resolveField(cpi);
     }
 
     /**
@@ -103,7 +106,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @return the compiler interface field resolved at that index
      */
     public CiField resolvePutStatic(char cpi) {
-        return resolveField(cpi); // TODO: check for incompatible class changes
+        return resolveField(cpi);
     }
 
     /**
@@ -114,7 +117,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @return the compiler interface method resolved at that index
      */
     public CiMethod resolveInvokeVirtual(char cpi) {
-        return resolveMethod(cpi); // TODO: check for incompatible class changes
+        return resolveMethod(cpi);
     }
 
     /**
@@ -125,7 +128,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @return the compiler interface method resolved at that index
      */
     public CiMethod resolveInvokeSpecial(char cpi) {
-        return resolveMethod(cpi); // TODO: check for incompatible class changes
+        return resolveMethod(cpi);
     }
 
     /**
@@ -136,7 +139,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @return the compiler interface method resolved at that index
      */
     public CiMethod resolveInvokeInterface(char cpi) {
-        return resolveMethod(cpi); // TODO: check for incompatible class changes
+        return resolveMethod(cpi);
     }
 
     /**
@@ -147,7 +150,79 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @return the compiler interface method resolved at that index
      */
     public CiMethod resolveInvokeStatic(char cpi) {
-        return resolveMethod(cpi); // TODO: check for incompatible class changes
+        return resolveMethod(cpi);
+    }
+
+    /**
+     *
+     * @param cpi the constant pool index of the field reference
+     * @return the compiler interface field resolved at that index
+     */
+    public CiField lookupGetField(char cpi) {
+        return fieldFrom(_constantPool.fieldAt(cpi), cpi);
+    }
+
+    /**
+     *
+     * @param cpi the constant pool index of the field reference
+     * @return the compiler interface field resolved at that index
+     */
+    public CiField lookupPutField(char cpi) {
+        return fieldFrom(_constantPool.fieldAt(cpi), cpi);
+    }
+
+    /**
+     *
+     * @param cpi the constant pool index of the field reference
+     * @return the compiler interface field resolved at that index
+     */
+    public CiField lookupGetStatic(char cpi) {
+        return fieldFrom(_constantPool.fieldAt(cpi), cpi);
+    }
+
+    /**
+     *
+     * @param cpi the constant pool index of the field reference
+     * @return the compiler interface field resolved at that index
+     */
+    public CiField lookupPutStatic(char cpi) {
+        return fieldFrom(_constantPool.fieldAt(cpi), cpi);
+    }
+
+    /**
+     *
+     * @param cpi the constant pool index of the method reference
+     * @return the compiler interface method resolved at that index
+     */
+    public CiMethod lookupInvokeVirtual(char cpi) {
+        return methodFrom(_constantPool.methodAt(cpi), cpi);
+    }
+
+    /**
+     *
+     * @param cpi the constant pool index of the method reference
+     * @return the compiler interface method resolved at that index
+     */
+    public CiMethod lookupInvokeSpecial(char cpi) {
+        return methodFrom(_constantPool.methodAt(cpi), cpi);
+    }
+
+    /**
+     *
+     * @param cpi the constant pool index of the method reference
+     * @return the compiler interface method resolved at that index
+     */
+    public CiMethod lookupInvokeInterface(char cpi) {
+        return methodFrom(_constantPool.methodAt(cpi), cpi);
+    }
+
+    /**
+     *
+     * @param cpi the constant pool index of the method reference
+     * @return the compiler interface method resolved at that index
+     */
+    public CiMethod lookupInvokeStatic(char cpi) {
+        return methodFrom(_constantPool.methodAt(cpi), cpi);
     }
 
     private MaxCiField resolveField(char cpi) {
@@ -192,41 +267,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @return the compiler interface type at that index
      */
     public CiType lookupType(char cpi) {
-        return typeFrom(constantPool.classAt(cpi));
-    }
-
-    /**
-     * Looks up a field at the specified index, without performing any resolution.
-     * If the field is incompatible with the specified opcode (e.g. getfield of a
-     * static field), it is expected that this method will return an unresolved
-     * constant.
-     * @param opcode the opcode for which the field is being resolved
-     * @param cpi the constant pool index
-     * @return the field at the specified index
-     */
-    public CiField lookupField(int opcode, char cpi) {
-        return fieldFrom(constantPool.fieldAt(cpi));
-    }
-
-    /**
-     * Looks up a method at the specified index, without performing any resolution.
-     * If the method is incompatible with the specified opcode (e.g. invokevirtual of a
-     * static method), it is expected that this method will return an unresolved
-     * constant.
-     * @param opcode the opcode for which the method is being resolved
-     * @param cpi the constant pool index
-     * @return the method at the specified index
-     */
-    public CiMethod lookupMethod(int opcode, char cpi) {
-        return methodFrom(constantPool.methodAt(cpi));
-    }
-
-    public boolean willLinkField(int opcode, char cpi) {
-        return true; // TODO: do incompatible class change checks
-    }
-
-    public boolean willLinkMethod(int opcode, char cpi) {
-        return true; // TODO: do incompatible class change checks
+        return typeFrom(_constantPool.classAt(cpi), cpi);
     }
 
     /**
@@ -237,7 +278,7 @@ public class MaxCiConstantPool implements CiConstantPool {
     public CiConstant lookupConstant(char cpi) {
         switch (constantPool.tagAt(cpi)) {
             case CLASS: {
-                return new MaxCiConstant(typeFrom(constantPool.classAt(cpi)));
+                return new MaxCiConstant(typeFrom(_constantPool.classAt(cpi), cpi));
             }
             case INTEGER: {
                 return new MaxCiConstant(IntValue.from(constantPool.intAt(cpi)));
@@ -259,30 +300,44 @@ public class MaxCiConstantPool implements CiConstantPool {
         }
     }
 
-    private MaxCiField fieldFrom(FieldRefConstant constant) {
+    private MaxCiField fieldFrom(FieldRefConstant constant, int cpi) {
         if (constant instanceof FieldRefConstant.Resolved) {
+            // already resolved
             return canonicalCiField(((FieldRefConstant.Resolved) constant).fieldActor());
+        } else if (attemptResolution(constant)) {
+            // the resolution can occur without side effects
+            return canonicalCiField(constant.resolve(_constantPool, cpi));
         }
-        return new MaxCiField(this, constant);
+        return new MaxCiField(this, constant); // unresolved
     }
 
-    private MaxCiMethod methodFrom(MethodRefConstant constant) {
+    private MaxCiMethod methodFrom(MethodRefConstant constant, int cpi) {
         if (constant instanceof ClassMethodRefConstant.Resolved) {
+            // already resolved
             return canonicalCiMethod(((ClassMethodRefConstant.Resolved) constant).methodActor());
-        }
-        if (constant instanceof InterfaceMethodRefConstant.Resolved) {
+        } else if (constant instanceof InterfaceMethodRefConstant.Resolved) {
+            // already resolved
             return canonicalCiMethod(((InterfaceMethodRefConstant.Resolved) constant).methodActor());
+        } else if (attemptResolution(constant)) {
+            // the resolution can occur without side effects
+            return canonicalCiMethod(constant.resolve(_constantPool, cpi));
         }
-        // no canonicalization necessary for unresolved constants
-        return new MaxCiMethod(this, constant);
+        return new MaxCiMethod(this, constant); // unresolved
     }
 
-    private MaxCiType typeFrom(ClassConstant constant) {
+    private MaxCiType typeFrom(ClassConstant constant, int cpi) {
         if (constant instanceof ClassConstant.Resolved) {
-            return canonicalCiType(((ClassConstant.Resolved) constant).classActor);
+            // already resolved
+            return canonicalCiType(((ClassConstant.Resolved) constant).classActor());
+        } else if (attemptResolution(constant)) {
+            // the resolution can occur without side effects
+            return canonicalCiType(constant.resolve(_constantPool, cpi));
         }
-        // no canonicalization necessary for unresolved constants
-        return new MaxCiType(this, constant);
+        return new MaxCiType(this, constant); // unresolved
+    }
+
+    private boolean attemptResolution(ResolvableConstant constant) {
+        return C1XOptions.AggressivelyResolveCPEs && constant.isResolvableWithoutClassLoading(_constantPool);
     }
 
     /**

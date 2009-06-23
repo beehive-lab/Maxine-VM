@@ -687,10 +687,6 @@ public final class JDK_java_lang_System {
                 setIfAbsent(properties, "os.name", "SunOS");
                 initBasicUnixProperties(properties);
                 break;
-            case WINDOWS:
-                setIfAbsent(properties, "os.name", "Windows");
-                initBasicWindowsProperties(properties);
-                break;
             default:
                 ProgramError.unknownCase();
                 break;
@@ -875,26 +871,6 @@ public final class JDK_java_lang_System {
             extDirs += ":" + userExtDir;
         }
         setIfAbsent(properties, "java.ext.dirs", extDirs);
-    }
-
-    private static void initBasicWindowsProperties(Properties properties) {
-        setIfAbsent(properties, "awt.toolkit", "sun.awt.windows.WToolkit");
-        setIfAbsent(properties, "java.io.tmpdir", ""); // TODO
-        setIfAbsent(properties, "java.awt.printerjob", "sun.awt.windows.WPrinterJob");
-        setIfAbsent(properties, "java.awt.graphicsenv", "sun.awt.Win32GraphicsEnvironment");
-        setIfAbsent(properties, "os.name", "windows"); // TODO
-        setIfAbsent(properties, "os.version", ""); // TODO
-        setIfAbsent(properties, "sun.os.patch.level", ""); // TODO
-        setIfAbsent(properties, "sun.desktop", "windows");
-        setIfAbsent(properties, "user.language", "en"); // TODO
-        setIfAbsent(properties, "user.country", "US"); // TODO
-        setIfAbsent(properties, "user.variant", ""); // TODO
-        setIfAbsent(properties, "file.encoding", "Cp1253");
-        fileSeparator = "\\";
-        pathSeparator = ";";
-        setIfAbsent(properties, "line.separator", "\r\n");
-        setIfAbsent(properties, "file.separator", fileSeparator);
-        setIfAbsent(properties, "path.separator", pathSeparator);
     }
 
     private static void initBasicUnixProperties(Properties properties) {
