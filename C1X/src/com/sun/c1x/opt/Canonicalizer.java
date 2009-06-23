@@ -26,12 +26,15 @@ import com.sun.c1x.bytecode.Bytecodes;
 import com.sun.c1x.util.InstructionVisitor;
 import com.sun.c1x.util.Util;
 import com.sun.c1x.C1XOptions;
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.ci.CiField;
-import com.sun.c1x.ci.CiConstant;
+import com.sun.c1x.C1XIntrinsic;
+import com.sun.c1x.C1XMetrics;
+import com.sun.c1x.ci.*;
 
 import java.util.List;
 import java.util.LinkedList;
+import java.util.ArrayList;
+import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * The <code>Canonicalizer</code> reduces instructions to a canonical form by folding constants,
@@ -41,6 +44,8 @@ import java.util.LinkedList;
  * @author Ben L. Titzer
  */
 public class Canonicalizer extends InstructionVisitor {
+
+    private static final Object[] NO_ARGUMENTS = { };
 
     Instruction canonical;
     List<Instruction> extra;
@@ -659,6 +664,54 @@ public class Canonicalizer extends InstructionVisitor {
             ConstType c = o.type().asConstant();
             if (c.isObject() && c.asObject() != null) {
                 setCanonical(o);
+            }
+        }
+    }
+
+    @Override
+    public void visitInvoke(Invoke i) {
+        if (C1XOptions.CanonicalizeFoldableMethods) {
+            CiMethod method = i.target();
+            if (method.isLoaded()) {
+                // only fold resolved methods
+                Method reflectMethod = C1XIntrinsic.getFoldableMethod(method);
+                if (reflectMethod != null) {
+                    // the method is foldable. check that all input arguments are constants
+                    Instruction obj = i.object();
+                    if (obj != null && !obj.type().isConstant()) {
+                        return;
+                    }
+                    Instruction[] args = i.arguments();
+                    for (Instruction a : args) {
+                        if (a != null && !a.type().isConstant()) {
+                            return;
+                        }
+                    }
+                    // build the argument list
+                    Object[] argArray = NO_ARGUMENTS;
+                    if (args.length > 0) {
+                        ArrayList<Object> list = new ArrayList<Object>();
+                        for (Instruction a : args) {
+                            if (a != null) {
+                                list.add(a.type().asConstant().boxedValue());
+                            }
+                        }
+                        argArray = list.toArray();
+                    }
+                    try {
+                        // attempt to invoke the method
+                        Object result = reflectMethod.invoke(obj == null ? null : obj.type().asConstant().asObject(), argArray);
+                        BasicType basicType = method.signatureType().returnBasicType();
+                        // set the result of this instruction to be the result of invocation
+                        setCanonical(new Constant(new ConstType(basicType, result, basicType == BasicType.Object)));
+                        C1XMetrics.MethodsFolded++;
+                        // note that for void, we will have a void constant with value null
+                    } catch (IllegalAccessException e) {
+                        // folding failed; too bad
+                    } catch (InvocationTargetException e) {
+                        // folding failed; too bad
+                    }
+                }
             }
         }
     }

@@ -930,12 +930,11 @@ public class GraphBuilder {
 
     private void appendInvoke(int opcode, ValueType resultType, Instruction receiver, Instruction[] args, CiMethod target) {
         int vtableIndex = target.vtableIndex();
-        Invoke invoke = new Invoke(opcode, resultType, receiver, args, vtableIndex, target);
-        append(invoke);
+        Instruction result = append(new Invoke(opcode, resultType, receiver, args, vtableIndex, target));
         if (method().isStrictFP()) {
-            pushReturn(resultType, roundFp(invoke));
+            pushReturn(resultType, roundFp(result));
         } else {
-            pushReturn(resultType, invoke);
+            pushReturn(resultType, result);
         }
     }
 
@@ -1423,6 +1422,10 @@ public class GraphBuilder {
         // TODO: check the total number of bytecodes is less than desired method limit
         if (!target.holder().isInitialized()) {
             return cannotInline(target, "holder is not initialized");
+        }
+        if (compilation.runtime.mustInline(target)) {
+            C1XMetrics.InlineForcedMethods++;
+            return true;
         }
         if (compilation.runtime.mustNotInline(target)) {
             return cannotInline(target, "inlining excluded by runtime");
