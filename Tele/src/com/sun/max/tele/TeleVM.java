@@ -1132,14 +1132,6 @@ public abstract class TeleVM implements MaxVM {
 
     /*
      * (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#updateWatchpointCaches()
-     */
-    public final void updateWatchpointCaches() {
-        teleProcess.watchpointFactory().updateWatchpointCaches();
-    }
-
-    /*
-     * (non-Javadoc)
      * @see com.sun.max.tele.MaxVM#triggeredWatchpointAddress()
      */
     public final Address getTriggeredWatchpointAddress() {
