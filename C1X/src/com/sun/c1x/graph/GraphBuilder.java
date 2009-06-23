@@ -1596,7 +1596,6 @@ public class GraphBuilder {
             popScope();
         }
 
-        compilation.recordInlining(target);
         C1XMetrics.InlinedMethods++;
         return true;
     }
