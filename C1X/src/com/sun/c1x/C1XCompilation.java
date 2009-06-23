@@ -263,6 +263,6 @@ public class C1XCompilation {
     }
 
     public int nextBlockNumber() {
-        return _totalBlocks++;
+        return totalBlocks++;
     }
 }

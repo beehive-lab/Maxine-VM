@@ -163,8 +163,8 @@ public class MaxCiField implements CiField {
      * @return the compiler interface constant for this field
      */
     public CiConstant constantValue() {
-        if (_fieldActor != null && _fieldActor.isConstant()) {
-            return new MaxCiConstant(HostTupleAccess.readValue(null, _fieldActor));
+        if (fieldActor != null && fieldActor.isConstant()) {
+            return new MaxCiConstant(HostTupleAccess.readValue(null, fieldActor));
         }
         return null;
     }
