@@ -95,6 +95,87 @@ public interface CiConstantPool {
     CiType resolveType(char cpi);
 
     /**
+     * Looks up a reference to a field for a GETFIELD operation at compile time
+     * (does not perform resolution). If a GETFIELD of this constant would fail
+     * at run time, the compiler expects this method to return an unresolved constant.
+     * @param cpi the constant pool index
+     * @return a reference to the compiler interface field
+     */
+    CiField lookupGetField(char cpi);
+
+    /**
+     * Looks up a reference to a field for a PUTFIELD operation at compile time
+     * (does not perform resolution). If a PUTTFIELD of this constant would fail
+     * at run time, the compiler expects this method to return an unresolved constant.
+     * @param cpi the constant pool index
+     * @return a reference to the compiler interface field
+     */
+    CiField lookupPutField(char cpi);
+
+    /**
+     * Looks up a reference to a field for a GETSTATIC operation at compile time
+     * (does not perform resolution).  If a GETSTATIC of this constant would fail
+     * at run time, the compiler expects this method to return an unresolved static.
+     * @param cpi the constant pool index
+     * @return a reference to the compiler interface field
+     */
+    CiField lookupGetStatic(char cpi);
+
+    /**
+     * Looks a reference to a field for a PUTSTATIC operation at compile time
+     * (does not perform resolution). If a PUTSTATIC of this constant would fail
+     * at run time, the compiler expects this method to return an unresolved constant.
+     * @param cpi the constant pool index
+     * @return a reference to the compiler interface field
+     */
+    CiField lookupPutStatic(char cpi);
+
+    /**
+     * Looks up a reference to a method for an INVOKEVIRTUAL operation at compile time
+     * (does not perform resolution).  If an INVOKEVIRTUAL of this constant would fail
+     * at run time, the compiler expects this method to return an unresolved constant.
+     * @param cpi the constant pool index
+     * @return a reference to the compiler interface method
+     */
+    CiMethod lookupInvokeVirtual(char cpi);
+
+    /**
+     * Looks up a reference to a method for an INVOKESPECIAL operation at compile time
+     * (does not perform resolution). If an INVOKESPECIAL of this constant would fail
+     * at run time, the compiler expects this method to return an unresolved constant.
+     * @param cpi the constant pool index
+     * @return a reference to the compiler interface method
+     */
+    CiMethod lookupInvokeSpecial(char cpi);
+
+    /**
+     * Looks up a reference to a method for an INVOKEINTERFACE operation at compile time
+     * (does not perform resolution). If an INVOKEINTERFACE of this constant would fail
+     * at run time, the compiler expects this method to return an unresolved constant.
+     * @param cpi the constant pool index
+     * @return a reference to the compiler interface method
+     */
+    CiMethod lookupInvokeInterface(char cpi);
+
+    /**
+     * Looks up a reference to a method for an INVOKESTATIC operation at compile time
+     * (does not perform resolution). If an INVOKESTATIC of this constant would fail
+     * at run time, the compiler expects this method to return an unresolved constant.
+     * @param cpi the constant pool index
+     * @return a reference to the compiler interface method
+     */
+    CiMethod lookupInvokeStatic(char cpi);
+
+    /**
+     * Looks up a reference to a compiler interface type at compile time (does not
+     * perform resolution). If a resolution of this constant would fail
+     * at run time, the compiler expects this method to return an unresolved constant.
+     * @param cpi the constant pool index
+     * @return a reference to the compiler interface type
+     */
+    CiType lookupType(char cpi);
+
+    /**
      * Resolves a reference to a constant string at runtime.
      * @param cpi the constant pool index
      * @return a reference to the string object
@@ -108,46 +189,6 @@ public interface CiConstantPool {
      */
     Class<?> resolveClass(char cpi);
 
-    /**
-     * Looks up a compiler interface type (without attempting resolution).
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface type, which may remain unresolved
-     */
-    CiType lookupType(char cpi);
-
-    /**
-     * Looks up a compiler interface field (without attempting resolution).
-     * @param opcode the bytecode operation for which the field is being resolved
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface field, which may remain unresolved
-     */
-    CiField lookupField(int opcode, char cpi);
-
-    /**
-     * Looks up a compiler interface method (without attempting resolution).
-     * @param opcode the bytecode operation for which the method is being resolved
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface method, which may remain unresolved
-     */
-    CiMethod lookupMethod(int opcode, char cpi);
-
-    /**
-     * Checks whether the field at the specified constant pool index will link
-     * successfully at runtime for the specified bytecode.
-     * @param opcode the bytecode operation
-     * @param cpi the constant pool index
-     * @return {@code true} if the field will link properly without errors at runtime
-     */
-    boolean willLinkField(int opcode, char cpi);
-
-    /**
-     * Checks whether the method at the specified constant pool index will link
-     * successfully at runtime for the specified bytecode.
-     * @param opcode the bytecode operation
-     * @param cpi the constant pool index
-     * @return {@code true} if the method will link properly without errors at runtime
-     */
-    boolean willLinkMethod(int opcode, char cpi);
 
     /**
      * Looks up a constant at the specified index.

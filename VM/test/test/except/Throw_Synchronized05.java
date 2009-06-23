@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,19 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x;
-
-/**
- * The <code>C1XMetrics</code> class contains a number of fields that collect metrics about
- * compilation.
- *
- * @author Ben L. Titzer
+/*
+ * @Harness: java
+ * @Runs: 0 = true; 1 = !java.lang.Exception
  */
-public class C1XMetrics {
-    public static int LocalValueNumberHits;
-    public static int ValueMapResizes;
-    public static int ValueMapKills;
-    public static int InlinedMethods;
-    public static int InlinedIntrinsics;
-    public static int InlinedFinalizerChecks;
+package test.except;
+
+public class Throw_Synchronized05 {
+
+    static final Throw_Synchronized05 _object = new Throw_Synchronized05();
+
+    public static boolean test(int i) throws Exception {
+        if (i == 0) {
+            return true;
+        }
+        return _object.test2(i);
+    }
+    public synchronized boolean test2(int i) throws Exception {
+        try {
+            throw new Exception();
+        } catch (Exception e) {
+            // do nothing and then rethrow
+            throw e;
+        }
+    }
 }
