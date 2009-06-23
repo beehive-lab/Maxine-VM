@@ -53,7 +53,7 @@ public class C1XCompilation {
     boolean hasUnsafeAccess;
     Bailout bailout;
 
-    int totalBlocks;
+    int totalBlocks = 1;
     int totalInstructions;
 
     /**
@@ -202,14 +202,6 @@ public class C1XCompilation {
     }
 
     /**
-     * Records an inlining decision to successfully inline a method.
-     * @param target the method inlined
-     */
-    public void recordInlining(CiMethod target) {
-        // TODO: record inlining success
-    }
-
-    /**
      * Converts this compilation to a string.
      * @return a string representation of this compilation
      */
@@ -229,9 +221,6 @@ public class C1XCompilation {
      */
     public BlockMap getBlockMap(CiMethod method, int osrBCI) {
         // XXX: cache the block map for methods that are compiled or inlined often
-        if (totalBlocks == 0) {
-            totalBlocks = 1; // start at block 1 to skip header block
-        }
         BlockMap map = new BlockMap(method, totalBlocks);
         boolean isOsrCompilation = false;
         if (osrBCI >= 0) {

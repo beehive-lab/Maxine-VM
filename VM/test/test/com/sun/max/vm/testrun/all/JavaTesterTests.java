@@ -7994,6 +7994,34 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void test_except_Catch_NPE_08() {
+        JavaTesterRunScheme.begin("test.except.Catch_NPE_08");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.Catch_NPE_08.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 1
+            runString = "test(1)";
+            if (1 != test.except.Catch_NPE_08.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-2) == -2
+            runString = "test(-2)";
+            if (-2 != test.except.Catch_NPE_08.test(-2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void test_except_Catch_StackOverflowError_01() {
         JavaTesterRunScheme.begin("test.except.Catch_StackOverflowError_01");
         String runString = null;
@@ -8104,6 +8132,28 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void test_except_Except_Synchronized04() {
+        JavaTesterRunScheme.begin("test.except.Except_Synchronized04");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.Except_Synchronized04.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 2
+            runString = "test(1)";
+            if (2 != test.except.Except_Synchronized04.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void test_except_Throw_InCatch01() {
         JavaTesterRunScheme.begin("test.except.Throw_InCatch01");
         String runString = null;
@@ -8178,6 +8228,40 @@ public class JavaTesterTests {
                 return;
             } catch (Throwable e) {
                 if (e.getClass() != java.lang.Exception.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_Throw_NPE_01() {
+        JavaTesterRunScheme.begin("test.except.Throw_NPE_01");
+        String runString = null;
+        try {
+        // test(0) == 1
+            runString = "test(0)";
+            if (1 != test.except.Throw_NPE_01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 2
+            runString = "test(1)";
+            if (2 != test.except.Throw_NPE_01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-1) == !java.lang.NullPointerException
+            try {
+                runString = "test(-1)";
+                test.except.Throw_NPE_01.test(-1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
                     JavaTesterRunScheme.end(runString, e);
                     return;
                 }
