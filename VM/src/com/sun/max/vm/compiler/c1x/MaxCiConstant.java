@@ -40,6 +40,7 @@ public class MaxCiConstant implements CiConstant {
      * @param value the value
      */
     MaxCiConstant(Value value) {
+        assert value != null;
         this.value = value;
         this.type = null;
     }
@@ -49,6 +50,7 @@ public class MaxCiConstant implements CiConstant {
      * @param type the type
      */
     MaxCiConstant(MaxCiType type) {
+        assert type != null;
         this.value = null;
         this.type = type;
     }

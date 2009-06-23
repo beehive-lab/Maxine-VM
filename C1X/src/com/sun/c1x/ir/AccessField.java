@@ -44,7 +44,6 @@ public abstract class AccessField extends Instruction {
     /**
      * Constructs a new access field object.
      * @param object the instruction producing the receiver object
-     * @param offset the offset of the field in bytes, if known
      * @param field the compiler interface representation of the field
      * @param isStatic indicates if the field is static
      * @param lockStack the lock stack
@@ -52,11 +51,11 @@ public abstract class AccessField extends Instruction {
      * @param isLoaded indicates if the class is loaded
      * @param isInitialized indicates if the class is initialized
      */
-    public AccessField(Instruction object, int offset, CiField field, boolean isStatic,
+    public AccessField(Instruction object, CiField field, boolean isStatic,
                        ValueStack lockStack, ValueStack stateBefore, boolean isLoaded, boolean isInitialized) {
         super(ValueType.fromBasicType(field.basicType()));
         this.object = object;
-        this.offset = offset;
+        this.offset = isLoaded ? field.offset() : -1;
         this.field = field;
         this.lockStack = lockStack;
         this.stateBefore = stateBefore;

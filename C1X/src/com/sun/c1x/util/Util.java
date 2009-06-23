@@ -78,7 +78,7 @@ public class Util {
      */
     public static int log2(int val) {
         assert val > 0 && isPowerOf2(val);
-        return 32 - Integer.numberOfLeadingZeros(val);
+        return 31 - Integer.numberOfLeadingZeros(val);
     }
 
     /**
@@ -89,7 +89,7 @@ public class Util {
      */
     public static int log2(long val) {
         assert val > 0 && isPowerOf2(val);
-        return 64 - Long.numberOfLeadingZeros(val);
+        return 63 - Long.numberOfLeadingZeros(val);
     }
 
     /**
@@ -390,5 +390,33 @@ public class Util {
     public static int hash4(int hash, Object x, Object y, Object z, Object w) {
         // always set at least one bit in case the hash wraps to zero
         return 0x40000000 | (hash + 7 * System.identityHashCode(x) + 11 * System.identityHashCode(y) + 13 * System.identityHashCode(z) + 17 * System.identityHashCode(w));
+    }
+
+    static {
+        assert log2(2) == 1;
+        assert log2(4) == 2;
+        assert log2(8) == 3;
+        assert log2(16) == 4;
+        assert log2(32) == 5;
+        assert log2(0x40000000) == 30;
+
+        assert log2(2L) == 1;
+        assert log2(4L) == 2;
+        assert log2(8L) == 3;
+        assert log2(16L) == 4;
+        assert log2(32L) == 5;
+        assert log2(0x4000000000000000L) == 62;
+
+        assert !isPowerOf2(3);
+        assert !isPowerOf2(5);
+        assert !isPowerOf2(7);
+        assert !isPowerOf2(-1);
+
+        assert isPowerOf2(2);
+        assert isPowerOf2(4);
+        assert isPowerOf2(8);
+        assert isPowerOf2(16);
+        assert isPowerOf2(32);
+        assert isPowerOf2(64);
     }
 }

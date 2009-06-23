@@ -24,6 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.object.host.*;
 
 /**
  * The <code>MaxCiField</code> implements a compiler interface field. A field can
@@ -106,16 +107,6 @@ public class MaxCiField implements CiField {
     }
 
     /**
-     * Checks whether a reference to this field will link successfully at runtime.
-     * @param where the type where the link will occur
-     * @param opcode the operation to check
-     * @return <code>true</code> if a reference to this field will link successfully at runtime
-     */
-    public boolean willLink(CiType where, int opcode) {
-        return fieldActor != null; // TODO: this is not correct
-    }
-
-    /**
      * Checks whether this compiler interface field is loaded (i.e. resolved).
      * @return <code>true</code> if this field is loaded
      */
@@ -172,8 +163,8 @@ public class MaxCiField implements CiField {
      * @return the compiler interface constant for this field
      */
     public CiConstant constantValue() {
-        if (fieldActor != null) {
-            return new MaxCiConstant(fieldActor.constantValue());
+        if (fieldActor != null && fieldActor.isConstant()) {
+            return new MaxCiConstant(HostTupleAccess.readValue(null, fieldActor));
         }
         return null;
     }
