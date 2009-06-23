@@ -146,17 +146,15 @@ public class C1XTest {
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
 
         for (int i = 0; i < warmupOption.getValue(); i++) {
-            if (verboseOption.getValue() > 0) {
                 if (i == 0) {
                     out.print("Warming up");
                 }
                 out.print(".");
                 out.flush();
-            }
             for (MethodActor actor : methods) {
                 compile(runtime, actor, false, true);
             }
-            if (verboseOption.getValue() > 0 && i == warmupOption.getValue() - 1) {
+            if (i == warmupOption.getValue() - 1) {
                 out.print("\n");
             }
         }
@@ -405,10 +403,10 @@ public class C1XTest {
                 final double ips = timing.instructionsPerSecond();
                 if (!averageOption.getValue()) {
                     out.print(Strings.padLengthWithSpaces("#" + timing.number, 6));
-                    out.print(Strings.padLengthWithSpaces(method.toString(), 80) + ": ");
+                    out.print(Strings.padLengthWithSpaces(method.toString(), 80) + ": \n\t\t");
                     out.print(Strings.padLengthWithSpaces(13, ns + " ns "));
-                    out.print(Strings.padLengthWithSpaces(18, Strings.fixedDouble(bcps, 2) + " bytes/s"));
-                    out.print(Strings.padLengthWithSpaces(18, Strings.fixedDouble(ips, 2) + " insts/s"));
+                    out.print(Strings.padLengthWithSpaces(20, Strings.fixedDouble(bcps, 2) + " bytes/s"));
+                    out.print(Strings.padLengthWithSpaces(20, Strings.fixedDouble(ips, 2) + " insts/s"));
                     out.println();
                 }
                 totalBcps += bcps;
