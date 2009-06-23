@@ -952,7 +952,6 @@ public abstract class BytecodeAssembler {
     }
 
     private void tableswitch0(int defaultTarget, int lowMatch, int highMatch, int[] targets) {
-        decStack();
         final int opcodeAddress = currentAddress;
         emitOpcode(TABLESWITCH);
         final int padding = 3 - opcodeAddress % 4; // number of pad bytes
@@ -979,11 +978,13 @@ public abstract class BytecodeAssembler {
 
     public void tableswitch(int defaultTarget, int lowMatch, int highMatch, int[] targets) {
         ProgramError.check(targets != null);
+        decStack();
         tableswitch0(defaultTarget, lowMatch, highMatch, targets);
     }
 
     public void tableswitch(final Label defaultTarget, final int lowMatch, final int highMatch, final Label[] targets) {
         final int opcodeAddress = currentAddress;
+        decStack();
         tableswitch0(0, lowMatch, highMatch, null);
         final int size = currentAddress - opcodeAddress;
         unboundInstructions.append(new LabelInstruction(opcodeAddress, size){
@@ -999,7 +1000,6 @@ public abstract class BytecodeAssembler {
     }
 
     private void lookupswitch0(int defaultTarget, int npairs, int[] matches, int[] targets) {
-        decStack();
         final int opcodeAddress = currentAddress;
         emitOpcode(LOOKUPSWITCH);
         final int padding = 3 - opcodeAddress % 4; // number of pad bytes
@@ -1028,11 +1028,13 @@ public abstract class BytecodeAssembler {
     public void lookupswitch(int defaultTarget, int[] matches, int[] targets) {
         ProgramError.check(matches != null);
         ProgramError.check(targets != null);
+        decStack();
         lookupswitch0(defaultTarget, matches.length, matches, targets);
     }
 
     public void lookupswitch(final Label defaultTarget, final int[] matches, final Label[] targets) {
         final int opcodeAddress = currentAddress;
+        decStack();
         lookupswitch0(0, matches.length, null, null);
         final int size = currentAddress - opcodeAddress;
         unboundInstructions.append(new LabelInstruction(opcodeAddress, size){
