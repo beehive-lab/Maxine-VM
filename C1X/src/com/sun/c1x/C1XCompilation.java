@@ -261,4 +261,8 @@ public class C1XCompilation {
     public int totalInstructions() {
         return _totalInstructions;
     }
+
+    public int nextBlockNumber() {
+        return _totalBlocks++;
+    }
 }

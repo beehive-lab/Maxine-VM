@@ -84,6 +84,7 @@ public class GraphBuilder {
         if (method.isSynchronized()) {
             // setup and exception handler
             syncHandler = new BlockBegin(Instruction.SYNCHRONIZATION_ENTRY_BCI);
+            syncHandler.setBlockID(compilation.nextBlockNumber());
             syncHandler.setExceptionEntry();
             syncHandler.setBlockFlag(BlockBegin.BlockFlag.IsOnWorkList);
             syncHandler.setBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler);
@@ -138,7 +139,9 @@ public class GraphBuilder {
 
         this.startBlock = setupStartBlock(osrBCI, start, osrEntryBlock, initialState);
         // eliminate redundant phis
-        new PhiSimplifier(this.startBlock);
+        if (C1XOptions.SimplifyPhis) {
+            new PhiSimplifier(this.startBlock);
+        }
 
         if (osrBCI >= 0) {
             BlockBegin osrBlock = blockMap.get(osrBCI);
@@ -183,6 +186,7 @@ public class GraphBuilder {
 
     BlockBegin setupStartBlock(int osrBCI, BlockBegin stdEntry, BlockBegin osrEntry, ValueStack state) {
         BlockBegin start = new BlockBegin(0);
+        start.setBlockID(compilation.nextBlockNumber());
 
         BlockBegin newHeaderBlock;
         if (stdEntry.predecessors().size() == 0 && !profileBranches()) {
@@ -209,6 +213,7 @@ public class GraphBuilder {
         assert entry.checkBlockFlag(f);
         // create header block
         BlockBegin h = new BlockBegin(entry.bci());
+        h.setBlockID(compilation.nextBlockNumber());
         h.setDepthFirstNumber(0);
 
         Instruction l = h;
@@ -1430,9 +1435,6 @@ public class GraphBuilder {
         if (recursiveInlineLevel(target) > C1XOptions.MaximumRecursiveInlineLevel) {
             return cannotInline(target, "recursive inlining too depth");
         }
-        if (target.codeSize() > scopeData.maxInlineSize()) {
-            return cannotInline(target, "> " + scopeData.maxInlineSize() + " bytecodes");
-        }
         // TODO: check the total number of bytecodes is less than desired method limit
         if (!target.holder().isInitialized()) {
             return cannotInline(target, "holder is not initialized");
@@ -1460,6 +1462,9 @@ public class GraphBuilder {
         }
         if (C1XOptions.SSEVersion < 2 && target.isStrictFP() != method().isStrictFP()) {
             return cannotInline(target, "strictfp mismatch on x87");
+        }
+        if (target.codeSize() > scopeData.maxInlineSize()) {
+            return cannotInline(target, "> " + scopeData.maxInlineSize() + " bytecodes");
         }
         if ("<init>".equals(target.name()) && target.holder().isSubtypeOf(compilation.throwableType())) {
             // don't inline constructors of throwable classes unless the inlining tree is
@@ -1501,6 +1506,7 @@ public class GraphBuilder {
         if (continuationBlock == null) {
             // there was not already a block starting at the next BCI
             continuationBlock = new BlockBegin(nextBCI());
+            continuationBlock.setBlockID(compilation.nextBlockNumber());
             continuationBlock.setDepthFirstNumber(0);
             continuationExisted = false;
         }
@@ -1517,7 +1523,9 @@ public class GraphBuilder {
         for (int i = argsBase; i < callerState.stackSize(); i++) {
             int param = i - argsBase;
             Instruction arg = callerState.stackAt(i);
-            calleeState.storeLocal(param, roundFp(arg));
+            if (arg != null) {
+                calleeState.storeLocal(param, roundFp(arg));
+            }
         }
 
         // remove arguments from the stack
@@ -1538,6 +1546,7 @@ public class GraphBuilder {
             // lock the receiver object if it is an instance method, the class object otherwise
             lock = synchronizedObject(curState, target);
             syncHandler = new BlockBegin(Instruction.SYNCHRONIZATION_ENTRY_BCI);
+            syncHandler.setBlockID(compilation.nextBlockNumber());
             inlineSyncEntry(lock, syncHandler);
             scope().computeLockStackSize();
         }
@@ -1588,7 +1597,7 @@ public class GraphBuilder {
             // Resume parsing in continuation block unless it was already parsed.
             // Note that if we don't change _last here, iteration in
             // iterateBytecodesForBlock will stop when we return.
-            if (scopeData.continuation().wasVisited()) {
+            if (!scopeData.continuation().wasVisited()) {
                 // add continuation to work list instead of parsing it immediately
                 assert lastInstr instanceof BlockEnd;
                 scopeData.parent.addToWorkList(scopeData.continuation());
@@ -1749,6 +1758,7 @@ public class GraphBuilder {
 
         // create a new block to contain the OSR setup code
         osrEntryBlock = new BlockBegin(osrBCI);
+        osrEntryBlock.setBlockID(compilation.nextBlockNumber());
         osrEntryBlock.setOsrEntry(true);
         osrEntryBlock.setDepthFirstNumber(0);
 
