@@ -185,7 +185,7 @@ public final class SolarisTeleProcess extends TeleProcess {
 
     @Override
     protected boolean activateWatchpoint(TeleWatchpoint teleWatchpoint) {
-        return nativeActivateWatchpoint(_processHandle, teleWatchpoint.start().toLong(), teleWatchpoint.size().toLong(), teleWatchpoint.isAfter(), teleWatchpoint.isRead(), teleWatchpoint.isWrite(), teleWatchpoint.isExec());
+        return nativeActivateWatchpoint(_processHandle, teleWatchpoint.start().toLong(), teleWatchpoint.size().toLong(), true, teleWatchpoint.isRead(), teleWatchpoint.isWrite(), teleWatchpoint.isExec());
     }
 
     @Override
@@ -201,6 +201,11 @@ public final class SolarisTeleProcess extends TeleProcess {
      */
     private static native long nativeReadWatchpointAddress(long processHandle);
 
+    @Override
+    protected long readWatchpointAddress() {
+        return nativeReadWatchpointAddress(_processHandle);
+    }
+
     /**
      * Reads the access code of the watchpoint which triggered a signal.
      *
@@ -210,14 +215,7 @@ public final class SolarisTeleProcess extends TeleProcess {
     private static native int nativeReadWatchpointAccessCode(long processHandle);
 
     @Override
-    protected long readWatchpointAddress() {
-        return nativeReadWatchpointAddress(_processHandle);
-    }
-
-    @Override
     protected int readWatchpointAccessCode() {
         return nativeReadWatchpointAccessCode(_processHandle);
     }
-
-
 }

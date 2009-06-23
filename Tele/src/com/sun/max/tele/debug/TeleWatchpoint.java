@@ -46,7 +46,6 @@ public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint
     private boolean _read = false;
     private boolean _write = false;
     private boolean _exec = false;
-    private boolean _after = true;
 
     private byte[] teleWatchpointCache;
 
@@ -56,9 +55,8 @@ public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint
         teleWatchpointCache = new byte[size.toInt()];
     }
 
-    public TeleWatchpoint(Factory factory, Address address, Size size, boolean after, boolean read, boolean write, boolean exec) {
+    public TeleWatchpoint(Factory factory, Address address, Size size, boolean read, boolean write, boolean exec) {
         this(factory, address, size);
-        this._after = after;
         this._read = read;
         this._write = write;
         this._exec = exec;
@@ -72,10 +70,6 @@ public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint
             return start().equals(teleWatchpoint.start());
         }
         return false;
-    }
-
-    public boolean isAfter() {
-        return _after;
     }
 
     public boolean isRead() {
@@ -175,7 +169,7 @@ public class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint
                 throw new TooManyWatchpointsException("Number of watchpoints supported by platform (" +
                     _teleProcess.maximumWatchpointCount() + ") exceeded");
             }
-            final TeleWatchpoint teleWatchpoint = new TeleWatchpoint(this, address, size, after, read, write, exec);
+            final TeleWatchpoint teleWatchpoint = new TeleWatchpoint(this, address, size, read, write, exec);
             if (!_watchpoints.add(teleWatchpoint)) {
                 // An existing watchpoint starts at the same location
                 throw new DuplicateWatchpointException("Watchpoint already exists at location: " + address.toHexString());

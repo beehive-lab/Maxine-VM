@@ -24,6 +24,7 @@
  */
 
 #include <string.h>
+#include <stdio.h>
 #include "log.h"
 #include "jni.h"
 
@@ -303,7 +304,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeDeactivateWatchpoin
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeReadWatchpointAddress(JNIEnv *env, jlong processHandle) {
+Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeReadWatchpointAddress(JNIEnv *env, jclass c, jlong processHandle) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
     pstatus_t *ps;
     long addr;
@@ -314,12 +315,12 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeReadWatchpointAddre
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeReadWatchpointAccessCode(JNIEnv *env, jlong processHandle) {
+Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeReadWatchpointAccessCode(JNIEnv *env, jclass c, jlong processHandle){
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
     pstatus_t *ps;
-    int addr;
+    int code = 0;
 
-    addr = proc_Pstatus(ph)->pr_lwp.pr_info.si_code;
+    code = proc_Pstatus(ph)->pr_lwp.pr_info.si_code;
 
-    return addr;
+    return code;
 }
