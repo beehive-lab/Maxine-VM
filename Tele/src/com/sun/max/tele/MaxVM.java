@@ -664,12 +664,6 @@ public interface MaxVM {
     MaxWatchpoint findWatchpoint(Address address);
 
     /**
-     * Update caches of all registered watchpoints.
-     * @return whether update succeeded
-     */
-    void updateWatchpointCaches();
-
-    /**
      * Find watchpoint which triggered a signal.
      * @return watchpoint which triggered a signal
      */

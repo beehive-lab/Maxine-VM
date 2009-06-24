@@ -78,6 +78,7 @@ public final class TeleProcessController {
             @Override
             public void execute() throws OSExecutionRequestException {
                 Trace.begin(TRACE_VALUE, runToInstructionPerformTracer);
+                updateWatchpointCaches();
                 final Factory breakpointFactory = teleProcess.targetBreakpointFactory();
 
                 // Create a temporary breakpoint if there is not already an enabled, non-persistent breakpoint for the target address:
@@ -131,6 +132,7 @@ public final class TeleProcessController {
             @Override
             public void execute() throws OSExecutionRequestException {
                 Trace.begin(TRACE_VALUE, resumePerformTracer);
+                updateWatchpointCaches();
                 for (TeleNativeThread thread : teleProcess().threads()) {
                     thread.evadeBreakpoint();
                 }
@@ -155,6 +157,7 @@ public final class TeleProcessController {
             @Override
             public void execute() throws OSExecutionRequestException {
                 Trace.begin(TRACE_VALUE, singleStepPerformTracer);
+                updateWatchpointCaches();
                 teleProcess().performSingleStep(thread);
                 Trace.end(TRACE_VALUE, singleStepPerformTracer);
             }
@@ -177,6 +180,7 @@ public final class TeleProcessController {
             @Override
             public void execute() throws OSExecutionRequestException {
                 Trace.begin(TRACE_VALUE, stepOverPerformTracer);
+                updateWatchpointCaches();
                 oldInstructionPointer = thread.instructionPointer();
                 oldReturnAddress = thread.getReturnAddress();
                 teleProcess().performSingleStep(thread);
@@ -236,6 +240,10 @@ public final class TeleProcessController {
         }
         // Stepped over a normal, non-call instruction:
         return null;
+    }
+
+    private void updateWatchpointCaches() {
+        teleProcess.watchpointFactory().updateWatchpointCaches();
     }
 
     /**

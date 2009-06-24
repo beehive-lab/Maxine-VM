@@ -31,7 +31,8 @@ import com.sun.max.collect.*;
 public enum WatchpointsColumnKind {
     START("Start", "Starting address", true, 20),
     END("End", "Ending address", true, 20),
-    REGION("Region", "Memory region pointed to by value", false, 20);
+    REGION("Region", "Memory region pointed to by value", false, 20),
+    READ("R", "Read?", true, 5);
 
     private final String label;
     private final String toolTipText;
