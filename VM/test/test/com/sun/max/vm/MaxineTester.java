@@ -403,12 +403,10 @@ public class MaxineTester {
 
         final int exitCode = unexpectedFailures.size() + unexpectedPasses.size() + failedImages + failedAutoTests;
         if (out != null) {
-
             final Date endDate = new Date();
             final long total = endDate.getTime() - startDate.getTime();
             final DateFormat dateFormat = DateFormat.getTimeInstance();
-            out.println("Start time: " + dateFormat.format(startDate));
-            out.println("End time:   " + dateFormat.format(endDate) + " [Time: " + ((double) total) / 1000 + " seconds]");
+            out.println("Time: " + dateFormat.format(startDate) + " - " + dateFormat.format(endDate) + " [" + ((double) total) / 1000 + " seconds]");
             out.println("Exit code: " + exitCode);
         }
 
