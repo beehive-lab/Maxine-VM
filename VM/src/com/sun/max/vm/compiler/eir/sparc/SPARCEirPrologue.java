@@ -157,13 +157,9 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
             asm.stx(register, stackPointer, offset);
             offset += wordSize;
         }
-        for (int i = 0; i < 32; i++) {
+        for (int i = 0; i < 64; i += 2) {
             final FPR fpr = FPR.fromValue(i);
-            if (fpr instanceof DFPR) {
-                asm.std((DFPR) fpr, stackPointer, offset);
-            } else {
-                asm.st((SFPR) fpr, stackPointer, offset);
-            }
+            asm.std((DFPR) fpr, stackPointer, offset);
             offset += wordSize;
         }
         asm.rd(StateRegister.CCR, scratchRegister);

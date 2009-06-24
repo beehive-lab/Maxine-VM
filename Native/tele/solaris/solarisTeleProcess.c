@@ -272,7 +272,6 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeActivateWatchpoint(
     if (after) {
         w.pr_wflags |= WA_TRAPAFTER;
     }
-    //w.pr_wflags = WA_WRITE | WA_TRAPAFTER;
 
     w.pr_pad = 0;
 
@@ -291,7 +290,6 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeDeactivateWatchpoin
     prwatch_t w;
     w.pr_vaddr = address;
     w.pr_size = size;
-    //w.pr_wflags = WA_WRITE | WA_TRAPAFTER;
     w.pr_pad = 0;
 
     int error = Pdelwapt(ph, &w);

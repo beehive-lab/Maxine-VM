@@ -128,7 +128,7 @@ public class FPR extends AbstractSymbolicArgument {
         if (value <= 31) {
             return singleValues[value];
         }
-        if (value % 2 == 0) {
+        if ((value & 0x1) == 0) {
             return doubleValues[value >> 1];
         }
         throw new IllegalArgumentException();
