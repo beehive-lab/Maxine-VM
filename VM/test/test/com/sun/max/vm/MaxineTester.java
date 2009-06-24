@@ -110,10 +110,13 @@ public class MaxineTester {
                     "Location of the Programming Language Shootout tests. If not provided, then the SHOOTOUT_DIR environment variable is used.");
     private static final Option<Boolean> timingOption = options.newBooleanOption("timing", false,
                     "For the SpecJVM98 and DaCapo benchmarks, report internal timings compared to the baseline.");
+    private static final Option<Boolean> execTimesOption = options.newBooleanOption("exec-times", true,
+                    "Report the time taken for each executed subprocess.");
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
                     "Show help message and exit.");
 
     private static String javaConfigAlias = null;
+    private static Date startDate;
 
     public static void main(String[] args) {
         try {
@@ -123,6 +126,9 @@ public class MaxineTester {
                 options.printHelp(System.out, 80);
                 return;
             }
+
+            startDate = new Date();
+            out().println("Start time: " + DateFormat.getTimeInstance().format(startDate));
 
             javaConfigAlias = javaConfigAliasOption.getValue();
             if (javaConfigAlias != null) {
@@ -383,8 +389,21 @@ public class MaxineTester {
 
         final int exitCode = unexpectedFailures.size() + unexpectedPasses.size() + failedImages + failedAutoTests;
         if (out != null) {
+            if (!execTimes.isEmpty() && execTimesOption.getValue()) {
+                out.println("Sub-process times (seconds):");
+                for (Map.Entry<String, Long> entry : execTimes.entrySet()) {
+                    final double ms = entry.getValue().longValue();
+                    out.printf("    %6.3f: %s%n", ms / 1000, entry.getKey());
+                }
+            }
+
+            final Date endDate = new Date();
+            final long total = endDate.getTime() - startDate.getTime();
+            final DateFormat dateFormat = DateFormat.getTimeInstance();
+            out.println("End time: " + dateFormat.format(endDate) + " [Time: " + ((double) total) / 1000 + " seconds]");
             out.println("Exit code: " + exitCode);
         }
+
         return exitCode;
     }
 
@@ -570,7 +589,7 @@ public class MaxineTester {
     /**
      * @param workingDir if {@code null}, then {@code imageDir} is used
      */
-    private static int runMaxineVM(JavaCommand command, File imageDir, File workingDir, File outputFile, int timeout) {
+    private static int runMaxineVM(JavaCommand command, File imageDir, File workingDir, File outputFile, String name, int timeout) {
         String[] envp = null;
         if (OperatingSystem.current() == OperatingSystem.LINUX) {
             // Since the executable may not be in the default location, then the -rpath linker option used when
@@ -588,14 +607,14 @@ public class MaxineTester {
             final String string = env.toString();
             envp = string.substring(1, string.length() - 2).split(", ");
         }
-        return exec(workingDir == null ? imageDir : workingDir, command.getExecutableCommand(imageDir.getAbsolutePath() + "/maxvm"), envp, outputFile, null, timeout);
+        return exec(workingDir == null ? imageDir : workingDir, command.getExecutableCommand(imageDir.getAbsolutePath() + "/maxvm"), envp, outputFile, name, timeout);
     }
 
     /**
      * @param workingDir if {@code null}, then {@code imageDir} is used
      */
     private static int runJavaVM(String program, JavaCommand command, File imageDir, File workingDir, File outputFile, int timeout) {
-        final String name = "Executing " + program;
+        final String name = "JVM_" + program;
         return exec(workingDir == null ? imageDir : workingDir, command.getExecutableCommand(javaExecutableOption.getValue()), null, outputFile, name, timeout);
     }
 
@@ -681,7 +700,7 @@ public class MaxineTester {
             final JavaCommand maxvmCommand = command.copy();
             maxvmCommand.addVMOptions(MaxineTesterConfiguration.getVMOptions(config));
             final File maxvmOutput = maxvmStdoutFile(outputDir, testName, config);
-            final int maxvmExitValue = runMaxineVM(maxvmCommand, imageDir, workingDir, maxvmOutput, javaRunTimeOutOption.getValue());
+            final int maxvmExitValue = runMaxineVM(maxvmCommand, imageDir, workingDir, maxvmOutput, maxvmOutput.getName(), javaRunTimeOutOption.getValue());
             if (javaExitValue != maxvmExitValue) {
                 if (maxvmExitValue == PROCESS_TIMEOUT) {
                     final ExpectedResult expected = printFailed(testName, config);
@@ -796,6 +815,8 @@ public class MaxineTester {
         return exec(workingDir, command, env, outputFile, false, name, timeout);
     }
 
+    private static final Map<String, Long> execTimes = Collections.synchronizedMap(new LinkedHashMap<String, Long>());
+
     /**
      * Executes a command in a sub-process. The execution uses a shell command to perform redirection of the standard
      * output and error streams.
@@ -814,6 +835,7 @@ public class MaxineTester {
      */
     private static int exec(File workingDir, String[] command, String[] env, File outputFile, boolean append, String name, int timeout) {
         traceExec(workingDir, command);
+        final long start = System.currentTimeMillis();
         try {
             final StringBuilder sb = new StringBuilder("exec ");
             for (String s : command) {
@@ -846,6 +868,20 @@ public class MaxineTester {
             return exitValue;
         } catch (IOException e) {
             throw ProgramError.unexpected(e);
+        } finally {
+            if (name != null) {
+                synchronized (execTimes) {
+                    String key = name;
+                    if (execTimes.containsKey(key)) {
+                        int unique = 1;
+                        do {
+                            key = name + " (" + unique + ")";
+                            unique++;
+                        } while (execTimes.containsKey(key));
+                    }
+                    execTimes.put(key, System.currentTimeMillis() - start);
+                }
+            }
         }
     }
 
@@ -1191,7 +1227,7 @@ public class MaxineTester {
                     final File outputFile = stdoutFile(imageDir, "JAVA_TESTER" + (executions == 0 ? "" : "-" + executions), config);
                     final JavaCommand command = new JavaCommand((Class) null);
                     command.addArgument(nextTestOption);
-                    final int exitValue = runMaxineVM(command, imageDir, null, outputFile, javaTesterTimeOutOption.getValue());
+                    final int exitValue = runMaxineVM(command, imageDir, null, outputFile, outputFile.getName(), javaTesterTimeOutOption.getValue());
                     final JavaTesterResult result = JavaTesterHarness.parseJavaTesterOutputFile(config, outputFile);
                     final String summary = result.summary;
                     nextTestOption = result.nextTestOption;
