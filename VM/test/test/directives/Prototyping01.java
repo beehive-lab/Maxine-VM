@@ -18,22 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x;
+package test.directives;
 
-/**
- * The <code>C1XMetrics</code> class contains a number of fields that collect metrics about
- * compilation.
- *
- * @author Ben L. Titzer
+import com.sun.max.vm.MaxineVM;
+
+/*
+ * @Harness: java
+ * @Runs: 0=1; 1=2
  */
-public class C1XMetrics {
-    public static int LocalValueNumberHits;
-    public static int ValueMapResizes;
-    public static int ValueMapKills;
-    public static int InlinedMethods;
-    public static int InlinedIntrinsics;
-    public static int InlinedFinalizerChecks;
-    public static int FoldableMethodsRegistered;
-    public static int MethodsFolded;
-    public static int InlineForcedMethods;
+public class Prototyping01 {
+    public static int test(int arg) {
+        if (MaxineVM.isPrototyping()) {
+            doSomething();
+            doSomething();
+            doSomething();
+            doSomething();
+            doSomething();
+            doSomething();
+        }
+        return arg + 1;
+    }
+    static void doSomething() {
+        for (int i = 0; i < 50; i++) {
+            new Object().toString();
+        }
+    }
 }
