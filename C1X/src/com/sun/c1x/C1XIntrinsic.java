@@ -25,6 +25,7 @@ import com.sun.c1x.ci.CiType;
 import com.sun.c1x.util.Util;
 
 import java.util.HashMap;
+import java.lang.reflect.Method;
 
 /**
  * The <code>C1XIntrinsic</code> class represents an intrinsic, i.e. a library method that
@@ -200,6 +201,8 @@ public enum C1XIntrinsic {
     sun_misc_Unsafe$prefetchWriteStatic  ("(Ljava/lang/Object;J)V");
 
     private static HashMap<String, HashMap<String, C1XIntrinsic>> intrinsicMap = new HashMap<String, HashMap<String, C1XIntrinsic>>(100);
+    private static HashMap<CiMethod, Method> foldableMap = new HashMap<CiMethod, Method>();
+    private static boolean anyFoldables;
 
     private final String className;
     private final String simpleClassName;
@@ -288,5 +291,33 @@ public enum C1XIntrinsic {
             }
         }
         return null;
+    }
+
+    /**
+     * Allows users of the C1X compiler to register particular methods that are "foldable"--
+     * i.e. they are pure functions that have no side effects. Such methods can be executed
+     * with reflection when all their inputs are constants, and the resulting value substituted
+     * for the method call.
+     * @param ciMethod the compiler interface method for matching
+     * @param reflectMethod the reflection method to execute for folding
+     */
+    public static void registerFoldableMethod(CiMethod ciMethod, Method reflectMethod) {
+        reflectMethod.setAccessible(true);
+        foldableMap.put(ciMethod, reflectMethod);
+        anyFoldables = true;
+        C1XMetrics.FoldableMethodsRegistered++;
+    }
+
+    /**
+     * Looks up the foldable reflective method for a compiler interface method, if it one is registered.
+     * @param ciMethod the compiler interface method
+     * @return the reflective method for the compiler interface method, if one is register; <code>null</code>
+     * otherwise
+     */
+    public static Method getFoldableMethod(CiMethod ciMethod) {
+        if (anyFoldables) {
+            return foldableMap.get(ciMethod);
+        }
+        return null; // don't even bother checking the map if none are registered
     }
 }

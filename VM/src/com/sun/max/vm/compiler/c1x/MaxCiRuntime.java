@@ -37,6 +37,9 @@ import com.sun.max.vm.type.*;
  * @author Ben L. Titzer
  */
 public class MaxCiRuntime implements CiRuntime {
+
+    public static final MaxCiRuntime globalRuntime = new MaxCiRuntime();
+
     final MaxCiConstantPool globalConstantPool = new MaxCiConstantPool(this, null);
 
     final WeakHashMap<MaxCiField, MaxCiField> fields = new WeakHashMap<MaxCiField, MaxCiField>();

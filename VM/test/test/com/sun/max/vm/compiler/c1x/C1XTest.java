@@ -36,6 +36,7 @@ import com.sun.max.program.option.OptionSet.*;
 import com.sun.max.test.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.actor.Actor;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
@@ -146,17 +147,15 @@ public class C1XTest {
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
 
         for (int i = 0; i < warmupOption.getValue(); i++) {
-            if (verboseOption.getValue() > 0) {
-                if (i == 0) {
-                    out.print("Warming up");
-                }
-                out.print(".");
-                out.flush();
+            if (i == 0) {
+                out.print("Warming up");
             }
+            out.print(".");
+            out.flush();
             for (MethodActor actor : methods) {
                 compile(runtime, actor, false, true);
             }
-            if (verboseOption.getValue() > 0 && i == warmupOption.getValue() - 1) {
+            if (i == warmupOption.getValue() - 1) {
                 out.print("\n");
             }
         }
@@ -283,6 +282,10 @@ public class C1XTest {
             @Override
             public boolean add(MethodActor e) {
                 final boolean result = super.add(e);
+                // register foldable methods with C1X.
+                if (C1XOptions.CanonicalizeFoldableMethods && Actor.isDeclaredFoldable(e.flags())) {
+                    C1XIntrinsic.registerFoldableMethod(MaxCiRuntime.globalRuntime.getCiMethod(e), e.toJava());
+                }
                 if ((size() % 1000) == 0 && verboseOption.getValue() >= 1) {
                     out.print('.');
                 }
@@ -405,10 +408,10 @@ public class C1XTest {
                 final double ips = timing.instructionsPerSecond();
                 if (!averageOption.getValue()) {
                     out.print(Strings.padLengthWithSpaces("#" + timing.number, 6));
-                    out.print(Strings.padLengthWithSpaces(method.toString(), 80) + ": ");
+                    out.print(Strings.padLengthWithSpaces(method.toString(), 80) + ": \n\t\t");
                     out.print(Strings.padLengthWithSpaces(13, ns + " ns "));
-                    out.print(Strings.padLengthWithSpaces(18, Strings.fixedDouble(bcps, 2) + " bytes/s"));
-                    out.print(Strings.padLengthWithSpaces(18, Strings.fixedDouble(ips, 2) + " insts/s"));
+                    out.print(Strings.padLengthWithSpaces(20, Strings.fixedDouble(bcps, 2) + " bytes/s"));
+                    out.print(Strings.padLengthWithSpaces(20, Strings.fixedDouble(ips, 2) + " insts/s"));
                     out.println();
                 }
                 totalBcps += bcps;
@@ -429,7 +432,7 @@ public class C1XTest {
                     try {
                         final int value = field.getInt(null);
                         final String name = field.getName();
-                        out.print(name + ": " + value + "\n");
+                        out.print(Strings.padLengthWithSpaces(name, 40) + ": " + value + "\n");
                     } catch (IllegalAccessException e) {
                         // do nothing.
                     }

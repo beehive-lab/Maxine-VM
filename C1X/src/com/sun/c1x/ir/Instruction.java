@@ -38,10 +38,6 @@ import com.sun.c1x.value.*;
  * @author Ben L. Titzer
  */
 public abstract class Instruction {
-    private static final int BCI_NOT_APPENDED = -99;
-    public static final int INVOCATION_ENTRY_BCI = -1;
-    public static final int SYNCHRONIZATION_ENTRY_BCI = -1;
-
     /**
      * An enumeration of flags on instructions.
      */
@@ -64,17 +60,7 @@ public abstract class Instruction {
         UnorderedIsTrue,
         NeedsPatching,
         ThrowIncompatibleClassChangeError,
-        ProfileMDO;
-
-        public final int mask() {
-            return 1 << ordinal();
-        }
-    }
-
-    /**
-     * An enumeration of the reasons that an instruction can be pinned.
-     */
-    public enum PinReason {
+        ProfileMDO,
         PinUnknown,
         PinExplicitNullCheck,
         PinStackForStateSplit,
@@ -86,11 +72,17 @@ public abstract class Instruction {
         }
     }
 
+    private static final int BCI_NOT_APPENDED = -99;
+    private static final int PIN_FLAGS = Flag.PinUnknown.mask() | Flag.PinExplicitNullCheck.mask() |
+                                         Flag.PinStackForStateSplit.mask() | Flag.PinStateSplitConstructor.mask() |
+                                         Flag.PinGlobalValueNumbering.mask();
+    public static final int INVOCATION_ENTRY_BCI = -1;
+    public static final int SYNCHRONIZATION_ENTRY_BCI = -1;
+
     private static int nextID;
 
     private final int id;
     private int bci;
-    private int pinState;
     private int flags;
     private ValueType valueType;
     private Instruction next;
@@ -140,16 +132,8 @@ public abstract class Instruction {
      * Checks whether this instruction has already been added to its basic block.
      * @return <code>true</code> if this instruction has been added to the basic block containing it
      */
-    public boolean isAppended() {
+    public final boolean isAppended() {
         return bci != BCI_NOT_APPENDED;
-    }
-
-    /**
-     * Gets the pin state of this instruction.
-     * @return the pin state of this instruction
-     */
-    public final int pinState() {
-        return pinState;
     }
 
     /**
@@ -159,7 +143,7 @@ public abstract class Instruction {
      * @return <code>true</code> if this instruction has been pinned
      */
     public final boolean isPinned() {
-        return C1XOptions.PinAllInstructions || (pinState != 0);
+        return C1XOptions.PinAllInstructions || (flags & PIN_FLAGS) != 0;
     }
 
     /**
@@ -175,7 +159,6 @@ public abstract class Instruction {
      * @param type the new value type for this instruction
      */
     public final void setType(ValueType type) {
-        // XXX: refactor to facade and make field public?
         assert type != null;
         valueType = type;
     }
@@ -198,7 +181,6 @@ public abstract class Instruction {
      */
     public final Instruction setNext(Instruction next, int bci) {
         if (next != null) {
-            // XXX: refactor to facade and make field public?
             assert !(this instanceof Phi || this instanceof BlockEnd || this instanceof Local);
             this.next = next;
             next.setBCI(bci);
@@ -257,18 +239,10 @@ public abstract class Instruction {
     }
 
     /**
-     * Pin this instruction.
-     * @param reason the reason this instruction should be pinned.
-     */
-    public final void pin(PinReason reason) {
-        pinState |= reason.mask();
-    }
-
-    /**
      * Pin this instruction (with an unknown reason).
      */
     public final void pin() {
-        pin(PinReason.PinUnknown);
+        setFlag(Flag.PinUnknown);
     }
 
     /**
@@ -277,10 +251,10 @@ public abstract class Instruction {
      * be unpinned.
      * @param reason the reason this instruction might have been pinned
      */
-    public final void unpin(PinReason reason) {
-        // XXX: is it better to just ignore requests to unpin in the unknown case?
-        assert reason != PinReason.PinUnknown : "cannot unpin unknown pin reason";
-        pinState &= ~reason.mask();
+    public final void unpin(Flag reason) {
+        if (reason != Flag.PinUnknown) {
+            clearFlag(reason);
+        }
     }
 
     /**
@@ -336,7 +310,7 @@ public abstract class Instruction {
      * Checks whether this instruction needs a null check.
      * @return <code>true</code> if this instruction needs a null check
      */
-    public boolean isNonNull() {
+    public final boolean isNonNull() {
         return checkFlag(Flag.NonNull);
     }
 
@@ -357,14 +331,6 @@ public abstract class Instruction {
     }
 
     /**
-     * Clears the LIR operand associated with this instruction by setting it
-     * to an illegal operand.
-     */
-    public void clearLirOperand() {
-        lirOperand = null;
-    }
-
-    /**
      * Gets the list of exception handlers associated with this instruction.
      * @return the list of exception handlers for this instruction
      */
@@ -376,7 +342,7 @@ public abstract class Instruction {
      * Sets the list of exception handlers for this instruction.
      * @param exceptionHandlers the exception handlers
      */
-    public void setExceptionHandlers(List<ExceptionHandler> exceptionHandlers) {
+    public final void setExceptionHandlers(List<ExceptionHandler> exceptionHandlers) {
         this.exceptionHandlers = exceptionHandlers;
     }
 
@@ -479,6 +445,11 @@ public abstract class Instruction {
         otherValuesDo(closure);
     }
 
+    @Override
+    public String toString() {
+        return valueString(this);
+    }
+
     /**
      * Utility method to check that two instructions have the same basic type.
      * @param i the first instruction
@@ -487,11 +458,6 @@ public abstract class Instruction {
      */
     public static boolean sameBasicType(Instruction i, Instruction other) {
         return i.type().basicType() == other.type().basicType();
-    }
-
-    @Override
-    public String toString() {
-        return valueString(this);
     }
 
     /**
