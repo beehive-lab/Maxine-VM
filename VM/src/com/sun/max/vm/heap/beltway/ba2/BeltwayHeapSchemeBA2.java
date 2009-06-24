@@ -115,7 +115,7 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
 
     }
 
-    @INLINE
+
     public boolean minorCollect(Size requestedFreeSpace) {
         if (_outOfMemory) {
             return false;
@@ -129,7 +129,6 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
         return false;
     }
 
-    @INLINE
     public boolean majorCollect(Size requestedFreeSpace) {
         if (_outOfMemory) {
             return false;
@@ -154,12 +153,11 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
         return address.greaterEqual(Heap.bootHeapRegion().start()) && address.lessEqual(getNurserySpace().end());
     }
 
-    @INLINE
     public boolean checkOverlappingBelts(Belt from, Belt to) {
         return from.getAllocationMark().greaterThan(to.start()) || from.end().greaterThan(to.start());
     }
 
-    @INLINE
+    @INLINE(override = true)
     public void writeBarrier(Reference from, Reference to) {
         // do nothing.
     }

@@ -38,13 +38,13 @@ import com.sun.max.vm.tele.*;
  * Configured with three belts: one for an nursery (the eden space); one for the tenured generation (the mature space);
  */
 public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
-
     /**
      * Default sizing of each belt, expressed as percentage of the total heap.
      * Each entry in the array correspond to the percentage of heap taken by the corresponding belt
-     * (e.g., belt 0, i.e., the eden, is allocated _percentages[0] percent of the heap.
+     * (e.g., belt 0, i.e., the eden, is allocated 10 % percent of the heap.
      */
-    private static int[] _percentages = new int[] {10, 40, 50};
+    private static final   int [] DEFAULT_BELT_HEAP_PERCENTAGE = new int[] {10, 40, 50};
+
     protected static BeltwayGenerationalCollector _beltCollectorGenerational = new BeltwayGenerationalCollector();
 
     public BeltwayHeapSchemeGenerational(VMConfiguration vmConfiguration) {
@@ -58,8 +58,8 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
             final Size heapSize = calculateHeapSize();
             final Address address = allocateMemory(heapSize);
             _beltwayConfiguration.initializeBeltWayConfiguration(address.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()),
-                heapSize.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()).asSize(), 3,
-                            _percentages);
+                heapSize.roundedUpBy(BeltwayConfiguration.TLAB_SIZE.toInt()).asSize(), DEFAULT_BELT_HEAP_PERCENTAGE.length,
+                DEFAULT_BELT_HEAP_PERCENTAGE);
             _beltManager.initializeBelts();
             if (Heap.verbose()) {
                 _beltManager.printBeltsInfo();
@@ -107,7 +107,7 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
      * @param size The size of the allocation.
      * @return the pointer to the address in which we can allocate. If null, a GC should be triggered.
      */
-    @INLINE
+    @INLINE(override = true)
     public Pointer allocate(Size size) {
         if (!MaxineVM.isRunning()) {
             return bumpAllocateSlowPath(getEdenSpace(), size);
@@ -163,7 +163,7 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
         return address.greaterEqual(Heap.bootHeapRegion().start()) & address.lessEqual(getMatureSpace().end());
     }
 
-    @INLINE
+    @INLINE(override = true)
     public void writeBarrier(Reference from, Reference to) {
         // do nothing.
     }

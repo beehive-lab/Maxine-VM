@@ -27,6 +27,9 @@ import com.sun.max.vm.heap.beltway.*;
 import com.sun.max.vm.tele.*;
 
 /**
+ * An Appel-style generational collector. The heap is divided in two generations, each implemented using a belt.
+ * @see BeltwayHeapSchemeBA2
+ *
  * @author Christos Kotselidis
  */
 
@@ -133,7 +136,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             if (BeltwayConfiguration._parallelScavenging) {
                 beltwayHeapSchemeBA2.fillLastTLAB();
                 beltwayHeapSchemeBA2.markSideTableLastTLAB();
-                BeltwayHeapScheme._inScavening = true;
+                BeltwayHeapScheme._inScavenging = true;
                 beltwayHeapSchemeBA2.initializeGCThreads(beltwayHeapSchemeBA2, matureSpaceBeforeAllocation, matureSpaceReserve);
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
                 if (Heap.verbose()) {
@@ -141,7 +144,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 }
 
                 beltwayHeapSchemeBA2.startGCThreads();
-                BeltwayHeapScheme._inScavening = false;
+                BeltwayHeapScheme._inScavenging = false;
                 if (Heap.verbose()) {
                     Log.println("Join Threads");
                 }
@@ -211,7 +214,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 if (BeltwayConfiguration._parallelScavenging) {
                     beltwayHeapSchemeBA2.fillLastTLAB();
                     beltwayHeapSchemeBA2.markSideTableLastTLAB();
-                    BeltwayHeapScheme._inScavening = true;
+                    BeltwayHeapScheme._inScavenging = true;
                     beltwayHeapSchemeBA2.initializeGCThreads(beltwayHeapSchemeBA2, matureSpaceReserve, beltwayHeapSchemeBA2.getMatureSpace());
                     VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
                     if (Heap.verbose()) {
@@ -219,7 +222,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                     }
 
                     beltwayHeapSchemeBA2.startGCThreads();
-                    BeltwayHeapScheme._inScavening = false;
+                    BeltwayHeapScheme._inScavenging = false;
                     if (Heap.verbose()) {
                         Log.println("Join Threads");
                     }
@@ -331,7 +334,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             if (BeltwayConfiguration._parallelScavenging) {
                 beltwayHeapSchemeBA2.fillLastTLAB();
                 beltwayHeapSchemeBA2.markSideTableLastTLAB();
-                BeltwayHeapScheme._inScavening = true;
+                BeltwayHeapScheme._inScavenging = true;
                 beltwayHeapSchemeBA2.initializeGCThreads(beltwayHeapSchemeBA2, beltwayHeapSchemeBA2.getNurserySpace(), beltwayHeapSchemeBA2.getMatureSpace());
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
                 if (Heap.verbose()) {
@@ -339,7 +342,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 }
 
                 beltwayHeapSchemeBA2.startGCThreads();
-                BeltwayHeapScheme._inScavening = false;
+                BeltwayHeapScheme._inScavenging = false;
                 if (Heap.verbose()) {
                     Log.println("Join Threads");
                 }
