@@ -258,6 +258,9 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
 #elif isa_AMD64 && os_DARWIN
 	 trapInfo[3] = ucontext->uc_mcontext->__ss.__r14;
 	 ucontext->uc_mcontext->__ss.__r14 = disabledVmThreadLocals;
+#elif isa_AMD64 && os_GUESTVMXEN
+	 trapInfo[3] = ucontext->r14;
+	 ucontext->r14 = disabledVmThreadLocals;
 #else
     c_UNIMPLEMENTED();
 #endif
