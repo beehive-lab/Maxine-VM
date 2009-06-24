@@ -128,8 +128,6 @@ public class MaxineTester {
             }
 
             startDate = new Date();
-            out().println("Start time: " + DateFormat.getTimeInstance().format(startDate));
-
             javaConfigAlias = javaConfigAliasOption.getValue();
             if (javaConfigAlias != null) {
                 ProgramError.check(MaxineTesterConfiguration.imageConfigs.containsKey(javaConfigAlias), "Unknown Java tester config '" + javaConfigAlias + "'");
@@ -351,6 +349,22 @@ public class MaxineTester {
      */
     private static int reportTestResults(PrintStream out) {
         if (out != null) {
+            if (!execTimes.isEmpty() && execTimesOption.getValue()) {
+                try {
+                    final File timesOutFile = new File(outputDirOption.getValue(), "times.stdout");
+                    final PrintStream timesOut = new PrintStream(new FileOutputStream(timesOutFile));
+                    for (Map.Entry<String, Long> entry : execTimes.entrySet()) {
+                        final double ms = entry.getValue().longValue();
+                        timesOut.printf("%10.3f: %s%n", ms / 1000, entry.getKey());
+                    }
+                    timesOut.close();
+
+                    out.println();
+                    out.println("Timing info: -> see " + fileRef(timesOutFile));
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
             out.println();
             out.println("== Summary ==");
         }
@@ -389,18 +403,12 @@ public class MaxineTester {
 
         final int exitCode = unexpectedFailures.size() + unexpectedPasses.size() + failedImages + failedAutoTests;
         if (out != null) {
-            if (!execTimes.isEmpty() && execTimesOption.getValue()) {
-                out.println("Sub-process times (seconds):");
-                for (Map.Entry<String, Long> entry : execTimes.entrySet()) {
-                    final double ms = entry.getValue().longValue();
-                    out.printf("    %6.3f: %s%n", ms / 1000, entry.getKey());
-                }
-            }
 
             final Date endDate = new Date();
             final long total = endDate.getTime() - startDate.getTime();
             final DateFormat dateFormat = DateFormat.getTimeInstance();
-            out.println("End time: " + dateFormat.format(endDate) + " [Time: " + ((double) total) / 1000 + " seconds]");
+            out.println("Start time: " + dateFormat.format(startDate));
+            out.println("End time:   " + dateFormat.format(endDate) + " [Time: " + ((double) total) / 1000 + " seconds]");
             out.println("Exit code: " + exitCode);
         }
 
