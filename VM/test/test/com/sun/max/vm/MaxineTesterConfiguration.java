@@ -299,7 +299,7 @@ public class MaxineTesterConfiguration {
     private static final String DEFAULT_JAVA_TESTER_CONFIGS = "optopt,jitopt,optjit,jitjit";
 
     public static String defaultMaxvmOutputConfigs() {
-        return "std,jit,pgi";
+        return "std,jit";
     }
 
     public static String defaultJavaTesterConfigs() {
