@@ -29,7 +29,7 @@ public class Barrier {
         this.threads = threads;
     }
 
-    public void reset() {
+    public synchronized void reset() {
         threadCount = 0;
     }
 

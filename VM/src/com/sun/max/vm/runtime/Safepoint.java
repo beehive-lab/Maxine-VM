@@ -172,11 +172,13 @@ public abstract class Safepoint {
     @INLINE
     public static void disable() {
         setLatchRegister(SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord().asPointer());
+        // copy variable thread locals
     }
 
     @INLINE
     public static void enable() {
         setLatchRegister(SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer());
+        // copy variable thread locals
     }
 
     public static void initializePrimordial(Pointer primordialVmThreadLocals) {

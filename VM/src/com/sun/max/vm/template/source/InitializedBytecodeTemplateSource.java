@@ -42,7 +42,7 @@ public final class InitializedBytecodeTemplateSource {
      */
     @BYTECODE_TEMPLATE(bytecode = Bytecode.NEW)
     public static void new_(ClassActor classActor) {
-        JitStackFrameOperation.pushReference(NonFoldableSnippet.CreateTupleOrHybrid.createTupleOrHybrid(classActor));
+        JitStackFrameOperation.pushReference(NoninlineTemplateRuntime.noninlineNew(classActor));
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESTATIC, kind = KindEnum.VOID)

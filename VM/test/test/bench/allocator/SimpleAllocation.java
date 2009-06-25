@@ -20,10 +20,13 @@
  */
 package test.bench.allocator;
 
+import com.sun.max.vm.*;
+
 
 public class SimpleAllocation {
 
-    protected static Barrier barrier;
+    protected static Barrier barrier1;
+    protected static Barrier barrier2;
     protected static int nrThreads;
     protected static int allocSize;
     protected static int nrAllocs;
@@ -38,16 +41,21 @@ public class SimpleAllocation {
         allocSize = Integer.parseInt(args[1]);
         nrAllocs = Integer.parseInt(args[2]);
 
-        barrier = new Barrier(nrThreads + 1);
+        barrier1 = new Barrier(nrThreads + 1);
+        barrier2 = new Barrier(nrThreads + 1);
 
         for (int i = 0; i < nrThreads; i++) {
-            new Thread(new AllocationThread(allocSize, nrAllocs)).start();
+            new Thread(new AllocationThread(allocSize, nrAllocs, i)).start();
         }
-
+        long start = 0;
         try {
-            barrier.waitForRelease();
+            barrier1.waitForRelease();
+            start = System.nanoTime();
+            barrier2.waitForRelease();
         } catch (InterruptedException e) { }
 
+        final long benchtime = System.nanoTime() - start;
+        System.out.println(benchtime);
 
         /*System.out.println("Simple Allocator Benchmark Result (nr threads: " + nrThreads +
                             "; size: " + allocSize + "; nr allocs: " + nrAllocs +
@@ -57,23 +65,32 @@ public class SimpleAllocation {
     public static class AllocationThread implements Runnable{
         private int size;
         private int nrAllocations;
+        private int threadId;
+        //public int tmp;
 
-        public AllocationThread(int size, int nrAllocations) {
+        public AllocationThread(int size, int nrAllocations, int threadId) {
             this.size = size;
             this.nrAllocations = nrAllocations;
+            this.threadId = threadId;
         }
 
         public void run() {
-            final long start = System.nanoTime();
+            try {
+                barrier1.waitForRelease();
+            } catch (InterruptedException e) { }
             for (int i = 0; i < nrAllocations; i++) {
+                if (i%100000 == 0) {
+                    Log.print("Alloc thread ");
+                    Log.println(threadId);
+                }
+
                 final byte[] tmp = new byte[size];
                 tmp[0] = 1;
+                //tmp = 1;
             }
-            final long benchtime = System.nanoTime() - start;
             try {
-                barrier.waitForRelease();
+                barrier2.waitForRelease();
             } catch (InterruptedException e) { }
-            System.out.println(benchtime);
         }
     }
 }

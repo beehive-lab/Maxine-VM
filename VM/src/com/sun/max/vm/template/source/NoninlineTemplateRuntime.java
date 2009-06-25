@@ -35,6 +35,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.snippet.*;
+import com.sun.max.vm.compiler.snippet.NonFoldableSnippet.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 
@@ -377,6 +378,11 @@ public class NoninlineTemplateRuntime {
     @NEVER_INLINE
     public static Object getClassMirror(ClassActor classActor) {
         return classActor.mirror();
+    }
+
+    @NEVER_INLINE
+    public static Object noninlineNew(ClassActor classActor) {
+        return NonFoldableSnippet.CreateTupleOrHybrid.createTupleOrHybrid(classActor);
     }
 
 
