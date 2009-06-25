@@ -33,6 +33,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.object.TupleAccess;
 
 /**
  * Method substitutions for the {@link java.security.AccessController} class.
@@ -192,7 +193,7 @@ final class JDK_java_security_AccessController {
      */
     @SUBSTITUTE
     public static AccessControlContext getInheritedAccessControlContext() {
-        return UnsafeLoophole.cast(ReferenceFieldActor.findInstance(Thread.class, "inheritedAccessControlContext").readObject(Thread.currentThread()));
+        return UnsafeLoophole.cast(TupleAccess.readObject(Thread.currentThread(), FieldActor.findInstance(Thread.class, "inheritedAccessControlContext").offset()));
     }
 
 }

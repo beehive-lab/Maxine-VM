@@ -30,6 +30,7 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.object.TupleAccess;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -88,12 +89,12 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
             return vmClassRegistry;
         }
         synchronized (classLoader) {
-            final ClassRegistry result = (ClassRegistry) ClassLoader_classRegistry.readObject(classLoader);
+            final ClassRegistry result = (ClassRegistry) TupleAccess.readObject(classLoader, ClassLoader_classRegistry.offset());
             if (result != null) {
                 return result;
             }
             final ClassRegistry registry = new ClassRegistry();
-            ClassLoader_classRegistry.writeObject(classLoader, registry);
+            TupleAccess.writeObject(classLoader, ClassLoader_classRegistry.offset(), registry);
             return registry;
         }
     }

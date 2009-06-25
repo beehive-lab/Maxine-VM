@@ -33,6 +33,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.object.TupleAccess;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.jni.*;
@@ -141,11 +142,11 @@ public class FieldActor<Value_Type extends Value<Value_Type>> extends MemberActo
         if (MaxineVM.isPrototyping()) {
             return JavaPrototype.javaPrototype().toFieldActor(javaField);
         }
-        FieldActor fieldActor = (FieldActor) Field_fieldActor.readObject(javaField);
+        FieldActor fieldActor = (FieldActor) TupleAccess.readObject(javaField, Field_fieldActor.offset());
         if (fieldActor == null) {
             final ClassActor holder = ClassActor.fromJava(javaField.getDeclaringClass());
             fieldActor = holder.findFieldActor(SymbolTable.makeSymbol(javaField.getName()), JavaTypeDescriptor.forJavaClass(javaField.getType()));
-            Field_fieldActor.writeObject(javaField, fieldActor);
+            TupleAccess.writeObject(javaField, Field_fieldActor.offset(), fieldActor);
         }
         return fieldActor;
     }
@@ -156,7 +157,7 @@ public class FieldActor<Value_Type extends Value<Value_Type>> extends MemberActo
         }
         final Class javaHolder = holder().toJava();
         final Field javaField = ReflectionFactory.getReflectionFactory().newField(javaHolder, name.toString(), type().toJava(), flags(), memberIndex(), genericSignatureString(), runtimeVisibleAnnotationsBytes());
-        Field_fieldActor.writeObject(javaField, this);
+        TupleAccess.writeObject(javaField, Field_fieldActor.offset(), this);
         return javaField;
     }
 

@@ -174,7 +174,7 @@ public class TupleOffsetSnippet extends BuiltinsSnippet {
         @INLINE
         public static Object readReference(Object tuple, int offset) {
             if (MaxineVM.isPrototyping()) {
-                return HostTupleAccess.readObject(tuple, (ReferenceFieldActor) findFieldActor(tuple, offset));
+                return HostTupleAccess.readObject(tuple, findFieldActor(tuple, offset));
             }
             return TupleAccess.readObject(tuple, offset);
         }

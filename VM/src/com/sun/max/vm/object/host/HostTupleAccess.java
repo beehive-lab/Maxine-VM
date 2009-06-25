@@ -250,7 +250,7 @@ public final class HostTupleAccess {
      * @param referenceFieldActor the field actor representing the field to be read
      * @return the value of the field of the specified object
      */
-    public static Object readObject(Object tuple, ReferenceFieldActor referenceFieldActor) {
+    public static Object readObject(Object tuple, FieldActor referenceFieldActor) {
         try {
             final Field field = referenceFieldActor.toJava();
             field.setAccessible(true);
@@ -412,7 +412,7 @@ public final class HostTupleAccess {
      * @param referenceFieldActor the field actor representing the field to write
      * @param value the value to write into the field
      */
-    public static void writeObject(Object tuple, ReferenceFieldActor referenceFieldActor, Object value) {
+    public static void writeObject(Object tuple, FieldActor referenceFieldActor, Object value) {
         try {
             final Field field = referenceFieldActor.toJava();
             field.setAccessible(true);

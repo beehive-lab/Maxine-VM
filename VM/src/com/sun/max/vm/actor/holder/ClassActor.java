@@ -1285,11 +1285,11 @@ public abstract class ClassActor extends Actor {
 
 
     @CONSTANT_WHEN_NOT_ZERO
-    private static ReferenceFieldActor mirrorFieldActor;
+    private static FieldActor mirrorFieldActor;
 
-    private static ReferenceFieldActor mirrorFieldActor() {
+    private static FieldActor mirrorFieldActor() {
         if (mirrorFieldActor == null) {
-            mirrorFieldActor = (ReferenceFieldActor) ClassActor.fromJava(ClassActor.class).findFieldActor(SymbolTable.makeSymbol("mirror"));
+            mirrorFieldActor = ClassActor.fromJava(ClassActor.class).findFieldActor(SymbolTable.makeSymbol("mirror"));
         }
         return mirrorFieldActor;
     }
@@ -1309,7 +1309,7 @@ public abstract class ClassActor extends Actor {
         // Non-blocking synchronization is used here to swap in the mirror reference.
         // This could lead to some extra Class objects being created that become garbage, but should be harmless.
         final Class newMirror = (Class) Heap.createTuple(ClassRegistry.javaLangClassActor().dynamicHub());
-        Class_classActor.writeObject(newMirror, this);
+        TupleAccess.writeObject(newMirror, Class_classActor.offset(), this);
         final Reference oldValue = Reference.fromJava(this).compareAndSwapReference(mirrorFieldActor().offset(), null,  Reference.fromJava(newMirror));
         if (oldValue == null) {
             return newMirror;
@@ -1360,7 +1360,7 @@ public abstract class ClassActor extends Actor {
         if (MaxineVM.isPrototyping()) {
             return JavaPrototype.javaPrototype().toClassActor(javaClass);
         }
-        return (ClassActor) Class_classActor.readObject(javaClass);
+        return (ClassActor) TupleAccess.readObject(javaClass, Class_classActor.offset());
     }
 
     /**

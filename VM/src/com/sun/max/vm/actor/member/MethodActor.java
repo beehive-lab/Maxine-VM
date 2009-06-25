@@ -35,6 +35,7 @@ import com.sun.max.profile.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.object.TupleAccess;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.jni.*;
@@ -215,11 +216,11 @@ public abstract class MethodActor extends MemberActor {
             return JavaPrototype.javaPrototype().toMethodActor(javaMethod);
         }
         // The injected field in a Method object that is used to speed up this translation is lazily initialized.
-        MethodActor methodActor = (MethodActor) Method_methodActor.readObject(javaMethod);
+        MethodActor methodActor = (MethodActor) TupleAccess.readObject(javaMethod, Method_methodActor.offset());
         if (methodActor == null) {
             final String name = javaMethod.getName();
             methodActor = findMethodActor(ClassActor.fromJava(javaMethod.getDeclaringClass()), SymbolTable.makeSymbol(name), SignatureDescriptor.fromJava(javaMethod));
-            Method_methodActor.writeObject(javaMethod, methodActor);
+            TupleAccess.writeObject(javaMethod, Method_methodActor.offset(), methodActor);
         }
         return methodActor;
     }
@@ -229,10 +230,10 @@ public abstract class MethodActor extends MemberActor {
             return JavaPrototype.javaPrototype().toMethodActor(javaConstructor);
         }
         // The injected field in a Constructor object that is used to speed up this translation is lazily initialized.
-        MethodActor methodActor = (MethodActor) Constructor_methodActor.readObject(javaConstructor);
+        MethodActor methodActor = (MethodActor) TupleAccess.readObject(javaConstructor, Constructor_methodActor.offset());
         if (methodActor == null) {
             methodActor = findMethodActor(ClassActor.fromJava(javaConstructor.getDeclaringClass()), SymbolTable.INIT, SignatureDescriptor.fromJava(javaConstructor));
-            Constructor_methodActor.writeObject(javaConstructor, methodActor);
+            TupleAccess.writeObject(javaConstructor, Constructor_methodActor.offset(), methodActor);
         }
         return methodActor;
     }
@@ -267,7 +268,7 @@ public abstract class MethodActor extends MemberActor {
                         runtimeVisibleAnnotationsBytes(),
                         runtimeVisibleParameterAnnotationsBytes(),
                         annotationDefaultBytes());
-        Method_methodActor.writeObject(javaMethod, this);
+        TupleAccess.writeObject(javaMethod, Method_methodActor.offset(), this);
         return javaMethod;
     }
 
@@ -289,7 +290,7 @@ public abstract class MethodActor extends MemberActor {
                         genericSignatureString(),
                         runtimeVisibleAnnotationsBytes(),
                         runtimeVisibleParameterAnnotationsBytes());
-        Constructor_methodActor.writeObject(javaConstructor, this);
+        TupleAccess.writeObject(javaConstructor, Constructor_methodActor.offset(), this);
         return javaConstructor;
     }
 

@@ -90,7 +90,7 @@ public class NoninlineTemplateRuntime {
 
     @NEVER_INLINE
     public static void resolveAndPutFieldReference(ResolutionGuard guard, final Object object, final Object value) {
-        final ReferenceFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForWriting(guard));
+        final FieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForWriting(guard));
         FieldWriteSnippet.WriteReference.writeReference(object, fieldActor, value);
     }
 
@@ -154,7 +154,7 @@ public class NoninlineTemplateRuntime {
 
     @NEVER_INLINE
     public static void resolveAndPutStaticReference(ResolutionGuard guard, final Object value) {
-        final ReferenceFieldActor fieldActor = UnsafeLoophole.cast(resolvePutstaticFieldActor(guard));
+        final FieldActor fieldActor = UnsafeLoophole.cast(resolvePutstaticFieldActor(guard));
         FieldWriteSnippet.WriteReference.writeReference(fieldActor.holder().staticTuple(), fieldActor, value);
     }
 
@@ -226,7 +226,7 @@ public class NoninlineTemplateRuntime {
 
     @NEVER_INLINE
     public static Object resolveAndGetFieldReference(ResolutionGuard guard, final Object object) {
-        final ReferenceFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForReading(guard));
+        final FieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForReading(guard));
         return FieldReadSnippet.ReadReference.readReference(object, fieldActor);
     }
 
@@ -297,7 +297,7 @@ public class NoninlineTemplateRuntime {
 
     @NEVER_INLINE
     public static Object resolveAndGetStaticReference(ResolutionGuard guard) {
-        final ReferenceFieldActor fieldActor = UnsafeLoophole.cast(getstaticFieldActor(guard));
+        final FieldActor fieldActor = UnsafeLoophole.cast(getstaticFieldActor(guard));
         return FieldReadSnippet.ReadReference.readReference(fieldActor.holder().staticTuple(), fieldActor);
     }
 

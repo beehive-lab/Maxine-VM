@@ -34,7 +34,6 @@ import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -63,16 +62,17 @@ public class SpecialReferenceManager {
         Grip getForwardGrip(Grip grip);
     }
 
-    private static final ReferenceFieldActor nextField = getReferenceClassField("next");
-    private static final ReferenceFieldActor discoveredField = getReferenceClassField("discovered");
-    private static final ReferenceFieldActor referentField = getReferenceClassField("referent");
-    private static final ReferenceFieldActor pendingField = getReferenceClassField("pending");
+    private static final FieldActor nextField = getReferenceClassField("next");
+    private static final FieldActor discoveredField = getReferenceClassField("discovered");
+    private static final FieldActor referentField = getReferenceClassField("referent");
+    private static final FieldActor pendingField = getReferenceClassField("pending");
 
     /**
      * The lock object associated with managing special references. This lock must
      * be held by the GC when it is updating the list of pending special references.
-     * This value is a reference to the static {@code lock} field in {@link java.lang.Reference}.
-     * Like {@link VmThread.ACTIVE}, this lock is special and requires a sticky monitor.
+     * This value is a reference to the static {@code lock} field in {@link java.lang.ref.Reference}.
+     * Like {@link com.sun.max.vm.thread.VmThreadMap#ACTIVE}, this lock is special and
+     * requires a sticky monitor.
      */
     public static final Object LOCK = WithoutAccessCheck.getStaticField(JDK.java_lang_ref_Reference.javaClass(), "lock");
 
@@ -100,16 +100,16 @@ public class SpecialReferenceManager {
     public static void processDiscoveredSpecialReferences(GripForwarder gripForwarder) {
         // the first pass over the list finds the references that have referents that are no longer reachable
         java.lang.ref.Reference ref = UnsafeLoophole.cast(discoveredList.toJava());
-        java.lang.ref.Reference last = UnsafeLoophole.cast(pendingField.readStatic());
+        java.lang.ref.Reference last = UnsafeLoophole.cast(TupleAccess.readObject(pendingField.holder().staticTuple(), pendingField.offset()));
         while (ref != null) {
             final Grip referent = Grip.fromJava(ref).readGrip(referentField.offset());
             if (gripForwarder.isReachable(referent)) {
                 // this object is reachable, however the "referent" field was not scanned.
                 // we need to update this field manually
-                referentField.writeObject(ref, gripForwarder.getForwardGrip(referent));
+                TupleAccess.writeObject(ref, referentField.offset(), gripForwarder.getForwardGrip(referent));
             } else {
-                referentField.writeObject(ref, null);
-                nextField.writeObject(ref, last);
+                TupleAccess.writeObject(ref, referentField.offset(), null);
+                TupleAccess.writeObject(ref, nextField.offset(), last);
                 last = ref;
             }
             if (Heap.traceGC()) {
@@ -120,7 +120,7 @@ public class SpecialReferenceManager {
                 Log.print(ObjectAccess.toOrigin(ref));
                 Log.print(" whose referent ");
                 Log.print(referent.toOrigin());
-                final Object newReferent = referentField.readObject(ref);
+                final Object newReferent = TupleAccess.readObject(ref, referentField.offset());
                 if (newReferent == null) {
                     Log.println(" was unreachable");
                 } else {
@@ -129,9 +129,9 @@ public class SpecialReferenceManager {
                 }
                 Log.unlock(lockDisabledSafepoints);
             }
-            ref = UnsafeLoophole.cast(discoveredField.readObject(ref));
+            ref = UnsafeLoophole.cast(TupleAccess.readObject(ref, discoveredField.offset()));
         }
-        pendingField.writeStatic(last);
+        TupleAccess.writeObject(pendingField.holder().staticTuple(), pendingField.offset(), last);
         discoveredList = Grip.fromOrigin(Pointer.zero());
         if (last != null) {
             // if there are pending special references, notify the reference handler thread.
@@ -145,7 +145,7 @@ public class SpecialReferenceManager {
      * reference object. This method checks to see whether the object has been processed previously,
      * and if not, then adds it to the queue to be processed later.
      *
-     * @param grip
+     * @param grip the grip that has been discovered
      */
     public static void discoverSpecialReference(Grip grip) {
         if (grip.readGrip(nextField.offset()).isZero()) {
@@ -181,7 +181,7 @@ public class SpecialReferenceManager {
 
     /**
      * Initialize the SpecialReferenceManager when starting the VM. Normally, on the host
-     * VM, the {@link java.lang.Reference} and {@link java.lang.Finalizer} classes create
+     * VM, the {@link java.lang.ref.Reference} and {@link java.lang.ref.Finalizer} classes create
      * threads in their static initializers to handle weak references and finalizable objects.
      * However, in the target VM, these classes have already been initialized and these
      * threads need to be started manually.
@@ -196,13 +196,13 @@ public class SpecialReferenceManager {
     }
 
     @PROTOTYPE_ONLY
-    private static ReferenceFieldActor getReferenceClassField(String name) {
+    private static FieldActor getReferenceClassField(String name) {
         final ClassActor referenceClass = ClassActor.fromJava(java.lang.ref.Reference.class);
         FieldActor fieldActor = referenceClass.findLocalStaticFieldActor(name);
         if (fieldActor == null) {
             fieldActor = referenceClass.findLocalInstanceFieldActor(name);
         }
-        return (ReferenceFieldActor) fieldActor;
+        return fieldActor;
     }
 
     /**

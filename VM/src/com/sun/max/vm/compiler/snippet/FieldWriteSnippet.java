@@ -163,16 +163,16 @@ public class FieldWriteSnippet extends BuiltinsSnippet {
     public static final class WriteReference extends FieldWriteSnippet {
         @SNIPPET
         @INLINE
-        public static void writeReference(Object tuple, ReferenceFieldActor referenceFieldActor, Object value) {
+        public static void writeReference(Object tuple, FieldActor referenceFieldActor, Object value) {
             if (MaxineVM.isPrototyping()) {
                 HostTupleAccess.writeObject(tuple, referenceFieldActor, value);
             } else {
-                referenceFieldActor.writeObject(tuple, value);
+                TupleAccess.writeObject(tuple, referenceFieldActor.offset(), value);
             }
         }
 
         @NEVER_INLINE
-        public static void noninlineWriteReference(Object tuple, ReferenceFieldActor referenceFieldActor, Object value) {
+        public static void noninlineWriteReference(Object tuple, FieldActor referenceFieldActor, Object value) {
             writeReference(tuple, referenceFieldActor, value);
         }
 
